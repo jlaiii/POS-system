@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Point of Sale System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .item {
+            margin-bottom: 10px;
+        }
+        .item button {
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+        .paymentBtn {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin-right: 10px;
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            cursor: pointer;
+        }
+        .paymentBtn.selected {
+            background-color: #4CAF50;
+            color: white;
+        }
+        #cart {
+            list-style-type: none;
+            padding: 0;
+        }
+        #cart li {
+            margin-bottom: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #cart li span {
+            color: red;
+        }
+        .paymentBtns {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Point of Sale System</h1>
+        <div class="item" id="item1">
+            <span>Item 1 - $10</span>
+            <button onclick="addItem('Item 1', 10)">Add to Cart</button>
+        </div>
+        <div class="item" id="item2">
+            <span>Item 2 - $15</span>
+            <button onclick="addItem('Item 2', 15)">Add to Cart</button>
+        </div>
+        <div class="item" id="item3">
+            <span>Item 3 - $20</span>
+            <button onclick="addItem('Item 3', 20)">Add to Cart</button>
+        </div>
+
+        <h2>Cart</h2>
+        <ul id="cart" onclick="removeItemFromCart(event)"></ul>
+
+        <p>Total: $<span id="totalAmount">0</span></p>
+
+        <div class="paymentBtns">
+            <h3>Payment Method</h3>
+            <button class="paymentBtn" onclick="selectPayment('cash')">Cash</button>
+            <button class="paymentBtn" onclick="selectPayment('card')">Card</button>
+        </div>
+
+        <button onclick="submitOrder()">Submit Order</button>
+        <button onclick="clearCart()">Clear Cart</button>
+    </div>
+
+    <script>
+        let cart = {};
+        let totalAmount = 0;
+        let selectedPayment = null;
+
+        function addItem(item, price) {
+            if (!cart[item]) {
+                cart[item] = {count: 0, price: price};
+            }
+            cart[item].count++;
+            totalAmount += price;
+            updateCartUI();
+        }
+
+        function removeItem(item) {
+            if (cart[item]) {
+                const price = cart[item].price;
+                cart[item].count--;
+                if (cart[item].count === 0) {
+                    delete cart[item];
+                }
+                totalAmount -= price;
+                updateCartUI();
+            }
+        }
+
+        function updateCartUI() {
+            const cartElement = document.getElementById("cart");
+            cartElement.innerHTML = "";
+            Object.keys(cart).forEach(item => {
+                const li = document.createElement("li");
+                const itemCost = cart[item].count * cart[item].price;
+                li.textContent = `${item} x${cart[item].count} - $${itemCost}`;
+                li.setAttribute('data-item', item); // Store item name as data attribute
+                cartElement.appendChild(li);
+            });
+
+            document.getElementById("totalAmount").textContent = totalAmount.toFixed(2);
+        }
+
+        function removeItemFromCart(event) {
+            const itemName = event.target.dataset.item; // Get item name from data attribute
+            if (itemName) {
+                removeItem(itemName);
+            }
+        }
+
+        function selectPayment(paymentType) {
+            selectedPayment = paymentType;
+            document.querySelectorAll('.paymentBtn').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            event.target.classList.add('selected');
+        }
+
+        function submitOrder() {
+            if (!selectedPayment) {
+                alert("Please select a payment method before submitting the order.");
+                return;
+            }
+            if (Object.keys(cart).length === 0) {
+                alert("Please add items to the cart before submitting the order.");
+                return;
+            }
+            const orderData = {items: cart, paymentMethod: selectedPayment};
+            const xhr = new XMLHttpRequest();
+            xhr.open("POST", "/log", true);
+            xhr.setRequestHeader("Content-Type", "application/json");
+            xhr.send(JSON.stringify(orderData));
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    alert("Order submitted successfully!");
+                    cart = {};
+                    totalAmount = 0;
+                    updateCartUI();
+                    document.querySelectorAll('.paymentBtn').forEach(btn => {
+                        btn.classList.remove('selected');
+                    });
+                    selectedPayment = null;
+                } else {
+                    alert("Failed to submit order!");
+                }
+            };
+        }
+
+        function clearCart() {
+            cart = {};
+            totalAmount = 0;
+            updateCartUI();
+            document.querySelectorAll('.paymentBtn').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            selectedPayment = null;
+        }
+    </script>
+</body>
+</html>
