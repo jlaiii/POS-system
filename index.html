@@ -16,13 +16,16 @@
         .item {
             margin-bottom: 10px;
         }
-        .item button {
+        .item button,
+        .paymentBtn,
+        #clearCartBtn,
+        #submitOrderBtn {
             padding: 10px 20px;
             font-size: 16px;
         }
-        .paymentBtn {
-            padding: 10px 20px;
-            font-size: 16px;
+        .paymentBtn,
+        #clearCartBtn,
+        #submitOrderBtn {
             margin-right: 10px;
             background-color: #f0f0f0;
             border: 1px solid #ccc;
@@ -76,8 +79,8 @@
             <button class="paymentBtn" onclick="selectPayment('card')">Card</button>
         </div>
 
-        <button onclick="submitOrder()">Submit Order</button>
-        <button onclick="clearCart()">Clear Cart</button>
+        <button id="submitOrderBtn" onclick="submitOrder()">Submit Order</button>
+        <button id="clearCartBtn" onclick="clearCart()">Clear Cart</button>
     </div>
 
     <script>
