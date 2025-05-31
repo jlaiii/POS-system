@@ -1,182 +1,429 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Point of Sale System</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        .item {
-            margin-bottom: 10px;
-        }
-        .item button,
-        .paymentBtn,
-        #clearCartBtn,
-        #submitOrderBtn {
-            padding: 10px 20px;
-            font-size: 16px;
-        }
-        .paymentBtn,
-        #clearCartBtn,
-        #submitOrderBtn {
-            margin-right: 10px;
-            background-color: #f0f0f0;
-            border: 1px solid #ccc;
-            cursor: pointer;
-        }
-        .paymentBtn.selected {
-            background-color: #4CAF50;
-            color: white;
-        }
-        #cart {
-            list-style-type: none;
-            padding: 0;
-        }
-        #cart li {
-            margin-bottom: 5px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-        #cart li span {
-            color: red;
-        }
-        .paymentBtns {
-            margin-top: 10px;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>POS System with Login</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      background: #f5f5f5;
+      padding: 20px;
+      color: #333;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h1, h2 {
+      text-align: center;
+      font-weight: 600;
+      margin: 10px 0;
+    }
+
+    #loginSection, #posSection {
+      width: 100%;
+      max-width: 800px;
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    }
+
+    #loggedInAs {
+      font-size: 1.3em;
+      margin-bottom: 20px;
+      font-weight: 600;
+      text-align: center;
+      color: #4CAF50;
+    }
+
+    label {
+      font-size: 1.2em;
+      display: block;
+      margin-bottom: 10px;
+    }
+
+    input[type="password"] {
+      font-size: 1.2em;
+      padding: 10px;
+      width: 100%;
+      max-width: 200px;
+      margin-bottom: 20px;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      transition: border-color 0.3s ease;
+    }
+
+    input[type="password"]:focus {
+      border-color: #2196F3;
+      outline: none;
+    }
+
+    button.loginBtn {
+      font-size: 1.3em;
+      padding: 12px 30px;
+      background: #2196F3;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      width: 100%;
+      max-width: 220px;
+      transition: background-color 0.3s ease;
+      user-select: none;
+    }
+
+    button.loginBtn:hover {
+      background: #1976D2;
+    }
+
+    .category {
+      margin-bottom: 25px;
+    }
+
+    .category h2 {
+      border-bottom: 2px solid #2196F3;
+      padding-bottom: 5px;
+      margin-bottom: 15px;
+      color: #2196F3;
+    }
+
+    .item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #fff;
+      padding: 12px 20px;
+      margin: 8px 0;
+      border-radius: 8px;
+      font-size: 1.2em;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .item span {
+      flex: 1;
+    }
+
+    .item button {
+      font-size: 1em;
+      padding: 8px 20px;
+      border: none;
+      background: #2196F3;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.3s ease;
+    }
+
+    .item button:hover {
+      background: #1976D2;
+    }
+
+    #cart {
+      list-style: none;
+      padding: 0;
+      margin-top: 10px;
+      font-size: 1.3em;
+      max-height: 220px;
+      overflow-y: auto;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background: #fafafa;
+    }
+
+    #cart li {
+      background: #e0e0e0;
+      padding: 12px 20px;
+      margin: 5px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      user-select: none;
+      transition: background-color 0.3s ease;
+    }
+
+    #cart li:hover {
+      background: #d0d0d0;
+    }
+
+    #totalAmount {
+      font-size: 1.8em;
+      text-align: center;
+      margin: 20px 0;
+      font-weight: 600;
+    }
+
+    .paymentBtns {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 25px;
+      flex-wrap: wrap;
+    }
+
+    .paymentBtn {
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #2196F3;
+      color: white;
+      padding: 15px 40px;
+      border-radius: 8px;
+      font-size: 1.3em;
+      cursor: pointer;
+      user-select: none;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      transition: background-color 0.3s ease;
+      min-width: 130px;
+      text-align: center;
+    }
+
+    .paymentBtn:hover {
+      background-color: #1976D2;
+    }
+
+    .paymentBtn.selected {
+      background-color: #4CAF50;
+      box-shadow: 0 3px 8px rgba(76,175,80,0.8);
+    }
+
+    .btns {
+      margin-top: 10px;
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .btns button {
+      font-size: 1.2em;
+      padding: 15px 35px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.3s ease;
+    }
+
+    .submit {
+      background: #4CAF50;
+      color: white;
+    }
+
+    .submit:hover {
+      background: #388E3C;
+    }
+
+    .clear {
+      background: #f44336;
+      color: white;
+    }
+
+    .clear:hover {
+      background: #d32f2f;
+    }
+
+    @media (max-width: 600px) {
+      .item {
+        font-size: 1em;
+        padding: 10px 15px;
+      }
+      .paymentBtn {
+        font-size: 1.1em;
+        padding: 12px 25px;
+        min-width: 110px;
+      }
+      .btns button {
+        font-size: 1em;
+        padding: 12px 20px;
+      }
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Point of Sale System</h1>
-        <div class="item" id="item1">
-            <span>Item 1 - $10</span>
-            <button onclick="addItem('Item 1', 10)">Add to Cart</button>
-        </div>
-        <div class="item" id="item2">
-            <span>Item 2 - $15</span>
-            <button onclick="addItem('Item 2', 15)">Add to Cart</button>
-        </div>
-        <div class="item" id="item3">
-            <span>Item 3 - $20</span>
-            <button onclick="addItem('Item 3', 20)">Add to Cart</button>
-        </div>
 
-        <h2>Cart</h2>
-        <ul id="cart" onclick="removeItemFromCart(event)"></ul>
+  <div id="loginSection">
+    <h1>POS System Login</h1>
+    <label for="userIdInput">Enter 4-digit User ID:</label>
+    <input type="password" id="userIdInput" maxlength="4" placeholder="e.g. 1234" autocomplete="off" />
+    <button class="loginBtn" onclick="login()">Login</button>
+  </div>
 
-        <p>Total: $<span id="totalAmount">0</span></p>
+  <div id="posSection" style="display:none;">
+    <div id="loggedInAs">Logged in as: <span id="userDisplay"></span></div>
 
-        <div class="paymentBtns">
-            <h3>Payment Method</h3>
-            <button class="paymentBtn" onclick="selectPayment('cash')">Cash</button>
-            <button class="paymentBtn" onclick="selectPayment('card')">Card</button>
-        </div>
+    <h1>POS System</h1>
 
-        <button id="submitOrderBtn" onclick="submitOrder()">Submit Order</button>
-        <button id="clearCartBtn" onclick="clearCart()">Clear Cart</button>
+    <div class="category">
+      <h2>Foods</h2>
+      <div class="item"><span>Hamburger - Normal</span><button onclick="addItem('Hamburger - Normal', 6)">Add</button></div>
+      <div class="item"><span>Hamburger - All the Fixings</span><button onclick="addItem('Hamburger - All the Fixings', 8)">Add</button></div>
+      <div class="item"><span>Hotdog - Loaded</span><button onclick="addItem('Hotdog - Loaded', 7)">Add</button></div>
+      <div class="item"><span>Hotdog - Plain</span><button onclick="addItem('Hotdog - Plain', 5)">Add</button></div>
+      <div class="item"><span>Taco - Beef & Cheese</span><button onclick="addItem('Taco - Beef & Cheese', 7)">Add</button></div>
+      <div class="item"><span>Taco - Chicken with Salsa</span><button onclick="addItem('Taco - Chicken with Salsa', 7)">Add</button></div>
     </div>
 
-    <script>
-        let cart = {};
-        let totalAmount = 0;
-        let selectedPayment = null;
+    <div class="category">
+      <h2>Drinks</h2>
+      <div class="item"><span>Lemonade</span><button onclick="addItem('Lemonade', 3)">Add</button></div>
+      <div class="item"><span>Coke</span><button onclick="addItem('Coke', 3)">Add</button></div>
+      <div class="item"><span>Water Bottle</span><button onclick="addItem('Water Bottle', 2)">Add</button></div>
+    </div>
 
-        function addItem(item, price) {
-            if (!cart[item]) {
-                cart[item] = {count: 0, price: price};
-            }
-            cart[item].count++;
-            totalAmount += price;
-            updateCartUI();
+    <div class="category">
+      <h2>Snacks</h2>
+      <div class="item"><span>Raspia (Fruit Slush)</span><button onclick="addItem('Raspia (Fruit Slush)', 4)">Add</button></div>
+      <div class="item"><span>Chips (Large Bag)</span><button onclick="addItem('Chips (Large Bag)', 3)">Add</button></div>
+      <div class="item"><span>Chocolate Bar</span><button onclick="addItem('Chocolate Bar', 2)">Add</button></div>
+      <div class="item"><span>Mixed Nuts (Small Pack)</span><button onclick="addItem('Mixed Nuts (Small Pack)', 4)">Add</button></div>
+      <div class="item"><span>Granola Bar</span><button onclick="addItem('Granola Bar', 2)">Add</button></div>
+    </div>
+
+    <h2>Cart (Click item to remove one)</h2>
+    <ul id="cart" onclick="handleCartClick(event)"></ul>
+
+    <div id="totalAmount">Total: $0.00</div>
+
+    <h2>Payment</h2>
+    <div class="paymentBtns">
+      <div class="paymentBtn" onclick="selectPayment(this, 'Cash')">Cash</div>
+      <div class="paymentBtn" onclick="selectPayment(this, 'Card')">Card</div>
+    </div>
+
+    <div class="btns">
+      <button class="submit" onclick="submitOrder()">Submit Order</button>
+      <button class="clear" onclick="clearCart()">Clear Cart</button>
+    </div>
+  </div>
+
+  <script>
+    const users = {
+      "1234": "TEST",
+      "5678": "Bob",
+      "9012": "Charlie",
+      "3456": "Diana",
+      "7890": "Ethan"
+    };
+
+    let loggedInUser = null;
+    let cart = {};
+    let totalAmount = 0;
+    let selectedPayment = null;
+
+    function login() {
+      const input = document.getElementById("userIdInput");
+      const id = input.value.trim();
+      if (users[id]) {
+        loggedInUser = users[id];
+        document.getElementById("userDisplay").textContent = loggedInUser;
+        document.getElementById("loginSection").style.display = "none";
+        document.getElementById("posSection").style.display = "block";
+        input.value = "";
+        clearCart();
+      } else {
+        alert("Invalid User ID.");
+        input.value = "";
+        input.focus();
+      }
+    }
+
+    function addItem(name, price) {
+      if (!cart[name]) {
+        cart[name] = { count: 0, price: price };
+      }
+      cart[name].count++;
+      updateCartDisplay();
+    }
+
+    function updateCartDisplay() {
+      const cartList = document.getElementById("cart");
+      cartList.innerHTML = "";
+      totalAmount = 0;
+
+      Object.keys(cart).forEach(name => {
+        if (cart[name].count > 0) {
+          const li = document.createElement("li");
+          li.textContent = `${name} x${cart[name].count} - $${(cart[name].price * cart[name].count).toFixed(2)}`;
+          li.dataset.itemName = name;
+          cartList.appendChild(li);
+          totalAmount += cart[name].price * cart[name].count;
         }
+      });
 
-        function removeItem(item) {
-            if (cart[item]) {
-                const price = cart[item].price;
-                cart[item].count--;
-                if (cart[item].count === 0) {
-                    delete cart[item];
-                }
-                totalAmount -= price;
-                updateCartUI();
-            }
+      document.getElementById("totalAmount").textContent = `Total: $${totalAmount.toFixed(2)}`;
+    }
+
+    function handleCartClick(event) {
+      if (event.target.tagName.toLowerCase() === 'li') {
+        const itemName = event.target.dataset.itemName;
+        if (cart[itemName]) {
+          cart[itemName].count--;
+          if (cart[itemName].count <= 0) {
+            delete cart[itemName];
+          }
+          updateCartDisplay();
         }
+      }
+    }
 
-        function updateCartUI() {
-            const cartElement = document.getElementById("cart");
-            cartElement.innerHTML = "";
-            Object.keys(cart).forEach(item => {
-                const li = document.createElement("li");
-                const itemCost = cart[item].count * cart[item].price;
-                li.textContent = `${item} x${cart[item].count} - $${itemCost}`;
-                li.setAttribute('data-item', item); // Store item name as data attribute
-                cartElement.appendChild(li);
-            });
+    function selectPayment(element, method) {
+      selectedPayment = method;
+      const buttons = document.querySelectorAll(".paymentBtn");
+      buttons.forEach(btn => btn.classList.remove("selected"));
+      element.classList.add("selected");
+    }
 
-            document.getElementById("totalAmount").textContent = totalAmount.toFixed(2);
-        }
+    function clearCart() {
+      cart = {};
+      selectedPayment = null;
+      const buttons = document.querySelectorAll(".paymentBtn");
+      buttons.forEach(btn => btn.classList.remove("selected"));
+      updateCartDisplay();
+    }
 
-        function removeItemFromCart(event) {
-            const itemName = event.target.dataset.item; // Get item name from data attribute
-            if (itemName) {
-                removeItem(itemName);
-            }
-        }
+    function submitOrder() {
+      if (!loggedInUser) {
+        alert("You must be logged in to submit an order.");
+        return;
+      }
+      if (Object.keys(cart).length === 0) {
+        alert("Cart is empty.");
+        return;
+      }
+      if (!selectedPayment) {
+        alert("Please select a payment method.");
+        return;
+      }
 
-        function selectPayment(paymentType) {
-            selectedPayment = paymentType;
-            document.querySelectorAll('.paymentBtn').forEach(btn => {
-                btn.classList.remove('selected');
-            });
-            event.target.classList.add('selected');
-        }
+      const now = new Date();
+      const dateStr = now.toLocaleString();
+      let log = `Date: ${dateStr}\nUser: ${loggedInUser}\nPayment: ${selectedPayment}\nItems:\n`;
 
-        function submitOrder() {
-            if (!selectedPayment) {
-                alert("Please select a payment method before submitting the order.");
-                return;
-            }
-            if (Object.keys(cart).length === 0) {
-                alert("Please add items to the cart before submitting the order.");
-                return;
-            }
-            const orderData = {items: cart, paymentMethod: selectedPayment};
-            const xhr = new XMLHttpRequest();
-            xhr.open("POST", "/log", true);
-            xhr.setRequestHeader("Content-Type", "application/json");
-            xhr.send(JSON.stringify(orderData));
-            xhr.onload = function () {
-                if (xhr.status === 200) {
-                    alert("Order submitted successfully!");
-                    cart = {};
-                    totalAmount = 0;
-                    updateCartUI();
-                    document.querySelectorAll('.paymentBtn').forEach(btn => {
-                        btn.classList.remove('selected');
-                    });
-                    selectedPayment = null;
-                } else {
-                    alert("Failed to submit order!");
-                }
-            };
-        }
+      Object.keys(cart).forEach(name => {
+        log += `  - ${name} x${cart[name].count} = $${(cart[name].price * cart[name].count).toFixed(2)}\n`;
+      });
 
-        function clearCart() {
-            cart = {};
-            totalAmount = 0;
-            updateCartUI();
-            document.querySelectorAll('.paymentBtn').forEach(btn => {
-                btn.classList.remove('selected');
-            });
-            selectedPayment = null;
-        }
-    </script>
+      log += `Total: $${totalAmount.toFixed(2)}\n`;
+
+      const blob = new Blob([log], { type: "text/plain" });
+      const link = document.createElement("a");
+      const formattedDate = now.toISOString().replace(/[:.]/g, '-');
+      link.href = URL.createObjectURL(blob);
+      link.download = `pos_order_${loggedInUser}_${formattedDate}.txt`;
+      link.click();
+
+      clearCart();
+      alert("Order saved and cart cleared.");
+    }
+  </script>
+
 </body>
 </html>
