@@ -2,6 +2,10 @@
 
 This is a basic Point-of-Sale (POS) web app with a user login, item selection, cart system, payment selection, and order logging feature. Everything is self-contained in a single HTML file—no backend or server required.
 
+## 🔗 Live Demo
+
+👉 [Try the Demo](https://jlaiii.github.io/POS-system/)
+
 ## 🔧 Features
 
 - 🔐 **Login System** (4-digit user ID)
@@ -12,7 +16,7 @@ This is a basic Point-of-Sale (POS) web app with a user login, item selection, c
 
 ## 👨‍💻 How to Use
 
-1. Open `index.html` in your browser.
+1. Open the [demo site](https://jlaiii.github.io/POS-system/) in your browser.
 2. Enter a valid 4-digit User ID to log in:
    - `1234` → TEST
    - `5678` → Bob
@@ -29,9 +33,6 @@ This is a basic Point-of-Sale (POS) web app with a user login, item selection, c
 
 - `index.html` — All logic, UI, and styles in one file. No external dependencies.
 
-## 🖥️ Screenshot
-
-![POS Screenshot](screenshot.png) <!-- Optional: Add screenshot if available -->
 
 ## 📋 Notes
 
