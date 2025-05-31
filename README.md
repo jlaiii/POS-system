@@ -1,33 +1,46 @@
-Point of Sale System
+# Simple POS System with Login (HTML/CSS/JavaScript)
 
-This is a simple Point of Sale (POS) system implemented using a Python HTTP server script. It allows users to add items to a virtual cart, view the total amount, select a payment method (cash or card), and submit the order.
-How to Use
+This is a basic Point-of-Sale (POS) web app with a user login, item selection, cart system, payment selection, and order logging feature. Everything is self-contained in a single HTML file—no backend or server required.
 
-    Clone or download the repository.
-    Run the Python script pos_http_server.py.
-    Open a web browser and navigate to http://localhost:8000.
+## 🔧 Features
 
-Features
+- 🔐 **Login System** (4-digit user ID)
+- 🍔 **Categorized Items**: Foods, Drinks, Snacks
+- 🛒 **Cart System**: Add/remove items, live total calculation
+- 💳 **Payment Selection**: Cash or Card
+- 💾 **Order Logging**: Save each transaction as a `.txt` file with timestamp and user info
 
-    Adding Items: Users can add items to the cart by clicking the "Add to Cart" button next to each item.
-    Removing Items: Items can be removed from the cart by clicking on them in the cart list.
-    Total Amount: The total amount of the items in the cart is dynamically updated as items are added or removed.
-    Payment Method: Users can select either "Cash" or "Card" as the payment method.
-    Submitting Order: Once items are added to the cart and a payment method is selected, users can submit the order. The order data is sent to the server via a POST request.
-    Clearing Cart: Users can clear the cart at any time, removing all items and resetting the total amount and payment method.
+## 👨‍💻 How to Use
 
-Technologies Used
+1. Open `index.html` in your browser.
+2. Enter a valid 4-digit User ID to log in:
+   - `1234` → TEST
+   - `5678` → Bob
+   - `9012` → Charlie
+   - `3456` → Diana
+   - `7890` → Ethan
+3. Add items to the cart by clicking "Add" buttons.
+4. Click an item in the cart to remove one instance.
+5. Select payment method.
+6. Click **Submit Order** to generate and download a `.txt` receipt.
+7. Click **Clear Cart** to reset selections.
 
-    Python (for the HTTP server)
-    HTML/CSS/JavaScript (for the frontend UI)
+## 📁 File Structure
 
-Code Structure
+- `index.html` — All logic, UI, and styles in one file. No external dependencies.
 
-    HTML: Defines the structure of the POS system and includes buttons for adding items, displaying the cart, selecting payment method, and submitting/clearing the order.
-    CSS: Provides basic styling for the UI elements.
-    JavaScript: Handles user interactions such as adding/removing items from the cart, updating the total amount, selecting a payment method, submitting orders, and clearing the cart.
-    Python HTTP Server Script: Implements the server-side logic for handling HTTP requests, including serving HTML, JavaScript, and processing order submissions.
+## 🖥️ Screenshot
 
-Note
+![POS Screenshot](screenshot.png) <!-- Optional: Add screenshot if available -->
 
-This POS system is a basic implementation intended for demonstration purposes. It does not include features such as user authentication, persistence (e.g., saving orders to a database), or security measures. It can be extended and enhanced based on specific requirements and use cases.
+## 📋 Notes
+
+- Cart auto-updates total cost and item count.
+- Clicking the same item increases quantity.
+- Fully responsive and mobile-friendly.
+
+## 📜 License
+
+MIT License. Feel free to use, modify, and distribute.
+
+---
