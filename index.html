@@ -1,0 +1,1640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>POS System with Login</title>
+  <style>
+    /* Existing styles remain the same */
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      background: #f5f5f5;
+      padding: 20px;
+      color: #333;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h1, h2 {
+      text-align: center;
+      font-weight: 600;
+      margin: 10px 0;
+    }
+
+    #loginSection, #posSection, #adminSection {
+      width: 100%;
+      max-width: 800px;
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+      margin-bottom: 20px; /* Add some space between sections */
+    }
+
+    #loggedInAs {
+      font-size: 1.3em;
+      margin-bottom: 20px;
+      font-weight: 600;
+      text-align: center;
+      color: #4CAF50;
+    }
+
+    label {
+      font-size: 1.2em;
+      display: block;
+      margin-bottom: 10px;
+    }
+
+    input[type="password"], input[type="text"], input[type="number"], select { /* Added input[type="number"] and select */
+      font-size: 1.2em;
+      padding: 10px;
+      width: 100%;
+      max-width: 200px; /* Adjusted for better form appearance */
+      margin-bottom: 20px;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      transition: border-color 0.3s ease;
+    }
+
+    input[type="password"]:focus, input[type="text"]:focus, input[type="number"]:focus, select:focus {
+      border-color: #2196F3;
+      outline: none;
+    }
+
+    button.loginBtn, button.adminLoginBtn { /* Modified to include adminLoginBtn */
+      font-size: 1.3em;
+      padding: 12px 30px;
+      background: #2196F3;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      width: 100%;
+      max-width: 220px;
+      transition: background-color 0.3s ease;
+      user-select: none;
+    }
+
+    button.loginBtn:hover, button.adminLoginBtn:hover {
+      background: #1976D2;
+    }
+
+    .category {
+      margin-bottom: 25px;
+    }
+
+    .category h2 {
+      border-bottom: 2px solid #2196F3;
+      padding-bottom: 5px;
+      margin-bottom: 15px;
+      color: #2196F3;
+    }
+
+    .item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #fff;
+      padding: 12px 20px;
+      margin: 8px 0;
+      border-radius: 8px;
+      font-size: 1.2em;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .item span {
+      flex: 1;
+    }
+
+    .item button {
+      font-size: 1em;
+      padding: 8px 20px;
+      border: none;
+      background: #2196F3;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.3s ease;
+    }
+
+    .item button:hover {
+      background: #1976D2;
+    }
+
+    #cart {
+      list-style: none;
+      padding: 0;
+      margin-top: 10px;
+      font-size: 1.3em;
+      max-height: 220px;
+      overflow-y: auto;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background: #fafafa;
+    }
+
+    #cart li {
+      background: #e0e0e0;
+      padding: 12px 20px;
+      margin: 5px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      user-select: none;
+      transition: background-color 0.3s ease;
+    }
+
+    #cart li:hover {
+      background: #d0d0d0;
+    }
+
+    #totalAmount {
+      font-size: 1.8em;
+      text-align: center;
+      margin: 20px 0;
+      font-weight: 600;
+    }
+
+    .paymentBtns {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 25px;
+      flex-wrap: wrap;
+    }
+
+    .paymentBtn {
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #2196F3;
+      color: white;
+      padding: 15px 40px;
+      border-radius: 8px;
+      font-size: 1.3em;
+      cursor: pointer;
+      user-select: none;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      transition: background-color 0.3s ease;
+      min-width: 130px;
+      text-align: center;
+    }
+
+    .paymentBtn:hover {
+      background-color: #1976D2;
+    }
+
+    .paymentBtn.selected {
+      background-color: #4CAF50;
+      box-shadow: 0 3px 8px rgba(76,175,80,0.8);
+    }
+
+    .btns {
+      margin-top: 10px;
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .btns button {
+      font-size: 1.2em;
+      padding: 15px 35px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.3s ease;
+    }
+
+    .submit {
+      background: #4CAF50;
+      color: white;
+    }
+
+    .submit:hover {
+      background: #388E3C;
+    }
+
+    .clear {
+      background: #f44336;
+      color: white;
+    }
+
+    .clear:hover {
+      background: #d32f2f;
+    }
+
+    /* Admin Panel Specific Styles */
+    #adminPanelContent {
+        margin-top: 20px;
+        border-top: 1px solid #eee;
+        padding-top: 20px;
+    }
+
+    #adminPanelContent h3 {
+        color: #2196F3;
+        margin-bottom: 10px;
+    }
+
+    #adminPanelContent pre {
+        background-color: #f0f0f0;
+        padding: 15px;
+        border-radius: 8px;
+        max-height: 400px;
+        overflow-y: auto;
+        white-space: pre-wrap; /* Ensures long lines wrap */
+        word-wrap: break-word; /* Ensures long words break */
+    }
+
+    .admin-section-toggle {
+        background-color: #007bff;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        margin-bottom: 15px;
+        border: none;
+        font-size: 1.1em;
+        transition: background-color 0.3s;
+    }
+    .admin-section-toggle:hover {
+        background-color: #0056b3;
+    }
+
+    .admin-management-section {
+        border: 1px solid #eee;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        background-color: #fcfcfc;
+    }
+
+    .admin-management-section form {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start; /* Align labels to the left */
+        max-width: 300px;
+        margin: 0 auto;
+    }
+
+    .admin-management-section form label {
+        width: 100%;
+        text-align: left;
+        margin-bottom: -5px; /* Adjust spacing */
+    }
+
+    .admin-management-section form input,
+    .admin-management-section form select {
+        width: 100%;
+        max-width: none; /* Override max-width for inputs in forms */
+    }
+
+    .admin-management-section form button {
+        width: 100%;
+        padding: 10px;
+        font-size: 1.1em;
+        margin-top: 10px;
+    }
+
+    #userListForDelete, #itemCategorySelect, #editItemCategorySelect, #deleteItemCategorySelect,
+    #editItemSelect, #deleteItemSelect {
+        width: 100%;
+        max-width: 300px;
+        margin-bottom: 20px;
+        padding: 10px;
+        border-radius: 8px;
+        border: 2px solid #ccc;
+        font-size: 1.2em;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+        text-align: center;
+    }
+
+    .stat-card {
+        background: #e9e9e9;
+        padding: 15px;
+        border-radius: 10px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .stat-card h4 {
+        margin-top: 0;
+        color: #2196F3;
+        font-size: 1.1em;
+    }
+
+    .stat-card p {
+        font-size: 1.6em;
+        font-weight: bold;
+        color: #333;
+        margin: 5px 0;
+    }
+
+    #timesheetData, #activityLogData {
+        width: 100%;
+        max-height: 300px;
+        overflow-y: auto;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        padding: 10px;
+        background-color: #f9f9f9;
+        font-family: monospace;
+        font-size: 0.9em;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+    }
+
+    @media (max-width: 600px) {
+      .item {
+        font-size: 1em;
+        padding: 10px 15px;
+      }
+      .paymentBtn {
+        font-size: 1.1em;
+        padding: 12px 25px;
+        min-width: 110px;
+      }
+      .btns button {
+        font-size: 1em;
+        padding: 12px 20px;
+      }
+      .stats-grid {
+        grid-template-columns: 1fr; /* Stack on small screens */
+      }
+    }
+
+    /* Custom Pop-up Styles */
+    .popup-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .popup-content {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      max-width: 400px;
+      width: 90%;
+      transform: scale(0.95);
+      transition: transform 0.2s ease-out;
+    }
+
+    .popup-content.show {
+        transform: scale(1);
+    }
+
+    .popup-content h3 {
+      margin-top: 0;
+      color: #333;
+    }
+
+    .popup-buttons {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+    }
+
+    .popup-buttons button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1em;
+      transition: background-color 0.3s ease;
+    }
+
+    .popup-buttons button.confirm-btn {
+      background: #4CAF50;
+      color: white;
+    }
+
+    .popup-buttons button.confirm-btn:hover {
+      background: #388E3C;
+    }
+
+    .popup-buttons button.cancel-btn {
+      background: #f44336;
+      color: white;
+    }
+
+    .popup-buttons button.cancel-btn:hover {
+      background: #d32f2f;
+    }
+
+    .popup-input {
+        width: calc(100% - 20px);
+        padding: 10px;
+        margin-top: 10px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+    }
+
+    .item-quantity {
+        margin-left: 10px;
+        margin-right: 10px; /* Added margin for better spacing */
+        font-weight: bold;
+        color: #007bff; /* Or any color you prefer */
+        min-width: 30px; /* Give it some space */
+        text-align: right;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="loginSection">
+    <h1>POS System Login</h1>
+    <label for="userIdInput">Enter 4-digit User ID:</label>
+    <input type="password" id="userIdInput" maxlength="4" placeholder="e.g. 1234" autocomplete="off" />
+    <button class="loginBtn" onclick="login()">Login</button>
+  </div>
+
+  <div id="posSection" style="display:none;">
+    <div id="loggedInAs">Logged in as: <span id="userDisplay"></span> (<span id="userRoleDisplay"></span>) <button onclick="logout()" style="margin-left: 10px; padding: 5px 10px; font-size: 0.8em;">Logout</button></div>
+
+    <h1>POS System</h1>
+
+    <div id="menuContainer">
+        </div>
+
+    <h2>Cart (Click item to remove one)</h2>
+    <ul id="cart" onclick="handleCartClick(event)"></ul>
+
+    <div id="totalAmount">Total: $0.00</div>
+
+    <h2>Payment</h2>
+    <div class="paymentBtns">
+      <div class="paymentBtn" onclick="selectPayment(this, 'Cash')">Cash</div>
+      <div class="paymentBtn" onclick="selectPayment(this, 'Card')">Card</div>
+    </div>
+
+    <div class="btns">
+      <button class="submit" onclick="submitOrder()">Submit Order</button>
+      <button class="clear" onclick="confirmClearCart()">Clear Cart</button>
+    </div>
+
+    <div style="text-align: center; margin-top: 20px;">
+        <button class="adminLoginBtn" onclick="showAdminLogin()">Admin Panel</button>
+    </div>
+  </div>
+
+  <div id="adminSection" style="display:none;">
+    <h1>Admin Panel Login</h1>
+    <label for="adminPinInput">Enter Admin PIN:</label>
+    <input type="password" id="adminPinInput" maxlength="4" placeholder="e.g. 1111" autocomplete="off" />
+    <button class="adminLoginBtn" onclick="adminLogin()">Login as Admin</button>
+    <button class="clear" onclick="hideAdminSection()">Back to POS</button>
+
+    <div id="adminPanelContent" style="display:none;">
+        <h2>Admin Statistics</h2>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h4>Total Sales</h4>
+                <p id="statTotalSales">$0.00</p>
+            </div>
+            <div class="stat-card">
+                <h4>Total Traffic (Orders)</h4>
+                <p id="statTotalTraffic">0</p>
+            </div>
+            <div class="stat-card">
+                <h4>Average Sale</h4>
+                <p id="statAverageSale">$0.00</p>
+            </div>
+            <div class="stat-card">
+                <h4>Weekly Sales</h4>
+                <p id="statWeeklySales">$0.00</p>
+            </div>
+            <div class="stat-card">
+                <h4>Monthly Sales</h4>
+                <p id="statMonthlySales">$0.00</p>
+            </div>
+        </div>
+
+        <h3 style="margin-top: 30px;">User Management</h3>
+        <button class="admin-section-toggle" onclick="toggleSection('addUserSection')">Add User</button>
+        <div id="addUserSection" class="admin-management-section" style="display:none;">
+            <h3>Add New User</h3>
+            <form onsubmit="event.preventDefault(); addNewUser();">
+                <label for="newUserId">User ID (4 digits):</label>
+                <input type="text" id="newUserId" maxlength="4" required pattern="\d{4}" title="Please enter exactly 4 digits." />
+
+                <label for="newUserName">User Name:</label>
+                <input type="text" id="newUserName" required />
+
+                <label for="newUserRole">User Role:</label>
+                <select id="newUserRole" required>
+                    <option value="user">User</option>
+                    <option value="admin">Admin</option>
+                </select>
+                <button type="submit" class="submit">Add User</button>
+            </form>
+        </div>
+
+        <button class="admin-section-toggle" onclick="toggleSection('deleteUserSection')">Delete User</button>
+        <div id="deleteUserSection" class="admin-management-section" style="display:none;">
+            <h3>Delete User</h3>
+            <form onsubmit="event.preventDefault(); deleteSelectedUser();">
+                <label for="userListForDelete">Select User to Delete:</label>
+                <select id="userListForDelete" required>
+                    </select>
+                <button type="submit" class="clear">Delete User</button>
+            </form>
+        </div>
+
+        <h3 style="margin-top: 30px;">Item Management</h3>
+        <button class="admin-section-toggle" onclick="toggleSection('addItemSection')">Add Item</button>
+        <div id="addItemSection" class="admin-management-section" style="display:none;">
+            <h3>Add New Item</h3>
+            <form onsubmit="event.preventDefault(); addNewItem();">
+                <label for="itemCategoryInput">Category:</label>
+                <input type="text" id="itemCategoryInput" placeholder="e.g. Desserts" required />
+
+                <label for="itemNameInput">Item Name:</label>
+                <input type="text" id="itemNameInput" required />
+
+                <label for="itemPriceInput">Price:</label>
+                <input type="number" id="itemPriceInput" step="0.01" min="0.01" required />
+                <button type="submit" class="submit">Add Item</button>
+            </form>
+        </div>
+
+        <button class="admin-section-toggle" onclick="toggleSection('editItemSection')">Edit Item</button>
+        <div id="editItemSection" class="admin-management-section" style="display:none;">
+            <h3>Edit Item</h3>
+            <form onsubmit="event.preventDefault(); editSelectedOrderItem();">
+                <label for="editItemCategorySelect">Select Category:</label>
+                <select id="editItemCategorySelect" onchange="populateEditItems()" required>
+                    <option value="">-- Select Category --</option>
+                </select>
+
+                <label for="editItemSelect">Select Item to Edit:</label>
+                <select id="editItemSelect" onchange="loadItemForEdit()" required>
+                    <option value="">-- Select Item --</option>
+                </select>
+
+                <label for="editItemNewCategoryInput">New Category:</label>
+                <input type="text" id="editItemNewCategoryInput" required />
+
+                <label for="editItemNewNameInput">New Item Name:</label>
+                <input type="text" id="editItemNewNameInput" required />
+
+                <label for="editItemNewPriceInput">New Price:</label>
+                <input type="number" id="editItemNewPriceInput" step="0.01" min="0.01" required />
+                <button type="submit" class="submit">Save Changes</button>
+            </form>
+        </div>
+
+        <button class="admin-section-toggle" onclick="toggleSection('deleteItemSection')">Delete Item</button>
+        <div id="deleteItemSection" class="admin-management-section" style="display:none;">
+            <h3>Delete Item</h3>
+            <form onsubmit="event.preventDefault(); deleteSelectedItem();">
+                <label for="deleteItemCategorySelect">Select Category:</label>
+                <select id="deleteItemCategorySelect" onchange="populateDeleteItems()" required>
+                    <option value="">-- Select Category --</option>
+                </select>
+
+                <label for="deleteItemSelect">Select Item to Delete:</label>
+                <select id="deleteItemSelect" required>
+                    <option value="">-- Select Item --</option>
+                </select>
+                <button type="submit" class="clear">Delete Item</button>
+            </form>
+        </div>
+
+
+        <button class="admin-section-toggle" onclick="toggleSection('adminTimesheetSection')">View Admin Timesheet</button>
+        <div id="adminTimesheetSection" class="admin-management-section" style="display:none;">
+            <h3>Admin Timesheet:</h3>
+            <pre id="timesheetData">No data available.</pre>
+        </div>
+
+        <button class="admin-section-toggle" onclick="toggleSection('activityLogSection')">View Activity Log</button>
+        <div id="activityLogSection" class="admin-management-section" style="display:none;">
+            <h3>Activity Log:</h3>
+            <pre id="activityLogData">No data available.</pre>
+        </div>
+
+        <button class="admin-section-toggle" onclick="toggleSection('rawDataSection')">View Raw Order Data</button>
+        <div id="rawDataSection" class="admin-management-section" style="display:none;">
+            <h3>Raw All Orders:</h3>
+            <pre id="allOrdersData"></pre>
+            <h3>Raw Cleared Orders:</h3>
+            <pre id="clearedOrdersData"></pre>
+        </div>
+    </div>
+  </div>
+
+  <div id="customPopup" class="popup-overlay" style="display:none;">
+    <div class="popup-content">
+      <h3 id="popupTitle"></h3>
+      <p id="popupMessage"></p>
+      <input type="text" id="popupInput" class="popup-input" placeholder="Enter reason (optional)" style="display:none;">
+      <div class="popup-buttons">
+        <button id="popupButtonConfirm" class="confirm-btn" style="display:none;"></button>
+        <button id="popupButtonCancel" class="cancel-btn" style="display:none;">Cancel</button>
+        <button id="popupButtonOK" class="confirm-btn" style="display:none;">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE_URL = 'http://127.0.0.1:5000/api'; // Your Flask server URL
+
+    let loggedInUser = null;
+    let loggedInUserId = null; // New: Store the user ID
+    let loggedInUserRole = null;
+    let cart = {};
+    let totalAmount = 0;
+    let selectedPayment = null;
+    let currentUsers = {}; // To store users for delete dropdown
+    let menuItems = {}; // Store menu items fetched from the backend
+
+    // --- Custom Pop-up Functions ---
+    let resolvePopupPromise; // To hold the resolve function for promises
+
+    function showPopup(title, message, type = 'alert', callback) {
+        const popup = document.getElementById('customPopup');
+        const popupTitle = document.getElementById('popupTitle');
+        const popupMessage = document.getElementById('popupMessage');
+        const popupInput = document.getElementById('popupInput');
+        const popupButtonConfirm = document.getElementById('popupButtonConfirm');
+        const popupButtonCancel = document.getElementById('popupButtonCancel');
+        const popupButtonOK = document.getElementById('popupButtonOK');
+
+        popupTitle.textContent = title;
+        popupMessage.textContent = message;
+
+        // Reset display states
+        popupInput.style.display = 'none';
+        popupButtonConfirm.style.display = 'none';
+        popupButtonCancel.style.display = 'none';
+        popupButtonOK.style.display = 'none';
+        popupInput.value = ''; // Clear previous input
+
+        if (type === 'confirm') {
+            popupButtonConfirm.textContent = 'Confirm';
+            popupButtonConfirm.style.display = 'inline-block';
+            popupButtonCancel.style.display = 'inline-block';
+            popupButtonConfirm.onclick = () => {
+                popup.style.display = 'none';
+                if (callback) callback(true);
+                if (resolvePopupPromise) resolvePopupPromise(true);
+            };
+            popupButtonCancel.onclick = () => {
+                popup.style.display = 'none';
+                if (callback) callback(false);
+                if (resolvePopupPromise) resolvePopupPromise(false);
+            };
+        } else if (type === 'prompt') {
+            popupInput.style.display = 'block';
+            popupButtonConfirm.textContent = 'Submit';
+            popupButtonConfirm.style.display = 'inline-block';
+            popupButtonCancel.style.display = 'inline-block';
+            popupInput.onkeyup = (event) => { // Allow Enter key to submit prompt
+                if (event.key === 'Enter') {
+                    popupButtonConfirm.click();
+                }
+            };
+            popupButtonConfirm.onclick = () => {
+                popup.style.display = 'none';
+                if (callback) callback(popupInput.value);
+                if (resolvePopupPromise) resolvePopupPromise(popupInput.value);
+            };
+            popupButtonCancel.onclick = () => {
+                popup.style.display = 'none';
+                if (callback) callback(null); // Return null if cancelled
+                if (resolvePopupPromise) resolvePopupPromise(null);
+            };
+        } else { // 'alert' type
+            popupButtonOK.style.display = 'inline-block';
+            popupButtonOK.onclick = () => {
+                popup.style.display = 'none';
+                if (callback) callback();
+                if (resolvePopupPromise) resolvePopupPromise(true);
+            };
+        }
+        popup.style.display = 'flex';
+        // Add a class for animation, if desired
+        setTimeout(() => popup.querySelector('.popup-content').classList.add('show'), 10);
+        return new Promise(resolve => resolvePopupPromise = resolve);
+    }
+
+    // --- POS Logic (Modified to use custom pop-ups) ---
+
+    async function login() {
+      const input = document.getElementById("userIdInput");
+      const userId = input.value.trim();
+
+      if (userId.length !== 4) {
+          await showPopup("Login Error", "User ID must be 4 digits.", "alert");
+          return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/login`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ userId: userId }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          loggedInUser = data.user;
+          loggedInUserId = userId; // Store the user ID
+          loggedInUserRole = data.role;
+          document.getElementById("userDisplay").textContent = loggedInUser;
+          document.getElementById("userRoleDisplay").textContent = loggedInUserRole;
+          document.getElementById("loginSection").style.display = "none";
+          document.getElementById("posSection").style.display = "block";
+          input.value = "";
+          clearCart(false); // Do not log cleared cart on initial login clear
+          await fetchMenuItems(); // Load menu items on successful login
+          await showPopup("Login Successful", `Welcome, ${loggedInUser}!`, "alert");
+        } else {
+          const errorData = await response.json();
+          await showPopup("Login Failed", errorData.message || "Invalid User ID.", "alert");
+          input.value = "";
+          input.focus();
+        }
+      } catch (error) {
+        console.error('Login error:', error);
+        await showPopup("Error", 'Could not connect to the server or an error occurred during login.', "alert");
+        input.value = "";
+        input.focus();
+      }
+    }
+
+    async function logout() {
+        if (loggedInUser) { // Only log out if someone was actually logged in
+            try {
+                await fetch(`${API_BASE_URL}/logout`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ userId: loggedInUserId, userRole: loggedInUserRole }),
+                });
+            } catch (error) {
+                console.error('Error logging out on server:', error);
+            }
+        }
+
+        loggedInUser = null;
+        loggedInUserId = null;
+        loggedInUserRole = null;
+        document.getElementById("posSection").style.display = "none";
+        document.getElementById("adminSection").style.display = "none";
+        document.getElementById("loginSection").style.display = "block";
+        clearCart(false); // Do not log cleared cart on logout clear
+        await showPopup("Logged Out", "You have been successfully logged out.", "alert");
+    }
+
+    // Helper function to create a clean ID from item name
+    function getItemId(itemName) {
+        return 'quantity-' + itemName.replace(/[^a-zA-Z0-9().\s-]/g, '').replace(/\s+/g, '-');
+    }
+
+    // Function to dynamically load and display menu items
+    async function fetchMenuItems() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/items`);
+            if (response.ok) {
+                menuItems = await response.json();
+                renderMenuItems();
+            } else {
+                await showPopup("Error", "Failed to load menu items.", "alert");
+                console.error('Failed to load items:', await response.json());
+            }
+        } catch (error) {
+            console.error('Error fetching menu items:', error);
+            await showPopup("Error", 'Could not connect to server to load menu items.', "alert");
+        }
+    }
+
+    function renderMenuItems() {
+        const menuContainer = document.getElementById('menuContainer');
+        menuContainer.innerHTML = ''; // Clear existing menu
+
+        for (const category in menuItems) {
+            const categoryDiv = document.createElement('div');
+            categoryDiv.classList.add('category');
+            
+            const categoryTitle = document.createElement('h2');
+            categoryTitle.textContent = category;
+            categoryDiv.appendChild(categoryTitle);
+
+            menuItems[category].forEach(item => {
+                const itemDiv = document.createElement('div');
+                itemDiv.classList.add('item');
+
+                const itemNameSpan = document.createElement('span');
+                itemNameSpan.textContent = item.name;
+                itemDiv.appendChild(itemNameSpan);
+
+                const itemQuantitySpan = document.createElement('span');
+                itemQuantitySpan.id = getItemId(item.name);
+                itemQuantitySpan.classList.add('item-quantity');
+                itemQuantitySpan.textContent = cart[item.name] ? `${cart[item.name].count}x` : ''; // Initialize display
+                itemDiv.appendChild(itemQuantitySpan);
+
+                const addButton = document.createElement('button');
+                addButton.textContent = 'Add';
+                addButton.onclick = () => addItem(item.name, item.price);
+                itemDiv.appendChild(addButton);
+
+                categoryDiv.appendChild(itemDiv);
+            });
+            menuContainer.appendChild(categoryDiv);
+        }
+    }
+
+
+    function addItem(name, price) {
+      if (!cart[name]) {
+        cart[name] = { count: 0, price: price };
+      }
+      cart[name].count++;
+      updateCartDisplay();
+      // Update individual item quantity display next to the button
+      const itemQuantitySpan = document.getElementById(getItemId(name));
+      if (itemQuantitySpan) {
+          itemQuantitySpan.textContent = `${cart[name].count}x`;
+      }
+    }
+
+    function updateCartDisplay() {
+      const cartList = document.getElementById("cart");
+      cartList.innerHTML = "";
+      totalAmount = 0;
+
+      // Clear all item quantity displays first for items not in cart
+      document.querySelectorAll('.item-quantity').forEach(span => {
+          const itemName = span.id.replace('quantity-', '').replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()); // Convert ID back to name (approx)
+          // A more robust way would be to store item name in a data attribute
+          // For now, this rough conversion works given the getItemId logic
+          let originalItemName = null;
+          for (const category in menuItems) {
+              const foundItem = menuItems[category].find(item => getItemId(item.name) === span.id);
+              if (foundItem) {
+                  originalItemName = foundItem.name;
+                  break;
+              }
+          }
+
+          if (originalItemName && !cart[originalItemName] || (cart[originalItemName] && cart[originalItemName].count === 0)) {
+              span.textContent = '';
+          }
+      });
+
+      Object.keys(cart).forEach(name => {
+        if (cart[name].count > 0) {
+          const li = document.createElement("li");
+          li.textContent = `${name} x${cart[name].count} - $${(cart[name].price * cart[name].count).toFixed(2)}`;
+          li.dataset.itemName = name;
+          cartList.appendChild(li);
+          totalAmount += cart[name].price * cart[name].count;
+
+          // Update individual item quantity display when cart is updated (e.g., item removed)
+          const itemQuantitySpan = document.getElementById(getItemId(name));
+          if (itemQuantitySpan) {
+              itemQuantitySpan.textContent = `${cart[name].count}x`;
+          }
+        }
+      });
+
+      document.getElementById("totalAmount").textContent = `Total: $${totalAmount.toFixed(2)}`;
+    }
+
+    function handleCartClick(event) {
+      if (event.target.tagName.toLowerCase() === 'li') {
+        const itemName = event.target.dataset.itemName;
+        if (cart[itemName]) {
+          cart[itemName].count--;
+          if (cart[itemName].count <= 0) {
+            delete cart[itemName];
+            // Clear the individual item quantity display if count goes to 0
+            const itemQuantitySpan = document.getElementById(getItemId(itemName));
+            if (itemQuantitySpan) {
+                itemQuantitySpan.textContent = '';
+            }
+          } else {
+            // Update the individual item quantity display
+            const itemQuantitySpan = document.getElementById(getItemId(itemName));
+            if (itemQuantitySpan) {
+                itemQuantitySpan.textContent = `${cart[itemName].count}x`;
+            }
+          }
+          updateCartDisplay(); // This will re-render the cart list and update total
+        }
+      }
+    }
+
+    function selectPayment(element, method) {
+      selectedPayment = method;
+      const buttons = document.querySelectorAll(".paymentBtn");
+      buttons.forEach(btn => btn.classList.remove("selected"));
+      element.classList.add("selected");
+    }
+
+    async function confirmClearCart() {
+        if (Object.keys(cart).length === 0) {
+            await showPopup("Cart Empty", "The cart is already empty.", "alert");
+            return;
+        }
+
+        const confirmResult = await showPopup("Confirm Clear", "Are you sure you want to clear the cart? This action will be logged.", "confirm");
+        if (confirmResult) {
+            const clearReason = await showPopup("Reason for Clear", "Please provide a reason for clearing the cart (optional):", "prompt");
+            await logClearedOrder(clearReason || 'No reason provided'); // Use 'No reason provided' if user cancels prompt or enters nothing
+            clearCart(false); // Clear the cart without logging again
+            await showPopup("Cart Cleared", "Cart cleared and logged.", "alert");
+        }
+    }
+
+    // clearCart function now takes a parameter to decide if it should log the clear action
+    function clearCart(log = true) { // Default is to log if not specified
+        if (log && Object.keys(cart).length > 0) {
+            // This path should ideally only be called via confirmClearCart()
+            // For now, we'll ensure it doesn't prompt again if called directly with log=true
+            // or we could add a warning. For simplicity, we'll assume confirmClearCart handles the logging.
+        }
+        cart = {};
+        selectedPayment = null;
+        const buttons = document.querySelectorAll(".paymentBtn");
+        buttons.forEach(btn => btn.classList.remove("selected"));
+        updateCartDisplay();
+        // Explicitly clear all individual item quantity displays
+        document.querySelectorAll('.item-quantity').forEach(span => {
+            span.textContent = '';
+        });
+    }
+
+
+    async function logClearedOrder(reason) {
+        const itemsAtClear = Object.keys(cart).map(name => ({
+            name: name,
+            count: cart[name].count,
+            price: cart[name].price
+        }));
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/clear_order`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    user: loggedInUser,
+                    userId: loggedInUserId, // Pass userId for logging
+                    reason: reason,
+                    items: itemsAtClear,
+                    total: totalAmount.toFixed(2)
+                }),
+            });
+            if (!response.ok) {
+                console.error('Failed to log cleared order:', await response.json());
+                await showPopup("Error", "Failed to log cleared order on the server.", "alert");
+            }
+        } catch (error) {
+            console.error('Error logging cleared order:', error);
+            await showPopup("Error", "Could not connect to server to log cleared order.", "alert");
+        }
+    }
+
+
+    async function submitOrder() {
+      if (!loggedInUser) {
+        await showPopup("Order Error", "You must be logged in to submit an order.", "alert");
+        return;
+      }
+      if (Object.keys(cart).length === 0) {
+        await showPopup("Order Error", "Cart is empty.", "alert");
+        return;
+      }
+      if (!selectedPayment) {
+        await showPopup("Order Error", "Please select a payment method.", "alert");
+        return;
+      }
+
+      const orderItems = Object.keys(cart).map(name => ({
+        name: name,
+        count: cart[name].count,
+        price: cart[name].price
+      }));
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/submit_order`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            user: loggedInUser,
+            userId: loggedInUserId, // Pass userId for logging
+            payment: selectedPayment,
+            items: orderItems,
+            total: totalAmount.toFixed(2)
+          }),
+        });
+
+        if (response.ok) {
+          await showPopup("Order Successful!", "Order submitted successfully and cart cleared.", "alert");
+          // Directly clear the cart without confirmation or logging, as it's a successful order
+          cart = {};
+          selectedPayment = null;
+          const buttons = document.querySelectorAll(".paymentBtn");
+          buttons.forEach(btn => btn.classList.remove("selected"));
+          updateCartDisplay();
+          // Clear all individual item quantity displays on successful submission
+          document.querySelectorAll('.item-quantity').forEach(span => {
+              span.textContent = '';
+          });
+        } else {
+          const errorData = await response.json();
+          await showPopup("Order Failed", errorData.message || "Failed to submit order.", "alert");
+        }
+      } catch (error) {
+        console.error('Submit order error:', error);
+        await showPopup("Error", 'Could not connect to the server or an error occurred during order submission.', "alert");
+      }
+    }
+
+    async function showAdminLogin() {
+        if (loggedInUserRole === 'admin' && loggedInUserId) {
+            // If already logged in as admin, directly show panel and log it
+            document.getElementById("posSection").style.display = "none";
+            document.getElementById("adminSection").style.display = "block";
+            await adminLogin(true); // Call adminLogin with a flag to indicate already logged in
+        } else {
+            // If not logged in as admin, show login form
+            document.getElementById("posSection").style.display = "none";
+            document.getElementById("adminSection").style.display = "block";
+            document.getElementById("adminPanelContent").style.display = "none"; // Hide content until logged in
+            document.getElementById("adminPinInput").value = "";
+            document.getElementById("adminPinInput").focus();
+
+            // Hide all admin management sections when showing login
+            toggleSection('addUserSection', 'hide');
+            toggleSection('deleteUserSection', 'hide');
+            toggleSection('addItemSection', 'hide'); // Hide new sections
+            toggleSection('editItemSection', 'hide'); // Hide new sections
+            toggleSection('deleteItemSection', 'hide'); // Hide new sections
+            toggleSection('adminTimesheetSection', 'hide');
+            toggleSection('activityLogSection', 'hide');
+            toggleSection('rawDataSection', 'hide');
+        }
+    }
+
+    async function hideAdminSection() {
+        // Log admin logout when moving back to POS
+        if (loggedInUserRole === 'admin' && loggedInUserId) {
+            try {
+                await fetch(`${API_BASE_URL}/logout`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ userId: loggedInUserId, userRole: loggedInUserRole }),
+                });
+            } catch (error) {
+                console.error('Error logging admin logout on server when switching to POS:', error);
+            }
+        }
+        document.getElementById("adminSection").style.display = "none";
+        document.getElementById("posSection").style.display = "block";
+        await fetchMenuItems(); // Re-fetch menu items in case they were changed by admin
+    }
+
+    function toggleSection(sectionId, forceState) {
+        const section = document.getElementById(sectionId);
+        if (section) {
+            if (forceState === 'show') {
+                section.style.display = 'block';
+                // Fetch data when section is opened
+                if (sectionId === 'adminTimesheetSection') {
+                    fetchAdminTimesheet();
+                } else if (sectionId === 'activityLogSection') {
+                    fetchActivityLog();
+                } else if (sectionId === 'deleteUserSection') {
+                    fetchUsersForAdmin();
+                } else if (sectionId === 'editItemSection' || sectionId === 'deleteItemSection') {
+                    populateItemCategories(sectionId);
+                }
+            } else if (forceState === 'hide') {
+                section.style.display = 'none';
+            } else {
+                section.style.display = section.style.display === 'none' ? 'block' : 'none';
+                // Fetch data when section is opened (if not forced hide)
+                if (section.style.display === 'block') {
+                    if (sectionId === 'adminTimesheetSection') {
+                        fetchAdminTimesheet();
+                    } else if (sectionId === 'activityLogSection') {
+                        fetchActivityLog();
+                    } else if (sectionId === 'deleteUserSection') {
+                        fetchUsersForAdmin();
+                    } else if (sectionId === 'editItemSection' || sectionId === 'deleteItemSection') {
+                        populateItemCategories(sectionId);
+                    }
+                }
+            }
+        }
+    }
+
+    async function adminLogin() {
+        const adminPinInput = document.getElementById("adminPinInput");
+        const adminPin = adminPinInput.value.trim();
+
+        if (adminPin.length !== 4) {
+            await showPopup("Admin Login Error", "Admin PIN must be 4 digits.", "alert");
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/admin_stats`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ adminPin: adminPin }),
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const stats = data.stats;
+
+                document.getElementById("statTotalSales").textContent = `$${stats.total_sales.toFixed(2)}`;
+                document.getElementById("statTotalTraffic").textContent = stats.total_traffic;
+                document.getElementById("statAverageSale").textContent = `$${stats.average_sale.toFixed(2)}`;
+                document.getElementById("statWeeklySales").textContent = `$${stats.weekly_sales.toFixed(2)}`;
+                document.getElementById("statMonthlySales").textContent = `$${stats.monthly_sales.toFixed(2)}`;
+
+                document.getElementById("allOrdersData").textContent = JSON.stringify(stats.raw_orders, null, 2);
+                document.getElementById("clearedOrdersData").textContent = JSON.stringify(stats.raw_cleared_orders, null, 2);
+
+                document.getElementById("adminPanelContent").style.display = "block";
+                await showPopup("Admin Login Successful", "Admin data retrieved. You can now manage users and view statistics.", "alert");
+
+                // Fetch users for the delete dropdown
+                await fetchUsersForAdmin();
+                // Fetch items for item management
+                await fetchMenuItems(); // This also updates the local menuItems variable
+
+            } else {
+                const errorData = await response.json();
+                await showPopup("Admin Login Failed", errorData.message || "Invalid Admin PIN.", "alert");
+                adminPinInput.value = "";
+                adminPinInput.focus();
+                document.getElementById("adminPanelContent").style.display = "none";
+            }
+        } catch (error) {
+            console.error('Admin login error:', error);
+            await showPopup("Error", 'Could not connect to the server or an error occurred during admin login.', "alert");
+            adminPinInput.value = "";
+            adminPinInput.focus();
+            document.getElementById("adminPanelContent").style.display = "none";
+        }
+    }
+
+    async function fetchUsersForAdmin() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/users`);
+            if (response.ok) {
+                currentUsers = await response.json();
+                const userListSelect = document.getElementById('userListForDelete');
+                userListSelect.innerHTML = '<option value="">-- Select User --</option>'; // Clear existing options
+
+                for (const userId in currentUsers) {
+                    const user = currentUsers[userId];
+                    const option = document.createElement('option');
+                    option.value = userId;
+                    option.textContent = `${user.name} (${user.role} - ${userId})`;
+                    userListSelect.appendChild(option);
+                }
+            } else {
+                console.error('Failed to fetch users:', await response.json());
+                await showPopup("Error", "Failed to load user list for management.", "alert");
+            }
+        } catch (error) {
+            console.error('Error fetching users:', error);
+            await showPopup("Error", "Could not connect to server to fetch user list.", "alert");
+        }
+    }
+
+    async function addNewUser() {
+        const adminPinInput = document.getElementById("adminPinInput");
+        const adminPin = adminPinInput.value.trim();
+
+        const newUserId = document.getElementById('newUserId').value.trim();
+        const newUserName = document.getElementById('newUserName').value.trim();
+        const newUserRole = document.getElementById('newUserRole').value;
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/add_user`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    adminPin: adminPin,
+                    userId: newUserId,
+                    userName: newUserName,
+                    userRole: newUserRole
+                }),
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                await showPopup("Success", data.message, "alert");
+                document.getElementById('newUserId').value = '';
+                document.getElementById('newUserName').value = '';
+                document.getElementById('newUserRole').value = 'user'; // Reset to default
+                await fetchUsersForAdmin(); // Refresh user list
+            } else {
+                const errorData = await response.json();
+                await showPopup("Error Adding User", errorData.message || "Failed to add user.", "alert");
+            }
+        } catch (error) {
+            console.error('Error adding user:', error);
+            await showPopup("Error", "Could not connect to server to add user.", "alert");
+        }
+    }
+
+    async function deleteSelectedUser() {
+        const adminPinInput = document.getElementById("adminPinInput");
+        const adminPin = adminPinInput.value.trim();
+
+        const userListSelect = document.getElementById('userListForDelete');
+        const userIdToDelete = userListSelect.value;
+
+        if (!userIdToDelete) {
+            await showPopup("Deletion Error", "Please select a user to delete.", "alert");
+            return;
+        }
+
+        const userNameToDelete = userListSelect.options[userListSelect.selectedIndex].text;
+        const confirmDelete = await showPopup("Confirm Delete", `Are you sure you want to delete user: ${userNameToDelete}? This action cannot be undone.`, "confirm");
+
+        if (!confirmDelete) {
+            return; // User cancelled deletion
+        }
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/delete_user`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    adminPin: adminPin,
+                    userId: userIdToDelete
+                }),
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                await showPopup("Success", data.message, "alert");
+                await fetchUsersForAdmin(); // Refresh user list
+            } else {
+                const errorData = await response.json();
+                await showPopup("Error Deleting User", errorData.message || "Failed to delete user.", "alert");
+            }
+        } catch (error) {
+            console.error('Error deleting user:', error);
+            await showPopup("Error", "Could not connect to server to delete user.", "alert");
+        }
+    }
+
+    // --- Item Management Functions ---
+
+    function populateItemCategories(sectionId) {
+        const categorySelects = [];
+        if (sectionId === 'editItemSection') {
+            categorySelects.push(document.getElementById('editItemCategorySelect'));
+        } else if (sectionId === 'deleteItemSection') {
+            categorySelects.push(document.getElementById('deleteItemCategorySelect'));
+        } else { // Populate all if no specific section is given (e.g., on admin login)
+            categorySelects.push(document.getElementById('editItemCategorySelect'));
+            categorySelects.push(document.getElementById('deleteItemCategorySelect'));
+        }
+
+        categorySelects.forEach(selectElement => {
+            selectElement.innerHTML = '<option value="">-- Select Category --</option>'; // Clear existing options
+            for (const category in menuItems) {
+                const option = document.createElement('option');
+                option.value = category;
+                option.textContent = category;
+                selectElement.appendChild(option);
+            }
+            // Reset item dropdowns when categories are repopulated
+            if (selectElement.id === 'editItemCategorySelect') {
+                document.getElementById('editItemSelect').innerHTML = '<option value="">-- Select Item --</option>';
+                document.getElementById('editItemNewCategoryInput').value = '';
+                document.getElementById('editItemNewNameInput').value = '';
+                document.getElementById('editItemNewPriceInput').value = '';
+            } else if (selectElement.id === 'deleteItemCategorySelect') {
+                document.getElementById('deleteItemSelect').innerHTML = '<option value="">-- Select Item --</option>';
+            }
+        });
+    }
+
+    function populateEditItems() {
+        const categorySelect = document.getElementById('editItemCategorySelect');
+        const itemSelect = document.getElementById('editItemSelect');
+        itemSelect.innerHTML = '<option value="">-- Select Item --</option>'; // Clear existing items
+        
+        document.getElementById('editItemNewCategoryInput').value = '';
+        document.getElementById('editItemNewNameInput').value = '';
+        document.getElementById('editItemNewPriceInput').value = '';
+
+        const selectedCategory = categorySelect.value;
+        if (selectedCategory && menuItems[selectedCategory]) {
+            menuItems[selectedCategory].forEach(item => {
+                const option = document.createElement('option');
+                option.value = item.name;
+                option.textContent = `${item.name} ($${item.price.toFixed(2)})`;
+                itemSelect.appendChild(option);
+            });
+        }
+    }
+
+    function loadItemForEdit() {
+        const categorySelect = document.getElementById('editItemCategorySelect');
+        const itemSelect = document.getElementById('editItemSelect');
+        const newCategoryInput = document.getElementById('editItemNewCategoryInput');
+        const newNameInput = document.getElementById('editItemNewNameInput');
+        const newPriceInput = document.getElementById('editItemNewPriceInput');
+
+        const selectedCategory = categorySelect.value;
+        const selectedItemName = itemSelect.value;
+
+        if (selectedCategory && selectedItemName && menuItems[selectedCategory]) {
+            const itemToEdit = menuItems[selectedCategory].find(item => item.name === selectedItemName);
+            if (itemToEdit) {
+                newCategoryInput.value = selectedCategory;
+                newNameInput.value = itemToEdit.name;
+                newPriceInput.value = itemToEdit.price;
+            }
+        } else {
+            newCategoryInput.value = '';
+            newNameInput.value = '';
+            newPriceInput.value = '';
+        }
+    }
+
+    function populateDeleteItems() {
+        const categorySelect = document.getElementById('deleteItemCategorySelect');
+        const itemSelect = document.getElementById('deleteItemSelect');
+        itemSelect.innerHTML = '<option value="">-- Select Item --</option>'; // Clear existing items
+
+        const selectedCategory = categorySelect.value;
+        if (selectedCategory && menuItems[selectedCategory]) {
+            menuItems[selectedCategory].forEach(item => {
+                const option = document.createElement('option');
+                option.value = item.name;
+                option.textContent = `${item.name} ($${item.price.toFixed(2)})`;
+                itemSelect.appendChild(option);
+            });
+        }
+    }
+
+    async function addNewItem() {
+        const adminPinInput = document.getElementById("adminPinInput");
+        const adminPin = adminPinInput.value.trim();
+
+        const category = document.getElementById('itemCategoryInput').value.trim();
+        const name = document.getElementById('itemNameInput').value.trim();
+        const price = parseFloat(document.getElementById('itemPriceInput').value);
+
+        if (!category || !name || isNaN(price) || price <= 0) {
+            await showPopup("Input Error", "Please provide a valid category, item name, and a positive price.", "alert");
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/add_item`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    adminPin: adminPin,
+                    category: category,
+                    name: name,
+                    price: price
+                }),
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                await showPopup("Success", data.message, "alert");
+                document.getElementById('itemCategoryInput').value = '';
+                document.getElementById('itemNameInput').value = '';
+                document.getElementById('itemPriceInput').value = '';
+                await fetchMenuItems(); // Refresh menu for POS and admin panels
+            } else {
+                const errorData = await response.json();
+                await showPopup("Error Adding Item", errorData.message || "Failed to add item.", "alert");
+            }
+        } catch (error) {
+            console.error('Error adding item:', error);
+            await showPopup("Error", "Could not connect to server to add item.", "alert");
+        }
+    }
+
+    async function editSelectedOrderItem() {
+        const adminPinInput = document.getElementById("adminPinInput");
+        const adminPin = adminPinInput.value.trim();
+
+        const oldCategory = document.getElementById('editItemCategorySelect').value;
+        const oldName = document.getElementById('editItemSelect').value;
+        const newCategory = document.getElementById('editItemNewCategoryInput').value.trim();
+        const newName = document.getElementById('editItemNewNameInput').value.trim();
+        const newPrice = parseFloat(document.getElementById('editItemNewPriceInput').value);
+
+        if (!oldCategory || !oldName || !newCategory || !newName || isNaN(newPrice) || newPrice <= 0) {
+            await showPopup("Input Error", "Please select an item and provide valid new category, name, and a positive price.", "alert");
+            return;
+        }
+
+        const confirmEdit = await showPopup("Confirm Edit", `Are you sure you want to edit "${oldName}" in "${oldCategory}"?`, "confirm");
+        if (!confirmEdit) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/edit_item`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    adminPin: adminPin,
+                    oldCategory: oldCategory,
+                    oldName: oldName,
+                    newCategory: newCategory,
+                    newName: newName,
+                    newPrice: newPrice
+                }),
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                await showPopup("Success", data.message, "alert");
+                document.getElementById('editItemCategorySelect').value = '';
+                document.getElementById('editItemSelect').innerHTML = '<option value="">-- Select Item --</option>';
+                document.getElementById('editItemNewCategoryInput').value = '';
+                document.getElementById('editItemNewNameInput').value = '';
+                document.getElementById('editItemNewPriceInput').value = '';
+                await fetchMenuItems(); // Refresh menu for POS and admin panels
+            } else {
+                const errorData = await response.json();
+                await showPopup("Error Editing Item", errorData.message || "Failed to edit item.", "alert");
+            }
+        } catch (error) {
+            console.error('Error editing item:', error);
+            await showPopup("Error", "Could not connect to server to edit item.", "alert");
+        }
+    }
+
+    async function deleteSelectedItem() {
+        const adminPinInput = document.getElementById("adminPinInput");
+        const adminPin = adminPinInput.value.trim();
+
+        const category = document.getElementById('deleteItemCategorySelect').value;
+        const name = document.getElementById('deleteItemSelect').value;
+
+        if (!category || !name) {
+            await showPopup("Deletion Error", "Please select a category and an item to delete.", "alert");
+            return;
+        }
+
+        const confirmDelete = await showPopup("Confirm Delete", `Are you sure you want to delete "${name}" from "${category}"? This action cannot be undone.`, "confirm");
+        if (!confirmDelete) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/delete_item`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    adminPin: adminPin,
+                    category: category,
+                    name: name
+                }),
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                await showPopup("Success", data.message, "alert");
+                document.getElementById('deleteItemCategorySelect').value = '';
+                document.getElementById('deleteItemSelect').innerHTML = '<option value="">-- Select Item --</option>';
+                await fetchMenuItems(); // Refresh menu for POS and admin panels
+            } else {
+                const errorData = await response.json();
+                await showPopup("Error Deleting Item", errorData.message || "Failed to delete item.", "alert");
+            }
+        } catch (error) {
+            console.error('Error deleting item:', error);
+            await showPopup("Error", "Could not connect to server to delete item.", "alert");
+        }
+    }
+
+
+    async function fetchAdminTimesheet() {
+        const adminPinInput = document.getElementById("adminPinInput");
+        const adminPin = adminPinInput.value.trim();
+        const timesheetDataElement = document.getElementById('timesheetData');
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/admin_timesheet`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ adminPin: adminPin }),
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.timesheet && data.timesheet.length > 0) {
+                    let timesheetHtml = data.timesheet.map(entry => {
+                        return `User: ${entry.user_id} | Login: ${new Date(entry.login_time).toLocaleString()} | Logout: ${new Date(entry.logout_time).toLocaleString()} | Duration: ${entry.duration_hours} hours`;
+                    }).join('\n');
+                    timesheetDataElement.textContent = timesheetHtml;
+                } else {
+                    timesheetDataElement.textContent = 'No timesheet data available.';
+                }
+            } else {
+                const errorData = await response.json();
+                timesheetDataElement.textContent = `Failed to load timesheet: ${errorData.message || 'Error'}`;
+            }
+        } catch (error) {
+            console.error('Error fetching admin timesheet:', error);
+            timesheetDataElement.textContent = 'Could not connect to server to fetch timesheet.';
+        }
+    }
+
+    async function fetchActivityLog() {
+        const adminPinInput = document.getElementById("adminPinInput");
+        const adminPin = adminPinInput.value.trim();
+        const activityLogDataElement = document.getElementById('activityLogData');
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/activity_log`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ adminPin: adminPin }),
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.log && data.log.length > 0) {
+                    activityLogDataElement.textContent = JSON.stringify(data.log, null, 2);
+                } else {
+                    activityLogDataElement.textContent = 'No activity log data available.';
+                }
+            } else {
+                const errorData = await response.json();
+                activityLogDataElement.textContent = `Failed to load activity log: ${errorData.message || 'Error'}`;
+            }
+        } catch (error) {
+            console.error('Error fetching activity log:', error);
+            activityLogDataElement.textContent = 'Could not connect to server to fetch activity log.';
+        }
+    }
+
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,64 @@
+{
+    "Foods": [
+        {
+            "name": "Hamburger - Normal",
+            "price": 6
+        },
+        {
+            "name": "Hamburger - All the Fixings",
+            "price": 8
+        },
+        {
+            "name": "Hotdog - Loaded",
+            "price": 7
+        },
+        {
+            "name": "Hotdog - Plain",
+            "price": 5
+        },
+        {
+            "name": "Taco - Beef & Cheese",
+            "price": 7
+        },
+        {
+            "name": "Taco - Chicken with Salsa",
+            "price": 7
+        }
+    ],
+    "Drinks": [
+        {
+            "name": "Lemonade",
+            "price": 3
+        },
+        {
+            "name": "Coke",
+            "price": 3
+        },
+        {
+            "name": "Water Bottle",
+            "price": 2
+        }
+    ],
+    "Snacks": [
+        {
+            "name": "Raspia (Fruit Slush)",
+            "price": 4
+        },
+        {
+            "name": "Chips (Large Bag)",
+            "price": 3
+        },
+        {
+            "name": "Chocolate Bar",
+            "price": 2
+        },
+        {
+            "name": "Mixed Nuts (Small Pack)",
+            "price": 4
+        },
+        {
+            "name": "Granola Bar",
+            "price": 2
+        }
+    ]
+}

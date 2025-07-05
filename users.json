@@ -1,0 +1,14 @@
+{
+    "1234": {
+        "name": "Employee One",
+        "role": "user"
+    },
+    "5678": {
+        "name": "Employee Two",
+        "role": "user"
+    },
+    "1111": {
+        "name": "Admin User",
+        "role": "admin"
+    }
+}
