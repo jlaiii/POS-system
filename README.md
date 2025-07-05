@@ -57,4 +57,4 @@ This Point of Sale (POS) system is provided for **personal use and testing purpo
 ## Contact
 
 For commercial use or any inquiries, please contact:
-[Your Contact Information Here, e.g., Your Email Address]
+jlaiii@protnmail.com
