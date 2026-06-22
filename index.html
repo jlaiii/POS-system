@@ -298,6 +298,9 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 .dt-indicator { font-size: 12px; color: var(--text2); text-align: center; margin-top: 4px; display: none; }
 .dt-indicator.active { display: block; }
 .dt-indicator .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--success); margin-right: 4px; animation: blink 1s infinite; }
+.cd-indicator { font-size: 12px; color: var(--text2); text-align: center; margin-top: 4px; display: none; }
+.cd-indicator.active { display: block; }
+.cd-indicator .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #4fc3f7; margin-right: 4px; animation: blink 1s infinite; }
 @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
 /* ── ORDER HISTORY ── */
@@ -919,8 +922,10 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
           <div id="dtToggle">
             <button class="outline" id="dtModeBtn" onclick="toggleDriveThrough()">🛵 Drive-Through</button>
             <button class="outline" id="kioskModeBtn" onclick="enterKioskMode()" style="border-color:#2ecc71;color:#2ecc71;">🪟 Kiosk Mode</button>
+            <button class="outline" id="customerDisplayBtn" onclick="toggleCustomerDisplay()" style="border-color:#4fc3f7;color:#4fc3f7;">🖥️ Customer Display</button>
           </div>
           <div class="dt-indicator" id="dtIndicator"><span class="dot"></span> Drive-through display is live</div>
+          <div class="cd-indicator" id="cdIndicator"><span class="dot"></span> Customer display is live — open <a href="/customer-display" target="_blank" style="color:#4fc3f7;">/customer-display</a></div>
         </div>
       </div>
     </div>
@@ -2309,6 +2314,7 @@ function renderCart() {
   totalEl.innerHTML = `${t('cart.subtotal')} $${subtotal.toFixed(2)} | ${t('cart.tax')} $${totalTax.toFixed(2)}${discountHtml}${tipAmount > 0 ? ` | <span style="color:#2ecc71;">💬 Tip: +$${tipAmount.toFixed(2)}</span>` : ''} | <strong>${t('cart.total')} $${finalTotalWithTip.toFixed(2)}</strong>`;
   updateDiscountStatus();
   if (driveThroughMode) pushToDriveThrough();
+  if (customerDisplayMode) pushToCustomerDisplay();
   // Rebuild payment splits to stay in sync with cart total
   buildPaymentMethods();
 }
@@ -2597,6 +2603,15 @@ async function submitOrder() {
         });
       } catch(e) { /* silent */ }
     }
+    // If customer display mode is active, mark order as complete
+    if (customerDisplayMode) {
+      try {
+        await fetch(BACKEND_URL + '/api/customer-display/complete', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ order_number: result.order_id })
+        });
+      } catch(e) { /* silent */ }
+    }
     cart = [];
     appliedDiscount = null;
     resetTip();
@@ -2640,6 +2655,10 @@ async function clearCart() {
     // If drive-through mode is active, reset display
     if (driveThroughMode) {
       fetch(BACKEND_URL + '/api/drivethrough/reset', { method: 'POST', headers: { 'Content-Type': 'application/json' } }).catch(() => {});
+    }
+    // If customer display mode is active, reset display
+    if (customerDisplayMode) {
+      fetch(BACKEND_URL + '/api/customer-display/reset', { method: 'POST', headers: { 'Content-Type': 'application/json' } }).catch(() => {});
     }
   } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
@@ -2786,6 +2805,55 @@ async function pushToDriveThrough() {
         subtotal: Math.round(subtotal * 100) / 100,
         tax: Math.round(taxAmount * 100) / 100,
         total: Math.round(total * 100) / 100
+      })
+    });
+  } catch(e) { /* silent */ }
+}
+
+// ═══════════ CUSTOMER DISPLAY ═══════════
+let customerDisplayMode = false;
+
+function toggleCustomerDisplay() {
+  customerDisplayMode = !customerDisplayMode;
+  const btn = document.getElementById('customerDisplayBtn');
+  const indicator = document.getElementById('cdIndicator');
+  if (customerDisplayMode) {
+    btn.classList.add('active');
+    btn.innerHTML = '🖥️ Customer Display ON';
+    indicator.classList.add('active');
+    pushToCustomerDisplay();
+    showToast('Customer display activated', 'success');
+  } else {
+    btn.classList.remove('active');
+    btn.innerHTML = '🖥️ Customer Display';
+    indicator.classList.remove('active');
+    // Reset the customer display
+    fetch(BACKEND_URL + '/api/customer-display/reset', { method: 'POST', headers: { 'Content-Type': 'application/json' } }).catch(() => {});
+  }
+}
+
+async function pushToCustomerDisplay() {
+  if (!customerDisplayMode) return;
+  let subtotal = 0, taxAmount = 0;
+  cart.forEach(item => {
+    const lineTotal = item.price * item.qty;
+    subtotal += lineTotal;
+    const rate = getTaxRate(item.name, item.category || '');
+    taxAmount += lineTotal * rate;
+  });
+  const discountAmount = appliedDiscount ? appliedDiscount.discount_amount : 0;
+  const tipAmount = parseFloat(document.getElementById('cartTotal').dataset.tip || 0);
+  const finalTotal = subtotal + taxAmount - discountAmount;
+  const finalTotalWithTip = finalTotal + tipAmount;
+  try {
+    await fetch(BACKEND_URL + '/api/customer-display/update', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        items: cart.map(c => ({ name: c.name, price: c.price, qty: c.qty, notes: c.notes })),
+        subtotal: Math.round(subtotal * 100) / 100,
+        tax: Math.round(taxAmount * 100) / 100,
+        tip: Math.round(tipAmount * 100) / 100,
+        total: Math.round(finalTotalWithTip * 100) / 100
       })
     });
   } catch(e) { /* silent */ }

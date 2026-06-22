@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"/>
+<title>Customer Order Display</title>
+<meta name="theme-color" content="#1a1a2e"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #1a1a2e;
+  --card: #16213e;
+  --accent: #e94560;
+  --success: #2ecc71;
+  --text: #fff;
+  --text2: #a0a0b0;
+  --border: #2a2a4a;
+}
+
+html, body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 22px;
+  overflow: hidden;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+/* ── IDLE STATE ── */
+#idleScreen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 30px;
+  text-align: center;
+  animation: fadeIn 0.6s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+#idleScreen .icon {
+  font-size: 6rem;
+  opacity: 0.6;
+}
+
+#idleScreen h1 {
+  font-size: 3rem;
+  color: var(--text2);
+  font-weight: 300;
+  letter-spacing: 2px;
+}
+
+#idleScreen .brand {
+  font-size: 4rem;
+  font-weight: 800;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 4px;
+}
+
+#idleScreen .sub {
+  font-size: 1.2rem;
+  color: var(--text2);
+}
+
+/* ── ORDER BUILDING SCREEN ── */
+#orderScreen {
+  display: none;
+  width: 100%;
+  max-width: 1000px;
+  height: 100vh;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 20px 0;
+}
+
+#orderScreen.active { display: flex; }
+
+/* Header */
+.cd-header {
+  text-align: center;
+  padding: 10px 0;
+  border-bottom: 2px solid var(--border);
+}
+
+.cd-header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.cd-header .order-info {
+  font-size: 1rem;
+  color: var(--text2);
+  margin-top: 4px;
+}
+
+.cd-header .order-info .mode-badge {
+  display: inline-block;
+  background: var(--accent);
+  color: #fff;
+  padding: 3px 14px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-right: 8px;
+}
+
+/* Items list */
+.cd-items {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cd-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--card);
+  border-radius: 16px;
+  padding: 16px 24px;
+  font-size: 1.6rem;
+  font-weight: 600;
+  border-left: 5px solid var(--accent);
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.cd-item .qty {
+  color: var(--accent);
+  font-weight: 800;
+  margin-right: 14px;
+  min-width: 50px;
+  text-align: center;
+}
+
+.cd-item .name {
+  flex: 1;
+  font-size: 1.6rem;
+  font-weight: 600;
+}
+
+.cd-item .notes-badge {
+  font-size: 0.7rem;
+  color: #f39c12;
+  background: rgba(243,156,18,0.15);
+  padding: 2px 8px;
+  border-radius: 8px;
+  margin-left: 8px;
+}
+
+.cd-item .price {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #4fc3f7;
+  min-width: 90px;
+  text-align: right;
+}
+
+.cd-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  color: var(--text2);
+}
+
+/* Totals section */
+.cd-totals {
+  border-top: 2px solid var(--border);
+  padding: 16px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.cd-total-line {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.2rem;
+  color: var(--text2);
+}
+
+.cd-total-line .label { font-weight: 400; }
+.cd-total-line .value { font-weight: 600; }
+
+.cd-total-line.tip {
+  color: var(--success);
+}
+
+.cd-total-line.grand-total {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--accent);
+  border-top: 2px solid var(--border);
+  padding-top: 10px;
+  margin-top: 5px;
+}
+
+.cd-total-line.grand-total .value {
+  color: #fff;
+  font-size: 2.2rem;
+}
+
+/* Status bar */
+.cd-status-bar {
+  text-align: center;
+  color: var(--text2);
+  font-size: 0.9rem;
+  padding: 8px 0;
+  border-top: 1px solid var(--border);
+}
+
+.cd-status-bar .dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--success);
+  margin-right: 6px;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* ── COMPLETE / THANK YOU SCREEN ── */
+#completeScreen {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 24px;
+  animation: fadeIn 0.5s ease-out;
+}
+
+#completeScreen.active { display: flex; }
+
+#completeScreen .check-icon {
+  font-size: 7rem;
+  color: var(--success);
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.12); }
+}
+
+#completeScreen h1 {
+  font-size: 3.5rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 2px;
+}
+
+#completeScreen .order-number {
+  font-size: 1.6rem;
+  color: var(--text2);
+  background: var(--card);
+  padding: 12px 30px;
+  border-radius: 12px;
+  display: inline-block;
+}
+
+#completeScreen .thank-you {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--success);
+}
+
+#completeScreen .sub-text {
+  font-size: 1.2rem;
+  color: var(--text2);
+}
+
+/* ── MODE INACTIVE OVERLAY ── */
+#inactiveOverlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.85);
+  z-index: 999;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 20px;
+}
+
+#inactiveOverlay.active { display: flex; }
+
+#inactiveOverlay .icon { font-size: 4rem; opacity: 0.5; }
+#inactiveOverlay h2 { font-size: 2rem; color: var(--text2); font-weight: 300; }
+#inactiveOverlay p { font-size: 1rem; color: var(--text2); }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  body { font-size: 18px; padding: 12px; }
+  .cd-item { font-size: 1.3rem; padding: 12px 16px; }
+  .cd-item .name { font-size: 1.3rem; }
+  .cd-item .price { font-size: 1.3rem; }
+  .cd-total-line.grand-total { font-size: 1.6rem; }
+  #completeScreen h1 { font-size: 2.2rem; }
+  #completeScreen .thank-you { font-size: 1.8rem; }
+  .cd-header h1 { font-size: 1.5rem; }
+  #idleScreen .brand { font-size: 2.5rem; }
+  #idleScreen h1 { font-size: 2rem; }
+}
+
+@media (min-width: 1200px) {
+  body { font-size: 26px; }
+  .cd-item { font-size: 1.8rem; padding: 20px 28px; }
+  .cd-item .name { font-size: 1.8rem; }
+  .cd-item .price { font-size: 1.8rem; }
+  .cd-total-line.grand-total { font-size: 2.2rem; }
+  #completeScreen h1 { font-size: 4rem; }
+  #completeScreen .thank-you { font-size: 3rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- IDLE SCREEN -->
+<div id="idleScreen">
+  <div class="icon">🛍️</div>
+  <div class="brand">POS System</div>
+  <h1>Welcome!</h1>
+  <div class="sub">Your order will appear here</div>
+</div>
+
+<!-- ORDER BUILDING SCREEN -->
+<div id="orderScreen">
+  <div class="cd-header">
+    <h1>🛒 Your Order</h1>
+    <div class="order-info">
+      <span class="mode-badge">Customer Display</span>
+      <span id="cdOrderNum"></span>
+    </div>
+  </div>
+  <div class="cd-items" id="cdItems">
+    <div class="cd-empty">No items yet</div>
+  </div>
+  <div class="cd-totals">
+    <div class="cd-total-line">
+      <span class="label">Subtotal</span>
+      <span class="value" id="cdSubtotal">$0.00</span>
+    </div>
+    <div class="cd-total-line">
+      <span class="label">Tax</span>
+      <span class="value" id="cdTax">$0.00</span>
+    </div>
+    <div class="cd-total-line tip" id="cdTipRow" style="display:none;">
+      <span class="label">💬 Tip</span>
+      <span class="value" id="cdTip">$0.00</span>
+    </div>
+    <div class="cd-total-line grand-total">
+      <span class="label">Total</span>
+      <span class="value" id="cdTotal">$0.00</span>
+    </div>
+  </div>
+  <div class="cd-status-bar">
+    <span class="dot"></span> Live — Updates automatically
+  </div>
+</div>
+
+<!-- COMPLETE / THANK YOU SCREEN -->
+<div id="completeScreen">
+  <div class="check-icon">✅</div>
+  <h1>Order Submitted!</h1>
+  <div class="order-number" id="cdCompleteOrderNum"></div>
+  <div class="thank-you">🙏 Thank You!</div>
+  <div class="sub-text">Your order is being prepared</div>
+</div>
+
+<!-- INACTIVE OVERLAY (display mode not active) -->
+<div id="inactiveOverlay">
+  <div class="icon">💤</div>
+  <h2>Customer Display Not Active</h2>
+  <p>Ask a staff member to activate the display</p>
+</div>
+
+<script>
+// ── CONFIG ──
+const POLL_INTERVAL = 2000; // 2 seconds
+const API_BASE = window.location.origin;
+
+// ── DOM REFS ──
+const idleScreen = document.getElementById('idleScreen');
+const orderScreen = document.getElementById('orderScreen');
+const completeScreen = document.getElementById('completeScreen');
+const inactiveOverlay = document.getElementById('inactiveOverlay');
+const cdItems = document.getElementById('cdItems');
+const cdSubtotal = document.getElementById('cdSubtotal');
+const cdTax = document.getElementById('cdTax');
+const cdTip = document.getElementById('cdTip');
+const cdTipRow = document.getElementById('cdTipRow');
+const cdTotal = document.getElementById('cdTotal');
+const cdOrderNum = document.getElementById('cdOrderNum');
+const cdCompleteOrderNum = document.getElementById('cdCompleteOrderNum');
+
+// ── STATE ──
+let currentStatus = 'idle';
+let previousItems = '';
+
+// ── HELPERS ──
+function formatPrice(n) {
+  return '$' + parseFloat(n).toFixed(2);
+}
+
+function showScreen(screen) {
+  [idleScreen, orderScreen, completeScreen].forEach(s => s.classList.remove('active'));
+  if (screen) {
+    screen.classList.add('active');
+    screen.style.display = 'flex';
+  }
+}
+
+function renderItems(items) {
+  if (!items || items.length === 0) {
+    cdItems.innerHTML = '<div class="cd-empty">No items yet</div>';
+    return;
+  }
+  let html = '';
+  items.forEach(item => {
+    const name = item.name || 'Unknown';
+    const qty = item.qty || 1;
+    const price = parseFloat(item.price || 0);
+    const lineTotal = price * qty;
+    const hasNotes = item.notes ? `<span class="notes-badge">📝 notes</span>` : '';
+    html += `<div class="cd-item">
+      <span class="qty">${qty}×</span>
+      <span class="name">${escHtml(name)}${hasNotes}</span>
+      <span class="price">${formatPrice(lineTotal)}</span>
+    </div>`;
+  });
+  cdItems.innerHTML = html;
+}
+
+function escHtml(s) {
+  if (!s) return '';
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+// ── POLLING ──
+async function pollStatus() {
+  try {
+    const r = await fetch(API_BASE + '/api/customer-display/status');
+    if (!r.ok) return;
+    const data = await r.json();
+
+    // Handle mode inactive
+    if (!data.mode_active && data.status === 'idle') {
+      inactiveOverlay.classList.add('active');
+      showScreen(null);
+      return;
+    } else {
+      inactiveOverlay.classList.remove('active');
+    }
+
+    const itemsJson = JSON.stringify(data.items || []);
+    const statusChanged = data.status !== currentStatus;
+    const itemsChanged = itemsJson !== previousItems;
+
+    // Update display based on status
+    if (data.status === 'idle') {
+      showScreen(idleScreen);
+      currentStatus = 'idle';
+    } else if (data.status === 'complete') {
+      cdCompleteOrderNum.textContent = data.order_number ? 'Order #' + data.order_number : '';
+      showScreen(completeScreen);
+      currentStatus = 'complete';
+    } else {
+      // 'building' — show order
+      showScreen(orderScreen);
+
+      // Update order number if present
+      if (data.order_number) {
+        cdOrderNum.textContent = 'Order #' + data.order_number;
+      } else {
+        cdOrderNum.textContent = '';
+      }
+
+      // Update items with animation only if items changed
+      if (itemsChanged) {
+        renderItems(data.items);
+        previousItems = itemsJson;
+      }
+
+      // Update totals
+      cdSubtotal.textContent = formatPrice(data.subtotal || 0);
+      cdTax.textContent = formatPrice(data.tax || 0);
+
+      const tip = parseFloat(data.tip || 0);
+      if (tip > 0) {
+        cdTipRow.style.display = 'flex';
+        cdTip.textContent = formatPrice(tip);
+      } else {
+        cdTipRow.style.display = 'none';
+      }
+
+      cdTotal.textContent = formatPrice(data.total || 0);
+      currentStatus = 'building';
+    }
+  } catch(e) {
+    // Show inactive overlay on network error
+    inactiveOverlay.classList.add('active');
+  }
+}
+
+// ── START ──
+showScreen(idleScreen);
+pollStatus();
+setInterval(pollStatus, POLL_INTERVAL);
+</script>
+</body>
+</html>

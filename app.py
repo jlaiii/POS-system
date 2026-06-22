@@ -2282,6 +2282,83 @@ def drivethrough_reset():
 
 
 # ============================================================
+# Customer-Facing Display System
+# ============================================================
+
+# In-memory live cart state for customer-facing display
+customer_display_state = {
+    'items': [],
+    'subtotal': 0,
+    'tax': 0,
+    'tip': 0,
+    'total': 0,
+    'status': 'idle',  # 'idle', 'building', 'complete'
+    'order_number': None,
+    'mode_active': False,
+    'updated_at': datetime.now().isoformat()
+}
+
+
+@app.route('/api/customer-display/update', methods=['POST'])
+def customer_display_update():
+    """POS frontend pushes current cart state to customer display."""
+    global customer_display_state
+    data = request.json
+    items = data.get('items', [])
+    subtotal = float(data.get('subtotal', 0))
+    tax = float(data.get('tax', 0))
+    tip = float(data.get('tip', 0))
+    total = float(data.get('total', 0))
+    customer_display_state = {
+        'items': items,
+        'subtotal': subtotal,
+        'tax': tax,
+        'tip': tip,
+        'total': total,
+        'status': 'building',
+        'order_number': data.get('order_number'),
+        'mode_active': True,
+        'updated_at': datetime.now().isoformat()
+    }
+    return jsonify({'message': 'Customer display updated'})
+
+
+@app.route('/api/customer-display/status', methods=['GET'])
+def customer_display_status():
+    """Customer display polls for current order state."""
+    return jsonify(customer_display_state)
+
+
+@app.route('/api/customer-display/complete', methods=['POST'])
+def customer_display_complete():
+    """Mark the current order as complete (shows thank-you screen)."""
+    global customer_display_state
+    data = request.json
+    customer_display_state['status'] = 'complete'
+    customer_display_state['order_number'] = data.get('order_number')
+    customer_display_state['updated_at'] = datetime.now().isoformat()
+    return jsonify({'message': 'Order marked as complete'})
+
+
+@app.route('/api/customer-display/reset', methods=['POST'])
+def customer_display_reset():
+    """Reset the customer display to idle."""
+    global customer_display_state
+    customer_display_state = {
+        'items': [],
+        'subtotal': 0,
+        'tax': 0,
+        'tip': 0,
+        'total': 0,
+        'status': 'idle',
+        'order_number': None,
+        'mode_active': customer_display_state.get('mode_active', False),
+        'updated_at': datetime.now().isoformat()
+    }
+    return jsonify({'message': 'Customer display reset'})
+
+
+# ============================================================
 # Table Management System
 # ============================================================
 
@@ -2964,6 +3041,11 @@ def serve_index():
 @app.route('/drivethrough')
 def serve_drivethrough():
     return send_from_directory(app.static_folder, 'drivethrough.html')
+
+
+@app.route('/customer-display')
+def serve_customer_display():
+    return send_from_directory(app.static_folder, 'customer-display.html')
 
 
 if __name__ == '__main__':
