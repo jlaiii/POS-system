@@ -1793,6 +1793,8 @@ const L10N = {
     'history.notes': '📝 Has notes',
     'history.subtotal': 'Subtotal',
     'history.total': 'Total',
+    'history.reorder': '🔄 Reorder',
+    'history.reorder_done': 'Order items loaded into cart!',
     'history.order_notes': '📝 Order Notes:',
     'admin.stats': '📊 Stats',
     'admin.charts': '📈 Charts',
@@ -2120,6 +2122,8 @@ const L10N = {
     'history.notes': '📝 Tiene notas',
     'history.subtotal': 'Subtotal',
     'history.total': 'Total',
+    'history.reorder': '🔄 Reordenar',
+    'history.reorder_done': '¡Productos del pedido cargados en el carrito!',
     'history.order_notes': '📝 Notas del pedido:',
     'admin.stats': '📊 Estadísticas',
     'admin.charts': '📈 Gráficos',
@@ -4475,7 +4479,7 @@ async function loadOrderHistory() {
           <span><strong>#${orderNum}</strong> — ${dt}${statusBadge}</span>
           <span class="ho-total">$${total}</span>
         </div>
-        <div class="ho-meta">${t('history.payment')} ${escHtml(paymentDisplay)} | ${t('history.user')} ${escHtml(o.user || 'N/A')}${hasTax ? ' | ' + t('history.tax') + ': $' + parseFloat(o.tax_amount).toFixed(2) : ''}${hasTip ? ' | 💬 ' + t('receipt.tip') + ': $' + parseFloat(o.tip_amount).toFixed(2) : ''}${o.table_number ? ' | 🪪 Table #' + o.table_number : ''}${hasDelivery ? ' | 📮 ' + escHtml(formatDeliveryAddress(deliveryAddr)) : ''}${orderNotes ? ' | 📝 ' + t('history.notes') : ''}${refundReasonStr} <button class="ghost" onclick="event.stopPropagation();printHistoryReceipt(${JSON.stringify(o).replace(/"/g, '&quot;')}, ${orderNum})" style="font-size:12px;padding:4px 8px;min-height:28px;color:var(--accent);">🖨️</button>${canRefund && !isRefunded ? \`<button class="ghost" onclick="event.stopPropagation();showRefundOverlay({order_id: ${o.order_id}, total: '${total}', date: '${(o.date || '').replace(/'/g, "\\'")}', payment: '${(o.payment || '').replace(/'/g, "\\'")}', user: '${(o.user || '').replace(/'/g, "\\'")}', orderNum: ${orderNum}})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#e74c3c;">!a9️</button>\` : ''}</div>
+        <div class="ho-meta">${t('history.payment')} ${escHtml(paymentDisplay)} | ${t('history.user')} ${escHtml(o.user || 'N/A')}${hasTax ? ' | ' + t('history.tax') + ': $' + parseFloat(o.tax_amount).toFixed(2) : ''}${hasTip ? ' | 💬 ' + t('receipt.tip') + ': $' + parseFloat(o.tip_amount).toFixed(2) : ''}${o.table_number ? ' | 🪪 Table #' + o.table_number : ''}${hasDelivery ? ' | 📮 ' + escHtml(formatDeliveryAddress(deliveryAddr)) : ''}${orderNotes ? ' | 📝 ' + t('history.notes') : ''}${refundReasonStr} <button class="ghost" onclick="event.stopPropagation();reorderFromHistory(${JSON.stringify(items).replace(/"/g, '&quot;')})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#2ecc71;" title="${t('history.reorder')}">🔄</button> <button class="ghost" onclick="event.stopPropagation();printHistoryReceipt(${JSON.stringify(o).replace(/"/g, '&quot;')}, ${orderNum})" style="font-size:12px;padding:4px 8px;min-height:28px;color:var(--accent);">🖨️</button>${canRefund && !isRefunded ? \`<button class="ghost" onclick="event.stopPropagation();showRefundOverlay({order_id: ${o.order_id}, total: '${total}', date: '${(o.date || '').replace(/'/g, "\\'")}', payment: '${(o.payment || '').replace(/'/g, "\\'")}', user: '${(o.user || '').replace(/'/g, "\\'")}', orderNum: ${orderNum}})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#e74c3c;">↩️</button>\` : ''}</div>
         <div class="ho-details">
           ${items.map((it, idx) => \`<div class="ho-item"><span>${escHtml(it.name)} x${it.qty||1}${it.note ? '<br/><span style="color:var(--text2);font-size:12px;padding-left:12px;">📝 ' + escHtml(it.note) + '</span>' : ''}${it.modifiers && it.modifiers.length > 0 ? '<br/><span style="color:#f39c12;font-size:12px;padding-left:12px;">⚙️ ' + it.modifiers.map(m => escHtml(m.option)).join(' · ') + '</span>' : ''}</span><span>$${((it.price||0)*(it.qty||1)).toFixed(2)}</span></div>\`).join('')}
           ${hasTax ? \`
@@ -4490,6 +4494,43 @@ async function loadOrderHistory() {
       </div>`;
     list.innerHTML = html;
   } catch(e) { list.innerHTML = '<div class="empty-state">' + t('network_error') + '</div>'; }
+}
+
+/** Reorder: load all items from a past order into the cart */
+function reorderFromHistory(items) {
+  if (!items || items.length === 0) {
+    showToast('No items to reorder', 'warning');
+    return;
+  }
+  // Clear existing cart
+  cart = [];
+  // Add each item from the order into the cart
+  items.forEach(it => {
+    const itemPrice = parseFloat(it.price || 0);
+    const itemQty = parseInt(it.qty || 1);
+    const itemCat = it.category || '';
+    const itemNote = it.note || '';
+    const itemModifiers = it.modifiers || [];
+    // Push each item individually (qty separate to allow duplicates as separate cart items)
+    for (let q = 0; q < itemQty; q++) {
+      cart.push({
+        name: it.name,
+        price: itemPrice,
+        qty: 1,
+        category: itemCat,
+        note: itemNote,
+        modifiers: itemModifiers.map(m => ({ ...m }))
+      });
+    }
+  });
+  renderCart();
+  showToast(t('history.reorder_done'), 'success');
+  // Switch to POS tab
+  const posTab = document.querySelector('.tab-btn[onclick*="POS"]') || document.querySelector('.tab-btn');
+  if (posTab) posTab.click();
+  // Also try more specific selector
+  const posTabBtn = document.querySelector('#posTabBtn') || document.querySelector('[data-tab="pos"]');
+  if (posTabBtn) posTabBtn.click();
 }
 
 
