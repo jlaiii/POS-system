@@ -329,6 +329,13 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
         <div id="cart">
           <h3>🧾 Cart</h3>
           <div id="cartItems"><div class="empty-state">Cart is empty</div></div>
+          <div id="discountRow" style="display:none;margin-top:4px;">
+            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+              <input type="text" id="couponInput" placeholder="Coupon code" style="flex:1;min-width:100px;padding:10px 12px;font-size:14px;text-transform:uppercase;" maxlength="20"/>
+              <button class="outline" onclick="applyDiscount()" style="font-size:13px;padding:8px 14px;min-height:40px;">Apply</button>
+            </div>
+            <div id="discountStatus" style="font-size:13px;margin-top:4px;"></div>
+          </div>
           <div id="cartTotal">Total: $0.00</div>
           <div class="payment-methods" id="paymentMethods"></div>
           <div id="cartActions">
@@ -357,6 +364,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
         <button onclick="switchAdminSection('users')" id="asUsers">👥 Users</button>
         <button onclick="switchAdminSection('items')" id="asItems">📦 Items</button>
         <button onclick="switchAdminSection('tax')" id="asTax">💰 Tax</button>
+        <button onclick="switchAdminSection('discounts')" id="asDiscounts">🏷️ Discounts</button>
         <button onclick="switchAdminSection('log')" id="asLog">📜 Activity Log</button>
         <button onclick="switchAdminSection('timesheet')" id="asTimesheet">⏱️ Timesheet</button>
       </div>
@@ -437,6 +445,28 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
             <div id="itemTaxOverridesList"><div class="empty-state">No overrides</div></div>
           </div>
         </div>
+        <!-- Discounts Admin -->
+        <div id="secDiscounts" class="admin-section">
+          <div class="card" style="margin-bottom:12px;">
+            <h4 style="margin-bottom:8px;">🏷️ Add / Edit Discount Code</h4>
+            <div class="form-row">
+              <input type="text" id="discountCode" placeholder="Code (e.g. SAVE10)" style="max-width:140px;text-transform:uppercase;"/>
+              <select id="discountType" style="max-width:130px;">
+                <option value="percent">Percent (%)</option>
+                <option value="flat">Flat ($)</option>
+              </select>
+              <input type="number" id="discountValue" placeholder="Value" step="0.01" min="0.01" style="max-width:90px;"/>
+              <input type="number" id="discountMinOrder" placeholder="Min order $" step="0.01" min="0" style="max-width:110px;"/>
+              <input type="number" id="discountUsageLimit" placeholder="Usage limit" min="1" style="max-width:100px;"/>
+            </div>
+            <div class="form-row">
+              <input type="text" id="discountDescription" placeholder="Description (optional)" style="flex:1;"/>
+              <button class="accent" onclick="saveDiscountCode()">💾 Save</button>
+              <button class="ghost" onclick="clearDiscountForm()">Clear</button>
+            </div>
+          </div>
+          <div id="discountCodesList"><div class="empty-state">Loading discounts...</div></div>
+        </div>
         <!-- Activity Log -->
         <div id="secLog" class="admin-section">
           <div id="activityLogList"><div class="empty-state">Loading...</div></div>
@@ -470,6 +500,7 @@ let adminStatsCache = null;
 let chartDaily = null;
 let chartPayment = null;
 let taxConfig = null; // { global_tax_rate, category_tax_rates, item_tax_overrides }
+let appliedDiscount = null; // { code, type, value, discount_amount, description }
 
 // ═══════════ INIT ═══════════
 window.addEventListener('DOMContentLoaded', () => {
@@ -558,6 +589,7 @@ async function doLogout() {
   cart = [];
   itemsData = {};
   adminStatsCache = null;
+  appliedDiscount = null;
   document.getElementById('appScreen').classList.remove('active');
   document.getElementById('loginScreen').style.display = 'flex';
   document.getElementById('pinDisplay').textContent = '----';
@@ -674,11 +706,15 @@ function removeFromCart(index) {
 function renderCart() {
   const container = document.getElementById('cartItems');
   const totalEl = document.getElementById('cartTotal');
+  const discountRow = document.getElementById('discountRow');
   if (cart.length === 0) {
     container.innerHTML = '<div class="empty-state">Cart is empty</div>';
     totalEl.innerHTML = 'Total: $0.00';
+    discountRow.style.display = 'none';
+    appliedDiscount = null;
     return;
   }
+  discountRow.style.display = 'block';
   let html = '';
   let subtotal = 0;
   let totalTax = 0;
@@ -699,9 +735,20 @@ function renderCart() {
       </div>
     </div>`;
   });
-  const grandTotal = subtotal + totalTax;
+  const grandTotalBeforeDiscount = subtotal + totalTax;
+  let discountAmount = 0;
+  let discountHtml = '';
+  if (appliedDiscount) {
+    discountAmount = appliedDiscount.discount_amount;
+    discountHtml = `<div style="display:flex;justify-content:space-between;align-items:center;color:#2ecc71;font-size:14px;padding:4px 0;">
+      <span>🏷️ Discount (${escHtml(appliedDiscount.code)})</span>
+      <span>-$${discountAmount.toFixed(2)} <button class="ghost" onclick="removeDiscount()" style="font-size:12px;padding:2px 6px;min-height:24px;color:var(--accent);">✕</button></span>
+    </div>`;
+  }
+  const finalTotal = grandTotalBeforeDiscount - discountAmount;
   container.innerHTML = html;
-  totalEl.innerHTML = `Subtotal: $${subtotal.toFixed(2)} | Tax: $${totalTax.toFixed(2)} | <strong>Total: $${grandTotal.toFixed(2)}</strong>`;
+  totalEl.innerHTML = `Subtotal: $${subtotal.toFixed(2)} | Tax: $${totalTax.toFixed(2)}${discountHtml} | <strong>Total: $${finalTotal.toFixed(2)}</strong>`;
+  updateDiscountStatus();
 }
 
 function buildPaymentMethods() {
@@ -730,7 +777,8 @@ async function submitOrder() {
     const rate = getTaxRate(item.name, item.category || '');
     taxAmount += lineTotal * rate;
   });
-  const total = subtotal + taxAmount;
+  const discountAmount = appliedDiscount ? appliedDiscount.discount_amount : 0;
+  const total = subtotal + taxAmount - discountAmount;
   try {
     const r = await fetch(BACKEND_URL + '/api/submit_order', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -740,12 +788,15 @@ async function submitOrder() {
         items: cart.map(c => ({ name: c.name, price: c.price, qty: c.qty })),
         subtotal: Math.round(subtotal * 100) / 100,
         tax_amount: Math.round(taxAmount * 100) / 100,
+        discount_code: appliedDiscount ? appliedDiscount.code : null,
+        discount_amount: Math.round(discountAmount * 100) / 100,
         total: Math.round(total * 100) / 100
       })
     });
     if (!r.ok) { const d = await r.json(); showToast(d.message || 'Failed', 'danger'); return; }
     showToast('Order submitted!', 'success');
     cart = [];
+    appliedDiscount = null;
     renderCart();
   } catch(e) { showToast('Network error', 'danger'); }
 }
@@ -764,9 +815,165 @@ async function clearCart() {
       })
     });
     cart = [];
+    appliedDiscount = null;
     renderCart();
     showToast('Cart cleared', 'success');
   } catch(e) { showToast('Network error', 'danger'); }
+}
+
+// ═══════════ DISCOUNT / COUPON ═══════════
+function updateDiscountStatus() {
+  const status = document.getElementById('discountStatus');
+  if (appliedDiscount) {
+    status.innerHTML = `<span style="color:#2ecc71;">✅ ${escHtml(appliedDiscount.code)} applied (−$${appliedDiscount.discount_amount.toFixed(2)})</span>`;
+  } else {
+    status.innerHTML = '';
+  }
+}
+
+async function applyDiscount() {
+  const input = document.getElementById('couponInput');
+  const code = input.value.trim().toUpperCase();
+  if (!code) { showToast('Enter a coupon code', 'danger'); return; }
+
+  // Calculate current subtotal
+  let subtotal = 0;
+  cart.forEach(item => { subtotal += item.price * item.qty; });
+  if (subtotal <= 0) { showToast('Cart is empty', 'danger'); return; }
+
+  try {
+    const r = await fetch(BACKEND_URL + '/api/validate_discount', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, subtotal })
+    });
+    const data = await r.json();
+    if (!data.valid) {
+      showToast(data.message || 'Invalid code', 'danger');
+      appliedDiscount = null;
+      renderCart();
+      return;
+    }
+    appliedDiscount = {
+      code: data.code,
+      type: data.type,
+      value: data.value,
+      discount_amount: data.discount_amount,
+      description: data.description
+    };
+    input.value = '';
+    showToast(data.message || 'Discount applied!', 'success');
+    renderCart();
+  } catch(e) { showToast('Network error', 'danger'); }
+}
+
+function removeDiscount() {
+  appliedDiscount = null;
+  document.getElementById('couponInput').value = '';
+  renderCart();
+  showToast('Discount removed', 'success');
+}
+
+// ── Admin Discount Management ──
+async function loadDiscountAdmin() {
+  const list = document.getElementById('discountCodesList');
+  list.innerHTML = '<div class="empty-state">Loading...</div>';
+  try {
+    const r = await fetch(BACKEND_URL + '/api/discounts');
+    if (!r.ok) { list.innerHTML = '<div class="empty-state">Failed to load</div>'; return; }
+    const discounts = await r.json();
+    const entries = Object.entries(discounts);
+    if (entries.length === 0) {
+      list.innerHTML = '<div class="empty-state">No discount codes defined yet</div>';
+      return;
+    }
+    let html = '<div class="card"><h4 style="margin-bottom:8px;">📋 Existing Discount Codes</h4>';
+    entries.forEach(([code, d]) => {
+      const typeLabel = d.type === 'percent' ? d.value + '%' : '$' + d.value.toFixed(2);
+      const minOrder = d.min_order > 0 ? ' | Min: $' + d.min_order.toFixed(2) : '';
+      const used = d.usage_limit ? d.times_used + '/' + d.usage_limit : d.times_used + ' used';
+      html += `<div class="item-mgmt-entry" style="margin-bottom:6px;">
+        <div class="ime-info">
+          <strong>${escHtml(code)}</strong> — ${escHtml(typeLabel)} off
+          <span class="ime-cat">${d.active ? '🟢 Active' : '🔴 Inactive'}</span>
+          <span style="color:var(--text2);font-size:12px;margin-left:8px;">${escHtml(d.description || '')}${minOrder} | ${used}</span>
+        </div>
+        <div class="ime-actions">
+          <button class="outline" onclick="toggleDiscount('${escJs(code)}')" style="font-size:13px;padding:6px 12px;min-height:36px;">${d.active ? '🔴 Disable' : '🟢 Enable'}</button>
+          <button class="danger" onclick="deleteDiscount('${escJs(code)}')" style="font-size:13px;padding:6px 12px;min-height:36px;">🗑️</button>
+        </div>
+      </div>`;
+    });
+    html += '</div>';
+    list.innerHTML = html;
+  } catch(e) { list.innerHTML = '<div class="empty-state">Network error</div>'; }
+}
+
+async function saveDiscountCode() {
+  const code = document.getElementById('discountCode').value.trim();
+  const discountType = document.getElementById('discountType').value;
+  const value = parseFloat(document.getElementById('discountValue').value);
+  const minOrder = parseFloat(document.getElementById('discountMinOrder').value) || 0;
+  const usageLimit = parseInt(document.getElementById('discountUsageLimit').value) || null;
+  const description = document.getElementById('discountDescription').value.trim();
+
+  if (!code || isNaN(value) || value <= 0) { showToast('Code and value required', 'danger'); return; }
+
+  try {
+    const r = await fetch(BACKEND_URL + '/api/discounts', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        adminPin: currentUser.id,
+        action: 'add',
+        code,
+        discount_type: discountType,
+        value,
+        min_order: minOrder,
+        usage_limit: usageLimit,
+        description
+      })
+    });
+    const d = await r.json();
+    if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
+    showToast('Discount code saved!', 'success');
+    clearDiscountForm();
+    loadDiscountAdmin();
+  } catch(e) { showToast('Network error', 'danger'); }
+}
+
+async function toggleDiscount(code) {
+  try {
+    const r = await fetch(BACKEND_URL + '/api/discounts', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, action: 'toggle', code })
+    });
+    const d = await r.json();
+    if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
+    showToast(d.message || 'Toggled', 'success');
+    loadDiscountAdmin();
+  } catch(e) { showToast('Network error', 'danger'); }
+}
+
+async function deleteDiscount(code) {
+  if (!confirm('Delete discount code "' + code + '"?')) return;
+  try {
+    const r = await fetch(BACKEND_URL + '/api/discounts', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, action: 'delete', code })
+    });
+    const d = await r.json();
+    if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
+    showToast('Discount deleted', 'success');
+    loadDiscountAdmin();
+  } catch(e) { showToast('Network error', 'danger'); }
+}
+
+function clearDiscountForm() {
+  document.getElementById('discountCode').value = '';
+  document.getElementById('discountType').value = 'percent';
+  document.getElementById('discountValue').value = '';
+  document.getElementById('discountMinOrder').value = '';
+  document.getElementById('discountUsageLimit').value = '';
+  document.getElementById('discountDescription').value = '';
 }
 
 // ═══════════ ORDER HISTORY ═══════════
@@ -831,6 +1038,7 @@ function switchAdminSection(sec) {
   else if (sec === 'users') loadUsers();
   else if (sec === 'items') loadItemMgmt();
   else if (sec === 'tax') loadTaxAdmin();
+  else if (sec === 'discounts') loadDiscountAdmin();
   else if (sec === 'log') loadActivityLog();
   else if (sec === 'timesheet') loadTimesheet();
 }

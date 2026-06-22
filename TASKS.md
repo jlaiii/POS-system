@@ -11,7 +11,6 @@
 
 ## Priority: HIGH
 
-- [ ] Add discount/coupon code system (percentage and flat discounts)
 - [ ] Add receipt printing simulation (print-friendly HTML receipt or thermal printer CSS)
 - [ ] Add order notes field (special instructions per item or per order)
 - [ ] Add multi-language support (start with Spanish — detect browser language)
@@ -49,6 +48,7 @@
 
 ## Done
 
+- [x] Discount/coupon code system — percentage and flat discounts with admin management, coupon input in cart, discount validation endpoint, usage limits, min order amounts
 - [x] Sales tax calculation support — configurable global, per-category, and per-item tax rates with cart tax breakdown, order history display, and admin Tax panel
 - [x] Touch-optimized item grid with category tabs
 - [x] Most-ordered items analytics endpoint

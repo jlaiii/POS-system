@@ -15,9 +15,10 @@ ACTIVITY_LOG_FILE = 'activity_log.json'  # New log file
 TIMESHEET_FILE = 'timesheet.json'  # New timesheet file
 ITEMS_FILE = 'items.json'  # New items file
 TAX_CONFIG_FILE = 'tax_config.json'  # Tax configuration
+DISCOUNTS_FILE = 'discounts.json'  # Discount/coupon codes
 
 # Ensure JSON files exist and are initialized correctly
-for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE]:
+for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE]:
     if not os.path.exists(f):
         with open(f, 'w') as file:
             if f == USERS_FILE:
@@ -53,6 +54,8 @@ for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMES
                     "category_tax_rates": {},
                     "item_tax_overrides": {}
                 }, file, indent=4)  # Initialize with 0% tax, no overrides
+            elif f == DISCOUNTS_FILE:
+                json.dump({}, file, indent=4)  # Initialize empty discounts
             else:
                 json.dump([], file)  # Initialize orders.json and cleared_orders.json as empty lists
 
@@ -73,6 +76,9 @@ def load_json_data(filepath):
             if filepath == TAX_CONFIG_FILE and not isinstance(data, dict):
                 print(f"Warning: {filepath} is not a dictionary. Initializing with defaults.")
                 return {"global_tax_rate": 0.0, "category_tax_rates": {}, "item_tax_overrides": {}}
+            if filepath == DISCOUNTS_FILE and not isinstance(data, dict):
+                print(f"Warning: {filepath} is not a dictionary. Initializing as empty dict.")
+                return {}
             return data
     except (FileNotFoundError, json.JSONDecodeError):
         print(f"File not found or JSON decode error for {filepath}. Returning empty structure.")
@@ -430,6 +436,8 @@ def submit_order():
         'items': items,
         'subtotal': round(subtotal, 2),
         'tax_amount': round(tax_amount, 2),
+        'discount_code': data.get('discount_code'),
+        'discount_amount': round(float(data.get('discount_amount', 0)), 2),
         'total': round(total, 2)
     }
     orders = load_json_data(ORDERS_FILE)
@@ -438,6 +446,8 @@ def submit_order():
     log_activity('submit_order', data.get('user'), 'user', {
         'subtotal': order_details['subtotal'],
         'tax_amount': order_details['tax_amount'],
+        'discount_code': order_details['discount_code'],
+        'discount_amount': order_details['discount_amount'],
         'total': order_details['total'],
         'payment_method': order_details['payment'],
         'item_count': len(items)
@@ -861,6 +871,178 @@ def update_tax_config():
     save_json_data(TAX_CONFIG_FILE, config)
     log_activity('update_tax_config', admin_pin, 'admin', {'new_config': config})
     return jsonify({'message': 'Tax configuration updated successfully', 'config': config})
+
+
+# ============================================================
+# --- Discount / Coupon Code Endpoints ---
+# ============================================================
+
+@app.route('/api/discounts', methods=['GET'])
+def get_discounts():
+    """Get all discount codes (public, no auth — used for validation on frontend)."""
+    discounts = load_json_data(DISCOUNTS_FILE)
+    # Return only active discounts for public view, include all for admin (filtered on frontend)
+    return jsonify(discounts)
+
+
+@app.route('/api/discounts', methods=['POST'])
+def manage_discount():
+    """Add, update, or delete discount codes (admin only)."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+    is_admin, admin_user = verify_admin(admin_pin)
+
+    if not is_admin:
+        log_activity('manage_discount', admin_pin, 'unauthorized', {'status': 'failed'})
+        return jsonify({'message': 'Unauthorized. Admin PIN required.'}, 403)
+
+    action = data.get('action')  # 'add', 'update', 'delete'
+
+    if action == 'add' or action == 'update':
+        code = data.get('code')
+        discount_type = data.get('discount_type')  # 'percent' or 'flat'
+        value = data.get('value')
+        min_order = data.get('min_order', 0)
+        description = data.get('description', '')
+        usage_limit = data.get('usage_limit')  # null = unlimited
+
+        if not code or not discount_type or value is None:
+            return jsonify({'message': 'Missing required fields: code, discount_type, value.'}, 400)
+
+        if discount_type not in ('percent', 'flat'):
+            return jsonify({'message': 'discount_type must be \"percent\" or \"flat\".'}, 400)
+
+        try:
+            value = float(value)
+            if value <= 0:
+                raise ValueError
+            if discount_type == 'percent' and value > 100:
+                return jsonify({'message': 'Percentage discount cannot exceed 100%.'}, 400)
+        except ValueError:
+            return jsonify({'message': 'Invalid value. Must be a positive number.'}, 400)
+
+        try:
+            min_order = float(min_order) if min_order else 0
+        except ValueError:
+            return jsonify({'message': 'Invalid min_order value.'}, 400)
+
+        discounts = load_json_data(DISCOUNTS_FILE)
+        code_upper = code.upper().strip()
+
+        if action == 'add' and code_upper in discounts:
+            return jsonify({'message': f'Discount code \"{code_upper}\" already exists.'}, 409)
+
+        discounts[code_upper] = {
+            'type': discount_type,
+            'value': value,
+            'min_order': min_order,
+            'active': True,
+            'description': description,
+            'usage_limit': int(usage_limit) if usage_limit else None,
+            'times_used': discounts.get(code_upper, {}).get('times_used', 0),
+            'created_at': discounts.get(code_upper, {}).get('created_at', datetime.now().isoformat())
+        }
+
+        save_json_data(DISCOUNTS_FILE, discounts)
+        log_activity('manage_discount', admin_pin, 'admin', {
+            'action': action, 'code': code_upper, 'type': discount_type, 'value': value
+        })
+        return jsonify({'message': f'Discount code \"{code_upper}\" {action}ed successfully.', 'discounts': discounts})
+
+    elif action == 'delete':
+        code = data.get('code')
+        if not code:
+            return jsonify({'message': 'Missing discount code to delete.'}, 400)
+
+        discounts = load_json_data(DISCOUNTS_FILE)
+        code_upper = code.upper().strip()
+
+        if code_upper not in discounts:
+            return jsonify({'message': f'Discount code \"{code_upper}\" not found.'}, 404)
+
+        del discounts[code_upper]
+        save_json_data(DISCOUNTS_FILE, discounts)
+        log_activity('manage_discount', admin_pin, 'admin', {
+            'action': 'delete', 'code': code_upper
+        })
+        return jsonify({'message': f'Discount code \"{code_upper}\" deleted successfully.', 'discounts': discounts})
+
+    elif action == 'toggle':
+        code = data.get('code')
+        if not code:
+            return jsonify({'message': 'Missing discount code to toggle.'}, 400)
+
+        discounts = load_json_data(DISCOUNTS_FILE)
+        code_upper = code.upper().strip()
+
+        if code_upper not in discounts:
+            return jsonify({'message': f'Discount code \"{code_upper}\" not found.'}, 404)
+
+        discounts[code_upper]['active'] = not discounts[code_upper].get('active', True)
+        save_json_data(DISCOUNTS_FILE, discounts)
+        status = 'enabled' if discounts[code_upper]['active'] else 'disabled'
+        log_activity('manage_discount', admin_pin, 'admin', {
+            'action': 'toggle', 'code': code_upper, 'status': status
+        })
+        return jsonify({'message': f'Discount code \"{code_upper}\" {status}.', 'discounts': discounts})
+
+    return jsonify({'message': 'Invalid action. Use \"add\", \"update\", \"delete\", or \"toggle\".'}, 400)
+
+
+@app.route('/api/validate_discount', methods=['POST'])
+def validate_discount():
+    """Validate a discount code and return the discount amount for a given subtotal."""
+    data = request.json
+    code = data.get('code', '').upper().strip()
+    subtotal = float(data.get('subtotal', 0))
+
+    if not code:
+        return jsonify({'valid': False, 'message': 'No discount code provided.'})
+
+    discounts = load_json_data(DISCOUNTS_FILE)
+
+    if code not in discounts:
+        return jsonify({'valid': False, 'message': 'Invalid discount code.'})
+
+    discount = discounts[code]
+
+    if not discount.get('active', True):
+        return jsonify({'valid': False, 'message': 'This discount code is no longer active.'})
+
+    # Check usage limit
+    usage_limit = discount.get('usage_limit')
+    times_used = discount.get('times_used', 0)
+    if usage_limit is not None and times_used >= usage_limit:
+        return jsonify({'valid': False, 'message': 'This discount code has reached its usage limit.'})
+
+    # Check minimum order
+    min_order = discount.get('min_order', 0)
+    if subtotal < min_order:
+        return jsonify({
+            'valid': False,
+            'message': f'Minimum order of ${min_order:.2f} required for this code.'
+        })
+
+    # Calculate discount amount
+    if discount['type'] == 'percent':
+        discount_amount = subtotal * (discount['value'] / 100.0)
+    else:  # flat
+        discount_amount = discount['value']
+        # Don't allow discount to exceed subtotal
+        if discount_amount > subtotal:
+            discount_amount = subtotal
+
+    discount_amount = round(discount_amount, 2)
+
+    return jsonify({
+        'valid': True,
+        'code': code,
+        'type': discount['type'],
+        'value': discount['value'],
+        'discount_amount': discount_amount,
+        'description': discount.get('description', ''),
+        'message': f'Discount applied: {discount_amount:.2f}'
+    })
 
 
 # ============================================================
