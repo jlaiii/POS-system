@@ -29,7 +29,7 @@
 ## Priority: HIGH (NEW — Audit 2026-06-22)
 
 - [~] worker-1 **Add reorder button in order history** — One-click to reload all items from a past order into the cart. Major waiter speed improvement: eliminates need to manually re-add frequent orders.
-- [ ] **Fix order history for all users (BUG)** — History tab is visible to all users but `loadOrderHistory()` calls `/api/admin_stats` which requires `view_stats` permission. Waiters with `pos_access` only get a misleading "Network error". Fix: add a public orders list endpoint or remove the `view_stats` permission check for own orders. [audit]
+^- [~] worker-3 **Fix order history for all users (BUG)** — History tab is visible to all users but `loadOrderHistory()` calls `/api/admin_stats` which requires `view_stats` permission. Waiters with `pos_access` only get a misleading "Network error". Fix: add a public orders list endpoint or remove the `view_stats` permission check for own orders. [audit]
 - [ ] **Add WebSocket support for real-time updates** — Replace polling (kitchen 8s, customer-display 2s, drive-through 2s) with WebSockets for instant updates. Reduces server load and gives waiters/cooks real-time order notifications. Fall back to polling if WebSocket fails. [audit]
 - [ ] **Add item modifier support (sizes, options, extras)** — Allow menu items to have variants (small/medium/large), modifiers (extra cheese, no onions), and customizations. Store modifiers in cart items, display on kitchen tickets and receipts. Industry-standard POS feature. [audit]
 
