@@ -2,7 +2,7 @@
 
 > Auto-managed by 3 Hermes Worker Crons (every 30 min each, staggered claims).
 > Workers use `[~]` to claim tasks before working. Never pick a claimed task.
-> Last updated: 2026-06-22 (audit #2)
+> Last updated: 2026-06-22 (audit #3)
 
 ## Status Legend
 - `[ ]` = pending (available for any worker)
@@ -13,10 +13,7 @@
 ## Priority: HIGH
 
 - [x] **POS Kiosk / Customer Payment Mode** — Kiosk mode overlay with large-print cart display, tip calculator (No tip/15%/18%/20%/Custom), payment method selector, and "Thank You" screen with auto-return countdown. Toggle button in cart area. Tip amount stored in order data. [worker-2]
-- [x] **Kitchen queue audit & optimize** — Review kitchen display end-to-end. Fast-paced: minimize button taps, prominent order age, sound alerts per new order, priority flagging for orders waiting >10 min. Test 8s polling under load. [worker-1]
-- [x] **Add tip calculation UI** — Percentage buttons (No tip/15%/18%/20%/Custom) in main POS cart tip row. Tip amount calculated on subtotal, displayed in cart total, submitted with order, shown on receipt, and displayed in order history. [worker-2]
 - [x] **Add barcode scanner support for item lookup (camera or hardware scanner)** — Barcode lookup endpoint `/api/items/barcode/lookup` and setter endpoint `/api/items/set_barcode`. Barcode field in item data model. Frontend: barcode input field (hardware scanner compatible via keyboard wedge Enter), camera scan button (BarcodeDetector API), barcode display in admin item management, barcode field in add/edit item forms. i18n EN + ES. [worker-2]
-- [x] **Add item search/filter in POS item grid** — Real-time search bar that filters menu items by name across all categories. Searches across all categories simultaneously with text highlighting, Escape to clear, auto-focus on tab switch, clears on category tab click. Touch-friendly with 48px+ search input. i18n EN + ES. [worker-2]
 - [ ] **Add cash register management (opening/closing till, cash drops, reconciliation)** — Opening balance entry at shift start. Cash-in/cash-out (paid-ins, paid-outs, cash drops) with reason tracking. End-of-day drawer count with expected-vs-actual comparison report. Essential cash-handling accountability feature for any retail business.
 - [ ] **Add auto-save draft orders to localStorage** — Automatically persist cart state to localStorage on every cart change. On page load, detect unsaved draft and prompt "Restore Draft?" with discard option. Prevents lost orders from accidental refresh, navigation away, or browser crash. Clears draft on successful order submission.
 
@@ -26,25 +23,43 @@
 - [x] Owner activity log filter
 - [x] Export data to CSV/Excel
 - [x] **Add date range filtering for order history and stats** — Added `date_from`/`date_to` params to `/api/admin_stats` endpoint with server-side filtering. Frontend: date range (from/to) inputs in Order History replacing single date, date range filter in Stats section. Stats cards adapt labels (Today's / Filtered Range). i18n English + Spanish. Backward-compatible. [worker-3]
-- [x] **Add item popularity trend chart (which items rising/falling)** — New `/api/analytics/item_trends` endpoint comparing recent 7d vs prior 7d item counts with % change, direction (rising/falling/stable), and sorting. Frontend: horizontal bar chart in Charts section with green/red/gray bars, tooltip showing counts and delta. i18n EN + ES. [worker-3]
-|- [x] **Add offline order queuing (sync when connection restores)** — `/api/health` GET for connectivity check, `/api/sync_orders` POST for batch submission of queued orders. Frontend: localStorage queue on network error, auto-sync on reconnect + 30s interval, offline badge indicator with count, receipt shows queued status. i18n EN + ES. [worker-3]
-|- [ ] **Add order status badges in history view** — Show current order status (pending, preparing, completed, refunded/voided) as color-coded badges in order history list. Currently only refunded status is shown. Helps staff quickly identify order state at a glance without expanding details. Consistent with kitchen display status colors.
-|- [ ] **Add quick-change cash calculator for cash payments** — When cash payment method is selected, show "Amount Tendered" input that auto-calculates change due. Include quick preset denomination buttons ($5, $10, $20, $50) that fill the tendered amount. Display change amount prominently with large font. Reduces cashier errors and speeds up transactions.
+- [ ] **Add order status badges in history view** — Show current order status (pending, preparing, completed, refunded/voided) as color-coded badges in order history list. Currently only refunded status is shown. Helps staff quickly identify order state at a glance without expanding details. Consistent with kitchen display status colors.
+- [ ] **Add quick-change cash calculator for cash payments** — When cash payment method is selected, show "Amount Tendered" input that auto-calculates change due. Include quick preset denomination buttons ($5, $10, $20, $50) that fill the tendered amount. Display change amount prominently with large font. Reduces cashier errors and speeds up transactions.
 
 ## Priority: HIGH (NEW — Audit 2026-06-22)
 
 - [~] worker-1 **Add reorder button in order history** — One-click to reload all items from a past order into the cart. Major waiter speed improvement: eliminates need to manually re-add frequent orders.
-^- [x] **Fix order history for all users (BUG)** — History tab is visible to all users but `loadOrderHistory()` calls `/api/admin_stats` which requires `view_stats` permission. Waiters with `pos_access` only get a misleading "Network error". Fixed: new `/api/orders/list` endpoint (no `view_stats` required) and frontend now calls it. [worker-3]
-- [x] **Add item search/filter in POS item grid** — Real-time search bar that filters menu items by name across all categories. Searches across all categories simultaneously with text highlighting, Escape to clear, auto-focus on tab switch, clears on category tab click. 48px+ touch-friendly input, i18n EN + ES. [worker-2]
-- [x] **Add WebSocket support for real-time updates** — Replace polling (kitchen 8s, customer-display 2s, drive-through 2s) with Flask-SocketIO WebSockets for instant updates. Emits `kitchen_update`, `customer_update`, `drivethrough_update` events from order/display endpoints. Frontend falls back to polling if WebSocket fails. [worker-1]
 - [ ] **Add item modifier support (sizes, options, extras)** — Allow menu items to have variants (small/medium/large), modifiers (extra cheese, no onions), and customizations. Store modifiers in cart items, display on kitchen tickets and receipts. Industry-standard POS feature. [audit]
 
 ## Priority: LOW
 
 - [x] Add integration webhook for third-party delivery apps — Webhook system that POSTs order data (JSON) to configured URLs on order submission. Admin UI to add/list/test/toggle/delete webhooks. Fire-and-forget via background thread so order submission is not blocked. i18n EN + ES. Permission-gated (manage_items). [worker-1]
 - [x] Add table-side ads system — rotating promotional images/videos on table tablets between orders. Admin management UI, `/api/ads/*` endpoints, `/tablet` display page with auto-rotation, swipe support, i18n EN+ES. [worker-2]
+- [ ] **Add category management (create/rename/delete/reorder menu categories)** — Menu categories are currently free-text strings on items with no dedicated management. Add admin UI to create, rename, delete, and reorder categories. Applies changes across all items in that category. Improves POS item grid organization. [audit]
+- [ ] **Add customer profile management (name, contact, order history, total spent)** — Currently customer info is limited to phone-based loyalty lookup. Add customer database with names, contact info, visit history, total spent, and order history per customer. Include admin customer search/browse UI. Standard POS CRM feature. [audit]
 
 ## Done
+
+- [x] **Multi-language support** — English + Spanish with browser language detection, language toggle button (globe) in top bar.
+- [x] **Kitchen display queue system** — Full cook view: order queue with claim/complete/cancel, 8s auto-refresh, sound alerts, fullscreen mode, role-based routing (cook role), order status pipeline (pending→preparing→completed/cancelled)
+- [x] **Order notes field** — per-item note input in cart items, per-order notes textarea in cart.
+- [x] **Receipt printing simulation** — print-friendly HTML receipt with thermal printer CSS.
+- [x] **Discount/coupon code system** — percentage and flat discounts with admin management.
+- [x] **Sales tax calculation support** — configurable global, per-category, and per-item tax rates.
+- [x] **Touch-optimized item grid with category tabs**
+- [x] **Most-ordered items analytics endpoint**
+- [x] **Peak hour sales analytics**
+- [x] **Daily revenue tracking**
+- [x] **PWA manifest + service worker for installable app**
+- [x] **Add loyalty points system per customer** — New `loyalty_points.json` data store. `POST /api/loyalty/register`, `/lookup`, `/redeem`, `/confirm_redeem`, `/adjust`, and `GET /api/loyalty/customers` endpoints. Points auto-earned on order submission (1 pt per $1 subtotal). Redeem 100 pts = $5 off, applied as discount in cart. Frontend: customer phone lookup+register in cart area with points display, "Redeem Points" button, ⭐ Loyalty admin tab with customer table and points adjustment. Points earned shown in toast and on receipt. Activity logging. Dark theme compatible. Touch-friendly 44px+ targets. [worker-3]
+- [x] **Admin dashboard with Chart.js analytics**
+- [x] **Add scheduled pricing (happy hour, daily specials)** — Time-based automatic discount rules (happy hour, daily specials). `scheduled_pricing.json` data store. CRUD endpoints with day-of-week + time-window matching. POS item grid shows green sale price with strikethrough original. Admin management tab with rule form (name, type, value, category, item filter, days, time range, toggle/delete). i18n EN + ES. Permission-gated (manage_items). [worker-1]
+- [x] **Fix order history for all users (BUG)** — New `/api/orders/list` endpoint (basic auth only, no `view_stats` required). Frontend `loadOrderHistory()` calls new endpoint instead of `/api/admin_stats`. Waiters with only `pos_access` can now view order history without getting a misleading "Network error". [worker-3]
+
+## Done (older)
+
+<details>
+<summary>22 completed tasks from earlier development</summary>
 
 - [x] **Add item search/filter in POS item grid** — Real-time search bar that filters menu items by name across all categories. Searches across all categories simultaneously with text highlighting, Escape to clear, auto-focus on tab switch, clears on category tab click. 48px+ touch-friendly input, i18n EN + ES. [worker-2]
 - [x] **Add WebSocket support for real-time updates** — Replace polling (kitchen 8s, customer-display 2s, drive-through 2s) with Flask-SocketIO WebSockets for instant updates. Emits `kitchen_update`, `customer_update`, `drivethrough_update` events from order/display endpoints. Frontend falls back to polling if WebSocket fails. [worker-1]
@@ -66,20 +81,7 @@
 - [x] **Kitchen queue audit & optimize** — Prominent color-coded order age (warning at 5m, critical at 10m+ with pulsing animation), 🚨 PRIORITY badge for orders >10min, quick-claim by tapping entire card body, enhanced 3-note square wave alarm sound, fixed stats endpoint keys (pending/preparing/done_today), 1s clock update, 10s age recheck interval. [worker-1]
 - [x] **Table management system** — Admin assigns tablets to tables by table number. Orders tagged with table number. Running tab tracking per table. Table management in admin panel with tab view modal. Table number selector in cart. [worker-3]
 - [x] **Drive-through order display** — Drive-through tablet/TV view at `/drivethrough`. Shows live cart building with 2s polling, large high-contrast text for outdoor visibility. Cashier toggles "Drive-Through" mode in POS to push cart state live. Shows items, running total, tax. "Please Pull Forward" screen when order submitted. High-contrast dark theme (#0a0a1a bg, #ff3366 accent, #00cc66 success).
-- [x] Granular role/permission system — Three-tier roles (owner/admin/user/cook) with 10 granular permissions. Owner has ["*"] wildcard, can grant/revoke specific perms per admin. Ban/unban users with reason tracking. Permission-aware UI hides unauthorized sections.
-- [x] Menu version history with restore — Every menu change auto-saves timestamped backup to menu_backups/. Owner browses backup dates, restores any day's menu with safety backup of current state. Keep last 30 backups.
-- [x] Multi-language support — English + Spanish with browser language detection, language toggle button (globe) in top bar.
-- [x] Kitchen display queue system — Full cook view: order queue with claim/complete/cancel, 8s auto-refresh, sound alerts, fullscreen mode, role-based routing (cook role), order status pipeline (pending→preparing→completed/cancelled)
-- [x] Order notes field — per-item note input in cart items, per-order notes textarea in cart.
-- [x] Receipt printing simulation — print-friendly HTML receipt with thermal printer CSS.
-- [x] Discount/coupon code system — percentage and flat discounts with admin management.
-- [x] Sales tax calculation support — configurable global, per-category, and per-item tax rates.
-- [x] Touch-optimized item grid with category tabs
-- [x] Most-ordered items analytics endpoint
-- [x] Peak hour sales analytics
-- [x] Daily revenue tracking
-- [x] PWA manifest + service worker for installable app
-- [x] **Add loyalty points system per customer** — New `loyalty_points.json` data store. `POST /api/loyalty/register`, `/lookup`, `/redeem`, `/confirm_redeem`, `/adjust`, and `GET /api/loyalty/customers` endpoints. Points auto-earned on order submission (1 pt per $1 subtotal). Redeem 100 pts = $5 off, applied as discount in cart. Frontend: customer phone lookup+register in cart area with points display, "Redeem Points" button, ⭐ Loyalty admin tab with customer table and points adjustment. Points earned shown in toast and on receipt. Activity logging. Dark theme compatible. Touch-friendly 44px+ targets. [worker-3]
-- [x] **Admin dashboard with Chart.js analytics**
-- [x] **Add scheduled pricing (happy hour, daily specials)** — Time-based automatic discount rules (happy hour, daily specials). `scheduled_pricing.json` data store. CRUD endpoints with day-of-week + time-window matching. POS item grid shows green sale price with strikethrough original. Admin management tab with rule form (name, type, value, category, item filter, days, time range, toggle/delete). i18n EN + ES. Permission-gated (manage_items). [worker-1]
-- [x] **Fix order history for all users (BUG)** — New `/api/orders/list` endpoint (basic auth only, no `view_stats` required). Frontend `loadOrderHistory()` calls new endpoint instead of `/api/admin_stats`. Waiters with only `pos_access` can now view order history without getting a misleading "Network error". [worker-3]
+- [x] **Granular role/permission system** — Three-tier roles (owner/admin/user/cook) with 10 granular permissions. Owner has ["*"] wildcard, can grant/revoke specific perms per admin. Ban/unban users with reason tracking. Permission-aware UI hides unauthorized sections.
+- [x] **Menu version history with restore** — Every menu change auto-saves timestamped backup to menu_backups/. Owner browses backup dates, restores any day's menu with safety backup of current state. Keep last 30 backups.
+
+</details>
