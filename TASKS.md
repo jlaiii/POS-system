@@ -23,8 +23,14 @@
 - [x] Export data to CSV/Excel
 - [x] **Add date range filtering for order history and stats** — Added `date_from`/`date_to` params to `/api/admin_stats` endpoint with server-side filtering. Frontend: date range (from/to) inputs in Order History replacing single date, date range filter in Stats section. Stats cards adapt labels (Today's / Filtered Range). i18n English + Spanish. Backward-compatible. [worker-3]
 |- [x] **Add item popularity trend chart (which items rising/falling)** — New `/api/analytics/item_trends` endpoint comparing recent 7d vs prior 7d item counts with % change, direction (rising/falling/stable), and sorting. Frontend: horizontal bar chart in Charts section with green/red/gray bars, tooltip showing counts and delta. i18n EN + ES. [worker-3]
-|- [ ] Add dark/light theme toggle with persistence
-|- [ ] Add offline order queuing (sync when connection restores)
+||- [ ] Add dark/light theme toggle with persistence
+||- [ ] Add offline order queuing (sync when connection restores)
+
+## Priority: HIGH (NEW — Audit 2026-06-22)
+
+- [ ] **Fix verify_admin blocking owners from tax/discount endpoints** — `verify_admin()` checks for role=='admin' but skips owners. Blocks owner from updating tax config and managing discounts in the API. Replace with `check_perm(admin_pin, "manage_items")` in both `update_tax_config()` and `manage_discount()`.
+- [ ] **Fix menu history frontend parsing** — Frontend reads `data.history` but API returns `{"backups": [...]}`. Causes TypeError (forEach on object) when owner opens Menu History tab. Change frontend to read `data.backups`.
+- [ ] **Add reorder button in order history** — One-click to reload all items from a past order into the cart. Major waiter speed improvement: eliminates need to manually re-add frequent orders.
 
 ## Priority: LOW
 
