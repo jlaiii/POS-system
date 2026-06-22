@@ -838,7 +838,52 @@ def activity_log():
         return jsonify({'message': 'Insufficient permissions.'}), 403
 
     logs = load_json_data(ACTIVITY_LOG_FILE)
-    return jsonify({'message': 'Activity log retrieved', 'log': logs})
+
+    # Extract available types and users for filter dropdowns
+    available_types = sorted(set(log.get('type', '') for log in logs))
+    available_users = sorted(set(
+        log.get('user_id', '') for log in logs
+        if log.get('user_id')
+    ))
+
+    # Apply filters
+    user_filter = (data.get('user_filter') or '').strip().lower()
+    type_filter = (data.get('type_filter') or '').strip()
+    date_from = data.get('date_from', '').strip()
+    date_to = data.get('date_to', '').strip()
+
+    filtered = logs
+    if user_filter:
+        filtered = [log for log in filtered
+                    if user_filter in log.get('user_id', '').lower()]
+    if type_filter:
+        filtered = [log for log in filtered
+                    if log.get('type', '') == type_filter]
+    if date_from:
+        try:
+            dt_from = datetime.fromisoformat(date_from)
+            filtered = [log for log in filtered
+                        if datetime.fromisoformat(log['timestamp']) >= dt_from]
+        except (ValueError, KeyError):
+            pass
+    if date_to:
+        try:
+            # Include the full end-date day (set time to 23:59:59)
+            if 'T' not in date_to:
+                dt_to = datetime.fromisoformat(date_to + 'T23:59:59')
+            else:
+                dt_to = datetime.fromisoformat(date_to)
+            filtered = [log for log in filtered
+                        if datetime.fromisoformat(log['timestamp']) <= dt_to]
+        except (ValueError, KeyError):
+            pass
+
+    return jsonify({
+        'message': 'Activity log retrieved',
+        'log': filtered,
+        'available_types': available_types,
+        'available_users': available_users
+    })
 
 
 # ============================================================

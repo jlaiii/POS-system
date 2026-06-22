@@ -301,6 +301,14 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 
 .ts-entry { background: var(--card); border-radius: 8px; padding: 10px 14px; margin-bottom: 4px; font-size: 14px; display: flex; justify-content: space-between; }
 
+.log-filters { background: var(--card); border-radius: var(--radius); padding: 12px 16px; margin-bottom: 12px; }
+.log-filter-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: end; }
+.log-filter-group { display: flex; flex-direction: column; gap: 4px; }
+.log-filter-group label { font-size: 12px; color: var(--text2); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.log-filter-group input, .log-filter-group select { background: var(--bg); border: 1px solid #333; border-radius: 6px; padding: 10px 12px; font-size: 14px; color: var(--text); min-height: 44px; }
+.log-filter-group input:focus, .log-filter-group select:focus { outline: none; border-color: var(--accent); }
+.log-filter-actions { display: flex; gap: 6px; align-items: end; }
+
 .form-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: end; margin-bottom: 10px; }
 .form-row input, .form-row select { max-width: 200px; }
 
@@ -990,6 +998,34 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
         </div>
         <!-- Activity Log -->
         <div id="secLog" class="admin-section">
+          <h3>📜 Activity Log</h3>
+          <div class="log-filters">
+            <div class="log-filter-row">
+              <div class="log-filter-group">
+                <label for="logUserFilter">👤 User</label>
+                <input type="text" id="logUserFilter" list="logUserList" placeholder="Filter by user ID..." style="min-width:140px;">
+                <datalist id="logUserList"></datalist>
+              </div>
+              <div class="log-filter-group">
+                <label for="logTypeFilter">🔧 Action</label>
+                <select id="logTypeFilter" style="min-width:140px;">
+                  <option value="">All actions</option>
+                </select>
+              </div>
+              <div class="log-filter-group">
+                <label for="logDateFrom">📅 From</label>
+                <input type="date" id="logDateFrom">
+              </div>
+              <div class="log-filter-group">
+                <label for="logDateTo">📅 To</label>
+                <input type="date" id="logDateTo">
+              </div>
+              <div class="log-filter-actions">
+                <button class="accent" onclick="loadActivityLog()" style="min-height:44px;">🔍 Apply</button>
+                <button class="ghost" onclick="resetActivityLogFilters()" style="min-height:44px;">✕ Reset</button>
+              </div>
+            </div>
+          </div>
           <div id="activityLogList"><div class="empty-state">Loading...</div></div>
         </div>
         <!-- Timesheet -->
@@ -2925,14 +2961,45 @@ async function loadActivityLog() {
   const list = document.getElementById('activityLogList');
   list.innerHTML = '<div class="empty-state">' + t('loading') + '</div>';
   try {
+    const userFilter = document.getElementById('logUserFilter').value.trim();
+    const typeFilter = document.getElementById('logTypeFilter').value;
+    const dateFrom = document.getElementById('logDateFrom').value;
+    const dateTo = document.getElementById('logDateTo').value;
+
+    const body = { adminPin: currentUser.id };
+    if (userFilter) body.user_filter = userFilter;
+    if (typeFilter) body.type_filter = typeFilter;
+    if (dateFrom) body.date_from = dateFrom;
+    if (dateTo) body.date_to = dateTo;
+
     const r = await fetch(BACKEND_URL + '/api/activity_log', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adminPin: currentUser.id })
+      body: JSON.stringify(body)
     });
     if (!r.ok) { list.innerHTML = '<div class="empty-state">Unauthorized</div>'; return; }
     const data = await r.json();
     const logs = (data.log || []).slice().reverse();
-    if (logs.length === 0) { list.innerHTML = '<div class="empty-state">No activity yet</div>'; return; }
+
+    // Populate filter dropdowns with available options (only on first load or when data changes)
+    const typeSelect = document.getElementById('logTypeFilter');
+    const userDatalist = document.getElementById('logUserList');
+    if (data.available_types && typeSelect.options.length <= 1) {
+      data.available_types.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t;
+        opt.textContent = t;
+        typeSelect.appendChild(opt);
+      });
+    }
+    if (data.available_users && userDatalist.children.length === 0) {
+      data.available_users.forEach(u => {
+        const opt = document.createElement('option');
+        opt.value = u;
+        userDatalist.appendChild(opt);
+      });
+    }
+
+    if (logs.length === 0) { list.innerHTML = '<div class="empty-state">No activity matches filters</div>'; return; }
     list.innerHTML = logs.map(l => `
       <div class="log-entry">
         <span class="log-time">${new Date(l.timestamp).toLocaleString()}</span>
@@ -2942,6 +3009,14 @@ async function loadActivityLog() {
       </div>
     `).join('');
   } catch(e) { list.innerHTML = '<div class="empty-state">' + t('network_error') + '</div>'; }
+}
+
+function resetActivityLogFilters() {
+  document.getElementById('logUserFilter').value = '';
+  document.getElementById('logTypeFilter').value = '';
+  document.getElementById('logDateFrom').value = '';
+  document.getElementById('logDateTo').value = '';
+  loadActivityLog();
 }
 
 async function loadTimesheet() {
