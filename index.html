@@ -945,6 +945,30 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
               </div>
             </div>
           </div>
+          <div id="loyaltyRow" style="display:none;margin-top:6px;">
+            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:4px;">
+              <span style="color:var(--text2);font-size:13px;font-weight:600;white-space:nowrap;">⭐ Loyalty:</span>
+              <input type="tel" id="loyaltyPhone" placeholder="Customer phone" style="flex:1;min-width:120px;min-height:44px;font-size:14px;padding:8px 12px;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);" maxlength="20" inputmode="tel"/>
+              <button class="outline" onclick="loyaltyLookup()" style="font-size:13px;padding:8px 14px;min-height:44px;border-color:#f39c12;color:#f39c12;">🔍 Lookup</button>
+              <button class="outline" onclick="loyaltyShowRegister()" style="font-size:13px;padding:8px 14px;min-height:44px;border-color:#2ecc71;color:#2ecc71;">➕ Register</button>
+            </div>
+            <div id="loyaltyInfo" style="display:none;background:var(--card);border-radius:8px;padding:10px;margin-top:4px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
+                <span id="loyaltyCustomerName" style="font-weight:600;font-size:14px;"></span>
+                <span id="loyaltyPointsDisplay" style="color:#f39c12;font-size:14px;font-weight:600;">⭐ 0 pts</span>
+              </div>
+              <div id="loyaltyRedeemRow" style="display:none;margin-top:6px;">
+                <button class="outline" onclick="loyaltyRedeem()" style="font-size:13px;padding:8px 14px;min-height:44px;width:100%;border-color:#9b59b6;color:#9b59b6;">🔄 Redeem Points for Discount</button>
+              </div>
+            </div>
+            <div id="loyaltyRegisterForm" style="display:none;background:var(--card);border-radius:8px;padding:10px;margin-top:4px;">
+              <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+                <input type="text" id="loyaltyRegName" placeholder="Customer name" style="flex:1;min-width:120px;min-height:44px;font-size:14px;padding:8px 12px;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);" maxlength="50"/>
+                <button class="accent" onclick="loyaltyRegister()" style="font-size:13px;padding:8px 14px;min-height:44px;">✅ Save</button>
+                <button class="ghost" onclick="loyaltyCancelRegister()" style="font-size:13px;padding:8px 14px;min-height:44px;">✕ Cancel</button>
+              </div>
+            </div>
+          </div>
           <div id="cartTotal">Total: $0.00</div>
           <div class="payment-methods" id="paymentMethods"></div>
           <div id="cartActions">
@@ -995,6 +1019,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
         <button onclick="switchAdminSection('tables')" id="asTables" data-i18n="admin.tables">🪑 Tables</button>
         <button onclick="switchAdminSection('inventory')" id="asInventory" data-i18n="admin.inventory">📦 Inventory</button>
         <button onclick="switchAdminSection('employees')" id="asEmployees" data-i18n="admin.employees">👤 Employee Perf</button>
+        <button onclick="switchAdminSection('loyalty')" id="asLoyalty">⭐ Loyalty</button>
       </div>
       <div id="adminContent">
         <!-- Stats -->
@@ -1203,6 +1228,13 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
             <button class="ghost" onclick="document.getElementById('empPerfDateFrom').value='';document.getElementById('empPerfDateTo').value='';loadEmployeePerformance();" style="font-size:13px;padding:8px 12px;min-height:36px;">✕ Clear</button>
           </div>
           <div id="employeePerfList"><div class="empty-state">Loading employee performance...</div></div>
+        </div>
+        <!-- Loyalty Management -->
+        <div id="secLoyalty" class="admin-section">
+          <h3 style="margin-bottom:12px;">⭐ Loyalty Points Management</h3>
+          <div id="loyaltyAdminContent">
+            <div class="empty-state">Loading loyalty customers...</div>
+          </div>
         </div>
       </div>
     </div>
@@ -1853,12 +1885,12 @@ let cart = [];
 let itemsData = {}; // { category: [{name, price}] }
 let paymentSplits = [{method: 'Cash', amount: 0}]; // [{method, amount}, ...] for split-payment support
 let currentCategory = '';
-let adminStatsCache = null;
-let chartDaily = null;
-let chartPayment = null;
-let chartTrends = null;
 let taxConfig = null; // { global_tax_rate, category_tax_rates, item_tax_overrides }
 let appliedDiscount = null; // { code, type, value, discount_amount, description }
+let loyaltyCustomerPhone = ''; // Currently tracked loyalty customer phone
+let loyaltyCustomerData = null; // { phone, name, points, total_earned, ... }
+let chartPayment = null;
+let chartTrends = null;
 
 // ═══════════ INVENTORY STATE ═══════════
 let inventoryData = {}; // { item_name: { stock, low_stock_threshold } }
@@ -2307,6 +2339,8 @@ function renderCart() {
     orderNotesRow.style.display = 'none';
     tipRow.style.display = 'none';
     if (favoritesRow) favoritesRow.style.display = 'none';
+    const loyaltyRow = document.getElementById('loyaltyRow');
+    if (loyaltyRow) loyaltyRow.style.display = 'none';
     appliedDiscount = null;
     resetTip();
     // Reset payment splits to single default when cart is empty
@@ -2318,6 +2352,8 @@ function renderCart() {
   orderNotesRow.style.display = 'block';
   tipRow.style.display = 'block';
   if (favoritesRow) favoritesRow.style.display = 'flex';
+  const loyaltyRow = document.getElementById('loyaltyRow');
+  if (loyaltyRow) loyaltyRow.style.display = 'block';
   let html = '';
   let subtotal = 0;
   let totalTax = 0;
@@ -2626,7 +2662,8 @@ async function submitOrder() {
       total: Math.round(total * 100) / 100,
       notes: document.getElementById('orderNotesInput').value.trim(),
       item_notes: receiptData.item_notes,
-      table_number: selectedTable ? parseInt(selectedTable) : null
+      table_number: selectedTable ? parseInt(selectedTable) : null,
+      customer_phone: loyaltyCustomerPhone || ''
     })
     });
     if (!r.ok) { const d = await r.json(); showToast(d.message || 'Failed', 'danger'); return; }
@@ -2647,6 +2684,12 @@ async function submitOrder() {
         setTimeout(() => showToast(warnMsg.trim(), 'danger'), 500);
       }
     }
+    if (result.loyalty_earned && result.loyalty_earned > 0) {
+      setTimeout(() => showToast('⭐ ' + result.loyalty_earned + ' loyalty points earned!', 'success'), 1000);
+      // Reload loyalty info if customer is still tracked
+      if (loyaltyCustomerPhone) loyaltyLookup();
+    }
+    receiptData.loyalty_earned = result.loyalty_earned || 0;
     receiptData.orderNumber = result.order_number || '—';
     showReceipt(receiptData);
     // If drive-through mode is active, mark order as ready
@@ -2704,6 +2747,7 @@ async function clearCart() {
     cart = [];
     appliedDiscount = null;
     resetTip();
+    clearLoyaltyCustomer();
     document.getElementById('orderNotesInput').value = '';
     renderCart();
     showToast(t('toast.cart_cleared'), 'success');
@@ -2863,6 +2907,140 @@ async function pushToDriveThrough() {
       })
     });
   } catch(e) { /* silent */ }
+}
+
+// ═══════════ LOYALTY POINTS ═══════════
+
+function loyaltyLookup() {
+  const phone = document.getElementById('loyaltyPhone').value.trim();
+  if (!phone) { showToast('Enter a customer phone number.', 'warning'); return; }
+  fetch(BACKEND_URL + '/api/loyalty/lookup', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ phone: phone })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.found) {
+      loyaltyCustomerPhone = phone;
+      loyaltyCustomerData = data.customer;
+      document.getElementById('loyaltyInfo').style.display = 'block';
+      document.getElementById('loyaltyRegisterForm').style.display = 'none';
+      document.getElementById('loyaltyCustomerName').textContent = '👤 ' + escHtml(data.customer.name);
+      document.getElementById('loyaltyPointsDisplay').textContent = '⭐ ' + data.customer.points + ' pts';
+      // Show redeem button if they have enough points
+      const redeemRow = document.getElementById('loyaltyRedeemRow');
+      if (data.customer.points >= 100) {
+        redeemRow.style.display = 'block';
+      } else {
+        redeemRow.style.display = 'none';
+      }
+    } else {
+      showToast(data.message || 'Customer not found.', 'warning');
+      loyaltyCustomerPhone = '';
+      loyaltyCustomerData = null;
+    }
+  })
+  .catch(e => { showToast('Network error', 'danger'); });
+}
+
+function loyaltyShowRegister() {
+  const phone = document.getElementById('loyaltyPhone').value.trim();
+  if (!phone) { showToast('Enter a phone number first.', 'warning'); return; }
+  document.getElementById('loyaltyRegisterForm').style.display = 'block';
+  document.getElementById('loyaltyRegName').focus();
+}
+
+function loyaltyCancelRegister() {
+  document.getElementById('loyaltyRegisterForm').style.display = 'none';
+  document.getElementById('loyaltyRegName').value = '';
+}
+
+function loyaltyRegister() {
+  const phone = document.getElementById('loyaltyPhone').value.trim();
+  const name = document.getElementById('loyaltyRegName').value.trim();
+  if (!phone || !name) { showToast('Phone and name required.', 'warning'); return; }
+  fetch(BACKEND_URL + '/api/loyalty/register', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ phone: phone, name: name, adminPin: currentUser ? currentUser.id : '' })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.message && !data.message.includes('already')) {
+      showToast(data.message, 'success');
+      loyaltyCustomerPhone = phone;
+      loyaltyCustomerData = data.customer;
+      document.getElementById('loyaltyInfo').style.display = 'block';
+      document.getElementById('loyaltyRegisterForm').style.display = 'none';
+      document.getElementById('loyaltyCustomerName').textContent = '👤 ' + escHtml(name);
+      document.getElementById('loyaltyPointsDisplay').textContent = '⭐ 0 pts';
+      document.getElementById('loyaltyRedeemRow').style.display = 'none';
+      document.getElementById('loyaltyRegName').value = '';
+    } else {
+      showToast(data.message || 'Registration failed.', 'warning');
+    }
+  })
+  .catch(e => { showToast('Network error', 'danger'); });
+}
+
+async function loyaltyRedeem() {
+  if (!loyaltyCustomerPhone || !loyaltyCustomerData) {
+    showToast('Look up a loyalty customer first.', 'warning');
+    return;
+  }
+  // Calculate current subtotal
+  let subtotal = 0;
+  cart.forEach(item => {
+    subtotal += item.price * item.qty;
+  });
+  try {
+    const r = await fetch(BACKEND_URL + '/api/loyalty/redeem', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone: loyaltyCustomerPhone, subtotal: Math.round(subtotal * 100) / 100 })
+    });
+    const data = await r.json();
+    if (data.can_redeem) {
+      if (confirm(data.message)) {
+        const r2 = await fetch(BACKEND_URL + '/api/loyalty/confirm_redeem', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            phone: loyaltyCustomerPhone,
+            points_to_deduct: data.points_to_deduct,
+            discount_amount: data.discount_amount,
+            user: currentUser ? currentUser.id : '',
+            order_id: null
+          })
+        });
+        const confirmData = await r2.json();
+        if (confirmData.discount_amount) {
+          // Apply as a discount
+          appliedDiscount = {
+            code: 'LOYALTY',
+            type: 'flat',
+            value: confirmData.discount_amount,
+            discount_amount: confirmData.discount_amount,
+            description: 'Loyalty Points Redemption'
+          };
+          showToast(confirmData.message, 'success');
+          // Reload loyalty info
+          loyaltyLookup();
+          renderCart();
+        } else {
+          showToast(confirmData.message || 'Redemption failed.', 'danger');
+        }
+      }
+    } else {
+      showToast(data.message, 'warning');
+    }
+  } catch(e) {
+    showToast('Network error', 'danger');
+  }
+}
+
+function clearLoyaltyCustomer() {
+  loyaltyCustomerPhone = '';
+  loyaltyCustomerData = null;
+  document.getElementById('loyaltyInfo').style.display = 'none';
+  document.getElementById('loyaltyPhone').value = '';
 }
 
 // ═══════════ CUSTOMER DISPLAY ═══════════
@@ -3212,6 +3390,7 @@ function switchAdminSection(sec) {
   else if (sec === 'tables') loadTableAdmin();
   else if (sec === 'inventory') loadInventoryAdmin();
   else if (sec === 'employees') loadEmployeePerformance();
+  else if (sec === 'loyalty') loadLoyaltyAdmin();
 }
 
 async function loadAdminStats() {
@@ -4291,6 +4470,86 @@ async function loadEmployeePerformance() {
   }
 }
 
+// ═══════════ LOYALTY ADMIN ═══════════
+async function loadLoyaltyAdmin() {
+  const container = document.getElementById('loyaltyAdminContent');
+  if (!container) return;
+  container.innerHTML = '<div class="empty-state">Loading...</div>';
+  const adminPin = currentUser ? currentUser.id : '';
+  try {
+    const r = await fetch(BACKEND_URL + '/api/loyalty/customers?adminPin=' + encodeURIComponent(adminPin));
+    if (!r.ok) { container.innerHTML = '<div class="empty-state">Permission denied or not available.</div>'; return; }
+    const data = await r.json();
+    if (!data.customers || data.customers.length === 0) {
+      container.innerHTML = '<div class="empty-state">No loyalty customers registered yet.</div>';
+      return;
+    }
+    let html = '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:14px;">' +
+      '<thead><tr style="background:var(--card-alt);">' +
+      '<th style="padding:10px;text-align:left;border-bottom:2px solid var(--border);">Name</th>' +
+      '<th style="padding:10px;text-align:left;border-bottom:2px solid var(--border);">Phone</th>' +
+      '<th style="padding:10px;text-align:right;border-bottom:2px solid var(--border);">Points</th>' +
+      '<th style="padding:10px;text-align:right;border-bottom:2px solid var(--border);">Earned</th>' +
+      '<th style="padding:10px;text-align:right;border-bottom:2px solid var(--border);">Redeemed</th>' +
+      '<th style="padding:10px;text-align:center;border-bottom:2px solid var(--border);">Actions</th>' +
+      '</tr></thead><tbody>';
+    data.customers.forEach(c => {
+      html += '<tr style="border-bottom:1px solid var(--border);">' +
+        '<td style="padding:10px;"><strong>' + escHtml(c.name) + '</strong></td>' +
+        '<td style="padding:10px;color:var(--text2);">' + escHtml(c.phone) + '</td>' +
+        '<td style="padding:10px;text-align:right;font-weight:600;color:#f39c12;">' + c.points + '</td>' +
+        '<td style="padding:10px;text-align:right;color:#2ecc71;">' + c.total_earned + '</td>' +
+        '<td style="padding:10px;text-align:right;color:var(--accent);">' + c.total_redeemed + '</td>' +
+        '<td style="padding:10px;text-align:center;"><button class="outline" onclick="showLoyaltyAdjust(\'' + escJs(c.phone) + '\', \'' + escJs(c.name) + '\', ' + c.points + ')" style="font-size:12px;padding:6px 10px;min-height:36px;">Adjust</button></td>' +
+        '</tr>';
+    });
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+  } catch(e) {
+    container.innerHTML = '<div class="empty-state">Network error.</div>';
+  }
+}
+
+function showLoyaltyAdjust(phone, name, currentPoints) {
+  const container = document.getElementById('loyaltyAdminContent');
+  const adjustHtml = '<div style="background:var(--card);border-radius:12px;padding:16px;margin-top:12px;">' +
+    '<h4 style="margin-bottom:8px;">Adjust Points — ' + escHtml(name) + ' (' + escHtml(phone) + ')</h4>' +
+    '<p style="font-size:14px;color:var(--text2);margin-bottom:8px;">Current balance: <strong style="color:#f39c12;">' + currentPoints + ' pts</strong></p>' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">' +
+    '<input type="number" id="loyaltyAdjPoints" placeholder="Points (+/-)" style="flex:1;min-width:120px;min-height:44px;font-size:14px;padding:8px 12px;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);"/>' +
+    '<input type="text" id="loyaltyAdjReason" placeholder="Reason" style="flex:2;min-width:200px;min-height:44px;font-size:14px;padding:8px 12px;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);" maxlength="100"/>' +
+    '<button class="accent" onclick="doLoyaltyAdjust(\'' + escJs(phone) + '\')" style="padding:10px 18px;min-height:44px;">✅ Apply</button>' +
+    '<button class="ghost" onclick="loadLoyaltyAdmin()" style="padding:10px 18px;min-height:44px;">✕ Cancel</button>' +
+    '</div></div>';
+  container.innerHTML += adjustHtml;
+}
+
+async function doLoyaltyAdjust(phone) {
+  const points = parseInt(document.getElementById('loyaltyAdjPoints').value);
+  const reason = document.getElementById('loyaltyAdjReason').value.trim() || 'Admin adjustment';
+  if (isNaN(points) || points === 0) { showToast('Enter non-zero points.', 'warning'); return; }
+  try {
+    const r = await fetch(BACKEND_URL + '/api/loyalty/adjust', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        adminPin: currentUser ? currentUser.id : '',
+        phone: phone,
+        points: points,
+        reason: reason
+      })
+    });
+    const data = await r.json();
+    if (r.ok) {
+      showToast(data.message, 'success');
+      loadLoyaltyAdmin();
+    } else {
+      showToast(data.message || 'Failed', 'danger');
+    }
+  } catch(e) {
+    showToast('Network error', 'danger');
+  }
+}
+
 async function loadTableSelector() {
   const sel = document.getElementById('tableSelect');
   if (!sel) return;
@@ -4657,6 +4916,7 @@ function showReceipt(orderData) {
     <div class="rcpt-line"><span>${t('receipt.subtotal')}</span><span>$${parseFloat(orderData.subtotal || 0).toFixed(2)}</span></div>
     ${hasTax ? `<div class="rcpt-line"><span>${t('receipt.tax')}</span><span>$${parseFloat(orderData.tax_amount).toFixed(2)}</span></div>` : ''}
     ${hasDiscount ? `<div class="rcpt-line"><span>${t('receipt.discount')} (${escHtml(orderData.discount_code)})</span><span>−$${parseFloat(orderData.discount_amount).toFixed(2)}</span></div>` : ''}
+    ${orderData.loyalty_earned ? `<div class="rcpt-line" style="color:#f39c12;"><span>⭐ ${t('receipt.loyalty_earned') || 'Points Earned'}</span><span>+${orderData.loyalty_earned} pts</span></div>` : ''}
     ${hasTip ? `<div class="rcpt-line" style="color:#2ecc71;"><span>💬 ${t('receipt.tip')}</span><span>+$${parseFloat(orderData.tip_amount).toFixed(2)}</span></div>` : ''}
     <div class="rcpt-total"><span>${t('receipt.total')}</span><span>$${parseFloat(orderData.total || 0).toFixed(2)}</span></div>
     ${hasNotes ? `<hr class="rcpt-divider"/><div class="rcpt-item" style="flex-direction:column;gap:4px;"><span style="font-weight:600;">📝 ${t('receipt.order_notes')}</span><span style="color:#555;font-size:12px;">${escHtml(orderData.notes)}</span></div>` : ''}

@@ -27,7 +27,13 @@ TABLES_FILE = 'tables.json'  # Table management data
 INVENTORY_FILE = 'inventory.json'  # Inventory tracking
 REFUNDED_ORDERS_FILE = 'refunded_orders.json'  # Track refunded/voided orders
 FAVORITES_FILE = 'favorites.json'  # User quick-order favorites
+LOYALTY_FILE = 'loyalty_points.json'  # Customer loyalty points tracking
 MENU_BACKUPS_DIR = 'menu_backups'
+
+# --- Loyalty Constants ---
+LOYALTY_POINTS_PER_DOLLAR = 1  # 1 point per $1 spent
+LOYALTY_REDEEM_RATE = 100      # 100 points = discount amount below
+LOYALTY_REDEEM_DISCOUNT = 5.00 # $5 off per 100 points
 
 # --- Permission Constants ---
 DEFAULT_ADMIN_PERMISSIONS = [
@@ -91,7 +97,7 @@ def backup_menu():
 
 
 # Ensure JSON files exist and are initialized correctly
-for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE, INVENTORY_FILE, REFUNDED_ORDERS_FILE, FAVORITES_FILE]:
+for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE, INVENTORY_FILE, REFUNDED_ORDERS_FILE, FAVORITES_FILE, LOYALTY_FILE]:
     if not os.path.exists(f):
         with open(f, 'w') as file:
             if f == USERS_FILE:
@@ -137,6 +143,8 @@ for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMES
                 json.dump({}, file, indent=4)  # Initialize empty inventory
             elif f == FAVORITES_FILE:
                 json.dump({}, file, indent=4)  # Initialize empty favorites dict (user_id -> list of combos)
+            elif f == LOYALTY_FILE:
+                json.dump({}, file, indent=4)  # Initialize empty loyalty points dict (phone -> data)
             else:
                 json.dump([], file)  # Initialize orders.json and cleared_orders.json as empty lists
 
@@ -804,11 +812,36 @@ def submit_order():
                 })
     save_json_data(INVENTORY_FILE, inventory)
 
+    # --- Loyalty: award points if customer phone is provided ---
+    loyalty_earned = 0
+    customer_phone = data.get('customer_phone', '').strip()
+    if customer_phone:
+        loyalty_data = load_json_data(LOYALTY_FILE)
+        if customer_phone in loyalty_data:
+            earned = max(1, int(subtotal * LOYALTY_POINTS_PER_DOLLAR))
+            loyalty_data[customer_phone]['points'] += earned
+            loyalty_data[customer_phone]['total_earned'] += earned
+            loyalty_data[customer_phone]['history'].append({
+                'type': 'earned',
+                'points': earned,
+                'order_id': order_id,
+                'subtotal': round(subtotal, 2),
+                'date': datetime.now().isoformat()
+            })
+            loyalty_earned = earned
+            save_json_data(LOYALTY_FILE, loyalty_data)
+            log_activity('loyalty_earn', data.get('user', 'unknown'), 'user', {
+                'customer_phone': customer_phone,
+                'points_earned': earned,
+                'order_id': order_id
+            })
+
     return jsonify({
         'message': 'Order submitted successfully',
         'order_number': order_number,
         'order_id': order_id,
-        'low_stock_warnings': low_stock_warnings
+        'low_stock_warnings': low_stock_warnings,
+        'loyalty_earned': loyalty_earned
     })
 
 
@@ -2779,6 +2812,239 @@ def low_stock_alerts():
             })
     
     return jsonify({'low_stock_items': low_stock_items})
+
+
+# ============================================================
+# Loyalty Points System
+# ============================================================
+
+
+@app.route('/api/loyalty/lookup', methods=['POST'])
+def loyalty_lookup():
+    """Look up a customer by phone number and return their loyalty data."""
+    data = request.json
+    phone = data.get('phone', '').strip()
+
+    if not phone:
+        return jsonify({'found': False, 'message': 'Phone number is required.'}), 400
+
+    loyalty_data = load_json_data(LOYALTY_FILE)
+
+    if phone not in loyalty_data:
+        return jsonify({'found': False, 'message': 'Customer not found. Please register first.'})
+
+    return jsonify({
+        'found': True,
+        'customer': loyalty_data[phone]
+    })
+
+
+@app.route('/api/loyalty/register', methods=['POST'])
+def loyalty_register():
+    """Register a new customer for loyalty points."""
+    data = request.json
+    phone = data.get('phone', '').strip()
+    name = data.get('name', '').strip()
+
+    if not phone or not name:
+        return jsonify({'message': 'Phone number and name are required.'}), 400
+
+    loyalty_data = load_json_data(LOYALTY_FILE)
+
+    if phone in loyalty_data:
+        return jsonify({'message': 'Customer with this phone number already exists.'}), 409
+
+    loyalty_data[phone] = {
+        'phone': phone,
+        'name': name,
+        'points': 0,
+        'total_earned': 0,
+        'total_redeemed': 0,
+        'created_at': datetime.now().isoformat(),
+        'history': []
+    }
+
+    save_json_data(LOYALTY_FILE, loyalty_data)
+
+    log_activity('loyalty_register', data.get('adminPin', 'unknown'), 'admin', {
+        'customer_phone': phone,
+        'customer_name': name
+    })
+
+    return jsonify({'message': f'Customer {name} registered for loyalty points!', 'customer': loyalty_data[phone]})
+
+
+@app.route('/api/loyalty/redeem', methods=['POST'])
+def loyalty_redeem():
+    """Redeem loyalty points for a discount. Returns the discount amount."""
+    data = request.json
+    phone = data.get('phone', '').strip()
+    subtotal = float(data.get('subtotal', 0))
+
+    if not phone:
+        return jsonify({'message': 'Phone number is required.'}), 400
+
+    loyalty_data = load_json_data(LOYALTY_FILE)
+
+    if phone not in loyalty_data:
+        return jsonify({'message': 'Customer not found.'}), 404
+
+    customer = loyalty_data[phone]
+    points = customer.get('points', 0)
+
+    # Calculate how many full redemption units they have
+    units = points // LOYALTY_REDEEM_RATE
+    if units == 0:
+        return jsonify({
+            'can_redeem': False,
+            'message': f'Not enough points. {LOYALTY_REDEEM_RATE} points = ${LOYALTY_REDEEM_DISCOUNT:.2f} off. You have {points} points.',
+            'points': points,
+            'points_needed': LOYALTY_REDEEM_RATE
+        })
+
+    # Calculate max discount available
+    max_discount = units * LOYALTY_REDEEM_DISCOUNT
+    # Don't allow discount to exceed subtotal
+    discount_amount = min(max_discount, subtotal)
+    discount_amount = round(discount_amount, 2)
+
+    # Calculate points to deduct
+    points_to_deduct = int((discount_amount / LOYALTY_REDEEM_DISCOUNT) * LOYALTY_REDEEM_RATE)
+
+    return jsonify({
+        'can_redeem': True,
+        'points': points,
+        'points_to_deduct': points_to_deduct,
+        'units': units,
+        'discount_amount': discount_amount,
+        'message': f'Redeem {points_to_deduct} points for ${discount_amount:.2f} off?'
+    })
+
+
+@app.route('/api/loyalty/confirm_redeem', methods=['POST'])
+def loyalty_confirm_redeem():
+    """Confirm the redemption: deduct points and return the discount code to apply."""
+    data = request.json
+    phone = data.get('phone', '').strip()
+    points_to_deduct = int(data.get('points_to_deduct', 0))
+    discount_amount = float(data.get('discount_amount', 0))
+    order_id_used = data.get('order_id')
+
+    if not phone or points_to_deduct <= 0:
+        return jsonify({'message': 'Invalid redemption request.'}), 400
+
+    loyalty_data = load_json_data(LOYALTY_FILE)
+
+    if phone not in loyalty_data:
+        return jsonify({'message': 'Customer not found.'}), 404
+
+    customer = loyalty_data[phone]
+    if customer.get('points', 0) < points_to_deduct:
+        return jsonify({'message': 'Insufficient points after confirmation. Points may have been used elsewhere.'}), 409
+
+    # Deduct points
+    customer['points'] -= points_to_deduct
+    customer['total_redeemed'] += points_to_deduct
+    customer['history'].append({
+        'type': 'redeemed',
+        'points': -points_to_deduct,
+        'discount': round(discount_amount, 2),
+        'order_id': order_id_used,
+        'date': datetime.now().isoformat()
+    })
+
+    save_json_data(LOYALTY_FILE, loyalty_data)
+
+    log_activity('loyalty_redeem', data.get('user', 'unknown'), 'user', {
+        'customer_phone': phone,
+        'points_deducted': points_to_deduct,
+        'discount_amount': discount_amount,
+        'order_id': order_id_used
+    })
+
+    return jsonify({
+        'message': f'{points_to_deduct} points redeemed for ${discount_amount:.2f} off!',
+        'remaining_points': customer['points'],
+        'discount_amount': discount_amount
+    })
+
+
+@app.route('/api/loyalty/customers', methods=['GET'])
+def loyalty_customers():
+    """List all loyalty customers (admin only)."""
+    admin_pin = request.args.get('adminPin', '')
+
+    if not admin_pin or not check_perm(admin_pin, "manage_items"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    loyalty_data = load_json_data(LOYALTY_FILE)
+
+    customers = []
+    for phone, data in loyalty_data.items():
+        customers.append({
+            'phone': data.get('phone', phone),
+            'name': data.get('name', 'Unknown'),
+            'points': data.get('points', 0),
+            'total_earned': data.get('total_earned', 0),
+            'total_redeemed': data.get('total_redeemed', 0),
+            'created_at': data.get('created_at', '')
+        })
+
+    # Sort by points descending
+    customers.sort(key=lambda c: c['points'], reverse=True)
+
+    return jsonify({'customers': customers})
+
+
+@app.route('/api/loyalty/adjust', methods=['POST'])
+def loyalty_adjust():
+    """Admin adjustment: add or remove points from a customer."""
+    data = request.json
+    admin_pin = data.get('adminPin', '')
+
+    if not check_perm(admin_pin, "manage_items"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    phone = data.get('phone', '').strip()
+    points_adjust = int(data.get('points', 0))
+    reason = data.get('reason', 'Admin adjustment')
+
+    if not phone or points_adjust == 0:
+        return jsonify({'message': 'Phone and non-zero points adjustment required.'}), 400
+
+    loyalty_data = load_json_data(LOYALTY_FILE)
+
+    if phone not in loyalty_data:
+        return jsonify({'message': 'Customer not found.'}), 404
+
+    customer = loyalty_data[phone]
+    customer['points'] += points_adjust
+    if points_adjust > 0:
+        customer['total_earned'] += points_adjust
+    else:
+        customer['total_redeemed'] += abs(points_adjust)
+
+    customer['history'].append({
+        'type': 'adjustment',
+        'points': points_adjust,
+        'reason': reason,
+        'date': datetime.now().isoformat()
+    })
+
+    save_json_data(LOYALTY_FILE, loyalty_data)
+
+    admin_user = load_json_data(USERS_FILE).get(admin_pin, {})
+    admin_role = admin_user.get('role', 'unknown')
+    log_activity('loyalty_adjust', admin_pin, admin_role, {
+        'customer_phone': phone,
+        'points_adjustment': points_adjust,
+        'reason': reason
+    })
+
+    return jsonify({
+        'message': f'Points adjusted by {points_adjust} for {customer["name"]}. New balance: {customer["points"]}.',
+        'customer': customer
+    })
 
 
 # ============================================================
