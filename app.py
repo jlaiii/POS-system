@@ -3,25 +3,26 @@ from flask_cors import CORS
 import json
 from datetime import datetime, timedelta
 import os
+from collections import defaultdict, Counter
 
 app = Flask(__name__, static_folder='.', static_url_path='')
-CORS(app) # Enable CORS for all origins
+CORS(app)  # Enable CORS for all origins
 
 USERS_FILE = 'users.json'
 ORDERS_FILE = 'orders.json'
 CLEARED_ORDERS_FILE = 'cleared_orders.json'
-ACTIVITY_LOG_FILE = 'activity_log.json' # New log file
-TIMESHEET_FILE = 'timesheet.json' # New timesheet file
-ITEMS_FILE = 'items.json' # New items file
+ACTIVITY_LOG_FILE = 'activity_log.json'  # New log file
+TIMESHEET_FILE = 'timesheet.json'  # New timesheet file
+ITEMS_FILE = 'items.json'  # New items file
 
 # Ensure JSON files exist and are initialized correctly
 for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE]:
     if not os.path.exists(f):
         with open(f, 'w') as file:
             if f == USERS_FILE:
-                json.dump({"1111": {"name": "Admin User", "role": "admin"}}, file) # Initialize with a default admin
+                json.dump({"1111": {"name": "Admin User", "role": "admin"}}, file)  # Initialize with a default admin
             elif f == TIMESHEET_FILE or f == ACTIVITY_LOG_FILE:
-                json.dump([], file) # Initialize as empty lists
+                json.dump([], file)  # Initialize as empty lists
             elif f == ITEMS_FILE:
                 json.dump({
                     "Foods": [
@@ -44,9 +45,10 @@ for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMES
                         {"name": "Mixed Nuts (Small Pack)", "price": 4},
                         {"name": "Granola Bar", "price": 2}
                     ]
-                }, file, indent=4) # Initialize with default items
+                }, file, indent=4)  # Initialize with default items
             else:
-                json.dump([], file) # Initialize orders.json and cleared_orders.json as empty lists
+                json.dump([], file)  # Initialize orders.json and cleared_orders.json as empty lists
+
 
 def load_json_data(filepath):
     try:
@@ -60,19 +62,21 @@ def load_json_data(filepath):
                 return []
             if filepath == ITEMS_FILE and not isinstance(data, dict):
                 print(f"Warning: {filepath} is not a dictionary. Initializing as empty dict.")
-                return {} # Items file should be a dict of categories
+                return {}  # Items file should be a dict of categories
             return data
     except (FileNotFoundError, json.JSONDecodeError):
         print(f"File not found or JSON decode error for {filepath}. Returning empty structure.")
         if filepath == USERS_FILE:
-            return {} # Return empty dict for users
+            return {}  # Return empty dict for users
         if filepath == ITEMS_FILE:
-            return {} # Return empty dict for items
-        return [] # Return empty list for others
+            return {}  # Return empty dict for items
+        return []  # Return empty list for others
+
 
 def save_json_data(filepath, data):
     with open(filepath, 'w') as f:
         json.dump(data, f, indent=4)
+
 
 def log_activity(activity_type, user_id, user_role, details=None):
     log_entry = {
@@ -86,8 +90,9 @@ def log_activity(activity_type, user_id, user_role, details=None):
     logs.append(log_entry)
     save_json_data(ACTIVITY_LOG_FILE, logs)
 
+
 # In-memory storage for active admin sessions (for timesheet calculation)
-active_admin_sessions = {} # {admin_id: login_time}
+active_admin_sessions = {}  # {admin_id: login_time}
 
 # --- User Management Endpoints ---
 
@@ -96,6 +101,7 @@ def get_users():
     users = load_json_data(USERS_FILE)
     display_users = {uid: {'name': user_data['name'], 'role': user_data['role']} for uid, user_data in users.items()}
     return jsonify(display_users)
+
 
 @app.route('/api/login', methods=['POST'])
 def login():
@@ -114,6 +120,7 @@ def login():
     log_activity('login', user_id, 'unknown', {'status': 'failed'})
     return jsonify({'message': 'Invalid User ID or role'}, 401)
 
+
 @app.route('/api/logout', methods=['POST'])
 def logout():
     data = request.json
@@ -126,7 +133,7 @@ def logout():
     if user_id in active_admin_sessions:
         login_time = active_admin_sessions.pop(user_id)
         logout_time = datetime.now()
-        duration = (logout_time - login_time).total_seconds() / 3600 # duration in hours
+        duration = (logout_time - login_time).total_seconds() / 3600  # duration in hours
 
         timesheet_entry = {
             'user_id': user_id,
@@ -179,6 +186,7 @@ def add_user():
     log_activity('add_user', admin_pin, admin_user['role'], {'status': 'success', 'added_user_id': new_user_id, 'added_user_name': new_user_name, 'added_user_role': new_user_role})
     return jsonify({'message': 'User added successfully', 'user': {'id': new_user_id, 'name': new_user_name, 'role': new_user_role}})
 
+
 @app.route('/api/delete_user', methods=['POST'])
 def delete_user():
     data = request.json
@@ -214,6 +222,7 @@ def delete_user():
     log_activity('delete_user', admin_pin, admin_user['role'], {'status': 'success', 'deleted_user_id': user_id_to_delete, 'deleted_user_name': deleted_user_info['name'], 'deleted_user_role': deleted_user_info['role']})
     return jsonify({'message': 'User deleted successfully', 'userId': user_id_to_delete})
 
+
 # --- Item Management Endpoints ---
 
 @app.route('/api/items', methods=['GET'])
@@ -221,12 +230,14 @@ def get_items():
     items = load_json_data(ITEMS_FILE)
     return jsonify(items)
 
+
 def verify_admin(admin_pin):
     users = load_json_data(USERS_FILE)
     for uid, u_data in users.items():
         if u_data.get('role') == 'admin' and uid == admin_pin:
             return True, u_data
     return False, None
+
 
 @app.route('/api/add_item', methods=['POST'])
 def add_item():
@@ -245,7 +256,7 @@ def add_item():
     if not all([category, name, price is not None]):
         log_activity('add_item', admin_pin, admin_user['role'], {'status': 'failed', 'reason': 'Missing data', 'item_data': data})
         return jsonify({'message': 'Missing item data (category, name, or price).'}, 400)
-    
+
     try:
         price = float(price)
         if price <= 0:
@@ -257,7 +268,7 @@ def add_item():
     items_data = load_json_data(ITEMS_FILE)
     if category not in items_data:
         items_data[category] = []
-    
+
     # Check for duplicate item name within the category
     for item in items_data[category]:
         if item['name'].lower() == name.lower():
@@ -268,6 +279,7 @@ def add_item():
     save_json_data(ITEMS_FILE, items_data)
     log_activity('add_item', admin_pin, admin_user['role'], {'status': 'success', 'category': category, 'name': name, 'price': price})
     return jsonify({'message': 'Item added successfully', 'item': {'category': category, 'name': name, 'price': price}})
+
 
 @app.route('/api/edit_item', methods=['POST'])
 def edit_item():
@@ -288,7 +300,7 @@ def edit_item():
     if not all([old_category, old_name, new_category, new_name, new_price is not None]):
         log_activity('edit_item', admin_pin, admin_user['role'], {'status': 'failed', 'reason': 'Missing data', 'item_data': data})
         return jsonify({'message': 'Missing item data for edit.'}, 400)
-    
+
     try:
         new_price = float(new_price)
         if new_price <= 0:
@@ -314,21 +326,21 @@ def edit_item():
                         if existing_item['name'].lower() == new_name.lower():
                             log_activity('edit_item', admin_pin, admin_user['role'], {'status': 'failed', 'reason': 'New item name already exists in target category', 'item_data': data})
                             return jsonify({'message': f'Item "{new_name}" already exists in category "{new_category}".'}, 409)
-            
+
             # Remove from old category if category is changing
             if old_category != new_category:
                 del items_data[old_category][i]
-                if not items_data[old_category]: # Remove category if it becomes empty
+                if not items_data[old_category]:  # Remove category if it becomes empty
                     del items_data[old_category]
-                
+
                 if new_category not in items_data:
                     items_data[new_category] = []
                 items_data[new_category].append({"name": new_name, "price": new_price})
-            else: # Only name/price changing within same category
+            else:  # Only name/price changing within same category
                 items_data[old_category][i]["name"] = new_name
                 items_data[old_category][i]["price"] = new_price
             break
-    
+
     if not item_found:
         log_activity('edit_item', admin_pin, admin_user['role'], {'status': 'failed', 'reason': 'Old item not found in category', 'item_data': data})
         return jsonify({'message': f'Item "{old_name}" not found in category "{old_category}".'}, 404)
@@ -336,6 +348,7 @@ def edit_item():
     save_json_data(ITEMS_FILE, items_data)
     log_activity('edit_item', admin_pin, admin_user['role'], {'status': 'success', 'old_item': {'category': old_category, 'name': old_name}, 'new_item': {'category': new_category, 'name': new_name, 'price': new_price}})
     return jsonify({'message': 'Item updated successfully'})
+
 
 @app.route('/api/delete_item', methods=['POST'])
 def delete_item():
@@ -366,12 +379,12 @@ def delete_item():
             del items_data[category][i]
             item_found = True
             break
-    
+
     if not item_found:
         log_activity('delete_item', admin_pin, admin_user['role'], {'status': 'failed', 'reason': 'Item not found', 'item_data': data})
         return jsonify({'message': f'Item "{name}" not found in category "{category}".'}, 404)
-    
-    if not items_data[category]: # If category becomes empty after deletion
+
+    if not items_data[category]:  # If category becomes empty after deletion
         del items_data[category]
 
     save_json_data(ITEMS_FILE, items_data)
@@ -389,13 +402,14 @@ def submit_order():
         'user': data.get('user'),
         'payment': data.get('payment'),
         'items': data.get('items'),
-        'total': float(data.get('total')) # Ensure total is float for calculations
+        'total': float(data.get('total'))  # Ensure total is float for calculations
     }
     orders = load_json_data(ORDERS_FILE)
     orders.append(order_details)
     save_json_data(ORDERS_FILE, orders)
     log_activity('submit_order', data.get('user'), 'user', {'total': order_details['total'], 'payment_method': order_details['payment'], 'item_count': len(order_details['items'])})
     return jsonify({'message': 'Order submitted successfully'})
+
 
 @app.route('/api/clear_order', methods=['POST'])
 def clear_order():
@@ -405,7 +419,7 @@ def clear_order():
         'user': data.get('user'),
         'reason': data.get('reason', 'N/A'),
         'items_at_clear': data.get('items'),
-        'total_at_clear': float(data.get('total')) # Ensure total is float for calculations
+        'total_at_clear': float(data.get('total'))  # Ensure total is float for calculations
     }
     cleared_orders = load_json_data(CLEARED_ORDERS_FILE)
     cleared_orders.append(cleared_order_details)
@@ -413,13 +427,14 @@ def clear_order():
     log_activity('clear_cart', data.get('user'), 'user', {'reason': cleared_order_details['reason'], 'total_at_clear': cleared_order_details['total_at_clear']})
     return jsonify({'message': 'Cleared order logged successfully'})
 
+
 # --- Admin Panel Endpoints ---
 
 @app.route('/api/admin_stats', methods=['POST'])
 def admin_stats():
     data = request.json
     admin_pin = data.get('adminPin')
-    users_data = load_json_data(USERS_FILE) # Renamed to avoid conflict with users variable
+    users_data = load_json_data(USERS_FILE)  # Renamed to avoid conflict with users variable
 
     admin_user_id = None
     for uid, u_data in users_data.items():
@@ -435,7 +450,6 @@ def admin_stats():
     # Record admin login for timesheet if not already active
     if admin_user_id not in active_admin_sessions:
         active_admin_sessions[admin_user_id] = datetime.now()
-
 
     orders = load_json_data(ORDERS_FILE)
     cleared_orders = load_json_data(CLEARED_ORDERS_FILE)
@@ -456,7 +470,7 @@ def admin_stats():
 
     now = datetime.now()
     week_ago = now - timedelta(days=7)
-    month_ago = now - timedelta(days=30) # Approx month
+    month_ago = now - timedelta(days=30)  # Approx month
 
     weekly_sales = sum(order['total'] for order in processed_orders if datetime.fromisoformat(order['date']) >= week_ago)
     monthly_sales = sum(order['total'] for order in processed_orders if datetime.fromisoformat(order['date']) >= month_ago)
@@ -485,6 +499,7 @@ def admin_timesheet():
     timesheet_data = load_json_data(TIMESHEET_FILE)
     return jsonify({'message': 'Timesheet data retrieved', 'timesheet': timesheet_data})
 
+
 @app.route('/api/activity_log', methods=['POST'])
 def activity_log():
     data = request.json
@@ -498,10 +513,268 @@ def activity_log():
     return jsonify({'message': 'Activity log retrieved', 'log': logs})
 
 
+# ============================================================
+# --- Analytics Endpoints (Public - No Auth Required) ---
+# ============================================================
+
+@app.route('/api/analytics/most_ordered', methods=['GET'])
+def analytics_most_ordered():
+    """Returns top 20 most-ordered items by frequency across all orders."""
+    try:
+        orders = load_json_data(ORDERS_FILE)
+        item_counter = Counter()
+
+        for order in orders:
+            items = order.get('items', [])
+            if isinstance(items, list):
+                for item in items:
+                    if isinstance(item, dict) and 'name' in item:
+                        item_counter[item['name']] += 1
+                    elif isinstance(item, str):
+                        item_counter[item] += 1
+
+        # Sort by count descending, take top 20
+        most_ordered = [{'name': name, 'count': count}
+                        for name, count in item_counter.most_common(20)]
+        return jsonify({'most_ordered': most_ordered})
+    except Exception as e:
+        return jsonify({'error': str(e)}, 500)
+
+
+@app.route('/api/analytics/hourly_sales', methods=['GET'])
+def analytics_hourly_sales():
+    """Returns sales counts grouped by hour of day (0-23) for all time."""
+    try:
+        orders = load_json_data(ORDERS_FILE)
+        hourly_counts = [0] * 24  # Index 0 = midnight (00:00-00:59), ..., 23 = 11 PM
+
+        for order in orders:
+            try:
+                order_date = order.get('date', '')
+                if order_date:
+                    dt = datetime.fromisoformat(order_date)
+                    hour = dt.hour
+                    hourly_counts[hour] += 1
+            except (ValueError, TypeError):
+                continue
+
+        hourly_sales = [{'hour': h, 'count': c} for h, c in enumerate(hourly_counts)]
+        # Sort by count descending
+        hourly_sales.sort(key=lambda x: x['count'], reverse=True)
+        return jsonify({'hourly_sales': hourly_sales})
+    except Exception as e:
+        return jsonify({'error': str(e)}, 500)
+
+
+@app.route('/api/analytics/daily_revenue', methods=['GET'])
+def analytics_daily_revenue():
+    """Returns daily revenue for the last 30 days [{date, revenue, order_count}]."""
+    try:
+        orders = load_json_data(ORDERS_FILE)
+        now = datetime.now()
+        thirty_days_ago = now - timedelta(days=30)
+        thirty_days_ago_date = thirty_days_ago.date()
+
+        # Group by date
+        daily_data = defaultdict(lambda: {'revenue': 0.0, 'order_count': 0})
+
+        for order in orders:
+            try:
+                order_date = order.get('date', '')
+                if not order_date:
+                    continue
+                dt = datetime.fromisoformat(order_date)
+                date_key = dt.date().isoformat()
+
+                if dt.date() >= thirty_days_ago_date:
+                    total = order.get('total', 0)
+                    daily_data[date_key]['revenue'] += float(total)
+                    daily_data[date_key]['order_count'] += 1
+            except (ValueError, TypeError):
+                continue
+
+        # Build result sorted by date descending
+        daily_revenue = [
+            {
+                'date': date_key,
+                'revenue': round(data['revenue'], 2),
+                'order_count': data['order_count']
+            }
+            for date_key, data in daily_data.items()
+        ]
+        daily_revenue.sort(key=lambda x: x['date'], reverse=True)
+
+        return jsonify({'daily_revenue': daily_revenue})
+    except Exception as e:
+        return jsonify({'error': str(e)}, 500)
+
+
+@app.route('/api/analytics/popular_combos', methods=['GET'])
+def analytics_popular_combos():
+    """Returns items frequently ordered together (pairs that appear in same order at least 2 times)."""
+    try:
+        orders = load_json_data(ORDERS_FILE)
+        pair_counter = Counter()
+
+        for order in orders:
+            items = order.get('items', [])
+            if not isinstance(items, list):
+                continue
+
+            # Extract item names
+            item_names = []
+            for item in items:
+                if isinstance(item, dict) and 'name' in item:
+                    item_names.append(item['name'])
+                elif isinstance(item, str):
+                    item_names.append(item)
+
+            # Generate all unique pairs (combinations of 2)
+            sorted_names = sorted(set(item_names))
+            n = len(sorted_names)
+            for i in range(n):
+                for j in range(i + 1, n):
+                    pair = (sorted_names[i], sorted_names[j])
+                    pair_counter[pair] += 1
+
+        # Filter pairs that appear at least 2 times
+        popular = [
+            {'item1': pair[0], 'item2': pair[1], 'count': count}
+            for pair, count in pair_counter.items()
+            if count >= 2
+        ]
+        # Sort by count descending
+        popular.sort(key=lambda x: x['count'], reverse=True)
+
+        return jsonify({'popular_combos': popular})
+    except Exception as e:
+        return jsonify({'error': str(e)}, 500)
+
+
+@app.route('/api/analytics/summary', methods=['GET'])
+def analytics_summary():
+    """Returns quick summary: total_orders_today, revenue_today, avg_order_today, top_item_today, active_users_count."""
+    try:
+        orders = load_json_data(ORDERS_FILE)
+        now = datetime.now()
+        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+
+        today_orders = []
+        for order in orders:
+            try:
+                order_date = order.get('date', '')
+                if order_date:
+                    dt = datetime.fromisoformat(order_date)
+                    if dt >= today_start:
+                        today_orders.append(order)
+            except (ValueError, TypeError):
+                continue
+
+        total_orders_today = len(today_orders)
+        revenue_today = sum(float(o.get('total', 0)) for o in today_orders)
+        avg_order_today = round(revenue_today / total_orders_today, 2) if total_orders_today > 0 else 0.0
+
+        # Top item today
+        item_counter = Counter()
+        for order in today_orders:
+            items = order.get('items', [])
+            if isinstance(items, list):
+                for item in items:
+                    if isinstance(item, dict) and 'name' in item:
+                        item_counter[item['name']] += 1
+                    elif isinstance(item, str):
+                        item_counter[item] += 1
+
+        top_item_today = item_counter.most_common(1)
+        top_item_today_name = top_item_today[0][0] if top_item_today else None
+
+        # Active users count (users who placed an order today)
+        active_users = set()
+        for order in today_orders:
+            user = order.get('user', '')
+            if user:
+                active_users.add(user)
+
+        summary = {
+            'total_orders_today': total_orders_today,
+            'revenue_today': round(revenue_today, 2),
+            'avg_order_today': avg_order_today,
+            'top_item_today': top_item_today_name,
+            'active_users_count': len(active_users)
+        }
+
+        return jsonify({'summary': summary})
+    except Exception as e:
+        return jsonify({'error': str(e)}, 500)
+
+
+@app.route('/api/suggestions', methods=['POST'])
+def get_suggestions():
+    """Returns smart reorder suggestions based on user's past orders.
+    Accepts {userId}. Looks at user's last 10 orders, returns most common items."""
+    try:
+        data = request.json
+        if not data:
+            return jsonify({'error': 'Missing request body'}, 400)
+
+        user_id = data.get('userId')
+        if not user_id:
+            return jsonify({'error': 'userId is required'}, 400)
+
+        # Validate user exists
+        users = load_json_data(USERS_FILE)
+        if user_id not in users:
+            return jsonify({'error': 'Invalid userId'}, 404)
+
+        orders = load_json_data(ORDERS_FILE)
+
+        # Filter orders by this user
+        user_orders = [o for o in orders if str(o.get('user', '')) == str(user_id)]
+
+        # Sort by date descending and take last 10
+        def get_order_date(order):
+            try:
+                return datetime.fromisoformat(order.get('date', ''))
+            except (ValueError, TypeError):
+                return datetime.min
+
+        user_orders.sort(key=get_order_date, reverse=True)
+        last10 = user_orders[:10]
+
+        # Count items in last 10 orders
+        item_counter = Counter()
+        for order in last10:
+            items = order.get('items', [])
+            if isinstance(items, list):
+                for item in items:
+                    if isinstance(item, dict) and 'name' in item:
+                        item_counter[item['name']] += 1
+                    elif isinstance(item, str):
+                        item_counter[item] += 1
+
+        # Get most common items sorted by count descending
+        suggestions = [
+            {'name': name, 'times_ordered': count}
+            for name, count in item_counter.most_common()
+        ]
+
+        return jsonify({
+            'userId': user_id,
+            'orders_analyzed': len(last10),
+            'suggestions': suggestions
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}, 500)
+
+
+# ============================================================
 # Serve the frontend
+# ============================================================
+
 @app.route('/')
 def serve_index():
     return send_from_directory(app.static_folder, 'index.html')
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
