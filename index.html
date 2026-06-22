@@ -639,6 +639,10 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 #kioskOverlay .kiosk-content { display: flex; flex-direction: column; align-items: center; width: 100%; }
 #kioskOverlay .kiosk-content.hidden { display: none; }
 
+/* ── CART TIP BUTTONS ── */
+.tip-btn.selected { background: var(--accent) !important; color: #fff !important; border-color: var(--accent) !important; }
+.tip-btn.tip-custom.selected { background: #2ecc71 !important; border-color: #2ecc71 !important; }
+
 @media (max-width: 600px) {
   #kioskOverlay { font-size: 20px; padding: 12px; }
   #kioskOverlay .kiosk-header h2 { font-size: 24px; }
@@ -721,6 +725,25 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
               <select id="tableSelect" style="flex:1;padding:8px 10px;font-size:14px;min-height:40px;">
                 <option value="">No table</option>
               </select>
+            </div>
+          </div>
+          <div id="tipRow" style="display:none;margin-top:6px;">
+            <div style="display:flex;gap:6px;align-items:center;justify-content:space-between;margin-bottom:6px;">
+              <span style="color:var(--text2);font-size:14px;font-weight:600;">💬 Tip:</span>
+              <span id="tipDisplay" style="color:#2ecc71;font-size:14px;font-weight:600;"></span>
+            </div>
+            <div class="tip-btns" id="cartTipBtns" style="display:flex;gap:6px;flex-wrap:wrap;">
+              <button onclick="selectTip(0)" class="tip-btn" data-tip="0" style="flex:1;min-width:60px;min-height:44px;font-size:14px;font-weight:600;border-radius:8px;background:var(--bg);color:var(--text2);border:2px solid #2a2a4e;cursor:pointer;transition:all 0.2s;">No Tip</button>
+              <button onclick="selectTip(15)" class="tip-btn" data-tip="15" style="flex:1;min-width:60px;min-height:44px;font-size:14px;font-weight:600;border-radius:8px;background:var(--bg);color:var(--text2);border:2px solid #2a2a4e;cursor:pointer;transition:all 0.2s;">15%</button>
+              <button onclick="selectTip(18)" class="tip-btn" data-tip="18" style="flex:1;min-width:60px;min-height:44px;font-size:14px;font-weight:600;border-radius:8px;background:var(--bg);color:var(--text2);border:2px solid #2a2a4e;cursor:pointer;transition:all 0.2s;">18%</button>
+              <button onclick="selectTip(20)" class="tip-btn" data-tip="20" style="flex:1;min-width:60px;min-height:44px;font-size:14px;font-weight:600;border-radius:8px;background:var(--bg);color:var(--text2);border:2px solid #2a2a4e;cursor:pointer;transition:all 0.2s;">20%</button>
+              <button onclick="selectTip(-1)" class="tip-btn tip-custom" style="flex:1;min-width:60px;min-height:44px;font-size:14px;font-weight:600;border-radius:8px;background:var(--bg);color:var(--text2);border:2px solid #2a2a4e;cursor:pointer;transition:all 0.2s;">Custom</button>
+            </div>
+            <div id="customTipRow" style="display:none;margin-top:6px;">
+              <div style="display:flex;gap:6px;align-items:center;">
+                <input type="number" id="customTipInput" placeholder="$0.00" step="0.01" min="0" inputmode="decimal" style="flex:1;max-width:140px;min-height:44px;font-size:16px;padding:8px 12px;background:var(--bg);border:2px solid #2a2a4e;border-radius:var(--radius);color:var(--text);">
+                <button class="outline" onclick="document.getElementById('customTipInput').value='';updateTipCustom();" style="font-size:13px;padding:8px 14px;min-height:40px;">Clear</button>
+              </div>
             </div>
           </div>
           <div id="cartTotal">Total: $0.00</div>
@@ -1017,6 +1040,9 @@ const L10N = {
     'cart.total': 'Total:',
     'cart.subtotal': 'Subtotal:',
     'cart.tax': 'Tax:',
+    'cart.tip': '💬 Tip',
+    'cart.no_tip': 'No Tip',
+    'cart.custom_tip': 'Custom',
     'cart.discount': 'Discount',
     'cart.submit': '✅ Submit Order',
     'cart.clear': '🗑️ Clear',
@@ -1074,6 +1100,7 @@ const L10N = {
     'receipt.tax': 'Tax',
     'receipt.discount': 'Discount',
     'receipt.total': 'TOTAL',
+    'receipt.tip': 'Tip',
     'receipt.order_notes': '📝 Order Notes:',
     'receipt.cashier': 'Cashier:',
     'receipt.payment': 'Payment:',
@@ -1126,6 +1153,9 @@ const L10N = {
     'cart.total': 'Total:',
     'cart.subtotal': 'Subtotal:',
     'cart.tax': 'Impuesto:',
+    'cart.tip': '💬 Propina',
+    'cart.no_tip': 'Sin Propina',
+    'cart.custom_tip': 'Personalizado',
     'cart.discount': 'Descuento',
     'cart.submit': '✅ Enviar pedido',
     'cart.clear': '🗑️ Limpiar',
@@ -1182,6 +1212,7 @@ const L10N = {
     'receipt.tax': 'Impuesto',
     'receipt.discount': 'Descuento',
     'receipt.total': 'TOTAL',
+    'receipt.tip': 'Propina',
     'receipt.order_notes': '📝 Notas del pedido:',
     'receipt.cashier': 'Cajero:',
     'receipt.payment': 'Pago:',
@@ -1296,6 +1327,11 @@ let chartDaily = null;
 let chartPayment = null;
 let taxConfig = null; // { global_tax_rate, category_tax_rates, item_tax_overrides }
 let appliedDiscount = null; // { code, type, value, discount_amount, description }
+
+// ═══════════ TIP STATE ═══════════
+let selectedTipMode = null; // null = no tip, 'percent', 'custom'
+let selectedTipValue = 0;   // percentage (e.g. 15) or custom dollar amount
+let currentTipAmount = 0;   // computed dollar amount
 
 // ═══════════ KITCHEN STATE ═══════════
 let kitchenQueue = [];
@@ -1686,16 +1722,20 @@ function renderCart() {
   const totalEl = document.getElementById('cartTotal');
   const discountRow = document.getElementById('discountRow');
   const orderNotesRow = document.getElementById('orderNotesRow');
+  const tipRow = document.getElementById('tipRow');
   if (cart.length === 0) {
     container.innerHTML = '<div class="empty-state">' + t('cart.empty') + '</div>';
     totalEl.innerHTML = t('cart.total') + ' $0.00';
     discountRow.style.display = 'none';
     orderNotesRow.style.display = 'none';
+    tipRow.style.display = 'none';
     appliedDiscount = null;
+    resetTip();
     return;
   }
   discountRow.style.display = 'block';
   orderNotesRow.style.display = 'block';
+  tipRow.style.display = 'block';
   let html = '';
   let subtotal = 0;
   let totalTax = 0;
@@ -1733,8 +1773,18 @@ function renderCart() {
     </div>`;
   }
   const finalTotal = grandTotalBeforeDiscount - discountAmount;
+  const tipAmount = calculateTipAmount(subtotal);
+  const finalTotalWithTip = finalTotal + tipAmount;
   container.innerHTML = html;
-  totalEl.innerHTML = `${t('cart.subtotal')} $${subtotal.toFixed(2)} | ${t('cart.tax')} $${totalTax.toFixed(2)}${discountHtml} | <strong>${t('cart.total')} $${finalTotal.toFixed(2)}</strong>`;
+  // Update tip display
+  const tipDisplay = document.getElementById('tipDisplay');
+  if (tipAmount > 0) {
+    const tipLabel = selectedTipMode === 'percent' ? selectedTipValue + '%' : '$';
+    tipDisplay.textContent = '+' + tipLabel + tipAmount.toFixed(2);
+  } else {
+    tipDisplay.textContent = '';
+  }
+  totalEl.innerHTML = `${t('cart.subtotal')} $${subtotal.toFixed(2)} | ${t('cart.tax')} $${totalTax.toFixed(2)}${discountHtml}${tipAmount > 0 ? ` | <span style="color:#2ecc71;">💬 Tip: +$${tipAmount.toFixed(2)}</span>` : ''} | <strong>${t('cart.total')} $${finalTotalWithTip.toFixed(2)}</strong>`;
   updateDiscountStatus();
   if (driveThroughMode) pushToDriveThrough();
 }
@@ -1755,6 +1805,67 @@ function buildPaymentMethods() {
   });
 }
 
+// ═══════════ TIP CALCULATION ═══════════
+function selectTip(value) {
+  // Reset custom tip input
+  document.getElementById('customTipRow').style.display = 'none';
+  
+  if (value === -1) {
+    // Custom mode
+    selectedTipMode = 'custom';
+    selectedTipValue = 0;
+    document.getElementById('customTipRow').style.display = 'flex';
+    document.getElementById('customTipInput').focus();
+    updateTipCustom();
+    // Highlight custom button
+    document.querySelectorAll('#cartTipBtns .tip-btn').forEach(b => b.classList.remove('selected'));
+    document.querySelector('#cartTipBtns .tip-custom').classList.add('selected');
+    renderCart();
+    return;
+  }
+  
+  selectedTipMode = value === 0 ? null : 'percent';
+  selectedTipValue = value;
+  
+  // Highlight the selected button
+  document.querySelectorAll('#cartTipBtns .tip-btn').forEach(b => b.classList.remove('selected'));
+  if (value > 0) {
+    document.querySelector('#cartTipBtns .tip-btn[data-tip="' + value + '"]').classList.add('selected');
+  }
+  
+  renderCart();
+}
+
+function updateTipCustom() {
+  const val = parseFloat(document.getElementById('customTipInput').value);
+  if (!isNaN(val) && val >= 0) {
+    selectedTipMode = 'custom';
+    selectedTipValue = val;
+  } else {
+    selectedTipMode = null;
+    selectedTipValue = 0;
+  }
+  renderCart();
+}
+
+function resetTip() {
+  selectedTipMode = null;
+  selectedTipValue = 0;
+  currentTipAmount = 0;
+  document.querySelectorAll('#cartTipBtns .tip-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('customTipRow').style.display = 'none';
+  document.getElementById('customTipInput').value = '';
+}
+
+function calculateTipAmount(subtotal) {
+  if (selectedTipMode === 'percent' && selectedTipValue > 0) {
+    return Math.round(subtotal * (selectedTipValue / 100) * 100) / 100;
+  } else if (selectedTipMode === 'custom' && selectedTipValue > 0) {
+    return Math.round(selectedTipValue * 100) / 100;
+  }
+  return 0;
+}
+
 async function submitOrder() {
   if (cart.length === 0) { showToast(t('toast.cart_empty'), 'danger'); return; }
   // Calculate subtotal and tax
@@ -1766,12 +1877,14 @@ async function submitOrder() {
     taxAmount += lineTotal * rate;
   });
   const discountAmount = appliedDiscount ? appliedDiscount.discount_amount : 0;
-  const total = subtotal + taxAmount - discountAmount;
+  const tipAmount = calculateTipAmount(subtotal);
+  const total = subtotal + taxAmount - discountAmount + tipAmount;
   // Build receipt data before clearing
   const receiptData = {
   items: cart.map(c => ({ name: c.name, price: c.price, qty: c.qty, note: c.note || '' })),
   subtotal: Math.round(subtotal * 100) / 100,
   tax_amount: Math.round(taxAmount * 100) / 100,
+  tip_amount: Math.round(tipAmount * 100) / 100,
   discount_code: appliedDiscount ? appliedDiscount.code : null,
   discount_amount: Math.round(discountAmount * 100) / 100,
   total: Math.round(total * 100) / 100,
@@ -1797,6 +1910,7 @@ async function submitOrder() {
       items: cart.map(c => ({ name: c.name, price: c.price, qty: c.qty, note: c.note || '' })),
       subtotal: Math.round(subtotal * 100) / 100,
       tax_amount: Math.round(taxAmount * 100) / 100,
+      tip_amount: Math.round(tipAmount * 100) / 100,
       discount_code: appliedDiscount ? appliedDiscount.code : null,
       discount_amount: Math.round(discountAmount * 100) / 100,
       total: Math.round(total * 100) / 100,
@@ -1821,6 +1935,7 @@ async function submitOrder() {
     }
     cart = [];
     appliedDiscount = null;
+    resetTip();
     document.getElementById('orderNotesInput').value = '';
     renderCart();
   } catch(e) { showToast(t('toast.network_error'), 'danger'); }
@@ -1841,6 +1956,7 @@ async function clearCart() {
     });
     cart = [];
     appliedDiscount = null;
+    resetTip();
     document.getElementById('orderNotesInput').value = '';
     renderCart();
     showToast(t('toast.cart_cleared'), 'success');
@@ -2085,6 +2201,7 @@ async function loadOrderHistory() {
       const total = parseFloat(o.total || 0).toFixed(2);
       const items = o.items || [];
       const hasTax = o.tax_amount !== undefined && o.tax_amount !== null && parseFloat(o.tax_amount) > 0;
+    const hasTip = o.tip_amount !== undefined && o.tip_amount !== null && parseFloat(o.tip_amount) > 0;
       const orderNum = orders.length - i;
       const orderNotes = o.notes || '';
       const hasItemNotes = items.some(it => it.note);
@@ -2093,12 +2210,13 @@ async function loadOrderHistory() {
           <span><strong>#${orderNum}</strong> — ${dt}</span>
           <span class="ho-total">$${total}</span>
         </div>
-        <div class="ho-meta">${t('history.payment')} ${escHtml(o.payment || 'N/A')} | ${t('history.user')} ${escHtml(o.user || 'N/A')}${hasTax ? ' | ' + t('history.tax') + ': $' + parseFloat(o.tax_amount).toFixed(2) : ''}${o.table_number ? ' | 🪑 Table #' + o.table_number : ''}${orderNotes ? ' | 📝 ' + t('history.notes') : ''} <button class="ghost" onclick="event.stopPropagation();printHistoryReceipt(${JSON.stringify(o).replace(/"/g, '&quot;')}, ${orderNum})" style="font-size:12px;padding:4px 8px;min-height:28px;color:var(--accent);">🖨️</button></div>
+        <div class="ho-meta">${t('history.payment')} ${escHtml(o.payment || 'N/A')} | ${t('history.user')} ${escHtml(o.user || 'N/A')}${hasTax ? ' | ' + t('history.tax') + ': $' + parseFloat(o.tax_amount).toFixed(2) : ''}${hasTip ? ' | 💬 ' + t('receipt.tip') + ': $' + parseFloat(o.tip_amount).toFixed(2) : ''}${o.table_number ? ' | 🪑 Table #' + o.table_number : ''}${orderNotes ? ' | 📝 ' + t('history.notes') : ''} <button class="ghost" onclick="event.stopPropagation();printHistoryReceipt(${JSON.stringify(o).replace(/"/g, '&quot;')}, ${orderNum})" style="font-size:12px;padding:4px 8px;min-height:28px;color:var(--accent);">🖨️</button></div>
         <div class="ho-details">
           ${items.map((it, idx) => `<div class="ho-item"><span>${escHtml(it.name)} x${it.qty||1}${it.note ? '<br/><span style="color:var(--text2);font-size:12px;padding-left:12px;">📝 ' + escHtml(it.note) + '</span>' : ''}</span><span>$${((it.price||0)*(it.qty||1)).toFixed(2)}</span></div>`).join('')}
           ${hasTax ? `
             <div class="ho-item" style="color:var(--text2);"><span>${t('history.subtotal')}</span><span>$${parseFloat(o.subtotal || o.total || 0).toFixed(2)}</span></div>
             <div class="ho-item" style="color:var(--text2);"><span>${t('history.tax')}</span><span>$${parseFloat(o.tax_amount).toFixed(2)}</span></div>
+            ${hasTip ? `<div class="ho-item" style="color:#2ecc71;"><span>💬 ${t('receipt.tip')}</span><span>+$${parseFloat(o.tip_amount).toFixed(2)}</span></div>` : ''}
             <div class="ho-item" style="font-weight:700;border-top:1px solid #2a2a4e;padding-top:4px;margin-top:4px;"><span>${t('history.total')}</span><span>$${total}</span></div>
           ` : ''}
           ${orderNotes ? `<div class="ho-item" style="color:var(--text2);border-top:1px solid #2a2a4e;padding-top:4px;margin-top:4px;"><span style="font-weight:600;">📝 ${t('history.order_notes')}</span><br/><span style="font-size:13px;">${escHtml(orderNotes)}</span></div>` : ''}
@@ -3055,6 +3173,7 @@ function showReceipt(orderData) {
   const dateStr = orderData.date ? new Date(orderData.date).toLocaleString() : new Date().toLocaleString();
   const hasTax = orderData.tax_amount !== undefined && orderData.tax_amount !== null && parseFloat(orderData.tax_amount) > 0;
   const hasDiscount = orderData.discount_code && orderData.discount_amount > 0;
+  const hasTip = orderData.tip_amount !== undefined && orderData.tip_amount !== null && parseFloat(orderData.tip_amount) > 0;
   const hasNotes = orderData.notes && orderData.notes.trim();
   const hasItemNotes = orderData.items && orderData.items.some(it => it.note);
 
@@ -3073,6 +3192,7 @@ function showReceipt(orderData) {
     <div class="rcpt-line"><span>${t('receipt.subtotal')}</span><span>$${parseFloat(orderData.subtotal || 0).toFixed(2)}</span></div>
     ${hasTax ? `<div class="rcpt-line"><span>${t('receipt.tax')}</span><span>$${parseFloat(orderData.tax_amount).toFixed(2)}</span></div>` : ''}
     ${hasDiscount ? `<div class="rcpt-line"><span>${t('receipt.discount')} (${escHtml(orderData.discount_code)})</span><span>−$${parseFloat(orderData.discount_amount).toFixed(2)}</span></div>` : ''}
+    ${hasTip ? `<div class="rcpt-line" style="color:#2ecc71;"><span>💬 ${t('receipt.tip')}</span><span>+$${parseFloat(orderData.tip_amount).toFixed(2)}</span></div>` : ''}
     <div class="rcpt-total"><span>${t('receipt.total')}</span><span>$${parseFloat(orderData.total || 0).toFixed(2)}</span></div>
     ${hasNotes ? `<hr class="rcpt-divider"/><div class="rcpt-item" style="flex-direction:column;gap:4px;"><span style="font-weight:600;">📝 ${t('receipt.order_notes')}</span><span style="color:#555;font-size:12px;">${escHtml(orderData.notes)}</span></div>` : ''}
     <hr class="rcpt-divider"/>
@@ -3099,6 +3219,7 @@ function printHistoryReceipt(orderData, orderNumber) {
     items: orderData.items || [],
     subtotal: parseFloat(orderData.subtotal || orderData.total || 0),
     tax_amount: orderData.tax_amount || 0,
+    tip_amount: orderData.tip_amount || 0,
     discount_code: orderData.discount_code || null,
     discount_amount: orderData.discount_amount || 0,
     total: parseFloat(orderData.total || 0),
