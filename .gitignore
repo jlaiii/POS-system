@@ -13,3 +13,6 @@ order_counter.json
 tables.json
 .env
 *.log
+refunded_orders.json
+inventory.json
+menu_backups/
