@@ -688,6 +688,14 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
           <div id="orderNotesRow" style="display:none;margin-top:4px;">
             <textarea id="orderNotesInput" placeholder="Order notes / special instructions..." style="width:100%;background:var(--bg);border:2px solid #2a2a4e;border-radius:var(--radius);color:var(--text);font-size:14px;padding:10px 12px;min-height:48px;resize:vertical;font-family:inherit;" rows="2" maxlength="500" data-i18n-placeholder="cart.notes"></textarea>
           </div>
+          <div id="tableRow" style="display:none;margin-top:4px;">
+            <div style="display:flex;gap:8px;align-items:center;">
+              <span style="color:var(--text2);font-size:13px;white-space:nowrap;">🪑 Table:</span>
+              <select id="tableSelect" style="flex:1;padding:8px 10px;font-size:14px;min-height:40px;">
+                <option value="">No table</option>
+              </select>
+            </div>
+          </div>
           <div id="cartTotal">Total: $0.00</div>
           <div class="payment-methods" id="paymentMethods"></div>
           <div id="cartActions">
@@ -727,6 +735,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
         <button onclick="switchAdminSection('permissions')" id="asPermissions" data-i18n="admin.permissions" style="display:none;">🔑 Permissions</button>
         <button onclick="switchAdminSection('menuhistory')" id="asMenuhistory" data-i18n="admin.menu_history" style="display:none;">📋 Menu History</button>
         <button onclick="switchAdminSection('credentials')" id="asCredentials" data-i18n="admin.credentials" style="display:none;">🔐 Owner Credentials</button>
+        <button onclick="switchAdminSection('tables')" id="asTables" data-i18n="admin.tables">🪑 Tables</button>
       </div>
       <div id="adminContent">
         <!-- Stats -->
@@ -850,6 +859,21 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
           <div id="ownerCredStatus" style="margin-bottom:16px;color:var(--text2);">Checking...</div>
           <button onclick="setupOwnerCredentials()" style="font-size:18px;padding:14px 32px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);cursor:pointer;font-weight:600;min-height:56px;">🔐 Set/Update Credentials</button>
         </div>
+        <!-- Tables Management -->
+        <div id="secTables" class="admin-section">
+          <h3>🪑 Table Management</h3>
+          <p style="color:var(--text2);margin-bottom:16px;font-size:14px;">Assign tablets to tables. Orders placed with a table number will aggregate into a running tab for that table.</p>
+          <div class="card" style="margin-bottom:12px;">
+            <h4 style="margin-bottom:8px;">➕ Assign / Add Table</h4>
+            <div class="form-row">
+              <input type="number" id="tableNumInput" placeholder="Table number" min="1" max="999" style="max-width:130px;"/>
+              <input type="text" id="tableNameInput" placeholder="Table name (e.g. Table 5)" style="max-width:180px;"/>
+              <input type="text" id="tabletIdInput" placeholder="Tablet ID" style="max-width:160px;"/>
+              <button class="accent" onclick="assignTable()">💾 Assign</button>
+            </div>
+          </div>
+          <div id="tablesList"><div class="empty-state">Loading tables...</div></div>
+        </div>
       </div>
     </div>
   </div>
@@ -883,6 +907,17 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
     <div id="receiptActions">
       <button class="print-btn" onclick="printReceipt()" data-i18n="receipt.print">🖨️ Print</button>
       <button class="close-btn" onclick="closeReceipt()" data-i18n="receipt.close">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ TABLE TAB OVERLAY ═══════════ -->
+<div id="tableTabOverlay" class="modal-overlay">
+  <div class="modal-box" style="max-width:500px;max-height:80vh;overflow-y:auto;">
+    <h3 id="tableTabTitle">🪑 Table Tab</h3>
+    <div id="tableTabContent"><div class="empty-state">Loading...</div></div>
+    <div class="modal-actions">
+      <button class="outline" onclick="closeTableTab()">Close</button>
     </div>
   </div>
 </div>
@@ -1482,7 +1517,8 @@ function showApp() {
     'asTimesheet': perms.includes('view_timesheet'),
     'asPermissions': isOwner,
     'asMenuhistory': isOwner,
-    'asCredentials': isOwner
+    'asCredentials': isOwner,
+    'asTables': perms.includes('manage_items')  // Tables management accessible to item managers
   };
   
   // Show/hide each sub-tab button
@@ -1507,6 +1543,7 @@ function showApp() {
   }
   
   loadTaxConfig();
+  loadTableSelector();
   if (currentUser.role === 'cook') {
     showKitchenView();
   } else {
@@ -1527,6 +1564,7 @@ function switchMainTab(tab) {
   if (tab === 'pos') {
     document.getElementById('posTab').classList.add('active');
     loadItems();
+    loadTableSelector();
   } else if (tab === 'history') {
     document.getElementById('historyTab').classList.add('active');
     loadOrderHistory();
@@ -1720,6 +1758,9 @@ async function submitOrder() {
   cart.forEach((c, i) => {
   if (c.note) receiptData.item_notes[i] = c.note;
   });
+  // Include table number if selected
+  const selectedTable = document.getElementById('tableSelect') ? document.getElementById('tableSelect').value : '';
+  if (selectedTable) receiptData.table_number = parseInt(selectedTable);
   try {
   const r = await fetch(BACKEND_URL + '/api/submit_order', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -1733,7 +1774,8 @@ async function submitOrder() {
       discount_amount: Math.round(discountAmount * 100) / 100,
       total: Math.round(total * 100) / 100,
       notes: document.getElementById('orderNotesInput').value.trim(),
-      item_notes: receiptData.item_notes
+      item_notes: receiptData.item_notes,
+      table_number: selectedTable ? parseInt(selectedTable) : null
     })
     });
     if (!r.ok) { const d = await r.json(); showToast(d.message || 'Failed', 'danger'); return; }
@@ -2024,7 +2066,7 @@ async function loadOrderHistory() {
           <span><strong>#${orderNum}</strong> — ${dt}</span>
           <span class="ho-total">$${total}</span>
         </div>
-        <div class="ho-meta">${t('history.payment')} ${escHtml(o.payment || 'N/A')} | ${t('history.user')} ${escHtml(o.user || 'N/A')}${hasTax ? ' | ' + t('history.tax') + ': $' + parseFloat(o.tax_amount).toFixed(2) : ''}${orderNotes ? ' | 📝 ' + t('history.notes') : ''} <button class="ghost" onclick="event.stopPropagation();printHistoryReceipt(${JSON.stringify(o).replace(/"/g, '&quot;')}, ${orderNum})" style="font-size:12px;padding:4px 8px;min-height:28px;color:var(--accent);">🖨️</button></div>
+        <div class="ho-meta">${t('history.payment')} ${escHtml(o.payment || 'N/A')} | ${t('history.user')} ${escHtml(o.user || 'N/A')}${hasTax ? ' | ' + t('history.tax') + ': $' + parseFloat(o.tax_amount).toFixed(2) : ''}${o.table_number ? ' | 🪑 Table #' + o.table_number : ''}${orderNotes ? ' | 📝 ' + t('history.notes') : ''} <button class="ghost" onclick="event.stopPropagation();printHistoryReceipt(${JSON.stringify(o).replace(/"/g, '&quot;')}, ${orderNum})" style="font-size:12px;padding:4px 8px;min-height:28px;color:var(--accent);">🖨️</button></div>
         <div class="ho-details">
           ${items.map((it, idx) => `<div class="ho-item"><span>${escHtml(it.name)} x${it.qty||1}${it.note ? '<br/><span style="color:var(--text2);font-size:12px;padding-left:12px;">📝 ' + escHtml(it.note) + '</span>' : ''}</span><span>$${((it.price||0)*(it.qty||1)).toFixed(2)}</span></div>`).join('')}
           ${hasTax ? `
@@ -2062,6 +2104,7 @@ function switchAdminSection(sec) {
   else if (sec === 'permissions') loadPermissions();
   else if (sec === 'menuhistory') loadMenuHistory();
   else if (sec === 'credentials') loadCredentialsStatus();
+  else if (sec === 'tables') loadTableAdmin();
 }
 
 async function loadAdminStats() {
@@ -2523,6 +2566,157 @@ async function restoreMenu(date) {
     loadMenuHistory();
     loadItems();
   } catch(e) { showToast('Network error', 'danger'); }
+}
+
+// ═══════════ TABLE MANAGEMENT ═══════════
+async function loadTableAdmin() {
+  const list = document.getElementById('tablesList');
+  list.innerHTML = '<div class="empty-state">' + t('loading') + '</div>';
+  try {
+    const r = await fetch(BACKEND_URL + '/api/tables');
+    if (!r.ok) { list.innerHTML = '<div class="empty-state">Failed to load</div>'; return; }
+    const tables = await r.json();
+    const entries = Object.entries(tables);
+    if (entries.length === 0) {
+      list.innerHTML = '<div class="empty-state">No tables assigned yet. Add a table above.</div>';
+      return;
+    }
+    let html = '';
+    entries.forEach(([num, t]) => {
+      const statusColor = t.status === 'available' ? '#2ecc71' : '#f0ad4e';
+      const tabInfo = t.tab_order_count > 0
+        ? `<span style="color:var(--accent);font-weight:600;margin-left:8px;">💵 $${t.tab_total.toFixed(2)} (${t.tab_order_count} order${t.tab_order_count > 1 ? 's' : ''})</span>`
+        : '<span style="color:var(--text2);margin-left:8px;">No active orders</span>';
+      html += `<div class="item-mgmt-entry" style="margin-bottom:6px;">
+        <div class="ime-info">
+          <strong>🪑 ${escHtml(t.name)}</strong>
+          <span class="ime-cat">#${escHtml(String(t.number))}</span>
+          <span style="color:var(--text2);font-size:12px;">📱 ${t.tablet_id || 'No tablet assigned'}</span>
+          <span style="color:${statusColor};font-size:12px;">● ${t.status}</span>
+          ${tabInfo}
+        </div>
+        <div class="ime-actions">
+          <button class="outline" onclick="viewTableTab(${t.number})" style="font-size:13px;padding:6px 12px;min-height:36px;">💵 Tab</button>
+          <button class="danger" onclick="removeTable(${t.number})" style="font-size:13px;padding:6px 12px;min-height:36px;">🗑️ Remove</button>
+        </div>
+      </div>`;
+    });
+    list.innerHTML = html || '<div class="empty-state">No tables assigned</div>';
+  } catch(e) { list.innerHTML = '<div class="empty-state">' + t('network_error') + '</div>'; }
+}
+
+async function assignTable() {
+  const tableNumber = parseInt(document.getElementById('tableNumInput').value);
+  const name = document.getElementById('tableNameInput').value.trim() || `Table ${tableNumber}`;
+  const tabletId = document.getElementById('tabletIdInput').value.trim();
+  if (!tableNumber || tableNumber < 1) { showToast('Enter a valid table number', 'danger'); return; }
+  try {
+    const r = await fetch(BACKEND_URL + '/api/tables/assign', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, table_number: tableNumber, name, tablet_id: tabletId })
+    });
+    const d = await r.json();
+    if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
+    showToast('Table assigned!', 'success');
+    document.getElementById('tableNumInput').value = '';
+    document.getElementById('tableNameInput').value = '';
+    document.getElementById('tabletIdInput').value = '';
+    loadTableAdmin();
+    loadTableSelector();
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
+}
+
+async function removeTable(tableNumber) {
+  if (!confirm('Remove table #' + tableNumber + '? This will not affect existing orders.')) return;
+  try {
+    const r = await fetch(BACKEND_URL + '/api/tables/remove', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, table_number: tableNumber })
+    });
+    const d = await r.json();
+    if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
+    showToast('Table removed', 'success');
+    loadTableAdmin();
+    loadTableSelector();
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
+}
+
+async function viewTableTab(tableNumber) {
+  document.getElementById('tableTabTitle').textContent = '🪑 Table #' + tableNumber + ' - Running Tab';
+  document.getElementById('tableTabContent').innerHTML = '<div class="empty-state">Loading tab...</div>';
+  document.getElementById('tableTabOverlay').classList.add('active');
+  try {
+    const r = await fetch(BACKEND_URL + '/api/tables/tab/' + tableNumber);
+    if (!r.ok) { document.getElementById('tableTabContent').innerHTML = '<div class="empty-state">Failed to load tab</div>'; return; }
+    const data = await r.json();
+    if (data.order_count === 0) {
+      document.getElementById('tableTabContent').innerHTML = '<div class="empty-state">No active orders for this table</div>';
+      return;
+    }
+    let html = `<div style="margin-bottom:12px;padding:12px;background:var(--bg);border-radius:8px;">
+      <div style="display:flex;justify-content:space-between;font-weight:600;"><span>Active Orders:</span><span>${data.order_count}</span></div>
+      <div style="display:flex;justify-content:space-between;"><span>Subtotal:</span><span>$${data.subtotal.toFixed(2)}</span></div>
+      <div style="display:flex;justify-content:space-between;"><span>Tax:</span><span>$${data.tax.toFixed(2)}</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:20px;color:var(--accent);font-weight:700;border-top:2px solid #2a2a4e;padding-top:8px;margin-top:8px;"><span>Total:</span><span>$${data.total.toFixed(2)}</span></div>
+    </div>`;
+    html += '<h4 style="margin-bottom:8px;">Orders</h4>';
+    data.orders.forEach((o, i) => {
+      const dt = o.date ? new Date(o.date).toLocaleString() : 'Unknown';
+      const items = o.items || [];
+      html += `<div style="background:var(--card);border-radius:8px;padding:12px;margin-bottom:8px;">
+        <div style="display:flex;justify-content:space-between;font-size:14px;">
+          <span><strong>Order #${o.order_id}</strong></span>
+          <span style="color:var(--text2);">${escHtml(dt)}</span>
+        </div>
+        <div style="margin-top:6px;">
+          ${items.map(it => `<div style="display:flex;justify-content:space-between;font-size:13px;padding:2px 0;">
+            <span>${escHtml(it.name)} x${it.qty || 1}</span>
+            <span>$${((it.price || 0) * (it.qty || 1)).toFixed(2)}</span>
+          </div>`).join('')}
+        </div>
+        <div style="display:flex;justify-content:space-between;font-weight:600;border-top:1px solid #2a2a4e;padding-top:4px;margin-top:4px;font-size:14px;">
+          <span>Total</span>
+          <span>$${parseFloat(o.total || 0).toFixed(2)}</span>
+        </div>
+      </div>`;
+    });
+    document.getElementById('tableTabContent').innerHTML = html;
+  } catch(e) {
+    document.getElementById('tableTabContent').innerHTML = '<div class="empty-state">Network error</div>';
+  }
+}
+
+function closeTableTab() {
+  document.getElementById('tableTabOverlay').classList.remove('active');
+}
+
+async function loadTableSelector() {
+  const sel = document.getElementById('tableSelect');
+  if (!sel) return;
+  try {
+    const r = await fetch(BACKEND_URL + '/api/tables');
+    if (!r.ok) return;
+    const tables = await r.json();
+    const entries = Object.entries(tables);
+    if (entries.length === 0) {
+      document.getElementById('tableRow').style.display = 'none';
+      return;
+    }
+    document.getElementById('tableRow').style.display = 'block';
+    const currentVal = sel.value;
+    sel.innerHTML = '<option value="">No table</option>';
+    entries.forEach(([num, t]) => {
+      const opt = document.createElement('option');
+      opt.value = t.number;
+      opt.textContent = escHtml(t.name) + ' (#' + t.number + ')';
+      sel.appendChild(opt);
+    });
+    if (currentVal && [...sel.options].some(o => o.value === currentVal)) {
+      sel.value = currentVal;
+    }
+  } catch(e) {
+    document.getElementById('tableRow').style.display = 'none';
+  }
 }
 
 // ═══════════ KITCHEN DISPLAY ═══════════

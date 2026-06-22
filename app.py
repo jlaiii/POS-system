@@ -21,6 +21,7 @@ ITEMS_FILE = 'items.json'  # New items file
 TAX_CONFIG_FILE = 'tax_config.json'  # Tax configuration
 DISCOUNTS_FILE = 'discounts.json'  # Discount/coupon codes
 ORDER_COUNTER_FILE = 'order_counter.json'  # Auto-incrementing order counter
+TABLES_FILE = 'tables.json'  # Table management data
 MENU_BACKUPS_DIR = 'menu_backups'
 
 # --- Permission Constants ---
@@ -85,7 +86,7 @@ def backup_menu():
 
 
 # Ensure JSON files exist and are initialized correctly
-for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE]:
+for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE]:
     if not os.path.exists(f):
         with open(f, 'w') as file:
             if f == USERS_FILE:
@@ -125,6 +126,8 @@ for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMES
                 json.dump({}, file, indent=4)  # Initialize empty discounts
             elif f == ORDER_COUNTER_FILE:
                 json.dump({"counter": 1}, file, indent=4)  # Initialize order counter at 1
+            elif f == TABLES_FILE:
+                json.dump({}, file, indent=4)  # Initialize empty tables
             else:
                 json.dump([], file)  # Initialize orders.json and cleared_orders.json as empty lists
 
@@ -656,7 +659,8 @@ def submit_order():
         'discount_amount': round(float(data.get('discount_amount', 0)), 2),
         'total': round(total, 2),
         'notes': data.get('notes', ''),  # Per-order special instructions
-        'item_notes': data.get('item_notes', {})  # Per-item notes {index: note_string}
+        'item_notes': data.get('item_notes', {}),  # Per-item notes {index: note_string}
+        'table_number': data.get('table_number')  # Table number for table management
     }
     orders = load_json_data(ORDERS_FILE)
     orders.append(order_details)
@@ -1727,6 +1731,138 @@ def drivethrough_reset():
         'updated_at': datetime.now().isoformat()
     }
     return jsonify({'message': 'Drive-through display reset'})
+
+
+# ============================================================
+# Table Management System
+# ============================================================
+
+
+@app.route('/api/tables', methods=['GET'])
+def get_tables():
+    """Returns all tables with their assignments and running tab info."""
+    tables = load_json_data(TABLES_FILE)
+    orders = load_json_data(ORDERS_FILE)
+    
+    result = {}
+    for table_num, tdata in tables.items():
+        # Calculate running tab for this table (unpaid orders)
+        table_orders = [o for o in orders if o.get('table_number') == int(table_num) and o.get('status') in ('pending', 'preparing')]
+        tab_total = sum(float(o.get('total', 0)) for o in table_orders)
+        tab_items_count = sum(len(o.get('items', [])) for o in table_orders)
+        
+        result[table_num] = {
+            'number': tdata.get('number'),
+            'name': tdata.get('name', f"Table {table_num}"),
+            'tablet_id': tdata.get('tablet_id', ''),
+            'status': tdata.get('status', 'available'),
+            'created_at': tdata.get('created_at', ''),
+            'tab_total': round(tab_total, 2),
+            'tab_order_count': len(table_orders),
+            'tab_items_count': tab_items_count
+        }
+    return jsonify(result)
+
+
+@app.route('/api/tables/assign', methods=['POST'])
+def assign_table():
+    """Admin assigns a tablet to a table or creates a new table."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+    
+    if not check_perm(admin_pin, "manage_items"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+    
+    table_number = data.get('table_number')
+    tablet_id = data.get('tablet_id', '')
+    name = data.get('name', f"Table {table_number}")
+    
+    if not table_number:
+        return jsonify({'message': 'Table number is required.'}), 400
+    
+    try:
+        table_number = int(table_number)
+        if table_number < 1:
+            raise ValueError
+    except (ValueError, TypeError):
+        return jsonify({'message': 'Table number must be a positive integer.'}), 400
+    
+    tables = load_json_data(TABLES_FILE)
+    key = str(table_number)
+    
+    tables[key] = {
+        'number': table_number,
+        'name': name,
+        'tablet_id': tablet_id,
+        'status': 'available',
+        'created_at': datetime.now().isoformat()
+    }
+    save_json_data(TABLES_FILE, tables)
+    
+    admin_user = load_json_data(USERS_FILE).get(admin_pin, {})
+    log_activity('assign_table', admin_pin, admin_user.get('role', 'admin'), {
+        'table_number': table_number,
+        'tablet_id': tablet_id,
+        'name': name
+    })
+    return jsonify({'message': f'Table {table_number} assigned successfully.', 'table': tables[key]})
+
+
+@app.route('/api/tables/remove', methods=['POST'])
+def remove_table():
+    """Admin removes a table assignment."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+    
+    if not check_perm(admin_pin, "manage_items"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+    
+    table_number = data.get('table_number')
+    if not table_number:
+        return jsonify({'message': 'Table number is required.'}), 400
+    
+    tables = load_json_data(TABLES_FILE)
+    key = str(table_number)
+    
+    if key not in tables:
+        return jsonify({'message': f'Table {table_number} not found.'}), 404
+    
+    del tables[key]
+    save_json_data(TABLES_FILE, tables)
+    
+    admin_user = load_json_data(USERS_FILE).get(admin_pin, {})
+    log_activity('remove_table', admin_pin, admin_user.get('role', 'admin'), {
+        'table_number': table_number
+    })
+    return jsonify({'message': f'Table {table_number} removed successfully.'})
+
+
+@app.route('/api/tables/tab/<int:table_number>', methods=['GET'])
+def get_table_tab(table_number):
+    """Returns the running tab for a table — all unpaid orders with their totals."""
+    orders = load_json_data(ORDERS_FILE)
+    table_orders = [o for o in orders if o.get('table_number') == table_number and o.get('status') in ('pending', 'preparing')]
+    
+    # Sort by date ascending
+    table_orders.sort(key=lambda o: o.get('date', ''))
+    
+    tab_subtotal = 0
+    tab_tax = 0
+    tab_total = 0
+    
+    for o in table_orders:
+        tab_subtotal += float(o.get('subtotal', 0))
+        tab_tax += float(o.get('tax_amount', 0))
+        tab_total += float(o.get('total', 0))
+    
+    return jsonify({
+        'table_number': table_number,
+        'orders': table_orders,
+        'order_count': len(table_orders),
+        'subtotal': round(tab_subtotal, 2),
+        'tax': round(tab_tax, 2),
+        'total': round(tab_total, 2)
+    })
 
 
 # ============================================================
