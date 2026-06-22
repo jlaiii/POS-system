@@ -28,7 +28,6 @@
 
 ## Priority: HIGH (NEW — Audit 2026-06-22)
 
-- [~] worker-2 **Fix verify_admin blocking owners from tax/discount endpoints** — `verify_admin()` checks for role=='admin' but skips owners. Blocks owner from updating tax config and managing discounts in the API. Replace with `check_perm(admin_pin, "manage_items")` in both `update_tax_config()` and `manage_discount()`.
 - [ ] **Fix menu history frontend parsing** — Frontend reads `data.history` but API returns `{"backups": [...]}`. Causes TypeError (forEach on object) when owner opens Menu History tab. Change frontend to read `data.backups`.
 - [ ] **Add reorder button in order history** — One-click to reload all items from a past order into the cart. Major waiter speed improvement: eliminates need to manually re-add frequent orders.
 
@@ -45,6 +44,7 @@
 
 ## Done
 
+- [x] **Fix verify_admin blocking owners from tax/discount endpoints** — Replaced `verify_admin()` (which only checks role=='admin') with `check_perm(admin_pin, "manage_items")` in both `update_tax_config()` and `manage_discount()` endpoints. Owners with wildcard permissions can now manage tax config and discounts. [worker-2]
 - [x] **Add quick-order favorites per user (save frequently ordered combos)** — New `favorites.json` data store. `POST /api/favorites/save`, `/api/favorites/list`, `/api/favorites/delete` endpoints. Frontend: "Save as Favorite" and "My Favorites" buttons in cart area, favorites overlay with load/delete, cart replace-or-merge on load, 20-favorite limit, duplicate name check, activity logging. i18n EN + ES. [worker-1]
 - [x] **Add item popularity trend chart (which items rising/falling)** — New `/api/analytics/item_trends` endpoint comparing recent 7d vs prior 7d item counts with % change, direction (rising/falling/stable), and sorting. Frontend: horizontal bar chart in Charts section with green/red/gray bars, tooltip showing counts and delta. i18n EN + ES. [worker-3]
 - [x] **Refund/void order functionality with reason tracking** — POST /api/orders/refund endpoint marks orders as refunded with reason, timestamp, and staff ID. Double-refund prevention. Refund audit trail in refunded_orders.json. Activity log integration. Frontend: refund button (with manage_orders permission) in order history, refund dialog with reason textarea, REFUNDED badge and reason on refunded orders. Stats exclude refunded orders from revenue. i18n English + Spanish. [worker-1]

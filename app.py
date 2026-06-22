@@ -1503,18 +1503,13 @@ def get_tax_config():
 
 @app.route('/api/tax_config', methods=['POST'])
 def update_tax_config():
-    """Update tax configuration (admin only)."""
+    """Update tax configuration (admin/owner only)."""
     data = request.json
     admin_pin = data.get('adminPin')
-    is_admin, admin_user = verify_admin(admin_pin)
-
-    if not is_admin:
-        log_activity('update_tax_config', admin_pin, 'unauthorized', {'status': 'failed'})
-        return jsonify({'message': 'Unauthorized. Admin PIN required.'}), 403
 
     if not check_perm(admin_pin, "manage_items"):
         log_activity('update_tax_config', admin_pin, 'unauthorized', {'status': 'failed', 'reason': 'Insufficient permissions'})
-        return jsonify({'message': 'Insufficient permissions.'}), 403
+        return jsonify({'message': 'Unauthorized. Admin PIN or permission required.'}), 403
 
     config = load_json_data(TAX_CONFIG_FILE)
 
@@ -1552,18 +1547,13 @@ def get_discounts():
 
 @app.route('/api/discounts', methods=['POST'])
 def manage_discount():
-    """Add, update, or delete discount codes (admin only)."""
+    """Add, update, or delete discount codes (admin/owner only)."""
     data = request.json
     admin_pin = data.get('adminPin')
-    is_admin, admin_user = verify_admin(admin_pin)
-
-    if not is_admin:
-        log_activity('manage_discount', admin_pin, 'unauthorized', {'status': 'failed'})
-        return jsonify({'message': 'Unauthorized. Admin PIN required.'}), 403
 
     if not check_perm(admin_pin, "manage_items"):
         log_activity('manage_discount', admin_pin, 'unauthorized', {'status': 'failed', 'reason': 'Insufficient permissions'})
-        return jsonify({'message': 'Insufficient permissions.'}), 403
+        return jsonify({'message': 'Unauthorized. Admin PIN or permission required.'}), 403
 
     action = data.get('action')  # 'add', 'update', 'delete'
 
