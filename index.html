@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+|<html lang="en" id="htmlTag">|
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"/>
@@ -325,6 +325,111 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 #receiptActions .print-btn { background: #e94560; color: #fff; }
 #receiptActions .close-btn { background: #ddd; color: #333; }
 
+/* ── KITCHEN DISPLAY ── */
+#kitchenView { display: none; flex-direction: column; min-height: 100vh; }
+#kitchenView.active { display: flex; }
+
+#kitchenHeader {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; background: var(--card); gap: 12px; flex-wrap: wrap;
+  border-bottom: 3px solid var(--accent);
+}
+#kitchenHeader .kh-title { font-size: 24px; font-weight: 700; color: var(--accent); }
+#kitchenHeader .kh-user { color: var(--text2); font-size: 15px; }
+#kitchenHeader .kh-clock { font-size: 20px; font-weight: 600; color: var(--text); min-width: 80px; text-align: right; }
+#kitchenHeader .kh-actions { display: flex; gap: 8px; align-items: center; }
+
+#kitchenStats {
+  display: flex; gap: 24px; padding: 10px 16px; background: var(--bg);
+  flex-wrap: wrap; font-size: 16px; font-weight: 600;
+}
+#kitchenStats span { color: var(--text2); }
+#kitchenStats .ks-pending { color: #f0ad4e; }
+#kitchenStats .ks-preparing { color: #5bc0de; }
+#kitchenStats .ks-done { color: #2ecc71; }
+
+#kitchenQueue {
+  flex: 1; padding: 12px; overflow-y: auto;
+  display: grid; grid-template-columns: 1fr; gap: 12px; align-content: start;
+}
+@media (min-width: 768px) and (orientation: landscape) {
+  #kitchenQueue { grid-template-columns: 1fr 1fr; }
+}
+
+.kitchen-order-card {
+  background: var(--card); border-radius: var(--radius); padding: 20px;
+  border-left: 6px solid #f0ad4e;
+  display: flex; flex-direction: column; gap: 12px;
+  transition: border-color 0.3s;
+}
+.kitchen-order-card.status-preparing { border-left-color: #5bc0de; }
+.kitchen-order-card.status-done { border-left-color: #2ecc71; }
+
+.kitchen-order-card .koc-header {
+  display: flex; align-items: center; justify-content: space-between;
+}
+.kitchen-order-card .koc-id {
+  font-size: 2.2em; font-weight: 800; color: var(--accent);
+}
+.kitchen-order-card .koc-time {
+  font-size: 1.1em; color: var(--text2); font-weight: 600;
+}
+.kitchen-order-card .koc-badge {
+  font-size: 0.95em; font-weight: 700; padding: 6px 14px; border-radius: 20px;
+}
+.koc-badge.pending { background: #f0ad4e33; color: #f0ad4e; }
+.koc-badge.preparing { background: #5bc0de33; color: #5bc0de; }
+
+.kitchen-order-card .koc-items {
+  display: flex; flex-direction: column; gap: 4px;
+}
+.kitchen-order-card .koc-item {
+  font-size: 1.2em; font-weight: 600; display: flex; gap: 8px;
+}
+.kitchen-order-card .koc-item .koc-qty {
+  color: var(--accent); font-weight: 700;
+}
+
+.kitchen-order-card .koc-notes {
+  font-size: 0.95em; color: #f39c12; font-style: italic;
+  background: #f39c1215; padding: 8px 12px; border-radius: 8px;
+}
+.kitchen-order-card .koc-payment {
+  font-size: 0.9em; color: var(--text2);
+}
+
+.kitchen-order-card .koc-actions {
+  display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+}
+.kitchen-order-card .koc-actions button { font-size: 1em; }
+.koc-btn-claim {
+  background: #27ae60; color: #fff; font-size: 1.1em; font-weight: 700;
+  padding: 14px 28px; min-height: 52px; flex: 1;
+}
+.koc-btn-done {
+  background: #2980b9; color: #fff; font-size: 1.1em; font-weight: 700;
+  padding: 14px 28px; min-height: 52px; flex: 1;
+}
+.koc-btn-cancel {
+  background: transparent; color: #e74c3c; border: 1px solid #e74c3c;
+  font-size: 0.85em; padding: 8px 16px; min-height: 36px;
+}
+.koc-claimed-by {
+  color: #5bc0de; font-size: 1em; font-weight: 600; font-style: italic;
+}
+
+#kitchenLoading {
+  display: none; align-items: center; gap: 8px; padding: 8px 16px;
+  color: var(--text2); font-size: 13px;
+}
+#kitchenLoading.active { display: flex; }
+#kitchenLoading .spinner { width: 14px; height: 14px; }
+
+.kitchen-empty {
+  text-align: center; color: var(--text2); font-size: 1.3em;
+  padding: 60px 20px; grid-column: 1 / -1;
+}
+
 /* Thermal printer print styles */
 @media print {
   body * { visibility: hidden; }
@@ -351,7 +456,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 <!-- ═══════════ LOGIN SCREEN ═══════════ -->
 <div id="loginScreen">
   <div class="logo">🍽️ POS</div>
-  <div class="subtitle">Enter PIN to continue</div>
+  <div class="subtitle" data-i18n="login.subtitle">Enter PIN to continue</div>
   <div id="pinDisplay"></div>
   <div id="pinPad"></div>
   <div id="loginError"></div>
@@ -360,15 +465,19 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 <!-- ═══════════ MAIN APP ═══════════ -->
 <div id="appScreen">
   <div id="topBar">
-    <span class="app-title">🍽️ POS System</span>
+    <span class="app-title" data-i18n="app.title">🍽️ POS System</span>
     <span class="user-info" id="userInfoDisplay"></span>
-    <button class="ghost logout-btn" onclick="doLogout()">🚪 Logout</button>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button class="ghost logout-btn" id="langToggle" onclick="switchLanguage(currentLang === 'en' ? 'es' : 'en')" style="font-size:18px;padding:8px 12px;min-height:40px;" title="Switch language">🇪🇸</button>
+      <button class="ghost logout-btn" onclick="doLogout()" data-i18n="logout">🚪 Logout</button>
+    </div>
   </div>
 
   <div id="mainTabs">
-    <button onclick="switchMainTab('pos')" id="mainTabPos" class="active">🛒 POS</button>
-    <button onclick="switchMainTab('history')" id="mainTabHistory">📋 History</button>
-    <button onclick="switchMainTab('admin')" id="mainTabAdmin" style="display:none;">⚙️ Admin</button>
+    <button onclick="switchMainTab('pos')" id="mainTabPos" class="active" data-i18n="tab.pos">🛒 POS</button>
+    <button onclick="switchMainTab('history')" id="mainTabHistory" data-i18n="tab.history">📋 History</button>
+    <button onclick="switchMainTab('admin')" id="mainTabAdmin" style="display:none;" data-i18n="tab.admin">⚙️ Admin</button>
+    <button onclick="showKitchenView()" id="mainTabKitchen" style="display:none;" data-i18n="tab.kitchen">🔪 Kitchen</button>
   </div>
 
   <div id="tabContent">
@@ -378,23 +487,23 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
       <div id="posMain">
         <div id="itemGrid"></div>
         <div id="cart">
-          <h3>🧾 Cart</h3>
-          <div id="cartItems"><div class="empty-state">Cart is empty</div></div>
+          <h3 data-i18n="cart.title">🧾 Cart</h3>
+          <div id="cartItems"><div class="empty-state" data-i18n="cart.empty">Cart is empty</div></div>
           <div id="discountRow" style="display:none;margin-top:4px;">
             <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
-              <input type="text" id="couponInput" placeholder="Coupon code" style="flex:1;min-width:100px;padding:10px 12px;font-size:14px;text-transform:uppercase;" maxlength="20"/>
-              <button class="outline" onclick="applyDiscount()" style="font-size:13px;padding:8px 14px;min-height:40px;">Apply</button>
+              <input type="text" id="couponInput" placeholder="Coupon code" style="flex:1;min-width:100px;padding:10px 12px;font-size:14px;text-transform:uppercase;" maxlength="20" data-i18n-placeholder="cart.coupon"/>
+              <button class="outline" onclick="applyDiscount()" style="font-size:13px;padding:8px 14px;min-height:40px;" data-i18n="cart.apply">Apply</button>
             </div>
             <div id="discountStatus" style="font-size:13px;margin-top:4px;"></div>
           </div>
           <div id="orderNotesRow" style="display:none;margin-top:4px;">
-            <textarea id="orderNotesInput" placeholder="Order notes / special instructions..." style="width:100%;background:var(--bg);border:2px solid #2a2a4e;border-radius:var(--radius);color:var(--text);font-size:14px;padding:10px 12px;min-height:48px;resize:vertical;font-family:inherit;" rows="2" maxlength="500"></textarea>
+            <textarea id="orderNotesInput" placeholder="Order notes / special instructions..." style="width:100%;background:var(--bg);border:2px solid #2a2a4e;border-radius:var(--radius);color:var(--text);font-size:14px;padding:10px 12px;min-height:48px;resize:vertical;font-family:inherit;" rows="2" maxlength="500" data-i18n-placeholder="cart.notes"></textarea>
           </div>
           <div id="cartTotal">Total: $0.00</div>
           <div class="payment-methods" id="paymentMethods"></div>
           <div id="cartActions">
-            <button class="accent" onclick="submitOrder()">✅ Submit Order</button>
-            <button class="danger" onclick="clearCart()">🗑️ Clear</button>
+            <button class="accent" onclick="submitOrder()" data-i18n="cart.submit">✅ Submit Order</button>
+            <button class="danger" onclick="clearCart()" data-i18n="cart.clear">🗑️ Clear</button>
           </div>
         </div>
       </div>
@@ -403,24 +512,24 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
     <!-- HISTORY TAB -->
     <div id="historyTab">
       <div id="historyFilter">
-        <input type="date" id="historyDateFilter" onchange="loadOrderHistory()" placeholder="Filter by date"/>
-        <button class="ghost" onclick="document.getElementById('historyDateFilter').value='';loadOrderHistory();">✕ Clear</button>
+        <input type="date" id="historyDateFilter" onchange="loadOrderHistory()" data-i18n-placeholder="history.filter_date"/>
+        <button class="ghost" onclick="document.getElementById('historyDateFilter').value='';loadOrderHistory();" data-i18n="history.clear">✕ Clear</button>
       </div>
-      <div id="historyList"><div class="empty-state">Loading orders...</div></div>
+      <div id="historyList"><div class="empty-state" data-i18n="history.loading">Loading orders...</div></div>
     </div>
 
     <!-- ADMIN TAB -->
     <div id="adminTab">
       <div id="adminSubTabs">
-        <button onclick="switchAdminSection('stats')" id="asStats" class="active">📊 Stats</button>
-        <button onclick="switchAdminSection('charts')" id="asCharts">📈 Charts</button>
-        <button onclick="switchAdminSection('most')" id="asMost">🏆 Most Ordered</button>
-        <button onclick="switchAdminSection('users')" id="asUsers">👥 Users</button>
-        <button onclick="switchAdminSection('items')" id="asItems">📦 Items</button>
-        <button onclick="switchAdminSection('tax')" id="asTax">💰 Tax</button>
-        <button onclick="switchAdminSection('discounts')" id="asDiscounts">🏷️ Discounts</button>
-        <button onclick="switchAdminSection('log')" id="asLog">📜 Activity Log</button>
-        <button onclick="switchAdminSection('timesheet')" id="asTimesheet">⏱️ Timesheet</button>
+        <button onclick="switchAdminSection('stats')" id="asStats" class="active" data-i18n="admin.stats">📊 Stats</button>
+        <button onclick="switchAdminSection('charts')" id="asCharts" data-i18n="admin.charts">📈 Charts</button>
+        <button onclick="switchAdminSection('most')" id="asMost" data-i18n="admin.most_ordered">🏆 Most Ordered</button>
+        <button onclick="switchAdminSection('users')" id="asUsers" data-i18n="admin.users">👥 Users</button>
+        <button onclick="switchAdminSection('items')" id="asItems" data-i18n="admin.items">📦 Items</button>
+        <button onclick="switchAdminSection('tax')" id="asTax" data-i18n="admin.tax">💰 Tax</button>
+        <button onclick="switchAdminSection('discounts')" id="asDiscounts" data-i18n="admin.discounts">🏷️ Discounts</button>
+        <button onclick="switchAdminSection('log')" id="asLog" data-i18n="admin.log">📜 Activity Log</button>
+        <button onclick="switchAdminSection('timesheet')" id="asTimesheet" data-i18n="admin.timesheet">⏱️ Timesheet</button>
       </div>
       <div id="adminContent">
         <!-- Stats -->
@@ -445,7 +554,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
             <div class="form-row">
               <input type="text" id="addUserId" placeholder="4-digit PIN" maxlength="4" inputmode="numeric" pattern="[0-9]{4}"/>
               <input type="text" id="addUserName" placeholder="User name"/>
-              <select id="addUserRole"><option value="user">User</option><option value="admin">Admin</option></select>
+              <select id="addUserRole"><option value="user">User</option><option value="admin">Admin</option><option value="cook">Cook</option></select>
               <button class="accent" onclick="addUser()">Add</button>
             </div>
           </div>
@@ -534,13 +643,34 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
   </div>
 </div>
 
+<!-- ═══════════ KITCHEN DISPLAY VIEW ═══════════ -->
+<div id="kitchenView">
+  <div id="kitchenHeader">
+    <span class="kh-title" data-i18n="kitchen.title">🔪 Kitchen Display</span>
+    <span class="kh-user" id="kitchenUserName"></span>
+    <span class="kh-clock" id="kitchenClock"></span>
+    <div class="kh-actions">
+      <button class="ghost" onclick="toggleFullscreen()" title="Fullscreen" style="font-size:18px;padding:8px 12px;min-height:40px;">⛶</button>
+      <button class="ghost" id="kitchenBackBtn" style="display:none;" onclick="hideKitchenView()" data-i18n="kitchen.back">← Back to POS</button>
+      <button class="ghost logout-btn" onclick="doLogout()" data-i18n="logout">🚪 Logout</button>
+    </div>
+  </div>
+  <div id="kitchenStats">
+    <span>🟡 Pending: <span class="ks-pending" id="ksPending">0</span></span>
+    <span>🟠 Preparing: <span class="ks-preparing" id="ksPreparing">0</span></span>
+    <span>✅ Done Today: <span class="ks-done" id="ksDone">0</span></span>
+  </div>
+  <div id="kitchenLoading"><div class="spinner"></div> Refreshing...</div>
+  <div id="kitchenQueue"><div class="kitchen-empty">No orders — stand by 🍳</div></div>
+</div>
+
 <!-- ═══════════ RECEIPT OVERLAY ═══════════ -->
 <div id="receiptOverlay">
   <div id="receiptBox">
     <div id="receiptContent"></div>
     <div id="receiptActions">
-      <button class="print-btn" onclick="printReceipt()">🖨️ Print</button>
-      <button class="close-btn" onclick="closeReceipt()">Close</button>
+      <button class="print-btn" onclick="printReceipt()" data-i18n="receipt.print">🖨️ Print</button>
+      <button class="close-btn" onclick="closeReceipt()" data-i18n="receipt.close">Close</button>
     </div>
   </div>
 </div>
@@ -555,6 +685,273 @@ const BACKEND_URL = (() => {
   catch(e) { return 'http://localhost:5000'; }
 })();
 
+// ═══════════ MULTI-LANGUAGE SUPPORT ═══════════
+// Translation dictionary: en = English (default), es = Spanish
+const L10N = {
+  en: {
+    'app.title': '🍽️ POS System',
+    'login.subtitle': 'Enter PIN to continue',
+    'login.error': 'Cannot connect to server',
+    'logout': '🚪 Logout',
+    'tab.pos': '🛒 POS',
+    'tab.history': '📋 History',
+    'tab.admin': '⚙️ Admin',
+    'tab.kitchen': '🔪 Kitchen',
+    'cart.title': '🧾 Cart',
+    'cart.empty': 'Cart is empty',
+    'cart.coupon': 'Coupon code',
+    'cart.apply': 'Apply',
+    'cart.notes': 'Order notes / special instructions...',
+    'cart.total': 'Total:',
+    'cart.subtotal': 'Subtotal:',
+    'cart.tax': 'Tax:',
+    'cart.discount': 'Discount',
+    'cart.submit': '✅ Submit Order',
+    'cart.clear': '🗑️ Clear',
+    'cart.each': 'each',
+    'cart.item_note': 'Item note...',
+    'payment.cash': '💵 Cash',
+    'payment.card': '💳 Card',
+    'payment.mobile': '📱 Mobile Pay',
+    'item.add': '➕ ADD',
+    'item.add_es': '➕ AÑADIR',
+    'item.no_items': 'No items in this category',
+    'item.load_fail': 'Cannot load items',
+    'history.filter_date': 'Filter by date',
+    'history.clear': '✕ Clear',
+    'history.loading': 'Loading orders...',
+    'history.empty': 'No orders found',
+    'history.payment': 'Payment:',
+    'history.user': 'User:',
+    'history.tax': 'Tax:',
+    'history.notes': '📝 Has notes',
+    'history.subtotal': 'Subtotal',
+    'history.total': 'Total',
+    'history.order_notes': '📝 Order Notes:',
+    'admin.stats': '📊 Stats',
+    'admin.charts': '📈 Charts',
+    'admin.most_ordered': '🏆 Most Ordered',
+    'admin.users': '👥 Users',
+    'admin.items': '📦 Items',
+    'admin.tax': '💰 Tax',
+    'admin.discounts': '🏷️ Discounts',
+    'admin.log': '📜 Activity Log',
+    'admin.timesheet': '⏱️ Timesheet',
+    'admin.stats.today_revenue': "Today's Revenue",
+    'admin.stats.today_orders': "Today's Orders",
+    'admin.stats.avg_order': 'Avg Order Today',
+    'admin.stats.top_item': 'Top Item Today',
+    'admin.stats.total_sales': 'Total All-Time Sales',
+    'admin.stats.total_orders': 'Total All-Time Orders',
+    'admin.stats.weekly_sales': 'Sales This Week',
+    'admin.stats.monthly_sales': 'Sales This Month',
+    'admin.charts.daily_revenue': '📅 Daily Revenue (Last 7 Days)',
+    'admin.charts.payment_methods': '💳 Payment Methods',
+    'receipt.print': '🖨️ Print',
+    'receipt.close': 'Close',
+    'receipt.thank_you': 'Thank you for your business!',
+    'receipt.have_day': 'Have a great day 🎉',
+    'receipt.subtotal': 'Subtotal',
+    'receipt.tax': 'Tax',
+    'receipt.discount': 'Discount',
+    'receipt.total': 'TOTAL',
+    'receipt.order_notes': '📝 Order Notes:',
+    'receipt.cashier': 'Cashier:',
+    'receipt.payment': 'Payment:',
+    'toast.cart_empty': 'Cart is empty!',
+    'toast.order_submitted': 'Order submitted!',
+    'toast.cart_cleared': 'Cart cleared',
+    'toast.network_error': 'Network error',
+    'toast.discount_applied': 'Discount applied!',
+    'toast.discount_removed': 'Discount removed',
+    'loading': 'Loading...',
+    'network_error': 'Network error',
+    'unauthorized': 'Unauthorized',
+    'no_data': 'No data',
+    'no_orders': 'No orders yet',
+    'no_users': 'No users',
+    'no_items': 'No items',
+    'save': 'Save',
+    'cancel': 'Cancel',
+    'add': 'Add',
+    'kitchen.title': '🔪 Kitchen Display',
+    'kitchen.pending': 'Pending:',
+    'kitchen.preparing': 'Preparing:',
+    'kitchen.done_today': 'Done Today:',
+    'kitchen.empty': 'No orders — stand by 🍳',
+    'kitchen.refreshing': 'Refreshing...',
+    'kitchen.back': '← Back to POS',
+    'kitchen.claim': '🔪 Claim Order',
+    'kitchen.done': '✅ Done',
+    'kitchen.cancel': 'Cancel',
+    'lang.switch': 'Español',
+    'users.add_title': '➕ Add User',
+    'items.add_title': '➕ Add Item',
+    'tax.save_global': 'Save Global Rate',
+  },
+  es: {
+    'app.title': '🍽️ Sistema POS',
+    'login.subtitle': 'Ingrese su PIN para continuar',
+    'login.error': 'No se puede conectar al servidor',
+    'logout': '🚪 Cerrar sesión',
+    'tab.pos': '🛒 POS',
+    'tab.history': '📋 Historial',
+    'tab.admin': '⚙️ Admin',
+    'tab.kitchen': '🔪 Cocina',
+    'cart.title': '🧾 Carrito',
+    'cart.empty': 'Carrito vacío',
+    'cart.coupon': 'Código de cupón',
+    'cart.apply': 'Aplicar',
+    'cart.notes': 'Notas del pedido / instrucciones especiales...',
+    'cart.total': 'Total:',
+    'cart.subtotal': 'Subtotal:',
+    'cart.tax': 'Impuesto:',
+    'cart.discount': 'Descuento',
+    'cart.submit': '✅ Enviar pedido',
+    'cart.clear': '🗑️ Limpiar',
+    'cart.each': 'cada uno',
+    'cart.item_note': 'Nota del artículo...',
+    'payment.cash': '💵 Efectivo',
+    'payment.card': '💳 Tarjeta',
+    'payment.mobile': '📱 Pago móvil',
+    'item.add': '➕ AÑADIR',
+    'item.no_items': 'No hay artículos en esta categoría',
+    'item.load_fail': 'No se pueden cargar los artículos',
+    'history.filter_date': 'Filtrar por fecha',
+    'history.clear': '✕ Limpiar',
+    'history.loading': 'Cargando pedidos...',
+    'history.empty': 'No se encontraron pedidos',
+    'history.payment': 'Pago:',
+    'history.user': 'Usuario:',
+    'history.tax': 'Impuesto:',
+    'history.notes': '📝 Tiene notas',
+    'history.subtotal': 'Subtotal',
+    'history.total': 'Total',
+    'history.order_notes': '📝 Notas del pedido:',
+    'admin.stats': '📊 Estadísticas',
+    'admin.charts': '📈 Gráficos',
+    'admin.most_ordered': '🏆 Más pedidos',
+    'admin.users': '👥 Usuarios',
+    'admin.items': '📦 Artículos',
+    'admin.tax': '💰 Impuestos',
+    'admin.discounts': '🏷️ Descuentos',
+    'admin.log': '📜 Registro de actividad',
+    'admin.timesheet': '⏱️ Horario',
+    'admin.stats.today_revenue': 'Ingresos de hoy',
+    'admin.stats.today_orders': 'Pedidos de hoy',
+    'admin.stats.avg_order': 'Promedio hoy',
+    'admin.stats.top_item': 'Artículo más pedido hoy',
+    'admin.stats.total_sales': 'Ventas totales',
+    'admin.stats.total_orders': 'Pedidos totales',
+    'admin.stats.weekly_sales': 'Ventas esta semana',
+    'admin.stats.monthly_sales': 'Ventas este mes',
+    'admin.charts.daily_revenue': '📅 Ingresos diarios (últimos 7 días)',
+    'admin.charts.payment_methods': '💳 Métodos de pago',
+    'receipt.print': '🖨️ Imprimir',
+    'receipt.close': 'Cerrar',
+    'receipt.thank_you': '¡Gracias por su negocio!',
+    'receipt.have_day': '¡Que tenga un buen día! 🎉',
+    'receipt.subtotal': 'Subtotal',
+    'receipt.tax': 'Impuesto',
+    'receipt.discount': 'Descuento',
+    'receipt.total': 'TOTAL',
+    'receipt.order_notes': '📝 Notas del pedido:',
+    'receipt.cashier': 'Cajero:',
+    'receipt.payment': 'Pago:',
+    'toast.cart_empty': '¡Carrito vacío!',
+    'toast.order_submitted': '¡Pedido enviado!',
+    'toast.cart_cleared': 'Carrito limpiado',
+    'toast.network_error': 'Error de red',
+    'toast.discount_applied': '¡Descuento aplicado!',
+    'toast.discount_removed': 'Descuento eliminado',
+    'loading': 'Cargando...',
+    'network_error': 'Error de red',
+    'unauthorized': 'No autorizado',
+    'no_data': 'Sin datos',
+    'no_orders': 'Sin pedidos aún',
+    'no_users': 'Sin usuarios',
+    'no_items': 'Sin artículos',
+    'save': 'Guardar',
+    'cancel': 'Cancelar',
+    'add': 'Agregar',
+    'kitchen.title': '🔪 Vista de Cocina',
+    'kitchen.pending': 'Pendientes:',
+    'kitchen.preparing': 'Preparando:',
+    'kitchen.done_today': 'Listos hoy:',
+    'kitchen.empty': 'Sin pedidos — en espera 🍳',
+    'kitchen.refreshing': 'Actualizando...',
+    'kitchen.back': '← Volver a POS',
+    'kitchen.claim': '🔪 Tomar pedido',
+    'kitchen.done': '✅ Listo',
+    'kitchen.cancel': 'Cancelar',
+    'lang.switch': 'English',
+    'users.add_title': '➕ Agregar usuario',
+    'items.add_title': '➕ Agregar artículo',
+    'tax.save_global': 'Guardar tasa global',
+  }
+};
+
+// Current language ('en' or 'es')
+let currentLang = 'en';
+
+/** Translate a key with optional variable interpolation {var} */
+function t(key, vars) {
+  const langData = L10N[currentLang] || L10N.en;
+  let str = langData[key] || L10N.en[key] || key;
+  if (vars) {
+    Object.keys(vars).forEach(k => {
+      str = str.replace(new RegExp('\\{' + k + '\\}', 'g'), vars[k]);
+    });
+  }
+  return str;
+}
+
+/** Detect browser language, default to 'en', switch to 'es' if browser is in Spanish */
+function detectLanguage() {
+  const stored = localStorage.getItem('pos_lang');
+  if (stored === 'es' || stored === 'en') return stored;
+  const browserLang = (navigator.language || navigator.userLanguage || '').toLowerCase();
+  return browserLang.startsWith('es') ? 'es' : 'en';
+}
+
+/** Switch language and re-render the whole UI */
+function switchLanguage(lang) {
+  if (lang !== 'en' && lang !== 'es') return;
+  currentLang = lang;
+  localStorage.setItem('pos_lang', lang);
+  document.getElementById('htmlTag').lang = lang;
+  // Update static data-i18n elements
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    el.textContent = t(el.getAttribute('data-i18n'));
+  });
+  // Update input placeholders with data-i18n-placeholder
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    el.placeholder = t(el.getAttribute('data-i18n-placeholder'));
+  });
+  // Refresh all dynamic UI
+  if (currentUser) {
+    // Re-render everything
+    document.getElementById('userInfoDisplay').textContent = currentUser.name + ' (' + currentUser.role + ')';
+    renderCategories();
+    renderItems();
+    renderCart();
+    if (document.getElementById('posTab').classList.contains('active')) {
+      // POS is active, already re-rendered
+    } else if (document.getElementById('historyTab').classList.contains('active')) {
+      loadOrderHistory();
+    } else if (document.getElementById('adminTab').classList.contains('active')) {
+      loadAdminStats();
+    }
+    // Update kitchen if visible
+    if (kitchenViewActive) {
+      renderKitchenQueue();
+    }
+  }
+  // Update language toggle button text
+  const langBtn = document.getElementById('langToggle');
+  if (langBtn) langBtn.textContent = currentLang === 'es' ? '🇺🇸' : '🇪🇸';
+}
+
 // ═══════════ STATE ═══════════
 let currentUser = null; // { id, name, role }
 let cart = [];
@@ -566,6 +963,14 @@ let chartDaily = null;
 let chartPayment = null;
 let taxConfig = null; // { global_tax_rate, category_tax_rates, item_tax_overrides }
 let appliedDiscount = null; // { code, type, value, discount_amount, description }
+
+// ═══════════ KITCHEN STATE ═══════════
+let kitchenQueue = [];
+let kitchenPollTimer = null;
+let kitchenStatsCache = { pending: 0, preparing: 0, done: 0 };
+let kitchenClockTimer = null;
+let kitchenPrevOrderIds = new Set(); // track new orders for sound
+let kitchenViewActive = false;
 
 // ═══════════ INIT ═══════════
 window.addEventListener('DOMContentLoaded', () => {
@@ -655,6 +1060,8 @@ async function doLogout() {
   itemsData = {};
   adminStatsCache = null;
   appliedDiscount = null;
+  stopKitchenPolling();
+  hideKitchenView();
   document.getElementById('appScreen').classList.remove('active');
   document.getElementById('loginScreen').style.display = 'flex';
   document.getElementById('pinDisplay').textContent = '----';
@@ -665,8 +1072,16 @@ function showApp() {
   document.getElementById('appScreen').classList.add('active');
   document.getElementById('userInfoDisplay').textContent = currentUser.name + ' (' + currentUser.role + ')';
   document.getElementById('mainTabAdmin').style.display = currentUser.role === 'admin' ? '' : 'none';
+  document.getElementById('mainTabKitchen').style.display = currentUser.role === 'admin' ? '' : 'none';
   loadTaxConfig();
-  switchMainTab('pos');
+  if (currentUser.role === 'cook') {
+    showKitchenView();
+  } else {
+    hideKitchenView();
+    switchMainTab('pos');
+  }
+  // Apply language after UI is set up
+  switchLanguage(currentLang);
 }
 
 // ═══════════ MAIN TABS ═══════════
@@ -701,7 +1116,7 @@ async function loadItems() {
     }
     renderItems();
   } catch(e) {
-    document.getElementById('itemGrid').innerHTML = '<div class="empty-state">Cannot load items</div>';
+    document.getElementById('itemGrid').innerHTML = '<div class="empty-state">' + t('item.load_fail') + '</div>';
   }
 }
 
@@ -722,7 +1137,7 @@ function renderItems() {
   grid.innerHTML = '';
   const items = itemsData[currentCategory] || [];
   if (items.length === 0) {
-    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;">No items in this category</div>';
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;">' + t('item.no_items') + '</div>';
     return;
   }
   items.forEach(item => {
@@ -731,7 +1146,7 @@ function renderItems() {
     card.innerHTML = `
       <div class="item-name">${escHtml(item.name)}</div>
       <div class="item-price">$${item.price.toFixed(2)}</div>
-      <button class="item-add" onclick="event.stopPropagation(); addToCart('${escJs(item.name)}', ${item.price}, '${escJs(currentCategory)}')">➕ ADD</button>
+      <button class="item-add" onclick="event.stopPropagation(); addToCart('${escJs(item.name)}', ${item.price}, '${escJs(currentCategory)}')">${t('item.add')}</button>
     `;
     card.onclick = () => addToCart(item.name, item.price, currentCategory);
     grid.appendChild(card);
@@ -774,8 +1189,8 @@ function renderCart() {
   const discountRow = document.getElementById('discountRow');
   const orderNotesRow = document.getElementById('orderNotesRow');
   if (cart.length === 0) {
-    container.innerHTML = '<div class="empty-state">Cart is empty</div>';
-    totalEl.innerHTML = 'Total: $0.00';
+    container.innerHTML = '<div class="empty-state">' + t('cart.empty') + '</div>';
+    totalEl.innerHTML = t('cart.total') + ' $0.00';
     discountRow.style.display = 'none';
     orderNotesRow.style.display = 'none';
     appliedDiscount = null;
@@ -796,7 +1211,7 @@ function renderCart() {
     const itemNote = item.note || '';
     html += `<div class="cart-item" style="flex-direction:column;align-items:stretch;gap:6px;">
       <div style="display:flex;align-items:center;justify-content:space-between;width:100%;">
-        <div class="ci-info"><div class="ci-name">${escHtml(item.name)}</div><div class="ci-price">$${item.price.toFixed(2)} each${pct ? ' (tax ' + pct + ')' : ''}</div></div>
+        <div class="ci-info"><div class="ci-name">${escHtml(item.name)}</div><div class="ci-price">$${item.price.toFixed(2)} ${t('cart.each')}${pct ? ' (tax ' + pct + ')' : ''}</div></div>
         <div class="ci-qty">
           <button onclick="removeFromCart(${i})">−</button>
           <span>${item.qty}</span>
@@ -805,7 +1220,7 @@ function renderCart() {
         </div>
       </div>
       <div style="display:flex;gap:6px;align-items:center;">
-        <input type="text" id="itemNote_${i}" value="${escJs(itemNote)}" placeholder="Item note..." maxlength="200" style="flex:1;min-height:32px;padding:6px 10px;font-size:13px;background:var(--bg);border:1px solid #2a2a4e;border-radius:6px;color:var(--text);" onchange="cart[${i}].note = this.value"/>
+        <input type="text" id="itemNote_${i}" value="${escJs(itemNote)}" placeholder="${t('cart.item_note')}" maxlength="200" style="flex:1;min-height:32px;padding:6px 10px;font-size:13px;background:var(--bg);border:1px solid #2a2a4e;border-radius:6px;color:var(--text);" onchange="cart[${i}].note = this.value"/>
       </div>
     </div>`;
   });
@@ -815,13 +1230,13 @@ function renderCart() {
   if (appliedDiscount) {
     discountAmount = appliedDiscount.discount_amount;
     discountHtml = `<div style="display:flex;justify-content:space-between;align-items:center;color:#2ecc71;font-size:14px;padding:4px 0;">
-      <span>🏷️ Discount (${escHtml(appliedDiscount.code)})</span>
+      <span>🏷️ ${t('cart.discount')} (${escHtml(appliedDiscount.code)})</span>
       <span>-$${discountAmount.toFixed(2)} <button class="ghost" onclick="removeDiscount()" style="font-size:12px;padding:2px 6px;min-height:24px;color:var(--accent);">✕</button></span>
     </div>`;
   }
   const finalTotal = grandTotalBeforeDiscount - discountAmount;
   container.innerHTML = html;
-  totalEl.innerHTML = `Subtotal: $${subtotal.toFixed(2)} | Tax: $${totalTax.toFixed(2)}${discountHtml} | <strong>Total: $${finalTotal.toFixed(2)}</strong>`;
+  totalEl.innerHTML = `${t('cart.subtotal')} $${subtotal.toFixed(2)} | ${t('cart.tax')} $${totalTax.toFixed(2)}${discountHtml} | <strong>${t('cart.total')} $${finalTotal.toFixed(2)}</strong>`;
   updateDiscountStatus();
 }
 
@@ -830,7 +1245,7 @@ function buildPaymentMethods() {
   const container = document.getElementById('paymentMethods');
   methods.forEach(m => {
     const btn = document.createElement('button');
-    btn.textContent = m === 'Cash' ? '💵 Cash' : m === 'Card' ? '💳 Card' : '📱 Mobile Pay';
+    btn.textContent = m === 'Cash' ? t('payment.cash') : m === 'Card' ? t('payment.card') : t('payment.mobile');
     if (m === selectedPayment) btn.classList.add('selected');
     btn.onclick = () => {
       selectedPayment = m;
@@ -842,7 +1257,7 @@ function buildPaymentMethods() {
 }
 
 async function submitOrder() {
-  if (cart.length === 0) { showToast('Cart is empty!', 'danger'); return; }
+  if (cart.length === 0) { showToast(t('toast.cart_empty'), 'danger'); return; }
   // Calculate subtotal and tax
   let subtotal = 0, taxAmount = 0;
   cart.forEach(item => {
@@ -889,7 +1304,7 @@ async function submitOrder() {
     });
     if (!r.ok) { const d = await r.json(); showToast(d.message || 'Failed', 'danger'); return; }
     const result = await r.json();
-    showToast('Order submitted!', 'success');
+    showToast(t('toast.order_submitted'), 'success');
     receiptData.orderNumber = result.order_number || '—';
     showReceipt(receiptData);
     cart = [];
@@ -1452,6 +1867,256 @@ async function loadTimesheet() {
       </div>
     `).join('');
   } catch(e) { list.innerHTML = '<div class="empty-state">Network error</div>'; }
+}
+
+// ═══════════ KITCHEN DISPLAY ═══════════
+function showKitchenView() {
+  kitchenViewActive = true;
+  // Hide normal app UI
+  document.getElementById('topBar').style.display = 'none';
+  document.getElementById('mainTabs').style.display = 'none';
+  document.getElementById('tabContent').style.display = 'none';
+  // Show kitchen view
+  document.getElementById('kitchenView').classList.add('active');
+  document.getElementById('kitchenUserName').textContent = currentUser.name + ' (' + currentUser.role + ')';
+  document.getElementById('kitchenBackBtn').style.display = currentUser.role === 'admin' ? '' : 'none';
+  // Start clock
+  updateKitchenClock();
+  if (kitchenClockTimer) clearInterval(kitchenClockTimer);
+  kitchenClockTimer = setInterval(updateKitchenClock, 10000);
+  // Start polling
+  loadKitchenQueue();
+  kitchenPollTimer = setInterval(loadKitchenQueue, 8000);
+}
+
+function hideKitchenView() {
+  kitchenViewActive = false;
+  stopKitchenPolling();
+  document.getElementById('kitchenView').classList.remove('active');
+  document.getElementById('topBar').style.display = '';
+  document.getElementById('mainTabs').style.display = '';
+  document.getElementById('tabContent').style.display = '';
+  // Re-show the appropriate tab
+  if (currentUser && currentUser.role !== 'cook') {
+    switchMainTab('pos');
+  }
+}
+
+function stopKitchenPolling() {
+  if (kitchenPollTimer) { clearInterval(kitchenPollTimer); kitchenPollTimer = null; }
+  if (kitchenClockTimer) { clearInterval(kitchenClockTimer); kitchenClockTimer = null; }
+}
+
+function updateKitchenClock() {
+  const now = new Date();
+  document.getElementById('kitchenClock').textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+async function loadKitchenQueue() {
+  if (!kitchenViewActive) return;
+  const loadingEl = document.getElementById('kitchenLoading');
+  loadingEl.classList.add('active');
+  try {
+    // Fetch queue and stats in parallel
+    const [qr, sr] = await Promise.all([
+      fetch(BACKEND_URL + '/api/kitchen/queue'),
+      fetch(BACKEND_URL + '/api/kitchen/stats')
+    ]);
+    if (qr.ok) {
+      const orders = await qr.json();
+      const newOrderIds = new Set();
+      let hasNewOrder = false;
+      orders.forEach(o => {
+        const oid = String(o.id || o.order_id || '');
+        newOrderIds.add(oid);
+        if (kitchenPrevOrderIds.size > 0 && !kitchenPrevOrderIds.has(oid)) {
+          hasNewOrder = true;
+        }
+      });
+      kitchenPrevOrderIds = newOrderIds;
+      if (hasNewOrder) playNotificationSound();
+      kitchenQueue = orders;
+      renderKitchenQueue(orders);
+    }
+    if (sr.ok) {
+      const stats = await sr.json();
+      kitchenStatsCache = stats;
+      document.getElementById('ksPending').textContent = stats.pending || 0;
+      document.getElementById('ksPreparing').textContent = stats.preparing || 0;
+      document.getElementById('ksDone').textContent = stats.done_today || 0;
+    }
+  } catch(e) {
+    // Silently continue - will retry on next poll
+  }
+  loadingEl.classList.remove('active');
+}
+
+function renderKitchenQueue(orders) {
+  const container = document.getElementById('kitchenQueue');
+  if (!orders || orders.length === 0) {
+    container.innerHTML = '<div class="kitchen-empty">No orders — stand by 🍳</div>';
+    return;
+  }
+  // Sort oldest-first
+  const sorted = [...orders].sort((a, b) => {
+    const da = a.created_at || a.date || '';
+    const db = b.created_at || b.date || '';
+    return da.localeCompare(db);
+  });
+  container.innerHTML = sorted.map(o => renderKitchenOrderCard(o)).join('');
+  // Start live-updating time displays
+  startKitchenTimeUpdater();
+}
+
+function renderKitchenOrderCard(o) {
+  const oid = o.id || o.order_id || '?';
+  const status = (o.status || 'pending').toLowerCase();
+  const items = o.items || [];
+  const notes = o.notes || '';
+  const payment = o.payment || 'N/A';
+  const createdAt = o.created_at || o.date || '';
+  const claimedBy = o.claimed_by || '';
+  const cookName = o.claimed_by_name || claimedBy;
+
+  const statusBadge = status === 'preparing'
+    ? '<span class="koc-badge preparing">🟠 PREPARING' + (cookName ? ' — ' + escHtml(cookName) : '') + '</span>'
+    : '<span class="koc-badge pending">🟡 PENDING</span>';
+
+  const statusClass = status === 'preparing' ? 'status-preparing' : '';
+
+  const timeHtml = createdAt
+    ? '<span class="koc-time" data-created="' + escHtml(createdAt) + '">' + timeSince(createdAt) + '</span>'
+    : '';
+
+  const itemsHtml = items.map(item => {
+    const qty = item.qty || item.quantity || 1;
+    const qtyDisplay = qty > 1 ? ' <span class="koc-qty">x' + qty + '</span>' : '';
+    return '<div class="koc-item"><span>' + escHtml(item.name || item.item_name || '?') + qtyDisplay + '</span></div>';
+  }).join('');
+
+  // Per-item notes
+  const itemNotes = [];
+  items.forEach((item, i) => {
+    if (item.note) itemNotes.push(escHtml(item.name || 'Item ' + (i+1)) + ': ' + escHtml(item.note));
+  });
+
+  const notesHtml = (notes || itemNotes.length > 0)
+    ? '<div class="koc-notes">📝 ' + escHtml(notes) + (notes && itemNotes.length > 0 ? ' | ' : '') + itemNotes.join(' | ') + '</div>'
+    : '';
+
+  // Action buttons
+  let actionsHtml = '';
+  if (status === 'pending') {
+    actionsHtml = '<button class="koc-btn-claim" onclick="claimKitchenOrder(\'' + escJs(String(oid)) + '\')">✋ CLAIM</button>';
+  } else if (status === 'preparing') {
+    if (claimedBy === currentUser.id) {
+      actionsHtml = '<button class="koc-btn-done" onclick="completeKitchenOrder(\'' + escJs(String(oid)) + '\')">✅ DONE ✓</button>';
+    } else {
+      actionsHtml = '<span class="koc-claimed-by">👨‍🍳 Being made by ' + escHtml(cookName || claimedBy) + '</span>';
+    }
+  }
+  // Cancel button on all non-completed
+  actionsHtml += '<button class="koc-btn-cancel" onclick="cancelKitchenOrder(\'' + escJs(String(oid)) + '\')">✕ Cancel</button>';
+
+  return '<div class="kitchen-order-card ' + statusClass + '">' +
+    '<div class="koc-header">' +
+      '<span class="koc-id">#' + escHtml(String(oid)) + '</span>' +
+      timeHtml +
+    '</div>' +
+    statusBadge +
+    '<div class="koc-items">' + itemsHtml + '</div>' +
+    notesHtml +
+    '<div class="koc-payment">💳 ' + escHtml(payment) + '</div>' +
+    '<div class="koc-actions">' + actionsHtml + '</div>' +
+  '</div>';
+}
+
+function timeSince(dateStr) {
+  if (!dateStr) return '';
+  const then = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now - then;
+  if (diffMs < 0) return 'just now';
+  const secs = Math.floor(diffMs / 1000);
+  if (secs < 60) return secs + 's ago';
+  const mins = Math.floor(secs / 60);
+  if (mins < 60) return mins + 'm ago';
+  const hrs = Math.floor(mins / 60);
+  return hrs + 'h ' + (mins % 60) + 'm ago';
+}
+
+let kitchenTimeUpdater = null;
+function startKitchenTimeUpdater() {
+  if (kitchenTimeUpdater) clearInterval(kitchenTimeUpdater);
+  kitchenTimeUpdater = setInterval(() => {
+    document.querySelectorAll('.koc-time[data-created]').forEach(el => {
+      el.textContent = timeSince(el.getAttribute('data-created'));
+    });
+  }, 30000);
+}
+
+async function claimKitchenOrder(orderId) {
+  try {
+    const r = await fetch(BACKEND_URL + '/api/kitchen/claim', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ order_id: orderId, cook_id: currentUser.id })
+    });
+    if (!r.ok) { const d = await r.json(); showToast(d.message || 'Failed to claim', 'danger'); return; }
+    showToast('Order claimed!', 'success');
+    loadKitchenQueue();
+  } catch(e) { showToast('Network error', 'danger'); }
+}
+
+async function completeKitchenOrder(orderId) {
+  try {
+    const r = await fetch(BACKEND_URL + '/api/kitchen/complete', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ order_id: orderId, cook_id: currentUser.id })
+    });
+    if (!r.ok) { const d = await r.json(); showToast(d.message || 'Failed to complete', 'danger'); return; }
+    showToast('Order completed! ✅', 'success');
+    loadKitchenQueue();
+  } catch(e) { showToast('Network error', 'danger'); }
+}
+
+async function cancelKitchenOrder(orderId) {
+  if (!confirm('Cancel order #' + orderId + '?')) return;
+  try {
+    const r = await fetch(BACKEND_URL + '/api/kitchen/cancel', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ order_id: orderId, cook_id: currentUser.id })
+    });
+    if (!r.ok) { const d = await r.json(); showToast(d.message || 'Failed to cancel', 'danger'); return; }
+    showToast('Order cancelled', 'success');
+    loadKitchenQueue();
+  } catch(e) { showToast('Network error', 'danger'); }
+}
+
+function playNotificationSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'sine';
+    // Quick beep sequence: 800Hz for 100ms, 1000Hz for 100ms
+    const now = ctx.currentTime;
+    osc.frequency.setValueAtTime(800, now);
+    osc.frequency.setValueAtTime(1000, now + 0.1);
+    gain.gain.setValueAtTime(0.3, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+    osc.start(now);
+    osc.stop(now + 0.3);
+  } catch(e) { /* audio not available */ }
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(() => {});
+  } else {
+    document.exitFullscreen();
+  }
 }
 
 // ═══════════ RECEIPT PRINTING ═══════════

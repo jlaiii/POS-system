@@ -16,9 +16,10 @@ TIMESHEET_FILE = 'timesheet.json'  # New timesheet file
 ITEMS_FILE = 'items.json'  # New items file
 TAX_CONFIG_FILE = 'tax_config.json'  # Tax configuration
 DISCOUNTS_FILE = 'discounts.json'  # Discount/coupon codes
+ORDER_COUNTER_FILE = 'order_counter.json'  # Auto-incrementing order counter
 
 # Ensure JSON files exist and are initialized correctly
-for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE]:
+for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE]:
     if not os.path.exists(f):
         with open(f, 'w') as file:
             if f == USERS_FILE:
@@ -56,6 +57,8 @@ for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMES
                 }, file, indent=4)  # Initialize with 0% tax, no overrides
             elif f == DISCOUNTS_FILE:
                 json.dump({}, file, indent=4)  # Initialize empty discounts
+            elif f == ORDER_COUNTER_FILE:
+                json.dump({"counter": 1}, file, indent=4)  # Initialize order counter at 1
             else:
                 json.dump([], file)  # Initialize orders.json and cleared_orders.json as empty lists
 
@@ -429,7 +432,18 @@ def submit_order():
     else:
         total = subtotal + tax_amount
 
+    # --- Kitchen: auto-increment order ID ---
+    counter_data = load_json_data(ORDER_COUNTER_FILE)
+    if not isinstance(counter_data, dict):
+        counter_data = {"counter": 1}
+    order_id = counter_data.get("counter", 1)
+
     order_details = {
+        'order_id': order_id,
+        'status': 'pending',
+        'claimed_by': None,
+        'claimed_at': None,
+        'completed_at': None,
         'date': datetime.now().isoformat(),
         'user': data.get('user'),
         'payment': data.get('payment'),
@@ -445,8 +459,14 @@ def submit_order():
     orders = load_json_data(ORDERS_FILE)
     orders.append(order_details)
     save_json_data(ORDERS_FILE, orders)
+
+    # Increment and save the counter
+    counter_data["counter"] = order_id + 1
+    save_json_data(ORDER_COUNTER_FILE, counter_data)
+
     order_number = len(orders)
     log_activity('submit_order', data.get('user'), 'user', {
+        'order_id': order_id,
         'subtotal': order_details['subtotal'],
         'tax_amount': order_details['tax_amount'],
         'discount_code': order_details['discount_code'],
@@ -455,7 +475,7 @@ def submit_order():
         'payment_method': order_details['payment'],
         'item_count': len(items)
     })
-    return jsonify({'message': 'Order submitted successfully', 'order_number': order_number})
+    return jsonify({'message': 'Order submitted successfully', 'order_number': order_number, 'order_id': order_id})
 
 
 @app.route('/api/clear_order', methods=['POST'])
@@ -1046,6 +1066,181 @@ def validate_discount():
         'description': discount.get('description', ''),
         'message': f'Discount applied: {discount_amount:.2f}'
     })
+
+
+# ============================================================
+# --- Kitchen Order Queue System ---
+# ============================================================
+
+@app.route('/api/kitchen/queue', methods=['GET'])
+def kitchen_queue():
+    """Returns all orders where status is 'pending' or 'preparing', sorted oldest first."""
+    try:
+        orders = load_json_data(ORDERS_FILE)
+        active_orders = [o for o in orders if o.get('status') in ('pending', 'preparing')]
+        # Sort by date ascending (oldest first)
+        active_orders.sort(key=lambda o: o.get('date', ''))
+        return jsonify({'queue': active_orders, 'count': len(active_orders)})
+    except Exception as e:
+        return jsonify({'error': str(e)}, 500)
+
+
+@app.route('/api/kitchen/claim', methods=['POST'])
+def kitchen_claim():
+    """Claims an order for a cook: sets status='preparing', claimed_by, claimed_at."""
+    data = request.json
+    cook_id = data.get('cookId')
+    order_id = data.get('order_id')
+
+    if not cook_id:
+        return jsonify({'error': 'cookId is required'}, 400)
+    if order_id is None:
+        return jsonify({'error': 'order_id is required'}, 400)
+
+    try:
+        orders = load_json_data(ORDERS_FILE)
+        for order in orders:
+            if order.get('order_id') == order_id:
+                if order.get('status') != 'pending':
+                    return jsonify({'error': f'Order #{order_id} is already {order.get("status")}'}, 409)
+                order['status'] = 'preparing'
+                order['claimed_by'] = cook_id
+                order['claimed_at'] = datetime.now().isoformat()
+                save_json_data(ORDERS_FILE, orders)
+                log_activity('kitchen_claim', cook_id, 'kitchen', {
+                    'order_id': order_id, 'action': 'claimed'
+                })
+                return jsonify({'message': f'Order #{order_id} claimed', 'order': order})
+        return jsonify({'error': f'Order #{order_id} not found'}, 404)
+    except Exception as e:
+        return jsonify({'error': str(e)}, 500)
+
+
+@app.route('/api/kitchen/complete', methods=['POST'])
+def kitchen_complete():
+    """Marks an order as completed."""
+    data = request.json
+    cook_id = data.get('cookId')
+    order_id = data.get('order_id')
+
+    if not cook_id:
+        return jsonify({'error': 'cookId is required'}, 400)
+    if order_id is None:
+        return jsonify({'error': 'order_id is required'}, 400)
+
+    try:
+        orders = load_json_data(ORDERS_FILE)
+        for order in orders:
+            if order.get('order_id') == order_id:
+                if order.get('status') != 'preparing':
+                    return jsonify({'error': f'Order #{order_id} is not in preparing status (current: {order.get("status")})'}, 409)
+                order['status'] = 'completed'
+                order['completed_at'] = datetime.now().isoformat()
+                save_json_data(ORDERS_FILE, orders)
+                log_activity('kitchen_complete', cook_id, 'kitchen', {
+                    'order_id': order_id, 'action': 'completed'
+                })
+                return jsonify({'message': f'Order #{order_id} completed', 'order': order})
+        return jsonify({'error': f'Order #{order_id} not found'}, 404)
+    except Exception as e:
+        return jsonify({'error': str(e)}, 500)
+
+
+@app.route('/api/kitchen/cancel', methods=['POST'])
+def kitchen_cancel():
+    """Cancels an order with a reason."""
+    data = request.json
+    cook_id = data.get('cookId')
+    order_id = data.get('order_id')
+    reason = data.get('reason', 'No reason provided')
+
+    if not cook_id:
+        return jsonify({'error': 'cookId is required'}, 400)
+    if order_id is None:
+        return jsonify({'error': 'order_id is required'}, 400)
+
+    try:
+        orders = load_json_data(ORDERS_FILE)
+        for order in orders:
+            if order.get('order_id') == order_id:
+                if order.get('status') in ('completed', 'cancelled'):
+                    return jsonify({'error': f'Order #{order_id} is already {order.get("status")}'}, 409)
+                order['status'] = 'cancelled'
+                order['cancellation_reason'] = reason
+                order['cancelled_by'] = cook_id
+                order['cancelled_at'] = datetime.now().isoformat()
+                save_json_data(ORDERS_FILE, orders)
+                log_activity('kitchen_cancel', cook_id, 'kitchen', {
+                    'order_id': order_id, 'action': 'cancelled', 'reason': reason
+                })
+                return jsonify({'message': f'Order #{order_id} cancelled', 'order': order})
+        return jsonify({'error': f'Order #{order_id} not found'}, 404)
+    except Exception as e:
+        return jsonify({'error': str(e)}, 500)
+
+
+@app.route('/api/kitchen/stats', methods=['GET'])
+def kitchen_stats():
+    """Returns kitchen stats: orders today, avg prep time, queue size, etc."""
+    try:
+        orders = load_json_data(ORDERS_FILE)
+        now = datetime.now()
+        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+
+        today_orders = []
+        for order in orders:
+            try:
+                order_date = order.get('date', '')
+                if order_date:
+                    dt = datetime.fromisoformat(order_date)
+                    if dt >= today_start:
+                        today_orders.append(order)
+            except (ValueError, TypeError):
+                continue
+
+        total_orders_today = len(today_orders)
+        orders_completed_today = sum(1 for o in today_orders if o.get('status') == 'completed')
+        orders_pending = sum(1 for o in orders if o.get('status') in ('pending', 'preparing'))
+        current_queue_size = sum(1 for o in orders if o.get('status') in ('pending', 'preparing'))
+
+        # Average prep time for orders completed today
+        prep_times = []
+        for order in today_orders:
+            if order.get('status') == 'completed' and order.get('claimed_at') and order.get('completed_at'):
+                try:
+                    claimed = datetime.fromisoformat(order['claimed_at'])
+                    completed = datetime.fromisoformat(order['completed_at'])
+                    delta_minutes = (completed - claimed).total_seconds() / 60.0
+                    if delta_minutes >= 0:
+                        prep_times.append(delta_minutes)
+                except (ValueError, TypeError):
+                    continue
+
+        avg_prep_time_minutes = round(sum(prep_times) / len(prep_times), 1) if prep_times else 0.0
+
+        stats = {
+            'total_orders_today': total_orders_today,
+            'avg_prep_time_minutes': avg_prep_time_minutes,
+            'orders_completed_today': orders_completed_today,
+            'orders_pending': orders_pending,
+            'current_queue_size': current_queue_size
+        }
+        return jsonify(stats)
+    except Exception as e:
+        return jsonify({'error': str(e)}, 500)
+
+
+@app.route('/api/kitchen/order/<int:order_id>', methods=['GET'])
+def kitchen_order_detail(order_id):
+    """Returns a single order by ID for detail view."""
+    try:
+        orders = load_json_data(ORDERS_FILE)
+        for order in orders:
+            if order.get('order_id') == order_id:
+                return jsonify({'order': order})
+        return jsonify({'error': f'Order #{order_id} not found'}, 404)
+    except Exception as e:
+        return jsonify({'error': str(e)}, 500)
 
 
 # ============================================================
