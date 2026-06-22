@@ -1077,6 +1077,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
         <button onclick="switchAdminSection('waste')" id="asWaste" data-i18n="admin.waste">🗑️ Waste</button>
         <button onclick="switchAdminSection('webhooks')" id="asWebhooks" data-i18n="admin.webhooks">🔗 Webhooks</button>
         <button onclick="switchAdminSection('ads')" id="asAds" data-i18n="admin.ads">📺 Ads</button>
+        <button onclick="switchAdminSection('categories')" id="asCategories" data-i18n="admin.categories">📁 Categories</button>
         <button onclick="switchAdminSection('cashdrawer')" id="asCashdrawer">💰 Cash Drawer</button>
       </div>
       <div id="adminContent">
@@ -1417,6 +1418,21 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
           </div>
           <!-- Ads List -->
           <div id="adsList"><div class="empty-state" data-i18n="admin.ads.no_ads">No ads configured yet. Add one above.</div></div>
+        </div>
+        <!-- Category Management -->
+        <div id="secCategories" class="admin-section">
+          <h3 data-i18n="admin.categories.title">📁 Category Management</h3>
+          <p style="color:var(--text2);margin-bottom:16px;font-size:14px;" data-i18n="admin.categories.desc">Create, rename, delete, and reorder menu categories. Categories appear in the POS item grid as tabs in this order.</p>
+          <!-- Create Category Form -->
+          <div class="card" style="margin-bottom:12px;">
+            <h4 style="margin-bottom:8px;" data-i18n="admin.categories.add_title">➕ Create Category</h4>
+            <div class="form-row" style="flex-wrap:wrap;gap:6px;">
+              <input type="text" id="newCategoryName" placeholder="Category name" style="flex:1;min-width:140px;" data-i18n-placeholder="admin.categories.name_placeholder"/>
+              <button class="accent" onclick="createCategory()" style="min-height:44px;" data-i18n="admin.categories.create_btn">➕ Create</button>
+            </div>
+          </div>
+          <!-- Categories List -->
+          <div id="categoriesList"><div class="empty-state" data-i18n="admin.categories.no_categories">No categories yet.</div></div>
         </div>
         <!-- Cash Drawer Management -->
         <div id="secCashdrawer" class="admin-section">
@@ -1992,6 +2008,18 @@ const L10N = {
     'admin.ads.deleted': 'Ad deleted!',
     'admin.ads.toggled': 'Ad toggled!',
     'admin.ads.interval_updated': 'Rotation interval updated!',
+    'admin.categories': '📁 Categories',
+    'admin.categories.title': '📁 Category Management',
+    'admin.categories.desc': 'Create, rename, delete, and reorder menu categories. Categories appear in the POS item grid as tabs in this order.',
+    'admin.categories.add_title': '➕ Create Category',
+    'admin.categories.name_placeholder': 'Category name',
+    'admin.categories.create_btn': '➕ Create',
+    'admin.categories.no_categories': 'No categories yet.',
+    'admin.categories.rename_btn': '✏️ Rename',
+    'admin.categories.rename_prompt': 'Enter new name for category "{name}":',
+    'admin.categories.delete_confirm': 'Delete category "{name}"? This cannot be undone.',
+    'admin.categories.delete_blocked': 'Delete items first',
+    'admin.categories.name_required': 'Category name is required',
     'item.search': '🔍 Search items...',
     'item.search_no_results': 'No items match "{query}"',
     'draft.restore_title': 'Unsaved Draft Found',
@@ -2307,6 +2335,18 @@ const L10N = {
     'admin.ads.deleted': '¡Anuncio eliminado!',
     'admin.ads.toggled': '¡Anuncio cambiado!',
     'admin.ads.interval_updated': '¡Intervalo de rotación actualizado!',
+    'admin.categories': '📁 Categorías',
+    'admin.categories.title': '📁 Gestión de Categorías',
+    'admin.categories.desc': 'Cree, renombre, elimine y reorganice las categorías del menú. Las categorías aparecen como pestañas en la cuadrícula de artículos en este orden.',
+    'admin.categories.add_title': '➕ Crear Categoría',
+    'admin.categories.name_placeholder': 'Nombre de categoría',
+    'admin.categories.create_btn': '➕ Crear',
+    'admin.categories.no_categories': 'Aún no hay categorías.',
+    'admin.categories.rename_btn': '✏️ Renombrar',
+    'admin.categories.rename_prompt': 'Ingrese nuevo nombre para la categoría "{name}":',
+    'admin.categories.delete_confirm': '¿Eliminar categoría "{name}"? Esto no se puede deshacer.',
+    'admin.categories.delete_blocked': 'Elimine artículos primero',
+    'admin.categories.name_required': 'El nombre de categoría es obligatorio',
     'item.search': '🔍 Buscar artículos...',
     'item.search_no_results': 'Ningún artículo coincide con "{query}"',
     'draft.restore_title': 'Borrador no guardado encontrado',
@@ -2822,6 +2862,7 @@ function showApp() {
     'asWaste': perms.includes('manage_items'),  // Waste tracking uses manage_items permission
     'asWebhooks': perms.includes('manage_items'),  // Webhook integration uses manage_items permission
     'asAds': perms.includes('manage_items'),  // Table-side ads uses manage_items permission
+    'asCategories': perms.includes('manage_items'),  // Category management uses manage_items permission
   };
   
   // Show/hide each sub-tab button
@@ -4525,6 +4566,7 @@ function switchAdminSection(sec) {
   else if (sec === 'waste') loadWasteAdmin();
   else if (sec === 'webhooks') loadWebhooks();
   else if (sec === 'ads') loadAds();
+  else if (sec === 'categories') loadCategories();
   else if (sec === 'cashdrawer') loadCashDrawer();
 }
 
@@ -5992,6 +6034,133 @@ async function setAdRotationInterval() {
     const d = await r.json();
     if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
     showToast(t('admin.ads.interval_updated'), 'success');
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
+}
+
+// ═══════════ CATEGORY MANAGEMENT ═══════════
+
+async function loadCategories() {
+  const list = document.getElementById('categoriesList');
+  if (!list) return;
+  list.innerHTML = '<div class="empty-state">' + t('loading') + '</div>';
+  try {
+    const r = await fetch(BACKEND_URL + '/api/categories/list', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id })
+    });
+    const data = await r.json();
+    if (!r.ok) { list.innerHTML = '<div class="empty-state">' + t('unauthorized') + '</div>'; return; }
+    const cats = data.categories || [];
+    if (cats.length === 0) {
+      list.innerHTML = '<div class="empty-state">' + t('admin.categories.no_categories') + '</div>';
+      return;
+    }
+    let html = '<div style="display:flex;flex-direction:column;gap:8px;">';
+    cats.forEach((cat, idx) => {
+      const isFirst = idx === 0;
+      const isLast = idx === cats.length - 1;
+      html += '<div class="card" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:12px 16px;">';
+      html += '<div style="flex:1;min-width:120px;display:flex;align-items:center;gap:10px;">';
+      // Reorder buttons
+      html += '<div style="display:flex;flex-direction:column;gap:2px;">';
+      html += '<button class="ghost" onclick="moveCategory(\'' + escJs(cat.name) + '\', \'up\')" style="min-height:28px;font-size:12px;padding:2px 6px;line-height:1;' + (isFirst ? 'opacity:0.3;pointer-events:none;' : '') + '">▲</button>';
+      html += '<button class="ghost" onclick="moveCategory(\'' + escJs(cat.name) + '\', \'down\')" style="min-height:28px;font-size:12px;padding:2px 6px;line-height:1;' + (isLast ? 'opacity:0.3;pointer-events:none;' : '') + '">▼</button>';
+      html += '</div>';
+      html += '<strong style="font-size:15px;">' + escHtml(cat.name) + '</strong>';
+      html += '<span style="color:var(--text2);font-size:13px;">(' + cat.item_count + ' item' + (cat.item_count !== 1 ? 's' : '') + ')</span>';
+      html += '</div>';
+      html += '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">';
+      // Rename button
+      html += '<button class="outline" onclick="renameCategory(\'' + escJs(cat.name) + '\')" style="min-height:36px;font-size:12px;padding:6px 10px;" data-i18n="admin.categories.rename_btn">✏️ Rename</button>';
+      // Delete button (only if empty)
+      if (cat.item_count === 0) {
+        html += '<button class="ghost" onclick="deleteCategory(\'' + escJs(cat.name) + '\')" style="min-height:36px;font-size:12px;padding:6px 10px;color:var(--danger,#e94560);">🗑️</button>';
+      } else {
+        html += '<span style="color:var(--text2);font-size:11px;" title="' + t('admin.categories.delete_blocked') + '">🔒</span>';
+      }
+      html += '</div></div>';
+    });
+    html += '</div>';
+    list.innerHTML = html;
+  } catch(e) { list.innerHTML = '<div class="empty-state">' + t('network_error') + '</div>'; }
+}
+
+async function createCategory() {
+  const nameInput = document.getElementById('newCategoryName');
+  const name = nameInput.value.trim();
+  if (!name) { showToast(t('admin.categories.name_required'), 'danger'); return; }
+  try {
+    const r = await fetch(BACKEND_URL + '/api/categories/create', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, name })
+    });
+    const d = await r.json();
+    if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
+    showToast(d.message, 'success');
+    nameInput.value = '';
+    loadCategories();
+    loadItems();  // Refresh POS grid
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
+}
+
+async function renameCategory(oldName) {
+  const newName = prompt(t('admin.categories.rename_prompt', {name: oldName}));
+  if (!newName || newName.trim() === '' || newName.trim() === oldName) return;
+  try {
+    const r = await fetch(BACKEND_URL + '/api/categories/rename', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, oldName, newName: newName.trim() })
+    });
+    const d = await r.json();
+    if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
+    showToast(d.message, 'success');
+    loadCategories();
+    loadItems();  // Refresh POS grid
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
+}
+
+async function deleteCategory(name) {
+  if (!confirm(t('admin.categories.delete_confirm', {name: name}))) return;
+  try {
+    const r = await fetch(BACKEND_URL + '/api/categories/delete', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, name })
+    });
+    const d = await r.json();
+    if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
+    showToast(d.message, 'success');
+    loadCategories();
+    loadItems();  // Refresh POS grid
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
+}
+
+async function moveCategory(name, direction) {
+  // Get current category order
+  try {
+    const r = await fetch(BACKEND_URL + '/api/categories/list', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id })
+    });
+    const data = await r.json();
+    if (!r.ok) { showToast('Failed to load categories', 'danger'); return; }
+    const cats = data.categories || [];
+    const idx = cats.findIndex(c => c.name === name);
+    if (idx === -1) return;
+    const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= cats.length) return;
+    // Swap in array
+    const order = cats.map(c => c.name);
+    [order[idx], order[swapIdx]] = [order[swapIdx], order[idx]];
+    // Send reorder
+    const rr = await fetch(BACKEND_URL + '/api/categories/reorder', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, order })
+    });
+    const dd = await rr.json();
+    if (!rr.ok) { showToast(dd.message || 'Failed', 'danger'); return; }
+    showToast(dd.message, 'success');
+    loadCategories();
+    loadItems();  // Refresh POS grid
   } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
 

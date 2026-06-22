@@ -4848,5 +4848,163 @@ def serve_tablet():
     return send_from_directory(app.static_folder, 'tablet.html')
 
 
+# ══════════════════════════════════════════════════
+# Category Management API
+# ══════════════════════════════════════════════════
+
+@app.route('/api/categories/list', methods=['POST'])
+def categories_list():
+    """Return all categories with item counts. Permission: manage_items."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+    if not check_perm(admin_pin, "manage_items"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    items_data = load_json_data(ITEMS_FILE)
+    categories = []
+    for cat_name, cat_items in items_data.items():
+        categories.append({
+            'name': cat_name,
+            'item_count': len(cat_items)
+        })
+    return jsonify({'categories': categories})
+
+
+@app.route('/api/categories/create', methods=['POST'])
+def categories_create():
+    """Create a new empty category. Permission: manage_items."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+    if not check_perm(admin_pin, "manage_items"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    name = (data.get('name') or '').strip()
+    if not name:
+        return jsonify({'message': 'Category name is required.'}), 400
+
+    items_data = load_json_data(ITEMS_FILE)
+    if name in items_data:
+        return jsonify({'message': f'Category "{name}" already exists.'}), 409
+
+    items_data[name] = []
+    save_json_data(ITEMS_FILE, items_data)
+    backup_menu()
+
+    admin_user = load_json_data(USERS_FILE).get(admin_pin, None)
+    admin_role = admin_user['role'] if admin_user else 'unknown'
+    log_activity('category_create', admin_pin, admin_role, {'name': name})
+
+    return jsonify({'message': f'Category "{name}" created.', 'category': name})
+
+
+@app.route('/api/categories/rename', methods=['POST'])
+def categories_rename():
+    """Rename a category. All items move to the new key. Permission: manage_items."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+    if not check_perm(admin_pin, "manage_items"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    old_name = (data.get('oldName') or '').strip()
+    new_name = (data.get('newName') or '').strip()
+
+    if not old_name or not new_name:
+        return jsonify({'message': 'Both old and new category names are required.'}), 400
+    if old_name == new_name:
+        return jsonify({'message': 'New name is the same as the old name.'}), 400
+
+    items_data = load_json_data(ITEMS_FILE)
+    if old_name not in items_data:
+        return jsonify({'message': f'Category "{old_name}" not found.'}), 404
+    if new_name in items_data:
+        return jsonify({'message': f'Category "{new_name}" already exists.'}), 409
+
+    # Rebuild dict with new key in the same position
+    new_items_data = {}
+    for cat, cat_items in items_data.items():
+        if cat == old_name:
+            new_items_data[new_name] = cat_items
+        else:
+            new_items_data[cat] = cat_items
+
+    save_json_data(ITEMS_FILE, new_items_data)
+    backup_menu()
+
+    admin_user = load_json_data(USERS_FILE).get(admin_pin, None)
+    admin_role = admin_user['role'] if admin_user else 'unknown'
+    log_activity('category_rename', admin_pin, admin_role, {'old_name': old_name, 'new_name': new_name})
+
+    return jsonify({'message': f'Category renamed from "{old_name}" to "{new_name}".'})
+
+
+@app.route('/api/categories/delete', methods=['POST'])
+def categories_delete():
+    """Delete a category (only if empty). Permission: manage_items."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+    if not check_perm(admin_pin, "manage_items"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    name = (data.get('name') or '').strip()
+    if not name:
+        return jsonify({'message': 'Category name is required.'}), 400
+
+    items_data = load_json_data(ITEMS_FILE)
+    if name not in items_data:
+        return jsonify({'message': f'Category "{name}" not found.'}), 404
+
+    if len(items_data[name]) > 0:
+        return jsonify({'message': f'Cannot delete category "{name}" — it contains {len(items_data[name])} item(s). Move or delete them first.', 'item_count': len(items_data[name])}), 400
+
+    del items_data[name]
+    save_json_data(ITEMS_FILE, items_data)
+    backup_menu()
+
+    admin_user = load_json_data(USERS_FILE).get(admin_pin, None)
+    admin_role = admin_user['role'] if admin_user else 'unknown'
+    log_activity('category_delete', admin_pin, admin_role, {'name': name})
+
+    return jsonify({'message': f'Category "{name}" deleted.'})
+
+
+@app.route('/api/categories/reorder', methods=['POST'])
+def categories_reorder():
+    """Reorder categories. Accepts an ordered array of category names.
+    Permission: manage_items."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+    if not check_perm(admin_pin, "manage_items"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    order = data.get('order')
+    if not isinstance(order, list) or len(order) == 0:
+        return jsonify({'message': 'Order array is required.'}), 400
+
+    items_data = load_json_data(ITEMS_FILE)
+    # Validate all names in order exist in current data
+    for cat_name in order:
+        if cat_name not in items_data:
+            return jsonify({'message': f'Category "{cat_name}" not found.'}), 404
+
+    # Check that all existing categories are in the order array
+    for cat_name in items_data:
+        if cat_name not in order:
+            return jsonify({'message': f'Missing category "{cat_name}" in order array.'}), 400
+
+    # Rebuild dict preserving new order
+    new_items_data = {}
+    for cat_name in order:
+        new_items_data[cat_name] = items_data[cat_name]
+
+    save_json_data(ITEMS_FILE, new_items_data)
+    backup_menu()
+
+    admin_user = load_json_data(USERS_FILE).get(admin_pin, None)
+    admin_role = admin_user['role'] if admin_user else 'unknown'
+    log_activity('category_reorder', admin_pin, admin_role, {'order': order})
+
+    return jsonify({'message': 'Categories reordered successfully.'})
+
+
 if __name__ == '__main__':
     socketio.run(app, debug=True, port=5000, allow_unsafe_werkzeug=True)
