@@ -27,7 +27,7 @@
 
 ## Priority: MEDIUM (NEW — Audit 2026-06-22)
 
-- [ ] **Add item images to grid cards** — Allow attaching image URLs to menu items for visual identification. Display thumbnail images on item grid cards, kitchen tickets, and kiosk mode. Speeds up waiter item location in busy environments. i18n EN + ES.
+- [~] worker-2 **Add item images to grid cards** — Allow attaching image URLs to menu items for visual identification. Display thumbnail images on item grid cards, kitchen tickets, and kiosk mode. Speeds up waiter item location in busy environments. i18n EN + ES.
 
 - [ ] **Add recent-order quick-access on POS tab** — Show last 5 orders for the logged-in waiter directly on the POS tab (collapsible "Recent Orders" section above item grid). One-tap reload of entire order into cart without navigating to History tab. Saves 3+ taps for frequent reorders.
 
