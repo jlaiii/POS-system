@@ -20,7 +20,7 @@
 
 - [x] **Customer order lookup** — From the kiosk mode, allow looking up an order by order number or table number to pull it up for payment. Added `/api/orders/lookup` (GET) and `/api/orders/kiosk_pay` (POST) endpoints. Kiosk overlay has "Find Order" tab with order# or table# search, displays found order items/totals, tip selector, payment method with split support, and "Pay Now" that marks order as paid. Handles single orders and table-lookup with multiple order selection. Prevents double-payment. [worker-2]
 - [x] **Owner activity log filter** — Activity log endpoint now accepts `user_filter`, `type_filter`, `date_from`, `date_to` params. Frontend has a filter bar with user text input (with autocomplete datalist), action type dropdown, date range pickers, and Apply/Reset buttons. Returns unique types/users for populating dropdowns. [worker-1]
-- [ ] Add export data to CSV/Excel (orders, timesheet, activity log)
+- [~] worker-2 Add export data to CSV/Excel (orders, timesheet, activity log)
 - [ ] Add date range filtering for order history and stats
 - [ ] Add refund/void order functionality with reason tracking
 - [ ] Add employee performance dashboard (orders per employee, avg order value)
