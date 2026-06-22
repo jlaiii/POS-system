@@ -43,6 +43,7 @@ TABLE_ADS_FILE = 'table_ads.json'  # Table-side promotional ads
 MENU_BACKUPS_DIR = 'menu_backups'
 CASH_DRAWER_FILE = 'cash_drawer.json'  # Cash register management
 SERVICE_CHARGE_FILE = 'service_charge_config.json'  # Auto-gratuity / service charge settings
+EMAIL_CONFIG_FILE = 'email_config.json'  # Email/SMTP configuration for digital receipts
 
 # --- Loyalty Constants ---
 LOYALTY_POINTS_PER_DOLLAR = 1  # 1 point per $1 spent
@@ -171,6 +172,8 @@ for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMES
                 json.dump({"sessions": [], "transactions": []}, file, indent=4)  # Initialize cash drawer
             elif f == SERVICE_CHARGE_FILE:
                 json.dump({"enabled": True, "threshold": 8, "percentage": 18.0, "label": "Auto-Gratuity (18%)"}, file, indent=4)  # Initialize service charge config
+            elif f == EMAIL_CONFIG_FILE:
+                json.dump({"server": "", "port": 587, "username": "", "password": "", "from_addr": "", "use_tls": True, "enabled": False}, file, indent=4)  # Initialize email config
             else:
                 json.dump([], file)  # Initialize orders.json and cleared_orders.json as empty lists
 
@@ -1034,7 +1037,8 @@ def submit_order():
         'notes': data.get('notes', ''),  # Per-order special instructions
         'item_notes': data.get('item_notes', {}),  # Per-item notes {index: note_string}
         'table_number': data.get('table_number'),  # Table number for table management
-        'delivery_address': data.get('delivery_address')  # Delivery address info
+        'delivery_address': data.get('delivery_address'),  # Delivery address info
+        'customer_email': data.get('customer_email', '')  # Email for digital receipt delivery
     }
     orders = load_json_data(ORDERS_FILE)
     orders.append(order_details)
@@ -1475,6 +1479,340 @@ def orders_recent():
         'message': 'Recent orders retrieved',
         'orders': recent
     })
+
+
+# --- Email / SMTP Config Endpoints ---
+
+@app.route('/api/email/config', methods=['GET'])
+def get_email_config():
+    """Get the current SMTP email configuration."""
+    config = load_json_data(EMAIL_CONFIG_FILE)
+    # Never expose the password in full
+    safe_config = dict(config)
+    if safe_config.get('password'):
+        safe_config['password'] = '••••••••'
+    return jsonify(safe_config)
+
+
+@app.route('/api/email/config', methods=['POST'])
+def save_email_config():
+    """Save SMTP email configuration. Requires manage_items permission."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+    if not admin_pin:
+        return jsonify({'message': 'Authentication required'}), 403
+
+    users = load_json_data(USERS_FILE)
+    if admin_pin not in users:
+        return jsonify({'message': 'Invalid user'}), 403
+    user_info = users[admin_pin]
+    user_info = upgrade_user(user_info)
+    perms = user_info.get('permissions', [])
+    if '*' not in perms and 'manage_items' not in perms:
+        return jsonify({'message': 'Permission denied'}), 403
+
+    config = load_json_data(EMAIL_CONFIG_FILE)
+    if 'server' in data:
+        config['server'] = str(data['server']).strip()
+    if 'port' in data:
+        config['port'] = int(data['port'])
+    if 'username' in data:
+        config['username'] = str(data['username']).strip()
+    if 'password' in data and data['password'] and data['password'] != '••••••••':
+        config['password'] = data['password']
+    if 'from_addr' in data:
+        config['from_addr'] = str(data['from_addr']).strip()
+    if 'use_tls' in data:
+        config['use_tls'] = bool(data['use_tls'])
+    if 'enabled' in data:
+        config['enabled'] = bool(data['enabled'])
+
+    save_json_data(EMAIL_CONFIG_FILE, config)
+    log_activity('save_email_config', admin_pin, user_info.get('role', 'user'), {})
+    return jsonify({'message': 'Email configuration saved'})
+
+
+# --- Receipt Generation & Email Endpoints ---
+
+@app.route('/api/orders/receipt/<int:order_id>', methods=['GET'])
+def get_order_receipt(order_id):
+    """Return receipt HTML for a completed order."""
+    # Look in both orders and cleared orders
+    all_orders = load_json_data(ORDERS_FILE) + load_json_data(CLEARED_ORDERS_FILE)
+    order = None
+    for o in all_orders:
+        if o.get('order_id') == order_id:
+            order = o
+            break
+    if not order:
+        return jsonify({'message': 'Order not found'}), 404
+
+    items = order.get('items', [])
+    date_str = order.get('date', '')
+    try:
+        dt = datetime.fromisoformat(date_str) if date_str else datetime.now()
+        formatted_date = dt.strftime('%Y-%m-%d %I:%M %p')
+    except:
+        formatted_date = date_str
+
+    item_rows = ''.join(
+        f'<tr><td style="padding:4px 8px;text-align:left;">{item.get("name","")} x{item.get("qty",1)}</td>'
+        f'<td style="padding:4px 8px;text-align:right;">${float(item.get("price",0))*int(item.get("qty",1)):.2f}</td></tr>'
+        for item in items
+    )
+
+    subtotal = float(order.get('subtotal', 0))
+    tax = float(order.get('tax_amount', 0))
+    tip = float(order.get('tip_amount', 0))
+    service_charge = float(order.get('service_charge_amount', 0))
+    discount = float(order.get('discount_amount', 0))
+    total = float(order.get('total', 0))
+    payment = order.get('payment', 'N/A')
+    user = order.get('user', '—')
+
+    discount_line = ''
+    if discount > 0:
+        discount_line = f'<tr><td style="padding:2px 8px;text-align:left;">Discount ({order.get("discount_code","")})</td><td style="padding:2px 8px;text-align:right;">−${discount:.2f}</td></tr>'
+
+    service_charge_line = ''
+    if service_charge > 0:
+        service_charge_line = f'<tr><td style="padding:2px 8px;text-align:left;">Service Charge</td><td style="padding:2px 8px;text-align:right;">+${service_charge:.2f}</td></tr>'
+
+    tip_line = ''
+    if tip > 0:
+        tip_line = f'<tr><td style="padding:2px 8px;text-align:left;">Tip</td><td style="padding:2px 8px;text-align:right;">+${tip:.2f}</td></tr>'
+
+    html = f'''<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>Receipt #{order_id}</title>
+<style>
+  body {{ font-family: 'Courier New', monospace; margin: 0; padding: 20px; max-width: 360px; margin: auto; }}
+  h2 {{ text-align: center; margin: 0 0 4px; }}
+  .info {{ text-align: center; color: #555; font-size: 12px; margin: 2px 0; }}
+  table {{ width: 100%; border-collapse: collapse; }}
+  hr {{ border: none; border-top: 1px dashed #999; margin: 8px 0; }}
+  .total {{ font-weight: bold; font-size: 15px; }}
+  .footer {{ text-align: center; color: #555; font-size: 12px; margin-top: 12px; }}
+</style>
+</head>
+<body>
+  <h2>🍽️ POS System</h2>
+  <div class="info">{formatted_date}</div>
+  <div class="info">Order #{order_id}</div>
+  <div class="info">Payment: {payment}</div>
+  <div class="info">Cashier: {user}</div>
+  <hr>
+  <table>{item_rows}</table>
+  <hr>
+  <table>
+    <tr><td style="padding:2px 8px;">Subtotal</td><td style="padding:2px 8px;text-align:right;">${subtotal:.2f}</td></tr>'''
+    if tax > 0:
+        html += f'<tr><td style="padding:2px 8px;">Tax</td><td style="padding:2px 8px;text-align:right;">${tax:.2f}</td></tr>'
+    html += discount_line + service_charge_line + tip_line
+    html += f'''
+    <tr class="total"><td style="padding:6px 8px;border-top:1px solid #555;">TOTAL</td><td style="padding:6px 8px;text-align:right;border-top:1px solid #555;">${total:.2f}</td></tr>
+  </table>
+  <hr>
+  <div class="footer">Thank you for your business!<br>Have a great day 🎉</div>
+</body>
+</html>'''
+
+    return html, 200, {'Content-Type': 'text/html; charset=utf-8'}
+
+
+@app.route('/api/orders/email_receipt', methods=['POST'])
+def email_receipt():
+    """Send a receipt for a completed order via email."""
+    import smtplib
+    from email.mime.text import MIMEText
+    from email.mime.multipart import MIMEMultipart
+
+    data = request.json
+    admin_pin = data.get('adminPin')
+    order_id = data.get('order_id')
+    recipient_email = data.get('recipient_email', '').strip()
+
+    if not admin_pin:
+        return jsonify({'message': 'Authentication required'}), 403
+    if not order_id:
+        return jsonify({'message': 'Order ID required'}), 400
+    if not recipient_email or '@' not in recipient_email:
+        return jsonify({'message': 'Valid recipient email required'}), 400
+
+    users = load_json_data(USERS_FILE)
+    if admin_pin not in users:
+        return jsonify({'message': 'Invalid user'}), 403
+
+    # Get email config
+    email_config = load_json_data(EMAIL_CONFIG_FILE)
+    if not email_config.get('enabled'):
+        return jsonify({'message': 'Email sending is not configured. Go to Admin → Email Settings to set up SMTP.'}), 400
+    if not email_config.get('server') or not email_config.get('from_addr'):
+        return jsonify({'message': 'SMTP server or from address not configured.'}), 400
+
+    # Find the order
+    all_orders = load_json_data(ORDERS_FILE) + load_json_data(CLEARED_ORDERS_FILE)
+    order = None
+    for o in all_orders:
+        if o.get('order_id') == order_id:
+            order = o
+            break
+    if not order:
+        return jsonify({'message': 'Order not found'}), 404
+
+    # Generate receipt HTML
+    items = order.get('items', [])
+    date_str = order.get('date', '')
+    try:
+        dt = datetime.fromisoformat(date_str) if date_str else datetime.now()
+        formatted_date = dt.strftime('%Y-%m-%d %I:%M %p')
+    except:
+        formatted_date = date_str
+
+    item_rows = ''.join(
+        f'<tr><td style="padding:4px 8px;text-align:left;">{item.get("name","")} x{item.get("qty",1)}</td>'
+        f'<td style="padding:4px 8px;text-align:right;">${float(item.get("price",0))*int(item.get("qty",1)):.2f}</td></tr>'
+        for item in items
+    )
+    subtotal = float(order.get('subtotal', 0))
+    tax = float(order.get('tax_amount', 0))
+    tip = float(order.get('tip_amount', 0))
+    service_charge = float(order.get('service_charge_amount', 0))
+    discount = float(order.get('discount_amount', 0))
+    total = float(order.get('total', 0))
+    payment = order.get('payment', 'N/A')
+
+    receipt_html_body = f'''
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>Receipt #{order_id}</title>
+<style>
+  body {{ font-family: 'Courier New', monospace; max-width: 360px; margin: auto; padding: 20px; }}
+  h2 {{ text-align: center; margin: 0 0 4px; }}
+  .info {{ text-align: center; color: #555; font-size: 12px; margin: 2px 0; }}
+  table {{ width: 100%; border-collapse: collapse; }}
+  hr {{ border: none; border-top: 1px dashed #999; margin: 8px 0; }}
+  .total {{ font-weight: bold; font-size: 15px; }}
+  .footer {{ text-align: center; color: #555; font-size: 12px; margin-top: 12px; }}
+</style>
+</head>
+<body>
+  <h2>🍽️ POS System</h2>
+  <div class="info">{formatted_date}</div>
+  <div class="info">Order #{order_id}</div>
+  <div class="info">Payment: {payment}</div>
+  <hr>
+  <table>{item_rows}</table>
+  <hr>
+  <table>
+    <tr><td style="padding:2px 8px;">Subtotal</td><td style="padding:2px 8px;text-align:right;">${subtotal:.2f}</td></tr>'''
+    if tax > 0:
+        receipt_html_body += f'<tr><td style="padding:2px 8px;">Tax</td><td style="padding:2px 8px;text-align:right;">${tax:.2f}</td></tr>'
+    if discount > 0:
+        receipt_html_body += f'<tr><td style="padding:2px 8px;">Discount ({order.get("discount_code","")})</td><td style="padding:2px 8px;text-align:right;">−${discount:.2f}</td></tr>'
+    if service_charge > 0:
+        receipt_html_body += f'<tr><td style="padding:2px 8px;">Service Charge</td><td style="padding:2px 8px;text-align:right;">+${service_charge:.2f}</td></tr>'
+    if tip > 0:
+        receipt_html_body += f'<tr><td style="padding:2px 8px;">Tip</td><td style="padding:2px 8px;text-align:right;">+${tip:.2f}</td></tr>'
+    receipt_html_body += f'''
+    <tr class="total"><td style="padding:6px 8px;border-top:1px solid #555;">TOTAL</td><td style="padding:6px 8px;text-align:right;border-top:1px solid #555;">${total:.2f}</td></tr>
+  </table>
+  <hr>
+  <div class="footer">Thank you for your business!<br>Have a great day 🎉</div>
+</body>
+</html>'''
+
+    # Build and send email
+    try:
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = f'Your Receipt — Order #{order_id}'
+        msg['From'] = email_config.get('from_addr', '')
+        msg['To'] = recipient_email
+        msg.attach(MIMEText(f'Your receipt for Order #{order_id} (Total: ${total:.2f}) is attached.\n\nThank you!', 'plain'))
+        msg.attach(MIMEText(receipt_html_body, 'html'))
+
+        smtp_server = email_config.get('server', '')
+        smtp_port = int(email_config.get('port', 587))
+        use_tls = email_config.get('use_tls', True)
+        username = email_config.get('username', '')
+        password = email_config.get('password', '')
+
+        server = smtplib.SMTP(smtp_server, smtp_port)
+        server.ehlo()
+        if use_tls:
+            server.starttls()
+            server.ehlo()
+        if username and password:
+            server.login(username, password)
+        server.send_message(msg)
+        server.quit()
+
+        log_activity('email_receipt', admin_pin, users.get(admin_pin, {}).get('role', 'user'), {
+            'order_id': order_id,
+            'recipient': recipient_email
+        })
+
+        return jsonify({'message': f'Receipt sent to {recipient_email}'})
+    except smtplib.SMTPAuthenticationError:
+        return jsonify({'message': 'SMTP authentication failed. Check username/password.'}), 400
+    except smtplib.SMTPException as e:
+        return jsonify({'message': f'SMTP error: {str(e)}'}), 400
+    except Exception as e:
+        return jsonify({'message': f'Failed to send email: {str(e)}'}), 500
+
+
+@app.route('/api/orders/test_email', methods=['POST'])
+def test_email():
+    """Send a test email using configured SMTP settings."""
+    import smtplib
+    from email.mime.text import MIMEText
+
+    data = request.json
+    admin_pin = data.get('adminPin')
+    test_email = data.get('test_email', '').strip()
+
+    if not admin_pin:
+        return jsonify({'message': 'Authentication required'}), 403
+    if not test_email or '@' not in test_email:
+        return jsonify({'message': 'Valid test email required'}), 400
+
+    users = load_json_data(USERS_FILE)
+    if admin_pin not in users:
+        return jsonify({'message': 'Invalid user'}), 403
+
+    email_config = load_json_data(EMAIL_CONFIG_FILE)
+    if not email_config.get('server') or not email_config.get('from_addr'):
+        return jsonify({'message': 'SMTP server or from address not configured.'}), 400
+
+    try:
+        msg = MIMEText('This is a test email from your POS System.\n\nIf you received this, your SMTP settings are working correctly!')
+        msg['Subject'] = 'POS System — Test Email'
+        msg['From'] = email_config.get('from_addr', '')
+        msg['To'] = test_email
+
+        smtp_server = email_config.get('server', '')
+        smtp_port = int(email_config.get('port', 587))
+        use_tls = email_config.get('use_tls', True)
+        username = email_config.get('username', '')
+        password = email_config.get('password', '')
+
+        server = smtplib.SMTP(smtp_server, smtp_port)
+        server.ehlo()
+        if use_tls:
+            server.starttls()
+            server.ehlo()
+        if username and password:
+            server.login(username, password)
+        server.send_message(msg)
+        server.quit()
+
+        return jsonify({'message': 'Test email sent successfully!'})
+    except smtplib.SMTPAuthenticationError:
+        return jsonify({'message': 'SMTP authentication failed. Check username/password.'}), 400
+    except smtplib.SMTPException as e:
+        return jsonify({'message': f'SMTP error: {str(e)}'}), 400
+    except Exception as e:
+        return jsonify({'message': f'Failed to send test email: {str(e)}'}), 500
 
 
 # --- Refund / Void Order Endpoint ---

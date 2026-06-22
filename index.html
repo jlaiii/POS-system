@@ -1108,6 +1108,13 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
               </div>
             </div>
           </div>
+          <!-- Email receipt input -->
+          <div id="emailRow" style="margin-top:6px;">
+            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+              <span style="color:var(--text2);font-size:13px;font-weight:600;white-space:nowrap;">📧 Email:</span>
+              <input type="email" id="customerEmail" placeholder="Email receipt to customer" style="flex:1;min-width:140px;min-height:44px;font-size:14px;padding:8px 12px;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);" maxlength="100" inputmode="email" data-i18n-placeholder="cart.email_placeholder"/>
+            </div>
+          </div>
           <div id="cartTotal">Total: $0.00</div>
           <div class="payment-methods" id="paymentMethods"></div>
           <div id="cartActions">
@@ -1163,6 +1170,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
         <button onclick="switchAdminSection('pricing')" id="asPricing" data-i18n="admin.pricing">⏰ Pricing</button>
         <button onclick="switchAdminSection('waste')" id="asWaste" data-i18n="admin.waste">🗑️ Waste</button>
         <button onclick="switchAdminSection('webhooks')" id="asWebhooks" data-i18n="admin.webhooks">🔗 Webhooks</button>
+        <button onclick="switchAdminSection('email')" id="asEmail" data-i18n="admin.email">📧 Email</button>
         <button onclick="switchAdminSection('ads')" id="asAds" data-i18n="admin.ads">📺 Ads</button>
         <button onclick="switchAdminSection('categories')" id="asCategories" data-i18n="admin.categories">📁 Categories</button>
         <button onclick="switchAdminSection('cashdrawer')" id="asCashdrawer">💰 Cash Drawer</button>
@@ -1502,6 +1510,59 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
           <!-- Webhook List -->
           <div id="webhooksList"><div class="empty-state" data-i18n="admin.webhooks.no_webhooks">No webhooks configured yet.</div></div>
         </div>
+        <!-- Email / SMTP Settings -->
+        <div id="secEmail" class="admin-section">
+          <h3 data-i18n="admin.email.title">📧 Email Settings (SMTP)</h3>
+          <p style="color:var(--text2);margin-bottom:16px;font-size:14px;" data-i18n="admin.email.desc">Configure SMTP server to send digital receipts to customers via email.</p>
+          <div class="card" style="margin-bottom:12px;">
+            <div class="form-row" style="flex-wrap:wrap;gap:8px;">
+              <div style="flex:2;min-width:200px;">
+                <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:2px;" data-i18n="admin.email.server">SMTP Server</label>
+                <input type="text" id="emailServer" placeholder="smtp.gmail.com" style="width:100%;"/>
+              </div>
+              <div style="flex:0 0 90px;">
+                <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:2px;" data-i18n="admin.email.port">Port</label>
+                <input type="number" id="emailPort" value="587" min="1" max="65535" style="width:100%;"/>
+              </div>
+              <div style="flex:0 0 80px;align-self:flex-end;padding-bottom:2px;">
+                <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:2px;">TLS</label>
+                <select id="emailUseTls" style="min-height:44px;">
+                  <option value="true">✅ Yes</option>
+                  <option value="false">❌ No</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row" style="flex-wrap:wrap;gap:8px;margin-top:6px;">
+              <div style="flex:1;min-width:160px;">
+                <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:2px;" data-i18n="admin.email.username">Username</label>
+                <input type="text" id="emailUsername" placeholder="user@gmail.com" style="width:100%;"/>
+              </div>
+              <div style="flex:1;min-width:160px;">
+                <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:2px;" data-i18n="admin.email.password">Password / App Password</label>
+                <input type="password" id="emailPassword" placeholder="••••••••" style="width:100%;"/>
+              </div>
+            </div>
+            <div class="form-row" style="flex-wrap:wrap;gap:8px;margin-top:6px;">
+              <div style="flex:1;min-width:200px;">
+                <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:2px;" data-i18n="admin.email.from_addr">From Address</label>
+                <input type="email" id="emailFromAddr" placeholder="pos@restaurant.com" style="width:100%;"/>
+              </div>
+              <div style="flex:0 0 160px;align-self:flex-end;padding-bottom:2px;">
+                <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:2px;" data-i18n="admin.email.enabled_label">Enabled</label>
+                <select id="emailEnabled" style="min-height:44px;">
+                  <option value="false" data-i18n="admin.no">No</option>
+                  <option value="true" data-i18n="admin.yes">Yes</option>
+                </select>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+              <button class="accent" onclick="saveEmailConfig()" style="min-height:44px;" data-i18n="admin.email.save_btn">💾 Save SMTP Settings</button>
+              <button class="outline" onclick="loadEmailConfig()" style="min-height:44px;" data-i18n="admin.email.load_btn">🔄 Refresh</button>
+              <button class="outline" onclick="testEmailConfig()" id="emailTestBtn" style="min-height:44px;border-color:#4fc3f7;color:#4fc3f7;">📧 Test Email</button>
+            </div>
+            <div id="emailConfigStatus" style="margin-top:8px;font-size:13px;color:var(--text2);"></div>
+          </div>
+        </div>
         <!-- Table-side Ads -->
         <div id="secAds" class="admin-section">
           <h3 data-i18n="admin.ads.title">📺 Table-Side Ads</h3>
@@ -1669,6 +1730,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
     <div id="receiptContent"></div>
     <div id="receiptActions">
       <button class="print-btn" onclick="printReceipt()" data-i18n="receipt.print">🖨️ Print</button>
+      <button class="print-btn" onclick="emailCurrentReceipt()" style="background:#4fc3f7;" data-i18n="receipt.email">📧 Email</button>
       <button class="close-btn" onclick="closeReceipt()" data-i18n="receipt.close">Close</button>
     </div>
   </div>
@@ -2222,6 +2284,26 @@ const L10N = {
     'course.appetizer_hint': 'Prepare first (~5 min)',
     'course.dessert_hint': 'Prepare after mains',
     'course.prep_guide': '🥗 Appetizers first → Mains → 🍰 Desserts last',
+    'cart.email_placeholder': 'Email receipt to customer',
+    'receipt.email': '📧 Email',
+    'history.email_receipt': '📧 Email Receipt',
+    'admin.email': '📧 Email',
+    'admin.email.title': '📧 Email Settings (SMTP)',
+    'admin.email.desc': 'Configure SMTP server to send digital receipts to customers via email.',
+    'admin.email.server': 'SMTP Server',
+    'admin.email.port': 'Port',
+    'admin.email.username': 'Username',
+    'admin.email.password': 'Password / App Password',
+    'admin.email.from_addr': 'From Address',
+    'admin.email.enabled_label': 'Enabled',
+    'admin.email.save_btn': '💾 Save SMTP Settings',
+    'admin.email.load_btn': '🔄 Refresh',
+    'admin.email.test_btn': '📧 Test Email',
+    'admin.email.saved': 'Email configuration saved!',
+    'admin.email.test_success': '✅ Test email sent! Check your inbox.',
+    'admin.email.test_fail': '❌ Test failed: {error}',
+    'admin.yes': 'Yes',
+    'admin.no': 'No',
   },
   es: {
     'app.title': '🍽️ Sistema POS',
@@ -2564,6 +2646,26 @@ const L10N = {
     'course.appetizer_hint': 'Prepare primero (~5 min)',
     'course.dessert_hint': 'Prepare después de principales',
     'course.prep_guide': '🥗 Entrantes → Principales → 🍰 Postres último',
+    'cart.email_placeholder': 'Enviar recibo por correo al cliente',
+    'receipt.email': '📧 Correo',
+    'history.email_receipt': '📧 Enviar Recibo',
+    'admin.email': '📧 Correo',
+    'admin.email.title': '📧 Configuración de Correo (SMTP)',
+    'admin.email.desc': 'Configure el servidor SMTP para enviar recibos digitales a los clientes por correo electrónico.',
+    'admin.email.server': 'Servidor SMTP',
+    'admin.email.port': 'Puerto',
+    'admin.email.username': 'Usuario',
+    'admin.email.password': 'Contraseña / App Password',
+    'admin.email.from_addr': 'Dirección Remitente',
+    'admin.email.enabled_label': 'Activado',
+    'admin.email.save_btn': '💾 Guardar Config SMTP',
+    'admin.email.load_btn': '🔄 Actualizar',
+    'admin.email.test_btn': '📧 Probar Correo',
+    'admin.email.saved': '¡Configuración de correo guardada!',
+    'admin.email.test_success': '✅ ¡Correo de prueba enviado! Revise su bandeja de entrada.',
+    'admin.email.test_fail': '❌ Prueba falló: {error}',
+    'admin.yes': 'Sí',
+    'admin.no': 'No',
   }
 };
 
@@ -3043,6 +3145,7 @@ function showApp() {
     'asPricing': perms.includes('manage_items'),  // Scheduled pricing uses manage_items permission
     'asWaste': perms.includes('manage_items'),  // Waste tracking uses manage_items permission
     'asWebhooks': perms.includes('manage_items'),  // Webhook integration uses manage_items permission
+    'asEmail': perms.includes('manage_items'),  // Email settings uses manage_items permission
     'asAds': perms.includes('manage_items'),  // Table-side ads uses manage_items permission
     'asCategories': perms.includes('manage_items'),  // Category management uses manage_items permission
   };
@@ -3828,7 +3931,8 @@ async function submitOrder() {
   user: currentUser.id,
   date: new Date().toISOString(),
   notes: document.getElementById('orderNotesInput').value.trim(),
-  item_notes: {}
+  item_notes: {},
+  customer_email: document.getElementById('customerEmail').value.trim()
   };
   // Build item_notes map
   cart.forEach((c, i) => {
@@ -3857,7 +3961,8 @@ async function submitOrder() {
       item_notes: receiptData.item_notes,
       table_number: selectedTable ? parseInt(selectedTable) : null,
       customer_phone: loyaltyCustomerPhone || '',
-      delivery_address: getDeliveryAddress()
+      delivery_address: getDeliveryAddress(),
+      customer_email: document.getElementById('customerEmail').value.trim()
     })
     });
     if (!r.ok) { const d = await r.json(); showToast(d.message || 'Failed', 'danger'); return; }
@@ -3885,6 +3990,8 @@ async function submitOrder() {
     }
     receiptData.loyalty_earned = result.loyalty_earned || 0;
     receiptData.orderNumber = result.order_number || '—';
+    receiptData.order_id = result.order_id || null;
+    receiptData.customer_email = document.getElementById('customerEmail').value.trim();
     showReceipt(receiptData);
     // If drive-through mode is active, mark order as ready
     if (driveThroughMode) {
@@ -4671,7 +4778,7 @@ async function loadOrderHistory() {
           <span><strong>#${orderNum}</strong> — ${dt}${statusBadge}</span>
           <span class="ho-total">$${total}</span>
         </div>
-        <div class="ho-meta">${t('history.payment')} ${escHtml(paymentDisplay)} | ${t('history.user')} ${escHtml(o.user || 'N/A')}${hasTax ? ' | ' + t('history.tax') + ': $' + parseFloat(o.tax_amount).toFixed(2) : ''}${hasServiceCharge ? ' | 🔧 +$' + parseFloat(o.service_charge_amount).toFixed(2) : ''}${hasTip ? ' | 💬 ' + t('receipt.tip') + ': $' + parseFloat(o.tip_amount).toFixed(2) : ''}${o.table_number ? ' | 🪪 Table #' + o.table_number : ''}${hasDelivery ? ' | 📮 ' + escHtml(formatDeliveryAddress(deliveryAddr)) : ''}${orderNotes ? ' | 📝 ' + t('history.notes') : ''}${refundReasonStr} <button class="ghost" onclick="event.stopPropagation();reorderFromHistory(${JSON.stringify(items).replace(/"/g, '&quot;')})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#2ecc71;" title="${t('history.reorder')}">🔄</button> <button class="ghost" onclick="event.stopPropagation();printHistoryReceipt(${JSON.stringify(o).replace(/"/g, '&quot;')}, ${orderNum})" style="font-size:12px;padding:4px 8px;min-height:28px;color:var(--accent);">🖨️</button>${canRefund && !isRefunded ? \`<button class="ghost" onclick="event.stopPropagation();showRefundOverlay({order_id: ${o.order_id}, total: '${total}', date: '${(o.date || '').replace(/'/g, "\\'")}', payment: '${(o.payment || '').replace(/'/g, "\\'")}', user: '${(o.user || '').replace(/'/g, "\\'")}', orderNum: ${orderNum}})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#e74c3c;">↩️</button>\` : ''}</div>
+        <div class="ho-meta">${t('history.payment')} ${escHtml(paymentDisplay)} | ${t('history.user')} ${escHtml(o.user || 'N/A')}${hasTax ? ' | ' + t('history.tax') + ': $' + parseFloat(o.tax_amount).toFixed(2) : ''}${hasServiceCharge ? ' | 🔧 +$' + parseFloat(o.service_charge_amount).toFixed(2) : ''}${hasTip ? ' | 💬 ' + t('receipt.tip') + ': $' + parseFloat(o.tip_amount).toFixed(2) : ''}${o.table_number ? ' | 🪪 Table #' + o.table_number : ''}${hasDelivery ? ' | 📮 ' + escHtml(formatDeliveryAddress(deliveryAddr)) : ''}${orderNotes ? ' | 📝 ' + t('history.notes') : ''}${refundReasonStr} <button class="ghost" onclick="event.stopPropagation();reorderFromHistory(${JSON.stringify(items).replace(/"/g, '&quot;')})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#2ecc71;" title="${t('history.reorder')}">🔄</button> <button class="ghost" onclick="event.stopPropagation();printHistoryReceipt(${JSON.stringify(o).replace(/"/g, '&quot;')}, ${orderNum})" style="font-size:12px;padding:4px 8px;min-height:28px;color:var(--accent);">🖨️</button> <button class="ghost" onclick="event.stopPropagation();emailHistoryReceipt(${o.order_id})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#4fc3f7;" title="${t('history.email_receipt')}">📧</button>${canRefund && !isRefunded ? \`<button class="ghost" onclick="event.stopPropagation();showRefundOverlay({order_id: ${o.order_id}, total: '${total}', date: '${(o.date || '').replace(/'/g, "\\'")}', payment: '${(o.payment || '').replace(/'/g, "\\'")}', user: '${(o.user || '').replace(/'/g, "\\'")}', orderNum: ${orderNum}})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#e74c3c;">↩️</button>\` : ''}</div>
         <div class="ho-details">
           ${items.map((it, idx) => \`<div class="ho-item"><span>${escHtml(it.name)} x${it.qty||1}${it.note ? '<br/><span style="color:var(--text2);font-size:12px;padding-left:12px;">📝 ' + escHtml(it.note) + '</span>' : ''}${it.modifiers && it.modifiers.length > 0 ? '<br/><span style="color:#f39c12;font-size:12px;padding-left:12px;">⚙️ ' + it.modifiers.map(m => escHtml(m.option)).join(' · ') + '</span>' : ''}</span><span>$${((it.price||0)*(it.qty||1)).toFixed(2)}</span></div>\`).join('')}
           ${hasTax ? \`
@@ -7410,6 +7517,7 @@ function showReceipt(orderData) {
       <div class="rcpt-info">${t('receipt.payment')} ${escHtml(paymentDisplay)}</div>
       ${orderData.user ? `<div class="rcpt-info">${t('receipt.cashier')} ${escHtml(String(orderData.user))}</div>` : ''}
       ${orderData.delivery_address ? `<div class="rcpt-info">📮 ${t('receipt.delivery_to')}: ${escHtml(formatDeliveryAddress(orderData.delivery_address))}</div>` : ''}
+      ${orderData.customer_email ? `<div class="rcpt-info">📧 ${escHtml(orderData.customer_email)}</div>` : ''}
     </div>
     <hr class="rcpt-divider"/>
     ${itemLines}
@@ -7457,9 +7565,154 @@ function printHistoryReceipt(orderData, orderNumber) {
     user: orderData.user || '—',
     date: orderData.date || new Date().toISOString(),
     orderNumber: orderNumber || '—',
+    order_id: orderData.order_id || null,
+    customer_email: orderData.customer_email || '',
     delivery_address: orderData.delivery_address || null
   };
   showReceipt(receiptData);
+}
+
+// ═══════════ EMAIL RECEIPT FUNCTIONS ═══════════
+
+/** Email a receipt from the current receipt overlay */
+async function emailCurrentReceipt() {
+  if (!lastReceiptData) {
+    showToast('No receipt data to email', 'warning');
+    return;
+  }
+  const email = lastReceiptData.customer_email || prompt('Enter customer email:');
+  if (!email || !email.includes('@')) {
+    showToast('Valid email required', 'danger');
+    return;
+  }
+  const orderId = lastReceiptData.order_id || 0;
+  await sendEmailReceipt(orderId, email);
+}
+
+/** Email a receipt from order history */
+async function emailHistoryReceipt(orderId) {
+  const email = prompt('Enter customer email:');
+  if (!email || !email.includes('@')) {
+    showToast('Valid email required', 'danger');
+    return;
+  }
+  await sendEmailReceipt(orderId, email);
+}
+
+/** Send a receipt email via the backend */
+async function sendEmailReceipt(orderId, email) {
+  try {
+    const r = await fetch(BACKEND_URL + '/api/orders/email_receipt', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, order_id: orderId, recipient_email: email })
+    });
+    const data = await r.json();
+    if (!r.ok) { showToast(data.message || 'Failed to send email', 'danger'); return; }
+    showToast(data.message || 'Receipt sent!', 'success');
+  } catch(e) {
+    showToast('Network error sending email', 'danger');
+  }
+}
+
+/** Load SMTP config from backend */
+async function loadEmailConfig() {
+  try {
+    const r = await fetch(BACKEND_URL + '/api/email/config', { method: 'GET' });
+    if (!r.ok) { document.getElementById('emailConfigStatus').textContent = 'Failed to load config'; return; }
+    const config = await r.json();
+    document.getElementById('emailServer').value = config.server || '';
+    document.getElementById('emailPort').value = config.port || 587;
+    document.getElementById('emailUsername').value = config.username || '';
+    document.getElementById('emailPassword').value = config.password && config.password !== '••••••••' ? config.password : '';
+    document.getElementById('emailFromAddr').value = config.from_addr || '';
+    document.getElementById('emailUseTls').value = config.use_tls ? 'true' : 'false';
+    document.getElementById('emailEnabled').value = config.enabled ? 'true' : 'false';
+    document.getElementById('emailConfigStatus').textContent = 'Configuration loaded.';
+  } catch(e) {
+    document.getElementById('emailConfigStatus').textContent = 'Error loading config: ' + e.message;
+  }
+}
+
+/** Save SMTP config to backend */
+async function saveEmailConfig() {
+  const btn = document.querySelector('#secEmail .accent');
+  const origText = btn.textContent;
+  btn.textContent = '⏳ Saving...';
+  btn.disabled = true;
+  try {
+    const body = {
+      adminPin: currentUser.id,
+      server: document.getElementById('emailServer').value.trim(),
+      port: parseInt(document.getElementById('emailPort').value) || 587,
+      username: document.getElementById('emailUsername').value.trim(),
+      password: document.getElementById('emailPassword').value,
+      from_addr: document.getElementById('emailFromAddr').value.trim(),
+      use_tls: document.getElementById('emailUseTls').value === 'true',
+      enabled: document.getElementById('emailEnabled').value === 'true'
+    };
+    const r = await fetch(BACKEND_URL + '/api/email/config', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const data = await r.json();
+    if (!r.ok) { showToast(data.message || 'Failed', 'danger'); return; }
+    showToast(t('admin.email.saved'), 'success');
+    document.getElementById('emailConfigStatus').textContent = '✅ Saved.';
+  } catch(e) {
+    showToast('Error saving config', 'danger');
+  } finally {
+    btn.textContent = origText;
+    btn.disabled = false;
+  }
+}
+
+/** Test email config by sending a test email */
+async function testEmailConfig() {
+  const btn = document.getElementById('emailTestBtn');
+  const origText = btn.textContent;
+  btn.textContent = '⏳ Sending...';
+  btn.disabled = true;
+  const testEmail = prompt('Send test email to:');
+  if (!testEmail || !testEmail.includes('@')) {
+    btn.textContent = origText;
+    btn.disabled = false;
+    return;
+  }
+  try {
+    // First save current config
+    const configBody = {
+      adminPin: currentUser.id,
+      server: document.getElementById('emailServer').value.trim(),
+      port: parseInt(document.getElementById('emailPort').value) || 587,
+      username: document.getElementById('emailUsername').value.trim(),
+      password: document.getElementById('emailPassword').value,
+      from_addr: document.getElementById('emailFromAddr').value.trim(),
+      use_tls: document.getElementById('emailUseTls').value === 'true',
+      enabled: true
+    };
+    await fetch(BACKEND_URL + '/api/email/config', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(configBody)
+    });
+    // Then send test via the email receipt endpoint with order_id=0 (test mode)
+    const r = await fetch(BACKEND_URL + '/api/orders/test_email', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, test_email: testEmail })
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      showToast(t('admin.email.test_fail', {error: data.message || 'Unknown error'}), 'danger');
+      document.getElementById('emailConfigStatus').textContent = '❌ ' + (data.message || 'Failed');
+    } else {
+      showToast(t('admin.email.test_success'), 'success');
+      document.getElementById('emailConfigStatus').textContent = '✅ Test sent!';
+    }
+  } catch(e) {
+    showToast(t('admin.email.test_fail', {error: e.message}), 'danger');
+  } finally {
+    btn.textContent = origText;
+    btn.disabled = false;
+  }
 }
 
 // ═══════════ UTILS ═══════════
