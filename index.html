@@ -257,6 +257,18 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 }
 @media (min-width: 768px) { #posMain { flex-direction: row; } }
 
+#itemSearchRow {
+  padding: 0 0 8px 0;
+}
+#itemSearchInput {
+  width: 100%; padding: 12px 16px; font-size: 16px; min-height: 48px;
+  background: var(--bg); border: 2px solid var(--border);
+  border-radius: var(--radius); color: var(--text); outline: none;
+  transition: border-color 0.2s; box-sizing: border-box;
+}
+#itemSearchInput:focus { border-color: var(--accent); }
+#itemSearchInput::placeholder { color: var(--text2); opacity: 0.7; }
+
 #itemGrid {
   display: grid; grid-template-columns: repeat(2, 1fr);
   gap: 10px; flex: 1; overflow-y: auto; align-content: start;
@@ -287,6 +299,11 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 .item-stock-low { background: #f39c1233; color: #f39c12; }
 .item-stock-out { background: #e74c3c33; color: #e74c3c; }
 .item-add-disabled { opacity: 0.4; cursor: not-allowed; }
+.item-category-label {
+  font-size: 11px; color: var(--text2); background: var(--bg);
+  padding: 2px 8px; border-radius: 8px; white-space: nowrap;
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis;
+}
 
 /* ── CART ── */
 #cart {
@@ -903,6 +920,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
         </div>
         <div id="barcodeStatus"></div>
       </div>
+      <div id="itemSearchRow"><input type="text" id="itemSearchInput" placeholder="🔍 Search items..." data-i18n-placeholder="item.search" autocomplete="off"/></div>
       <div id="catTabs"></div>
       <div id="posMain">
         <div id="itemGrid"></div>
@@ -1875,6 +1893,8 @@ const L10N = {
     'admin.ads.deleted': 'Ad deleted!',
     'admin.ads.toggled': 'Ad toggled!',
     'admin.ads.interval_updated': 'Rotation interval updated!',
+    'item.search': '🔍 Search items...',
+    'item.search_no_results': 'No items match "{query}"',
   },
   es: {
     'app.title': '🍽️ Sistema POS',
@@ -2150,6 +2170,8 @@ const L10N = {
     'admin.ads.deleted': '¡Anuncio eliminado!',
     'admin.ads.toggled': '¡Anuncio cambiado!',
     'admin.ads.interval_updated': '¡Intervalo de rotación actualizado!',
+    'item.search': '🔍 Buscar artículos...',
+    'item.search_no_results': 'Ningún artículo coincide con "{query}"',
   }
 };
 
@@ -2255,6 +2277,7 @@ let cart = [];
 let itemsData = {}; // { category: [{name, price}] }
 let paymentSplits = [{method: 'Cash', amount: 0}]; // [{method, amount}, ...] for split-payment support
 let currentCategory = '';
+let itemSearchTerm = '';
 let taxConfig = null; // { global_tax_rate, category_tax_rates, item_tax_overrides }
 let appliedDiscount = null; // { code, type, value, discount_amount, description }
 let scheduledPricing = null; // { item_name: { original_price, discounted_price, discount_label, category } }
@@ -2361,6 +2384,22 @@ window.addEventListener('DOMContentLoaded', () => {
   syncQueuedOrders();
   // Init WebSocket real-time connection
   initSocketIO();
+  // Init item search: real-time filter as user types
+  const searchInput = document.getElementById('itemSearchInput');
+  if (searchInput) {
+    searchInput.addEventListener('input', () => {
+      itemSearchTerm = searchInput.value;
+      renderItems();
+    });
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        searchInput.value = '';
+        itemSearchTerm = '';
+        renderItems();
+        searchInput.blur();
+      }
+    });
+  }
   // Listen for online/offline events to auto-sync
   window.addEventListener('online', () => {
     updateOfflineIndicator();
@@ -2644,6 +2683,11 @@ function switchMainTab(tab) {
     document.getElementById('posTab').classList.add('active');
     loadItems();
     loadTableSelector();
+    // Auto-focus search input when switching to POS tab
+    setTimeout(() => {
+      const searchInput = document.getElementById('itemSearchInput');
+      if (searchInput) searchInput.focus();
+    }, 100);
   } else if (tab === 'history') {
     document.getElementById('historyTab').classList.add('active');
     loadOrderHistory();
@@ -2691,7 +2735,14 @@ function renderCategories() {
     const btn = document.createElement('button');
     btn.textContent = cat;
     if (cat === currentCategory) btn.classList.add('active');
-    btn.onclick = () => { currentCategory = cat; renderCategories(); renderItems(); };
+    btn.onclick = () => { 
+      currentCategory = cat; 
+      // Clear search when clicking a category tab
+      const searchInput = document.getElementById('itemSearchInput');
+      if (searchInput) { searchInput.value = ''; itemSearchTerm = ''; }
+      renderCategories(); 
+      renderItems(); 
+    };
     container.appendChild(btn);
   });
 }
@@ -2699,42 +2750,93 @@ function renderCategories() {
 function renderItems() {
   const grid = document.getElementById('itemGrid');
   grid.innerHTML = '';
-  const items = itemsData[currentCategory] || [];
-  if (items.length === 0) {
-    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;">' + t('item.no_items') + '</div>';
-    return;
+  const term = itemSearchTerm.trim().toLowerCase();
+  if (term) {
+    // Search mode: gather all matching items across categories
+    let results = [];
+    Object.keys(itemsData).forEach(cat => {
+      (itemsData[cat] || []).forEach(item => {
+        if (item.name.toLowerCase().includes(term)) {
+          results.push({ ...item, _category: cat });
+        }
+      });
+    });
+    if (results.length === 0) {
+      grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;">' + t('item.search_no_results', {query: escHtml(itemSearchTerm.trim())}) + '</div>';
+      return;
+    }
+    // Highlight the matching term
+    const re = new RegExp('(' + term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+    results.forEach(item => {
+      const inv = inventoryData[item.name] || {};
+      const stock = inv.stock !== undefined ? inv.stock : null;
+      const threshold = inv.low_stock_threshold || 10;
+      let stockHtml = '';
+      let stockClass = '';
+      if (stock !== null && stock <= 0) {
+        stockHtml = '<div class="item-stock item-stock-out">Out of stock</div>';
+        stockClass = ' item-out-of-stock';
+      } else if (stock !== null && stock <= threshold) {
+        stockHtml = '<div class="item-stock item-stock-low">' + stock + ' left</div>';
+        stockClass = ' item-low-stock';
+      }
+      let effectivePrice = item.price;
+      let priceHtml = '<div class="item-price">$' + item.price.toFixed(2) + '</div>';
+      if (scheduledPricing && scheduledPricing[item.name]) {
+        effectivePrice = scheduledPricing[item.name].discounted_price;
+        priceHtml = '<div class="item-price" style="color:#2ecc71;">' + t('item.scheduled_price', {price: effectivePrice.toFixed(2)}) + ' <span style="text-decoration:line-through;color:var(--text2);font-size:12px;">$' + item.price.toFixed(2) + '</span></div>';
+      }
+      const displayName = item.name.replace(re, '<mark style="background:#e9456033;color:var(--accent);border-radius:3px;padding:0 2px;">$1</mark>');
+      const card = document.createElement('div');
+      card.className = 'item-card' + stockClass;
+      card.innerHTML = `
+        <div class="item-category-label">${escHtml(item._category)}</div>
+        <div class="item-name">${displayName}</div>
+        ${priceHtml}
+        ${stockHtml}
+        <button class="item-add${stock !== null && stock <= 0 ? ' item-add-disabled' : ''}" onclick="event.stopPropagation(); addToCart('${escJs(item.name)}', ${effectivePrice}, '${escJs(item._category)}')"${stock !== null && stock <= 0 ? ' disabled' : ''}>${stock !== null && stock <= 0 ? t('item.out') : t('item.add')}</button>
+      `;
+      card.onclick = () => { if (stock !== null && stock <= 0) { showToast('Item out of stock', 'danger'); return; } addToCart(item.name, effectivePrice, item._category); };
+      grid.appendChild(card);
+    });
+  } else {
+    // Normal category mode
+    const items = itemsData[currentCategory] || [];
+    if (items.length === 0) {
+      grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;">' + t('item.no_items') + '</div>';
+      return;
+    }
+    items.forEach(item => {
+      const inv = inventoryData[item.name] || {};
+      const stock = inv.stock !== undefined ? inv.stock : null;
+      const threshold = inv.low_stock_threshold || 10;
+      let stockHtml = '';
+      let stockClass = '';
+      if (stock !== null && stock <= 0) {
+        stockHtml = '<div class="item-stock item-stock-out">Out of stock</div>';
+        stockClass = ' item-out-of-stock';
+      } else if (stock !== null && stock <= threshold) {
+        stockHtml = '<div class="item-stock item-stock-low">' + stock + ' left</div>';
+        stockClass = ' item-low-stock';
+      }
+      let effectivePrice = item.price;
+      let priceHtml = '<div class="item-price">$' + item.price.toFixed(2) + '</div>';
+      if (scheduledPricing && scheduledPricing[item.name]) {
+        effectivePrice = scheduledPricing[item.name].discounted_price;
+        priceHtml = '<div class="item-price" style="color:#2ecc71;">' + t('item.scheduled_price', {price: effectivePrice.toFixed(2)}) + ' <span style="text-decoration:line-through;color:var(--text2);font-size:12px;">$' + item.price.toFixed(2) + '</span></div>';
+      }
+      const card = document.createElement('div');
+      card.className = 'item-card' + stockClass;
+      card.innerHTML = `
+        <div class="item-name">${escHtml(item.name)}</div>
+        ${priceHtml}
+        ${stockHtml}
+        <button class="item-add${stock !== null && stock <= 0 ? ' item-add-disabled' : ''}" onclick="event.stopPropagation(); addToCart('${escJs(item.name)}', ${effectivePrice}, '${escJs(currentCategory)}')"${stock !== null && stock <= 0 ? ' disabled' : ''}>${stock !== null && stock <= 0 ? t('item.out') : t('item.add')}</button>
+      `;
+      card.onclick = () => { if (stock !== null && stock <= 0) { showToast('Item out of stock', 'danger'); return; } addToCart(item.name, effectivePrice, currentCategory); };
+      grid.appendChild(card);
+    });
   }
-  items.forEach(item => {
-    const inv = inventoryData[item.name] || {};
-    const stock = inv.stock !== undefined ? inv.stock : null;
-    const threshold = inv.low_stock_threshold || 10;
-    let stockHtml = '';
-    let stockClass = '';
-    if (stock !== null && stock <= 0) {
-      stockHtml = '<div class="item-stock item-stock-out">Out of stock</div>';
-      stockClass = ' item-out-of-stock';
-    } else if (stock !== null && stock <= threshold) {
-      stockHtml = '<div class="item-stock item-stock-low">' + stock + ' left</div>';
-      stockClass = ' item-low-stock';
-    }
-    // Check for scheduled pricing
-    let effectivePrice = item.price;
-    let priceHtml = '<div class="item-price">$' + item.price.toFixed(2) + '</div>';
-    if (scheduledPricing && scheduledPricing[item.name]) {
-      effectivePrice = scheduledPricing[item.name].discounted_price;
-      priceHtml = '<div class="item-price" style="color:#2ecc71;">' + t('item.scheduled_price', {price: effectivePrice.toFixed(2)}) + ' <span style="text-decoration:line-through;color:var(--text2);font-size:12px;">$' + item.price.toFixed(2) + '</span></div>';
-    }
-    const card = document.createElement('div');
-    card.className = 'item-card' + stockClass;
-    card.innerHTML = `
-      <div class="item-name">${escHtml(item.name)}</div>
-      ${priceHtml}
-      ${stockHtml}
-      <button class="item-add${stock !== null && stock <= 0 ? ' item-add-disabled' : ''}" onclick="event.stopPropagation(); addToCart('${escJs(item.name)}', ${effectivePrice}, '${escJs(currentCategory)}')"${stock !== null && stock <= 0 ? ' disabled' : ''}>${stock !== null && stock <= 0 ? t('item.out') : t('item.add')}</button>
-    `;
-    card.onclick = () => { if (stock !== null && stock <= 0) { showToast('Item out of stock', 'danger'); return; } addToCart(item.name, effectivePrice, currentCategory); };
-    grid.appendChild(card);
-  });
 }
 
 function addToCart(name, price, category) {
