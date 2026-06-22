@@ -901,6 +901,9 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
         <!-- Stats -->
         <div id="secStats" class="admin-section active">
           <div class="stats-grid" id="statsGrid"><div class="empty-state">Loading stats...</div></div>
+          <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="accent" onclick="exportOrdersCSV()" style="font-size:14px;padding:12px 20px;min-height:48px;">📥 Export Orders (CSV)</button>
+          </div>
         </div>
         <!-- Charts -->
         <div id="secCharts" class="admin-section">
@@ -1023,6 +1026,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
               <div class="log-filter-actions">
                 <button class="accent" onclick="loadActivityLog()" style="min-height:44px;">🔍 Apply</button>
                 <button class="ghost" onclick="resetActivityLogFilters()" style="min-height:44px;">✕ Reset</button>
+                <button class="outline" onclick="exportActivityLogCSV()" style="min-height:44px;">📥 Export CSV</button>
               </div>
             </div>
           </div>
@@ -1030,6 +1034,10 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
         </div>
         <!-- Timesheet -->
         <div id="secTimesheet" class="admin-section">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+            <h3 style="margin:0;">⏱️ Timesheet</h3>
+            <button class="accent" onclick="exportTimesheetCSV()" style="font-size:14px;padding:12px 20px;min-height:48px;">📥 Export Timesheet (CSV)</button>
+          </div>
           <div id="timesheetList"><div class="empty-state">Loading...</div></div>
         </div>
         <!-- Permissions (owner only) -->
@@ -3039,6 +3047,61 @@ async function loadTimesheet() {
       </div>
     `).join('');
   } catch(e) { list.innerHTML = '<div class="empty-state">' + t('network_error') + '</div>'; }
+}
+
+// ═══════════ CSV EXPORT ═══════════
+
+/** Trigger a browser download of a CSV string as a file. */
+function downloadCSV(csvContent, filename) {
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+async function exportOrdersCSV() {
+  try {
+    const r = await fetch(BACKEND_URL + '/api/export/orders_csv', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id })
+    });
+    if (!r.ok) { const d = await r.json(); showToast(d.message || 'Export failed', 'danger'); return; }
+    const data = await r.json();
+    downloadCSV(data.csv, data.filename);
+    showToast('✅ Orders exported!', 'success');
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
+}
+
+async function exportTimesheetCSV() {
+  try {
+    const r = await fetch(BACKEND_URL + '/api/export/timesheet_csv', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id })
+    });
+    if (!r.ok) { const d = await r.json(); showToast(d.message || 'Export failed', 'danger'); return; }
+    const data = await r.json();
+    downloadCSV(data.csv, data.filename);
+    showToast('✅ Timesheet exported!', 'success');
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
+}
+
+async function exportActivityLogCSV() {
+  try {
+    const r = await fetch(BACKEND_URL + '/api/export/activity_log_csv', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id })
+    });
+    if (!r.ok) { const d = await r.json(); showToast(d.message || 'Export failed', 'danger'); return; }
+    const data = await r.json();
+    downloadCSV(data.csv, data.filename);
+    showToast('✅ Activity log exported!', 'success');
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
 
 // ═══════════ PERMISSIONS (owner only) ═══════════

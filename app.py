@@ -7,6 +7,8 @@ import shutil
 import glob
 import hashlib
 import secrets
+import csv
+import io
 from collections import defaultdict, Counter
 
 app = Flask(__name__, static_folder='.', static_url_path='')
@@ -2319,6 +2321,112 @@ def kiosk_pay():
             })
 
     return jsonify({'message': f'Order #{order_id} not found'}), 404
+
+
+# ============================================================
+# CSV Export Endpoints
+# ============================================================
+
+
+def generate_csv(rows, headers):
+    """Generate CSV string from a list of dicts with given headers."""
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(headers)
+    for row in rows:
+        writer.writerow([row.get(h, '') for h in headers])
+    result = output.getvalue()
+    output.close()
+    return result
+
+
+@app.route('/api/export/orders_csv', methods=['POST'])
+def export_orders_csv():
+    data = request.json
+    admin_pin = data.get('adminPin')
+
+    if not check_perm(admin_pin, "view_stats"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    orders = load_json_data(ORDERS_FILE)
+    headers = ['Order ID', 'Date', 'User', 'Items', 'Subtotal', 'Tax Amount',
+               'Tip Amount', 'Discount Amount', 'Total', 'Payment', 'Status', 'Notes', 'Table']
+
+    rows = []
+    for order in orders:
+        items_str = '; '.join([
+            f"{i.get('name', '')} x{i.get('qty', 1)}"
+            for i in order.get('items', [])
+        ])
+        rows.append({
+            'Order ID': order.get('order_id', ''),
+            'Date': order.get('date', ''),
+            'User': order.get('user', ''),
+            'Items': items_str,
+            'Subtotal': order.get('subtotal', 0),
+            'Tax Amount': order.get('tax_amount', 0),
+            'Tip Amount': order.get('tip_amount', 0),
+            'Discount Amount': order.get('discount_amount', 0),
+            'Total': order.get('total', 0),
+            'Payment': order.get('payment', ''),
+            'Status': order.get('status', ''),
+            'Notes': order.get('notes', ''),
+            'Table': order.get('table_number', '')
+        })
+
+    csv_content = generate_csv(rows, headers)
+    return jsonify({'csv': csv_content, 'filename': 'orders_export.csv'})
+
+
+@app.route('/api/export/timesheet_csv', methods=['POST'])
+def export_timesheet_csv():
+    data = request.json
+    admin_pin = data.get('adminPin')
+
+    if not check_perm(admin_pin, "view_timesheet"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    timesheet = load_json_data(TIMESHEET_FILE)
+    headers = ['User ID', 'Login Time', 'Logout Time', 'Duration (Hours)']
+
+    rows = []
+    for entry in timesheet:
+        rows.append({
+            'User ID': entry.get('user_id', ''),
+            'Login Time': entry.get('login_time', ''),
+            'Logout Time': entry.get('logout_time', ''),
+            'Duration (Hours)': entry.get('duration_hours', 0)
+        })
+
+    csv_content = generate_csv(rows, headers)
+    return jsonify({'csv': csv_content, 'filename': 'timesheet_export.csv'})
+
+
+@app.route('/api/export/activity_log_csv', methods=['POST'])
+def export_activity_log_csv():
+    data = request.json
+    admin_pin = data.get('adminPin')
+
+    if not check_perm(admin_pin, "view_logs"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    logs = load_json_data(ACTIVITY_LOG_FILE)
+    headers = ['Timestamp', 'Type', 'User ID', 'User Role', 'Details']
+
+    rows = []
+    for log in logs:
+        details = log.get('details', {})
+        details_str = json.dumps(details) if details else ''
+        rows.append({
+            'Timestamp': log.get('timestamp', ''),
+            'Type': log.get('type', ''),
+            'User ID': log.get('user_id', ''),
+            'User Role': log.get('user_role', ''),
+            'Details': details_str
+        })
+
+    csv_content = generate_csv(rows, headers)
+    return jsonify({'csv': csv_content, 'filename': 'activity_log_export.csv'})
 
 
 # ============================================================
