@@ -22,6 +22,7 @@ TAX_CONFIG_FILE = 'tax_config.json'  # Tax configuration
 DISCOUNTS_FILE = 'discounts.json'  # Discount/coupon codes
 ORDER_COUNTER_FILE = 'order_counter.json'  # Auto-incrementing order counter
 TABLES_FILE = 'tables.json'  # Table management data
+INVENTORY_FILE = 'inventory.json'  # Inventory tracking
 MENU_BACKUPS_DIR = 'menu_backups'
 
 # --- Permission Constants ---
@@ -86,7 +87,7 @@ def backup_menu():
 
 
 # Ensure JSON files exist and are initialized correctly
-for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE]:
+for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE, INVENTORY_FILE]:
     if not os.path.exists(f):
         with open(f, 'w') as file:
             if f == USERS_FILE:
@@ -128,6 +129,8 @@ for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMES
                 json.dump({"counter": 1}, file, indent=4)  # Initialize order counter at 1
             elif f == TABLES_FILE:
                 json.dump({}, file, indent=4)  # Initialize empty tables
+            elif f == INVENTORY_FILE:
+                json.dump({}, file, indent=4)  # Initialize empty inventory
             else:
                 json.dump([], file)  # Initialize orders.json and cleared_orders.json as empty lists
 
@@ -483,6 +486,16 @@ def add_item():
     items_data[category].append({"name": name, "price": price})
     save_json_data(ITEMS_FILE, items_data)
     backup_menu()  # Auto-backup after successful save
+    
+    # Auto-add inventory entry for the new item
+    inventory = load_json_data(INVENTORY_FILE)
+    if name not in inventory:
+        inventory[name] = {
+            'stock': 0,
+            'low_stock_threshold': 10
+        }
+        save_json_data(INVENTORY_FILE, inventory)
+    
     log_activity('add_item', admin_pin, admin_role, {'status': 'success', 'category': category, 'name': name, 'price': price})
     return jsonify({'message': 'Item added successfully', 'item': {'category': category, 'name': name, 'price': price}})
 
@@ -696,7 +709,39 @@ def submit_order():
         'payment_method': order_details['payment'],
         'item_count': len(items)
     })
-    return jsonify({'message': 'Order submitted successfully', 'order_number': order_number, 'order_id': order_id})
+
+    # --- Inventory: decrement stock for each item in the order ---
+    inventory = load_json_data(INVENTORY_FILE)
+    low_stock_warnings = []
+    for item in items:
+        item_name = item.get('name', '')
+        qty = int(item.get('qty', 1))
+        if item_name in inventory:
+            current_stock = inventory[item_name].get('stock', 0)
+            new_stock = max(0, current_stock - qty)
+            inventory[item_name]['stock'] = new_stock
+            threshold = inventory[item_name].get('low_stock_threshold', 10)
+            if new_stock <= 0:
+                low_stock_warnings.append({
+                    'item_name': item_name,
+                    'stock': new_stock,
+                    'status': 'out_of_stock'
+                })
+            elif new_stock <= threshold:
+                low_stock_warnings.append({
+                    'item_name': item_name,
+                    'stock': new_stock,
+                    'status': 'low_stock',
+                    'threshold': threshold
+                })
+    save_json_data(INVENTORY_FILE, inventory)
+
+    return jsonify({
+        'message': 'Order submitted successfully',
+        'order_number': order_number,
+        'order_id': order_id,
+        'low_stock_warnings': low_stock_warnings
+    })
 
 
 @app.route('/api/clear_order', methods=['POST'])
@@ -1892,6 +1937,136 @@ def get_table_tab(table_number):
         'tax': round(tab_tax, 2),
         'total': round(tab_total, 2)
     })
+
+
+# ============================================================
+# Inventory Tracking System
+# ============================================================
+
+
+@app.route('/api/inventory', methods=['GET'])
+def get_inventory():
+    """Returns all inventory data merged with item names from menu."""
+    inventory = load_json_data(INVENTORY_FILE)
+    items = load_json_data(ITEMS_FILE)
+    
+    # Build a lookup of all item names from menu
+    menu_item_names = set()
+    for cat, cat_items in items.items():
+        for item in cat_items:
+            menu_item_names.add(item['name'])
+    
+    # Auto-populate inventory for menu items that don't have an entry yet
+    changed = False
+    for item_name in menu_item_names:
+        if item_name not in inventory:
+            inventory[item_name] = {
+                'stock': 0,
+                'low_stock_threshold': 10
+            }
+            changed = True
+    
+    if changed:
+        save_json_data(INVENTORY_FILE, inventory)
+    
+    return jsonify(inventory)
+
+
+@app.route('/api/inventory/update', methods=['POST'])
+def update_inventory():
+    """Update stock or threshold for an item (admin only, manage_items)."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+    
+    if not check_perm(admin_pin, "manage_items"):
+        log_activity('update_inventory', admin_pin, 'unauthorized', {'status': 'failed', 'reason': 'Insufficient permissions'})
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+    
+    item_name = data.get('item_name')
+    stock = data.get('stock')
+    low_stock_threshold = data.get('low_stock_threshold')
+    
+    if not item_name:
+        return jsonify({'message': 'item_name is required.'}), 400
+    
+    admin_user = load_json_data(USERS_FILE).get(admin_pin, None)
+    admin_role = admin_user['role'] if admin_user else 'unknown'
+    
+    inventory = load_json_data(INVENTORY_FILE)
+    
+    if item_name not in inventory:
+        inventory[item_name] = {
+            'stock': 0,
+            'low_stock_threshold': 10
+        }
+    
+    if stock is not None:
+        try:
+            stock = int(stock)
+            if stock < 0:
+                raise ValueError
+            inventory[item_name]['stock'] = stock
+        except (ValueError, TypeError):
+            return jsonify({'message': 'Stock must be a non-negative integer.'}), 400
+    
+    if low_stock_threshold is not None:
+        try:
+            low_stock_threshold = int(low_stock_threshold)
+            if low_stock_threshold < 0:
+                raise ValueError
+            inventory[item_name]['low_stock_threshold'] = low_stock_threshold
+        except (ValueError, TypeError):
+            return jsonify({'message': 'Low stock threshold must be a non-negative integer.'}), 400
+    
+    save_json_data(INVENTORY_FILE, inventory)
+    log_activity('update_inventory', admin_pin, admin_role, {
+        'item_name': item_name,
+        'stock': inventory[item_name]['stock'],
+        'low_stock_threshold': inventory[item_name]['low_stock_threshold']
+    })
+    return jsonify({
+        'message': f'Inventory for "{item_name}" updated.',
+        'inventory': inventory[item_name]
+    })
+
+
+@app.route('/api/inventory/low_stock', methods=['GET'])
+def low_stock_alerts():
+    """Returns items that are low on stock or out of stock."""
+    inventory = load_json_data(INVENTORY_FILE)
+    items = load_json_data(ITEMS_FILE)
+    
+    # Build item name -> category mapping
+    item_categories = {}
+    for cat, cat_items in items.items():
+        for item in cat_items:
+            if item['name'] not in item_categories:
+                item_categories[item['name']] = cat
+    
+    low_stock_items = []
+    for item_name, inv_data in inventory.items():
+        stock = inv_data.get('stock', 0)
+        threshold = inv_data.get('low_stock_threshold', 10)
+        category = item_categories.get(item_name, '')
+        
+        if stock <= 0:
+            low_stock_items.append({
+                'item_name': item_name,
+                'stock': stock,
+                'threshold': threshold,
+                'category': category,
+                'status': 'out_of_stock'
+            })
+        elif stock <= threshold:
+            low_stock_items.append({
+                'item_name': item_name,
+                'stock': stock,
+                'threshold': threshold,
+                'category': category,
+                'status': 'low_stock'
+            })
+    
+    return jsonify({'low_stock_items': low_stock_items})
 
 
 # ============================================================

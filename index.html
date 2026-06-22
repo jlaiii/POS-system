@@ -90,6 +90,15 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 .perm-table td:first-child { text-align: left; font-weight: 600; }
 .perm-save-btn { font-size: 12px; padding: 6px 12px; min-height: 32px; }
 
+/* ── INVENTORY BADGES ── */
+.inv-badge {
+  display: inline-block; font-size: 11px; font-weight: 700;
+  padding: 2px 10px; border-radius: 10px; margin-left: 8px;
+}
+.inv-badge.inv-ok { background: #2ecc7133; color: #2ecc71; }
+.inv-badge.inv-low { background: #f39c1233; color: #f39c12; }
+.inv-badge.inv-out { background: #e74c3c33; color: #e74c3c; }
+
 /* ── ROLE BADGES ── */
 .role-badge {
   display: inline-block; padding: 2px 10px; border-radius: 12px;
@@ -192,6 +201,15 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
   background: var(--accent); color: #fff; font-size: 14px;
   padding: 8px 16px; border-radius: 8px; min-height: 40px; width: 100%;
 }
+.item-card.item-low-stock { border-color: #f39c12; }
+.item-card.item-out-of-stock { border-color: #e74c3c; opacity: 0.7; }
+.item-stock {
+  font-size: 12px; font-weight: 600; padding: 2px 10px;
+  border-radius: 10px; text-align: center; width: 100%;
+}
+.item-stock-low { background: #f39c1233; color: #f39c12; }
+.item-stock-out { background: #e74c3c33; color: #e74c3c; }
+.item-add-disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* ── CART ── */
 #cart {
@@ -786,6 +804,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
         <button onclick="switchAdminSection('menuhistory')" id="asMenuhistory" data-i18n="admin.menu_history" style="display:none;">📋 Menu History</button>
         <button onclick="switchAdminSection('credentials')" id="asCredentials" data-i18n="admin.credentials" style="display:none;">🔐 Owner Credentials</button>
         <button onclick="switchAdminSection('tables')" id="asTables" data-i18n="admin.tables">🪑 Tables</button>
+        <button onclick="switchAdminSection('inventory')" id="asInventory" data-i18n="admin.inventory">📦 Inventory</button>
       </div>
       <div id="adminContent">
         <!-- Stats -->
@@ -923,6 +942,19 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
             </div>
           </div>
           <div id="tablesList"><div class="empty-state">Loading tables...</div></div>
+        </div>
+        <!-- Inventory Management -->
+        <div id="secInventory" class="admin-section">
+          <h3>📦 Inventory Management</h3>
+          <p style="color:var(--text2);margin-bottom:16px;font-size:14px;">Manage stock levels per item. Stock is automatically decremented when orders are placed.</p>
+          <div class="card" style="margin-bottom:12px;">
+            <h4 style="margin-bottom:8px;">⚡ Bulk Actions</h4>
+            <div class="form-row">
+              <button class="accent" onclick="initInventory()">🔄 Initialize All Items (Set 0 stock)</button>
+              <button class="outline" onclick="loadInventoryAdmin()">🔄 Refresh</button>
+            </div>
+          </div>
+          <div id="inventoryList"><div class="empty-state">Loading inventory...</div></div>
         </div>
       </div>
     </div>
@@ -1077,6 +1109,9 @@ const L10N = {
     'admin.timesheet': '⏱️ Timesheet',
     'admin.permissions': '🔑 Permissions',
     'admin.menu_history': '📋 Menu History',
+    'admin.tables': '🪑 Tables',
+    'admin.inventory': '📦 Inventory',
+    'item.out': 'OUT',
     'ban': 'Ban',
     'unban': 'Unban',
     'banned': '🚫 Banned',
@@ -1189,6 +1224,9 @@ const L10N = {
     'admin.timesheet': '⏱️ Horario',
     'admin.permissions': '🔑 Permisos',
     'admin.menu_history': '📋 Historial de Menú',
+    'admin.tables': '🪑 Mesas',
+    'admin.inventory': '📦 Inventario',
+    'item.out': 'AGOTADO',
     'ban': 'Bloquear',
     'unban': 'Desbloquear',
     'banned': '🚫 Bloqueado',
@@ -1327,6 +1365,9 @@ let chartDaily = null;
 let chartPayment = null;
 let taxConfig = null; // { global_tax_rate, category_tax_rates, item_tax_overrides }
 let appliedDiscount = null; // { code, type, value, discount_amount, description }
+
+// ═══════════ INVENTORY STATE ═══════════
+let inventoryData = {}; // { item_name: { stock, low_stock_threshold } }
 
 // ═══════════ TIP STATE ═══════════
 let selectedTipMode = null; // null = no tip, 'percent', 'custom'
@@ -1581,7 +1622,8 @@ function showApp() {
     'asPermissions': isOwner,
     'asMenuhistory': isOwner,
     'asCredentials': isOwner,
-    'asTables': perms.includes('manage_items')  // Tables management accessible to item managers
+    'asTables': perms.includes('manage_items'),  // Tables management accessible to item managers
+    'asInventory': perms.includes('manage_items')  // Inventory management accessible to item managers
   };
   
   // Show/hide each sub-tab button
@@ -1641,9 +1683,15 @@ function switchMainTab(tab) {
 // ═══════════ POS TAB ═══════════
 async function loadItems() {
   try {
-    const r = await fetch(BACKEND_URL + '/api/items');
-    if (!r.ok) throw new Error('Failed');
-    itemsData = await r.json();
+    const [itemsRes, invRes] = await Promise.all([
+      fetch(BACKEND_URL + '/api/items'),
+      fetch(BACKEND_URL + '/api/inventory')
+    ]);
+    if (!itemsRes.ok) throw new Error('Failed');
+    itemsData = await itemsRes.json();
+    if (invRes.ok) {
+      inventoryData = await invRes.json();
+    }
     renderCategories();
     if (!currentCategory || !itemsData[currentCategory]) {
       currentCategory = Object.keys(itemsData)[0] || '';
@@ -1675,14 +1723,27 @@ function renderItems() {
     return;
   }
   items.forEach(item => {
+    const inv = inventoryData[item.name] || {};
+    const stock = inv.stock !== undefined ? inv.stock : null;
+    const threshold = inv.low_stock_threshold || 10;
+    let stockHtml = '';
+    let stockClass = '';
+    if (stock !== null && stock <= 0) {
+      stockHtml = '<div class="item-stock item-stock-out">Out of stock</div>';
+      stockClass = ' item-out-of-stock';
+    } else if (stock !== null && stock <= threshold) {
+      stockHtml = '<div class="item-stock item-stock-low">' + stock + ' left</div>';
+      stockClass = ' item-low-stock';
+    }
     const card = document.createElement('div');
-    card.className = 'item-card';
+    card.className = 'item-card' + stockClass;
     card.innerHTML = `
       <div class="item-name">${escHtml(item.name)}</div>
       <div class="item-price">$${item.price.toFixed(2)}</div>
-      <button class="item-add" onclick="event.stopPropagation(); addToCart('${escJs(item.name)}', ${item.price}, '${escJs(currentCategory)}')">${t('item.add')}</button>
+      ${stockHtml}
+      <button class="item-add${stock !== null && stock <= 0 ? ' item-add-disabled' : ''}" onclick="event.stopPropagation(); addToCart('${escJs(item.name)}', ${item.price}, '${escJs(currentCategory)}')"${stock !== null && stock <= 0 ? ' disabled' : ''}>${stock !== null && stock <= 0 ? t('item.out') : t('item.add')}</button>
     `;
-    card.onclick = () => addToCart(item.name, item.price, currentCategory);
+    card.onclick = () => { if (stock !== null && stock <= 0) { showToast('Item out of stock', 'danger'); return; } addToCart(item.name, item.price, currentCategory); };
     grid.appendChild(card);
   });
 }
@@ -2052,6 +2113,21 @@ async function submitOrder() {
     if (!r.ok) { const d = await r.json(); showToast(d.message || 'Failed', 'danger'); return; }
     const result = await r.json();
     showToast(t('toast.order_submitted'), 'success');
+    // Show low stock warnings if any
+    if (result.low_stock_warnings && result.low_stock_warnings.length > 0) {
+      const outOfStock = result.low_stock_warnings.filter(w => w.status === 'out_of_stock');
+      const lowStock = result.low_stock_warnings.filter(w => w.status === 'low_stock');
+      let warnMsg = '';
+      if (outOfStock.length > 0) {
+        warnMsg += '🔴 OUT OF STOCK: ' + outOfStock.map(w => w.item_name).join(', ') + '. ';
+      }
+      if (lowStock.length > 0) {
+        warnMsg += '⚠️ LOW STOCK: ' + lowStock.map(w => w.item_name + ' (' + w.stock + ' left)').join(', ') + '. ';
+      }
+      if (warnMsg) {
+        setTimeout(() => showToast(warnMsg.trim(), 'danger'), 500);
+      }
+    }
     receiptData.orderNumber = result.order_number || '—';
     showReceipt(receiptData);
     // If drive-through mode is active, mark order as ready
@@ -2384,6 +2460,7 @@ function switchAdminSection(sec) {
   else if (sec === 'menuhistory') loadMenuHistory();
   else if (sec === 'credentials') loadCredentialsStatus();
   else if (sec === 'tables') loadTableAdmin();
+  else if (sec === 'inventory') loadInventoryAdmin();
 }
 
 async function loadAdminStats() {
@@ -2967,6 +3044,106 @@ async function viewTableTab(tableNumber) {
 
 function closeTableTab() {
   document.getElementById('tableTabOverlay').classList.remove('active');
+}
+
+// ═══════════ INVENTORY MANAGEMENT ═══════════
+
+async function loadInventoryAdmin() {
+  const list = document.getElementById('inventoryList');
+  if (!list) return;
+  list.innerHTML = '<div class="empty-state">' + t('loading') + '</div>';
+  try {
+    const [invRes, itemsRes] = await Promise.all([
+      fetch(BACKEND_URL + '/api/inventory'),
+      fetch(BACKEND_URL + '/api/items')
+    ]);
+    if (!invRes.ok) { list.innerHTML = '<div class="empty-state">Failed to load inventory</div>'; return; }
+    const inventory = await invRes.json();
+    // Only show items that exist in the menu
+    const items = itemsRes.ok ? await itemsRes.json() : {};
+    const menuItemNames = new Set();
+    Object.values(items).forEach(catItems => catItems.forEach(item => menuItemNames.add(item.name)));
+    
+    const entries = Object.entries(inventory).filter(([name]) => menuItemNames.has(name));
+    if (entries.length === 0) {
+      list.innerHTML = '<div class="empty-state">No items in inventory. Add some menu items first.</div>';
+      return;
+    }
+    // Save to global for updates
+    inventoryData = inventory;
+    let html = '';
+    entries.forEach(([itemName, inv]) => {
+      const stock = inv.stock !== undefined ? inv.stock : 0;
+      const threshold = inv.low_stock_threshold !== undefined ? inv.low_stock_threshold : 10;
+      const stockClass = stock <= 0 ? 'inv-out' : (stock <= threshold ? 'inv-low' : 'inv-ok');
+      html += '<div class="item-mgmt-entry" style="margin-bottom:6px;">' +
+        '<div class="ime-info">' +
+          '<strong>' + escHtml(itemName) + '</strong>' +
+          '<span class="inv-badge ' + stockClass + '">' + (
+            stock <= 0 ? 'OUT' : (stock <= threshold ? stock + ' left' : stock + ' in stock')
+          ) + '</span>' +
+        '</div>' +
+        '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">' +
+          '<label style="color:var(--text2);font-size:13px;">Stock: ' +
+            '<input type="number" id="invStock_' + escJs(itemName) + '" value="' + stock + '" min="0" style="width:70px;min-height:36px;padding:4px 8px;font-size:14px;background:var(--bg);border:1px solid #2a2a4e;border-radius:6px;color:var(--text);"/>' +
+          '</label>' +
+          '<label style="color:var(--text2);font-size:13px;">Alert at: ' +
+            '<input type="number" id="invThresh_' + escJs(itemName) + '" value="' + threshold + '" min="0" style="width:60px;min-height:36px;padding:4px 8px;font-size:14px;background:var(--bg);border:1px solid #2a2a4e;border-radius:6px;color:var(--text);"/>' +
+          '</label>' +
+          '<button class="accent" onclick="updateInventoryItem(\'' + escJs(itemName) + '\')" style="font-size:13px;padding:6px 12px;min-height:36px;">Save</button>' +
+        '</div>' +
+      '</div>';
+    });
+    list.innerHTML = html;
+  } catch(e) {
+    list.innerHTML = '<div class="empty-state">' + t('network_error') + '</div>';
+  }
+}
+
+async function updateInventoryItem(itemName) {
+  const stockInput = document.getElementById('invStock_' + itemName);
+  const threshInput = document.getElementById('invThresh_' + itemName);
+  if (!stockInput || !threshInput) return;
+  const stock = parseInt(stockInput.value);
+  const threshold = parseInt(threshInput.value);
+  if (isNaN(stock) || stock < 0) { showToast('Stock must be a non-negative integer', 'danger'); return; }
+  if (isNaN(threshold) || threshold < 0) { showToast('Threshold must be a non-negative integer', 'danger'); return; }
+  try {
+    const r = await fetch(BACKEND_URL + '/api/inventory/update', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        adminPin: currentUser.id,
+        item_name: itemName,
+        stock: stock,
+        low_stock_threshold: threshold
+      })
+    });
+    const d = await r.json();
+    if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
+    showToast('Inventory updated for "' + itemName + '"', 'success');
+    inventoryData[itemName] = d.inventory;
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
+}
+
+async function initInventory() {
+  if (!confirm('This will set stock to 0 for all menu items. Continue?')) return;
+  try {
+    const itemsRes = await fetch(BACKEND_URL + '/api/items');
+    if (!itemsRes.ok) { showToast('Cannot load items', 'danger'); return; }
+    const items = await itemsRes.json();
+    const allItemNames = new Set();
+    Object.values(items).forEach(catItems => catItems.forEach(item => allItemNames.add(item.name)));
+    let successCount = 0;
+    for (const name of allItemNames) {
+      const r = await fetch(BACKEND_URL + '/api/inventory/update', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminPin: currentUser.id, item_name: name, stock: 0, low_stock_threshold: 10 })
+      });
+      if (r.ok) successCount++;
+    }
+    showToast('Initialized ' + successCount + ' items with 0 stock', 'success');
+    loadInventoryAdmin();
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
 
 async function loadTableSelector() {
