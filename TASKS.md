@@ -2,7 +2,7 @@
 
 > Auto-managed by 3 Hermes Worker Crons (every 30 min each, staggered claims).
 > Workers use `[~]` to claim tasks before working. Never pick a claimed task.
-> Last updated: 2026-06-22 (audit #3)
+> Last updated: 2026-06-22 (audit #4)
 
 ## Status Legend
 - `[ ]` = pending (available for any worker)
@@ -24,7 +24,14 @@
 - [x] **Add date range filtering for order history and stats** — Added `date_from`/`date_to` params to `/api/admin_stats` endpoint with server-side filtering. Frontend: date range (from/to) inputs in Order History replacing single date, date range filter in Stats section. Stats cards adapt labels (Today's / Filtered Range). i18n English + Spanish. Backward-compatible. [worker-3]
 - [x] **Add order status badges in history view** — Show current order status (pending, preparing, completed, refunded/voided) as color-coded badges in order history list. Currently only refunded status is shown. Helps staff quickly identify order state at a glance without expanding details. Consistent with kitchen display status colors. [worker-3]
 - [x] **Add reorder button in order history** — One-click to reload all items from a past order into the cart. Major waiter speed improvement: eliminates need to manually re-add frequent orders. 🔄 button per order in history list loads items into cart with notes/modifiers, switches to POS tab. [worker-1]
-## Priority: HIGH (NEW — Audit 2026-06-22)
+
+## Priority: MEDIUM (NEW — Audit 2026-06-22)
+
+- [ ] **Add item images to grid cards** — Allow attaching image URLs to menu items for visual identification. Display thumbnail images on item grid cards, kitchen tickets, and kiosk mode. Speeds up waiter item location in busy environments. i18n EN + ES.
+
+- [ ] **Add recent-order quick-access on POS tab** — Show last 5 orders for the logged-in waiter directly on the POS tab (collapsible "Recent Orders" section above item grid). One-tap reload of entire order into cart without navigating to History tab. Saves 3+ taps for frequent reorders.
+
+- [ ] **Add course/meal prep timing (appetizer/main/dessert)** — Allow marking items with course type so kitchen knows preparation order. Items marked as "Appetizer" show with 🥗 flag and suggested 5-min prep target, "Main" normal, "Dessert" 🍰 flagged to prepare after mains. Display course badge on kitchen order cards.
 
 ## Priority: LOW
 
