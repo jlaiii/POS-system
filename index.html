@@ -387,6 +387,9 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
             </div>
             <div id="discountStatus" style="font-size:13px;margin-top:4px;"></div>
           </div>
+          <div id="orderNotesRow" style="display:none;margin-top:4px;">
+            <textarea id="orderNotesInput" placeholder="Order notes / special instructions..." style="width:100%;background:var(--bg);border:2px solid #2a2a4e;border-radius:var(--radius);color:var(--text);font-size:14px;padding:10px 12px;min-height:48px;resize:vertical;font-family:inherit;" rows="2" maxlength="500"></textarea>
+          </div>
           <div id="cartTotal">Total: $0.00</div>
           <div class="payment-methods" id="paymentMethods"></div>
           <div id="cartActions">
@@ -769,14 +772,17 @@ function renderCart() {
   const container = document.getElementById('cartItems');
   const totalEl = document.getElementById('cartTotal');
   const discountRow = document.getElementById('discountRow');
+  const orderNotesRow = document.getElementById('orderNotesRow');
   if (cart.length === 0) {
     container.innerHTML = '<div class="empty-state">Cart is empty</div>';
     totalEl.innerHTML = 'Total: $0.00';
     discountRow.style.display = 'none';
+    orderNotesRow.style.display = 'none';
     appliedDiscount = null;
     return;
   }
   discountRow.style.display = 'block';
+  orderNotesRow.style.display = 'block';
   let html = '';
   let subtotal = 0;
   let totalTax = 0;
@@ -787,13 +793,19 @@ function renderCart() {
     const tax = lineTotal * rate;
     totalTax += tax;
     const pct = rate > 0 ? (rate * 100).toFixed(1) + '%' : '';
-    html += `<div class="cart-item">
-      <div class="ci-info"><div class="ci-name">${escHtml(item.name)}</div><div class="ci-price">$${item.price.toFixed(2)} each${pct ? ' (tax ' + pct + ')' : ''}</div></div>
-      <div class="ci-qty">
-        <button onclick="removeFromCart(${i})">−</button>
-        <span>${item.qty}</span>
-        <button onclick="addToCart('${escJs(item.name)}', ${item.price}, '${escJs(item.category || '')}')">+</button>
-        <button class="ci-remove" onclick="cart.splice(${i},1);renderCart();">×</button>
+    const itemNote = item.note || '';
+    html += `<div class="cart-item" style="flex-direction:column;align-items:stretch;gap:6px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;width:100%;">
+        <div class="ci-info"><div class="ci-name">${escHtml(item.name)}</div><div class="ci-price">$${item.price.toFixed(2)} each${pct ? ' (tax ' + pct + ')' : ''}</div></div>
+        <div class="ci-qty">
+          <button onclick="removeFromCart(${i})">−</button>
+          <span>${item.qty}</span>
+          <button onclick="addToCart('${escJs(item.name)}', ${item.price}, '${escJs(item.category || '')}')">+</button>
+          <button class="ci-remove" onclick="cart.splice(${i},1);renderCart();">×</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <input type="text" id="itemNote_${i}" value="${escJs(itemNote)}" placeholder="Item note..." maxlength="200" style="flex:1;min-height:32px;padding:6px 10px;font-size:13px;background:var(--bg);border:1px solid #2a2a4e;border-radius:6px;color:var(--text);" onchange="cart[${i}].note = this.value"/>
       </div>
     </div>`;
   });
@@ -843,29 +855,37 @@ async function submitOrder() {
   const total = subtotal + taxAmount - discountAmount;
   // Build receipt data before clearing
   const receiptData = {
-    items: cart.map(c => ({ name: c.name, price: c.price, qty: c.qty })),
-    subtotal: Math.round(subtotal * 100) / 100,
-    tax_amount: Math.round(taxAmount * 100) / 100,
-    discount_code: appliedDiscount ? appliedDiscount.code : null,
-    discount_amount: Math.round(discountAmount * 100) / 100,
-    total: Math.round(total * 100) / 100,
-    payment: selectedPayment,
-    user: currentUser.id,
-    date: new Date().toISOString()
+  items: cart.map(c => ({ name: c.name, price: c.price, qty: c.qty, note: c.note || '' })),
+  subtotal: Math.round(subtotal * 100) / 100,
+  tax_amount: Math.round(taxAmount * 100) / 100,
+  discount_code: appliedDiscount ? appliedDiscount.code : null,
+  discount_amount: Math.round(discountAmount * 100) / 100,
+  total: Math.round(total * 100) / 100,
+  payment: selectedPayment,
+  user: currentUser.id,
+  date: new Date().toISOString(),
+  notes: document.getElementById('orderNotesInput').value.trim(),
+  item_notes: {}
   };
+  // Build item_notes map
+  cart.forEach((c, i) => {
+  if (c.note) receiptData.item_notes[i] = c.note;
+  });
   try {
-    const r = await fetch(BACKEND_URL + '/api/submit_order', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        user: currentUser.id,
-        payment: selectedPayment,
-        items: cart.map(c => ({ name: c.name, price: c.price, qty: c.qty })),
-        subtotal: Math.round(subtotal * 100) / 100,
-        tax_amount: Math.round(taxAmount * 100) / 100,
-        discount_code: appliedDiscount ? appliedDiscount.code : null,
-        discount_amount: Math.round(discountAmount * 100) / 100,
-        total: Math.round(total * 100) / 100
-      })
+  const r = await fetch(BACKEND_URL + '/api/submit_order', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      user: currentUser.id,
+      payment: selectedPayment,
+      items: cart.map(c => ({ name: c.name, price: c.price, qty: c.qty, note: c.note || '' })),
+      subtotal: Math.round(subtotal * 100) / 100,
+      tax_amount: Math.round(taxAmount * 100) / 100,
+      discount_code: appliedDiscount ? appliedDiscount.code : null,
+      discount_amount: Math.round(discountAmount * 100) / 100,
+      total: Math.round(total * 100) / 100,
+      notes: document.getElementById('orderNotesInput').value.trim(),
+      item_notes: receiptData.item_notes
+    })
     });
     if (!r.ok) { const d = await r.json(); showToast(d.message || 'Failed', 'danger'); return; }
     const result = await r.json();
@@ -874,6 +894,7 @@ async function submitOrder() {
     showReceipt(receiptData);
     cart = [];
     appliedDiscount = null;
+    document.getElementById('orderNotesInput').value = '';
     renderCart();
   } catch(e) { showToast('Network error', 'danger'); }
 }
@@ -893,6 +914,7 @@ async function clearCart() {
     });
     cart = [];
     appliedDiscount = null;
+    document.getElementById('orderNotesInput').value = '';
     renderCart();
     showToast('Cart cleared', 'success');
   } catch(e) { showToast('Network error', 'danger'); }
@@ -1081,19 +1103,22 @@ async function loadOrderHistory() {
       const items = o.items || [];
       const hasTax = o.tax_amount !== undefined && o.tax_amount !== null && parseFloat(o.tax_amount) > 0;
       const orderNum = orders.length - i;
+      const orderNotes = o.notes || '';
+      const hasItemNotes = items.some(it => it.note);
       html += `<div class="history-order" onclick="this.classList.toggle('expanded')">
         <div class="ho-header">
           <span><strong>#${orderNum}</strong> — ${dt}</span>
           <span class="ho-total">$${total}</span>
         </div>
-        <div class="ho-meta">Payment: ${escHtml(o.payment || 'N/A')} | User: ${escHtml(o.user || 'N/A')}${hasTax ? ' | Tax: $' + parseFloat(o.tax_amount).toFixed(2) : ''} <button class="ghost" onclick="event.stopPropagation();printHistoryReceipt(${JSON.stringify(o).replace(/"/g, '&quot;')}, ${orderNum})" style="font-size:12px;padding:4px 8px;min-height:28px;color:var(--accent);">🖨️</button></div>
+        <div class="ho-meta">Payment: ${escHtml(o.payment || 'N/A')} | User: ${escHtml(o.user || 'N/A')}${hasTax ? ' | Tax: $' + parseFloat(o.tax_amount).toFixed(2) : ''}${orderNotes ? ' | 📝 Has notes' : ''} <button class="ghost" onclick="event.stopPropagation();printHistoryReceipt(${JSON.stringify(o).replace(/"/g, '&quot;')}, ${orderNum})" style="font-size:12px;padding:4px 8px;min-height:28px;color:var(--accent);">🖨️</button></div>
         <div class="ho-details">
-          ${items.map(it => `<div class="ho-item"><span>${escHtml(it.name)} x${it.qty||1}</span><span>$${((it.price||0)*(it.qty||1)).toFixed(2)}</span></div>`).join('')}
+          ${items.map((it, idx) => `<div class="ho-item"><span>${escHtml(it.name)} x${it.qty||1}${it.note ? '<br/><span style="color:var(--text2);font-size:12px;padding-left:12px;">📝 ' + escHtml(it.note) + '</span>' : ''}</span><span>$${((it.price||0)*(it.qty||1)).toFixed(2)}</span></div>`).join('')}
           ${hasTax ? `
             <div class="ho-item" style="color:var(--text2);"><span>Subtotal</span><span>$${parseFloat(o.subtotal || o.total || 0).toFixed(2)}</span></div>
             <div class="ho-item" style="color:var(--text2);"><span>Tax</span><span>$${parseFloat(o.tax_amount).toFixed(2)}</span></div>
             <div class="ho-item" style="font-weight:700;border-top:1px solid #2a2a4e;padding-top:4px;margin-top:4px;"><span>Total</span><span>$${total}</span></div>
           ` : ''}
+          ${orderNotes ? `<div class="ho-item" style="color:var(--text2);border-top:1px solid #2a2a4e;padding-top:4px;margin-top:4px;"><span style="font-weight:600;">📝 Order Notes:</span><br/><span style="font-size:13px;">${escHtml(orderNotes)}</span></div>` : ''}
         </div>
       </div>`;
     });
@@ -1446,6 +1471,8 @@ function showReceipt(orderData) {
   const dateStr = orderData.date ? new Date(orderData.date).toLocaleString() : new Date().toLocaleString();
   const hasTax = orderData.tax_amount !== undefined && orderData.tax_amount !== null && parseFloat(orderData.tax_amount) > 0;
   const hasDiscount = orderData.discount_code && orderData.discount_amount > 0;
+  const hasNotes = orderData.notes && orderData.notes.trim();
+  const hasItemNotes = orderData.items && orderData.items.some(it => it.note);
 
   container.innerHTML = `
     <div class="rcpt-header">
@@ -1457,11 +1484,13 @@ function showReceipt(orderData) {
     </div>
     <hr class="rcpt-divider"/>
     ${itemLines}
+    ${hasItemNotes ? items.map(item => item.note ? `<div class="rcpt-item" style="color:#555;font-size:12px;padding-left:12px;">📝 ${escHtml(item.name)}: ${escHtml(item.note)}</div>` : '').join('') : ''}
     <hr class="rcpt-divider"/>
     <div class="rcpt-line"><span>Subtotal</span><span>$${parseFloat(orderData.subtotal || 0).toFixed(2)}</span></div>
     ${hasTax ? `<div class="rcpt-line"><span>Tax</span><span>$${parseFloat(orderData.tax_amount).toFixed(2)}</span></div>` : ''}
     ${hasDiscount ? `<div class="rcpt-line"><span>Discount (${escHtml(orderData.discount_code)})</span><span>−$${parseFloat(orderData.discount_amount).toFixed(2)}</span></div>` : ''}
     <div class="rcpt-total"><span>TOTAL</span><span>$${parseFloat(orderData.total || 0).toFixed(2)}</span></div>
+    ${hasNotes ? `<hr class="rcpt-divider"/><div class="rcpt-item" style="flex-direction:column;gap:4px;"><span style="font-weight:600;">📝 Order Notes:</span><span style="color:#555;font-size:12px;">${escHtml(orderData.notes)}</span></div>` : ''}
     <hr class="rcpt-divider"/>
     <div class="rcpt-footer">
       Thank you for your business!<br/>

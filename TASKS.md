@@ -11,7 +11,7 @@
 
 ## Priority: HIGH
 
-- [ ] Add order notes field (special instructions per item or per order)
+- [x] Add order notes field (special instructions per item or per order)
 - [ ] Add multi-language support (start with Spanish — detect browser language)
 - [ ] Add tip calculation UI (percentage buttons: 15%, 18%, 20%, custom)
 - [ ] Add split-payment support (multiple payment methods per order)
@@ -47,6 +47,7 @@
 
 ## Done
 
+- [x] Order notes field — per-item note input in cart items, per-order notes textarea in cart, notes displayed on receipt and order history, stored in backend order records
 - [x] Receipt printing simulation — print-friendly HTML receipt with thermal printer CSS, overlay after order submit, re-print from order history, @media print styles for 80mm thermal printer format
 - [x] Discount/coupon code system — percentage and flat discounts with admin management, coupon input in cart, discount validation endpoint, usage limits, min order amounts
 - [x] Sales tax calculation support — configurable global, per-category, and per-item tax rates with cart tax breakdown, order history display, and admin Tax panel

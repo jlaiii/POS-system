@@ -438,7 +438,9 @@ def submit_order():
         'tax_amount': round(tax_amount, 2),
         'discount_code': data.get('discount_code'),
         'discount_amount': round(float(data.get('discount_amount', 0)), 2),
-        'total': round(total, 2)
+        'total': round(total, 2),
+        'notes': data.get('notes', ''),  # Per-order special instructions
+        'item_notes': data.get('item_notes', {})  # Per-item notes {index: note_string}
     }
     orders = load_json_data(ORDERS_FILE)
     orders.append(order_details)
