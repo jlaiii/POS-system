@@ -32,7 +32,6 @@
 
 ## Priority: LOW
 
-- [~] worker-1 Add scheduled pricing (happy hour, daily specials)
 - [ ] Add waste tracking (items thrown away, reason)
 - [ ] Add delivery address management
 - [ ] Add integration webhook for third-party delivery apps
@@ -70,4 +69,5 @@
 - [x] Daily revenue tracking
 - [x] PWA manifest + service worker for installable app
 - [x] **Add loyalty points system per customer** — New `loyalty_points.json` data store. `POST /api/loyalty/register`, `/lookup`, `/redeem`, `/confirm_redeem`, `/adjust`, and `GET /api/loyalty/customers` endpoints. Points auto-earned on order submission (1 pt per $1 subtotal). Redeem 100 pts = $5 off, applied as discount in cart. Frontend: customer phone lookup+register in cart area with points display, "Redeem Points" button, ⭐ Loyalty admin tab with customer table and points adjustment. Points earned shown in toast and on receipt. Activity logging. Dark theme compatible. Touch-friendly 44px+ targets. [worker-3]
-- [x] **Admin dashboard with Chart.js analytics**
+|- [x] **Admin dashboard with Chart.js analytics**
+|- [x] **Add scheduled pricing (happy hour, daily specials)** — Time-based automatic discount rules (happy hour, daily specials). `scheduled_pricing.json` data store. CRUD endpoints with day-of-week + time-window matching. POS item grid shows green sale price with strikethrough original. Admin management tab with rule form (name, type, value, category, item filter, days, time range, toggle/delete). i18n EN + ES. Permission-gated (manage_items). [worker-1]

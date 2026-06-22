@@ -28,6 +28,7 @@ INVENTORY_FILE = 'inventory.json'  # Inventory tracking
 REFUNDED_ORDERS_FILE = 'refunded_orders.json'  # Track refunded/voided orders
 FAVORITES_FILE = 'favorites.json'  # User quick-order favorites
 LOYALTY_FILE = 'loyalty_points.json'  # Customer loyalty points tracking
+SCHEDULED_PRICING_FILE = 'scheduled_pricing.json'  # Scheduled pricing rules (happy hour, daily specials)
 MENU_BACKUPS_DIR = 'menu_backups'
 
 # --- Loyalty Constants ---
@@ -97,7 +98,7 @@ def backup_menu():
 
 
 # Ensure JSON files exist and are initialized correctly
-for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE, INVENTORY_FILE, REFUNDED_ORDERS_FILE, FAVORITES_FILE, LOYALTY_FILE]:
+for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE, INVENTORY_FILE, REFUNDED_ORDERS_FILE, FAVORITES_FILE, LOYALTY_FILE, SCHEDULED_PRICING_FILE]:
     if not os.path.exists(f):
         with open(f, 'w') as file:
             if f == USERS_FILE:
@@ -1915,6 +1916,247 @@ def validate_discount():
         'discount_amount': discount_amount,
         'description': discount.get('description', ''),
         'message': f'Discount applied: {discount_amount:.2f}'
+    })
+
+
+# ============================================================
+# --- Scheduled Pricing (Happy Hour, Daily Specials) ---
+# ============================================================
+
+def is_schedule_active(rule):
+    """Check if a pricing rule is active right now based on day of week and time."""
+    import datetime as dt
+    now = dt.datetime.now()
+    # Check days_of_week
+    days = rule.get('days_of_week', [0,1,2,3,4,5,6])
+    if now.weekday() not in days:
+        return False
+    # Check time range
+    start_str = rule.get('start_time', '00:00')
+    end_str = rule.get('end_time', '23:59')
+    try:
+        start_h, start_m = map(int, start_str.split(':'))
+        end_h, end_m = map(int, end_str.split(':'))
+        now_minutes = now.hour * 60 + now.minute
+        start_minutes = start_h * 60 + start_m
+        end_minutes = end_h * 60 + end_m
+        if start_minutes <= end_minutes:
+            return start_minutes <= now_minutes <= end_minutes
+        else:
+            # Overnight schedule (e.g., 22:00 - 02:00)
+            return now_minutes >= start_minutes or now_minutes <= end_minutes
+    except (ValueError, TypeError):
+        return False
+
+def get_active_scheduled_discounts():
+    """Return list of pricing rules that are currently active."""
+    rules = load_json_data(SCHEDULED_PRICING_FILE)
+    if not isinstance(rules, list):
+        return []
+    active = [r for r in rules if r.get('active', True) and is_schedule_active(r)]
+    return active
+
+def get_scheduled_pricing_map(items_data):
+    """Return a dict: item_name -> {original_price, discounted_price, discount_label}
+    for all items affected by currently active scheduled pricing rules."""
+    active_rules = get_active_scheduled_discounts()
+    if not active_rules:
+        return {}
+
+    pricing_map = {}
+    for cat, cat_items in items_data.items():
+        for item in cat_items:
+            name = item['name']
+            orig_price = float(item['price'])
+            best_price = orig_price
+            best_label = ''
+            for rule in active_rules:
+                # Check if rule applies to this item
+                rule_cat = rule.get('category', 'all')
+                if rule_cat != 'all' and rule_cat != cat:
+                    continue
+                # Check item filter (optional)
+                item_filter = rule.get('item_filter', 'all')
+                if item_filter != 'all' and item_filter.lower() != name.lower():
+                    continue
+
+                discount_type = rule.get('discount_type', 'percent')
+                value = float(rule.get('value', 0))
+                if value <= 0:
+                    continue
+
+                if discount_type == 'percent':
+                    disc_price = orig_price * (1 - value / 100.0)
+                elif discount_type == 'flat':
+                    disc_price = max(0, orig_price - value)
+                else:
+                    continue
+
+                if disc_price < best_price:
+                    best_price = disc_price
+                    best_label = rule.get('name', 'Discount')
+
+            best_price = round(best_price, 2)
+            if best_price < orig_price:
+                pricing_map[name] = {
+                    'original_price': orig_price,
+                    'discounted_price': best_price,
+                    'discount_label': best_label,
+                    'category': cat
+                }
+    return pricing_map
+
+
+@app.route('/api/scheduled_pricing', methods=['GET'])
+def get_scheduled_pricing():
+    """List all scheduled pricing rules (admin/manage_items required)."""
+    admin_pin = request.args.get('adminPin', '')
+    if admin_pin and not check_perm(admin_pin, "manage_items"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+    rules = load_json_data(SCHEDULED_PRICING_FILE)
+    if not isinstance(rules, list):
+        rules = []
+    return jsonify(rules)
+
+
+@app.route('/api/scheduled_pricing/add', methods=['POST'])
+def add_scheduled_pricing():
+    """Add a new scheduled pricing rule."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+    if not check_perm(admin_pin, "manage_items"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    name = data.get('name', '').strip()
+    discount_type = data.get('discount_type', 'percent')
+    value = data.get('value')
+    category = data.get('category', 'all')
+    item_filter = data.get('item_filter', 'all')
+    days_of_week = data.get('days_of_week', [0,1,2,3,4,5,6])
+    start_time = data.get('start_time', '00:00')
+    end_time = data.get('end_time', '23:59')
+
+    if not name:
+        return jsonify({'message': 'Rule name is required.'}), 400
+    if value is None:
+        return jsonify({'message': 'Discount value is required.'}), 400
+    try:
+        value = float(value)
+        if value <= 0:
+            raise ValueError
+        if discount_type == 'percent' and value > 100:
+            return jsonify({'message': 'Percentage discount cannot exceed 100%.'}), 400
+    except ValueError:
+        return jsonify({'message': 'Invalid discount value.'}), 400
+
+    if discount_type not in ('percent', 'flat'):
+        return jsonify({'message': 'discount_type must be "percent" or "flat".'}), 400
+
+    # Validate time format HH:MM
+    try:
+        for t in [start_time, end_time]:
+            h, m = map(int, t.split(':'))
+            if h < 0 or h > 23 or m < 0 or m > 59:
+                raise ValueError
+    except (ValueError, TypeError):
+        return jsonify({'message': 'Invalid time format. Use HH:MM (24-hour).'}), 400
+
+    rules = load_json_data(SCHEDULED_PRICING_FILE)
+    if not isinstance(rules, list):
+        rules = []
+
+    rule = {
+        'id': len(rules) + 1,
+        'name': name,
+        'discount_type': discount_type,
+        'value': value,
+        'category': category,
+        'item_filter': item_filter,
+        'days_of_week': days_of_week,
+        'start_time': start_time,
+        'end_time': end_time,
+        'active': True,
+        'created_at': datetime.now().isoformat()
+    }
+    rules.append(rule)
+    save_json_data(SCHEDULED_PRICING_FILE, rules)
+
+    admin_user = load_json_data(USERS_FILE).get(admin_pin, {})
+    log_activity('add_scheduled_pricing', admin_pin, admin_user.get('role', 'unknown'), {
+        'rule_name': name, 'discount_type': discount_type, 'value': value
+    })
+    return jsonify({'message': 'Pricing rule added successfully.', 'rules': rules})
+
+
+@app.route('/api/scheduled_pricing/delete', methods=['POST'])
+def delete_scheduled_pricing():
+    """Delete a scheduled pricing rule by id."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+    if not check_perm(admin_pin, "manage_items"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    rule_id = data.get('id')
+    if rule_id is None:
+        return jsonify({'message': 'Rule id is required.'}), 400
+
+    rules = load_json_data(SCHEDULED_PRICING_FILE)
+    if not isinstance(rules, list):
+        return jsonify({'message': 'No rules found.'}), 404
+
+    new_rules = [r for r in rules if r.get('id') != rule_id]
+    if len(new_rules) == len(rules):
+        return jsonify({'message': f'Rule id {rule_id} not found.'}), 404
+
+    save_json_data(SCHEDULED_PRICING_FILE, new_rules)
+    admin_user = load_json_data(USERS_FILE).get(admin_pin, {})
+    log_activity('delete_scheduled_pricing', admin_pin, admin_user.get('role', 'unknown'), {
+        'rule_id': rule_id
+    })
+    return jsonify({'message': 'Pricing rule deleted successfully.', 'rules': new_rules})
+
+
+@app.route('/api/scheduled_pricing/toggle', methods=['POST'])
+def toggle_scheduled_pricing():
+    """Toggle a pricing rule's active status."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+    if not check_perm(admin_pin, "manage_items"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    rule_id = data.get('id')
+    if rule_id is None:
+        return jsonify({'message': 'Rule id is required.'}), 400
+
+    rules = load_json_data(SCHEDULED_PRICING_FILE)
+    if not isinstance(rules, list):
+        return jsonify({'message': 'No rules found.'}), 404
+
+    found = False
+    for r in rules:
+        if r.get('id') == rule_id:
+            r['active'] = not r.get('active', True)
+            found = True
+            break
+
+    if not found:
+        return jsonify({'message': f'Rule id {rule_id} not found.'}), 404
+
+    save_json_data(SCHEDULED_PRICING_FILE, rules)
+    return jsonify({'message': 'Rule toggled.', 'rules': rules})
+
+
+@app.route('/api/scheduled_pricing/active', methods=['GET'])
+def active_scheduled_pricing():
+    """Return currently active scheduled discounts as a pricing map."""
+    items_data = load_json_data(ITEMS_FILE)
+    if not isinstance(items_data, dict):
+        items_data = {}
+    pricing_map = get_scheduled_pricing_map(items_data)
+    active_rules = get_active_scheduled_discounts()
+    return jsonify({
+        'active_rules': [{'id': r.get('id'), 'name': r.get('name'), 'discount_type': r.get('discount_type'), 'value': r.get('value'), 'category': r.get('category', 'all')} for r in active_rules],
+        'pricing_map': pricing_map
     })
 
 

@@ -1020,6 +1020,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
         <button onclick="switchAdminSection('inventory')" id="asInventory" data-i18n="admin.inventory">📦 Inventory</button>
         <button onclick="switchAdminSection('employees')" id="asEmployees" data-i18n="admin.employees">👤 Employee Perf</button>
         <button onclick="switchAdminSection('loyalty')" id="asLoyalty">⭐ Loyalty</button>
+        <button onclick="switchAdminSection('pricing')" id="asPricing" data-i18n="admin.pricing">⏰ Pricing</button>
       </div>
       <div id="adminContent">
         <!-- Stats -->
@@ -1235,6 +1236,45 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
           <div id="loyaltyAdminContent">
             <div class="empty-state">Loading loyalty customers...</div>
           </div>
+        </div>
+        <!-- Scheduled Pricing -->
+        <div id="secPricing" class="admin-section">
+          <h3 data-i18n="admin.pricing.title">⏰ Scheduled Pricing (Happy Hour / Daily Specials)</h3>
+          <p style="color:var(--text2);margin-bottom:16px;font-size:14px;" data-i18n="admin.pricing.desc">Set time-based automatic discounts. Rules apply to items when days and time match.</p>
+          <div class="card" style="margin-bottom:12px;">
+            <h4 style="margin-bottom:8px;" data-i18n="admin.pricing.add_title">➕ Add Pricing Rule</h4>
+            <div class="form-row" style="flex-wrap:wrap;gap:6px;">
+              <input type="text" id="pricingRuleName" placeholder="Happy Hour - 20% off Drinks" style="min-width:180px;flex:1;"/>
+              <select id="pricingDiscountType" style="max-width:130px;">
+                <option value="percent" data-i18n="admin.pricing.percent">Percent (%)</option>
+                <option value="flat" data-i18n="admin.pricing.flat">Flat ($)</option>
+              </select>
+              <input type="number" id="pricingDiscountValue" placeholder="Value" step="0.01" min="0.01" style="max-width:90px;"/>
+              <select id="pricingCategory" style="max-width:160px;">
+                <option value="all" data-i18n="admin.pricing.all_cats">All Categories</option>
+              </select>
+            </div>
+            <div class="form-row" style="flex-wrap:wrap;gap:6px;margin-top:6px;">
+              <input type="text" id="pricingItemFilter" placeholder="Specific item name (or 'all')" style="flex:1;min-width:140px;"/>
+              <span style="color:var(--text2);font-size:13px;white-space:nowrap;align-self:center;" data-i18n="admin.pricing.start">Start time</span>
+              <input type="time" id="pricingStartTime" value="00:00" style="max-width:140px;"/>
+              <span style="color:var(--text2);font-size:13px;white-space:nowrap;align-self:center;" data-i18n="admin.pricing.end">End time</span>
+              <input type="time" id="pricingEndTime" value="23:59" style="max-width:140px;"/>
+            </div>
+            <div class="form-row" style="flex-wrap:wrap;gap:6px;margin-top:6px;align-items:center;">
+              <span style="color:var(--text2);font-size:13px;font-weight:600;" data-i18n="admin.pricing.days">Days of Week:</span>
+              <label style="font-size:13px;display:flex;align-items:center;gap:3px;"><input type="checkbox" class="pricing-day" value="0" checked/> <span data-i18n="admin.pricing.sun">Sun</span></label>
+              <label style="font-size:13px;display:flex;align-items:center;gap:3px;"><input type="checkbox" class="pricing-day" value="1" checked/> <span data-i18n="admin.pricing.mon">Mon</span></label>
+              <label style="font-size:13px;display:flex;align-items:center;gap:3px;"><input type="checkbox" class="pricing-day" value="2" checked/> <span data-i18n="admin.pricing.tue">Tue</span></label>
+              <label style="font-size:13px;display:flex;align-items:center;gap:3px;"><input type="checkbox" class="pricing-day" value="3" checked/> <span data-i18n="admin.pricing.wed">Wed</span></label>
+              <label style="font-size:13px;display:flex;align-items:center;gap:3px;"><input type="checkbox" class="pricing-day" value="4" checked/> <span data-i18n="admin.pricing.thu">Thu</span></label>
+              <label style="font-size:13px;display:flex;align-items:center;gap:3px;"><input type="checkbox" class="pricing-day" value="5" checked/> <span data-i18n="admin.pricing.fri">Fri</span></label>
+              <label style="font-size:13px;display:flex;align-items:center;gap:3px;"><input type="checkbox" class="pricing-day" value="6" checked/> <span data-i18n="admin.pricing.sat">Sat</span></label>
+              <button class="accent" onclick="addPricingRule()" style="min-height:44px;margin-left:auto;" data-i18n="admin.pricing.save">💾 Save Rule</button>
+            </div>
+          </div>
+          <div id="activePricingBanner" style="display:none;margin-bottom:12px;padding:12px 16px;background:var(--accent);color:#fff;border-radius:8px;font-size:15px;font-weight:600;"></div>
+          <div id="pricingRulesList"><div class="empty-state">Loading...</div></div>
         </div>
       </div>
     </div>
@@ -1614,6 +1654,41 @@ const L10N = {
     'offline.synced': '📶 {count} offline order(s) synced!',
     'offline.sync_failed': '📶 Failed to sync some offline orders',
     'offline.queue_badge': '📶 {count}',
+    'admin.pricing': '⏰ Pricing',
+    'admin.pricing.title': '⏰ Scheduled Pricing (Happy Hour / Daily Specials)',
+    'admin.pricing.desc': 'Set time-based automatic discounts. Rules apply to items when days and time match.',
+    'admin.pricing.add_title': '➕ Add Pricing Rule',
+    'admin.pricing.name': 'Rule name',
+    'admin.pricing.type': 'Discount type',
+    'admin.pricing.percent': 'Percent (%)',
+    'admin.pricing.flat': 'Flat ($)',
+    'admin.pricing.value': 'Value',
+    'admin.pricing.category': 'Category',
+    'admin.pricing.all_cats': 'All Categories',
+    'admin.pricing.item_filter': 'Item filter (optional)',
+    'admin.pricing.item_filter_placeholder': 'Specific item name (or "all")',
+    'admin.pricing.days': 'Days of Week',
+    'admin.pricing.sun': 'Sun',
+    'admin.pricing.mon': 'Mon',
+    'admin.pricing.tue': 'Tue',
+    'admin.pricing.wed': 'Wed',
+    'admin.pricing.thu': 'Thu',
+    'admin.pricing.fri': 'Fri',
+    'admin.pricing.sat': 'Sat',
+    'admin.pricing.start': 'Start time',
+    'admin.pricing.end': 'End time',
+    'admin.pricing.save': '💾 Save Rule',
+    'admin.pricing.no_rules': 'No pricing rules configured.',
+    'admin.pricing.active': 'Active',
+    'admin.pricing.inactive': 'Inactive',
+    'admin.pricing.toggle': 'Toggle',
+    'admin.pricing.delete': 'Delete',
+    'admin.pricing.now_active': '🔥 Currently active: {name}',
+    'admin.pricing.added': 'Pricing rule added!',
+    'admin.pricing.deleted': 'Pricing rule deleted!',
+    'admin.pricing.toggled': 'Rule toggled!',
+    'item.scheduled_price': 'SALE ${price}',
+    'item.original_price': 'was ${price}',
   },
   es: {
     'app.title': '🍽️ Sistema POS',
@@ -1780,6 +1855,41 @@ const L10N = {
     'barcode.camera_denied': 'Acceso a cámara denegado. Use un escáner físico.',
     'barcode.scan_timeout': 'Escaneo cancelado (tiempo agotado)',
     'barcode.added': '¡{name} añadido!',
+    'admin.pricing': '⏰ Precios',
+    'admin.pricing.title': '⏰ Precios Programados (Happy Hour / Especiales del Día)',
+    'admin.pricing.desc': 'Configure descuentos automáticos por tiempo. Las reglas se aplican a los artículos cuando coinciden días y hora.',
+    'admin.pricing.add_title': '➕ Agregar Regla de Precio',
+    'admin.pricing.name': 'Nombre de la regla',
+    'admin.pricing.type': 'Tipo de descuento',
+    'admin.pricing.percent': 'Porcentaje (%)',
+    'admin.pricing.flat': 'Fijo ($)',
+    'admin.pricing.value': 'Valor',
+    'admin.pricing.category': 'Categoría',
+    'admin.pricing.all_cats': 'Todas las Categorías',
+    'admin.pricing.item_filter': 'Filtro de artículo (opcional)',
+    'admin.pricing.item_filter_placeholder': 'Nombre específico (o "todas")',
+    'admin.pricing.days': 'Días de la Semana',
+    'admin.pricing.sun': 'Dom',
+    'admin.pricing.mon': 'Lun',
+    'admin.pricing.tue': 'Mar',
+    'admin.pricing.wed': 'Mié',
+    'admin.pricing.thu': 'Jue',
+    'admin.pricing.fri': 'Vie',
+    'admin.pricing.sat': 'Sáb',
+    'admin.pricing.start': 'Hora inicio',
+    'admin.pricing.end': 'Hora fin',
+    'admin.pricing.save': '💾 Guardar Regla',
+    'admin.pricing.no_rules': 'No hay reglas de precio configuradas.',
+    'admin.pricing.active': 'Activo',
+    'admin.pricing.inactive': 'Inactivo',
+    'admin.pricing.toggle': 'Cambiar',
+    'admin.pricing.delete': 'Eliminar',
+    'admin.pricing.now_active': '🔥 Activo ahora: {name}',
+    'admin.pricing.added': '¡Regla de precio añadida!',
+    'admin.pricing.deleted': '¡Regla de precio eliminada!',
+    'admin.pricing.toggled': '¡Regla cambiada!',
+    'item.scheduled_price': 'OFERTA ${price}',
+    'item.original_price': 'antes ${price}',
   }
 };
 
@@ -1887,6 +1997,7 @@ let paymentSplits = [{method: 'Cash', amount: 0}]; // [{method, amount}, ...] fo
 let currentCategory = '';
 let taxConfig = null; // { global_tax_rate, category_tax_rates, item_tax_overrides }
 let appliedDiscount = null; // { code, type, value, discount_amount, description }
+let scheduledPricing = null; // { item_name: { original_price, discounted_price, discount_label, category } }
 let loyaltyCustomerPhone = ''; // Currently tracked loyalty customer phone
 let loyaltyCustomerData = null; // { phone, name, points, total_earned, ... }
 let chartPayment = null;
@@ -2169,7 +2280,8 @@ function showApp() {
     'asCredentials': isOwner,
     'asTables': perms.includes('manage_items'),  // Tables management accessible to item managers
     'asInventory': perms.includes('manage_items'),  // Inventory management accessible to item managers
-    'asEmployees': perms.includes('view_stats')  // Employee perf uses view_stats permission
+    'asEmployees': perms.includes('view_stats'),  // Employee perf uses view_stats permission
+    'asPricing': perms.includes('manage_items'),  // Scheduled pricing uses manage_items permission
   };
   
   // Show/hide each sub-tab button
@@ -2230,14 +2342,21 @@ function switchMainTab(tab) {
 // ═══════════ POS TAB ═══════════
 async function loadItems() {
   try {
-    const [itemsRes, invRes] = await Promise.all([
+    const [itemsRes, invRes, pricingRes] = await Promise.all([
       fetch(BACKEND_URL + '/api/items'),
-      fetch(BACKEND_URL + '/api/inventory')
+      fetch(BACKEND_URL + '/api/inventory'),
+      fetch(BACKEND_URL + '/api/scheduled_pricing/active')
     ]);
     if (!itemsRes.ok) throw new Error('Failed');
     itemsData = await itemsRes.json();
     if (invRes.ok) {
       inventoryData = await invRes.json();
+    }
+    if (pricingRes.ok) {
+      const pricingData = await pricingRes.json();
+      scheduledPricing = pricingData.pricing_map || {};
+    } else {
+      scheduledPricing = null;
     }
     renderCategories();
     if (!currentCategory || !itemsData[currentCategory]) {
@@ -2246,6 +2365,7 @@ async function loadItems() {
     renderItems();
   } catch(e) {
     document.getElementById('itemGrid').innerHTML = '<div class="empty-state">' + t('item.load_fail') + '</div>';
+    scheduledPricing = null;
   }
 }
 
@@ -2282,15 +2402,22 @@ function renderItems() {
       stockHtml = '<div class="item-stock item-stock-low">' + stock + ' left</div>';
       stockClass = ' item-low-stock';
     }
+    // Check for scheduled pricing
+    let effectivePrice = item.price;
+    let priceHtml = '<div class="item-price">$' + item.price.toFixed(2) + '</div>';
+    if (scheduledPricing && scheduledPricing[item.name]) {
+      effectivePrice = scheduledPricing[item.name].discounted_price;
+      priceHtml = '<div class="item-price" style="color:#2ecc71;">' + t('item.scheduled_price', {price: effectivePrice.toFixed(2)}) + ' <span style="text-decoration:line-through;color:var(--text2);font-size:12px;">$' + item.price.toFixed(2) + '</span></div>';
+    }
     const card = document.createElement('div');
     card.className = 'item-card' + stockClass;
     card.innerHTML = `
       <div class="item-name">${escHtml(item.name)}</div>
-      <div class="item-price">$${item.price.toFixed(2)}</div>
+      ${priceHtml}
       ${stockHtml}
-      <button class="item-add${stock !== null && stock <= 0 ? ' item-add-disabled' : ''}" onclick="event.stopPropagation(); addToCart('${escJs(item.name)}', ${item.price}, '${escJs(currentCategory)}')"${stock !== null && stock <= 0 ? ' disabled' : ''}>${stock !== null && stock <= 0 ? t('item.out') : t('item.add')}</button>
+      <button class="item-add${stock !== null && stock <= 0 ? ' item-add-disabled' : ''}" onclick="event.stopPropagation(); addToCart('${escJs(item.name)}', ${effectivePrice}, '${escJs(currentCategory)}')"${stock !== null && stock <= 0 ? ' disabled' : ''}>${stock !== null && stock <= 0 ? t('item.out') : t('item.add')}</button>
     `;
-    card.onclick = () => { if (stock !== null && stock <= 0) { showToast('Item out of stock', 'danger'); return; } addToCart(item.name, item.price, currentCategory); };
+    card.onclick = () => { if (stock !== null && stock <= 0) { showToast('Item out of stock', 'danger'); return; } addToCart(item.name, effectivePrice, currentCategory); };
     grid.appendChild(card);
   });
 }
@@ -3391,6 +3518,7 @@ function switchAdminSection(sec) {
   else if (sec === 'inventory') loadInventoryAdmin();
   else if (sec === 'employees') loadEmployeePerformance();
   else if (sec === 'loyalty') loadLoyaltyAdmin();
+  else if (sec === 'pricing') loadPricingRules();
 }
 
 async function loadAdminStats() {
@@ -4659,6 +4787,138 @@ async function loadKitchenQueue() {
     // Silently continue - will retry on next poll
   }
   loadingEl.classList.remove('active');
+}
+
+// ═══════════ SCHEDULED PRICING ADMIN ═══════════
+
+async function loadPricingRules() {
+  const container = document.getElementById('pricingRulesList');
+  container.innerHTML = '<div class="empty-state">' + t('loading') + '</div>';
+  // Populate category dropdown
+  const catSelect = document.getElementById('pricingCategory');
+  catSelect.innerHTML = '<option value="all">' + t('admin.pricing.all_cats') + '</option>';
+  if (itemsData && typeof itemsData === 'object') {
+    Object.keys(itemsData).forEach(cat => {
+      const opt = document.createElement('option');
+      opt.value = cat;
+      opt.textContent = cat;
+      catSelect.appendChild(opt);
+    });
+  }
+  // Load active banner
+  try {
+    const activeRes = await fetch(BACKEND_URL + '/api/scheduled_pricing/active');
+    if (activeRes.ok) {
+      const activeData = await activeRes.json();
+      const banner = document.getElementById('activePricingBanner');
+      if (activeData.active_rules && activeData.active_rules.length > 0) {
+        banner.style.display = 'block';
+        banner.textContent = '🔥 ' + activeData.active_rules.map(r => r.name).join(', ') + ' — active now!';
+      } else {
+        banner.style.display = 'none';
+      }
+    }
+  } catch(e) { /* silent */ }
+  // Load all rules
+  try {
+    const r = await fetch(BACKEND_URL + '/api/scheduled_pricing?adminPin=' + encodeURIComponent(currentUser.id));
+    if (!r.ok) { container.innerHTML = '<div class="empty-state">' + t('unauthorized') + '</div>'; return; }
+    const rules = await r.json();
+    if (!rules || rules.length === 0) {
+      container.innerHTML = '<div class="empty-state">' + t('admin.pricing.no_rules') + '</div>';
+      return;
+    }
+    let html = '<div style="display:flex;flex-direction:column;gap:8px;">';
+    rules.forEach(rule => {
+      const isActive = rule.active !== false;
+      const daysNames = rule.days_of_week ? rule.days_of_week.map(d => ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d]).join(', ') : 'All';
+      const timeRange = rule.start_time + ' - ' + rule.end_time;
+      const catLabel = rule.category === 'all' ? 'All Categories' : rule.category;
+      const itemFilter = rule.item_filter && rule.item_filter !== 'all' ? ' | Item: ' + rule.item_filter : '';
+      const discLabel = rule.discount_type === 'percent' ? rule.value + '%' : '$' + parseFloat(rule.value).toFixed(2);
+      html += '<div class="card" style="padding:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">' +
+        '<div style="flex:1;">' +
+          '<div style="font-weight:600;font-size:15px;">' + escHtml(rule.name) + ' <span style="color:' + (isActive ? '#2ecc71' : '#e74c3c') + ';font-size:12px;">' + (isActive ? '● ' + t('admin.pricing.active') : '○ ' + t('admin.pricing.inactive')) + '</span></div>' +
+          '<div style="font-size:13px;color:var(--text2);margin-top:4px;">' + discLabel + ' off | ' + catLabel + itemFilter + ' | ' + daysNames + ' | ' + timeRange + '</div>' +
+        '</div>' +
+        '<div style="display:flex;gap:6px;">' +
+          '<button class="ghost" onclick="togglePricingRule(' + rule.id + ')" style="min-height:36px;font-size:13px;">' + t('admin.pricing.toggle') + '</button>' +
+          '<button class="ghost" onclick="deletePricingRule(' + rule.id + ')" style="min-height:36px;font-size:13px;color:var(--accent);">' + t('admin.pricing.delete') + '</button>' +
+        '</div>' +
+      '</div>';
+    });
+    html += '</div>';
+    container.innerHTML = html;
+  } catch(e) {
+    container.innerHTML = '<div class="empty-state">' + t('network_error') + '</div>';
+  }
+}
+
+async function addPricingRule() {
+  const name = document.getElementById('pricingRuleName').value.trim();
+  const discountType = document.getElementById('pricingDiscountType').value;
+  const value = parseFloat(document.getElementById('pricingDiscountValue').value);
+  const category = document.getElementById('pricingCategory').value;
+  const itemFilter = document.getElementById('pricingItemFilter').value.trim() || 'all';
+  const startTime = document.getElementById('pricingStartTime').value;
+  const endTime = document.getElementById('pricingEndTime').value;
+  const dayCheckboxes = document.querySelectorAll('.pricing-day:checked');
+  const daysOfWeek = Array.from(dayCheckboxes).map(cb => parseInt(cb.value));
+
+  if (!name) { showToast('Rule name is required', 'danger'); return; }
+  if (!value || value <= 0) { showToast('Valid discount value is required', 'danger'); return; }
+  if (daysOfWeek.length === 0) { showToast('Select at least one day', 'danger'); return; }
+
+  try {
+    const r = await fetch(BACKEND_URL + '/api/scheduled_pricing/add', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        adminPin: currentUser.id,
+        name, discount_type: discountType, value,
+        category, item_filter: itemFilter,
+        days_of_week: daysOfWeek,
+        start_time: startTime, end_time: endTime
+      })
+    });
+    const data = await r.json();
+    if (!r.ok) { showToast(data.message || 'Failed', 'danger'); return; }
+    showToast(t('admin.pricing.added'), 'success');
+    // Clear form
+    document.getElementById('pricingRuleName').value = '';
+    document.getElementById('pricingDiscountValue').value = '';
+    document.getElementById('pricingItemFilter').value = '';
+    loadPricingRules();
+    loadItems(); // Refresh item grid to reflect new pricing
+  } catch(e) {
+    showToast(t('network_error'), 'danger');
+  }
+}
+
+async function togglePricingRule(id) {
+  try {
+    const r = await fetch(BACKEND_URL + '/api/scheduled_pricing/toggle', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, id })
+    });
+    if (!r.ok) return;
+    showToast(t('admin.pricing.toggled'), 'success');
+    loadPricingRules();
+    loadItems();
+  } catch(e) { /* silent */ }
+}
+
+async function deletePricingRule(id) {
+  try {
+    const r = await fetch(BACKEND_URL + '/api/scheduled_pricing/delete', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, id })
+    });
+    const data = await r.json();
+    if (!r.ok) { showToast(data.message || 'Failed', 'danger'); return; }
+    showToast(t('admin.pricing.deleted'), 'success');
+    loadPricingRules();
+    loadItems();
+  } catch(e) { /* silent */ }
 }
 
 function renderKitchenQueue(orders) {
