@@ -397,7 +397,19 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
   background: var(--card); border-radius: var(--radius); padding: 20px;
   border-left: 6px solid #f0ad4e;
   display: flex; flex-direction: column; gap: 12px;
-  transition: border-color 0.3s;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+.kitchen-order-card.card-age-warning { border-left-color: #f39c12; box-shadow: 0 0 12px rgba(243,156,18,0.3); }
+.kitchen-order-card.card-age-critical {
+  border-left-color: #e74c3c;
+  box-shadow: 0 0 20px rgba(231,76,60,0.4);
+  animation: cardCriticalPulse 2s ease-in-out infinite;
+}
+.kitchen-order-card.card-pending-tap { cursor: pointer; }
+.kitchen-order-card.card-pending-tap:active { transform: scale(0.98); opacity: 0.85; }
+@keyframes cardCriticalPulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(231,76,60,0.4); }
+  50% { box-shadow: 0 0 30px rgba(231,76,60,0.7); }
 }
 .kitchen-order-card.status-preparing { border-left-color: #5bc0de; }
 .kitchen-order-card.status-done { border-left-color: #2ecc71; }
@@ -411,11 +423,26 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 .kitchen-order-card .koc-time {
   font-size: 1.1em; color: var(--text2); font-weight: 600;
 }
+.koc-time.age-warning { color: #f39c12; font-weight: 800; font-size: 1.2em; }
+.koc-time.age-critical { color: #e74c3c; font-weight: 900; font-size: 1.3em; animation: agePulse 1.5s ease-in-out infinite; }
+
+@keyframes agePulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.05); }
+}
 .kitchen-order-card .koc-badge {
   font-size: 0.95em; font-weight: 700; padding: 6px 14px; border-radius: 20px;
 }
 .koc-badge.pending { background: #f0ad4e33; color: #f0ad4e; }
 .koc-badge.preparing { background: #5bc0de33; color: #5bc0de; }
+.koc-badge.priority {
+  background: #e74c3c33; color: #e74c3c;
+  animation: badgePulse 1s ease-in-out infinite;
+}
+@keyframes badgePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
 
 .kitchen-order-card .koc-items {
   display: flex; flex-direction: column; gap: 4px;
@@ -2733,7 +2760,7 @@ function showKitchenView() {
   // Start clock
   updateKitchenClock();
   if (kitchenClockTimer) clearInterval(kitchenClockTimer);
-  kitchenClockTimer = setInterval(updateKitchenClock, 10000);
+  kitchenClockTimer = setInterval(updateKitchenClock, 1000);
   // Start polling
   loadKitchenQueue();
   kitchenPollTimer = setInterval(loadKitchenQueue, 8000);
@@ -2828,14 +2855,38 @@ function renderKitchenOrderCard(o) {
   const claimedBy = o.claimed_by || '';
   const cookName = o.claimed_by_name || claimedBy;
 
-  const statusBadge = status === 'preparing'
-    ? '<span class="koc-badge preparing">🟠 ' + (cookName ? escHtml(cookName) : t('kitchen.preparing')) + '</span>'
-    : '<span class="koc-badge pending">🟡 ' + t('kitchen.pending') + '</span>';
+  // Compute age in minutes for priority flagging
+  let ageMinutes = -1;
+  let ageClass = '';
+  let isPriority = false;
+  if (createdAt) {
+    const then = new Date(createdAt);
+    const now = new Date();
+    ageMinutes = Math.floor((now - then) / 60000);
+    if (ageMinutes >= 10) {
+      ageClass = 'age-critical';
+      isPriority = true;
+    } else if (ageMinutes >= 5) {
+      ageClass = 'age-warning';
+    }
+  }
+
+  const cardAgeClass = isPriority ? 'card-age-critical' : (ageClass === 'age-warning' ? 'card-age-warning' : '');
+  const pendingTapClass = status === 'pending' ? 'card-pending-tap' : '';
+
+  let statusBadge = '';
+  if (isPriority && status === 'pending') {
+    statusBadge = '<span class="koc-badge priority">🚨 PRIORITY</span>';
+  } else if (status === 'preparing') {
+    statusBadge = '<span class="koc-badge preparing">🟠 ' + (cookName ? escHtml(cookName) : t('kitchen.preparing')) + '</span>';
+  } else {
+    statusBadge = '<span class="koc-badge pending">🟡 ' + t('kitchen.pending') + '</span>';
+  }
 
   const statusClass = status === 'preparing' ? 'status-preparing' : '';
 
   const timeHtml = createdAt
-    ? '<span class="koc-time" data-created="' + escHtml(createdAt) + '">' + timeSince(createdAt) + '</span>'
+    ? '<span class="koc-time ' + ageClass + '" data-created="' + escHtml(createdAt) + '">' + timeSince(createdAt) + '</span>'
     : '';
 
   const itemsHtml = items.map(item => {
@@ -2857,23 +2908,29 @@ function renderKitchenOrderCard(o) {
   // Action buttons
   let actionsHtml = '';
   if (status === 'pending') {
-    actionsHtml = '<button class="koc-btn-claim" onclick="claimKitchenOrder(\'' + escJs(String(oid)) + '\')">' + t('kitchen.claim') + '</button>';
+    actionsHtml = '<button class="koc-btn-claim" onclick="event.stopPropagation();claimKitchenOrder(' + escJs(String(oid)) + ')">' + t('kitchen.claim') + '</button>';
   } else if (status === 'preparing') {
     if (claimedBy === currentUser.id) {
-      actionsHtml = '<button class="koc-btn-done" onclick="completeKitchenOrder(\'' + escJs(String(oid)) + '\')">' + t('kitchen.done') + '</button>';
+      actionsHtml = '<button class="koc-btn-done" onclick="event.stopPropagation();completeKitchenOrder(' + escJs(String(oid)) + ')">' + t('kitchen.done') + '</button>';
     } else {
       actionsHtml = '<span class="koc-claimed-by">👨‍🍳 ' + escHtml(cookName || claimedBy) + '</span>';
     }
   }
   // Cancel button on all non-completed
-  actionsHtml += '<button class="koc-btn-cancel" onclick="cancelKitchenOrder(\'' + escJs(String(oid)) + '\')">✕ ' + t('kitchen.cancel') + '</button>';
+  actionsHtml += '<button class="koc-btn-cancel" onclick="event.stopPropagation();cancelKitchenOrder(' + escJs(String(oid)) + ')">✕ ' + t('kitchen.cancel') + '</button>';
 
-  return '<div class="kitchen-order-card ' + statusClass + '">' +
+  // Whole card click handler for quick-claim on pending orders
+  const cardClick = status === 'pending'
+    ? ' onclick="claimKitchenOrder(' + escJs(String(oid)) + ')"'
+    : '';
+
+  return '<div class="kitchen-order-card ' + statusClass + ' ' + cardAgeClass + ' ' + pendingTapClass + '"' + cardClick + '>' +
     '<div class="koc-header">' +
       '<span class="koc-id">#' + escHtml(String(oid)) + '</span>' +
       timeHtml +
     '</div>' +
     statusBadge +
+    (isPriority && status === 'pending' ? '<div style="color:#e74c3c;font-weight:700;font-size:0.95em;">⏰ Waiting ' + ageMinutes + ' min</div>' : '') +
     '<div class="koc-items">' + itemsHtml + '</div>' +
     notesHtml +
     '<div class="koc-payment">💳 ' + escHtml(payment) + '</div>' +
@@ -2899,10 +2956,21 @@ let kitchenTimeUpdater = null;
 function startKitchenTimeUpdater() {
   if (kitchenTimeUpdater) clearInterval(kitchenTimeUpdater);
   kitchenTimeUpdater = setInterval(() => {
+    const now = new Date();
     document.querySelectorAll('.koc-time[data-created]').forEach(el => {
-      el.textContent = timeSince(el.getAttribute('data-created'));
+      const createdAt = el.getAttribute('data-created');
+      el.textContent = timeSince(createdAt);
+      // Update age classes dynamically
+      const then = new Date(createdAt);
+      const ageMin = Math.floor((now - then) / 60000);
+      el.classList.remove('age-warning', 'age-critical');
+      if (ageMin >= 10) {
+        el.classList.add('age-critical');
+      } else if (ageMin >= 5) {
+        el.classList.add('age-warning');
+      }
     });
-  }, 30000);
+  }, 10000);
 }
 
 async function claimKitchenOrder(orderId) {
@@ -2945,19 +3013,20 @@ async function cancelKitchenOrder(orderId) {
 function playNotificationSound() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.type = 'sine';
-    // Quick beep sequence: 800Hz for 100ms, 1000Hz for 100ms
     const now = ctx.currentTime;
-    osc.frequency.setValueAtTime(800, now);
-    osc.frequency.setValueAtTime(1000, now + 0.1);
-    gain.gain.setValueAtTime(0.3, now);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
-    osc.start(now);
-    osc.stop(now + 0.3);
+    // More noticeable alarm: 3-note rising sequence
+    [440, 554, 659].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(freq, now + i * 0.15);
+      gain.gain.setValueAtTime(0.25, now + i * 0.15);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.15 + 0.25);
+      osc.start(now + i * 0.15);
+      osc.stop(now + i * 0.15 + 0.25);
+    });
   } catch(e) { /* audio not available */ }
 }
 

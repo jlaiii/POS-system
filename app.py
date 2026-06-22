@@ -1620,8 +1620,9 @@ def kitchen_stats():
 
         total_orders_today = len(today_orders)
         orders_completed_today = sum(1 for o in today_orders if o.get('status') == 'completed')
-        orders_pending = sum(1 for o in orders if o.get('status') in ('pending', 'preparing'))
-        current_queue_size = sum(1 for o in orders if o.get('status') in ('pending', 'preparing'))
+        pending_count = sum(1 for o in orders if o.get('status') == 'pending')
+        preparing_count = sum(1 for o in orders if o.get('status') == 'preparing')
+        current_queue_size = pending_count + preparing_count
 
         # Average prep time for orders completed today
         prep_times = []
@@ -1641,8 +1642,9 @@ def kitchen_stats():
         stats = {
             'total_orders_today': total_orders_today,
             'avg_prep_time_minutes': avg_prep_time_minutes,
-            'orders_completed_today': orders_completed_today,
-            'orders_pending': orders_pending,
+            'done_today': orders_completed_today,
+            'pending': pending_count,
+            'preparing': preparing_count,
             'current_queue_size': current_queue_size
         }
         return jsonify(stats)
