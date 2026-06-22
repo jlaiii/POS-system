@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"/>
+<title>Drive-Through Order Display</title>
+<meta name="theme-color" content="#1a1a2e"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0a0a1a;
+  --card: #111128;
+  --accent: #ff3366;
+  --success: #00cc66;
+  --text: #fff;
+  --text2: #aaa;
+}
+
+html, body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 24px;
+  overflow: hidden;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+/* ── IDLE STATE ── */
+#idleScreen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 30px;
+  text-align: center;
+}
+
+#idleScreen h1 {
+  font-size: 3rem;
+  color: var(--text2);
+  font-weight: 300;
+  letter-spacing: 2px;
+}
+
+#idleScreen .brand {
+  font-size: 5rem;
+  font-weight: 800;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 4px;
+}
+
+/* ── ORDER BUILDING ── */
+#orderScreen {
+  display: none;
+  width: 100%;
+  max-width: 1100px;
+  height: 100vh;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 20px 0;
+}
+
+#orderScreen.active { display: flex; }
+
+/* Header */
+.dt-header {
+  text-align: center;
+  padding: 10px 0;
+  border-bottom: 2px solid #222;
+}
+
+.dt-header h1 {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.dt-header .order-num {
+  font-size: 1.2rem;
+  color: var(--text2);
+  margin-top: 4px;
+}
+
+/* Items list */
+.dt-items {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dt-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--card);
+  border-radius: 16px;
+  padding: 18px 28px;
+  font-size: 1.8rem;
+  font-weight: 600;
+  border-left: 6px solid var(--accent);
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.dt-item .qty {
+  color: var(--accent);
+  font-weight: 800;
+  margin-right: 16px;
+  min-width: 60px;
+  text-align: center;
+}
+
+.dt-item .name {
+  flex: 1;
+  font-size: 1.8rem;
+  font-weight: 600;
+}
+
+.dt-item .price {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #4fc3f7;
+  min-width: 100px;
+  text-align: right;
+}
+
+.dt-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  color: var(--text2);
+}
+
+/* Totals section */
+.dt-totals {
+  border-top: 2px solid #222;
+  padding: 20px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dt-total-line {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.4rem;
+  color: var(--text2);
+}
+
+.dt-total-line.grand-total {
+  font-size: 2.4rem;
+  font-weight: 800;
+  color: var(--accent);
+  border-top: 2px solid #333;
+  padding-top: 10px;
+  margin-top: 6px;
+}
+
+/* ── READY / PULL FORWARD ── */
+#readyScreen {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 30px;
+  animation: fadeIn 0.5s ease-out;
+}
+
+#readyScreen.active { display: flex; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+#readyScreen .check-icon {
+  font-size: 8rem;
+  color: var(--success);
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+
+#readyScreen h1 {
+  font-size: 4rem;
+  font-weight: 800;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+}
+
+#readyScreen .order-num {
+  font-size: 2rem;
+  color: var(--text2);
+}
+
+#readyScreen .pull-forward {
+  font-size: 3rem;
+  font-weight: 700;
+  color: var(--success);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  animation: pulse 2s infinite;
+}
+
+#readyScreen .sub-text {
+  font-size: 1.4rem;
+  color: var(--text2);
+}
+
+/* ── STATUS BAR ── */
+.dt-status-bar {
+  text-align: center;
+  color: var(--text2);
+  font-size: 1rem;
+  padding: 8px 0;
+  border-top: 1px solid #222;
+}
+
+.dt-status-bar .dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--success);
+  margin-right: 6px;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  body { font-size: 18px; padding: 12px; }
+  .dt-item { font-size: 1.3rem; padding: 14px 18px; }
+  .dt-item .name { font-size: 1.3rem; }
+  .dt-item .price { font-size: 1.3rem; }
+  .dt-total-line.grand-total { font-size: 1.8rem; }
+  #readyScreen h1 { font-size: 2.5rem; }
+  #readyScreen .pull-forward { font-size: 2rem; }
+  .dt-header h1 { font-size: 1.6rem; }
+}
+
+@media (min-width: 1200px) {
+  body { font-size: 28px; }
+  .dt-item { font-size: 2rem; padding: 22px 32px; }
+  .dt-item .name { font-size: 2rem; }
+  .dt-item .price { font-size: 2rem; }
+  .dt-total-line.grand-total { font-size: 2.8rem; }
+  #readyScreen h1 { font-size: 5rem; }
+  #readyScreen .pull-forward { font-size: 3.5rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- IDLE SCREEN -->
+<div id="idleScreen">
+  <div class="brand">POS System</div>
+  <h1>Waiting for Order...</h1>
+  <div style="font-size:3rem;color:var(--text2);">🛵</div>
+</div>
+
+<!-- ORDER BUILDING SCREEN -->
+<div id="orderScreen">
+  <div class="dt-header">
+    <h1>🛒 Your Order</h1>
+    <div class="order-num" id="dtOrderNum"></div>
+  </div>
+  <div class="dt-items" id="dtItems">
+    <div class="dt-empty">No items yet</div>
+  </div>
+  <div class="dt-totals">
+    <div class="dt-total-line">
+      <span>Subtotal</span>
+      <span id="dtSubtotal">$0.00</span>
+    </div>
+    <div class="dt-total-line">
+      <span>Tax</span>
+      <span id="dtTax">$0.00</span>
+    </div>
+    <div class="dt-total-line grand-total">
+      <span>Total</span>
+      <span id="dtTotal">$0.00</span>
+    </div>
+  </div>
+  <div class="dt-status-bar">
+    <span class="dot"></span> Live — Updates automatically
+  </div>
+</div>
+
+<!-- READY / PULL FORWARD SCREEN -->
+<div id="readyScreen">
+  <div class="check-icon">✅</div>
+  <h1>Order Complete</h1>
+  <div class="order-num" id="dtReadyOrderNum"></div>
+  <div class="pull-forward">⬆️ Please Pull Forward</div>
+  <div class="sub-text">Thank you for your order!</div>
+</div>
+
+<script>
+// ── CONFIG ──
+const POLL_INTERVAL = 2000; // 2 seconds
+const API_BASE = window.location.origin;
+
+// ── DOM REFS ──
+const idleScreen = document.getElementById('idleScreen');
+const orderScreen = document.getElementById('orderScreen');
+const readyScreen = document.getElementById('readyScreen');
+const dtItems = document.getElementById('dtItems');
+const dtSubtotal = document.getElementById('dtSubtotal');
+const dtTax = document.getElementById('dtTax');
+const dtTotal = document.getElementById('dtTotal');
+const dtOrderNum = document.getElementById('dtOrderNum');
+const dtReadyOrderNum = document.getElementById('dtReadyOrderNum');
+
+// ── STATE ──
+let currentStatus = 'idle';
+let previousItems = '';
+
+// ── HELPERS ──
+function formatPrice(n) {
+  return '$' + parseFloat(n).toFixed(2);
+}
+
+function showScreen(screen) {
+  [idleScreen, orderScreen, readyScreen].forEach(s => s.classList.remove('active'));
+  if (screen) {
+    screen.classList.add('active');
+    screen.style.display = 'flex';
+  }
+}
+
+function renderItems(items) {
+  if (!items || items.length === 0) {
+    dtItems.innerHTML = '<div class="dt-empty">No items yet</div>';
+    return;
+  }
+  let html = '';
+  items.forEach(item => {
+    const name = item.name || 'Unknown';
+    const qty = item.qty || 1;
+    const price = parseFloat(item.price || 0);
+    const lineTotal = price * qty;
+    html += `<div class="dt-item">
+      <span class="qty">${qty}×</span>
+      <span class="name">${name}</span>
+      <span class="price">${formatPrice(lineTotal)}</span>
+    </div>`;
+  });
+  dtItems.innerHTML = html;
+}
+
+// ── POLLING ──
+async function pollStatus() {
+  try {
+    const r = await fetch(API_BASE + '/api/drivethrough/status');
+    if (!r.ok) return;
+    const data = await r.json();
+
+    const itemsJson = JSON.stringify(data.items || []);
+    const statusChanged = data.status !== currentStatus;
+    const itemsChanged = itemsJson !== previousItems;
+
+    // Update display based on status
+    if (data.status === 'idle' || data.status === 'ready') {
+      if (data.status === 'ready') {
+        // Show "Please Pull Forward"
+        showScreen(readyScreen);
+        dtReadyOrderNum.textContent = data.order_number ? 'Order #' + data.order_number : '';
+      } else {
+        // Idle - show waiting screen
+        showScreen(idleScreen);
+      }
+    } else if (data.status === 'building') {
+      // Show the order being built
+      showScreen(orderScreen);
+      if (itemsChanged) {
+        renderItems(data.items);
+        previousItems = itemsJson;
+      }
+      dtSubtotal.textContent = formatPrice(data.subtotal || 0);
+      dtTax.textContent = formatPrice(data.tax || 0);
+      dtTotal.textContent = formatPrice(data.total || 0);
+      dtOrderNum.textContent = data.order_number ? 'Order #' + data.order_number : '';
+    }
+
+    currentStatus = data.status;
+  } catch (e) {
+    // Network error - silently retry
+  }
+}
+
+// ── INIT ──
+showScreen(idleScreen);
+pollStatus();
+setInterval(pollStatus, POLL_INTERVAL);
+</script>
+</body>
+</html>

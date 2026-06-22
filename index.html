@@ -225,6 +225,13 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 .payment-methods button.selected { background: var(--success); color: #fff; border-color: var(--success); }
 #cartActions { display: flex; gap: 8px; }
 #cartActions button { flex: 1; }
+#dtToggle { display: flex; gap: 8px; margin-top: 8px; }
+#dtToggle button { flex: 1; font-size: 14px; }
+#dtToggle button.active { background: var(--success); color: #fff; border-color: var(--success); }
+.dt-indicator { font-size: 12px; color: var(--text2); text-align: center; margin-top: 4px; display: none; }
+.dt-indicator.active { display: block; }
+.dt-indicator .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--success); margin-right: 4px; animation: blink 1s infinite; }
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
 /* ── ORDER HISTORY ── */
 #historyTab { display: none; flex-direction: column; gap: 12px; }
@@ -548,6 +555,10 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
             <button class="accent" onclick="submitOrder()" data-i18n="cart.submit">✅ Submit Order</button>
             <button class="danger" onclick="clearCart()" data-i18n="cart.clear">🗑️ Clear</button>
           </div>
+          <div id="dtToggle">
+            <button class="outline" id="dtModeBtn" onclick="toggleDriveThrough()">🛵 Drive-Through</button>
+          </div>
+          <div class="dt-indicator" id="dtIndicator"><span class="dot"></span> Drive-through display is live</div>
         </div>
       </div>
     </div>
@@ -1482,6 +1493,7 @@ function renderCart() {
   container.innerHTML = html;
   totalEl.innerHTML = `${t('cart.subtotal')} $${subtotal.toFixed(2)} | ${t('cart.tax')} $${totalTax.toFixed(2)}${discountHtml} | <strong>${t('cart.total')} $${finalTotal.toFixed(2)}</strong>`;
   updateDiscountStatus();
+  if (driveThroughMode) pushToDriveThrough();
 }
 
 function buildPaymentMethods() {
@@ -1551,6 +1563,15 @@ async function submitOrder() {
     showToast(t('toast.order_submitted'), 'success');
     receiptData.orderNumber = result.order_number || '—';
     showReceipt(receiptData);
+    // If drive-through mode is active, mark order as ready
+    if (driveThroughMode) {
+      try {
+        await fetch(BACKEND_URL + '/api/drivethrough/complete', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ order_number: result.order_id })
+        });
+      } catch(e) { /* silent */ }
+    }
     cart = [];
     appliedDiscount = null;
     document.getElementById('orderNotesInput').value = '';
@@ -1576,7 +1597,63 @@ async function clearCart() {
     document.getElementById('orderNotesInput').value = '';
     renderCart();
     showToast(t('toast.cart_cleared'), 'success');
+    // If drive-through mode is active, reset display
+    if (driveThroughMode) {
+      fetch(BACKEND_URL + '/api/drivethrough/reset', { method: 'POST', headers: { 'Content-Type': 'application/json' } }).catch(() => {});
+    }
   } catch(e) { showToast(t('toast.network_error'), 'danger'); }
+}
+
+// ═══════════ DRIVE-THROUGH DISPLAY ═══════════
+let driveThroughMode = false;
+
+function toggleDriveThrough() {
+  driveThroughMode = !driveThroughMode;
+  const btn = document.getElementById('dtModeBtn');
+  const indicator = document.getElementById('dtIndicator');
+  if (driveThroughMode) {
+    btn.classList.add('active');
+    btn.innerHTML = '🛵 Drive-Through ON';
+    indicator.classList.add('active');
+    pushToDriveThrough();
+    showToast('Drive-through display activated', 'success');
+  } else {
+    btn.classList.remove('active');
+    btn.innerHTML = '🛵 Drive-Through';
+    indicator.classList.remove('active');
+    // Reset the drive-through display
+    fetch(BACKEND_URL + '/api/drivethrough/reset', { method: 'POST', headers: { 'Content-Type': 'application/json' } }).catch(() => {});
+  }
+}
+
+async function pushToDriveThrough() {
+  if (!driveThroughMode || cart.length === 0) {
+    // If drive-through mode is on but cart is empty, reset display
+    if (driveThroughMode) {
+      fetch(BACKEND_URL + '/api/drivethrough/reset', { method: 'POST', headers: { 'Content-Type': 'application/json' } }).catch(() => {});
+    }
+    return;
+  }
+  let subtotal = 0, taxAmount = 0;
+  cart.forEach(item => {
+    const lineTotal = item.price * item.qty;
+    subtotal += lineTotal;
+    const rate = getTaxRate(item.name, item.category || '');
+    taxAmount += lineTotal * rate;
+  });
+  const discountAmount = appliedDiscount ? appliedDiscount.discount_amount : 0;
+  const total = subtotal + taxAmount - discountAmount;
+  try {
+    await fetch(BACKEND_URL + '/api/drivethrough/update', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        items: cart.map(c => ({ name: c.name, price: c.price, qty: c.qty })),
+        subtotal: Math.round(subtotal * 100) / 100,
+        tax: Math.round(taxAmount * 100) / 100,
+        total: Math.round(total * 100) / 100
+      })
+    });
+  } catch(e) { /* silent */ }
 }
 
 // ═══════════ DISCOUNT / COUPON ═══════════

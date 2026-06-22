@@ -12,7 +12,6 @@
 
 ## Priority: HIGH
 
-- [~] worker-1 **Drive-through order display** — Like McDonald's drive-through: a tablet/TV mounted outside shows the order being built in real-time as the cashier adds items. Large text for outdoor visibility (bright, high-contrast). Shows: items being added/removed live, running total, "Please pull forward" message when done. Separate URL/endpoint that the drive-through tablet opens. Auto-refreshes via polling to show live cart changes.
 - [ ] **POS Kiosk / Customer Payment Mode** — A toggleable mode where the tablet becomes a customer-facing payment terminal at the front counter/door. Worker brings up order or creates it there, customer sees total and pays. Large-print mode for customer visibility. Shows items, tax, tip prompt, total. Payment method selector. "Thank you" screen after payment.
 - [ ] **Table management system** — Admin assigns tablets to tables by table number. Each tablet knows its table number (displayed prominently). Orders are tagged with table number. Customers can order more drinks/food from their table tablet, see running tab. Future: ads on table tablets.
 - [ ] **Kitchen queue audit & optimize** — Review kitchen display end-to-end. Fast-paced: minimize button taps, prominent order age, sound alerts per new order, priority flagging for orders waiting >10 min. Test 8s polling under load.
@@ -47,6 +46,7 @@
 
 ## Done
 
+- [x] **Drive-through order display** — Drive-through tablet/TV view at `/drivethrough`. Shows live cart building with 2s polling, large high-contrast text for outdoor visibility. Cashier toggles "Drive-Through" mode in POS to push cart state live. Shows items, running total, tax. "Please Pull Forward" screen when order submitted. High-contrast dark theme (#0a0a1a bg, #ff3366 accent, #00cc66 success).
 - [x] Granular role/permission system — Three-tier roles (owner/admin/user/cook) with 10 granular permissions. Owner has ["*"] wildcard, can grant/revoke specific perms per admin. Ban/unban users with reason tracking. Permission-aware UI hides unauthorized sections.
 - [x] Menu version history with restore — Every menu change auto-saves timestamped backup to menu_backups/. Owner browses backup dates, restores any day's menu with safety backup of current state. Keep last 30 backups.
 - [x] Multi-language support — English + Spanish with browser language detection, language toggle button (globe) in top bar.

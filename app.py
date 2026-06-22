@@ -1658,12 +1658,87 @@ def kitchen_order_detail(order_id):
 
 
 # ============================================================
+# Drive-through Display System
+# ============================================================
+
+# In-memory live cart state for the drive-through display
+drive_through_state = {
+    'items': [],
+    'subtotal': 0,
+    'tax': 0,
+    'total': 0,
+    'status': 'idle',  # 'idle', 'building', 'ready'
+    'order_number': None,
+    'updated_at': datetime.now().isoformat()
+}
+
+
+@app.route('/api/drivethrough/update', methods=['POST'])
+def drivethrough_update():
+    """POS frontend pushes current cart state to drive-through display."""
+    global drive_through_state
+    data = request.json
+    items = data.get('items', [])
+    subtotal = float(data.get('subtotal', 0))
+    tax = float(data.get('tax', 0))
+    total = float(data.get('total', 0))
+    drive_through_state = {
+        'items': items,
+        'subtotal': subtotal,
+        'tax': tax,
+        'total': total,
+        'status': 'building',
+        'order_number': None,
+        'updated_at': datetime.now().isoformat()
+    }
+    return jsonify({'message': 'Drive-through display updated'})
+
+
+@app.route('/api/drivethrough/status', methods=['GET'])
+def drivethrough_status():
+    """Drive-through display polls for current order status."""
+    return jsonify(drive_through_state)
+
+
+@app.route('/api/drivethrough/complete', methods=['POST'])
+def drivethrough_complete():
+    """Mark the current order as ready (shows 'Please pull forward')."""
+    global drive_through_state
+    data = request.json
+    drive_through_state['status'] = 'ready'
+    drive_through_state['order_number'] = data.get('order_number')
+    drive_through_state['updated_at'] = datetime.now().isoformat()
+    return jsonify({'message': 'Order marked as ready'})
+
+
+@app.route('/api/drivethrough/reset', methods=['POST'])
+def drivethrough_reset():
+    """Reset the drive-through display to idle."""
+    global drive_through_state
+    drive_through_state = {
+        'items': [],
+        'subtotal': 0,
+        'tax': 0,
+        'total': 0,
+        'status': 'idle',
+        'order_number': None,
+        'updated_at': datetime.now().isoformat()
+    }
+    return jsonify({'message': 'Drive-through display reset'})
+
+
+# ============================================================
 # Serve the frontend
 # ============================================================
 
 @app.route('/')
 def serve_index():
     return send_from_directory(app.static_folder, 'index.html')
+
+
+@app.route('/drivethrough')
+def serve_drivethrough():
+    return send_from_directory(app.static_folder, 'drivethrough.html')
 
 
 if __name__ == '__main__':
