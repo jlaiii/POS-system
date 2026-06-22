@@ -624,13 +624,14 @@ def submit_order():
     # Accept tax info from frontend, or default to 0 for backward compatibility
     subtotal = float(data.get('subtotal', calculated_subtotal))
     tax_amount = float(data.get('tax_amount', 0))
+    tip_amount = float(data.get('tip_amount', 0))
 
-    # Accept total from frontend, or compute as subtotal + tax
+    # Accept total from frontend, or compute as subtotal + tax + tip
     total_from_request = data.get('total')
     if total_from_request is not None:
         total = float(total_from_request)
     else:
-        total = subtotal + tax_amount
+        total = subtotal + tax_amount + tip_amount
 
     # --- Kitchen: auto-increment order ID ---
     counter_data = load_json_data(ORDER_COUNTER_FILE)
@@ -650,6 +651,7 @@ def submit_order():
         'items': items,
         'subtotal': round(subtotal, 2),
         'tax_amount': round(tax_amount, 2),
+        'tip_amount': round(tip_amount, 2),
         'discount_code': data.get('discount_code'),
         'discount_amount': round(float(data.get('discount_amount', 0)), 2),
         'total': round(total, 2),

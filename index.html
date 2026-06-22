@@ -484,6 +484,145 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
   #receiptContent .rcpt-total { font-size: 14px; }
   #receiptActions { display: none; }
   .rcpt-divider { border-top: 1px dashed #000 !important; }
+}
+
+/* ── KIOSK MODE OVERLAY ── */
+#kioskOverlay {
+  display: none;
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: #0d0d1a;
+  z-index: 10000;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  font-size: 28px;
+}
+#kioskOverlay.active { display: flex; }
+#kioskOverlay .kiosk-header {
+  width: 100%; max-width: 700px;
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 20px;
+}
+#kioskOverlay .kiosk-header h2 {
+  font-size: 32px; color: var(--accent); margin: 0;
+}
+#kioskOverlay .kiosk-header .kiosk-exit {
+  background: transparent; color: #666; border: 1px solid #333;
+  font-size: 16px; padding: 8px 16px; border-radius: 8px; cursor: pointer;
+}
+#kioskOverlay .kiosk-header .kiosk-exit:hover { color: #fff; border-color: #666; }
+#kioskOverlay .kiosk-cart {
+  width: 100%; max-width: 700px; max-height: 40vh;
+  overflow-y: auto; margin-bottom: 20px;
+}
+#kioskOverlay .kiosk-item {
+  display: flex; justify-content: space-between; align-items: center;
+  background: #16213e; border-radius: 12px; padding: 16px 20px;
+  margin-bottom: 8px; font-size: 26px;
+}
+#kioskOverlay .kiosk-item .ki-name { font-weight: 600; }
+#kioskOverlay .kiosk-item .ki-qty { color: var(--accent); margin: 0 12px; }
+#kioskOverlay .kiosk-item .ki-price { color: #a0a0b0; }
+#kioskOverlay .kiosk-totals {
+  width: 100%; max-width: 700px;
+  background: #16213e; border-radius: 12px; padding: 24px;
+  margin-bottom: 20px;
+}
+#kioskOverlay .kiosk-totals .kt-row {
+  display: flex; justify-content: space-between; font-size: 24px;
+  padding: 6px 0;
+}
+#kioskOverlay .kiosk-totals .kt-row.total {
+  font-size: 36px; font-weight: 700; color: var(--accent);
+  border-top: 2px solid #2a2a4e; padding-top: 12px; margin-top: 8px;
+}
+#kioskOverlay .kiosk-totals .kt-row.tip-line { color: #2ecc71; }
+#kioskOverlay .kiosk-tip {
+  width: 100%; max-width: 700px;
+  margin-bottom: 20px;
+}
+#kioskOverlay .kiosk-tip h3 { font-size: 28px; text-align: center; margin-bottom: 12px; color: #eee; }
+#kioskOverlay .kiosk-tip .tip-btns {
+  display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
+}
+#kioskOverlay .kiosk-tip .tip-btns button {
+  flex: 1; min-width: 120px; min-height: 64px;
+  font-size: 24px; font-weight: 700; border-radius: 12px;
+  background: #16213e; color: #eee; border: 2px solid #2a2a4e;
+  cursor: pointer; transition: all 0.2s;
+}
+#kioskOverlay .kiosk-tip .tip-btns button:hover,
+#kioskOverlay .kiosk-tip .tip-btns button.selected {
+  background: var(--accent); border-color: var(--accent); color: #fff;
+}
+#kioskOverlay .kiosk-tip .tip-btns .tip-custom {
+  background: #1a1a2e; border-color: #555;
+}
+#kioskOverlay .kiosk-tip .tip-custom-input {
+  display: flex; gap: 8px; align-items: center; justify-content: center; margin-top: 10px;
+}
+#kioskOverlay .kiosk-tip .tip-custom-input input {
+  width: 160px; font-size: 24px; padding: 12px; text-align: center;
+  background: #1a1a2e; border: 2px solid #555; border-radius: 12px;
+  color: #fff; min-height: 56px;
+}
+#kioskOverlay .kiosk-tip .tip-custom-input input:focus { border-color: var(--accent); outline: none; }
+#kioskOverlay .kiosk-payment {
+  width: 100%; max-width: 700px;
+  margin-bottom: 20px;
+}
+#kioskOverlay .kiosk-payment h3 { font-size: 28px; text-align: center; margin-bottom: 12px; }
+#kioskOverlay .kiosk-payment .kiosk-pay-btns {
+  display: flex; gap: 10px; justify-content: center;
+}
+#kioskOverlay .kiosk-payment .kiosk-pay-btns button {
+  flex: 1; max-width: 200px; min-height: 64px;
+  font-size: 24px; font-weight: 600; border-radius: 12px;
+  background: #16213e; color: #eee; border: 2px solid #2a2a4e;
+  cursor: pointer;
+}
+#kioskOverlay .kiosk-payment .kiosk-pay-btns button.selected {
+  background: #0f3460; border-color: #0f3460; color: #fff;
+}
+#kioskOverlay .kiosk-pay-btn {
+  width: 100%; max-width: 700px; min-height: 72px;
+  font-size: 32px; font-weight: 700; border-radius: 16px;
+  background: var(--accent); color: #fff; border: none; cursor: pointer;
+  padding: 16px;
+}
+#kioskOverlay .kiosk-pay-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+#kioskOverlay .kiosk-thankyou {
+  display: none;
+  text-align: center; padding: 60px 20px;
+}
+#kioskOverlay .kiosk-thankyou.active { display: block; }
+#kioskOverlay .kiosk-thankyou h1 {
+  font-size: 64px; color: #2ecc71; margin-bottom: 20px;
+}
+#kioskOverlay .kiosk-thankyou p {
+  font-size: 28px; color: #a0a0b0; margin-bottom: 10px;
+}
+#kioskOverlay .kiosk-thankyou .kiosk-thankyou-total {
+  font-size: 48px; color: var(--accent); font-weight: 700; margin: 20px 0;
+}
+#kioskOverlay .kiosk-thankyou .kiosk-countdown {
+  font-size: 20px; color: #666; margin-top: 30px;
+}
+#kioskOverlay .kiosk-content { display: flex; flex-direction: column; align-items: center; width: 100%; }
+#kioskOverlay .kiosk-content.hidden { display: none; }
+
+@media (max-width: 600px) {
+  #kioskOverlay { font-size: 20px; padding: 12px; }
+  #kioskOverlay .kiosk-header h2 { font-size: 24px; }
+  #kioskOverlay .kiosk-item { font-size: 18px; padding: 12px 16px; }
+  #kioskOverlay .kiosk-totals .kt-row { font-size: 18px; }
+  #kioskOverlay .kiosk-totals .kt-row.total { font-size: 28px; }
+  #kioskOverlay .kiosk-tip .tip-btns button { font-size: 18px; min-width: 80px; min-height: 52px; }
+  #kioskOverlay .kiosk-pay-btn { font-size: 24px; min-height: 60px; }
+  #kioskOverlay .kiosk-thankyou h1 { font-size: 40px; }
+  #kioskOverlay .kiosk-payment .kiosk-pay-btns button { font-size: 18px; min-height: 52px; }
+}
   @page { margin: 0; size: 80mm auto; }
 }
 </style>
@@ -557,6 +696,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
           </div>
           <div id="dtToggle">
             <button class="outline" id="dtModeBtn" onclick="toggleDriveThrough()">🛵 Drive-Through</button>
+            <button class="outline" id="kioskModeBtn" onclick="enterKioskMode()" style="border-color:#2ecc71;color:#2ecc71;">🪟 Kiosk Mode</button>
           </div>
           <div class="dt-indicator" id="dtIndicator"><span class="dot"></span> Drive-through display is live</div>
         </div>
@@ -744,6 +884,44 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
       <button class="print-btn" onclick="printReceipt()" data-i18n="receipt.print">🖨️ Print</button>
       <button class="close-btn" onclick="closeReceipt()" data-i18n="receipt.close">Close</button>
     </div>
+  </div>
+</div>
+
+<!-- ═══════════ KIOSK MODE OVERLAY ═══════════ -->
+<div id="kioskOverlay">
+  <div class="kiosk-content">
+    <div class="kiosk-header">
+      <h2>🛒 Your Order</h2>
+      <button class="kiosk-exit" onclick="exitKioskMode()">✕ Staff Exit</button>
+    </div>
+    <div class="kiosk-cart" id="kioskCartItems"></div>
+    <div class="kiosk-totals" id="kioskTotals"></div>
+    <div class="kiosk-tip">
+      <h3>💬 Add a Tip</h3>
+      <div class="tip-btns">
+        <button onclick="selectKioskTip(0)" class="tip-0">No Tip</button>
+        <button onclick="selectKioskTip(15)" class="tip-15">15%</button>
+        <button onclick="selectKioskTip(18)" class="tip-18">18%</button>
+        <button onclick="selectKioskTip(20)" class="tip-20">20%</button>
+        <button onclick="selectKioskTip(-1)" class="tip-custom">Custom</button>
+      </div>
+      <div class="tip-custom-input" id="kioskCustomTip" style="display:none;">
+        <input type="number" id="kioskCustomTipInput" placeholder="$0.00" step="0.01" min="0" inputmode="decimal" oninput="updateKioskTipCustom()">
+        <button class="outline" onclick="document.getElementById('kioskCustomTipInput').value='';updateKioskTipCustom();" style="font-size:18px;padding:8px 16px;min-height:48px;">Clear</button>
+      </div>
+    </div>
+    <div class="kiosk-payment">
+      <h3>💳 Payment Method</h3>
+      <div class="kiosk-pay-btns" id="kioskPaymentMethods"></div>
+    </div>
+    <button class="kiosk-pay-btn" id="kioskPayBtn" onclick="kioskPay()">💵 Pay Now</button>
+  </div>
+  <div class="kiosk-thankyou" id="kioskThankYou">
+    <h1>✅ Thank You!</h1>
+    <p>Your order has been placed.</p>
+    <div class="kiosk-thankyou-total" id="kioskThankYouTotal"></div>
+    <p id="kioskThankYouOrderNum"></p>
+    <div class="kiosk-countdown" id="kioskCountdown">Returning to POS in <span id="kioskCountdownNum">10</span>s...</div>
   </div>
 </div>
 
@@ -2855,6 +3033,198 @@ function renderItemTaxOverrides() {
       <span>${(rate * 100).toFixed(1)}%</span>
     </div>
   `).join('');
+}
+
+// ═══════════ KIOSK MODE ═══════════
+let kioskTipAmount = 0;
+let kioskTipPercent = 0;
+let kioskReturnTimer = null;
+
+function enterKioskMode() {
+  if (cart.length === 0) { showToast(t('toast.cart_empty'), 'danger'); return; }
+  if (!currentUser) { showToast('Please log in first', 'danger'); return; }
+  
+  kioskTipAmount = 0;
+  kioskTipPercent = 0;
+  
+  renderKioskCart();
+  renderKioskPaymentMethods();
+  
+  document.getElementById('kioskOverlay').classList.add('active');
+  document.querySelector('.kiosk-content').classList.remove('hidden');
+  document.getElementById('kioskThankYou').classList.remove('active');
+  
+  // Default: No Tip selected
+  document.querySelectorAll('.kiosk-tip .tip-btns button').forEach(b => b.classList.remove('selected'));
+  const noTipBtn = document.querySelector('.tip-0');
+  if (noTipBtn) noTipBtn.classList.add('selected');
+  document.getElementById('kioskCustomTip').style.display = 'none';
+}
+
+function exitKioskMode() {
+  document.getElementById('kioskOverlay').classList.remove('active');
+  document.querySelector('.kiosk-content').classList.remove('hidden');
+  document.getElementById('kioskThankYou').classList.remove('active');
+  if (kioskReturnTimer) { clearInterval(kioskReturnTimer); kioskReturnTimer = null; }
+}
+
+function renderKioskCart() {
+  const container = document.getElementById('kioskCartItems');
+  if (!container) return;
+  container.innerHTML = cart.map((item, i) => `
+    <div class="kiosk-item">
+      <span class="ki-name">${escHtml(item.name)}</span>
+      <span class="ki-qty">×${item.qty}</span>
+      <span class="ki-price">$${(item.price * item.qty).toFixed(2)}</span>
+    </div>
+  `).join('');
+  renderKioskTotals();
+}
+
+function renderKioskTotals() {
+  let subtotal = 0, taxAmount = 0;
+  cart.forEach(item => {
+    const lineTotal = item.price * item.qty;
+    subtotal += lineTotal;
+    const rate = getTaxRate(item.name, item.category || '');
+    taxAmount += lineTotal * rate;
+  });
+  const total = subtotal + taxAmount + kioskTipAmount;
+  
+  const container = document.getElementById('kioskTotals');
+  if (!container) return;
+  container.innerHTML = `
+    <div class="kt-row"><span>Subtotal</span><span>$${subtotal.toFixed(2)}</span></div>
+    <div class="kt-row"><span>Tax</span><span>$${taxAmount.toFixed(2)}</span></div>
+    ${kioskTipAmount > 0 ? `<div class="kt-row tip-line"><span>💬 Tip</span><span>+$${kioskTipAmount.toFixed(2)}</span></div>` : ''}
+    <div class="kt-row total"><span>Total</span><span>$${total.toFixed(2)}</span></div>
+  `;
+}
+
+function renderKioskPaymentMethods() {
+  const methods = ['Cash', 'Card', 'Mobile Pay'];
+  const container = document.getElementById('kioskPaymentMethods');
+  if (!container) return;
+  container.innerHTML = '';
+  methods.forEach(m => {
+    const btn = document.createElement('button');
+    btn.textContent = m === 'Cash' ? '💵 Cash' : m === 'Card' ? '💳 Card' : '📱 Mobile Pay';
+    if (m === selectedPayment) btn.classList.add('selected');
+    btn.onclick = () => {
+      selectedPayment = m;
+      container.querySelectorAll('button').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+    };
+    container.appendChild(btn);
+  });
+}
+
+function selectKioskTip(percent) {
+  document.querySelectorAll('.kiosk-tip .tip-btns button').forEach(b => b.classList.remove('selected'));
+  document.getElementById('kioskCustomTip').style.display = 'none';
+  
+  if (percent === -1) {
+    const customBtn = document.querySelector('.tip-custom');
+    if (customBtn) customBtn.classList.add('selected');
+    document.getElementById('kioskCustomTip').style.display = 'flex';
+    document.getElementById('kioskCustomTipInput').focus();
+    kioskTipPercent = -1;
+    updateKioskTipCustom();
+    return;
+  }
+  
+  if (percent === 0) {
+    const btn = document.querySelector('.tip-0');
+    if (btn) btn.classList.add('selected');
+    kioskTipAmount = 0;
+    kioskTipPercent = 0;
+  } else {
+    const btn = document.querySelector(`.tip-${percent}`);
+    if (btn) btn.classList.add('selected');
+    let subtotal = 0;
+    cart.forEach(item => { subtotal += item.price * item.qty; });
+    kioskTipAmount = subtotal * (percent / 100);
+    kioskTipPercent = percent;
+  }
+  renderKioskTotals();
+}
+
+function updateKioskTipCustom() {
+  const val = parseFloat(document.getElementById('kioskCustomTipInput').value);
+  if (!isNaN(val) && val >= 0) {
+    kioskTipAmount = val;
+  } else {
+    kioskTipAmount = 0;
+  }
+  renderKioskTotals();
+}
+
+async function kioskPay() {
+  if (cart.length === 0) { showToast('Cart is empty', 'danger'); return; }
+  if (!selectedPayment) { showToast('Please select a payment method', 'danger'); return; }
+  
+  const btn = document.getElementById('kioskPayBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Processing...';
+  
+  let subtotal = 0, taxAmount = 0;
+  cart.forEach(item => {
+    const lineTotal = item.price * item.qty;
+    subtotal += lineTotal;
+    const rate = getTaxRate(item.name, item.category || '');
+    taxAmount += lineTotal * rate;
+  });
+  const total = subtotal + taxAmount + kioskTipAmount;
+  
+  try {
+    const r = await fetch(BACKEND_URL + '/api/submit_order', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user: currentUser.id,
+        payment: selectedPayment,
+        items: cart.map(c => ({ name: c.name, price: c.price, qty: c.qty, note: c.note || '' })),
+        subtotal: Math.round(subtotal * 100) / 100,
+        tax_amount: Math.round(taxAmount * 100) / 100,
+        tip_amount: Math.round(kioskTipAmount * 100) / 100,
+        total: Math.round(total * 100) / 100,
+        notes: document.getElementById('orderNotesInput').value.trim(),
+        item_notes: {}
+      })
+    });
+    if (!r.ok) { const d = await r.json(); showToast(d.message || 'Failed', 'danger'); btn.disabled = false; btn.textContent = '💵 Pay Now'; return; }
+    const result = await r.json();
+    
+    // Show thank you screen
+    document.querySelector('.kiosk-content').classList.add('hidden');
+    document.getElementById('kioskThankYou').classList.add('active');
+    document.getElementById('kioskThankYouTotal').textContent = `$${total.toFixed(2)}`;
+    document.getElementById('kioskThankYouOrderNum').textContent = `Order #${result.order_number || result.order_id || ''}`;
+    
+    // Clear cart
+    cart = [];
+    appliedDiscount = null;
+    document.getElementById('orderNotesInput').value = '';
+    renderCart();
+    
+    // Countdown to return
+    let count = 10;
+    document.getElementById('kioskCountdownNum').textContent = count;
+    if (kioskReturnTimer) clearInterval(kioskReturnTimer);
+    kioskReturnTimer = setInterval(() => {
+      count--;
+      const el = document.getElementById('kioskCountdownNum');
+      if (el) el.textContent = count;
+      if (count <= 0) {
+        clearInterval(kioskReturnTimer);
+        kioskReturnTimer = null;
+        exitKioskMode();
+      }
+    }, 1000);
+  } catch(e) {
+    showToast('Network error', 'danger');
+    btn.disabled = false;
+    btn.textContent = '💵 Pay Now';
+  }
 }
 </script>
 </body>
