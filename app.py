@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
+from flask_socketio import SocketIO, emit, join_room, leave_room
 import json
 from datetime import datetime, timedelta
 import os
@@ -16,6 +17,9 @@ from collections import defaultdict, Counter
 
 app = Flask(__name__, static_folder='.', static_url_path='')
 CORS(app)  # Enable CORS for all origins
+
+# --- SocketIO for real-time updates ---
+socketio = SocketIO(app, cors_allowed_origins="*")
 
 USERS_FILE = 'users.json'
 ORDERS_FILE = 'orders.json'
@@ -258,6 +262,76 @@ def fire_webhooks_async(order_data):
     """Fire webhooks in a daemon thread so the HTTP response isn't blocked."""
     t = threading.Thread(target=fire_webhooks, args=(order_data,), daemon=True)
     t.start()
+
+
+# --- SocketIO Real-Time Event Handlers ---
+
+KITCHEN_ROOM = 'kitchen'
+CUSTOMER_ROOM = 'customer_display'
+DRIVETHROUGH_ROOM = 'drivethrough'
+
+
+@socketio.on('connect')
+def handle_connect():
+    """Client connects — they'll join a specific room via join events."""
+    pass
+
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    """Client disconnects — no cleanup needed, rooms auto-left."""
+    pass
+
+
+@socketio.on('join_kitchen')
+def handle_join_kitchen():
+    """Frontend kitchen display joins the kitchen room for real-time updates."""
+    join_room(KITCHEN_ROOM)
+
+
+@socketio.on('leave_kitchen')
+def handle_leave_kitchen():
+    """Frontend kitchen display leaves the kitchen room."""
+    leave_room(KITCHEN_ROOM)
+
+
+@socketio.on('join_customer_display')
+def handle_join_customer_display():
+    """Customer display page joins the customer display room."""
+    join_room(CUSTOMER_ROOM)
+
+
+@socketio.on('leave_customer_display')
+def handle_leave_customer_display():
+    """Customer display page leaves the customer display room."""
+    leave_room(CUSTOMER_ROOM)
+
+
+@socketio.on('join_drivethrough')
+def handle_join_drivethrough():
+    """Drive-through display page joins the drive-through room."""
+    join_room(DRIVETHROUGH_ROOM)
+
+
+@socketio.on('leave_drivethrough')
+def handle_leave_drivethrough():
+    """Drive-through display page leaves the drive-through room."""
+    leave_room(DRIVETHROUGH_ROOM)
+
+
+def emit_kitchen_update():
+    """Broadcast to kitchen room that order state changed."""
+    socketio.emit('kitchen_update', {}, room=KITCHEN_ROOM)
+
+
+def emit_customer_update():
+    """Broadcast to customer display room that display state changed."""
+    socketio.emit('customer_update', {}, room=CUSTOMER_ROOM)
+
+
+def emit_drivethrough_update():
+    """Broadcast to drive-through room that display state changed."""
+    socketio.emit('drivethrough_update', {}, room=DRIVETHROUGH_ROOM)
 
 
 # In-memory storage for active admin sessions (for timesheet calculation)
@@ -888,6 +962,11 @@ def submit_order():
     # --- Webhooks: fire to third-party delivery integrations ---
     fire_webhooks_async(order_details)
 
+    # --- SocketIO: notify kitchen, customer display, drivethrough ---
+    emit_kitchen_update()
+    emit_customer_update()
+    emit_drivethrough_update()
+
     return jsonify({
         'message': 'Order submitted successfully',
         'order_number': order_number,
@@ -1030,6 +1109,8 @@ def sync_orders():
     save_json_data(ORDERS_FILE, orders_data)
     save_json_data(ORDER_COUNTER_FILE, counter_data)
     save_json_data(INVENTORY_FILE, inventory)
+
+    emit_kitchen_update()
 
     return jsonify({'results': results})
 
@@ -2622,6 +2703,7 @@ def kitchen_claim():
                 log_activity('kitchen_claim', cook_id, 'kitchen', {
                     'order_id': order_id, 'action': 'claimed'
                 })
+                emit_kitchen_update()
                 return jsonify({'message': f'Order #{order_id} claimed', 'order': order})
         return jsonify({'error': f'Order #{order_id} not found'}), 404
     except Exception as e:
@@ -2652,6 +2734,7 @@ def kitchen_complete():
                 log_activity('kitchen_complete', cook_id, 'kitchen', {
                     'order_id': order_id, 'action': 'completed'
                 })
+                emit_kitchen_update()
                 return jsonify({'message': f'Order #{order_id} completed', 'order': order})
         return jsonify({'error': f'Order #{order_id} not found'}), 404
     except Exception as e:
@@ -2685,6 +2768,7 @@ def kitchen_cancel():
                 log_activity('kitchen_cancel', cook_id, 'kitchen', {
                     'order_id': order_id, 'action': 'cancelled', 'reason': reason
                 })
+                emit_kitchen_update()
                 return jsonify({'message': f'Order #{order_id} cancelled', 'order': order})
         return jsonify({'error': f'Order #{order_id} not found'}), 404
     except Exception as e:
@@ -2791,6 +2875,7 @@ def drivethrough_update():
         'order_number': None,
         'updated_at': datetime.now().isoformat()
     }
+    emit_drivethrough_update()
     return jsonify({'message': 'Drive-through display updated'})
 
 
@@ -2808,6 +2893,7 @@ def drivethrough_complete():
     drive_through_state['status'] = 'ready'
     drive_through_state['order_number'] = data.get('order_number')
     drive_through_state['updated_at'] = datetime.now().isoformat()
+    emit_drivethrough_update()
     return jsonify({'message': 'Order marked as ready'})
 
 
@@ -2824,6 +2910,7 @@ def drivethrough_reset():
         'order_number': None,
         'updated_at': datetime.now().isoformat()
     }
+    emit_drivethrough_update()
     return jsonify({'message': 'Drive-through display reset'})
 
 
@@ -2866,6 +2953,7 @@ def customer_display_update():
         'mode_active': True,
         'updated_at': datetime.now().isoformat()
     }
+    emit_customer_update()
     return jsonify({'message': 'Customer display updated'})
 
 
@@ -2883,6 +2971,7 @@ def customer_display_complete():
     customer_display_state['status'] = 'complete'
     customer_display_state['order_number'] = data.get('order_number')
     customer_display_state['updated_at'] = datetime.now().isoformat()
+    emit_customer_update()
     return jsonify({'message': 'Order marked as complete'})
 
 
@@ -2901,6 +2990,7 @@ def customer_display_reset():
         'mode_active': customer_display_state.get('mode_active', False),
         'updated_at': datetime.now().isoformat()
     }
+    emit_customer_update()
     return jsonify({'message': 'Customer display reset'})
 
 
@@ -4304,4 +4394,4 @@ def serve_tablet():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    socketio.run(app, debug=True, port=5000, allow_unsafe_werkzeug=True)

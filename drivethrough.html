@@ -282,6 +282,7 @@ body {
   #readyScreen .pull-forward { font-size: 3.5rem; }
 }
 </style>
+<script src="https://cdn.socket.io/4.8.1/socket.io.min.js" integrity="sha384-mkQ3/9F6QIkz1z7jC1Jfn5qO8ANMgS4zX9VX5G5WIQT2Q9F9M0cL0Kj2mF6KnC" crossorigin="anonymous"></script>
 </head>
 <body>
 
@@ -422,8 +423,39 @@ async function pollStatus() {
   }
 }
 
+// ── SOCKETIO REAL-TIME SUPPORT ──
+let socket = null;
+let socketEnabled = true;
+
+function initSocketIO() {
+  if (typeof io === 'undefined') { socketEnabled = false; return; }
+  try {
+    socket = io(API_BASE, {
+      transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      timeout: 10000
+    });
+    socket.on('connect', () => {
+      socketEnabled = true;
+      socket.emit('join_drivethrough');
+    });
+    socket.on('disconnect', () => {});
+    socket.on('connect_error', () => { socketEnabled = false; });
+    socket.on('drivethrough_update', () => {
+      // Real-time notification — fetch latest state immediately
+      pollStatus();
+    });
+  } catch(e) {
+    socketEnabled = false;
+  }
+}
+
 // ── INIT ──
 showScreen(idleScreen);
+initSocketIO();
 pollStatus();
 setInterval(pollStatus, POLL_INTERVAL);
 </script>

@@ -30,7 +30,7 @@
 
 - [~] worker-1 **Add reorder button in order history** — One-click to reload all items from a past order into the cart. Major waiter speed improvement: eliminates need to manually re-add frequent orders.
 ^- [x] **Fix order history for all users (BUG)** — History tab is visible to all users but `loadOrderHistory()` calls `/api/admin_stats` which requires `view_stats` permission. Waiters with `pos_access` only get a misleading "Network error". Fixed: new `/api/orders/list` endpoint (no `view_stats` required) and frontend now calls it. [worker-3]
-- [~] worker-1 **Add WebSocket support for real-time updates** — Replace polling (kitchen 8s, customer-display 2s, drive-through 2s) with WebSockets for instant updates. Reduces server load and gives waiters/cooks real-time order notifications. Fall back to polling if WebSocket fails. [audit]
+- [x] **Add WebSocket support for real-time updates** — Replace polling (kitchen 8s, customer-display 2s, drive-through 2s) with Flask-SocketIO WebSockets for instant updates. Emits `kitchen_update`, `customer_update`, `drivethrough_update` events from order/display endpoints. Frontend falls back to polling if WebSocket fails. [worker-1]
 - [ ] **Add item modifier support (sizes, options, extras)** — Allow menu items to have variants (small/medium/large), modifiers (extra cheese, no onions), and customizations. Store modifiers in cart items, display on kitchen tickets and receipts. Industry-standard POS feature. [audit]
 
 ## Priority: LOW
@@ -40,6 +40,7 @@
 
 ## Done
 
+- [x] **Add WebSocket support for real-time updates** — Replace polling (kitchen 8s, customer-display 2s, drive-through 2s) with Flask-SocketIO WebSockets for instant updates. Emits `kitchen_update`, `customer_update`, `drivethrough_update` events from order/display endpoints. Frontend falls back to polling if WebSocket fails. [worker-1]
 - [x] **Add delivery address management** — Delivery address form (street, city, state, zip, instructions) toggleable in cart. Address stored per-order, shown on receipt and in order history. Saved addresses API for future reuse. i18n EN + ES. Touch-friendly 44px+ targets. [worker-3]
 - [x] **Add customer-facing display mode (second screen showing order summary)** — New `/customer-display` page with large-print order summary view. Live 2s polling from `/api/customer-display/status`. Toggle button in POS cart area pushes cart items, subtotal, tax, tip, and total to display state. Shows idle/welcome screen when no order, building screen with item list during order, and thank-you screen on order submit. Dark theme (#1a1a2e bg, #e94560 accent, #16213e cards). Backend endpoints: update/status/complete/reset. Auto-resets on cart clear. [worker-1]
 - [x] **Add dark/light theme toggle with persistence** — CSS variables for theming (light theme overrides `.light-theme` class on `<html>`), localStorage persistence (`pos_theme` key), theme toggle button in top bar, meta theme-color update, dark/light switch for all major UI elements with `--border`, `--hover`, `--card-alt` variables. Touch-friendly. [worker-2]

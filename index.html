@@ -846,6 +846,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
   @page { margin: 0; size: 80mm auto; }
 }
 </style>
+<script src="https://cdn.socket.io/4.8.1/socket.io.min.js" integrity="sha384-mkQ3/9F6QIkz1z7jC1Jfn5qO8ANMgS4zX9VX5G5WIQT2Q9F9M0cL0Kj2mF6KnC" crossorigin="anonymous"></script>
 </head>
 <body>
 
@@ -2278,6 +2279,56 @@ let kitchenClockTimer = null;
 let kitchenPrevOrderIds = new Set(); // track new orders for sound
 let kitchenViewActive = false;
 
+// ═══════════ SOCKETIO (real-time) ═══════════
+let socket = null;
+let socketConnected = false;
+let socketEnabled = true; // set false if socket fails, fall back to polling
+
+function initSocketIO() {
+  if (!io) { socketEnabled = false; return; }
+  try {
+    socket = io(BACKEND_URL, {
+      transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      timeout: 10000
+    });
+
+    socket.on('connect', () => {
+      socketConnected = true;
+      socketEnabled = true;
+      // Join relevant rooms
+      if (kitchenViewActive) socket.emit('join_kitchen');
+    });
+
+    socket.on('disconnect', () => {
+      socketConnected = false;
+    });
+
+    socket.on('connect_error', () => {
+      socketConnected = false;
+      socketEnabled = false; // fall back to polling
+    });
+
+    // ── Real-time event listeners ──
+    socket.on('kitchen_update', () => {
+      if (kitchenViewActive) loadKitchenQueue();
+    });
+
+    socket.on('customer_update', () => {
+      // Customer display update handled separately (customer-display.html)
+    });
+
+    socket.on('drivethrough_update', () => {
+      // Drive-through update handled separately (drivethrough.html)
+    });
+  } catch(e) {
+    socketEnabled = false;
+  }
+}
+
 // ═══════════ INIT ═══════════
 window.addEventListener('DOMContentLoaded', () => {
   buildPinPad();
@@ -2308,6 +2359,8 @@ window.addEventListener('DOMContentLoaded', () => {
   // Init offline queue: show badge and attempt sync
   updateOfflineIndicator();
   syncQueuedOrders();
+  // Init WebSocket real-time connection
+  initSocketIO();
   // Listen for online/offline events to auto-sync
   window.addEventListener('online', () => {
     updateOfflineIndicator();
@@ -5414,13 +5467,22 @@ function showKitchenView() {
   updateKitchenClock();
   if (kitchenClockTimer) clearInterval(kitchenClockTimer);
   kitchenClockTimer = setInterval(updateKitchenClock, 1000);
-  // Start polling
+  // Join SocketIO kitchen room for real-time updates
+  if (socket && socket.connected) {
+    socket.emit('join_kitchen');
+  }
+  // Initial load + start polling fallback (8s interval as before)
   loadKitchenQueue();
+  if (kitchenPollTimer) clearInterval(kitchenPollTimer);
   kitchenPollTimer = setInterval(loadKitchenQueue, 8000);
 }
 
 function hideKitchenView() {
   kitchenViewActive = false;
+  // Leave SocketIO kitchen room
+  if (socket && socket.connected) {
+    socket.emit('leave_kitchen');
+  }
   stopKitchenPolling();
   document.getElementById('kitchenView').classList.remove('active');
   document.getElementById('topBar').style.display = '';
