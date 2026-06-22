@@ -25,6 +25,7 @@ DISCOUNTS_FILE = 'discounts.json'  # Discount/coupon codes
 ORDER_COUNTER_FILE = 'order_counter.json'  # Auto-incrementing order counter
 TABLES_FILE = 'tables.json'  # Table management data
 INVENTORY_FILE = 'inventory.json'  # Inventory tracking
+REFUNDED_ORDERS_FILE = 'refunded_orders.json'  # Track refunded/voided orders
 MENU_BACKUPS_DIR = 'menu_backups'
 
 # --- Permission Constants ---
@@ -89,7 +90,7 @@ def backup_menu():
 
 
 # Ensure JSON files exist and are initialized correctly
-for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE, INVENTORY_FILE]:
+for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE, INVENTORY_FILE, REFUNDED_ORDERS_FILE]:
     if not os.path.exists(f):
         with open(f, 'w') as file:
             if f == USERS_FILE:
@@ -763,6 +764,93 @@ def clear_order():
     return jsonify({'message': 'Cleared order logged successfully'})
 
 
+# --- Refund / Void Order Endpoint ---
+
+@app.route('/api/orders/refund', methods=['POST'])
+def refund_order():
+    """
+    Refund/void an order with reason tracking.
+    Requires manage_orders permission.
+    Marks the order as 'refunded' in orders.json with reason and timestamp.
+    """
+    data = request.json
+    admin_pin = data.get('adminPin')
+    order_id = data.get('order_id')
+    reason = data.get('reason', '').strip()
+
+    if not check_perm(admin_pin, "manage_orders"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    if order_id is None:
+        return jsonify({'message': 'Order ID is required.'}), 400
+
+    orders = load_json_data(ORDERS_FILE)
+    found_order = None
+
+    for order in orders:
+        if order.get('order_id') == int(order_id):
+            if order.get('status') in ('refunded', 'voided'):
+                return jsonify({'message': f'Order #{order_id} has already been refunded/voided.'}), 400
+            found_order = order
+            break
+
+    if not found_order:
+        return jsonify({'message': f'Order #{order_id} not found.'}), 404
+
+    if not reason:
+        reason = 'No reason provided'
+
+    # Mark the order as refunded
+    found_order['status'] = 'refunded'
+    found_order['refund_reason'] = reason
+    found_order['refunded_at'] = datetime.now().isoformat()
+    found_order['refunded_by'] = admin_pin
+
+    save_json_data(ORDERS_FILE, orders)
+
+    # Also log to refunded_orders.json for easy audit trail
+    refunded_orders = load_json_data(REFUNDED_ORDERS_FILE)
+    refunded_orders.append({
+        'order_id': int(order_id),
+        'original_order': {k: v for k, v in found_order.items() if k != 'original_order'},
+        'reason': reason,
+        'refunded_at': found_order['refunded_at'],
+        'refunded_by': admin_pin
+    })
+    save_json_data(REFUNDED_ORDERS_FILE, refunded_orders)
+
+    # Log activity
+    users = load_json_data(USERS_FILE)
+    user_name = users.get(admin_pin, {}).get('name', 'Unknown')
+    user_role = users.get(admin_pin, {}).get('role', 'unknown')
+    log_activity('refund_order', admin_pin, user_role, {
+        'order_id': int(order_id),
+        'reason': reason,
+        'refunded_by_name': user_name,
+        'order_total': found_order.get('total', 0)
+    })
+
+    return jsonify({
+        'message': f'Order #{order_id} refunded successfully.',
+        'reason': reason
+    })
+
+
+# --- Refund History Endpoint ---
+
+@app.route('/api/orders/refunds', methods=['POST'])
+def get_refunds():
+    """Return the list of refunded orders for audit."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+
+    if not check_perm(admin_pin, "manage_orders"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    refunded_orders = load_json_data(REFUNDED_ORDERS_FILE)
+    return jsonify({'refunds': refunded_orders, 'count': len(refunded_orders)})
+
+
 # --- Admin Panel Endpoints ---
 
 @app.route('/api/admin_stats', methods=['POST'])
@@ -815,6 +903,9 @@ def admin_stats():
 
     processed_orders = []
     for order in orders:
+        # Skip refunded/voided orders for revenue calculations
+        if order.get('status') in ('refunded', 'voided'):
+            continue
         try:
             order_total = float(order.get('total', 0))
             order['total'] = order_total
