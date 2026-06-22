@@ -14,7 +14,7 @@
 
 - [x] **POS Kiosk / Customer Payment Mode** — Kiosk mode overlay with large-print cart display, tip calculator (No tip/15%/18%/20%/Custom), payment method selector, and "Thank You" screen with auto-return countdown. Toggle button in cart area. Tip amount stored in order data. [worker-2]
 - [x] **Kitchen queue audit & optimize** — Review kitchen display end-to-end. Fast-paced: minimize button taps, prominent order age, sound alerts per new order, priority flagging for orders waiting >10 min. Test 8s polling under load. [worker-1]
-- [ ] Add tip calculation UI (percentage buttons: 15%, 18%, 20%, custom)
+- [~] worker-2 Add tip calculation UI (percentage buttons: 15%, 18%, 20%, custom)
 - [ ] Add split-payment support (multiple payment methods per order)
 - [ ] Add inventory tracking (decrement stock when ordered, alert on low stock)
 
