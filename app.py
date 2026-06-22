@@ -42,6 +42,7 @@ WEBHOOKS_FILE = 'webhooks.json'  # Webhook integration URLs for third-party deli
 TABLE_ADS_FILE = 'table_ads.json'  # Table-side promotional ads
 MENU_BACKUPS_DIR = 'menu_backups'
 CASH_DRAWER_FILE = 'cash_drawer.json'  # Cash register management
+SERVICE_CHARGE_FILE = 'service_charge_config.json'  # Auto-gratuity / service charge settings
 
 # --- Loyalty Constants ---
 LOYALTY_POINTS_PER_DOLLAR = 1  # 1 point per $1 spent
@@ -110,7 +111,7 @@ def backup_menu():
 
 
 # Ensure JSON files exist and are initialized correctly
-for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE, INVENTORY_FILE, REFUNDED_ORDERS_FILE, FAVORITES_FILE, LOYALTY_FILE, SCHEDULED_PRICING_FILE, WASTE_FILE, DELIVERY_ADDRESSES_FILE, WEBHOOKS_FILE, TABLE_ADS_FILE, CASH_DRAWER_FILE]:
+for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE, INVENTORY_FILE, REFUNDED_ORDERS_FILE, FAVORITES_FILE, LOYALTY_FILE, SCHEDULED_PRICING_FILE, WASTE_FILE, DELIVERY_ADDRESSES_FILE, WEBHOOKS_FILE, TABLE_ADS_FILE, CASH_DRAWER_FILE, SERVICE_CHARGE_FILE]:
     if not os.path.exists(f):
         with open(f, 'w') as file:
             if f == USERS_FILE:
@@ -168,6 +169,8 @@ for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMES
                 json.dump({"ads": [], "rotation_interval": 10}, file, indent=4)  # Initialize empty table ads
             elif f == CASH_DRAWER_FILE:
                 json.dump({"sessions": [], "transactions": []}, file, indent=4)  # Initialize cash drawer
+            elif f == SERVICE_CHARGE_FILE:
+                json.dump({"enabled": True, "threshold": 8, "percentage": 18.0, "label": "Auto-Gratuity (18%)"}, file, indent=4)  # Initialize service charge config
             else:
                 json.dump([], file)  # Initialize orders.json and cleared_orders.json as empty lists
 
@@ -981,13 +984,14 @@ def submit_order():
     subtotal = float(data.get('subtotal', calculated_subtotal))
     tax_amount = float(data.get('tax_amount', 0))
     tip_amount = float(data.get('tip_amount', 0))
+    service_charge_amount = float(data.get('service_charge_amount', 0))
 
-    # Accept total from frontend, or compute as subtotal + tax + tip
+    # Accept total from frontend, or compute as subtotal + tax + tip + service charge
     total_from_request = data.get('total')
     if total_from_request is not None:
         total = float(total_from_request)
     else:
-        total = subtotal + tax_amount + tip_amount
+        total = subtotal + tax_amount + tip_amount + service_charge_amount
 
     # --- Kitchen: auto-increment order ID ---
     counter_data = load_json_data(ORDER_COUNTER_FILE)
@@ -1023,6 +1027,7 @@ def submit_order():
         'subtotal': round(subtotal, 2),
         'tax_amount': round(tax_amount, 2),
         'tip_amount': round(tip_amount, 2),
+        'service_charge_amount': round(service_charge_amount, 2),
         'discount_code': data.get('discount_code'),
         'discount_amount': round(float(data.get('discount_amount', 0)), 2),
         'total': round(total, 2),
@@ -1192,12 +1197,13 @@ def sync_orders():
         subtotal = float(order_data.get('subtotal', calculated_subtotal))
         tax_amount = float(order_data.get('tax_amount', 0))
         tip_amount = float(order_data.get('tip_amount', 0))
+        service_charge_amount = float(order_data.get('service_charge_amount', 0))
 
         total_from_request = order_data.get('total')
         if total_from_request is not None:
             total = float(total_from_request)
         else:
-            total = subtotal + tax_amount + tip_amount
+            total = subtotal + tax_amount + tip_amount + service_charge_amount
 
         order_id = counter_data.get("counter", 1)
 
@@ -1228,6 +1234,7 @@ def sync_orders():
             'subtotal': round(subtotal, 2),
             'tax_amount': round(tax_amount, 2),
             'tip_amount': round(tip_amount, 2),
+            'service_charge_amount': round(service_charge_amount, 2),
             'discount_code': order_data.get('discount_code'),
             'discount_amount': round(float(order_data.get('discount_amount', 0)), 2),
             'total': round(total, 2),
@@ -2234,6 +2241,52 @@ def update_tax_config():
     save_json_data(TAX_CONFIG_FILE, config)
     log_activity('update_tax_config', admin_pin, 'admin', {'new_config': config})
     return jsonify({'message': 'Tax configuration updated successfully', 'config': config})
+
+
+# ============================================================
+# --- Service Charge / Auto-Gratuity Endpoints ---
+# ============================================================
+
+@app.route('/api/service-charge/config', methods=['GET'])
+def get_service_charge_config():
+    """Get the current service charge config (public, no auth)."""
+    config = load_json_data(SERVICE_CHARGE_FILE)
+    return jsonify(config)
+
+
+@app.route('/api/service-charge/config', methods=['POST'])
+def update_service_charge_config():
+    """Update service charge config (admin/owner only, manage_items permission)."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+
+    if not check_perm(admin_pin, "manage_items"):
+        log_activity('update_service_charge', admin_pin, 'unauthorized', {'status': 'failed', 'reason': 'Insufficient permissions'})
+        return jsonify({'message': 'Unauthorized. Admin PIN or permission required.'}), 403
+
+    config = load_json_data(SERVICE_CHARGE_FILE)
+
+    if 'enabled' in data:
+        config['enabled'] = bool(data['enabled'])
+    if 'threshold' in data:
+        try:
+            config['threshold'] = int(data['threshold'])
+        except (ValueError, TypeError):
+            return jsonify({'message': 'Threshold must be a number.'}), 400
+    if 'percentage' in data:
+        try:
+            val = float(data['percentage'])
+            if val < 0 or val > 100:
+                return jsonify({'message': 'Percentage must be between 0 and 100.'}), 400
+            config['percentage'] = val
+        except (ValueError, TypeError):
+            return jsonify({'message': 'Percentage must be a number.'}), 400
+    if 'label' in data:
+        config['label'] = str(data['label']).strip()
+
+    save_json_data(SERVICE_CHARGE_FILE, config)
+    log_activity('update_service_charge', admin_pin, 'admin', {'new_config': config})
+    return jsonify({'message': 'Service charge configuration updated successfully', 'config': config})
 
 
 # ============================================================
