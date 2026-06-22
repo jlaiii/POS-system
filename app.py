@@ -112,7 +112,7 @@ def backup_menu():
 
 
 # Ensure JSON files exist and are initialized correctly
-for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE, INVENTORY_FILE, REFUNDED_ORDERS_FILE, FAVORITES_FILE, LOYALTY_FILE, SCHEDULED_PRICING_FILE, WASTE_FILE, DELIVERY_ADDRESSES_FILE, WEBHOOKS_FILE, TABLE_ADS_FILE, CASH_DRAWER_FILE, SERVICE_CHARGE_FILE]:
+for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE, INVENTORY_FILE, REFUNDED_ORDERS_FILE, FAVORITES_FILE, LOYALTY_FILE, SCHEDULED_PRICING_FILE, WASTE_FILE, DELIVERY_ADDRESSES_FILE, WEBHOOKS_FILE, TABLE_ADS_FILE, CASH_DRAWER_FILE, SERVICE_CHARGE_FILE, EMAIL_CONFIG_FILE]:
     if not os.path.exists(f):
         with open(f, 'w') as file:
             if f == USERS_FILE:
@@ -1487,6 +1487,8 @@ def orders_recent():
 def get_email_config():
     """Get the current SMTP email configuration."""
     config = load_json_data(EMAIL_CONFIG_FILE)
+    if not isinstance(config, dict):
+        config = {"server": "", "port": 587, "username": "", "password": "", "from_addr": "", "use_tls": True, "enabled": False}
     # Never expose the password in full
     safe_config = dict(config)
     if safe_config.get('password'):
@@ -1512,6 +1514,9 @@ def save_email_config():
         return jsonify({'message': 'Permission denied'}), 403
 
     config = load_json_data(EMAIL_CONFIG_FILE)
+    # If config is a list (file didn't exist or wrong format), start fresh
+    if not isinstance(config, dict):
+        config = {"server": "", "port": 587, "username": "", "password": "", "from_addr": "", "use_tls": True, "enabled": False}
     if 'server' in data:
         config['server'] = str(data['server']).strip()
     if 'port' in data:
@@ -1645,6 +1650,8 @@ def email_receipt():
 
     # Get email config
     email_config = load_json_data(EMAIL_CONFIG_FILE)
+    if not isinstance(email_config, dict):
+        email_config = {"server": "", "port": 587, "username": "", "password": "", "from_addr": "", "use_tls": True, "enabled": False}
     if not email_config.get('enabled'):
         return jsonify({'message': 'Email sending is not configured. Go to Admin → Email Settings to set up SMTP.'}), 400
     if not email_config.get('server') or not email_config.get('from_addr'):
@@ -1781,6 +1788,8 @@ def test_email():
         return jsonify({'message': 'Invalid user'}), 403
 
     email_config = load_json_data(EMAIL_CONFIG_FILE)
+    if not isinstance(email_config, dict):
+        email_config = {"server": "", "port": 587, "username": "", "password": "", "from_addr": "", "use_tls": True, "enabled": False}
     if not email_config.get('server') or not email_config.get('from_addr'):
         return jsonify({'message': 'SMTP server or from address not configured.'}), 400
 
