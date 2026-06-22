@@ -367,6 +367,10 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
   font-size: 12px; font-weight: 600; padding: 2px 10px;
   border-radius: 10px; text-align: center; width: 100%;
 }
+.course-badge {
+  display: inline-block; vertical-align: middle; font-size: 16px;
+  margin-left: 4px; cursor: help;
+}
 .item-stock-low { background: #f39c1233; color: #f39c12; }
 .item-stock-out { background: #e74c3c33; color: #e74c3c; }
 .item-add-disabled { opacity: 0.4; cursor: not-allowed; }
@@ -1213,6 +1217,11 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
             <input type="text" id="addItemName" placeholder="Item name"/>
             <input type="number" id="addItemPrice" placeholder="Price" step="0.01" min="0.01"/>
             <input type="text" id="addItemBarcode" placeholder="Barcode (optional)" style="max-width:160px;"/>
+            <select id="addItemCourse" style="max-width:130px;min-height:var(--tap);padding:8px 10px;font-size:14px;">
+              <option value="main">Main</option>
+              <option value="appetizer">🥗 Appetizer</option>
+              <option value="dessert">🍰 Dessert</option>
+            </select>
             <input type="text" id="addItemImageUrl" placeholder="Image URL (optional)" style="max-width:200px;"/>
             <button class="accent" onclick="addItem()">Add</button>
           </div>
@@ -1226,6 +1235,11 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
               <input type="text" id="editNewName" placeholder="Name"/>
               <input type="number" id="editNewPrice" placeholder="Price" step="0.01" min="0.01"/>
               <input type="text" id="editNewBarcode" placeholder="Barcode" style="max-width:160px;"/>
+              <select id="editNewCourse" style="max-width:130px;min-height:var(--tap);padding:8px 10px;font-size:14px;">
+                <option value="main">Main</option>
+                <option value="appetizer">🥗 Appetizer</option>
+                <option value="dessert">🍰 Dessert</option>
+              </select>
               <input type="text" id="editNewImageUrl" placeholder="Image URL" style="max-width:200px;"/>
               <button class="success" onclick="saveEditItem()">Save</button>
               <button class="ghost" onclick="cancelEditItem()">Cancel</button>
@@ -1604,6 +1618,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
     <span>🟠 ${t('kitchen.preparing')} <span class="ks-preparing" id="ksPreparing">0</span></span>
     <span>✅ ${t('kitchen.done_today')} <span class="ks-done" id="ksDone">0</span></span>
   </div>
+  <div id="kitchenPrepGuide" style="padding:6px 16px;background:var(--card);font-size:13px;color:var(--text2);border-top:1px solid var(--border);text-align:center;">🥗 ${t('course.appetizer')} → ${t('course.main')} → 🍰 ${t('course.dessert')}</div>
   <div id="kitchenLoading"><div class="spinner"></div> ${t('kitchen.refreshing')}</div>
   <div id="kitchenQueue"><div class="kitchen-empty" data-i18n="kitchen.empty">No orders — stand by 🍳</div></div>
 </div>
@@ -2160,6 +2175,12 @@ const L10N = {
     'cash_calc.quick50': '$50',
     'cash_calc.change_due': 'Change Due:',
     'cash_calc.still_owed': 'Still Owed:',
+    'course.appetizer': '🥗 Appetizer',
+    'course.main': 'Main',
+    'course.dessert': '🍰 Dessert',
+    'course.appetizer_hint': 'Prepare first (~5 min)',
+    'course.dessert_hint': 'Prepare after mains',
+    'course.prep_guide': '🥗 Appetizers first → Mains → 🍰 Desserts last',
   },
   es: {
     'app.title': '🍽️ Sistema POS',
@@ -2495,6 +2516,12 @@ const L10N = {
     'cash_calc.quick50': '$50',
     'cash_calc.change_due': 'Cambio:',
     'cash_calc.still_owed': 'Falta:',
+    'course.appetizer': '🥗 Entrante',
+    'course.main': 'Principal',
+    'course.dessert': '🍰 Postre',
+    'course.appetizer_hint': 'Prepare primero (~5 min)',
+    'course.dessert_hint': 'Prepare después de principales',
+    'course.prep_guide': '🥗 Entrantes → Principales → 🍰 Postres último',
   }
 };
 
@@ -3136,10 +3163,12 @@ function renderItems() {
       const imgHtml = imgUrl ? '<img src="' + escHtml(imgUrl) + '" alt="' + escHtml(item.name) + '" class="item-thumb" onerror="this.style.display=\'none\'">' : '';
       const card = document.createElement('div');
       card.className = 'item-card' + stockClass;
+      const course = item.course || 'main';
+      const courseBadge = course === 'appetizer' ? '<span class="course-badge appetizer" title="Appetizer — 5 min prep">🥗</span>' : (course === 'dessert' ? '<span class="course-badge dessert" title="Dessert — after mains">🍰</span>' : '');
       card.innerHTML = `
         <div class="item-category-label">${escHtml(item._category)}</div>
         ${imgHtml}
-        <div class="item-name">${displayName}${modBadge}</div>
+        <div class="item-name">${displayName}${modBadge}${courseBadge}</div>
         ${priceHtml}
         ${stockHtml}
         <button class="item-add${stock !== null && stock <= 0 ? ' item-add-disabled' : ''}" onclick="event.stopPropagation(); addToCart('${escJs(item.name)}', ${effectivePrice}, '${escJs(item._category)}')"${stock !== null && stock <= 0 ? ' disabled' : ''}>${stock !== null && stock <= 0 ? t('item.out') : t('item.add')}</button>
@@ -3179,9 +3208,11 @@ function renderItems() {
       const modBadge = hasModifiers ? '<span class="mod-badge" style="font-size:11px;color:#f39c12;margin-left:4px;">⚙️</span>' : '';
       const imgUrl = item.image_url || '';
       const imgHtml = imgUrl ? '<img src="' + escHtml(imgUrl) + '" alt="' + escHtml(item.name) + '" class="item-thumb" onerror="this.style.display=\'none\'">' : '';
+      const course = item.course || 'main';
+      const courseBadge = course === 'appetizer' ? '<span class="course-badge appetizer" title="Appetizer — 5 min prep">🥗</span>' : (course === 'dessert' ? '<span class="course-badge dessert" title="Dessert — after mains">🍰</span>' : '');
       card.innerHTML = `
         ${imgHtml}
-        <div class="item-name">${escHtml(item.name)}${modBadge}</div>
+        <div class="item-name">${escHtml(item.name)}${modBadge}${courseBadge}</div>
         ${priceHtml}
         ${stockHtml}
         <button class="item-add${stock !== null && stock <= 0 ? ' item-add-disabled' : ''}" onclick="event.stopPropagation(); addToCart('${escJs(item.name)}', ${effectivePrice}, '${escJs(currentCategory)}')"${stock !== null && stock <= 0 ? ' disabled' : ''}>${stock !== null && stock <= 0 ? t('item.out') : t('item.add')}</button>
@@ -5125,12 +5156,14 @@ async function loadItemMgmt() {
       items.forEach(item => {
         const bc = item.barcode || '';
         const imgUrl = item.image_url || '';
+        const course = item.course || 'main';
         const imgHtml = imgUrl ? `<img src="${escHtml(imgUrl)}" alt="" style="width:32px;height:32px;border-radius:6px;object-fit:cover;margin-right:8px;vertical-align:middle;">` : '';
         const bcHtml = bc ? `<span class="ime-barcode" style="color:var(--text2);font-size:12px;font-family:monospace;margin-left:8px;">📷 ${escHtml(bc)}</span>` : '';
+        const courseBadge = course === 'appetizer' ? '<span style="font-size:14px;margin-left:6px;" title="Appetizer — prepare first (5 min)">🥗</span>' : (course === 'dessert' ? '<span style="font-size:14px;margin-left:6px;" title="Dessert — prepare after mains">🍰</span>' : '');
         html += `<div class="item-mgmt-entry">
-          <div class="ime-info">${imgHtml}<span class="ime-cat">${escHtml(cat)}</span> — ${escHtml(item.name)} <span class="ime-price">$${item.price.toFixed(2)}</span>${bcHtml}${item.modifiers && item.modifiers.groups && item.modifiers.groups.length > 0 ? '<span style="color:#f39c12;font-size:11px;margin-left:6px;">⚙️</span>' : ''}</div>
+          <div class="ime-info">${imgHtml}<span class="ime-cat">${escHtml(cat)}</span> — ${escHtml(item.name)} <span class="ime-price">$${item.price.toFixed(2)}</span>${bcHtml}${courseBadge}${item.modifiers && item.modifiers.groups && item.modifiers.groups.length > 0 ? '<span style="color:#f39c12;font-size:11px;margin-left:6px;">⚙️</span>' : ''}</div>
           <div class="ime-actions">
-            <button class="outline" onclick='startEditItem(${JSON.stringify(cat)},${JSON.stringify(item.name)},${item.price},${JSON.stringify(bc)},${JSON.stringify(imgUrl)})' style="font-size:13px;padding:6px 12px;min-height:36px;">✏️</button>
+            <button class="outline" onclick='startEditItem(${JSON.stringify(cat)},${JSON.stringify(item.name)},${item.price},${JSON.stringify(bc)},${JSON.stringify(imgUrl)},${JSON.stringify(course)})' style="font-size:13px;padding:6px 12px;min-height:36px;">✏️</button>
             <button class="outline" onclick='editItemModifiers(${JSON.stringify(cat)},${JSON.stringify(item.name)})' style="font-size:13px;padding:6px 12px;min-height:36px;">⚙️</button>
             <button class="danger" onclick='deleteItem(${JSON.stringify(cat)},${JSON.stringify(item.name)})' style="font-size:13px;padding:6px 12px;min-height:36px;">🗑️</button>
           </div>
@@ -5141,7 +5174,7 @@ async function loadItemMgmt() {
   } catch(e) { list.innerHTML = '<div class="empty-state">' + t('network_error') + '</div>'; }
 }
 
-function startEditItem(cat, name, price, barcode, imageUrl) {
+function startEditItem(cat, name, price, barcode, imageUrl, course) {
   document.getElementById('editItemForm').classList.add('active');
   document.getElementById('editOldCat').value = cat;
   document.getElementById('editOldName').value = name;
@@ -5150,6 +5183,7 @@ function startEditItem(cat, name, price, barcode, imageUrl) {
   document.getElementById('editNewPrice').value = price;
   document.getElementById('editNewBarcode').value = barcode || '';
   document.getElementById('editNewImageUrl').value = imageUrl || '';
+  document.getElementById('editNewCourse').value = course || 'main';
   document.getElementById('editItemForm').scrollIntoView({ behavior: 'smooth' });
 }
 
@@ -5165,11 +5199,12 @@ async function saveEditItem() {
   const newPrice = parseFloat(document.getElementById('editNewPrice').value);
   const newBarcode = document.getElementById('editNewBarcode').value.trim();
   const newImageUrl = document.getElementById('editNewImageUrl').value.trim();
+  const newCourse = document.getElementById('editNewCourse').value;
   if (!newCat || !newName || isNaN(newPrice) || newPrice <= 0) { showToast('Fill all fields correctly', 'danger'); return; }
   try {
     const r = await fetch(BACKEND_URL + '/api/edit_item', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adminPin: currentUser.id, oldCategory: oldCat, oldName, newCategory: newCat, newName, newPrice, barcode: newBarcode, image_url: newImageUrl })
+      body: JSON.stringify({ adminPin: currentUser.id, oldCategory: oldCat, oldName, newCategory: newCat, newName, newPrice, barcode: newBarcode, image_url: newImageUrl, course: newCourse })
     });
     const d = await r.json();
     if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
@@ -5313,11 +5348,12 @@ async function addItem() {
   const price = parseFloat(document.getElementById('addItemPrice').value);
   const barcode = document.getElementById('addItemBarcode').value.trim();
   const imageUrl = document.getElementById('addItemImageUrl').value.trim();
+  const course = document.getElementById('addItemCourse').value;
   if (!category || !name || isNaN(price) || price <= 0) { showToast('Fill all fields correctly', 'danger'); return; }
   try {
     const r = await fetch(BACKEND_URL + '/api/add_item', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adminPin: currentUser.id, category, name, price, barcode, image_url: imageUrl })
+      body: JSON.stringify({ adminPin: currentUser.id, category, name, price, barcode, image_url: imageUrl, course })
     });
     const d = await r.json();
     if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
@@ -7106,23 +7142,32 @@ function renderKitchenOrderCard(o) {
     const modDisplay = item.modifiers && item.modifiers.length > 0
       ? '<div style="font-size:13px;color:#f39c12;font-weight:400;padding-left:8px;">' + item.modifiers.map(m => escHtml(m.option)).join(', ') + '</div>'
       : '';
-    // Look up image from menu data
+    // Look up image and course from menu data
     let imgHtml = '';
+    let courseBadge = '';
     const itemName = item.name || item.item_name || '';
     const itemCat = item.category || '';
     if (itemName && window.itemsData) {
       for (const [cat, catItems] of Object.entries(window.itemsData)) {
         if (itemCat && cat !== itemCat) continue;
         for (const menuItem of catItems) {
-          if (menuItem.name === itemName && menuItem.image_url) {
-            imgHtml = '<img src="' + escHtml(menuItem.image_url) + '" alt="" style="width:28px;height:28px;border-radius:6px;object-fit:cover;margin-right:8px;vertical-align:middle;">';
+          if (menuItem.name === itemName) {
+            if (menuItem.image_url) {
+              imgHtml = '<img src="' + escHtml(menuItem.image_url) + '" alt="" style="width:28px;height:28px;border-radius:6px;object-fit:cover;margin-right:8px;vertical-align:middle;">';
+            }
+            const course = menuItem.course || 'main';
+            if (course === 'appetizer') {
+              courseBadge = '<span class="course-badge appetizer" title="Appetizer — prepare first (~5 min)" style="font-size:16px;margin-left:4px;">🥗</span>';
+            } else if (course === 'dessert') {
+              courseBadge = '<span class="course-badge dessert" title="Dessert — prepare after mains" style="font-size:16px;margin-left:4px;">🍰</span>';
+            }
             break;
           }
         }
-        if (imgHtml) break;
+        if (imgHtml || courseBadge) break;
       }
     }
-    return '<div class="koc-item">' + imgHtml + '<span>' + escHtml(item.name || item.item_name || '?') + qtyDisplay + '</span>' + modDisplay + '</div>';
+    return '<div class="koc-item">' + imgHtml + '<span>' + escHtml(item.name || item.item_name || '?') + qtyDisplay + courseBadge + '</span>' + modDisplay + '</div>';
   }).join('');
 
   // Per-item notes

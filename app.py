@@ -622,7 +622,7 @@ def add_item():
             log_activity('add_item', admin_pin, admin_role, {'status': 'failed', 'reason': 'Item already exists', 'item_data': data})
             return jsonify({'message': f'Item "{name}" already exists in category "{category}".'}), 409
 
-    items_data[category].append({"name": name, "price": price, "barcode": data.get('barcode', ''), "image_url": data.get('image_url', '')})
+    items_data[category].append({"name": name, "price": price, "barcode": data.get('barcode', ''), "image_url": data.get('image_url', ''), "course": data.get('course', 'main')})
     save_json_data(ITEMS_FILE, items_data)
     backup_menu()  # Auto-backup after successful save
     
@@ -698,7 +698,8 @@ def edit_item():
                 # Preserve image_url from old item
                 old_image_url = items_data[old_category][i].get('image_url', '')
                 old_barcode = items_data[old_category][i].get('barcode', '')
-                items_data[new_category].append({"name": new_name, "price": new_price, "barcode": data.get('barcode', old_barcode), "image_url": data.get('image_url', old_image_url)})
+                old_course = item.get('course', 'main')
+                items_data[new_category].append({"name": new_name, "price": new_price, "barcode": data.get('barcode', old_barcode), "image_url": data.get('image_url', old_image_url), "course": data.get('course', old_course)})
             else:  # Only name/price/barcode changing within same category
                 items_data[old_category][i]["name"] = new_name
                 items_data[old_category][i]["price"] = new_price
@@ -706,6 +707,8 @@ def edit_item():
                     items_data[old_category][i]["barcode"] = data.get('barcode', '')
                 if 'image_url' in data and data.get('image_url') is not None:
                     items_data[old_category][i]["image_url"] = data.get('image_url', '')
+                if 'course' in data and data.get('course') is not None:
+                    items_data[old_category][i]["course"] = data.get('course', 'main')
             break
 
     if not item_found:
