@@ -1,0 +1,52 @@
+{
+    "1111": {
+        "name": "Owner",
+        "role": "owner",
+        "permissions": [
+            "*"
+        ],
+        "banned": false,
+        "banned_reason": "",
+        "username": "jayadmin",
+        "password_hash": "c5376a74c76bb8870e6e81c8a6ba60d56c72493b9fd440e3e4ddb6e2cc024680",
+        "password_salt": "888243d1672d63dc9134ab43b6531a7b"
+    },
+    "1234": {
+        "name": "Employee One",
+        "role": "user",
+        "permissions": [
+            "pos_access"
+        ],
+        "banned": false,
+        "banned_reason": ""
+    },
+    "5678": {
+        "name": "Employee Two",
+        "role": "user",
+        "permissions": [
+            "pos_access"
+        ],
+        "banned": false,
+        "banned_reason": ""
+    },
+    "2222": {
+        "name": "Manager",
+        "role": "admin",
+        "permissions": [
+            "manage_items",
+            "view_stats",
+            "view_logs",
+            "pos_access",
+            "kitchen_access"
+        ],
+        "banned": false,
+        "banned_reason": ""
+    },
+    "123456": {
+        "name": "Carlos",
+        "role": "user",
+        "permissions": [
+            "pos_access"
+        ]
+    }
+}

@@ -1,0 +1,686 @@
+[
+    {
+        "timestamp": "2026-06-22T09:14:49.114842",
+        "type": "submit_order",
+        "user_id": "1111",
+        "user_role": "user",
+        "details": {
+            "order_id": 1,
+            "subtotal": 20.0,
+            "tax_amount": 2.0,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 25.0,
+            "payment_method": "Card",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-22T09:24:44.285868",
+        "type": "assign_table",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "table_number": 5,
+            "tablet_id": "tablet-5",
+            "name": "Table 5"
+        }
+    },
+    {
+        "timestamp": "2026-06-22T09:24:50.249772",
+        "type": "submit_order",
+        "user_id": "1111",
+        "user_role": "user",
+        "details": {
+            "order_id": 1,
+            "subtotal": 12.0,
+            "tax_amount": 0.0,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 12.0,
+            "payment_method": "Card",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-22T09:58:30.034341",
+        "type": "submit_order",
+        "user_id": "1111",
+        "user_role": "user",
+        "details": {
+            "order_id": 2,
+            "subtotal": 10.0,
+            "tax_amount": 0.0,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 12.5,
+            "payment_method": "Cash",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-22T10:08:49.937446",
+        "type": "submit_order",
+        "user_id": "test_worker3",
+        "user_role": "user",
+        "details": {
+            "order_id": 3,
+            "subtotal": 50.0,
+            "tax_amount": 0.0,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 50.0,
+            "payment_method": "Split (Cash $30.00, Card $20.00)",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-22T10:08:56.400125",
+        "type": "submit_order",
+        "user_id": "test_worker3",
+        "user_role": "user",
+        "details": {
+            "order_id": 4,
+            "subtotal": 25.0,
+            "tax_amount": 2.0,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 27.0,
+            "payment_method": "Card",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-22T10:28:59.684284",
+        "type": "update_inventory",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "item_name": "Hamburger - Normal",
+            "stock": 15,
+            "low_stock_threshold": 10
+        }
+    },
+    {
+        "timestamp": "2026-06-22T10:29:04.060281",
+        "type": "submit_order",
+        "user_id": "1111",
+        "user_role": "user",
+        "details": {
+            "order_id": 5,
+            "subtotal": 12.0,
+            "tax_amount": 0.0,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 12.0,
+            "payment_method": "Cash",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-22T10:29:07.828976",
+        "type": "update_inventory",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "item_name": "Hamburger - Normal",
+            "stock": 5,
+            "low_stock_threshold": 10
+        }
+    },
+    {
+        "timestamp": "2026-06-22T10:29:07.841794",
+        "type": "update_inventory",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "item_name": "Coke",
+            "stock": 0,
+            "low_stock_threshold": 10
+        }
+    },
+    {
+        "timestamp": "2026-06-22T10:39:08.635636",
+        "type": "submit_order",
+        "user_id": "1111",
+        "user_role": "user",
+        "details": {
+            "order_id": 6,
+            "subtotal": 12.0,
+            "tax_amount": 0.0,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 14.0,
+            "payment_method": "Cash",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-22T10:39:13.695111",
+        "type": "kiosk_pay",
+        "user_id": "kiosk",
+        "user_role": "kiosk",
+        "details": {
+            "order_id": 6,
+            "payment_splits": [
+                {
+                    "method": "Card",
+                    "amount": 15
+                }
+            ],
+            "tip_amount": 1.0,
+            "total": 15.0
+        }
+    },
+    {
+        "timestamp": "2026-06-22T10:39:19.247175",
+        "type": "submit_order",
+        "user_id": "1111",
+        "user_role": "user",
+        "details": {
+            "order_id": 7,
+            "subtotal": 13.0,
+            "tax_amount": 0.0,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 13.0,
+            "payment_method": "Cash",
+            "item_count": 2
+        }
+    },
+    {
+        "timestamp": "2026-06-22T11:43:44.563138",
+        "type": "submit_order",
+        "user_id": "1111",
+        "user_role": "user",
+        "details": {
+            "order_id": 6,
+            "subtotal": 12.0,
+            "tax_amount": 0.0,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 12.0,
+            "payment_method": "Card",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-22T11:43:47.251781",
+        "type": "refund_order",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "order_id": 6,
+            "reason": "Customer changed mind",
+            "refunded_by_name": "Owner",
+            "order_total": 12.0
+        }
+    },
+    {
+        "timestamp": "2026-06-22T11:43:54.313556",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-22T11:43:57.863042",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-22T12:24:02.209490",
+        "type": "save_favorite",
+        "user_id": "1111",
+        "user_role": "user",
+        "details": {
+            "favorite_id": "9845097023d33b05",
+            "favorite_name": "My Lunch Combo",
+            "item_count": 2
+        }
+    },
+    {
+        "timestamp": "2026-06-22T12:24:04.857773",
+        "type": "delete_favorite",
+        "user_id": "1111",
+        "user_role": "user",
+        "details": {
+            "favorite_id": "9845097023d33b05"
+        }
+    },
+    {
+        "timestamp": "2026-06-22T13:37:44.855796",
+        "type": "submit_order",
+        "user_id": "1111",
+        "user_role": "user",
+        "details": {
+            "order_id": 7,
+            "subtotal": 6.0,
+            "tax_amount": 0.0,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 6.0,
+            "payment_method": "Cash",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-22T13:37:49.231815",
+        "type": "submit_order",
+        "user_id": "1111",
+        "user_role": "user",
+        "details": {
+            "order_id": 8,
+            "subtotal": 6.0,
+            "tax_amount": 0.0,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 6.0,
+            "payment_method": "Cash",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-22T13:39:42.476256",
+        "type": "submit_order",
+        "user_id": "1111",
+        "user_role": "user",
+        "details": {
+            "order_id": 7,
+            "subtotal": 3.0,
+            "tax_amount": 0.0,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 3.0,
+            "payment_method": "Cash",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-22T14:12:09.012991",
+        "type": "set_barcode",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "category": "Drinks",
+            "name": "Coke",
+            "barcode": "4901234567890"
+        }
+    },
+    {
+        "timestamp": "2026-06-22T14:22:42.204618",
+        "type": "loyalty_register",
+        "user_id": "unknown",
+        "user_role": "admin",
+        "details": {
+            "customer_phone": "5551234567",
+            "customer_name": "Alice Johnson"
+        }
+    },
+    {
+        "timestamp": "2026-06-22T14:22:45.660523",
+        "type": "loyalty_adjust",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "customer_phone": "5551234567",
+            "points_adjustment": 200,
+            "reason": "Bonus"
+        }
+    },
+    {
+        "timestamp": "2026-06-22T14:22:48.909109",
+        "type": "loyalty_redeem",
+        "user_id": "1111",
+        "user_role": "user",
+        "details": {
+            "customer_phone": "5551234567",
+            "points_deducted": 100,
+            "discount_amount": 5.0,
+            "order_id": null
+        }
+    },
+    {
+        "timestamp": "2026-06-22T14:22:53.032191",
+        "type": "submit_order",
+        "user_id": "1111",
+        "user_role": "user",
+        "details": {
+            "order_id": 7,
+            "subtotal": 12.0,
+            "tax_amount": 0.0,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 12.0,
+            "payment_method": "Cash",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-22T14:22:53.033093",
+        "type": "loyalty_earn",
+        "user_id": "1111",
+        "user_role": "user",
+        "details": {
+            "customer_phone": "5551234567",
+            "points_earned": 12,
+            "order_id": 7
+        }
+    },
+    {
+        "timestamp": "2026-06-22T14:23:25.197574",
+        "type": "loyalty_register",
+        "user_id": "unknown",
+        "user_role": "admin",
+        "details": {
+            "customer_phone": "9991112222",
+            "customer_name": "Test Customer"
+        }
+    },
+    {
+        "timestamp": "2026-06-22T14:30:55.886567",
+        "type": "add_scheduled_pricing",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "rule_name": "Happy Hour - 20% Drinks",
+            "discount_type": "percent",
+            "value": 20.0
+        }
+    },
+    {
+        "timestamp": "2026-06-22T14:31:02.188666",
+        "type": "delete_scheduled_pricing",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "rule_id": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-22T14:46:25.370227",
+        "type": "log_waste",
+        "user_id": "9999",
+        "user_role": "unauthorized",
+        "details": {
+            "status": "failed",
+            "reason": "Insufficient permissions"
+        }
+    },
+    {
+        "timestamp": "2026-06-22T14:46:27.857053",
+        "type": "log_waste",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "item_name": "Hamburger - Normal",
+            "quantity": 2,
+            "reason": "burned",
+            "estimated_cost": 12.0,
+            "notes": "Test waste entry"
+        }
+    },
+    {
+        "timestamp": "2026-06-22T15:12:23.051633",
+        "type": "webhook_add",
+        "user_id": "1111",
+        "user_role": "admin",
+        "details": {
+            "name": "Test Delivery",
+            "url": "https://hooks.example.com/order"
+        }
+    },
+    {
+        "timestamp": "2026-06-22T15:12:23.203645",
+        "type": "webhook_toggle",
+        "user_id": "1111",
+        "user_role": "admin",
+        "details": {
+            "name": "Test Delivery",
+            "status": "disabled"
+        }
+    },
+    {
+        "timestamp": "2026-06-22T15:12:27.457179",
+        "type": "webhook_delete",
+        "user_id": "1111",
+        "user_role": "admin",
+        "details": {
+            "name": "Test Delivery",
+            "url": "https://hooks.example.com/order"
+        }
+    },
+    {
+        "timestamp": "2026-06-22T15:12:31.021768",
+        "type": "webhook_add",
+        "user_id": "1111",
+        "user_role": "admin",
+        "details": {
+            "name": "Test Delivery",
+            "url": "https://hooks.example.com/order"
+        }
+    },
+    {
+        "timestamp": "2026-06-22T15:12:54.606437",
+        "type": "webhook_add",
+        "user_id": "1111",
+        "user_role": "admin",
+        "details": {
+            "name": "Test",
+            "url": "https://hooks.example.com/order"
+        }
+    },
+    {
+        "timestamp": "2026-06-22T15:12:58.641872",
+        "type": "webhook_toggle",
+        "user_id": "1111",
+        "user_role": "admin",
+        "details": {
+            "name": "Test",
+            "status": "disabled"
+        }
+    },
+    {
+        "timestamp": "2026-06-22T15:12:58.699113",
+        "type": "webhook_toggle",
+        "user_id": "1111",
+        "user_role": "admin",
+        "details": {
+            "name": "Test",
+            "status": "enabled"
+        }
+    },
+    {
+        "timestamp": "2026-06-22T15:12:58.761016",
+        "type": "webhook_delete",
+        "user_id": "1111",
+        "user_role": "admin",
+        "details": {
+            "name": "Test",
+            "url": "https://hooks.example.com/order"
+        }
+    },
+    {
+        "timestamp": "2026-06-22T15:13:03.671374",
+        "type": "webhook_add",
+        "user_id": "1111",
+        "user_role": "admin",
+        "details": {
+            "name": "Delivery Test",
+            "url": "https://hooks.example.com/order"
+        }
+    },
+    {
+        "timestamp": "2026-06-22T15:13:03.690420",
+        "type": "submit_order",
+        "user_id": "1111",
+        "user_role": "user",
+        "details": {
+            "order_id": 8,
+            "subtotal": 12.0,
+            "tax_amount": 0.0,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 12.0,
+            "payment_method": "Cash",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-22T15:13:03.814495",
+        "type": "webhook_delete",
+        "user_id": "1111",
+        "user_role": "admin",
+        "details": {
+            "name": "Test Delivery",
+            "url": "https://hooks.example.com/order"
+        }
+    },
+    {
+        "timestamp": "2026-06-22T15:21:57.460375",
+        "type": "ad_add",
+        "user_id": "1111",
+        "user_role": "admin",
+        "details": {
+            "title": "Daily Special"
+        }
+    },
+    {
+        "timestamp": "2026-06-22T15:21:57.468965",
+        "type": "ad_toggle",
+        "user_id": "1111",
+        "user_role": "admin",
+        "details": {
+            "ad_id": "e54d9404",
+            "status": "disabled"
+        }
+    },
+    {
+        "timestamp": "2026-06-22T16:58:05.493469",
+        "type": "admin_login",
+        "user_id": "1234",
+        "user_role": "unauthorized",
+        "details": {
+            "status": "failed"
+        }
+    },
+    {
+        "timestamp": "2026-06-22T16:58:08.003495",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-22T17:32:15.753471",
+        "type": "cash_drawer_open",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "session_id": "81553ccbf2705801",
+            "opening_balance": 200.0
+        }
+    },
+    {
+        "timestamp": "2026-06-22T17:32:15.757379",
+        "type": "cash_drawer_transaction",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "session_id": "81553ccbf2705801",
+            "type": "cash_in",
+            "amount": 50.0,
+            "reason": "Cash drop to safe"
+        }
+    },
+    {
+        "timestamp": "2026-06-22T17:32:15.760969",
+        "type": "cash_drawer_close",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "session_id": "81553ccbf2705801",
+            "opening_balance": 200.0,
+            "expected_balance": 250.0,
+            "closing_balance": 250.0,
+            "difference": 0.0
+        }
+    },
+    {
+        "timestamp": "2026-06-22T17:58:41.386700",
+        "type": "save_item_modifiers",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "category": "Foods",
+            "name": "Hamburger - Normal",
+            "groups_count": 2
+        }
+    },
+    {
+        "timestamp": "2026-06-22T17:58:48.430752",
+        "type": "submit_order",
+        "user_id": "1111",
+        "user_role": "user",
+        "details": {
+            "order_id": 8,
+            "subtotal": 8.5,
+            "tax_amount": 0.0,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 8.5,
+            "payment_method": "Cash",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-22T18:38:40.268982",
+        "type": "category_create",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "name": "Test Category"
+        }
+    },
+    {
+        "timestamp": "2026-06-22T18:38:40.296308",
+        "type": "category_rename",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "old_name": "Test Category",
+            "new_name": "Specialties"
+        }
+    },
+    {
+        "timestamp": "2026-06-22T18:38:40.310427",
+        "type": "category_reorder",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "order": [
+                "Specialties",
+                "Foods",
+                "Drinks",
+                "Snacks"
+            ]
+        }
+    },
+    {
+        "timestamp": "2026-06-22T18:38:44.150716",
+        "type": "category_delete",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "name": "Specialties"
+        }
+    }
+]
