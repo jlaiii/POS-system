@@ -175,6 +175,26 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 #topBar .app-title { font-size: 22px; font-weight: 700; color: var(--accent); }
 #topBar .user-info { color: var(--text2); font-size: 14px; }
 #topBar .logout-btn { padding: 8px 16px; font-size: 14px; min-height: 40px; }
+#topBar .offline-badge {
+  display: none;
+  background: #f39c12;
+  color: #fff;
+  border-radius: 20px;
+  padding: 2px 10px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.6;
+  min-height: 28px;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+#topBar .offline-badge.visible { display: inline-flex; }
+#topBar .offline-badge.syncing { background: #3498db; animation: pulse-badge 1s infinite; }
+@keyframes pulse-badge {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
 
 #mainTabs {
   display: flex; gap: 0; border-bottom: 2px solid var(--border);
@@ -826,6 +846,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
     <span class="app-title" data-i18n="app.title">🍽️ POS System</span>
     <span class="user-info" id="userInfoDisplay"></span>
     <div style="display:flex;gap:8px;align-items:center;">
+      <span class="offline-badge" id="offlineBadge" onclick="syncQueuedOrders()" title="Click to sync now"></span>
       <button class="ghost logout-btn" id="themeToggle" onclick="toggleTheme()" style="font-size:18px;padding:8px 12px;min-height:40px;" title="Toggle theme">🌙</button>
       <button class="ghost logout-btn" id="langToggle" onclick="switchLanguage(currentLang === 'en' ? 'es' : 'en')" style="font-size:18px;padding:8px 12px;min-height:40px;" title="Switch language">🇪🇸</button>
       <button class="ghost logout-btn" onclick="doLogout()" data-i18n="logout">🚪 Logout</button>
@@ -1505,6 +1526,11 @@ const L10N = {
     'favorites.load_btn': '📋 Load',
     'favorites.loading': 'Loading...',
     'favorites.empty': 'No saved favorites yet. Add items to cart and save a favorite!',
+    'offline.queued': '📶 Order queued offline — will sync when connection restores',
+    'offline.syncing': '📶 Syncing offline orders...',
+    'offline.synced': '📶 {count} offline order(s) synced!',
+    'offline.sync_failed': '📶 Failed to sync some offline orders',
+    'offline.queue_badge': '📶 {count}',
   },
   es: {
     'app.title': '🍽️ Sistema POS',
@@ -1658,6 +1684,11 @@ const L10N = {
     'favorites.load_btn': '📋 Cargar',
     'favorites.loading': 'Cargando...',
     'favorites.empty': 'Aún no hay favoritos. ¡Añada artículos al carrito y guarde un favorito!',
+    'offline.queued': '📶 Pedido en cola sin conexión — se sincronizará cuando se restaure la conexión',
+    'offline.syncing': '📶 Sincronizando pedidos sin conexión...',
+    'offline.synced': '📶 ¡{count} pedido(s) sin conexión sincronizado(s)!',
+    'offline.sync_failed': '📶 Error al sincronizar algunos pedidos sin conexión',
+    'offline.queue_badge': '📶 {count}',
   }
 };
 
@@ -1813,6 +1844,23 @@ window.addEventListener('DOMContentLoaded', () => {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(() => {});
   }
+  // Init offline queue: show badge and attempt sync
+  updateOfflineIndicator();
+  syncQueuedOrders();
+  // Listen for online/offline events to auto-sync
+  window.addEventListener('online', () => {
+    updateOfflineIndicator();
+    syncQueuedOrders();
+  });
+  window.addEventListener('offline', () => {
+    updateOfflineIndicator();
+  });
+  // Periodic sync check every 30 seconds while online
+  setInterval(() => {
+    if (navigator.onLine) {
+      syncQueuedOrders();
+    }
+  }, 30000);
 });
 
 // ═══════════ PIN PAD ═══════════
@@ -2554,7 +2602,20 @@ async function submitOrder() {
     resetTip();
     document.getElementById('orderNotesInput').value = '';
     renderCart();
-  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
+  } catch(e) {
+    // Network error — queue order offline
+    queueOrderOffline(receiptData);
+    showToast(t('offline.queued'), 'danger');
+    // Still show receipt with queued note
+    receiptData.orderNumber = '📶 OFFLINE-QUEUED';
+    receiptData.offline = true;
+    showReceipt(receiptData);
+    cart = [];
+    appliedDiscount = null;
+    resetTip();
+    document.getElementById('orderNotesInput').value = '';
+    renderCart();
+  }
 }
 
 async function clearCart() {
@@ -2581,6 +2642,101 @@ async function clearCart() {
       fetch(BACKEND_URL + '/api/drivethrough/reset', { method: 'POST', headers: { 'Content-Type': 'application/json' } }).catch(() => {});
     }
   } catch(e) { showToast(t('toast.network_error'), 'danger'); }
+}
+
+// ═══════════ OFFLINE ORDER QUEUING ═══════════
+
+/** Get the offline queue from localStorage */
+function getOfflineQueue() {
+  try {
+    return JSON.parse(localStorage.getItem('pos_offline_queue')) || [];
+  } catch(e) { return []; }
+}
+
+/** Save the offline queue to localStorage */
+function saveOfflineQueue(queue) {
+  try {
+    localStorage.setItem('pos_offline_queue', JSON.stringify(queue));
+  } catch(e) { /* storage full - silently fail */ }
+}
+
+/** Add an order to the offline queue */
+function queueOrderOffline(orderData) {
+  const queue = getOfflineQueue();
+  const entry = {
+    local_id: Date.now() + '-' + Math.random().toString(36).slice(2, 8),
+    queued_at: new Date().toISOString(),
+    order: orderData
+  };
+  queue.push(entry);
+  saveOfflineQueue(queue);
+  updateOfflineIndicator();
+}
+
+/** Update the offline badge in the header */
+function updateOfflineIndicator() {
+  const badge = document.getElementById('offlineBadge');
+  if (!badge) return;
+  const queue = getOfflineQueue();
+  const count = queue.length;
+  if (count > 0) {
+    badge.textContent = t('offline.queue_badge', { count: count });
+    badge.classList.add('visible');
+  } else {
+    badge.textContent = '';
+    badge.classList.remove('visible');
+    badge.classList.remove('syncing');
+  }
+}
+
+/** Attempt to sync all queued orders to the server */
+async function syncQueuedOrders() {
+  const queue = getOfflineQueue();
+  if (queue.length === 0) return;
+
+  const badge = document.getElementById('offlineBadge');
+  if (badge) badge.classList.add('syncing');
+
+  // Build payload
+  const orders = queue.map(entry => ({
+    local_id: entry.local_id,
+    ...entry.order,
+    // Ensure user context is present
+    user: entry.order.user || (currentUser ? currentUser.id : null)
+  }));
+
+  try {
+    const r = await fetch(BACKEND_URL + '/api/sync_orders', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orders: orders })
+    });
+
+    if (!r.ok) {
+      showToast(t('offline.sync_failed'), 'danger');
+      if (badge) badge.classList.remove('syncing');
+      return;
+    }
+
+    const result = await r.json();
+    const syncedIds = result.results || [];
+    const syncedLocalIds = new Set(syncedIds.map(s => s.local_id));
+
+    // Remove successfully synced orders from queue
+    const remaining = queue.filter(entry => !syncedLocalIds.has(entry.local_id));
+    saveOfflineQueue(remaining);
+    updateOfflineIndicator();
+
+    const syncedCount = syncedIds.length;
+    if (syncedCount > 0) {
+      showToast(t('offline.synced', { count: syncedCount }), 'success');
+    } else {
+      showToast(t('offline.sync_failed'), 'danger');
+    }
+  } catch(e) {
+    showToast(t('offline.sync_failed'), 'danger');
+  }
+
+  if (badge) badge.classList.remove('syncing');
 }
 
 // ═══════════ DRIVE-THROUGH DISPLAY ═══════════
@@ -4359,6 +4515,7 @@ function showReceipt(orderData) {
   container.innerHTML = `
     <div class="rcpt-header">
       <h2>🍽️ POS System</h2>
+      ${orderData.offline ? '<div class="rcpt-info" style="color:#f39c12;font-weight:700;">📶 QUEUED OFFLINE — Will sync when online</div>' : ''}
       <div class="rcpt-info">${escHtml(dateStr)}</div>
       <div class="rcpt-info">Order #${orderData.orderNumber || '—'}</div>
       <div class="rcpt-info">${t('receipt.payment')} ${escHtml(paymentDisplay)}</div>

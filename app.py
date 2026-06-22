@@ -767,6 +767,125 @@ def clear_order():
     return jsonify({'message': 'Cleared order logged successfully'})
 
 
+# --- Offline Order Queuing & Sync ---
+
+@app.route('/api/health', methods=['GET'])
+def health_check():
+    """Lightweight health check for frontend connectivity probing."""
+    return jsonify({'status': 'ok'})
+
+
+@app.route('/api/sync_orders', methods=['POST'])
+def sync_orders():
+    """
+    Accept an array of offline-queued orders and process them sequentially.
+    Each order in the array should have the same shape as a normal submit_order payload,
+    plus a 'local_id' field for client-side dedup.
+    Returns an array of results with local_id → server order_id mapping.
+    """
+    data = request.json
+    orders = data.get('orders', [])
+    if not isinstance(orders, list) or len(orders) == 0:
+        return jsonify({'message': 'No orders provided'}), 400
+
+    results = []
+    orders_data = load_json_data(ORDERS_FILE)
+    counter_data = load_json_data(ORDER_COUNTER_FILE)
+    if not isinstance(counter_data, dict):
+        counter_data = {"counter": 1}
+    inventory = load_json_data(INVENTORY_FILE)
+
+    for order_data in orders:
+        local_id = order_data.get('local_id', None)
+        items = order_data.get('items', [])
+
+        # Calculate subtotal from items
+        calculated_subtotal = sum(float(item.get('price', 0)) * int(item.get('qty', 1)) for item in items)
+        subtotal = float(order_data.get('subtotal', calculated_subtotal))
+        tax_amount = float(order_data.get('tax_amount', 0))
+        tip_amount = float(order_data.get('tip_amount', 0))
+
+        total_from_request = order_data.get('total')
+        if total_from_request is not None:
+            total = float(total_from_request)
+        else:
+            total = subtotal + tax_amount + tip_amount
+
+        order_id = counter_data.get("counter", 1)
+
+        # Handle payment splits
+        payment_splits = order_data.get('payment_splits')
+        payment_display = order_data.get('payment', '')
+
+        if payment_splits and isinstance(payment_splits, list) and len(payment_splits) > 0:
+            if len(payment_splits) == 1:
+                payment_display = payment_splits[0]['method']
+            else:
+                parts = [f"{s['method']} ${float(s['amount']):.2f}" for s in payment_splits]
+                payment_display = 'Split (' + ', '.join(parts) + ')'
+        elif not payment_display:
+            payment_display = 'Cash'
+
+        order_details = {
+            'order_id': order_id,
+            'status': 'pending',
+            'claimed_by': None,
+            'claimed_at': None,
+            'completed_at': None,
+            'date': order_data.get('date', datetime.now().isoformat()),
+            'user': order_data.get('user'),
+            'payment': payment_display,
+            'payment_splits': payment_splits if payment_splits else None,
+            'items': items,
+            'subtotal': round(subtotal, 2),
+            'tax_amount': round(tax_amount, 2),
+            'tip_amount': round(tip_amount, 2),
+            'discount_code': order_data.get('discount_code'),
+            'discount_amount': round(float(order_data.get('discount_amount', 0)), 2),
+            'total': round(total, 2),
+            'notes': order_data.get('notes', ''),
+            'item_notes': order_data.get('item_notes', {}),
+            'table_number': order_data.get('table_number')
+        }
+        orders_data.append(order_details)
+
+        # Increment counter
+        counter_data["counter"] = order_id + 1
+
+        # Log activity
+        log_activity('submit_order', order_data.get('user'), 'user', {
+            'order_id': order_id,
+            'subtotal': order_details['subtotal'],
+            'tax_amount': order_details['tax_amount'],
+            'discount_code': order_details['discount_code'],
+            'discount_amount': order_details['discount_amount'],
+            'total': order_details['total'],
+            'payment_method': order_details['payment'],
+            'item_count': len(items)
+        })
+
+        # Decrement inventory
+        for item in items:
+            item_name = item.get('name', '')
+            qty = int(item.get('qty', 1))
+            if item_name in inventory:
+                current_stock = inventory[item_name].get('stock', 0)
+                inventory[item_name]['stock'] = max(0, current_stock - qty)
+
+        results.append({
+            'local_id': local_id,
+            'order_id': order_id,
+            'order_number': len(orders_data),
+            'status': 'success'
+        })
+
+    save_json_data(ORDERS_FILE, orders_data)
+    save_json_data(ORDER_COUNTER_FILE, counter_data)
+    save_json_data(INVENTORY_FILE, inventory)
+
+    return jsonify({'results': results})
+
+
 # --- Refund / Void Order Endpoint ---
 
 @app.route('/api/orders/refund', methods=['POST'])
