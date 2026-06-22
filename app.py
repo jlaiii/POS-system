@@ -818,6 +818,99 @@ def set_item_barcode():
     return jsonify({'message': 'Barcode updated successfully'})
 
 
+# --- Item Modifier Support Endpoints ---
+
+@app.route('/api/items/modifiers/save', methods=['POST'])
+def save_item_modifiers():
+    """Save modifier groups for an item. Each group has name, type (single/multiple), and options list."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+
+    if not check_perm(admin_pin, "manage_items"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    category = data.get('category')
+    name = data.get('name')
+    modifier_groups = data.get('modifiers', [])
+
+    if not category or not name:
+        return jsonify({'message': 'Category and item name are required.'}), 400
+
+    # Validate modifier structure
+    if not isinstance(modifier_groups, list):
+        return jsonify({'message': 'Modifiers must be an array of groups.'}), 400
+
+    items_data = load_json_data(ITEMS_FILE)
+    if category not in items_data:
+        return jsonify({'message': f'Category "{category}" not found.'}), 404
+
+    clean_groups = []
+    found = False
+    for item in items_data[category]:
+        if item['name'] == name:
+            # Save validated modifier groups
+            for group in modifier_groups:
+                clean_group = {
+                    'name': str(group.get('name', '')).strip(),
+                    'type': 'single' if str(group.get('type', 'single')) not in ('single', 'multiple') else str(group.get('type')),
+                    'options': []
+                }
+                if not clean_group['name']:
+                    continue
+                for opt in group.get('options', []):
+                    opt_name = str(opt.get('name', '')).strip()
+                    if not opt_name:
+                        continue
+                    try:
+                        price_mod = float(opt.get('price_mod', 0))
+                    except (ValueError, TypeError):
+                        price_mod = 0.0
+                    clean_group['options'].append({
+                        'name': opt_name,
+                        'price_mod': price_mod
+                    })
+                if clean_group['options']:
+                    clean_groups.append(clean_group)
+            item['modifiers'] = {'groups': clean_groups}
+            found = True
+            break
+
+    if not found:
+        return jsonify({'message': f'Item "{name}" not found in category "{category}".'}), 404
+
+    save_json_data(ITEMS_FILE, items_data)
+    backup_menu()
+
+    admin_user = load_json_data(USERS_FILE).get(admin_pin, None)
+    admin_role = admin_user['role'] if admin_user else 'unknown'
+    log_activity('save_item_modifiers', admin_pin, admin_role, {
+        'category': category, 'name': name, 'groups_count': len(clean_groups)
+    })
+    return jsonify({'message': 'Modifiers saved successfully', 'item': {'category': category, 'name': name}})
+
+
+@app.route('/api/items/modifiers/get', methods=['POST'])
+def get_item_modifiers():
+    """Get modifier groups for a specific item."""
+    data = request.json
+    category = data.get('category')
+    name = data.get('name')
+
+    if not category or not name:
+        return jsonify({'message': 'Category and item name are required.'}), 400
+
+    items_data = load_json_data(ITEMS_FILE)
+    if category not in items_data:
+        return jsonify({'message': f'Category "{category}" not found.'}), 404
+
+    for item in items_data[category]:
+        if item['name'] == name:
+            modifiers = item.get('modifiers', {})
+            return jsonify({'modifiers': modifiers.get('groups', [])})
+
+    return jsonify({'message': f'Item "{name}" not found.'}), 404
+
+
 # --- Order Management Endpoints ---
 
 @app.route('/api/submit_order', methods=['POST'])

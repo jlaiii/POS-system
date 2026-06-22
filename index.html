@@ -1657,6 +1657,37 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
   </div>
 </div>
 
+<!-- ═══════════ ITEM MODIFIER OVERLAY ═══════════ -->
+<div id="modifierOverlay" class="modal-overlay">
+  <div class="modal-box" style="max-width:500px;max-height:80vh;overflow-y:auto;">
+    <h3 id="modifierTitle" style="margin-bottom:12px;">✏️ Customize Item</h3>
+    <div id="modifierContent" style="margin-bottom:12px;"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;border-top:1px solid var(--border);padding-top:12px;">
+      <div id="modifierTotalDisplay" style="flex:1;font-size:18px;font-weight:700;color:var(--accent);"></div>
+      <button class="ghost" onclick="closeModifierOverlay()" style="font-size:16px;padding:12px 24px;min-height:48px;" data-i18n="common.cancel">Cancel</button>
+      <button class="accent" id="modifierConfirmBtn" onclick="confirmModifierAdd()" style="font-size:16px;padding:12px 24px;min-height:48px;" data-i18n="modifier.add_to_cart">➕ Add to Cart</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ MODIFIER EDITOR OVERLAY (ADMIN) ═══════════ -->
+<div id="modifierEditorOverlay" class="modal-overlay">
+  <div class="modal-box" style="max-width:600px;max-height:85vh;overflow-y:auto;">
+    <h3 id="modifierEditorTitle" style="margin-bottom:12px;">⚙️ Edit Item Modifiers</h3>
+    <p style="color:var(--text2);font-size:14px;margin-bottom:12px;">Define modifier groups with options. Each group can be "single" (radio, choose one) or "multiple" (checkboxes, choose many). Options can have a price adjustment.</p>
+    <div id="modifierEditorContent" style="margin-bottom:12px;"></div>
+    <div style="display:flex;gap:8px;justify-content:space-between;border-top:1px solid var(--border);padding-top:12px;">
+      <div>
+        <button class="outline" onclick="addModifierGroupToEditor()" style="font-size:14px;padding:10px 16px;min-height:44px;" data-i18n="modifier.add_group">➕ Add Group</button>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="ghost" onclick="closeModifierEditor()" style="font-size:16px;padding:12px 24px;min-height:48px;" data-i18n="common.cancel">Cancel</button>
+        <button class="accent" onclick="saveModifierEditor()" style="font-size:16px;padding:12px 24px;min-height:48px;" data-i18n="modifier.save_btn">💾 Save Modifiers</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Chart.js CDN -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -1952,6 +1983,26 @@ const L10N = {
     'draft.restore': '🔄 Restore Draft',
     'draft.discard': '🗑️ Discard',
     'draft.restored': '🔄 Cart restored from draft',
+    'modifier.title': '✏️ Customize Item',
+    'modifier.add_to_cart': '➕ Add to Cart',
+    'modifier.no_selection': '— Select —',
+    'modifier.single_required': 'Please select an option in all required fields.',
+    'modifier.total': 'Total:',
+    'modifier.edit_btn': '⚙️ Modifiers',
+    'modifier.edit_title': '⚙️ Edit Item Modifiers',
+    'modifier.save_btn': '💾 Save Modifiers',
+    'modifier.group_name': 'Group name (e.g. Size)',
+    'modifier.group_type': 'Selection type',
+    'modifier.type_single': 'Choose one (radio)',
+    'modifier.type_multiple': 'Choose many (checkboxes)',
+    'modifier.option_name': 'Option name',
+    'modifier.price_mod': 'Price mod $',
+    'modifier.add_group': '➕ Add Group',
+    'modifier.add_option': '➕ Add Option',
+    'modifier.remove_group': '🗑️',
+    'modifier.remove_option': '✕',
+    'modifier.no_modifiers': 'No modifiers configured for this item.',
+    'modifier.add_modifiers_btn': '⚙️ Add Modifiers',
   },
   es: {
     'app.title': '🍽️ Sistema POS',
@@ -2234,6 +2285,26 @@ const L10N = {
     'draft.restore': '🔄 Restaurar borrador',
     'draft.discard': '🗑️ Descartar',
     'draft.restored': '🔄 Carrito restaurado del borrador',
+    'modifier.title': '✏️ Personalizar Artículo',
+    'modifier.add_to_cart': '➕ Añadir al Carrito',
+    'modifier.no_selection': '— Seleccionar —',
+    'modifier.single_required': 'Por favor seleccione una opción en todos los campos requeridos.',
+    'modifier.total': 'Total:',
+    'modifier.edit_btn': '⚙️ Modificadores',
+    'modifier.edit_title': '⚙️ Editar Modificadores',
+    'modifier.save_btn': '💾 Guardar Modificadores',
+    'modifier.group_name': 'Nombre del grupo (ej. Tamaño)',
+    'modifier.group_type': 'Tipo de selección',
+    'modifier.type_single': 'Elegir uno (radio)',
+    'modifier.type_multiple': 'Elegir varios (casillas)',
+    'modifier.option_name': 'Nombre de opción',
+    'modifier.price_mod': 'Modificador precio $',
+    'modifier.add_group': '➕ Añadir Grupo',
+    'modifier.add_option': '➕ Añadir Opción',
+    'modifier.remove_group': '🗑️',
+    'modifier.remove_option': '✕',
+    'modifier.no_modifiers': 'No hay modificadores configurados para este artículo.',
+    'modifier.add_modifiers_btn': '⚙️ Añadir Modificadores',
   }
 };
 
@@ -2867,11 +2938,13 @@ function renderItems() {
         priceHtml = '<div class="item-price" style="color:#2ecc71;">' + t('item.scheduled_price', {price: effectivePrice.toFixed(2)}) + ' <span style="text-decoration:line-through;color:var(--text2);font-size:12px;">$' + item.price.toFixed(2) + '</span></div>';
       }
       const displayName = item.name.replace(re, '<mark style="background:#e9456033;color:var(--accent);border-radius:3px;padding:0 2px;">$1</mark>');
+      const hasModifiers = item.modifiers && item.modifiers.groups && item.modifiers.groups.length > 0;
+      const modBadge = hasModifiers ? '<span class="mod-badge" style="font-size:11px;color:#f39c12;margin-left:4px;">⚙️</span>' : '';
       const card = document.createElement('div');
       card.className = 'item-card' + stockClass;
       card.innerHTML = `
         <div class="item-category-label">${escHtml(item._category)}</div>
-        <div class="item-name">${displayName}</div>
+        <div class="item-name">${displayName}${modBadge}</div>
         ${priceHtml}
         ${stockHtml}
         <button class="item-add${stock !== null && stock <= 0 ? ' item-add-disabled' : ''}" onclick="event.stopPropagation(); addToCart('${escJs(item.name)}', ${effectivePrice}, '${escJs(item._category)}')"${stock !== null && stock <= 0 ? ' disabled' : ''}>${stock !== null && stock <= 0 ? t('item.out') : t('item.add')}</button>
@@ -2907,8 +2980,10 @@ function renderItems() {
       }
       const card = document.createElement('div');
       card.className = 'item-card' + stockClass;
+      const hasModifiers = item.modifiers && item.modifiers.groups && item.modifiers.groups.length > 0;
+      const modBadge = hasModifiers ? '<span class="mod-badge" style="font-size:11px;color:#f39c12;margin-left:4px;">⚙️</span>' : '';
       card.innerHTML = `
-        <div class="item-name">${escHtml(item.name)}</div>
+        <div class="item-name">${escHtml(item.name)}${modBadge}</div>
         ${priceHtml}
         ${stockHtml}
         <button class="item-add${stock !== null && stock <= 0 ? ' item-add-disabled' : ''}" onclick="event.stopPropagation(); addToCart('${escJs(item.name)}', ${effectivePrice}, '${escJs(currentCategory)}')"${stock !== null && stock <= 0 ? ' disabled' : ''}>${stock !== null && stock <= 0 ? t('item.out') : t('item.add')}</button>
@@ -2920,9 +2995,148 @@ function renderItems() {
 }
 
 function addToCart(name, price, category) {
+  // Check if item has modifiers
+  const modifiers = getItemModifiers(name, category);
+  if (modifiers && modifiers.length > 0) {
+    showModifierOverlay(name, price, category, modifiers);
+    return;
+  }
   const existing = cart.find(c => c.name === name && c.category === category);
   if (existing) { existing.qty++; }
   else { cart.push({ name, price, qty: 1, category: category || '' }); }
+  renderCart();
+}
+
+/** Get modifier groups for an item by name and category */
+function getItemModifiers(name, category) {
+  if (!itemsData) return null;
+  for (const [cat, items] of Object.entries(itemsData)) {
+    if (cat !== category) continue;
+    for (const item of items) {
+      if (item.name === name) {
+        const mods = item.modifiers;
+        if (mods && mods.groups && mods.groups.length > 0) {
+          return mods.groups;
+        }
+        return null;
+      }
+    }
+  }
+  return null;
+}
+
+// ═══════════ MODIFIER OVERLAY ═══════════
+let pendingModifierItem = null; // { name, basePrice, category }
+
+function showModifierOverlay(name, basePrice, category, modifierGroups) {
+  pendingModifierItem = { name, basePrice, category };
+  const content = document.getElementById('modifierContent');
+  document.getElementById('modifierTitle').textContent = '✏️ ' + escHtml(name) + ' — ' + t('modifier.title');
+
+  let html = '';
+  modifierGroups.forEach((group, gi) => {
+    const isSingle = group.type === 'single';
+    html += `<div class="modifier-group" style="margin-bottom:16px;padding:12px;background:var(--card);border-radius:8px;">
+      <div style="font-weight:700;font-size:15px;margin-bottom:8px;color:var(--accent);">${escHtml(group.name)}</div>`;
+    group.options.forEach((opt, oi) => {
+      const optId = 'mod_opt_' + gi + '_' + oi;
+      const inputType = isSingle ? 'radio' : 'checkbox';
+      const inputName = isSingle ? 'mod_group_' + gi : optId;
+      const checked = isSingle && oi === 0 ? ' checked' : '';
+      html += `<label for="${optId}" style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer;min-height:44px;">
+        <input type="${inputType}" name="${inputName}" id="${optId}" value="${escJs(opt.name)}" data-price-mod="${opt.price_mod}" data-group="${gi}"${checked} style="width:20px;height:20px;cursor:pointer;">
+        <span style="flex:1;font-size:15px;">${escHtml(opt.name)}</span>
+        <span style="color:var(--text2);font-size:14px;">${opt.price_mod > 0 ? '+' : ''}$${opt.price_mod.toFixed(2)}</span>
+      </label>`;
+    });
+    html += '</div>';
+  });
+  content.innerHTML = html;
+
+  // Update total on change
+  content.querySelectorAll('input').forEach(el => {
+    el.addEventListener('change', updateModifierTotal);
+  });
+  updateModifierTotal();
+
+  document.getElementById('modifierOverlay').classList.add('active');
+}
+
+function updateModifierTotal() {
+  let modTotal = 0;
+  const content = document.getElementById('modifierContent');
+  content.querySelectorAll('input:checked').forEach(el => {
+    modTotal += parseFloat(el.dataset.priceMod || 0);
+  });
+  const basePrice = pendingModifierItem ? pendingModifierItem.basePrice : 0;
+  const total = basePrice + modTotal;
+  document.getElementById('modifierTotalDisplay').textContent = t('modifier.total') + ' $' + total.toFixed(2);
+}
+
+function closeModifierOverlay() {
+  document.getElementById('modifierOverlay').classList.remove('active');
+  pendingModifierItem = null;
+}
+
+function confirmModifierAdd() {
+  if (!pendingModifierItem) return;
+  const { name, basePrice, category } = pendingModifierItem;
+
+  // Collect selected modifiers
+  const modifierGroups = getItemModifiers(name, category);
+  const selectedMods = [];
+  let modPriceTotal = 0;
+  const content = document.getElementById('modifierContent');
+
+  modifierGroups.forEach((group, gi) => {
+    const isSingle = group.type === 'single';
+    if (isSingle) {
+      // Find checked radio
+      const checked = content.querySelector(`input[name="mod_group_${gi}"]:checked`);
+      if (checked) {
+        selectedMods.push({
+          group: group.name,
+          option: checked.value,
+          price_mod: parseFloat(checked.dataset.priceMod || 0)
+        });
+        modPriceTotal += parseFloat(checked.dataset.priceMod || 0);
+      }
+    } else {
+      // Find all checked checkboxes
+      content.querySelectorAll(`input[data-group="${gi}"]:checked`).forEach(el => {
+        selectedMods.push({
+          group: group.name,
+          option: el.value,
+          price_mod: parseFloat(el.dataset.priceMod || 0)
+        });
+        modPriceTotal += parseFloat(el.dataset.priceMod || 0);
+      });
+    }
+  });
+
+  if (selectedMods.length === 0 && modifierGroups.some(g => g.type === 'single')) {
+    showToast(t('modifier.single_required'), 'danger');
+    return;
+  }
+
+  const finalPrice = basePrice + modPriceTotal;
+  // Generate a unique key for this item+modifiers combination
+  const modKey = selectedMods.map(m => m.group + ':' + m.option).sort().join('|');
+  const existing = cart.find(c => c.name === name && c.category === category && (c.modifierKey || '') === modKey);
+  if (existing) {
+    existing.qty++;
+  } else {
+    cart.push({
+      name,
+      price: finalPrice,
+      base_price: basePrice,
+      qty: 1,
+      category: category || '',
+      modifiers: selectedMods,
+      modifierKey: modKey
+    });
+  }
+  closeModifierOverlay();
   renderCart();
 }
 
@@ -2989,9 +3203,12 @@ function renderCart() {
     totalTax += tax;
     const pct = rate > 0 ? (rate * 100).toFixed(1) + '%' : '';
     const itemNote = item.note || '';
+    const modHtml = item.modifiers && item.modifiers.length > 0
+      ? '<div style="font-size:12px;color:#f39c12;margin-top:2px;">' + item.modifiers.map(m => escHtml(m.option)).join(' · ') + '</div>'
+      : '';
     html += `<div class="cart-item" style="flex-direction:column;align-items:stretch;gap:6px;">
       <div style="display:flex;align-items:center;justify-content:space-between;width:100%;">
-        <div class="ci-info"><div class="ci-name">${escHtml(item.name)}</div><div class="ci-price">$${item.price.toFixed(2)} ${t('cart.each')}${pct ? ' (tax ' + pct + ')' : ''}</div></div>
+        <div class="ci-info"><div class="ci-name">${escHtml(item.name)}${modHtml ? '' : ''}</div><div class="ci-price">$${item.price.toFixed(2)} ${t('cart.each')}${pct ? ' (tax ' + pct + ')' : ''}</div>${modHtml}</div>
         <div class="ci-qty">
           <button onclick="removeFromCart(${i})">−</button>
           <span>${item.qty}</span>
@@ -3250,7 +3467,7 @@ async function submitOrder() {
   }
   // Build receipt data before clearing
   const receiptData = {
-  items: cart.map(c => ({ name: c.name, price: c.price, qty: c.qty, note: c.note || '' })),
+  items: cart.map(c => ({ name: c.name, price: c.price, qty: c.qty, note: c.note || '', modifiers: c.modifiers || [] })),
   subtotal: Math.round(subtotal * 100) / 100,
   tax_amount: Math.round(taxAmount * 100) / 100,
   tip_amount: Math.round(tipAmount * 100) / 100,
@@ -3279,7 +3496,7 @@ async function submitOrder() {
       user: currentUser.id,
       payment: '',  // backend will derive from payment_splits
       payment_splits: paymentSplits.filter(s => s.amount > 0),
-      items: cart.map(c => ({ name: c.name, price: c.price, qty: c.qty, note: c.note || '' })),
+      items: cart.map(c => ({ name: c.name, price: c.price, qty: c.qty, note: c.note || '', modifiers: c.modifiers || [] })),
       subtotal: Math.round(subtotal * 100) / 100,
       tax_amount: Math.round(taxAmount * 100) / 100,
       tip_amount: Math.round(tipAmount * 100) / 100,
@@ -4103,7 +4320,7 @@ async function loadOrderHistory() {
         </div>
         <div class="ho-meta">${t('history.payment')} ${escHtml(paymentDisplay)} | ${t('history.user')} ${escHtml(o.user || 'N/A')}${hasTax ? ' | ' + t('history.tax') + ': $' + parseFloat(o.tax_amount).toFixed(2) : ''}${hasTip ? ' | 💬 ' + t('receipt.tip') + ': $' + parseFloat(o.tip_amount).toFixed(2) : ''}${o.table_number ? ' | 🪪 Table #' + o.table_number : ''}${hasDelivery ? ' | 📮 ' + escHtml(formatDeliveryAddress(deliveryAddr)) : ''}${orderNotes ? ' | 📝 ' + t('history.notes') : ''}${refundReasonStr} <button class="ghost" onclick="event.stopPropagation();printHistoryReceipt(${JSON.stringify(o).replace(/"/g, '&quot;')}, ${orderNum})" style="font-size:12px;padding:4px 8px;min-height:28px;color:var(--accent);">🖨️</button>${canRefund && !isRefunded ? \`<button class="ghost" onclick="event.stopPropagation();showRefundOverlay({order_id: ${o.order_id}, total: '${total}', date: '${(o.date || '').replace(/'/g, "\\'")}', payment: '${(o.payment || '').replace(/'/g, "\\'")}', user: '${(o.user || '').replace(/'/g, "\\'")}', orderNum: ${orderNum}})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#e74c3c;">!a9️</button>\` : ''}</div>
         <div class="ho-details">
-          ${items.map((it, idx) => \`<div class="ho-item"><span>${escHtml(it.name)} x${it.qty||1}${it.note ? '<br/><span style="color:var(--text2);font-size:12px;padding-left:12px;">📝 ' + escHtml(it.note) + '</span>' : ''}</span><span>$${((it.price||0)*(it.qty||1)).toFixed(2)}</span></div>\`).join('')}
+          ${items.map((it, idx) => \`<div class="ho-item"><span>${escHtml(it.name)} x${it.qty||1}${it.note ? '<br/><span style="color:var(--text2);font-size:12px;padding-left:12px;">📝 ' + escHtml(it.note) + '</span>' : ''}${it.modifiers && it.modifiers.length > 0 ? '<br/><span style="color:#f39c12;font-size:12px;padding-left:12px;">⚙️ ' + it.modifiers.map(m => escHtml(m.option)).join(' · ') + '</span>' : ''}</span><span>$${((it.price||0)*(it.qty||1)).toFixed(2)}</span></div>\`).join('')}
           ${hasTax ? \`
             <div class="ho-item" style="color:var(--text2);"><span>${t('history.subtotal')}</span><span>$${parseFloat(o.subtotal || o.total || 0).toFixed(2)}</span></div>
             <div class="ho-item" style="color:var(--text2);"><span>${t('history.tax')}</span><span>$${parseFloat(o.tax_amount).toFixed(2)}</span></div>
@@ -4513,9 +4730,10 @@ async function loadItemMgmt() {
         const bc = item.barcode || '';
         const bcHtml = bc ? `<span class="ime-barcode" style="color:var(--text2);font-size:12px;font-family:monospace;margin-left:8px;">📷 ${escHtml(bc)}</span>` : '';
         html += `<div class="item-mgmt-entry">
-          <div class="ime-info"><span class="ime-cat">${escHtml(cat)}</span> — ${escHtml(item.name)} <span class="ime-price">$${item.price.toFixed(2)}</span>${bcHtml}</div>
+          <div class="ime-info"><span class="ime-cat">${escHtml(cat)}</span> — ${escHtml(item.name)} <span class="ime-price">$${item.price.toFixed(2)}</span>${bcHtml}${item.modifiers && item.modifiers.groups && item.modifiers.groups.length > 0 ? '<span style="color:#f39c12;font-size:11px;margin-left:6px;">⚙️</span>' : ''}</div>
           <div class="ime-actions">
             <button class="outline" onclick='startEditItem(${JSON.stringify(cat)},${JSON.stringify(item.name)},${item.price},${JSON.stringify(bc)})' style="font-size:13px;padding:6px 12px;min-height:36px;">✏️</button>
+            <button class="outline" onclick='editItemModifiers(${JSON.stringify(cat)},${JSON.stringify(item.name)})' style="font-size:13px;padding:6px 12px;min-height:36px;">⚙️</button>
             <button class="danger" onclick='deleteItem(${JSON.stringify(cat)},${JSON.stringify(item.name)})' style="font-size:13px;padding:6px 12px;min-height:36px;">🗑️</button>
           </div>
         </div>`;
@@ -4572,6 +4790,118 @@ async function deleteItem(cat, name) {
     const d = await r.json();
     if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
     showToast('Item deleted', 'success');
+    loadItemMgmt();
+    loadItems();
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
+}
+
+// ═══════════ MODIFIER ADMIN EDITOR ═══════════
+let modifierEditorState = { category: '', name: '', groups: [] };
+
+function editItemModifiers(cat, name) {
+  modifierEditorState = { category: cat, name: name, groups: [] };
+  document.getElementById('modifierEditorTitle').textContent = '⚙️ ' + t('modifier.edit_title') + ' — ' + escHtml(name);
+
+  // Fetch current modifiers from backend
+  fetch(BACKEND_URL + '/api/items/modifiers/get', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ category: cat, name: name })
+  }).then(r => r.json()).then(data => {
+    modifierEditorState.groups = (data.modifiers || []).map(g => ({
+      name: g.name || '',
+      type: g.type || 'single',
+      options: (g.options || []).map(o => ({ name: o.name || '', price_mod: o.price_mod || 0 }))
+    }));
+    renderModifierEditor();
+    document.getElementById('modifierEditorOverlay').classList.add('active');
+  }).catch(() => {
+    modifierEditorState.groups = [];
+    renderModifierEditor();
+    document.getElementById('modifierEditorOverlay').classList.add('active');
+  });
+}
+
+function closeModifierEditor() {
+  document.getElementById('modifierEditorOverlay').classList.remove('active');
+}
+
+function renderModifierEditor() {
+  const container = document.getElementById('modifierEditorContent');
+  if (modifierEditorState.groups.length === 0) {
+    container.innerHTML = '<div class="empty-state" style="padding:20px;">' + t('modifier.no_modifiers') + '</div>';
+    return;
+  }
+  let html = '';
+  modifierEditorState.groups.forEach((group, gi) => {
+    html += `<div class="mod-editor-group" style="background:var(--card);border-radius:8px;padding:12px;margin-bottom:12px;border:1px solid var(--border);">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+        <input type="text" value="${escJs(group.name)}" placeholder="${t('modifier.group_name')}" style="flex:1;min-height:36px;font-size:14px;padding:6px 10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);" onchange="modifierEditorState.groups[${gi}].name = this.value"/>
+        <select style="min-height:36px;font-size:14px;padding:6px 10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);" onchange="modifierEditorState.groups[${gi}].type = this.value">
+          <option value="single" ${group.type === 'single' ? 'selected' : ''}>${t('modifier.type_single')}</option>
+          <option value="multiple" ${group.type === 'multiple' ? 'selected' : ''}>${t('modifier.type_multiple')}</option>
+        </select>
+        <button class="danger" onclick="removeModifierGroup(${gi})" style="font-size:14px;padding:6px 12px;min-height:36px;" data-i18n="modifier.remove_group">🗑️</button>
+      </div>
+      <div style="padding-left:12px;">`;
+    group.options.forEach((opt, oi) => {
+      html += `<div style="display:flex;gap:6px;align-items:center;margin-bottom:4px;">
+        <input type="text" value="${escJs(opt.name)}" placeholder="${t('modifier.option_name')}" style="flex:1;min-height:32px;font-size:13px;padding:4px 8px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);" onchange="modifierEditorState.groups[${gi}].options[${oi}].name = this.value"/>
+        <span style="color:var(--text2);font-size:13px;">$</span>
+        <input type="number" value="${opt.price_mod}" step="0.25" min="0" style="width:80px;min-height:32px;font-size:13px;padding:4px 8px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);" onchange="modifierEditorState.groups[${gi}].options[${oi}].price_mod = parseFloat(this.value) || 0"/>
+        <button class="ghost" onclick="removeModifierOption(${gi}, ${oi})" style="font-size:12px;padding:4px 8px;min-height:32px;color:var(--accent);" data-i18n="modifier.remove_option">✕</button>
+      </div>`;
+    });
+    html += `<button class="outline" onclick="addModifierOption(${gi})" style="font-size:12px;padding:4px 12px;min-height:32px;margin-top:4px;" data-i18n="modifier.add_option">➕ Add Option</button>`;
+    html += `</div></div>`;
+  });
+  container.innerHTML = html;
+}
+
+function addModifierGroupToEditor() {
+  modifierEditorState.groups.push({
+    name: '',
+    type: 'single',
+    options: [{ name: '', price_mod: 0 }]
+  });
+  renderModifierEditor();
+}
+
+function addModifierOption(gi) {
+  modifierEditorState.groups[gi].options.push({ name: '', price_mod: 0 });
+  renderModifierEditor();
+}
+
+function removeModifierGroup(gi) {
+  modifierEditorState.groups.splice(gi, 1);
+  renderModifierEditor();
+}
+
+function removeModifierOption(gi, oi) {
+  modifierEditorState.groups[gi].options.splice(oi, 1);
+  renderModifierEditor();
+}
+
+async function saveModifierEditor() {
+  const { category, name, groups } = modifierEditorState;
+  // Validate
+  const cleaned = groups.filter(g => g.name.trim()).map(g => ({
+    name: g.name.trim(),
+    type: g.type,
+    options: g.options.filter(o => o.name.trim()).map(o => ({
+      name: o.name.trim(),
+      price_mod: parseFloat(o.price_mod) || 0
+    }))
+  })).filter(g => g.options.length > 0);
+
+  try {
+    const r = await fetch(BACKEND_URL + '/api/items/modifiers/save', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, category, name, modifiers: cleaned })
+    });
+    const d = await r.json();
+    if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
+    showToast('Modifiers saved!', 'success');
+    closeModifierEditor();
     loadItemMgmt();
     loadItems();
   } catch(e) { showToast(t('toast.network_error'), 'danger'); }
@@ -6032,7 +6362,10 @@ function renderKitchenOrderCard(o) {
   const itemsHtml = items.map(item => {
     const qty = item.qty || item.quantity || 1;
     const qtyDisplay = qty > 1 ? ' <span class="koc-qty">x' + qty + '</span>' : '';
-    return '<div class="koc-item"><span>' + escHtml(item.name || item.item_name || '?') + qtyDisplay + '</span></div>';
+    const modDisplay = item.modifiers && item.modifiers.length > 0
+      ? '<div style="font-size:13px;color:#f39c12;font-weight:400;padding-left:8px;">' + item.modifiers.map(m => escHtml(m.option)).join(', ') + '</div>'
+      : '';
+    return '<div class="koc-item"><span>' + escHtml(item.name || item.item_name || '?') + qtyDisplay + '</span>' + modDisplay + '</div>';
   }).join('');
 
   // Per-item notes
@@ -6190,6 +6523,7 @@ function showReceipt(orderData) {
       <span>${escHtml(item.name)} <span class="rcpt-qty">x${item.qty || 1}</span></span>
       <span>$${((item.price || 0) * (item.qty || 1)).toFixed(2)}</span>
     </div>
+    ${item.modifiers && item.modifiers.length > 0 ? `<div style="font-size:12px;color:#f39c12;padding-left:8px;text-align:left;">${item.modifiers.map(m => escHtml(m.option)).join(' · ')}</div>` : ''}
   `).join('');
 
   const dateStr = orderData.date ? new Date(orderData.date).toLocaleString() : new Date().toLocaleString();
@@ -6657,10 +6991,15 @@ function renderKioskCart() {
   const container = document.getElementById('kioskCartItems');
   if (!container) return;
   container.innerHTML = cart.map((item, i) => `
-    <div class="kiosk-item">
-      <span class="ki-name">${escHtml(item.name)}</span>
-      <span class="ki-qty">×${item.qty}</span>
-      <span class="ki-price">$${(item.price * item.qty).toFixed(2)}</span>
+    <div class="kiosk-item" style="flex-direction:column;align-items:stretch;padding:12px 20px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;width:100%;">
+        <span class="ki-name">${escHtml(item.name)}</span>
+        <div>
+          <span class="ki-qty">×${item.qty}</span>
+          <span class="ki-price">$${(item.price * item.qty).toFixed(2)}</span>
+        </div>
+      </div>
+      ${item.modifiers && item.modifiers.length > 0 ? `<div style="font-size:18px;color:#f39c12;padding-left:4px;margin-top:4px;">${item.modifiers.map(m => escHtml(m.option)).join(' · ')}</div>` : ''}
     </div>
   `).join('');
   renderKioskTotals();
@@ -7264,7 +7603,9 @@ async function confirmSaveFavorite() {
     name: item.name,
     qty: item.qty,
     category: item.category || '',
-    price: item.price
+    price: item.price,
+    base_price: item.base_price || item.price,
+    modifiers: item.modifiers || []
   }));
 
   const btn = document.querySelector('#saveFavoriteOverlay .accent');
