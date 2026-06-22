@@ -2019,6 +2019,14 @@ const L10N = {
     'modifier.remove_option': '✕',
     'modifier.no_modifiers': 'No modifiers configured for this item.',
     'modifier.add_modifiers_btn': '⚙️ Add Modifiers',
+    'cash_calc.title': '💵 Cash Calculator',
+    'cash_calc.tendered': 'Amount Tendered:',
+    'cash_calc.quick5': '$5',
+    'cash_calc.quick10': '$10',
+    'cash_calc.quick20': '$20',
+    'cash_calc.quick50': '$50',
+    'cash_calc.change_due': 'Change Due:',
+    'cash_calc.still_owed': 'Still Owed:',
   },
   es: {
     'app.title': '🍽️ Sistema POS',
@@ -2326,6 +2334,14 @@ const L10N = {
     'modifier.remove_option': '✕',
     'modifier.no_modifiers': 'No hay modificadores configurados para este artículo.',
     'modifier.add_modifiers_btn': '⚙️ Añadir Modificadores',
+    'cash_calc.title': '💵 Calculadora de Efectivo',
+    'cash_calc.tendered': 'Monto Recibido:',
+    'cash_calc.quick5': '$5',
+    'cash_calc.quick10': '$10',
+    'cash_calc.quick20': '$20',
+    'cash_calc.quick50': '$50',
+    'cash_calc.change_due': 'Cambio:',
+    'cash_calc.still_owed': 'Falta:',
   }
 };
 
@@ -3367,6 +3383,33 @@ function buildPaymentMethods() {
     container.appendChild(eqBtn);
 
     updateRemaining();
+
+    // --- Cash Calculator (when Cash is a selected payment method) ---
+    const usesCash = paymentSplits.some(s => s.method === 'Cash');
+    const oldCalc = document.getElementById('cashCalculator');
+    if (oldCalc) oldCalc.remove();
+    if (usesCash) {
+      const calcDiv = document.createElement('div');
+      calcDiv.id = 'cashCalculator';
+      calcDiv.style.cssText = 'width:100%;margin-top:10px;padding:10px;background:var(--card);border-radius:10px;border:1px solid var(--border);';
+      calcDiv.innerHTML = `
+        <div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:6px;">💵 ${t('cash_calc.title')}</div>
+        <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
+          <label style="font-size:13px;color:var(--text2);white-space:nowrap;">${t('cash_calc.tendered')}</label>
+          <input type="number" id="cashTendered" step="0.01" min="0" placeholder="$0.00"
+            style="flex:1;min-height:48px;font-size:18px;font-weight:600;padding:8px 12px;background:var(--bg);border:2px solid var(--accent);border-radius:8px;color:#fff;text-align:center;"
+            inputmode="decimal" oninput="updateCashChange()" />
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">
+          <button class="cash-quick" onclick="setCashAmount(5)" style="flex:1;min-width:60px;min-height:48px;background:#0f3460;color:#fff;border:1px solid var(--border);border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;" data-i18n="cash_calc.quick5">$5</button>
+          <button class="cash-quick" onclick="setCashAmount(10)" style="flex:1;min-width:60px;min-height:48px;background:#0f3460;color:#fff;border:1px solid var(--border);border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;" data-i18n="cash_calc.quick10">$10</button>
+          <button class="cash-quick" onclick="setCashAmount(20)" style="flex:1;min-width:60px;min-height:48px;background:#0f3460;color:#fff;border:1px solid var(--border);border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;" data-i18n="cash_calc.quick20">$20</button>
+          <button class="cash-quick" onclick="setCashAmount(50)" style="flex:1;min-width:60px;min-height:48px;background:#0f3460;color:#fff;border:1px solid var(--border);border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;" data-i18n="cash_calc.quick50">$50</button>
+        </div>
+        <div id="cashChangeDisplay" style="text-align:center;padding:8px;font-size:14px;color:var(--text2);">${t('cash_calc.change_due')} <span style="font-size:24px;font-weight:700;color:#2ecc71;">$0.00</span></div>
+      `;
+      container.appendChild(calcDiv);
+    }
   }
 
   function updateRemaining() {
@@ -3404,6 +3447,43 @@ function buildPaymentMethods() {
   }
   renderSplitUI();
   updateRemaining();
+}
+
+// ═══════════ CASH CALCULATOR ═══════════
+function updateCashChange() {
+  const input = document.getElementById('cashTendered');
+  const display = document.getElementById('cashChangeDisplay');
+  if (!input || !display) return;
+  // Recalculate total using same logic as getOrderTotal()
+  let sub = 0, tax = 0;
+  cart.forEach(item => {
+    const lt = item.price * item.qty;
+    sub += lt;
+    const rate = getTaxRate(item.name, item.category || '');
+    tax += lt * rate;
+  });
+  const discAmt = appliedDiscount ? appliedDiscount.discount_amount : 0;
+  const tipAmt = calculateTipAmount(sub);
+  const total = Math.round((sub + tax - discAmt + tipAmt) * 100) / 100;
+
+  const tendered = parseFloat(input.value);
+  if (isNaN(tendered) || tendered <= 0) {
+    display.innerHTML = t('cash_calc.change_due') + ' <span style="font-size:24px;font-weight:700;color:#2ecc71;">$0.00</span>';
+    return;
+  }
+  const change = Math.round((tendered - total) * 100) / 100;
+  if (change < 0) {
+    display.innerHTML = t('cash_calc.still_owed') + ' <span style="font-size:24px;font-weight:700;color:#e94560;">$' + Math.abs(change).toFixed(2) + '</span>';
+  } else {
+    display.innerHTML = t('cash_calc.change_due') + ' <span style="font-size:28px;font-weight:700;color:#2ecc71;">$' + change.toFixed(2) + '</span>';
+  }
+}
+
+function setCashAmount(amount) {
+  const input = document.getElementById('cashTendered');
+  if (!input) return;
+  input.value = amount.toFixed(2);
+  updateCashChange();
 }
 
 // ═══════════ TIP CALCULATION ═══════════
