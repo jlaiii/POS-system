@@ -1431,6 +1431,42 @@ def orders_list():
     })
 
 
+@app.route('/api/orders/recent', methods=['POST'])
+def orders_recent():
+    """Return the last 5 orders for the logged-in user (waiter)."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+
+    users = load_json_data(USERS_FILE)
+    if admin_pin not in users:
+        return jsonify({'message': 'User not found.'}), 403
+
+    user_info = upgrade_user(users[admin_pin])
+    if user_info.get('banned', False):
+        return jsonify({'message': 'User is banned.'}), 403
+
+    username = user_info.get('name', '')
+
+    orders = load_json_data(ORDERS_FILE)
+    cleared_orders = load_json_data(CLEARED_ORDERS_FILE)
+
+    # Filter by this user's orders (user field stores the PIN/id)
+    user_orders = [o for o in orders if str(o.get('user', '')) == str(admin_pin)]
+    user_cleared = [o for o in cleared_orders if str(o.get('user', '')) == str(admin_pin)]
+
+    # Merge and sort by date descending
+    all_user_orders = user_orders + user_cleared
+    all_user_orders.sort(key=lambda o: o.get('date', ''), reverse=True)
+
+    # Take last 5
+    recent = all_user_orders[:5]
+
+    return jsonify({
+        'message': 'Recent orders retrieved',
+        'orders': recent
+    })
+
+
 # --- Refund / Void Order Endpoint ---
 
 @app.route('/api/orders/refund', methods=['POST'])

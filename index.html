@@ -213,6 +213,73 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 #posTab { display: none; flex-direction: column; gap: 12px; height: 100%; }
 #posTab.active { display: flex; }
 
+/* ── RECENT ORDERS QUICK-ACCESS ── */
+.recent-orders-wrap {
+  background: var(--card);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.recent-orders-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  cursor: pointer;
+  user-select: none;
+  min-height: 48px;
+  transition: background 0.15s;
+}
+.recent-orders-header:hover { background: var(--hover); }
+.recent-orders-title { flex: 1; font-weight: 600; font-size: 14px; }
+.recent-orders-count { font-size: 12px; color: var(--text2); }
+.recent-orders-toggle { font-size: 12px; color: var(--text2); transition: transform 0.2s; }
+.recent-orders-toggle.open { transform: rotate(90deg); }
+.recent-orders-body {
+  border-top: 1px solid var(--border);
+  max-height: 320px;
+  overflow-y: auto;
+}
+.recent-order-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  min-height: 52px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.12s;
+}
+.recent-order-item:last-child { border-bottom: none; }
+.recent-order-item:hover { background: var(--hover); }
+.recent-order-num { font-weight: 700; font-size: 15px; min-width: 48px; }
+.recent-order-info { flex: 1; min-width: 0; }
+.recent-order-info .ro-name { font-size: 12px; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.recent-order-info .ro-meta { font-size: 11px; color: var(--text2); opacity: 0.7; }
+.recent-order-total { font-weight: 700; font-size: 14px; color: var(--accent); white-space: nowrap; }
+.recent-order-reload {
+  font-size: 18px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  min-height: 44px;
+  min-width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--accent);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.recent-order-reload:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+.recent-orders-empty {
+  padding: 20px;
+  text-align: center;
+  color: var(--text2);
+  font-size: 13px;
+}
+
 #catTabs {
   display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px;
   -webkit-overflow-scrolling: touch;
@@ -936,6 +1003,17 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
         <div id="barcodeStatus"></div>
       </div>
       <div id="itemSearchRow"><input type="text" id="itemSearchInput" placeholder="🔍 Search items..." data-i18n-placeholder="item.search" autocomplete="off"/></div>
+      <!-- RECENT ORDERS quick-access (collapsible) -->
+      <div id="recentOrdersSection" class="recent-orders-wrap" style="display:none;">
+        <div class="recent-orders-header" onclick="toggleRecentOrders()">
+          <span class="recent-orders-title" data-i18n="pos.recent_orders">⏱️ Recent Orders</span>
+          <span class="recent-orders-count" id="recentOrdersCount"></span>
+          <span class="recent-orders-toggle" id="recentOrdersToggle">▶</span>
+        </div>
+        <div id="recentOrdersBody" class="recent-orders-body" style="display:none;">
+          <div id="recentOrdersList"></div>
+        </div>
+      </div>
       <div id="catTabs"></div>
       <div id="posMain">
         <div id="itemGrid"></div>
@@ -1756,6 +1834,11 @@ const L10N = {
     'tab.history': '📋 History',
     'tab.admin': '⚙️ Admin',
     'tab.kitchen': '🔪 Kitchen',
+    'pos.recent_orders': '⏱️ Recent Orders',
+    'pos.recent_empty': 'No recent orders yet',
+    'pos.recent_load': '🔄 Load',
+    'pos.recent_loaded': 'Recent order loaded into cart!',
+    'pos.recent_items': 'items',
     'cart.title': '🧾 Cart',
     'cart.empty': 'Cart is empty',
     'cart.coupon': 'Coupon code',
@@ -2087,6 +2170,11 @@ const L10N = {
     'tab.history': '📋 Historial',
     'tab.admin': '⚙️ Admin',
     'tab.kitchen': '🔪 Cocina',
+    'pos.recent_orders': '⏱️ Pedidos Recientes',
+    'pos.recent_empty': 'Sin pedidos recientes',
+    'pos.recent_load': '🔄 Cargar',
+    'pos.recent_loaded': '¡Pedido reciente cargado al carrito!',
+    'pos.recent_items': 'artículos',
     'cart.title': '🧾 Carrito',
     'cart.empty': 'Carrito vacío',
     'cart.coupon': 'Código de cupón',
@@ -2937,6 +3025,7 @@ function switchMainTab(tab) {
     document.getElementById('posTab').classList.add('active');
     loadItems();
     loadTableSelector();
+    loadRecentOrders();  // Load recent orders quick-access
     // Auto-focus search input when switching to POS tab
     setTimeout(() => {
       const searchInput = document.getElementById('itemSearchInput');
@@ -4545,6 +4634,99 @@ function reorderFromHistory(items) {
   // Also try more specific selector
   const posTabBtn = document.querySelector('#posTabBtn') || document.querySelector('[data-tab="pos"]');
   if (posTabBtn) posTabBtn.click();
+}
+
+// ═══════════ RECENT ORDERS QUICK-ACCESS ═══════════
+
+/** Toggle the collapsible recent orders section */
+function toggleRecentOrders() {
+  const body = document.getElementById('recentOrdersBody');
+  const toggle = document.getElementById('recentOrdersToggle');
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : 'block';
+  toggle.classList.toggle('open', !isOpen);
+}
+
+/** Load the last 5 orders for the current user */
+async function loadRecentOrders() {
+  const section = document.getElementById('recentOrdersSection');
+  const list = document.getElementById('recentOrdersList');
+  const countEl = document.getElementById('recentOrdersCount');
+  if (!section || !currentUser) return;
+  try {
+    const r = await fetch(BACKEND_URL + '/api/orders/recent', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id })
+    });
+    if (!r.ok) { section.style.display = 'none'; return; }
+    const data = await r.json();
+    const orders = data.orders || [];
+    if (orders.length === 0) {
+      section.style.display = 'none';
+      return;
+    }
+    section.style.display = 'block';
+    countEl.textContent = orders.length;
+    let html = '';
+    orders.forEach(o => {
+      const dt = o.date ? new Date(o.date).toLocaleString() : '';
+      const total = parseFloat(o.total || 0).toFixed(2);
+      const items = o.items || [];
+      const itemCount = items.reduce((sum, it) => sum + parseInt(it.qty || 1), 0);
+      const itemNames = items.map(it => escHtml(it.name)).join(', ');
+      const status = o.status || 'pending';
+      const isRefunded = status === 'refunded' || status === 'voided';
+      const orderId = o.order_id || '';
+      html += `<div class="recent-order-item">
+        <div class="recent-order-num">#${orderId}</div>
+        <div class="recent-order-info">
+          <div class="ro-name">${itemNames.length > 50 ? itemNames.substring(0, 50) + '…' : itemNames}</div>
+          <div class="ro-meta">${dt} · ${itemCount} ${t('pos.recent_items')}${isRefunded ? ' · <span style="color:#e74c3c;">Refunded</span>' : ''}</div>
+        </div>
+        <div class="recent-order-total">$${total}</div>
+        <button class="recent-order-reload" onclick="event.stopPropagation();reloadRecentOrder(${JSON.stringify(o).replace(/\"/g, '&quot;')})" title="${t('pos.recent_load')}">↻</button>
+      </div>`;
+    });
+    list.innerHTML = html;
+  } catch (e) {
+    section.style.display = 'none';
+  }
+}
+
+/** Reload a recent order's items into the cart */
+function reloadRecentOrder(order) {
+  const items = order.items || [];
+  if (items.length === 0) {
+    showToast(t('history.empty'), 'warning');
+    return;
+  }
+  // Clear existing cart
+  cart = [];
+  // Add each item
+  items.forEach(it => {
+    const itemPrice = parseFloat(it.price || 0);
+    const itemQty = parseInt(it.qty || 1);
+    const itemCat = it.category || '';
+    const itemNote = it.note || '';
+    const itemModifiers = it.modifiers || [];
+    for (let q = 0; q < itemQty; q++) {
+      cart.push({
+        name: it.name,
+        price: itemPrice,
+        qty: 1,
+        category: itemCat,
+        note: itemNote,
+        modifiers: itemModifiers.map(m => ({ ...m }))
+      });
+    }
+  });
+  renderCart();
+  showToast(t('pos.recent_loaded'), 'success');
+  // Collapse the recent orders section
+  const body = document.getElementById('recentOrdersBody');
+  const toggle = document.getElementById('recentOrdersToggle');
+  if (body) body.style.display = 'none';
+  if (toggle) toggle.classList.remove('open');
 }
 
 
