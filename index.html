@@ -1066,6 +1066,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
         <button onclick="switchAdminSection('waste')" id="asWaste" data-i18n="admin.waste">🗑️ Waste</button>
         <button onclick="switchAdminSection('webhooks')" id="asWebhooks" data-i18n="admin.webhooks">🔗 Webhooks</button>
         <button onclick="switchAdminSection('ads')" id="asAds" data-i18n="admin.ads">📺 Ads</button>
+        <button onclick="switchAdminSection('cashdrawer')" id="asCashdrawer">💰 Cash Drawer</button>
       </div>
       <div id="adminContent">
         <!-- Stats -->
@@ -1405,6 +1406,57 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
           </div>
           <!-- Ads List -->
           <div id="adsList"><div class="empty-state" data-i18n="admin.ads.no_ads">No ads configured yet. Add one above.</div></div>
+        </div>
+        <!-- Cash Drawer Management -->
+        <div id="secCashdrawer" class="admin-section">
+          <h3>💰 Cash Drawer Management</h3>
+          <p style="color:var(--text2);margin-bottom:16px;font-size:14px;">Manage cash drawer sessions — opening/closing till, cash in/out, and end-of-day reconciliation.</p>
+          <!-- Session Status Card -->
+          <div id="cashDrawerStatusCard" class="card" style="margin-bottom:12px;">
+            <div id="cashDrawerStatusContent"><div class="empty-state">Loading cash drawer status...</div></div>
+          </div>
+          <!-- Open Session Form -->
+          <div id="cashDrawerOpenForm" class="card" style="margin-bottom:12px;display:none;">
+            <h4 style="margin-bottom:8px;">🔓 Open Cash Drawer</h4>
+            <div class="form-row" style="flex-wrap:wrap;gap:6px;">
+              <input type="number" id="cashDrawerOpeningBalance" placeholder="Opening balance ($)" step="0.01" min="0" style="max-width:180px;"/>
+              <input type="text" id="cashDrawerOpenNotes" placeholder="Notes (optional)" style="flex:1;min-width:140px;"/>
+              <button class="accent" onclick="openCashDrawer()" style="min-height:44px;">🔓 Open Drawer</button>
+            </div>
+          </div>
+          <!-- Cash In Form -->
+          <div id="cashDrawerInForm" class="card" style="margin-bottom:12px;display:none;">
+            <h4 style="margin-bottom:8px;">💰 Cash In (Paid-In / Cash Drop)</h4>
+            <div class="form-row" style="flex-wrap:wrap;gap:6px;">
+              <input type="number" id="cashInAmount" placeholder="Amount ($)" step="0.01" min="0.01" style="max-width:140px;"/>
+              <input type="text" id="cashInReason" placeholder="Reason (e.g., Cash drop to safe)" style="flex:2;min-width:180px;"/>
+              <button class="accent" onclick="cashDrawerTransaction('cash_in')" style="min-height:44px;">💰 Record Cash In</button>
+            </div>
+          </div>
+          <!-- Cash Out Form -->
+          <div id="cashDrawerOutForm" class="card" style="margin-bottom:12px;display:none;">
+            <h4 style="margin-bottom:8px;">💸 Cash Out (Paid-Out / Expense)</h4>
+            <div class="form-row" style="flex-wrap:wrap;gap:6px;">
+              <input type="number" id="cashOutAmount" placeholder="Amount ($)" step="0.01" min="0.01" style="max-width:140px;"/>
+              <input type="text" id="cashOutReason" placeholder="Reason (e.g., Change for register)" style="flex:2;min-width:180px;"/>
+              <button class="accent" onclick="cashDrawerTransaction('cash_out')" style="min-height:44px;">💸 Record Cash Out</button>
+            </div>
+          </div>
+          <!-- Close Session Form -->
+          <div id="cashDrawerCloseForm" class="card" style="margin-bottom:12px;display:none;">
+            <h4 style="margin-bottom:8px;">🔒 Close & Reconcile Drawer</h4>
+            <p style="color:var(--text2);font-size:13px;margin-bottom:8px;">Enter the actual cash counted in the drawer. The system will compare it to the expected balance.</p>
+            <div class="form-row" style="flex-wrap:wrap;gap:6px;">
+              <input type="number" id="cashDrawerClosingBalance" placeholder="Actual cash counted ($)" step="0.01" min="0" style="max-width:180px;"/>
+              <input type="text" id="cashDrawerCloseNotes" placeholder="Close notes (optional)" style="flex:1;min-width:140px;"/>
+              <button class="accent" onclick="closeCashDrawer()" style="min-height:44px;">🔒 Close Drawer & Reconcile</button>
+            </div>
+          </div>
+          <!-- Session History -->
+          <div id="cashDrawerHistory" style="margin-top:16px;">
+            <h4 style="margin-bottom:8px;">📋 Session History</h4>
+            <div id="cashDrawerSessionsList"><div class="empty-state">Loading session history...</div></div>
+          </div>
         </div>
       </div>
     </div>
@@ -4018,6 +4070,7 @@ function switchAdminSection(sec) {
   else if (sec === 'waste') loadWasteAdmin();
   else if (sec === 'webhooks') loadWebhooks();
   else if (sec === 'ads') loadAds();
+  else if (sec === 'cashdrawer') loadCashDrawer();
 }
 
 async function loadAdminStats() {
@@ -7212,6 +7265,214 @@ async function deleteFavorite(favoriteId) {
     showFavorites(); // Refresh the list
   } catch(e) {
     showToast('Network error', 'danger');
+  }
+}
+
+// ═══════════ CASH DRAWER MANAGEMENT ═══════════
+async function loadCashDrawer() {
+  const statusContent = document.getElementById('cashDrawerStatusContent');
+  if (!statusContent) return;
+  statusContent.innerHTML = '<div class="empty-state">Loading...</div>';
+  try {
+    const r = await fetch(BACKEND_URL + '/api/cash_drawer/status', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id })
+    });
+    if (!r.ok) { statusContent.innerHTML = '<div class="empty-state">Permission denied.</div>'; return; }
+    const data = await r.json();
+    renderCashDrawerStatus(data);
+    loadCashDrawerHistory();
+  } catch(e) {
+    statusContent.innerHTML = '<div class="empty-state">Network error</div>';
+  }
+}
+
+function renderCashDrawerStatus(data) {
+  const content = document.getElementById('cashDrawerStatusContent');
+  const openForm = document.getElementById('cashDrawerOpenForm');
+  const inForm = document.getElementById('cashDrawerInForm');
+  const outForm = document.getElementById('cashDrawerOutForm');
+  const closeForm = document.getElementById('cashDrawerCloseForm');
+
+  if (data.active && data.session) {
+    const s = data.session;
+    const expected = data.expected_balance || 0;
+    const totalIn = data.total_cash_in || 0;
+    const totalOut = data.total_cash_out || 0;
+    content.innerHTML =
+      '<div class="card" style="background:var(--bg);border:1px solid #2ecc71;">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">' +
+      '<div><strong style="color:#2ecc71;font-size:18px;">🔓 Drawer Open</strong>' +
+      '<div style="color:var(--text2);font-size:13px;margin-top:2px;">Opened by ' + escHtml(s.opened_by_name || 'Unknown') + ' at ' + formatDateTime(s.opened_at) + '</div></div>' +
+      '<div style="text-align:right;"><strong style="font-size:22px;">$' + expected.toFixed(2) + '</strong><div style="color:var(--text2);font-size:12px;">Expected balance</div></div>' +
+      '</div>' +
+      '<div class="stats-grid" style="margin-top:12px;grid-template-columns:repeat(4,1fr);">' +
+      '<div class="stat-card"><div class="stat-val">$' + (s.opening_balance || 0).toFixed(2) + '</div><div class="stat-lbl">Opening</div></div>' +
+      '<div class="stat-card"><div class="stat-val" style="color:#2ecc71;">+$' + totalIn.toFixed(2) + '</div><div class="stat-lbl">Cash In</div></div>' +
+      '<div class="stat-card"><div class="stat-val" style="color:' + (totalOut > 0 ? '#e94560' : 'var(--text1)') + ';">-$' + totalOut.toFixed(2) + '</div><div class="stat-lbl">Cash Out</div></div>' +
+      '<div class="stat-card"><div class="stat-val">$' + expected.toFixed(2) + '</div><div class="stat-lbl">Expected</div></div>' +
+      '</div>' +
+      '</div>';
+    openForm.style.display = 'none';
+    inForm.style.display = 'block';
+    outForm.style.display = 'block';
+    closeForm.style.display = 'block';
+  } else {
+    const last = data.last_closed;
+    content.innerHTML =
+      '<div class="card">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">' +
+      '<div><strong style="font-size:18px;">🔒 Drawer Closed</strong>' +
+      (last ? '<div style="color:var(--text2);font-size:13px;margin-top:2px;">Last closed: ' + formatDateTime(last.closed_at) + ' by ' + escHtml(last.closed_by_name || 'Unknown') + '</div>' : '<div style="color:var(--text2);font-size:13px;margin-top:2px;">No previous session found.</div>') +
+      '</div>' +
+      '<div>' +
+      '<strong style="font-size:18px;">' + data.sessions_count + '</strong><div style="color:var(--text2);font-size:12px;">Total sessions</div></div>' +
+      '</div>' +
+      (last ? '<div class="stats-grid" style="margin-top:12px;grid-template-columns:repeat(4,1fr);">' +
+      '<div class="stat-card"><div class="stat-val">$' + (last.opening_balance || 0).toFixed(2) + '</div><div class="stat-lbl">Opening</div></div>' +
+      '<div class="stat-card"><div class="stat-val">$' + (last.expected_balance || 0).toFixed(2) + '</div><div class="stat-lbl">Expected</div></div>' +
+      '<div class="stat-card"><div class="stat-val">$' + (last.closing_balance || 0).toFixed(2) + '</div><div class="stat-lbl">Actual Count</div></div>' +
+      '<div class="stat-card"><div class="stat-val" style="color:' + ((last.difference || 0) >= 0 ? '#2ecc71' : '#e94560') + ';">' + ((last.difference || 0) >= 0 ? '+' : '') + (last.difference || 0).toFixed(2) + '</div><div class="stat-lbl">Difference</div></div>' +
+      '</div>' : '') +
+      '</div>';
+    openForm.style.display = 'block';
+    inForm.style.display = 'none';
+    outForm.style.display = 'none';
+    closeForm.style.display = 'none';
+  }
+}
+
+async function openCashDrawer() {
+  const balance = document.getElementById('cashDrawerOpeningBalance').value;
+  if (!balance || parseFloat(balance) < 0) {
+    showToast('Please enter a valid opening balance.', 'danger');
+    return;
+  }
+  const notes = document.getElementById('cashDrawerOpenNotes').value.trim();
+  try {
+    const r = await fetch(BACKEND_URL + '/api/cash_drawer/open', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, opening_balance: parseFloat(balance), notes })
+    });
+    const d = await r.json();
+    if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
+    showToast('💰 Drawer opened with $' + parseFloat(balance).toFixed(2), 'success');
+    document.getElementById('cashDrawerOpeningBalance').value = '';
+    document.getElementById('cashDrawerOpenNotes').value = '';
+    loadCashDrawer();
+  } catch(e) { showToast('Network error', 'danger'); }
+}
+
+async function cashDrawerTransaction(type) {
+  const prefix = type === 'cash_in' ? 'cashIn' : 'cashOut';
+  const amount = document.getElementById(prefix + 'Amount').value;
+  const reason = document.getElementById(prefix + 'Reason').value.trim();
+
+  if (!amount || parseFloat(amount) <= 0) {
+    showToast('Please enter a valid amount.', 'danger');
+    return;
+  }
+  if (!reason) {
+    showToast('Please enter a reason.', 'danger');
+    return;
+  }
+  try {
+    const r = await fetch(BACKEND_URL + '/api/cash_drawer/transaction', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, type, amount: parseFloat(amount), reason })
+    });
+    const d = await r.json();
+    if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
+    const label = type === 'cash_in' ? '💰 Cash In' : '💸 Cash Out';
+    showToast(label + ' of $' + parseFloat(amount).toFixed(2) + ' recorded!', 'success');
+    document.getElementById(prefix + 'Amount').value = '';
+    document.getElementById(prefix + 'Reason').value = '';
+    loadCashDrawer();
+  } catch(e) { showToast('Network error', 'danger'); }
+}
+
+async function closeCashDrawer() {
+  const balance = document.getElementById('cashDrawerClosingBalance').value;
+  if (!balance || parseFloat(balance) < 0) {
+    showToast('Please enter the actual cash counted.', 'danger');
+    return;
+  }
+  const notes = document.getElementById('cashDrawerCloseNotes').value.trim();
+  if (!confirm('Close the drawer? The expected balance will be compared to your counted amount.')) return;
+  try {
+    const r = await fetch(BACKEND_URL + '/api/cash_drawer/close', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, closing_balance: parseFloat(balance), notes })
+    });
+    const d = await r.json();
+    if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
+    const rec = d.reconciliation || {};
+    const diff = rec.difference || 0;
+    const diffLabel = diff >= 0 ? 'over by $' + diff.toFixed(2) : 'short by $' + Math.abs(diff).toFixed(2);
+    showToast('🔒 Drawer closed. ' + diffLabel, diff === 0 ? 'success' : 'warning');
+    document.getElementById('cashDrawerClosingBalance').value = '';
+    document.getElementById('cashDrawerCloseNotes').value = '';
+    loadCashDrawer();
+  } catch(e) { showToast('Network error', 'danger'); }
+}
+
+async function loadCashDrawerHistory() {
+  const list = document.getElementById('cashDrawerSessionsList');
+  if (!list) return;
+  list.innerHTML = '<div class="empty-state">Loading...</div>';
+  try {
+    const r = await fetch(BACKEND_URL + '/api/cash_drawer/history', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id })
+    });
+    if (!r.ok) { list.innerHTML = '<div class="empty-state">Permission denied.</div>'; return; }
+    const data = await r.json();
+    const sessions = data.sessions || [];
+    if (sessions.length === 0) {
+      list.innerHTML = '<div class="empty-state">No sessions yet.</div>';
+      return;
+    }
+    let html = '<div style="overflow-x:auto;"><table class="emp-perf-table"><thead><tr>' +
+      '<th>#</th><th>Status</th><th>Opened</th><th>Opened By</th><th>Closed</th><th>Opening</th><th>Expected</th><th>Actual</th><th>Diff</th><th>Txns</th><th>Notes</th>' +
+      '</tr></thead><tbody>';
+    sessions.forEach(function(s, idx) {
+      const isOpen = s.status === 'open';
+      const diff = (s.difference !== null && s.difference !== undefined) ? s.difference : '-';
+      const diffDisplay = typeof diff === 'number' ? (diff >= 0 ? '+' : '') + diff.toFixed(2) : '-';
+      const diffColor = typeof diff === 'number' ? (diff === 0 ? 'var(--text1)' : diff > 0 ? '#2ecc71' : '#e94560') : 'var(--text2)';
+      html += '<tr>' +
+        '<td>' + (idx + 1) + '</td>' +
+        '<td>' + (isOpen ? '<span style="color:#2ecc71;font-weight:600;">🔓 Open</span>' : '<span style="color:var(--text2);">🔒 Closed</span>') + '</td>' +
+        '<td>' + formatDateTime(s.opened_at) + '</td>' +
+        '<td>' + escHtml(s.opened_by_name || '') + '</td>' +
+        '<td>' + (s.closed_at ? formatDateTime(s.closed_at) : '-') + '</td>' +
+        '<td class="num">$' + (s.opening_balance || 0).toFixed(2) + '</td>' +
+        '<td class="num">$' + (s.expected_balance !== null && s.expected_balance !== undefined ? s.expected_balance.toFixed(2) : '-') + '</td>' +
+        '<td class="num">$' + (s.closing_balance !== null && s.closing_balance !== undefined ? s.closing_balance.toFixed(2) : '-') + '</td>' +
+        '<td class="num" style="color:' + diffColor + ';font-weight:600;">' + diffDisplay + '</td>' +
+        '<td class="num">' + (s.transaction_count || 0) + '</td>' +
+        '<td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2);font-size:13px;">' + escHtml(s.notes || '') + '</td>' +
+        '</tr>';
+    });
+    html += '</tbody></table></div>';
+    list.innerHTML = html;
+  } catch(e) {
+    list.innerHTML = '<div class="empty-state">Network error</div>';
+  }
+}
+
+// Helper: format ISO datetime to readable
+function formatDateTime(isoStr) {
+  if (!isoStr) return '-';
+  try {
+    const d = new Date(isoStr);
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const hours = String(d.getHours()).padStart(2, '0');
+    const mins = String(d.getMinutes()).padStart(2, '0');
+    return month + '/' + day + ' ' + hours + ':' + mins;
+  } catch(e) {
+    return isoStr;
   }
 }
 </script>

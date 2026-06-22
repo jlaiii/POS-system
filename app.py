@@ -41,6 +41,7 @@ DELIVERY_ADDRESSES_FILE = 'delivery_addresses.json'  # Saved delivery addresses
 WEBHOOKS_FILE = 'webhooks.json'  # Webhook integration URLs for third-party delivery apps
 TABLE_ADS_FILE = 'table_ads.json'  # Table-side promotional ads
 MENU_BACKUPS_DIR = 'menu_backups'
+CASH_DRAWER_FILE = 'cash_drawer.json'  # Cash register management
 
 # --- Loyalty Constants ---
 LOYALTY_POINTS_PER_DOLLAR = 1  # 1 point per $1 spent
@@ -109,7 +110,7 @@ def backup_menu():
 
 
 # Ensure JSON files exist and are initialized correctly
-for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE, INVENTORY_FILE, REFUNDED_ORDERS_FILE, FAVORITES_FILE, LOYALTY_FILE, SCHEDULED_PRICING_FILE, WASTE_FILE, DELIVERY_ADDRESSES_FILE, WEBHOOKS_FILE, TABLE_ADS_FILE]:
+for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE, INVENTORY_FILE, REFUNDED_ORDERS_FILE, FAVORITES_FILE, LOYALTY_FILE, SCHEDULED_PRICING_FILE, WASTE_FILE, DELIVERY_ADDRESSES_FILE, WEBHOOKS_FILE, TABLE_ADS_FILE, CASH_DRAWER_FILE]:
     if not os.path.exists(f):
         with open(f, 'w') as file:
             if f == USERS_FILE:
@@ -165,6 +166,8 @@ for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMES
                 json.dump({}, file, indent=4)  # Initialize empty webhooks dict
             elif f == TABLE_ADS_FILE:
                 json.dump({"ads": [], "rotation_interval": 10}, file, indent=4)  # Initialize empty table ads
+            elif f == CASH_DRAWER_FILE:
+                json.dump({"sessions": [], "transactions": []}, file, indent=4)  # Initialize cash drawer
             else:
                 json.dump([], file)  # Initialize orders.json and cleared_orders.json as empty lists
 
@@ -4366,6 +4369,365 @@ def get_current_ad():
         'interval': interval,
         'total': len(active_ads)
     })
+
+
+# ============================================================
+# Cash Register / Drawer Management System
+# ============================================================
+
+
+def get_cash_drawer_data():
+    """Load cash drawer data."""
+    return load_json_data(CASH_DRAWER_FILE)
+
+
+def save_cash_drawer_data(data):
+    """Save cash drawer data."""
+    save_json_data(CASH_DRAWER_FILE, data)
+
+
+def get_active_session(drawer_data):
+    """Return the currently open session (status='open'), or None."""
+    for s in drawer_data.get('sessions', []):
+        if s.get('status') == 'open':
+            return s
+    return None
+
+
+def calculate_expected_balance(session, drawer_data):
+    """Calculate the expected cash balance for a session.
+    expected = opening_balance + sum(cash_in) - sum(cash_out)
+    """
+    opening = float(session.get('opening_balance', 0))
+    total_in = 0.0
+    total_out = 0.0
+    session_id = session.get('id')
+    for txn in drawer_data.get('transactions', []):
+        if txn.get('session_id') != session_id:
+            continue
+        txn_type = txn.get('type', '')
+        amount = float(txn.get('amount', 0))
+        if txn_type == 'cash_in':
+            total_in += amount
+        elif txn_type == 'cash_out':
+            total_out += amount
+    expected = opening + total_in - total_out
+    return round(expected, 2), round(total_in, 2), round(total_out, 2)
+
+
+@app.route('/api/cash_drawer/open', methods=['POST'])
+def cash_drawer_open():
+    """Open a new cash drawer session with an opening balance."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+
+    if not check_perm(admin_pin, "manage_items"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    opening_balance = data.get('opening_balance')
+    if opening_balance is None:
+        return jsonify({'message': 'Opening balance is required.'}), 400
+
+    try:
+        opening_balance = float(opening_balance)
+        if opening_balance < 0:
+            raise ValueError
+    except (ValueError, TypeError):
+        return jsonify({'message': 'Opening balance must be a non-negative number.'}), 400
+
+    drawer = get_cash_drawer_data()
+
+    # Check there isn't already an open session
+    active = get_active_session(drawer)
+    if active:
+        return jsonify({'message': 'A cash drawer session is already open. Close it first.'}), 409
+
+    users_data = load_json_data(USERS_FILE)
+    admin_user = users_data.get(admin_pin, {})
+    admin_name = admin_user.get('name', 'Unknown')
+
+    session_id = secrets.token_hex(8)
+    session = {
+        'id': session_id,
+        'opened_at': datetime.now().isoformat(),
+        'opened_by': admin_pin,
+        'opened_by_name': admin_name,
+        'opening_balance': opening_balance,
+        'closed_at': None,
+        'closed_by': None,
+        'closed_by_name': None,
+        'closing_balance': None,
+        'expected_balance': None,
+        'difference': None,
+        'notes': data.get('notes', ''),
+        'status': 'open'
+    }
+
+    drawer['sessions'].append(session)
+    save_cash_drawer_data(drawer)
+
+    log_activity('cash_drawer_open', admin_pin, admin_user.get('role', 'unknown'), {
+        'session_id': session_id,
+        'opening_balance': opening_balance
+    })
+
+    return jsonify({'message': 'Cash drawer opened successfully.', 'session': session})
+
+
+@app.route('/api/cash_drawer/transaction', methods=['POST'])
+def cash_drawer_transaction():
+    """Record a cash-in or cash-out transaction."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+
+    if not check_perm(admin_pin, "manage_items"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    txn_type = data.get('type')  # 'cash_in' or 'cash_out'
+    amount = data.get('amount')
+    reason = data.get('reason', '').strip()
+
+    if txn_type not in ('cash_in', 'cash_out'):
+        return jsonify({'message': 'Type must be \"cash_in\" or \"cash_out\".'}), 400
+
+    try:
+        amount = float(amount)
+        if amount <= 0:
+            raise ValueError
+    except (ValueError, TypeError):
+        return jsonify({'message': 'Amount must be a positive number.'}), 400
+
+    if not reason:
+        return jsonify({'message': 'Reason is required for cash transactions.'}), 400
+
+    drawer = get_cash_drawer_data()
+
+    # Find active session
+    session = get_active_session(drawer)
+    if not session:
+        return jsonify({'message': 'No open cash drawer session. Open one first.'}), 409
+
+    users_data = load_json_data(USERS_FILE)
+    admin_user = users_data.get(admin_pin, {})
+    admin_name = admin_user.get('name', 'Unknown')
+
+    txn_id = secrets.token_hex(8)
+    transaction = {
+        'id': txn_id,
+        'session_id': session['id'],
+        'type': txn_type,
+        'amount': amount,
+        'reason': reason,
+        'created_at': datetime.now().isoformat(),
+        'created_by': admin_pin,
+        'created_by_name': admin_name,
+        'related_order_id': data.get('related_order_id')
+    }
+
+    drawer['transactions'].append(transaction)
+    save_cash_drawer_data(drawer)
+
+    label = 'Cash In' if txn_type == 'cash_in' else 'Cash Out'
+    log_activity('cash_drawer_transaction', admin_pin, admin_user.get('role', 'unknown'), {
+        'session_id': session['id'],
+        'type': txn_type,
+        'amount': amount,
+        'reason': reason
+    })
+
+    return jsonify({
+        'message': f'{label} of ${amount:.2f} recorded.',
+        'transaction': transaction
+    })
+
+
+@app.route('/api/cash_drawer/close', methods=['POST'])
+def cash_drawer_close():
+    """Close the current cash drawer session with reconciliation."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+
+    if not check_perm(admin_pin, "manage_items"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    closing_balance = data.get('closing_balance')
+    if closing_balance is None:
+        return jsonify({'message': 'Closing balance (actual count) is required.'}), 400
+
+    try:
+        closing_balance = float(closing_balance)
+        if closing_balance < 0:
+            raise ValueError
+    except (ValueError, TypeError):
+        return jsonify({'message': 'Closing balance must be a non-negative number.'}), 400
+
+    drawer = get_cash_drawer_data()
+    session = get_active_session(drawer)
+    if not session:
+        return jsonify({'message': 'No open cash drawer session found.'}), 409
+
+    users_data = load_json_data(USERS_FILE)
+    admin_user = users_data.get(admin_pin, {})
+    admin_name = admin_user.get('name', 'Unknown')
+
+    # Calculate expected balance
+    expected, total_in, total_out = calculate_expected_balance(session, drawer)
+    difference = round(closing_balance - expected, 2)
+
+    session['closed_at'] = datetime.now().isoformat()
+    session['closed_by'] = admin_pin
+    session['closed_by_name'] = admin_name
+    session['closing_balance'] = closing_balance
+    session['expected_balance'] = expected
+    session['difference'] = difference
+    session['status'] = 'closed'
+    session['notes'] = data.get('notes', session.get('notes', ''))
+    session['total_cash_in'] = total_in
+    session['total_cash_out'] = total_out
+
+    save_cash_drawer_data(drawer)
+
+    log_activity('cash_drawer_close', admin_pin, admin_user.get('role', 'unknown'), {
+        'session_id': session['id'],
+        'opening_balance': session['opening_balance'],
+        'expected_balance': expected,
+        'closing_balance': closing_balance,
+        'difference': difference
+    })
+
+    return jsonify({
+        'message': 'Cash drawer closed and reconciled.',
+        'session': session,
+        'reconciliation': {
+            'opening_balance': session['opening_balance'],
+            'total_cash_in': total_in,
+            'total_cash_out': total_out,
+            'expected_balance': expected,
+            'closing_balance': closing_balance,
+            'difference': difference
+        }
+    })
+
+
+@app.route('/api/cash_drawer/status', methods=['POST'])
+def cash_drawer_status():
+    """Get the current cash drawer session status."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+
+    if not check_perm(admin_pin, "manage_items"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    drawer = get_cash_drawer_data()
+    session = get_active_session(drawer)
+
+    if not session:
+        # Return the last closed session info
+        sessions = drawer.get('sessions', [])
+        last_closed = None
+        for s in reversed(sessions):
+            if s.get('status') == 'closed':
+                last_closed = s
+                break
+        return jsonify({
+            'active': False,
+            'last_closed': last_closed,
+            'sessions_count': len(sessions)
+        })
+
+    # Calculate expected balance for current session
+    expected, total_in, total_out = calculate_expected_balance(session, drawer)
+    return jsonify({
+        'active': True,
+        'session': session,
+        'expected_balance': expected,
+        'total_cash_in': total_in,
+        'total_cash_out': total_out
+    })
+
+
+@app.route('/api/cash_drawer/history', methods=['POST'])
+def cash_drawer_history():
+    """Get all cash drawer sessions with their transactions."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+
+    if not check_perm(admin_pin, "view_stats"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    drawer = get_cash_drawer_data()
+    sessions = drawer.get('sessions', [])
+    transactions = drawer.get('transactions', [])
+
+    # Build session summaries with transaction counts
+    result = []
+    for s in reversed(sessions):  # newest first
+        session_txns = [t for t in transactions if t.get('session_id') == s.get('id')]
+        result.append({
+            **s,
+            'transaction_count': len(session_txns),
+            'transactions': session_txns
+        })
+
+    return jsonify({
+        'sessions': result,
+        'total_sessions': len(sessions)
+    })
+
+
+@app.route('/api/cash_drawer/report', methods=['POST'])
+def cash_drawer_report():
+    """Get a reconciliation report for a specific session or all sessions."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+
+    if not check_perm(admin_pin, "view_stats"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    drawer = get_cash_drawer_data()
+    session_id = data.get('session_id')
+
+    sessions = drawer.get('sessions', [])
+    transactions = drawer.get('transactions', [])
+
+    if session_id:
+        # Report for a specific session
+        session = None
+        for s in sessions:
+            if s.get('id') == session_id:
+                session = s
+                break
+        if not session:
+            return jsonify({'message': 'Session not found.'}), 404
+
+        session_txns = [t for t in transactions if t.get('session_id') == session_id]
+        expected, total_in, total_out = calculate_expected_balance(session, drawer)
+        return jsonify({
+            'session': session,
+            'transactions': session_txns,
+            'expected_balance': expected,
+            'total_cash_in': total_in,
+            'total_cash_out': total_out
+        })
+    else:
+        # Summary of all closed sessions
+        summary = []
+        for s in sessions:
+            if s.get('status') == 'closed':
+                summary.append({
+                    'id': s.get('id'),
+                    'opened_at': s.get('opened_at'),
+                    'closed_at': s.get('closed_at'),
+                    'opened_by_name': s.get('opened_by_name'),
+                    'closed_by_name': s.get('closed_by_name'),
+                    'opening_balance': s.get('opening_balance'),
+                    'expected_balance': s.get('expected_balance'),
+                    'closing_balance': s.get('closing_balance'),
+                    'difference': s.get('difference'),
+                    'total_cash_in': s.get('total_cash_in', 0),
+                    'total_cash_out': s.get('total_cash_out', 0)
+                })
+        return jsonify({'closed_sessions': summary})
 
 
 # ============================================================
