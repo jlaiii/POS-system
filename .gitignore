@@ -5,5 +5,9 @@ orders.json
 cleared_orders.json
 activity_log.json
 timesheet.json
+users.json
+items.json
+tax_config.json
+discounts.json
 .env
 *.log

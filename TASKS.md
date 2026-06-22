@@ -11,7 +11,6 @@
 
 ## Priority: HIGH
 
-- [ ] Add receipt printing simulation (print-friendly HTML receipt or thermal printer CSS)
 - [ ] Add order notes field (special instructions per item or per order)
 - [ ] Add multi-language support (start with Spanish — detect browser language)
 - [ ] Add tip calculation UI (percentage buttons: 15%, 18%, 20%, custom)
@@ -48,6 +47,7 @@
 
 ## Done
 
+- [x] Receipt printing simulation — print-friendly HTML receipt with thermal printer CSS, overlay after order submit, re-print from order history, @media print styles for 80mm thermal printer format
 - [x] Discount/coupon code system — percentage and flat discounts with admin management, coupon input in cart, discount validation endpoint, usage limits, min order amounts
 - [x] Sales tax calculation support — configurable global, per-category, and per-item tax rates with cart tax breakdown, order history display, and admin Tax panel
 - [x] Touch-optimized item grid with category tabs

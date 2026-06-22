@@ -293,6 +293,57 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
   animation: fadeUp 0.3s ease;
 }
 @keyframes fadeUp { from { opacity: 0; transform: translateX(-50%) translateY(10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+
+/* ── RECEIPT OVERLAY ── */
+#receiptOverlay {
+  display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.7); z-index: 300; align-items: center; justify-content: center;
+}
+#receiptOverlay.active { display: flex; }
+#receiptBox {
+  background: #fff; color: #222; border-radius: 8px;
+  max-width: 380px; width: 95%; max-height: 90vh; overflow-y: auto;
+  font-family: 'Courier New', 'Consolas', monospace; font-size: 13px;
+  padding: 20px 18px;
+}
+#receiptContent { line-height: 1.6; }
+#receiptContent .rcpt-header { text-align: center; margin-bottom: 12px; }
+#receiptContent .rcpt-header h2 { font-size: 20px; margin: 0; color: #000; }
+#receiptContent .rcpt-header .rcpt-info { color: #555; font-size: 12px; margin-top: 4px; }
+#receiptContent .rcpt-divider { border: none; border-top: 1px dashed #999; margin: 8px 0; }
+#receiptContent .rcpt-item { display: flex; justify-content: space-between; font-size: 13px; }
+#receiptContent .rcpt-item .rcpt-qty { color: #555; }
+#receiptContent .rcpt-total { display: flex; justify-content: space-between; font-weight: 700; font-size: 15px; border-top: 1px solid #555; padding-top: 6px; margin-top: 4px; }
+#receiptContent .rcpt-line { display: flex; justify-content: space-between; padding: 2px 0; }
+#receiptContent .rcpt-footer { text-align: center; margin-top: 12px; color: #555; font-size: 12px; }
+#receiptActions { display: flex; gap: 8px; margin-top: 14px; justify-content: center; }
+#receiptActions button {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  padding: 10px 20px; border-radius: 6px; font-weight: 600;
+  cursor: pointer; border: none; font-size: 14px;
+}
+#receiptActions .print-btn { background: #e94560; color: #fff; }
+#receiptActions .close-btn { background: #ddd; color: #333; }
+
+/* Thermal printer print styles */
+@media print {
+  body * { visibility: hidden; }
+  #receiptOverlay, #receiptOverlay * { visibility: visible; }
+  #receiptOverlay {
+    position: absolute; top: 0; left: 0; right: 0; bottom: auto;
+    background: none; display: block !important; overflow: visible;
+  }
+  #receiptBox {
+    max-width: 300px; width: 100%; padding: 16px 12px;
+    margin: 0 auto; box-shadow: none; border-radius: 0;
+    background: #fff; color: #000; font-size: 12px;
+  }
+  #receiptContent .rcpt-header h2 { font-size: 18px; }
+  #receiptContent .rcpt-total { font-size: 14px; }
+  #receiptActions { display: none; }
+  .rcpt-divider { border-top: 1px dashed #000 !important; }
+  @page { margin: 0; size: 80mm auto; }
+}
 </style>
 </head>
 <body>
@@ -476,6 +527,17 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
           <div id="timesheetList"><div class="empty-state">Loading...</div></div>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ RECEIPT OVERLAY ═══════════ -->
+<div id="receiptOverlay">
+  <div id="receiptBox">
+    <div id="receiptContent"></div>
+    <div id="receiptActions">
+      <button class="print-btn" onclick="printReceipt()">🖨️ Print</button>
+      <button class="close-btn" onclick="closeReceipt()">Close</button>
     </div>
   </div>
 </div>
@@ -779,6 +841,18 @@ async function submitOrder() {
   });
   const discountAmount = appliedDiscount ? appliedDiscount.discount_amount : 0;
   const total = subtotal + taxAmount - discountAmount;
+  // Build receipt data before clearing
+  const receiptData = {
+    items: cart.map(c => ({ name: c.name, price: c.price, qty: c.qty })),
+    subtotal: Math.round(subtotal * 100) / 100,
+    tax_amount: Math.round(taxAmount * 100) / 100,
+    discount_code: appliedDiscount ? appliedDiscount.code : null,
+    discount_amount: Math.round(discountAmount * 100) / 100,
+    total: Math.round(total * 100) / 100,
+    payment: selectedPayment,
+    user: currentUser.id,
+    date: new Date().toISOString()
+  };
   try {
     const r = await fetch(BACKEND_URL + '/api/submit_order', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -794,7 +868,10 @@ async function submitOrder() {
       })
     });
     if (!r.ok) { const d = await r.json(); showToast(d.message || 'Failed', 'danger'); return; }
+    const result = await r.json();
     showToast('Order submitted!', 'success');
+    receiptData.orderNumber = result.order_number || '—';
+    showReceipt(receiptData);
     cart = [];
     appliedDiscount = null;
     renderCart();
@@ -1003,12 +1080,13 @@ async function loadOrderHistory() {
       const total = parseFloat(o.total || 0).toFixed(2);
       const items = o.items || [];
       const hasTax = o.tax_amount !== undefined && o.tax_amount !== null && parseFloat(o.tax_amount) > 0;
+      const orderNum = orders.length - i;
       html += `<div class="history-order" onclick="this.classList.toggle('expanded')">
         <div class="ho-header">
-          <span><strong>#${orders.length - i}</strong> — ${dt}</span>
+          <span><strong>#${orderNum}</strong> — ${dt}</span>
           <span class="ho-total">$${total}</span>
         </div>
-        <div class="ho-meta">Payment: ${escHtml(o.payment || 'N/A')} | User: ${escHtml(o.user || 'N/A')}${hasTax ? ' | Tax: $' + parseFloat(o.tax_amount).toFixed(2) : ''}</div>
+        <div class="ho-meta">Payment: ${escHtml(o.payment || 'N/A')} | User: ${escHtml(o.user || 'N/A')}${hasTax ? ' | Tax: $' + parseFloat(o.tax_amount).toFixed(2) : ''} <button class="ghost" onclick="event.stopPropagation();printHistoryReceipt(${JSON.stringify(o).replace(/"/g, '&quot;')}, ${orderNum})" style="font-size:12px;padding:4px 8px;min-height:28px;color:var(--accent);">🖨️</button></div>
         <div class="ho-details">
           ${items.map(it => `<div class="ho-item"><span>${escHtml(it.name)} x${it.qty||1}</span><span>$${((it.price||0)*(it.qty||1)).toFixed(2)}</span></div>`).join('')}
           ${hasTax ? `
@@ -1349,6 +1427,74 @@ async function loadTimesheet() {
       </div>
     `).join('');
   } catch(e) { list.innerHTML = '<div class="empty-state">Network error</div>'; }
+}
+
+// ═══════════ RECEIPT PRINTING ═══════════
+let lastReceiptData = null; // Stores the last receipt data for printing
+
+function showReceipt(orderData) {
+  lastReceiptData = orderData;
+  const container = document.getElementById('receiptContent');
+  const items = orderData.items || [];
+  const itemLines = items.map(item => `
+    <div class="rcpt-item">
+      <span>${escHtml(item.name)} <span class="rcpt-qty">x${item.qty || 1}</span></span>
+      <span>$${((item.price || 0) * (item.qty || 1)).toFixed(2)}</span>
+    </div>
+  `).join('');
+
+  const dateStr = orderData.date ? new Date(orderData.date).toLocaleString() : new Date().toLocaleString();
+  const hasTax = orderData.tax_amount !== undefined && orderData.tax_amount !== null && parseFloat(orderData.tax_amount) > 0;
+  const hasDiscount = orderData.discount_code && orderData.discount_amount > 0;
+
+  container.innerHTML = `
+    <div class="rcpt-header">
+      <h2>🍽️ POS System</h2>
+      <div class="rcpt-info">${escHtml(dateStr)}</div>
+      <div class="rcpt-info">Order #${orderData.orderNumber || '—'}</div>
+      <div class="rcpt-info">Payment: ${escHtml(orderData.payment || '—')}</div>
+      ${orderData.user ? `<div class="rcpt-info">Cashier: ${escHtml(String(orderData.user))}</div>` : ''}
+    </div>
+    <hr class="rcpt-divider"/>
+    ${itemLines}
+    <hr class="rcpt-divider"/>
+    <div class="rcpt-line"><span>Subtotal</span><span>$${parseFloat(orderData.subtotal || 0).toFixed(2)}</span></div>
+    ${hasTax ? `<div class="rcpt-line"><span>Tax</span><span>$${parseFloat(orderData.tax_amount).toFixed(2)}</span></div>` : ''}
+    ${hasDiscount ? `<div class="rcpt-line"><span>Discount (${escHtml(orderData.discount_code)})</span><span>−$${parseFloat(orderData.discount_amount).toFixed(2)}</span></div>` : ''}
+    <div class="rcpt-total"><span>TOTAL</span><span>$${parseFloat(orderData.total || 0).toFixed(2)}</span></div>
+    <hr class="rcpt-divider"/>
+    <div class="rcpt-footer">
+      Thank you for your business!<br/>
+      Have a great day 🎉
+    </div>
+  `;
+  document.getElementById('receiptOverlay').classList.add('active');
+}
+
+function printReceipt() {
+  window.print();
+}
+
+function closeReceipt() {
+  document.getElementById('receiptOverlay').classList.remove('active');
+  lastReceiptData = null;
+}
+
+function printHistoryReceipt(orderData, orderNumber) {
+  // Reconstruct receipt data from a historical order
+  const receiptData = {
+    items: orderData.items || [],
+    subtotal: parseFloat(orderData.subtotal || orderData.total || 0),
+    tax_amount: orderData.tax_amount || 0,
+    discount_code: orderData.discount_code || null,
+    discount_amount: orderData.discount_amount || 0,
+    total: parseFloat(orderData.total || 0),
+    payment: orderData.payment || 'N/A',
+    user: orderData.user || '—',
+    date: orderData.date || new Date().toISOString(),
+    orderNumber: orderNumber || '—'
+  };
+  showReceipt(receiptData);
 }
 
 // ═══════════ UTILS ═══════════

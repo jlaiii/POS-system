@@ -443,6 +443,7 @@ def submit_order():
     orders = load_json_data(ORDERS_FILE)
     orders.append(order_details)
     save_json_data(ORDERS_FILE, orders)
+    order_number = len(orders)
     log_activity('submit_order', data.get('user'), 'user', {
         'subtotal': order_details['subtotal'],
         'tax_amount': order_details['tax_amount'],
@@ -452,7 +453,7 @@ def submit_order():
         'payment_method': order_details['payment'],
         'item_count': len(items)
     })
-    return jsonify({'message': 'Order submitted successfully'})
+    return jsonify({'message': 'Order submitted successfully', 'order_number': order_number})
 
 
 @app.route('/api/clear_order', methods=['POST'])
