@@ -363,6 +363,17 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 .history-order .ho-details { display: none; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
 .history-order.expanded .ho-details { display: block; }
 .history-order .ho-item { display: flex; justify-content: space-between; padding: 4px 0; font-size: 14px; }
+/* Status badges in order history */
+.ho-status-badge {
+  display: inline-block; padding: 3px 10px; border-radius: 12px;
+  font-size: 11px; font-weight: 700; margin-left: 8px;
+  vertical-align: middle; line-height: normal;
+}
+.ho-status-badge.pending { background: #f0ad4e33; color: #f0ad4e; }
+.ho-status-badge.preparing { background: #5bc0de33; color: #5bc0de; }
+.ho-status-badge.completed { background: #2ecc7133; color: #2ecc71; }
+.ho-status-badge.refunded,
+.ho-status-badge.voided { background: #e74c3c33; color: #e74c3c; }
 
 /* ── ADMIN TAB ── */
 #adminTab { display: none; flex-direction: column; gap: 12px; }
@@ -1809,6 +1820,11 @@ const L10N = {
     'history.refund_cancel_btn': 'Cancel',
     'history.refund_success': 'Order #{id} refunded!',
     'history.refund_already': 'Order already refunded',
+    'history.status_pending': 'Pending',
+    'history.status_preparing': 'Preparing',
+    'history.status_completed': 'Completed',
+    'history.status_refunded': 'Refunded',
+    'history.status_voided': 'Voided',
     'receipt.print': '🖨️ Print',
     'receipt.close': 'Close',
     'receipt.thank_you': 'Thank you for your business!',
@@ -2111,6 +2127,11 @@ const L10N = {
     'history.refund_cancel_btn': 'Cancelar',
     'history.refund_success': '¡Pedido #{id} reembolsado!',
     'history.refund_already': 'Pedido ya reembolsado',
+    'history.status_pending': 'Pendiente',
+    'history.status_preparing': 'Preparando',
+    'history.status_completed': 'Completado',
+    'history.status_refunded': 'Reembolsado',
+    'history.status_voided': 'Anulado',
     'receipt.print': '🖨️ Imprimir',
     'receipt.close': 'Cerrar',
     'receipt.thank_you': '¡Gracias por su negocio!',
@@ -4309,13 +4330,15 @@ async function loadOrderHistory() {
     const paymentDisplay = hasSplitPayments
       ? o.payment_splits.map(s => s.method + ' $' + parseFloat(s.amount).toFixed(2)).join(' + ')
       : (o.payment || 'N/A');
-    const isRefunded = o.status === 'refunded' || o.status === 'voided';
+    const status = o.status || 'pending';
     const canRefund = currentUser && (currentUser.permissions || []).some(p => p === '*' || p === 'manage_orders');
-    const refundBadge = isRefunded ? ` <span style="background:#c0392b;color:#fff;padding:2px 10px;border-radius:4px;font-size:11px;font-weight:700;margin-left:6px;">${t('history.refunded')}</span>` : '';
+    const isRefunded = status === 'refunded' || status === 'voided';
+    const statusLabel = t('history.status_' + status) || status;
+    const statusBadge = `<span class="ho-status-badge ${status}">${statusLabel}</span>`;
     const refundReasonStr = isRefunded && o.refund_reason ? `<br/><span style="color:var(--text2);font-size:12px;">${t('history.refund_reason', {reason: escHtml(o.refund_reason)})}</span>\` : '';
     html += `<div class="history-order" onclick="this.classList.toggle('expanded')">
         <div class="ho-header">
-          <span><strong>#${orderNum}</strong> — ${dt}${refundBadge}</span>
+          <span><strong>#${orderNum}</strong> — ${dt}${statusBadge}</span>
           <span class="ho-total">$${total}</span>
         </div>
         <div class="ho-meta">${t('history.payment')} ${escHtml(paymentDisplay)} | ${t('history.user')} ${escHtml(o.user || 'N/A')}${hasTax ? ' | ' + t('history.tax') + ': $' + parseFloat(o.tax_amount).toFixed(2) : ''}${hasTip ? ' | 💬 ' + t('receipt.tip') + ': $' + parseFloat(o.tip_amount).toFixed(2) : ''}${o.table_number ? ' | 🪪 Table #' + o.table_number : ''}${hasDelivery ? ' | 📮 ' + escHtml(formatDeliveryAddress(deliveryAddr)) : ''}${orderNotes ? ' | 📝 ' + t('history.notes') : ''}${refundReasonStr} <button class="ghost" onclick="event.stopPropagation();printHistoryReceipt(${JSON.stringify(o).replace(/"/g, '&quot;')}, ${orderNum})" style="font-size:12px;padding:4px 8px;min-height:28px;color:var(--accent);">🖨️</button>${canRefund && !isRefunded ? \`<button class="ghost" onclick="event.stopPropagation();showRefundOverlay({order_id: ${o.order_id}, total: '${total}', date: '${(o.date || '').replace(/'/g, "\\'")}', payment: '${(o.payment || '').replace(/'/g, "\\'")}', user: '${(o.user || '').replace(/'/g, "\\'")}', orderNum: ${orderNum}})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#e74c3c;">!a9️</button>\` : ''}</div>
