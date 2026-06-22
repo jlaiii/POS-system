@@ -12,7 +12,7 @@
 
 ## Priority: HIGH
 
-- [ ] **POS Kiosk / Customer Payment Mode** — A toggleable mode where the tablet becomes a customer-facing payment terminal at the front counter/door. Worker brings up order or creates it there, customer sees total and pays. Large-print mode for customer visibility. Shows items, tax, tip prompt, total. Payment method selector. "Thank you" screen after payment.
+- [~] worker-2 **POS Kiosk / Customer Payment Mode** — A toggleable mode where the tablet becomes a customer-facing payment terminal at the front counter/door. Worker brings up order or creates it there, customer sees total and pays. Large-print mode for customer visibility. Shows items, tax, tip prompt, total. Payment method selector. "Thank you" screen after payment.
 - [ ] **Table management system** — Admin assigns tablets to tables by table number. Each tablet knows its table number (displayed prominently). Orders are tagged with table number. Customers can order more drinks/food from their table tablet, see running tab. Future: ads on table tablets.
 - [ ] **Kitchen queue audit & optimize** — Review kitchen display end-to-end. Fast-paced: minimize button taps, prominent order age, sound alerts per new order, priority flagging for orders waiting >10 min. Test 8s polling under load.
 - [ ] Add tip calculation UI (percentage buttons: 15%, 18%, 20%, custom)
