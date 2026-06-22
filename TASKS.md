@@ -27,7 +27,7 @@
 
 ## Priority: MEDIUM (NEW — Audit 2026-06-22)
 
-- [~] worker-2 **Add item images to grid cards** — Allow attaching image URLs to menu items for visual identification. Display thumbnail images on item grid cards, kitchen tickets, and kiosk mode. Speeds up waiter item location in busy environments. i18n EN + ES.
+- [x] **Add item images to grid cards** — Allow attaching image URLs to menu items for visual identification. Display thumbnail images on item grid cards, kitchen tickets, and kiosk mode. Speeds up waiter item location in busy environments. i18n EN + ES. [worker-2]
 
 - [ ] **Add recent-order quick-access on POS tab** — Show last 5 orders for the logged-in waiter directly on the POS tab (collapsible "Recent Orders" section above item grid). One-tap reload of entire order into cart without navigating to History tab. Saves 3+ taps for frequent reorders.
 
@@ -40,6 +40,8 @@
 - [x] **Add category management (create/rename/delete/reorder menu categories)** — Backend: 5 new API endpoints (list, create, rename, delete, reorder) under `/api/categories/*`. Frontend: new admin "📁 Categories" section with create form, category list with up/down reorder arrows, rename button, delete button (only for empty categories). Item counts shown per category. All changes auto-refresh POS grid. Permission-gated (manage_items). i18n EN + ES. Dark theme compatible. Touch-friendly 48px+ targets. [worker-2]
 
 ## Done
+
+- [x] **Add item images to grid cards** — Allow attaching image URLs to menu items for visual identification. Display thumbnail images on item grid cards, kitchen tickets, and kiosk mode. Speeds up waiter item location in busy environments. i18n EN + ES. [worker-2]
 
 - [x] **Add customer profile management (name, contact, order history, total spent)** — Currently customer info is limited to phone-based loyalty lookup. Extended customer data model with email, address, notes, total_spent, total_orders, last_visit. New endpoints: `/api/customers/list` (search), `/api/customers/detail` (order history), `/api/customers/update`. Spending auto-tracked on order submission. New admin "👥 Customers" CRM tab with search, sortable table, and full-profile detail overlay. Auto-creates customer records when orders come in with unrecognized phone. [worker-3]
 

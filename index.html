@@ -290,6 +290,10 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
   background: var(--accent); color: #fff; font-size: 14px;
   padding: 8px 16px; border-radius: 8px; min-height: 40px; width: 100%;
 }
+.item-card .item-thumb {
+  width: 100%; height: 80px; object-fit: cover; border-radius: 8px;
+  margin-bottom: 4px; background: var(--bg);
+}
 .item-card.item-low-stock { border-color: #f39c12; }
 .item-card.item-out-of-stock { border-color: #e74c3c; opacity: 0.7; }
 .item-stock {
@@ -1125,14 +1129,15 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
         <!-- Items -->
         <div id="secItems" class="admin-section">
           <div class="card" style="margin-bottom:12px;">
-            <h4 style="margin-bottom:8px;">➕ Add Item</h4>
-            <div class="form-row">
-              <input type="text" id="addItemCategory" placeholder="Category"/>
-              <input type="text" id="addItemName" placeholder="Item name"/>
-              <input type="number" id="addItemPrice" placeholder="Price" step="0.01" min="0.01"/>
-              <input type="text" id="addItemBarcode" placeholder="Barcode (optional)" style="max-width:160px;"/>
-              <button class="accent" onclick="addItem()">Add</button>
-            </div>
+          <h4 style="margin-bottom:8px;">➕ Add Item</h4>
+          <div class="form-row">
+            <input type="text" id="addItemCategory" placeholder="Category"/>
+            <input type="text" id="addItemName" placeholder="Item name"/>
+            <input type="number" id="addItemPrice" placeholder="Price" step="0.01" min="0.01"/>
+            <input type="text" id="addItemBarcode" placeholder="Barcode (optional)" style="max-width:160px;"/>
+            <input type="text" id="addItemImageUrl" placeholder="Image URL (optional)" style="max-width:200px;"/>
+            <button class="accent" onclick="addItem()">Add</button>
+          </div>
           </div>
           <div id="editItemForm">
             <h4>✏️ Edit Item</h4>
@@ -1143,6 +1148,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
               <input type="text" id="editNewName" placeholder="Name"/>
               <input type="number" id="editNewPrice" placeholder="Price" step="0.01" min="0.01"/>
               <input type="text" id="editNewBarcode" placeholder="Barcode" style="max-width:160px;"/>
+              <input type="text" id="editNewImageUrl" placeholder="Image URL" style="max-width:200px;"/>
               <button class="success" onclick="saveEditItem()">Save</button>
               <button class="ghost" onclick="cancelEditItem()">Cancel</button>
             </div>
@@ -2037,6 +2043,7 @@ const L10N = {
     'admin.categories.name_required': 'Category name is required',
     'item.search': '🔍 Search items...',
     'item.search_no_results': 'No items match "{query}"',
+    'item.image_url': 'Image URL',
     'draft.restore_title': 'Unsaved Draft Found',
     'draft.restore_desc': 'You have a cart with items from {time}. Restore it?',
     'draft.restore': '🔄 Restore Draft',
@@ -2366,6 +2373,7 @@ const L10N = {
     'admin.categories.name_required': 'El nombre de categoría es obligatorio',
     'item.search': '🔍 Buscar artículos...',
     'item.search_no_results': 'Ningún artículo coincide con "{query}"',
+    'item.image_url': 'URL de imagen',
     'draft.restore_title': 'Borrador no guardado encontrado',
     'draft.restore_desc': 'Tienes un carrito con artículos de {time}. ¿Restaurarlo?',
     'draft.restore': '🔄 Restaurar borrador',
@@ -3035,10 +3043,13 @@ function renderItems() {
       const displayName = item.name.replace(re, '<mark style="background:#e9456033;color:var(--accent);border-radius:3px;padding:0 2px;">$1</mark>');
       const hasModifiers = item.modifiers && item.modifiers.groups && item.modifiers.groups.length > 0;
       const modBadge = hasModifiers ? '<span class="mod-badge" style="font-size:11px;color:#f39c12;margin-left:4px;">⚙️</span>' : '';
+      const imgUrl = item.image_url || '';
+      const imgHtml = imgUrl ? '<img src="' + escHtml(imgUrl) + '" alt="' + escHtml(item.name) + '" class="item-thumb" onerror="this.style.display=\'none\'">' : '';
       const card = document.createElement('div');
       card.className = 'item-card' + stockClass;
       card.innerHTML = `
         <div class="item-category-label">${escHtml(item._category)}</div>
+        ${imgHtml}
         <div class="item-name">${displayName}${modBadge}</div>
         ${priceHtml}
         ${stockHtml}
@@ -3077,7 +3088,10 @@ function renderItems() {
       card.className = 'item-card' + stockClass;
       const hasModifiers = item.modifiers && item.modifiers.groups && item.modifiers.groups.length > 0;
       const modBadge = hasModifiers ? '<span class="mod-badge" style="font-size:11px;color:#f39c12;margin-left:4px;">⚙️</span>' : '';
+      const imgUrl = item.image_url || '';
+      const imgHtml = imgUrl ? '<img src="' + escHtml(imgUrl) + '" alt="' + escHtml(item.name) + '" class="item-thumb" onerror="this.style.display=\'none\'">' : '';
       card.innerHTML = `
+        ${imgHtml}
         <div class="item-name">${escHtml(item.name)}${modBadge}</div>
         ${priceHtml}
         ${stockHtml}
@@ -4928,11 +4942,13 @@ async function loadItemMgmt() {
     Object.entries(data).forEach(([cat, items]) => {
       items.forEach(item => {
         const bc = item.barcode || '';
+        const imgUrl = item.image_url || '';
+        const imgHtml = imgUrl ? `<img src="${escHtml(imgUrl)}" alt="" style="width:32px;height:32px;border-radius:6px;object-fit:cover;margin-right:8px;vertical-align:middle;">` : '';
         const bcHtml = bc ? `<span class="ime-barcode" style="color:var(--text2);font-size:12px;font-family:monospace;margin-left:8px;">📷 ${escHtml(bc)}</span>` : '';
         html += `<div class="item-mgmt-entry">
-          <div class="ime-info"><span class="ime-cat">${escHtml(cat)}</span> — ${escHtml(item.name)} <span class="ime-price">$${item.price.toFixed(2)}</span>${bcHtml}${item.modifiers && item.modifiers.groups && item.modifiers.groups.length > 0 ? '<span style="color:#f39c12;font-size:11px;margin-left:6px;">⚙️</span>' : ''}</div>
+          <div class="ime-info">${imgHtml}<span class="ime-cat">${escHtml(cat)}</span> — ${escHtml(item.name)} <span class="ime-price">$${item.price.toFixed(2)}</span>${bcHtml}${item.modifiers && item.modifiers.groups && item.modifiers.groups.length > 0 ? '<span style="color:#f39c12;font-size:11px;margin-left:6px;">⚙️</span>' : ''}</div>
           <div class="ime-actions">
-            <button class="outline" onclick='startEditItem(${JSON.stringify(cat)},${JSON.stringify(item.name)},${item.price},${JSON.stringify(bc)})' style="font-size:13px;padding:6px 12px;min-height:36px;">✏️</button>
+            <button class="outline" onclick='startEditItem(${JSON.stringify(cat)},${JSON.stringify(item.name)},${item.price},${JSON.stringify(bc)},${JSON.stringify(imgUrl)})' style="font-size:13px;padding:6px 12px;min-height:36px;">✏️</button>
             <button class="outline" onclick='editItemModifiers(${JSON.stringify(cat)},${JSON.stringify(item.name)})' style="font-size:13px;padding:6px 12px;min-height:36px;">⚙️</button>
             <button class="danger" onclick='deleteItem(${JSON.stringify(cat)},${JSON.stringify(item.name)})' style="font-size:13px;padding:6px 12px;min-height:36px;">🗑️</button>
           </div>
@@ -4943,7 +4959,7 @@ async function loadItemMgmt() {
   } catch(e) { list.innerHTML = '<div class="empty-state">' + t('network_error') + '</div>'; }
 }
 
-function startEditItem(cat, name, price, barcode) {
+function startEditItem(cat, name, price, barcode, imageUrl) {
   document.getElementById('editItemForm').classList.add('active');
   document.getElementById('editOldCat').value = cat;
   document.getElementById('editOldName').value = name;
@@ -4951,6 +4967,7 @@ function startEditItem(cat, name, price, barcode) {
   document.getElementById('editNewName').value = name;
   document.getElementById('editNewPrice').value = price;
   document.getElementById('editNewBarcode').value = barcode || '';
+  document.getElementById('editNewImageUrl').value = imageUrl || '';
   document.getElementById('editItemForm').scrollIntoView({ behavior: 'smooth' });
 }
 
@@ -4965,11 +4982,12 @@ async function saveEditItem() {
   const newName = document.getElementById('editNewName').value.trim();
   const newPrice = parseFloat(document.getElementById('editNewPrice').value);
   const newBarcode = document.getElementById('editNewBarcode').value.trim();
+  const newImageUrl = document.getElementById('editNewImageUrl').value.trim();
   if (!newCat || !newName || isNaN(newPrice) || newPrice <= 0) { showToast('Fill all fields correctly', 'danger'); return; }
   try {
     const r = await fetch(BACKEND_URL + '/api/edit_item', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adminPin: currentUser.id, oldCategory: oldCat, oldName, newCategory: newCat, newName, newPrice, barcode: newBarcode })
+      body: JSON.stringify({ adminPin: currentUser.id, oldCategory: oldCat, oldName, newCategory: newCat, newName, newPrice, barcode: newBarcode, image_url: newImageUrl })
     });
     const d = await r.json();
     if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
@@ -5112,11 +5130,12 @@ async function addItem() {
   const name = document.getElementById('addItemName').value.trim();
   const price = parseFloat(document.getElementById('addItemPrice').value);
   const barcode = document.getElementById('addItemBarcode').value.trim();
+  const imageUrl = document.getElementById('addItemImageUrl').value.trim();
   if (!category || !name || isNaN(price) || price <= 0) { showToast('Fill all fields correctly', 'danger'); return; }
   try {
     const r = await fetch(BACKEND_URL + '/api/add_item', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adminPin: currentUser.id, category, name, price, barcode })
+      body: JSON.stringify({ adminPin: currentUser.id, category, name, price, barcode, image_url: imageUrl })
     });
     const d = await r.json();
     if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
@@ -5125,6 +5144,7 @@ async function addItem() {
     document.getElementById('addItemName').value = '';
     document.getElementById('addItemPrice').value = '';
     document.getElementById('addItemBarcode').value = '';
+    document.getElementById('addItemImageUrl').value = '';
     loadItemMgmt();
     loadItems();
   } catch(e) { showToast(t('toast.network_error'), 'danger'); }
@@ -6904,7 +6924,23 @@ function renderKitchenOrderCard(o) {
     const modDisplay = item.modifiers && item.modifiers.length > 0
       ? '<div style="font-size:13px;color:#f39c12;font-weight:400;padding-left:8px;">' + item.modifiers.map(m => escHtml(m.option)).join(', ') + '</div>'
       : '';
-    return '<div class="koc-item"><span>' + escHtml(item.name || item.item_name || '?') + qtyDisplay + '</span>' + modDisplay + '</div>';
+    // Look up image from menu data
+    let imgHtml = '';
+    const itemName = item.name || item.item_name || '';
+    const itemCat = item.category || '';
+    if (itemName && window.itemsData) {
+      for (const [cat, catItems] of Object.entries(window.itemsData)) {
+        if (itemCat && cat !== itemCat) continue;
+        for (const menuItem of catItems) {
+          if (menuItem.name === itemName && menuItem.image_url) {
+            imgHtml = '<img src="' + escHtml(menuItem.image_url) + '" alt="" style="width:28px;height:28px;border-radius:6px;object-fit:cover;margin-right:8px;vertical-align:middle;">';
+            break;
+          }
+        }
+        if (imgHtml) break;
+      }
+    }
+    return '<div class="koc-item">' + imgHtml + '<span>' + escHtml(item.name || item.item_name || '?') + qtyDisplay + '</span>' + modDisplay + '</div>';
   }).join('');
 
   // Per-item notes
@@ -7529,18 +7565,34 @@ function exitKioskMode() {
 function renderKioskCart() {
   const container = document.getElementById('kioskCartItems');
   if (!container) return;
-  container.innerHTML = cart.map((item, i) => `
-    <div class="kiosk-item" style="flex-direction:column;align-items:stretch;padding:12px 20px;">
+  container.innerHTML = cart.map((item, i) => {
+    // Look up image from menu data
+    let imgHtml = '';
+    const itemName = item.name || '';
+    const itemCat = item.category || '';
+    if (itemName && window.itemsData) {
+      for (const [cat, catItems] of Object.entries(window.itemsData)) {
+        if (itemCat && cat !== itemCat) continue;
+        for (const menuItem of catItems) {
+          if (menuItem.name === itemName && menuItem.image_url) {
+            imgHtml = '<img src="' + escHtml(menuItem.image_url) + '" alt="" style="width:40px;height:40px;border-radius:8px;object-fit:cover;margin-right:12px;vertical-align:middle;">';
+            break;
+          }
+        }
+        if (imgHtml) break;
+      }
+    }
+    return `<div class="kiosk-item" style="flex-direction:column;align-items:stretch;padding:12px 20px;">
       <div style="display:flex;justify-content:space-between;align-items:center;width:100%;">
-        <span class="ki-name">${escHtml(item.name)}</span>
+        <span class="ki-name">${imgHtml}${escHtml(item.name)}</span>
         <div>
           <span class="ki-qty">×${item.qty}</span>
           <span class="ki-price">$${(item.price * item.qty).toFixed(2)}</span>
         </div>
       </div>
       ${item.modifiers && item.modifiers.length > 0 ? `<div style="font-size:18px;color:#f39c12;padding-left:4px;margin-top:4px;">${item.modifiers.map(m => escHtml(m.option)).join(' · ')}</div>` : ''}
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
   renderKioskTotals();
 }
 
