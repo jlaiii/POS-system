@@ -28,7 +28,7 @@
 
 ## Priority: HIGH (NEW — Audit 2026-06-22)
 
-- [ ] **Fix menu history frontend parsing** — Frontend reads `data.history` but API returns `{"backups": [...]}`. Causes TypeError (forEach on object) when owner opens Menu History tab. Change frontend to read `data.backups`.
+- [~] worker-3 **Fix menu history frontend parsing** — Frontend reads `data.history` but API returns `{"backups": [...]}`. Causes TypeError (forEach on object) when owner opens Menu History tab. Change frontend to read `data.backups`.
 - [ ] **Add reorder button in order history** — One-click to reload all items from a past order into the cart. Major waiter speed improvement: eliminates need to manually re-add frequent orders.
 
 ## Priority: LOW
