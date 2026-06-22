@@ -11,7 +11,6 @@
 
 ## Priority: HIGH
 
-- [ ] Add sales tax calculation support (configurable tax rate per item/category)
 - [ ] Add discount/coupon code system (percentage and flat discounts)
 - [ ] Add receipt printing simulation (print-friendly HTML receipt or thermal printer CSS)
 - [ ] Add order notes field (special instructions per item or per order)
@@ -50,6 +49,7 @@
 
 ## Done
 
+- [x] Sales tax calculation support — configurable global, per-category, and per-item tax rates with cart tax breakdown, order history display, and admin Tax panel
 - [x] Touch-optimized item grid with category tabs
 - [x] Most-ordered items analytics endpoint
 - [x] Peak hour sales analytics

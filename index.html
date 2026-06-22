@@ -356,6 +356,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
         <button onclick="switchAdminSection('most')" id="asMost">🏆 Most Ordered</button>
         <button onclick="switchAdminSection('users')" id="asUsers">👥 Users</button>
         <button onclick="switchAdminSection('items')" id="asItems">📦 Items</button>
+        <button onclick="switchAdminSection('tax')" id="asTax">💰 Tax</button>
         <button onclick="switchAdminSection('log')" id="asLog">📜 Activity Log</button>
         <button onclick="switchAdminSection('timesheet')" id="asTimesheet">⏱️ Timesheet</button>
       </div>
@@ -413,6 +414,29 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
           </div>
           <div id="itemMgmtList"><div class="empty-state">Loading items...</div></div>
         </div>
+        <!-- Tax Config -->
+        <div id="secTax" class="admin-section">
+          <div class="card" style="margin-bottom:12px;">
+            <h4 style="margin-bottom:8px;">💰 Global Tax Rate</h4>
+            <div class="form-row">
+              <input type="number" id="globalTaxRate" placeholder="e.g., 8" step="0.1" min="0" max="100" style="max-width:120px;"/>
+              <span style="color:var(--text2);font-size:14px;">percent</span>
+              <button class="accent" onclick="saveTaxConfig()">Save Global Rate</button>
+            </div>
+          </div>
+          <div id="taxCategoryRates"><div class="empty-state">Loading...</div></div>
+          <div class="card" style="margin-top:12px;">
+            <h4 style="margin-bottom:8px;">📋 Per-Item Tax Overrides</h4>
+            <p style="color:var(--text2);font-size:13px;margin-bottom:10px;">Override the tax rate for specific items. Leave blank to use category/global rate.</p>
+            <div class="form-row">
+              <select id="taxItemSelect" style="max-width:220px;"></select>
+              <input type="number" id="taxItemRate" placeholder="Tax %" step="0.1" min="0" max="100" style="max-width:100px;"/>
+              <button class="accent" onclick="saveItemTaxOverride()" style="font-size:13px;padding:6px 12px;min-height:36px;">Set</button>
+              <button class="ghost" onclick="clearItemTaxOverride()" style="font-size:13px;padding:6px 12px;min-height:36px;">Clear</button>
+            </div>
+            <div id="itemTaxOverridesList"><div class="empty-state">No overrides</div></div>
+          </div>
+        </div>
         <!-- Activity Log -->
         <div id="secLog" class="admin-section">
           <div id="activityLogList"><div class="empty-state">Loading...</div></div>
@@ -445,6 +469,7 @@ let currentCategory = '';
 let adminStatsCache = null;
 let chartDaily = null;
 let chartPayment = null;
+let taxConfig = null; // { global_tax_rate, category_tax_rates, item_tax_overrides }
 
 // ═══════════ INIT ═══════════
 window.addEventListener('DOMContentLoaded', () => {
@@ -543,6 +568,7 @@ function showApp() {
   document.getElementById('appScreen').classList.add('active');
   document.getElementById('userInfoDisplay').textContent = currentUser.name + ' (' + currentUser.role + ')';
   document.getElementById('mainTabAdmin').style.display = currentUser.role === 'admin' ? '' : 'none';
+  loadTaxConfig();
   switchMainTab('pos');
 }
 
@@ -608,18 +634,35 @@ function renderItems() {
     card.innerHTML = `
       <div class="item-name">${escHtml(item.name)}</div>
       <div class="item-price">$${item.price.toFixed(2)}</div>
-      <button class="item-add" onclick="event.stopPropagation(); addToCart('${escJs(item.name)}', ${item.price})">➕ ADD</button>
+      <button class="item-add" onclick="event.stopPropagation(); addToCart('${escJs(item.name)}', ${item.price}, '${escJs(currentCategory)}')">➕ ADD</button>
     `;
-    card.onclick = () => addToCart(item.name, item.price);
+    card.onclick = () => addToCart(item.name, item.price, currentCategory);
     grid.appendChild(card);
   });
 }
 
-function addToCart(name, price) {
-  const existing = cart.find(c => c.name === name);
+function addToCart(name, price, category) {
+  const existing = cart.find(c => c.name === name && c.category === category);
   if (existing) { existing.qty++; }
-  else { cart.push({ name, price, qty: 1 }); }
+  else { cart.push({ name, price, qty: 1, category: category || '' }); }
   renderCart();
+}
+
+// Get effective tax rate for an item (item override > category override > global)
+function getTaxRate(itemName, category) {
+  if (!taxConfig) return 0;
+  // Item override
+  const overrides = taxConfig.item_tax_overrides || {};
+  if (overrides[itemName] !== undefined && overrides[itemName] !== null) {
+    return parseFloat(overrides[itemName]);
+  }
+  // Category override
+  const catRates = taxConfig.category_tax_rates || {};
+  if (catRates[category] !== undefined && catRates[category] !== null) {
+    return parseFloat(catRates[category]);
+  }
+  // Global rate
+  return parseFloat(taxConfig.global_tax_rate || 0);
 }
 
 function removeFromCart(index) {
@@ -633,26 +676,32 @@ function renderCart() {
   const totalEl = document.getElementById('cartTotal');
   if (cart.length === 0) {
     container.innerHTML = '<div class="empty-state">Cart is empty</div>';
-    totalEl.textContent = 'Total: $0.00';
+    totalEl.innerHTML = 'Total: $0.00';
     return;
   }
   let html = '';
-  let total = 0;
+  let subtotal = 0;
+  let totalTax = 0;
   cart.forEach((item, i) => {
-    const subtotal = item.price * item.qty;
-    total += subtotal;
+    const lineTotal = item.price * item.qty;
+    subtotal += lineTotal;
+    const rate = getTaxRate(item.name, item.category || '');
+    const tax = lineTotal * rate;
+    totalTax += tax;
+    const pct = rate > 0 ? (rate * 100).toFixed(1) + '%' : '';
     html += `<div class="cart-item">
-      <div class="ci-info"><div class="ci-name">${escHtml(item.name)}</div><div class="ci-price">$${item.price.toFixed(2)} each</div></div>
+      <div class="ci-info"><div class="ci-name">${escHtml(item.name)}</div><div class="ci-price">$${item.price.toFixed(2)} each${pct ? ' (tax ' + pct + ')' : ''}</div></div>
       <div class="ci-qty">
         <button onclick="removeFromCart(${i})">−</button>
         <span>${item.qty}</span>
-        <button onclick="addToCart('${escJs(item.name)}', ${item.price})">+</button>
+        <button onclick="addToCart('${escJs(item.name)}', ${item.price}, '${escJs(item.category || '')}')">+</button>
         <button class="ci-remove" onclick="cart.splice(${i},1);renderCart();">×</button>
       </div>
     </div>`;
   });
+  const grandTotal = subtotal + totalTax;
   container.innerHTML = html;
-  totalEl.textContent = 'Total: $' + total.toFixed(2);
+  totalEl.innerHTML = `Subtotal: $${subtotal.toFixed(2)} | Tax: $${totalTax.toFixed(2)} | <strong>Total: $${grandTotal.toFixed(2)}</strong>`;
 }
 
 function buildPaymentMethods() {
@@ -673,7 +722,15 @@ function buildPaymentMethods() {
 
 async function submitOrder() {
   if (cart.length === 0) { showToast('Cart is empty!', 'danger'); return; }
-  const total = cart.reduce((s, i) => s + i.price * i.qty, 0);
+  // Calculate subtotal and tax
+  let subtotal = 0, taxAmount = 0;
+  cart.forEach(item => {
+    const lineTotal = item.price * item.qty;
+    subtotal += lineTotal;
+    const rate = getTaxRate(item.name, item.category || '');
+    taxAmount += lineTotal * rate;
+  });
+  const total = subtotal + taxAmount;
   try {
     const r = await fetch(BACKEND_URL + '/api/submit_order', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -681,7 +738,9 @@ async function submitOrder() {
         user: currentUser.id,
         payment: selectedPayment,
         items: cart.map(c => ({ name: c.name, price: c.price, qty: c.qty })),
-        total: total
+        subtotal: Math.round(subtotal * 100) / 100,
+        tax_amount: Math.round(taxAmount * 100) / 100,
+        total: Math.round(total * 100) / 100
       })
     });
     if (!r.ok) { const d = await r.json(); showToast(d.message || 'Failed', 'danger'); return; }
@@ -736,14 +795,20 @@ async function loadOrderHistory() {
       const dt = o.date ? new Date(o.date).toLocaleString() : 'Unknown';
       const total = parseFloat(o.total || 0).toFixed(2);
       const items = o.items || [];
+      const hasTax = o.tax_amount !== undefined && o.tax_amount !== null && parseFloat(o.tax_amount) > 0;
       html += `<div class="history-order" onclick="this.classList.toggle('expanded')">
         <div class="ho-header">
           <span><strong>#${orders.length - i}</strong> — ${dt}</span>
           <span class="ho-total">$${total}</span>
         </div>
-        <div class="ho-meta">Payment: ${escHtml(o.payment || 'N/A')} | User: ${escHtml(o.user || 'N/A')}</div>
+        <div class="ho-meta">Payment: ${escHtml(o.payment || 'N/A')} | User: ${escHtml(o.user || 'N/A')}${hasTax ? ' | Tax: $' + parseFloat(o.tax_amount).toFixed(2) : ''}</div>
         <div class="ho-details">
           ${items.map(it => `<div class="ho-item"><span>${escHtml(it.name)} x${it.qty||1}</span><span>$${((it.price||0)*(it.qty||1)).toFixed(2)}</span></div>`).join('')}
+          ${hasTax ? `
+            <div class="ho-item" style="color:var(--text2);"><span>Subtotal</span><span>$${parseFloat(o.subtotal || o.total || 0).toFixed(2)}</span></div>
+            <div class="ho-item" style="color:var(--text2);"><span>Tax</span><span>$${parseFloat(o.tax_amount).toFixed(2)}</span></div>
+            <div class="ho-item" style="font-weight:700;border-top:1px solid #2a2a4e;padding-top:4px;margin-top:4px;"><span>Total</span><span>$${total}</span></div>
+          ` : ''}
         </div>
       </div>`;
     });
@@ -765,6 +830,7 @@ function switchAdminSection(sec) {
   else if (sec === 'most') loadMostOrdered();
   else if (sec === 'users') loadUsers();
   else if (sec === 'items') loadItemMgmt();
+  else if (sec === 'tax') loadTaxAdmin();
   else if (sec === 'log') loadActivityLog();
   else if (sec === 'timesheet') loadTimesheet();
 }
@@ -1097,6 +1163,172 @@ function showToast(msg, type) {
   toast.textContent = msg;
   document.body.appendChild(toast);
   setTimeout(() => toast.remove(), 2500);
+}
+
+// ═══════════ TAX CONFIG ═══════════
+async function loadTaxConfig() {
+  try {
+    const r = await fetch(BACKEND_URL + '/api/tax_config');
+    if (r.ok) taxConfig = await r.json();
+  } catch(e) { /* silently fail, cart will show no tax */ }
+}
+
+async function loadTaxAdmin() {
+  await loadTaxConfig();
+  if (!taxConfig) { document.getElementById('taxContent').innerHTML = '<div class="empty-state">Cannot load tax config</div>'; return; }
+  document.getElementById('globalTaxRate').value = (taxConfig.global_tax_rate * 100).toFixed(1);
+  renderCategoryTaxRates();
+  renderItemTaxOverrides();
+  populateItemSelect();
+}
+
+function renderCategoryTaxRates() {
+  const container = document.getElementById('taxCategoryRates');
+  const cats = Object.keys(itemsData);
+  if (cats.length === 0) {
+    container.innerHTML = '<div class="empty-state">No categories defined. Add items first.</div>';
+    return;
+  }
+  let html = '<div class="card"><h4 style="margin-bottom:8px;">📁 Per-Category Tax Rates</h4><p style="color:var(--text2);font-size:13px;margin-bottom:10px;">Set a rate for each category, or leave blank to use the global rate.</p>';
+  cats.forEach(cat => {
+    const catRate = (taxConfig.category_tax_rates || {})[cat];
+    const displayVal = (catRate !== null && catRate !== undefined) ? (catRate * 100).toFixed(1) : '';
+    html += `<div class="form-row" style="margin-top:8px;">
+      <span style="min-width:120px;font-weight:600;">${escHtml(cat)}</span>
+      <input type="number" id="catRate_${escJs(cat)}" value="${displayVal}" placeholder="Global (${(taxConfig.global_tax_rate * 100).toFixed(1)}%)" step="0.1" min="0" max="100" style="max-width:100px;"/>
+      <button class="outline" onclick="saveCategoryTaxRate('${escJs(cat)}')" style="font-size:13px;padding:6px 12px;min-height:36px;">Save</button>
+      <button class="ghost" onclick="clearCategoryTaxRate('${escJs(cat)}')" style="font-size:13px;padding:6px 12px;min-height:36px;">Clear</button>
+    </div>`;
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+async function saveCategoryTaxRate(cat) {
+  const input = document.getElementById('catRate_' + cat);
+  const val = input.value.trim();
+  const rate = val ? parseFloat(val) / 100 : null;
+  if (val && (isNaN(rate) || rate < 0 || rate > 1)) {
+    showToast('Enter a valid rate (0-100)', 'danger');
+    return;
+  }
+  const catRates = { ...(taxConfig.category_tax_rates || {}), [cat]: rate };
+  try {
+    const r = await fetch(BACKEND_URL + '/api/tax_config', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, category_tax_rates: catRates })
+    });
+    if (!r.ok) { const d = await r.json(); showToast(d.message || 'Failed', 'danger'); return; }
+    showToast('Category rate saved', 'success');
+    loadTaxAdmin();
+  } catch(e) { showToast('Network error', 'danger'); }
+}
+
+async function clearCategoryTaxRate(cat) {
+  const catRates = { ...(taxConfig.category_tax_rates || {}) };
+  delete catRates[cat];
+  try {
+    const r = await fetch(BACKEND_URL + '/api/tax_config', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, category_tax_rates: catRates })
+    });
+    if (!r.ok) { const d = await r.json(); showToast(d.message || 'Failed', 'danger'); return; }
+    showToast('Category rate cleared', 'success');
+    loadTaxAdmin();
+  } catch(e) { showToast('Network error', 'danger'); }
+}
+
+async function saveTaxConfig() {
+  const input = document.getElementById('globalTaxRate');
+  const val = parseFloat(input.value);
+  if (isNaN(val) || val < 0 || val > 100) {
+    showToast('Enter a valid rate (0-100)', 'danger');
+    return;
+  }
+  try {
+    const r = await fetch(BACKEND_URL + '/api/tax_config', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, global_tax_rate: val / 100 })
+    });
+    if (!r.ok) { const d = await r.json(); showToast(d.message || 'Failed', 'danger'); return; }
+    const data = await r.json();
+    taxConfig = data.config;
+    showToast('Global tax rate saved', 'success');
+    loadTaxAdmin();
+  } catch(e) { showToast('Network error', 'danger'); }
+}
+
+function populateItemSelect() {
+  const sel = document.getElementById('taxItemSelect');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">-- Select item --</option>';
+  Object.entries(itemsData).forEach(([cat, items]) => {
+    items.forEach(item => {
+      const opt = document.createElement('option');
+      opt.value = item.name;
+      opt.textContent = item.name + ' (' + cat + ')';
+      sel.appendChild(opt);
+    });
+  });
+}
+
+async function saveItemTaxOverride() {
+  const sel = document.getElementById('taxItemSelect');
+  const itemName = sel ? sel.value : '';
+  if (!itemName) { showToast('Select an item', 'danger'); return; }
+  const rateInput = document.getElementById('taxItemRate');
+  const val = parseFloat(rateInput.value);
+  if (isNaN(val) || val < 0 || val > 100) {
+    showToast('Enter a valid rate (0-100)', 'danger');
+    return;
+  }
+  const overrides = { ...(taxConfig.item_tax_overrides || {}), [itemName]: val / 100 };
+  try {
+    const r = await fetch(BACKEND_URL + '/api/tax_config', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, item_tax_overrides: overrides })
+    });
+    if (!r.ok) { const d = await r.json(); showToast(d.message || 'Failed', 'danger'); return; }
+    showToast('Item override set', 'success');
+    rateInput.value = '';
+    sel.value = '';
+    loadTaxAdmin();
+  } catch(e) { showToast('Network error', 'danger'); }
+}
+
+async function clearItemTaxOverride() {
+  const sel = document.getElementById('taxItemSelect');
+  const itemName = sel ? sel.value : '';
+  if (!itemName) { showToast('Select an item', 'danger'); return; }
+  const overrides = { ...(taxConfig.item_tax_overrides || {}) };
+  delete overrides[itemName];
+  try {
+    const r = await fetch(BACKEND_URL + '/api/tax_config', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, item_tax_overrides: overrides })
+    });
+    if (!r.ok) { const d = await r.json(); showToast(d.message || 'Failed', 'danger'); return; }
+    showToast('Item override cleared', 'success');
+    sel.value = '';
+    loadTaxAdmin();
+  } catch(e) { showToast('Network error', 'danger'); }
+}
+
+function renderItemTaxOverrides() {
+  const list = document.getElementById('itemTaxOverridesList');
+  if (!list) return;
+  const overrides = taxConfig.item_tax_overrides || {};
+  const entries = Object.entries(overrides);
+  if (entries.length === 0) {
+    list.innerHTML = '<div class="empty-state">No item-specific overrides</div>';
+    return;
+  }
+  list.innerHTML = entries.map(([name, rate]) => `
+    <div class="most-item" style="margin-bottom:4px;">
+      <span>${escHtml(name)}</span>
+      <span>${(rate * 100).toFixed(1)}%</span>
+    </div>
+  `).join('');
 }
 </script>
 </body>

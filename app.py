@@ -14,9 +14,10 @@ CLEARED_ORDERS_FILE = 'cleared_orders.json'
 ACTIVITY_LOG_FILE = 'activity_log.json'  # New log file
 TIMESHEET_FILE = 'timesheet.json'  # New timesheet file
 ITEMS_FILE = 'items.json'  # New items file
+TAX_CONFIG_FILE = 'tax_config.json'  # Tax configuration
 
 # Ensure JSON files exist and are initialized correctly
-for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE]:
+for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE]:
     if not os.path.exists(f):
         with open(f, 'w') as file:
             if f == USERS_FILE:
@@ -46,6 +47,12 @@ for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMES
                         {"name": "Granola Bar", "price": 2}
                     ]
                 }, file, indent=4)  # Initialize with default items
+            elif f == TAX_CONFIG_FILE:
+                json.dump({
+                    "global_tax_rate": 0.0,
+                    "category_tax_rates": {},
+                    "item_tax_overrides": {}
+                }, file, indent=4)  # Initialize with 0% tax, no overrides
             else:
                 json.dump([], file)  # Initialize orders.json and cleared_orders.json as empty lists
 
@@ -63,6 +70,9 @@ def load_json_data(filepath):
             if filepath == ITEMS_FILE and not isinstance(data, dict):
                 print(f"Warning: {filepath} is not a dictionary. Initializing as empty dict.")
                 return {}  # Items file should be a dict of categories
+            if filepath == TAX_CONFIG_FILE and not isinstance(data, dict):
+                print(f"Warning: {filepath} is not a dictionary. Initializing with defaults.")
+                return {"global_tax_rate": 0.0, "category_tax_rates": {}, "item_tax_overrides": {}}
             return data
     except (FileNotFoundError, json.JSONDecodeError):
         print(f"File not found or JSON decode error for {filepath}. Returning empty structure.")
@@ -397,17 +407,41 @@ def delete_item():
 @app.route('/api/submit_order', methods=['POST'])
 def submit_order():
     data = request.json
+    items = data.get('items', [])
+
+    # Calculate subtotal from items for verification
+    calculated_subtotal = sum(float(item.get('price', 0)) * int(item.get('qty', 1)) for item in items)
+
+    # Accept tax info from frontend, or default to 0 for backward compatibility
+    subtotal = float(data.get('subtotal', calculated_subtotal))
+    tax_amount = float(data.get('tax_amount', 0))
+
+    # Accept total from frontend, or compute as subtotal + tax
+    total_from_request = data.get('total')
+    if total_from_request is not None:
+        total = float(total_from_request)
+    else:
+        total = subtotal + tax_amount
+
     order_details = {
         'date': datetime.now().isoformat(),
         'user': data.get('user'),
         'payment': data.get('payment'),
-        'items': data.get('items'),
-        'total': float(data.get('total'))  # Ensure total is float for calculations
+        'items': items,
+        'subtotal': round(subtotal, 2),
+        'tax_amount': round(tax_amount, 2),
+        'total': round(total, 2)
     }
     orders = load_json_data(ORDERS_FILE)
     orders.append(order_details)
     save_json_data(ORDERS_FILE, orders)
-    log_activity('submit_order', data.get('user'), 'user', {'total': order_details['total'], 'payment_method': order_details['payment'], 'item_count': len(order_details['items'])})
+    log_activity('submit_order', data.get('user'), 'user', {
+        'subtotal': order_details['subtotal'],
+        'tax_amount': order_details['tax_amount'],
+        'total': order_details['total'],
+        'payment_method': order_details['payment'],
+        'item_count': len(items)
+    })
     return jsonify({'message': 'Order submitted successfully'})
 
 
@@ -765,6 +799,68 @@ def get_suggestions():
         })
     except Exception as e:
         return jsonify({'error': str(e)}, 500)
+
+
+# ============================================================
+# --- Tax Configuration Endpoints ---
+# ============================================================
+
+def get_effective_tax_rate(item_name, category, tax_config):
+    """Determine the effective tax rate for an item.
+    Priority: item override > category override > global rate.
+    """
+    # Check item-specific override
+    item_overrides = tax_config.get('item_tax_overrides', {})
+    if item_name in item_overrides and item_overrides[item_name] is not None:
+        return float(item_overrides[item_name])
+
+    # Check category override
+    cat_rates = tax_config.get('category_tax_rates', {})
+    if category in cat_rates and cat_rates[category] is not None:
+        return float(cat_rates[category])
+
+    # Fall back to global rate
+    return float(tax_config.get('global_tax_rate', 0.0))
+
+
+@app.route('/api/tax_config', methods=['GET'])
+def get_tax_config():
+    """Get the current tax configuration (public, no auth required)."""
+    config = load_json_data(TAX_CONFIG_FILE)
+    return jsonify(config)
+
+
+@app.route('/api/tax_config', methods=['POST'])
+def update_tax_config():
+    """Update tax configuration (admin only)."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+    is_admin, admin_user = verify_admin(admin_pin)
+
+    if not is_admin:
+        log_activity('update_tax_config', admin_pin, 'unauthorized', {'status': 'failed'})
+        return jsonify({'message': 'Unauthorized. Admin PIN required.'}, 403)
+
+    config = load_json_data(TAX_CONFIG_FILE)
+
+    if 'global_tax_rate' in data:
+        try:
+            rate = float(data['global_tax_rate'])
+            if rate < 0 or rate > 100:
+                return jsonify({'message': 'Tax rate must be between 0 and 100 percent.'}, 400)
+            config['global_tax_rate'] = rate
+        except (ValueError, TypeError):
+            return jsonify({'message': 'Invalid tax rate. Must be a number between 0 and 100.'}, 400)
+
+    if 'category_tax_rates' in data:
+        config['category_tax_rates'] = data['category_tax_rates']
+
+    if 'item_tax_overrides' in data:
+        config['item_tax_overrides'] = data['item_tax_overrides']
+
+    save_json_data(TAX_CONFIG_FILE, config)
+    log_activity('update_tax_config', admin_pin, 'admin', {'new_config': config})
+    return jsonify({'message': 'Tax configuration updated successfully', 'config': config})
 
 
 # ============================================================
