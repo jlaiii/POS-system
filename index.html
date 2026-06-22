@@ -874,6 +874,10 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
             <button class="accent" onclick="submitOrder()" data-i18n="cart.submit">✅ Submit Order</button>
             <button class="danger" onclick="clearCart()" data-i18n="cart.clear">🗑️ Clear</button>
           </div>
+          <div id="favoritesRow" style="display:none;margin-top:6px;gap:6px;flex-wrap:wrap;">
+            <button class="outline" onclick="saveFavoriteDialog()" style="flex:1;min-width:100px;font-size:13px;border-color:#f39c12;color:#f39c12;" data-i18n="favorites.save_as">⭐ Save as Favorite</button>
+            <button class="outline" onclick="showFavorites()" style="flex:1;min-width:100px;font-size:13px;border-color:#9b59b6;color:#9b59b6;" data-i18n="favorites.load">⭐ My Favorites</button>
+          </div>
           <div id="dtToggle">
             <button class="outline" id="dtModeBtn" onclick="toggleDriveThrough()">🛵 Drive-Through</button>
             <button class="outline" id="kioskModeBtn" onclick="enterKioskMode()" style="border-color:#2ecc71;color:#2ecc71;">🪟 Kiosk Mode</button>
@@ -1275,6 +1279,33 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
   </div>
 </div>
 
+<!-- ═══════════ FAVORITES OVERLAY ═══════════ -->
+<div id="favoritesOverlay" class="modal-overlay">
+  <div class="modal-box" style="max-width:500px;max-height:80vh;overflow-y:auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <h3 style="margin:0;" data-i18n="favorites.title">⭐ My Favorites</h3>
+      <button class="ghost" onclick="closeFavorites()" style="font-size:20px;min-height:40px;min-width:40px;padding:0;">✕</button>
+    </div>
+    <div id="favoritesList"><div class="empty-state" data-i18n="favorites.loading">Loading...</div></div>
+    <div style="margin-top:12px;text-align:right;">
+      <button class="ghost" onclick="closeFavorites()" data-i18n="common.close" style="font-size:16px;padding:12px 24px;min-height:48px;">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ SAVE FAVORITE DIALOG ═══════════ -->
+<div id="saveFavoriteOverlay" class="modal-overlay">
+  <div class="modal-box" style="max-width:400px;">
+    <h3 style="margin-bottom:12px;" data-i18n="favorites.save_title">⭐ Save as Favorite</h3>
+    <p style="color:var(--text2);margin-bottom:12px;font-size:14px;" data-i18n="favorites.save_desc">Save your current cart items as a favorite combo for quick ordering.</p>
+    <input type="text" id="saveFavoriteName" placeholder="e.g. My Lunch Combo" maxlength="50" style="margin-bottom:12px;font-size:16px;" data-i18n-placeholder="favorites.name_placeholder"/>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button class="ghost" onclick="closeSaveFavorite()" data-i18n="common.cancel" style="font-size:16px;padding:12px 24px;min-height:48px;">Cancel</button>
+      <button class="accent" onclick="confirmSaveFavorite()" data-i18n="favorites.save_btn" style="font-size:16px;padding:12px 24px;min-height:48px;">💾 Save</button>
+    </div>
+  </div>
+</div>
+
 <!-- ═══════════ REFUND OVERLAY ═══════════ -->
 <div id="refundOverlay" class="modal-overlay">
   <div class="modal-box" style="max-width:500px;max-height:80vh;overflow-y:auto;">
@@ -1447,6 +1478,16 @@ const L10N = {
     'users.add_title': '➕ Add User',
     'items.add_title': '➕ Add Item',
     'tax.save_global': 'Save Global Rate',
+    'favorites.save_as': '⭐ Save as Favorite',
+    'favorites.load': '⭐ My Favorites',
+    'favorites.title': '⭐ My Favorites',
+    'favorites.save_title': '⭐ Save as Favorite',
+    'favorites.save_desc': 'Save your current cart items as a favorite combo for quick ordering.',
+    'favorites.name_placeholder': 'e.g. My Lunch Combo',
+    'favorites.save_btn': '💾 Save',
+    'favorites.load_btn': '📋 Load',
+    'favorites.loading': 'Loading...',
+    'favorites.empty': 'No saved favorites yet. Add items to cart and save a favorite!',
   },
   es: {
     'app.title': '🍽️ Sistema POS',
@@ -1590,6 +1631,16 @@ const L10N = {
     'users.add_title': '➕ Agregar usuario',
     'items.add_title': '➕ Agregar artículo',
     'tax.save_global': 'Guardar tasa global',
+    'favorites.save_as': '⭐ Guardar como Favorito',
+    'favorites.load': '⭐ Mis Favoritos',
+    'favorites.title': '⭐ Mis Favoritos',
+    'favorites.save_title': '⭐ Guardar como Favorito',
+    'favorites.save_desc': 'Guarde los artículos de su carrito como una combinación favorita para pedidos rápidos.',
+    'favorites.name_placeholder': 'Ej. Mi Combo Almuerzo',
+    'favorites.save_btn': '💾 Guardar',
+    'favorites.load_btn': '📋 Cargar',
+    'favorites.loading': 'Cargando...',
+    'favorites.empty': 'Aún no hay favoritos. ¡Añada artículos al carrito y guarde un favorito!',
   }
 };
 
@@ -2091,12 +2142,14 @@ function renderCart() {
   const discountRow = document.getElementById('discountRow');
   const orderNotesRow = document.getElementById('orderNotesRow');
   const tipRow = document.getElementById('tipRow');
+  const favoritesRow = document.getElementById('favoritesRow');
   if (cart.length === 0) {
     container.innerHTML = '<div class="empty-state">' + t('cart.empty') + '</div>';
     totalEl.innerHTML = t('cart.total') + ' $0.00';
     discountRow.style.display = 'none';
     orderNotesRow.style.display = 'none';
     tipRow.style.display = 'none';
+    if (favoritesRow) favoritesRow.style.display = 'none';
     appliedDiscount = null;
     resetTip();
     // Reset payment splits to single default when cart is empty
@@ -2107,6 +2160,7 @@ function renderCart() {
   discountRow.style.display = 'block';
   orderNotesRow.style.display = 'block';
   tipRow.style.display = 'block';
+  if (favoritesRow) favoritesRow.style.display = 'flex';
   let html = '';
   let subtotal = 0;
   let totalTax = 0;
@@ -5130,6 +5184,167 @@ async function kioskLookupPay() {
     showToast('Network error', 'danger');
     btn.disabled = false;
     btn.textContent = '💵 Pay Now';
+  }
+}
+
+// ═══════════ FAVORITES (Quick-Order Combos) ═══════════
+
+function saveFavoriteDialog() {
+  if (!currentUser) { showToast('Please log in first', 'danger'); return; }
+  if (cart.length === 0) { showToast('Cart is empty', 'danger'); return; }
+  document.getElementById('saveFavoriteName').value = '';
+  document.getElementById('saveFavoriteOverlay').classList.add('active');
+}
+
+function closeSaveFavorite() {
+  document.getElementById('saveFavoriteOverlay').classList.remove('active');
+}
+
+async function confirmSaveFavorite() {
+  const name = document.getElementById('saveFavoriteName').value.trim();
+  if (!name) { showToast('Please enter a name for your favorite', 'danger'); return; }
+  if (!currentUser) { showToast('Please log in first', 'danger'); return; }
+
+  const items = cart.map(item => ({
+    name: item.name,
+    qty: item.qty,
+    category: item.category || '',
+    price: item.price
+  }));
+
+  const btn = document.querySelector('#saveFavoriteOverlay .accent');
+  btn.disabled = true;
+  btn.textContent = 'Saving...';
+
+  try {
+    const r = await fetch(BACKEND_URL + '/api/favorites/save', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: currentUser.id, name, items })
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      showToast(data.message || 'Failed to save favorite', 'danger');
+    } else {
+      showToast('⭐ Favorite "' + escHtml(name) + '" saved!', 'success');
+      closeSaveFavorite();
+    }
+  } catch(e) {
+    showToast('Network error', 'danger');
+  }
+  btn.disabled = false;
+  btn.textContent = '💾 Save';
+}
+
+async function showFavorites() {
+  if (!currentUser) { showToast('Please log in first', 'danger'); return; }
+
+  const overlay = document.getElementById('favoritesOverlay');
+  const list = document.getElementById('favoritesList');
+  list.innerHTML = '<div class="empty-state">' + t('favorites.loading') + '</div>';
+  overlay.classList.add('active');
+
+  try {
+    const r = await fetch(BACKEND_URL + '/api/favorites/list', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: currentUser.id })
+    });
+    const data = await r.json();
+    if (!r.ok) { list.innerHTML = '<div class="empty-state">Error loading favorites</div>'; return; }
+
+    if (data.count === 0) {
+      list.innerHTML = '<div class="empty-state" data-i18n="favorites.empty">No saved favorites yet. Add items to cart and save a favorite!</div>';
+      return;
+    }
+
+    let html = '';
+    data.favorites.forEach(fav => {
+      const itemCount = fav.items.reduce((sum, it) => sum + it.qty, 0);
+      const itemNames = fav.items.map(it => escHtml(it.name) + (it.qty > 1 ? ' x' + it.qty : '')).join(', ');
+      html += `<div class="fav-card" style="background:var(--bg);border-radius:8px;padding:12px;margin-bottom:8px;border:1px solid #2a2a4e;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:600;font-size:15px;margin-bottom:4px;">⭐ ${escHtml(fav.name)}</div>
+            <div style="color:var(--text2);font-size:13px;margin-bottom:6px;">${escHtml(itemNames)}</div>
+            <div style="color:var(--text2);font-size:11px;">${fav.items.length} item types · ${itemCount} total items</div>
+          </div>
+          <div style="display:flex;gap:4px;flex-shrink:0;">
+            <button onclick="loadFavorite('${fav.id}')" class="outline" style="font-size:13px;padding:8px 14px;min-height:36px;border-color:#2ecc71;color:#2ecc71;" data-i18n="favorites.load_btn">📋 Load</button>
+            <button onclick="deleteFavorite('${fav.id}')" class="ghost" style="font-size:13px;padding:8px 10px;min-height:36px;color:var(--accent);">🗑️</button>
+          </div>
+        </div>
+      </div>`;
+    });
+    list.innerHTML = html;
+  } catch(e) {
+    list.innerHTML = '<div class="empty-state">Network error</div>';
+  }
+}
+
+function closeFavorites() {
+  document.getElementById('favoritesOverlay').classList.remove('active');
+}
+
+async function loadFavorite(favoriteId) {
+  if (!currentUser) { showToast('Please log in first', 'danger'); return; }
+
+  try {
+    // First get the list to find the specific favorite
+    const r = await fetch(BACKEND_URL + '/api/favorites/list', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: currentUser.id })
+    });
+    const data = await r.json();
+    if (!r.ok) { showToast('Error loading favorite', 'danger'); return; }
+
+    const fav = data.favorites.find(f => f.id === favoriteId);
+    if (!fav) { showToast('Favorite not found', 'danger'); return; }
+
+    // If cart has items, ask to replace or merge
+    if (cart.length > 0) {
+      if (!confirm('Replace current cart with "' + fav.name + '" items?')) {
+        // User wants to merge - add items to existing cart
+        fav.items.forEach(fi => {
+          const existing = cart.find(c => c.name === fi.name && c.category === (fi.category || ''));
+          if (existing) { existing.qty += fi.qty; }
+          else { cart.push({ name: fi.name, price: fi.price, qty: fi.qty, category: fi.category || '' }); }
+        });
+        showToast('⭐ "' + fav.name + '" items added to cart!', 'success');
+        renderCart();
+        closeFavorites();
+        return;
+      }
+    }
+
+    // Replace cart
+    cart = fav.items.map(fi => ({
+      name: fi.name,
+      price: fi.price,
+      qty: fi.qty,
+      category: fi.category || ''
+    }));
+    showToast('⭐ "' + fav.name + '" loaded!', 'success');
+    renderCart();
+    closeFavorites();
+  } catch(e) {
+    showToast('Network error', 'danger');
+  }
+}
+
+async function deleteFavorite(favoriteId) {
+  if (!currentUser) return;
+  if (!confirm('Delete this favorite?')) return;
+
+  try {
+    const r = await fetch(BACKEND_URL + '/api/favorites/delete', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: currentUser.id, favorite_id: favoriteId })
+    });
+    const data = await r.json();
+    if (!r.ok) { showToast(data.message || 'Error deleting favorite', 'danger'); return; }
+    showToast('Favorite deleted', 'success');
+    showFavorites(); // Refresh the list
+  } catch(e) {
+    showToast('Network error', 'danger');
   }
 }
 </script>

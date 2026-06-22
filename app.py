@@ -26,6 +26,7 @@ ORDER_COUNTER_FILE = 'order_counter.json'  # Auto-incrementing order counter
 TABLES_FILE = 'tables.json'  # Table management data
 INVENTORY_FILE = 'inventory.json'  # Inventory tracking
 REFUNDED_ORDERS_FILE = 'refunded_orders.json'  # Track refunded/voided orders
+FAVORITES_FILE = 'favorites.json'  # User quick-order favorites
 MENU_BACKUPS_DIR = 'menu_backups'
 
 # --- Permission Constants ---
@@ -90,7 +91,7 @@ def backup_menu():
 
 
 # Ensure JSON files exist and are initialized correctly
-for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE, INVENTORY_FILE, REFUNDED_ORDERS_FILE]:
+for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE, INVENTORY_FILE, REFUNDED_ORDERS_FILE, FAVORITES_FILE]:
     if not os.path.exists(f):
         with open(f, 'w') as file:
             if f == USERS_FILE:
@@ -134,6 +135,8 @@ for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMES
                 json.dump({}, file, indent=4)  # Initialize empty tables
             elif f == INVENTORY_FILE:
                 json.dump({}, file, indent=4)  # Initialize empty inventory
+            elif f == FAVORITES_FILE:
+                json.dump({}, file, indent=4)  # Initialize empty favorites dict (user_id -> list of combos)
             else:
                 json.dump([], file)  # Initialize orders.json and cleared_orders.json as empty lists
 
@@ -849,6 +852,116 @@ def get_refunds():
 
     refunded_orders = load_json_data(REFUNDED_ORDERS_FILE)
     return jsonify({'refunds': refunded_orders, 'count': len(refunded_orders)})
+
+
+# --- Quick-Order Favorites Endpoints ---
+
+@app.route('/api/favorites/save', methods=['POST'])
+def save_favorite():
+    """Save current cart items as a named favorite combo for the user."""
+    data = request.json
+    user_id = data.get('user_id')
+    name = data.get('name', '').strip()
+    items = data.get('items', [])
+
+    if not user_id:
+        return jsonify({'message': 'User ID is required.'}), 400
+    if not name:
+        return jsonify({'message': 'Favorite name is required.'}), 400
+    if not items or len(items) == 0:
+        return jsonify({'message': 'Cart items are required to save a favorite.'}), 400
+    if len(name) > 50:
+        return jsonify({'message': 'Favorite name must be 50 characters or less.'}), 400
+
+    favorites = load_json_data(FAVORITES_FILE)
+    if user_id not in favorites:
+        favorites[user_id] = []
+
+    # Limit per user to 20 favorites
+    if len(favorites[user_id]) >= 20:
+        return jsonify({'message': 'Maximum of 20 favorites per user. Delete some first.'}), 400
+
+    # Check for duplicate names
+    for fav in favorites[user_id]:
+        if fav['name'].lower() == name.lower():
+            return jsonify({'message': 'A favorite with this name already exists.'}), 409
+
+    # Normalize items — keep name, qty, category, price
+    sanitized_items = []
+    for item in items:
+        sanitized_items.append({
+            'name': item.get('name', ''),
+            'qty': int(item.get('qty', 1)),
+            'category': item.get('category', ''),
+            'price': float(item.get('price', 0))
+        })
+
+    new_fav = {
+        'id': secrets.token_hex(8),
+        'name': name,
+        'items': sanitized_items,
+        'created_at': datetime.now().isoformat()
+    }
+    favorites[user_id].append(new_fav)
+    save_json_data(FAVORITES_FILE, favorites)
+
+    log_activity('save_favorite', user_id, 'user', {
+        'favorite_id': new_fav['id'],
+        'favorite_name': name,
+        'item_count': len(sanitized_items)
+    })
+
+    return jsonify({
+        'message': 'Favorite saved successfully',
+        'favorite': new_fav
+    })
+
+
+@app.route('/api/favorites/list', methods=['POST'])
+def list_favorites():
+    """List all saved favorites for a user."""
+    data = request.json
+    user_id = data.get('user_id')
+
+    if not user_id:
+        return jsonify({'message': 'User ID is required.'}), 400
+
+    favorites = load_json_data(FAVORITES_FILE)
+    user_favs = favorites.get(user_id, [])
+
+    return jsonify({
+        'favorites': user_favs,
+        'count': len(user_favs)
+    })
+
+
+@app.route('/api/favorites/delete', methods=['POST'])
+def delete_favorite():
+    """Delete a saved favorite by ID."""
+    data = request.json
+    user_id = data.get('user_id')
+    favorite_id = data.get('favorite_id')
+
+    if not user_id or not favorite_id:
+        return jsonify({'message': 'User ID and favorite ID are required.'}), 400
+
+    favorites = load_json_data(FAVORITES_FILE)
+    if user_id not in favorites:
+        return jsonify({'message': 'No favorites found for this user.'}), 404
+
+    before = len(favorites[user_id])
+    favorites[user_id] = [f for f in favorites[user_id] if f.get('id') != favorite_id]
+
+    if len(favorites[user_id]) == before:
+        return jsonify({'message': 'Favorite not found.'}), 404
+
+    save_json_data(FAVORITES_FILE, favorites)
+
+    log_activity('delete_favorite', user_id, 'user', {
+        'favorite_id': favorite_id
+    })
+
+    return jsonify({'message': 'Favorite deleted successfully'})
 
 
 # --- Admin Panel Endpoints ---
