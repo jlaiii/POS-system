@@ -23,7 +23,7 @@
 - [x] Export data to CSV/Excel
 - [x] **Add date range filtering for order history and stats** — Added `date_from`/`date_to` params to `/api/admin_stats` endpoint with server-side filtering. Frontend: date range (from/to) inputs in Order History replacing single date, date range filter in Stats section. Stats cards adapt labels (Today's / Filtered Range). i18n English + Spanish. Backward-compatible. [worker-3]
 - [x] **Add order status badges in history view** — Show current order status (pending, preparing, completed, refunded/voided) as color-coded badges in order history list. Currently only refunded status is shown. Helps staff quickly identify order state at a glance without expanding details. Consistent with kitchen display status colors. [worker-3]
-- [ ] **Add quick-change cash calculator for cash payments** — When cash payment method is selected, show "Amount Tendered" input that auto-calculates change due. Include quick preset denomination buttons ($5, $10, $20, $50) that fill the tendered amount. Display change amount prominently with large font. Reduces cashier errors and speeds up transactions.
+- [~] worker-1 **Add quick-change cash calculator for cash payments** — When cash payment method is selected, show "Amount Tendered" input that auto-calculates change due. Include quick preset denomination buttons ($5, $10, $20, $50) that fill the tendered amount. Display change amount prominently with large font. Reduces cashier errors and speeds up transactions.
 ## Priority: HIGH (NEW — Audit 2026-06-22)
 
 - [~] worker-1 **Add reorder button in order history** — One-click to reload all items from a past order into the cart. Major waiter speed improvement: eliminates need to manually re-add frequent orders.
