@@ -2458,6 +2458,102 @@ def generate_csv(rows, headers):
     return result
 
 
+@app.route('/api/employee_performance', methods=['POST'])
+def employee_performance():
+    data = request.json
+    admin_pin = data.get('adminPin')
+
+    if not check_perm(admin_pin, "view_stats"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    users_data = load_json_data(USERS_FILE)
+    orders = load_json_data(ORDERS_FILE)
+
+    # --- Date range filtering ---
+    date_from = data.get('date_from', '').strip()
+    date_to = data.get('date_to', '').strip()
+
+    def filter_by_date_range(order_list, date_field='date'):
+        filtered = order_list
+        if date_from:
+            try:
+                dt_from = datetime.fromisoformat(date_from)
+                filtered = [o for o in filtered if datetime.fromisoformat(o.get(date_field, '')) >= dt_from]
+            except (ValueError, KeyError):
+                pass
+        if date_to:
+            try:
+                if 'T' not in date_to:
+                    dt_to = datetime.fromisoformat(date_to + 'T23:59:59')
+                else:
+                    dt_to = datetime.fromisoformat(date_to)
+                filtered = [o for o in filtered if datetime.fromisoformat(o.get(date_field, '')) <= dt_to]
+            except (ValueError, KeyError):
+                pass
+        return filtered
+
+    orders = filter_by_date_range(orders)
+
+    # Track per-employee metrics: user_id -> {orders, revenue, tips, items_count}
+    employee_data = {}
+
+    for order in orders:
+        # Skip refunded/voided orders
+        if order.get('status') in ('refunded', 'voided'):
+            continue
+
+        user_id = order.get('user', '')
+        if not user_id:
+            continue
+
+        if user_id not in employee_data:
+            employee_data[user_id] = {
+                'orders_count': 0,
+                'total_revenue': 0.0,
+                'total_tips': 0.0,
+                'item_count': 0
+            }
+
+        try:
+            total = float(order.get('total', 0))
+            tip = float(order.get('tip_amount', 0))
+            items_list = order.get('items', [])
+            items_qty = sum(int(i.get('qty', 1)) for i in items_list)
+
+            employee_data[user_id]['orders_count'] += 1
+            employee_data[user_id]['total_revenue'] += total
+            employee_data[user_id]['total_tips'] += tip
+            employee_data[user_id]['item_count'] += items_qty
+        except (ValueError, TypeError):
+            continue
+
+    # Build response array sorted by revenue (descending)
+    result = []
+    for uid, metrics in employee_data.items():
+        user_info = users_data.get(uid, {})
+        user_info = upgrade_user(user_info)
+        avg_order = metrics['total_revenue'] / metrics['orders_count'] if metrics['orders_count'] > 0 else 0
+
+        result.append({
+            'user_id': uid,
+            'user_name': user_info.get('name', 'Unknown'),
+            'user_role': user_info.get('role', 'unknown'),
+            'orders_count': metrics['orders_count'],
+            'total_revenue': round(metrics['total_revenue'], 2),
+            'average_order_value': round(avg_order, 2),
+            'total_tips': round(metrics['total_tips'], 2),
+            'items_sold': metrics['item_count']
+        })
+
+    # Sort by total revenue descending
+    result.sort(key=lambda x: x['total_revenue'], reverse=True)
+
+    return jsonify({
+        'message': 'Employee performance data retrieved',
+        'employees': result
+    })
+
+
 @app.route('/api/export/orders_csv', methods=['POST'])
 def export_orders_csv():
     data = request.json

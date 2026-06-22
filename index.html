@@ -108,6 +108,19 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 .role-badge.admin { background: #3498db; color: #fff; }
 .role-badge.cook { background: #27ae60; color: #fff; }
 
+/* ── EMPLOYEE PERF TABLE ── */
+.emp-perf-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.emp-perf-table th { color: var(--text2); font-size: 12px; text-align: left; padding: 10px 8px; border-bottom: 2px solid #2a2a4e; white-space: nowrap; }
+.emp-perf-table td { padding: 10px 8px; border-bottom: 1px solid #2a2a4e; }
+.emp-perf-table tr:hover td { background: #1e2a4a; }
+.emp-perf-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+.emp-perf-table .rank { color: var(--text2); font-size: 12px; width: 30px; text-align: center; }
+.emp-perf-card { background: var(--card); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; }
+.emp-perf-card h4 { color: var(--text2); font-size: 13px; margin-bottom: 4px; }
+.emp-perf-card .val { font-size: 24px; font-weight: 700; color: var(--accent); }
+.emp-perf-summary { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+.emp-perf-summary .stat-card { flex: 1; min-width: 120px; }
+
 /* ── LOGIN SCREEN ── */
 #loginScreen {
   display: flex; flex-direction: column; align-items: center;
@@ -898,6 +911,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
         <button onclick="switchAdminSection('credentials')" id="asCredentials" data-i18n="admin.credentials" style="display:none;">🔐 Owner Credentials</button>
         <button onclick="switchAdminSection('tables')" id="asTables" data-i18n="admin.tables">🪑 Tables</button>
         <button onclick="switchAdminSection('inventory')" id="asInventory" data-i18n="admin.inventory">📦 Inventory</button>
+        <button onclick="switchAdminSection('employees')" id="asEmployees" data-i18n="admin.employees">👤 Employee Perf</button>
       </div>
       <div id="adminContent">
         <!-- Stats -->
@@ -1090,6 +1104,17 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
             </div>
           </div>
           <div id="inventoryList"><div class="empty-state">Loading inventory...</div></div>
+        </div>
+        <!-- Employee Performance -->
+        <div id="secEmployees" class="admin-section">
+          <h3 style="margin-bottom:12px;">👤 Employee Performance</h3>
+          <div class="stats-filter" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center;">
+            <input type="date" id="empPerfDateFrom" onchange="loadEmployeePerformance()" style="flex:1;min-width:130px;"/>
+            <span style="color:var(--text2);">→</span>
+            <input type="date" id="empPerfDateTo" onchange="loadEmployeePerformance()" style="flex:1;min-width:130px;"/>
+            <button class="ghost" onclick="document.getElementById('empPerfDateFrom').value='';document.getElementById('empPerfDateTo').value='';loadEmployeePerformance();" style="font-size:13px;padding:8px 12px;min-height:36px;">✕ Clear</button>
+          </div>
+          <div id="employeePerfList"><div class="empty-state">Loading employee performance...</div></div>
         </div>
       </div>
     </div>
@@ -1334,6 +1359,18 @@ const L10N = {
     'admin.menu_history': '📋 Menu History',
     'admin.tables': '🪑 Tables',
     'admin.inventory': '📦 Inventory',
+    'admin.employees': '👤 Employee Perf',
+    'admin.employees.title': '👤 Employee Performance',
+    'admin.employees.employee': 'Employee',
+    'admin.employees.orders': 'Orders',
+    'admin.employees.revenue': 'Revenue',
+    'admin.employees.avg_order': 'Avg Order',
+    'admin.employees.tips': 'Tips',
+    'admin.employees.items_sold': 'Items Sold',
+    'admin.employees.total_employees': 'Active Employees',
+    'admin.employees.total_orders': 'Total Orders',
+    'admin.employees.total_revenue': 'Total Revenue',
+    'admin.employees.avg_all': 'Avg All Orders',
     'item.out': 'OUT',
     'ban': 'Ban',
     'unban': 'Unban',
@@ -1464,6 +1501,18 @@ const L10N = {
     'admin.menu_history': '📋 Historial de Menú',
     'admin.tables': '🪑 Mesas',
     'admin.inventory': '📦 Inventario',
+    'admin.employees': '👤 Rendimiento',
+    'admin.employees.title': '👤 Rendimiento de Empleados',
+    'admin.employees.employee': 'Empleado',
+    'admin.employees.orders': 'Pedidos',
+    'admin.employees.revenue': 'Ingresos',
+    'admin.employees.avg_order': 'Promedio',
+    'admin.employees.tips': 'Propinas',
+    'admin.employees.items_sold': 'Artículos Vendidos',
+    'admin.employees.total_employees': 'Empleados Activos',
+    'admin.employees.total_orders': 'Total Pedidos',
+    'admin.employees.total_revenue': 'Ingresos Totales',
+    'admin.employees.avg_all': 'Promedio General',
     'item.out': 'AGOTADO',
     'ban': 'Bloquear',
     'unban': 'Desbloquear',
@@ -1874,7 +1923,8 @@ function showApp() {
     'asMenuhistory': isOwner,
     'asCredentials': isOwner,
     'asTables': perms.includes('manage_items'),  // Tables management accessible to item managers
-    'asInventory': perms.includes('manage_items')  // Inventory management accessible to item managers
+    'asInventory': perms.includes('manage_items'),  // Inventory management accessible to item managers
+    'asEmployees': perms.includes('view_stats')  // Employee perf uses view_stats permission
   };
   
   // Show/hide each sub-tab button
@@ -2773,6 +2823,7 @@ function switchAdminSection(sec) {
   else if (sec === 'credentials') loadCredentialsStatus();
   else if (sec === 'tables') loadTableAdmin();
   else if (sec === 'inventory') loadInventoryAdmin();
+  else if (sec === 'employees') loadEmployeePerformance();
 }
 
 async function loadAdminStats() {
@@ -3700,6 +3751,77 @@ async function initInventory() {
     showToast('Initialized ' + successCount + ' items with 0 stock', 'success');
     loadInventoryAdmin();
   } catch(e) { showToast(t('toast.network_error'), 'danger'); }
+}
+
+// ═══════════ EMPLOYEE PERFORMANCE ═══════════
+async function loadEmployeePerformance() {
+  const list = document.getElementById('employeePerfList');
+  if (!list) return;
+  list.innerHTML = '<div class="empty-state">' + t('loading') + '</div>';
+  try {
+    const body = { adminPin: currentUser.id };
+    const dateFrom = document.getElementById('empPerfDateFrom').value;
+    const dateTo = document.getElementById('empPerfDateTo').value;
+    if (dateFrom) body.date_from = dateFrom;
+    if (dateTo) body.date_to = dateTo;
+
+    const r = await fetch(BACKEND_URL + '/api/employee_performance', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (!r.ok) { list.innerHTML = '<div class="empty-state">' + t('unauthorized') + '</div>'; return; }
+    const data = await r.json();
+    const employees = data.employees || [];
+
+    if (employees.length === 0) {
+      list.innerHTML = '<div class="empty-state">' + t('no_data') + '</div>';
+      return;
+    }
+
+    // Summary stats
+    const totalEmployees = employees.length;
+    const totalOrders = employees.reduce((s, e) => s + e.orders_count, 0);
+    const totalRevenue = employees.reduce((s, e) => s + e.total_revenue, 0);
+    const avgAll = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+
+    let html = '<div class="emp-perf-summary">' +
+      '<div class="stat-card"><div class="stat-val">' + totalEmployees + '</div><div class="stat-lbl">' + t('admin.employees.total_employees') + '</div></div>' +
+      '<div class="stat-card"><div class="stat-val">' + totalOrders + '</div><div class="stat-lbl">' + t('admin.employees.total_orders') + '</div></div>' +
+      '<div class="stat-card"><div class="stat-val">$' + totalRevenue.toFixed(2) + '</div><div class="stat-lbl">' + t('admin.employees.total_revenue') + '</div></div>' +
+      '<div class="stat-card"><div class="stat-val">$' + avgAll.toFixed(2) + '</div><div class="stat-lbl">' + t('admin.employees.avg_all') + '</div></div>' +
+    '</div>';
+
+    // Employee table
+    html += '<div style="overflow-x:auto;"><table class="emp-perf-table">' +
+      '<thead><tr>' +
+        '<th class="rank">#</th>' +
+        '<th>' + t('admin.employees.employee') + '</th>' +
+        '<th>' + t('admin.employees.orders') + '</th>' +
+        '<th>' + t('admin.employees.revenue') + '</th>' +
+        '<th>' + t('admin.employees.avg_order') + '</th>' +
+        '<th>' + t('admin.employees.tips') + '</th>' +
+        '<th>' + t('admin.employees.items_sold') + '</th>' +
+      '</tr></thead><tbody>';
+
+    employees.forEach((emp, idx) => {
+      const rank = idx + 1;
+      const roleBadge = '<span class="role-badge ' + escHtml(emp.user_role) + '">' + escHtml(emp.user_role) + '</span>';
+      html += '<tr>' +
+        '<td class="rank">' + rank + '</td>' +
+        '<td><strong>' + escHtml(emp.user_name) + '</strong> <span style="color:var(--text2);font-size:12px;">(' + escHtml(emp.user_id) + ')</span>' + roleBadge + '</td>' +
+        '<td class="num">' + emp.orders_count + '</td>' +
+        '<td class="num">$' + emp.total_revenue.toFixed(2) + '</td>' +
+        '<td class="num">$' + emp.average_order_value.toFixed(2) + '</td>' +
+        '<td class="num">$' + emp.total_tips.toFixed(2) + '</td>' +
+        '<td class="num">' + emp.items_sold + '</td>' +
+      '</tr>';
+    });
+
+    html += '</tbody></table></div>';
+    list.innerHTML = html;
+  } catch(e) {
+    list.innerHTML = '<div class="empty-state">' + t('network_error') + '</div>';
+  }
 }
 
 async function loadTableSelector() {
