@@ -31,7 +31,7 @@
 
 ## Priority: LOW
 
-- [ ] Add barcode scanner support for item lookup (camera or hardware scanner)
+- [~] worker-2 Add barcode scanner support for item lookup (camera or hardware scanner)
 - [ ] Add loyalty points system per customer
 - [ ] Add scheduled pricing (happy hour, daily specials)
 - [ ] Add waste tracking (items thrown away, reason)
