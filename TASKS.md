@@ -11,9 +11,10 @@
 
 ## Priority: HIGH
 
-- [ ] **Granular role/permission system** — Three roles (owner/admin/user/cook) with toggleable permissions per admin. Owner has all perms, can grant/revoke specific perms per admin (ban_users, manage_items, manage_users, view_logs, etc). Owner can revert admin changes.
-- [ ] **Menu version history with restore** — Every menu change auto-saves a backup. Owner can browse backup dates and restore items.json to any previous day. Shows diff preview before confirming restore.
-- [ ] **User ban/unban system** — Owner and admins with ban_users perm can ban a user (disables their login). Banned users show in admin panel with unban button. Ban reason is logged.
+- [x] **Granular role/permission system** — Three roles (owner/admin/user/cook) with toggleable permissions per admin. Owner has all perms, can grant/revoke specific perms per admin (ban_users, manage_items, manage_users, view_logs, etc). Owner can revert admin changes.
+- [x] **Menu version history with restore** — Every menu change auto-saves a backup. Owner can browse backup dates and restore items.json to any previous day. Shows diff preview before confirming restore.
+- [x] **User ban/unban system** — Owner and admins with ban_users perm can ban a user (disables their login). Banned users show in admin panel with unban button. Ban reason is logged.
+- [x] **Permission management UI** — Admin panel section where owner sees all admins with toggle switches per permission (ban_users on/off, manage_items on/off, etc). Changes take effect immediately.
 - [ ] **Kitchen queue audit & optimize** — Review the kitchen display system end-to-end. Make sure it's fast-paced friendly: minimize button taps, show order age prominently, add sound alerts for every new order, add priority flagging for orders waiting too long. Test the 8s polling under load.
 - [ ] Add tip calculation UI (percentage buttons: 15%, 18%, 20%, custom)
 - [ ] Add split-payment support (multiple payment methods per order)
@@ -21,7 +22,7 @@
 
 ## Priority: MEDIUM
 
-- [ ] **Permission management UI** — Admin panel section where owner sees all admins with toggle switches per permission (ban_users on/off, manage_items on/off, etc). Changes take effect immediately.
+- [x] **Permission management UI** — Admin panel section where owner sees all admins with toggle switches per permission (ban_users on/off, manage_items on/off, etc). Changes take effect immediately.
 - [ ] **Owner activity log filter** — Let owner filter activity log by: admin user, action type, date range. Show who changed what and when.
 - [ ] Add export data to CSV/Excel (orders, timesheet, activity log)
 - [ ] Add date range filtering for order history and stats
@@ -46,6 +47,8 @@
 
 ## Done
 
+- [x] Granular role/permission system — Three-tier roles (owner/admin/user/cook) with 10 granular permissions. Owner has ["*"] wildcard, can grant/revoke specific perms per admin. Ban/unban users with reason tracking. Permission-aware UI hides unauthorized sections.
+- [x] Menu version history with restore — Every menu change auto-saves timestamped backup to menu_backups/. Owner browses backup dates, restores any day's menu with safety backup of current state. Keep last 30 backups.
 - [x] Multi-language support — English + Spanish with browser language detection, language toggle button (globe) in top bar, translation dictionary (L10N), `t()` helper function, `data-i18n` attributes for static HTML, persistent language preference in localStorage, all major UI strings translated. Use the 🌐 globe button in top bar to switch between English and Español.
 
 - [x] Kitchen display queue system — Full cook view: order queue with claim/complete/cancel, 8s auto-refresh, sound alerts, fullscreen mode, role-based routing (cook role), order status pipeline (pending→preparing→completed/cancelled)

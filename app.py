@@ -3,6 +3,8 @@ from flask_cors import CORS
 import json
 from datetime import datetime, timedelta
 import os
+import shutil
+import glob
 from collections import defaultdict, Counter
 
 app = Flask(__name__, static_folder='.', static_url_path='')
@@ -17,13 +19,75 @@ ITEMS_FILE = 'items.json'  # New items file
 TAX_CONFIG_FILE = 'tax_config.json'  # Tax configuration
 DISCOUNTS_FILE = 'discounts.json'  # Discount/coupon codes
 ORDER_COUNTER_FILE = 'order_counter.json'  # Auto-incrementing order counter
+MENU_BACKUPS_DIR = 'menu_backups'
+
+# --- Permission Constants ---
+DEFAULT_ADMIN_PERMISSIONS = [
+    "manage_users", "ban_users", "manage_items", "manage_permissions",
+    "view_stats", "view_logs", "view_timesheet", "manage_orders",
+    "pos_access", "kitchen_access"
+]
+DEFAULT_USER_PERMISSIONS = ["pos_access"]
+DEFAULT_COOK_PERMISSIONS = ["kitchen_access"]
+
+
+# --- Utility Functions ---
+
+def upgrade_user(user_data):
+    """Ensure user has a permissions list matching their role, adding defaults if missing."""
+    role = user_data.get('role', 'user')
+    if role == 'owner':
+        user_data['permissions'] = ["*"]
+    elif role == 'admin' and 'permissions' not in user_data:
+        user_data['permissions'] = list(DEFAULT_ADMIN_PERMISSIONS)
+    elif role == 'user' and 'permissions' not in user_data:
+        user_data['permissions'] = list(DEFAULT_USER_PERMISSIONS)
+    elif role == 'cook' and 'permissions' not in user_data:
+        user_data['permissions'] = list(DEFAULT_COOK_PERMISSIONS)
+    return user_data
+
+
+def check_perm(user_id, permission):
+    """Check if a user has a specific permission. Returns True/False."""
+    users = load_json_data(USERS_FILE)
+    if user_id not in users:
+        return False
+    user_data = users[user_id]
+    user_data = upgrade_user(user_data)
+    perms = user_data.get('permissions', [])
+    if "*" in perms:
+        return True
+    if permission in perms:
+        return True
+    return False
+
+
+def backup_menu():
+    """Save a timestamped copy of items.json to menu_backups/, keeping last 30."""
+    if not os.path.exists(MENU_BACKUPS_DIR):
+        os.makedirs(MENU_BACKUPS_DIR, exist_ok=True)
+    if not os.path.exists(ITEMS_FILE):
+        return
+    timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    backup_filename = f'items_{timestamp}.json'
+    backup_path = os.path.join(MENU_BACKUPS_DIR, backup_filename)
+    shutil.copy2(ITEMS_FILE, backup_path)
+    # Keep only the last 30 backups
+    backups = sorted(
+        glob.glob(os.path.join(MENU_BACKUPS_DIR, 'items_*.json')),
+        key=os.path.getmtime
+    )
+    while len(backups) > 30:
+        oldest = backups.pop(0)
+        os.remove(oldest)
+
 
 # Ensure JSON files exist and are initialized correctly
 for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE]:
     if not os.path.exists(f):
         with open(f, 'w') as file:
             if f == USERS_FILE:
-                json.dump({"1111": {"name": "Admin User", "role": "admin"}}, file)  # Initialize with a default admin
+                json.dump({"1111": {"name": "Owner", "role": "owner", "permissions": ["*"]}}, file)
             elif f == TIMESHEET_FILE or f == ACTIVITY_LOG_FILE:
                 json.dump([], file)  # Initialize as empty lists
             elif f == ITEMS_FILE:
@@ -61,6 +125,10 @@ for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMES
                 json.dump({"counter": 1}, file, indent=4)  # Initialize order counter at 1
             else:
                 json.dump([], file)  # Initialize orders.json and cleared_orders.json as empty lists
+
+# Ensure menu_backups directory exists at startup
+if not os.path.exists(MENU_BACKUPS_DIR):
+    os.makedirs(MENU_BACKUPS_DIR, exist_ok=True)
 
 
 def load_json_data(filepath):
@@ -118,7 +186,17 @@ active_admin_sessions = {}  # {admin_id: login_time}
 @app.route('/api/users', methods=['GET'])
 def get_users():
     users = load_json_data(USERS_FILE)
-    display_users = {uid: {'name': user_data['name'], 'role': user_data['role']} for uid, user_data in users.items()}
+    display_users = {}
+    for uid, user_data in users.items():
+        # Ensure permissions are upgraded before returning
+        user_data = upgrade_user(user_data)
+        display_users[uid] = {
+            'name': user_data['name'],
+            'role': user_data['role'],
+            'permissions': user_data.get('permissions', []),
+            'banned': user_data.get('banned', False),
+            'banned_reason': user_data.get('banned_reason', '')
+        }
     return jsonify(display_users)
 
 
@@ -130,14 +208,27 @@ def login():
 
     if user_id in users:
         user_info = users[user_id]
-        if user_info.get('role') in ['user', 'admin']:
+        # Upgrade permissions structure if needed
+        user_info = upgrade_user(user_info)
+        # Save upgraded user data back
+        users[user_id] = user_info
+        save_json_data(USERS_FILE, users)
+
+        # Check if user is banned
+        if user_info.get('banned', False):
+            reason = user_info.get('banned_reason', 'No reason provided')
+            log_activity('login', user_id, user_info.get('role', 'unknown'),
+                         {'status': 'failed', 'reason': f'User is banned: {reason}'})
+            return jsonify({'message': f'User is banned. Reason: {reason}', 'banned': True}), 403
+
+        if user_info.get('role') in ['user', 'admin', 'owner', 'cook']:
             log_activity('login', user_id, user_info['role'], {'status': 'success', 'user_name': user_info['name']})
-            # If it's an admin logging in, record their start time for timesheet
-            if user_info['role'] == 'admin':
+            # If it's an admin or owner logging in, record their start time for timesheet
+            if user_info['role'] in ('admin', 'owner'):
                 active_admin_sessions[user_id] = datetime.now()
             return jsonify({'message': 'Login successful', 'user': user_info['name'], 'role': user_info['role']})
     log_activity('login', user_id, 'unknown', {'status': 'failed'})
-    return jsonify({'message': 'Invalid User ID or role'}, 401)
+    return jsonify({'message': 'Invalid User ID or role'}), 401
 
 
 @app.route('/api/logout', methods=['POST'])
@@ -175,34 +266,47 @@ def add_user():
     new_user_name = data.get('userName')
     new_user_role = data.get('userRole')
 
+    # Verify caller has manage_users permission
+    if not check_perm(admin_pin, "manage_users"):
+        log_activity('add_user', admin_pin, 'unauthorized', {'status': 'failed', 'reason': 'Insufficient permissions'})
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
     users = load_json_data(USERS_FILE)
 
-    admin_user = None
-    for uid, u_data in users.items():
-        if u_data.get('role') == 'admin' and uid == admin_pin:
-            admin_user = u_data
-            break
-
-    if not admin_user:
-        log_activity('add_user', admin_pin, 'unauthorized', {'status': 'failed', 'reason': 'Invalid Admin PIN'})
-        return jsonify({'message': 'Unauthorized. Admin PIN required.'}, 403)
+    admin_user = users.get(admin_pin, None)
 
     if not new_user_id or not new_user_name or not new_user_role:
-        log_activity('add_user', admin_pin, admin_user['role'], {'status': 'failed', 'reason': 'Missing data', 'new_user_id': new_user_id})
-        return jsonify({'message': 'Missing user data.'}, 400)
+        log_activity('add_user', admin_pin, admin_user['role'] if admin_user else 'unknown',
+                     {'status': 'failed', 'reason': 'Missing data', 'new_user_id': new_user_id})
+        return jsonify({'message': 'Missing user data.'}), 400
     if len(new_user_id) != 4 or not new_user_id.isdigit():
-        log_activity('add_user', admin_pin, admin_user['role'], {'status': 'failed', 'reason': 'Invalid User ID format', 'new_user_id': new_user_id})
-        return jsonify({'message': 'User ID must be a 4-digit number.'}, 400)
+        log_activity('add_user', admin_pin, admin_user['role'] if admin_user else 'unknown',
+                     {'status': 'failed', 'reason': 'Invalid User ID format', 'new_user_id': new_user_id})
+        return jsonify({'message': 'User ID must be a 4-digit number.'}), 400
     if new_user_id in users:
-        log_activity('add_user', admin_pin, admin_user['role'], {'status': 'failed', 'reason': 'User ID exists', 'new_user_id': new_user_id})
-        return jsonify({'message': 'User ID already exists.'}, 409)
-    if new_user_role not in ['user', 'admin']:
-        log_activity('add_user', admin_pin, admin_user['role'], {'status': 'failed', 'reason': 'Invalid user role', 'new_user_id': new_user_id})
-        return jsonify({'message': 'Invalid user role. Must be "user" or "admin".'}, 400)
+        log_activity('add_user', admin_pin, admin_user['role'] if admin_user else 'unknown',
+                     {'status': 'failed', 'reason': 'User ID exists', 'new_user_id': new_user_id})
+        return jsonify({'message': 'User ID already exists.'}), 409
+    if new_user_role not in ['user', 'admin', 'owner', 'cook']:
+        log_activity('add_user', admin_pin, admin_user['role'] if admin_user else 'unknown',
+                     {'status': 'failed', 'reason': 'Invalid user role', 'new_user_id': new_user_id})
+        return jsonify({'message': 'Invalid user role. Must be "user", "admin", "owner", or "cook".'}), 400
 
-    users[new_user_id] = {'name': new_user_name, 'role': new_user_role}
+    # Assign default permissions based on role
+    new_user_data = {'name': new_user_name, 'role': new_user_role}
+    if new_user_role == 'owner':
+        new_user_data['permissions'] = ["*"]
+    elif new_user_role == 'admin':
+        new_user_data['permissions'] = list(DEFAULT_ADMIN_PERMISSIONS)
+    elif new_user_role == 'cook':
+        new_user_data['permissions'] = list(DEFAULT_COOK_PERMISSIONS)
+    else:  # user
+        new_user_data['permissions'] = list(DEFAULT_USER_PERMISSIONS)
+
+    users[new_user_id] = new_user_data
     save_json_data(USERS_FILE, users)
-    log_activity('add_user', admin_pin, admin_user['role'], {'status': 'success', 'added_user_id': new_user_id, 'added_user_name': new_user_name, 'added_user_role': new_user_role})
+    log_activity('add_user', admin_pin, admin_user['role'] if admin_user else 'unknown',
+                 {'status': 'success', 'added_user_id': new_user_id, 'added_user_name': new_user_name, 'added_user_role': new_user_role})
     return jsonify({'message': 'User added successfully', 'user': {'id': new_user_id, 'name': new_user_name, 'role': new_user_role}})
 
 
@@ -212,33 +316,33 @@ def delete_user():
     admin_pin = data.get('adminPin')
     user_id_to_delete = data.get('userId')
 
+    # Verify caller has manage_users permission
+    if not check_perm(admin_pin, "manage_users"):
+        log_activity('delete_user', admin_pin, 'unauthorized', {'status': 'failed', 'reason': 'Insufficient permissions', 'target_user_id': user_id_to_delete})
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
     users = load_json_data(USERS_FILE)
-
-    admin_user = None
-    for uid, u_data in users.items():
-        if u_data.get('role') == 'admin' and uid == admin_pin:
-            admin_user = u_data
-            break
-
-    if not admin_user:
-        log_activity('delete_user', admin_pin, 'unauthorized', {'status': 'failed', 'reason': 'Invalid Admin PIN', 'target_user_id': user_id_to_delete})
-        return jsonify({'message': 'Unauthorized. Admin PIN required.'}, 403)
+    admin_user = users.get(admin_pin, None)
 
     if not user_id_to_delete:
-        log_activity('delete_user', admin_pin, admin_user['role'], {'status': 'failed', 'reason': 'Missing user ID to delete'})
-        return jsonify({'message': 'Missing user ID to delete.'}, 400)
+        log_activity('delete_user', admin_pin, admin_user['role'] if admin_user else 'unknown',
+                     {'status': 'failed', 'reason': 'Missing user ID to delete'})
+        return jsonify({'message': 'Missing user ID to delete.'}), 400
     if user_id_to_delete not in users:
-        log_activity('delete_user', admin_pin, admin_user['role'], {'status': 'failed', 'reason': 'User ID not found', 'target_user_id': user_id_to_delete})
-        return jsonify({'message': 'User ID not found.'}, 404)
+        log_activity('delete_user', admin_pin, admin_user['role'] if admin_user else 'unknown',
+                     {'status': 'failed', 'reason': 'User ID not found', 'target_user_id': user_id_to_delete})
+        return jsonify({'message': 'User ID not found.'}), 404
     # Prevent deleting the last admin user
     if users[user_id_to_delete]['role'] == 'admin' and sum(1 for u in users.values() if u['role'] == 'admin') == 1:
-        log_activity('delete_user', admin_pin, admin_user['role'], {'status': 'failed', 'reason': 'Cannot delete last admin', 'target_user_id': user_id_to_delete})
-        return jsonify({'message': 'Cannot delete the last admin user.'}, 400)
+        log_activity('delete_user', admin_pin, admin_user['role'] if admin_user else 'unknown',
+                     {'status': 'failed', 'reason': 'Cannot delete last admin', 'target_user_id': user_id_to_delete})
+        return jsonify({'message': 'Cannot delete the last admin user.'}), 400
 
     deleted_user_info = users[user_id_to_delete]
     del users[user_id_to_delete]
     save_json_data(USERS_FILE, users)
-    log_activity('delete_user', admin_pin, admin_user['role'], {'status': 'success', 'deleted_user_id': user_id_to_delete, 'deleted_user_name': deleted_user_info['name'], 'deleted_user_role': deleted_user_info['role']})
+    log_activity('delete_user', admin_pin, admin_user['role'] if admin_user else 'unknown',
+                 {'status': 'success', 'deleted_user_id': user_id_to_delete, 'deleted_user_name': deleted_user_info['name'], 'deleted_user_role': deleted_user_info['role']})
     return jsonify({'message': 'User deleted successfully', 'userId': user_id_to_delete})
 
 
@@ -262,27 +366,29 @@ def verify_admin(admin_pin):
 def add_item():
     data = request.json
     admin_pin = data.get('adminPin')
-    is_admin, admin_user = verify_admin(admin_pin)
 
-    if not is_admin:
-        log_activity('add_item', admin_pin, 'unauthorized', {'status': 'failed', 'reason': 'Invalid Admin PIN'})
-        return jsonify({'message': 'Unauthorized. Admin PIN required.'}, 403)
+    if not check_perm(admin_pin, "manage_items"):
+        log_activity('add_item', admin_pin, 'unauthorized', {'status': 'failed', 'reason': 'Insufficient permissions'})
+        return jsonify({'message': 'Insufficient permissions.'}), 403
 
     category = data.get('category')
     name = data.get('name')
     price = data.get('price')
 
+    admin_user = load_json_data(USERS_FILE).get(admin_pin, None)
+    admin_role = admin_user['role'] if admin_user else 'unknown'
+
     if not all([category, name, price is not None]):
-        log_activity('add_item', admin_pin, admin_user['role'], {'status': 'failed', 'reason': 'Missing data', 'item_data': data})
-        return jsonify({'message': 'Missing item data (category, name, or price).'}, 400)
+        log_activity('add_item', admin_pin, admin_role, {'status': 'failed', 'reason': 'Missing data', 'item_data': data})
+        return jsonify({'message': 'Missing item data (category, name, or price).'}), 400
 
     try:
         price = float(price)
         if price <= 0:
             raise ValueError("Price must be positive.")
     except ValueError:
-        log_activity('add_item', admin_pin, admin_user['role'], {'status': 'failed', 'reason': 'Invalid price format', 'item_data': data})
-        return jsonify({'message': 'Invalid price format. Must be a positive number.'}, 400)
+        log_activity('add_item', admin_pin, admin_role, {'status': 'failed', 'reason': 'Invalid price format', 'item_data': data})
+        return jsonify({'message': 'Invalid price format. Must be a positive number.'}), 400
 
     items_data = load_json_data(ITEMS_FILE)
     if category not in items_data:
@@ -291,12 +397,13 @@ def add_item():
     # Check for duplicate item name within the category
     for item in items_data[category]:
         if item['name'].lower() == name.lower():
-            log_activity('add_item', admin_pin, admin_user['role'], {'status': 'failed', 'reason': 'Item already exists', 'item_data': data})
-            return jsonify({'message': f'Item "{name}" already exists in category "{category}".'}, 409)
+            log_activity('add_item', admin_pin, admin_role, {'status': 'failed', 'reason': 'Item already exists', 'item_data': data})
+            return jsonify({'message': f'Item "{name}" already exists in category "{category}".'}), 409
 
     items_data[category].append({"name": name, "price": price})
     save_json_data(ITEMS_FILE, items_data)
-    log_activity('add_item', admin_pin, admin_user['role'], {'status': 'success', 'category': category, 'name': name, 'price': price})
+    backup_menu()  # Auto-backup after successful save
+    log_activity('add_item', admin_pin, admin_role, {'status': 'success', 'category': category, 'name': name, 'price': price})
     return jsonify({'message': 'Item added successfully', 'item': {'category': category, 'name': name, 'price': price}})
 
 
@@ -304,11 +411,10 @@ def add_item():
 def edit_item():
     data = request.json
     admin_pin = data.get('adminPin')
-    is_admin, admin_user = verify_admin(admin_pin)
 
-    if not is_admin:
-        log_activity('edit_item', admin_pin, 'unauthorized', {'status': 'failed', 'reason': 'Invalid Admin PIN'})
-        return jsonify({'message': 'Unauthorized. Admin PIN required.'}, 403)
+    if not check_perm(admin_pin, "manage_items"):
+        log_activity('edit_item', admin_pin, 'unauthorized', {'status': 'failed', 'reason': 'Insufficient permissions'})
+        return jsonify({'message': 'Insufficient permissions.'}), 403
 
     old_category = data.get('oldCategory')
     old_name = data.get('oldName')
@@ -316,23 +422,26 @@ def edit_item():
     new_name = data.get('newName')
     new_price = data.get('newPrice')
 
+    admin_user = load_json_data(USERS_FILE).get(admin_pin, None)
+    admin_role = admin_user['role'] if admin_user else 'unknown'
+
     if not all([old_category, old_name, new_category, new_name, new_price is not None]):
-        log_activity('edit_item', admin_pin, admin_user['role'], {'status': 'failed', 'reason': 'Missing data', 'item_data': data})
-        return jsonify({'message': 'Missing item data for edit.'}, 400)
+        log_activity('edit_item', admin_pin, admin_role, {'status': 'failed', 'reason': 'Missing data', 'item_data': data})
+        return jsonify({'message': 'Missing item data for edit.'}), 400
 
     try:
         new_price = float(new_price)
         if new_price <= 0:
             raise ValueError("Price must be positive.")
     except ValueError:
-        log_activity('edit_item', admin_pin, admin_user['role'], {'status': 'failed', 'reason': 'Invalid new price format', 'item_data': data})
-        return jsonify({'message': 'Invalid new price format. Must be a positive number.'}, 400)
+        log_activity('edit_item', admin_pin, admin_role, {'status': 'failed', 'reason': 'Invalid new price format', 'item_data': data})
+        return jsonify({'message': 'Invalid new price format. Must be a positive number.'}), 400
 
     items_data = load_json_data(ITEMS_FILE)
 
     if old_category not in items_data:
-        log_activity('edit_item', admin_pin, admin_user['role'], {'status': 'failed', 'reason': 'Old category not found', 'item_data': data})
-        return jsonify({'message': f'Old category "{old_category}" not found.'}, 404)
+        log_activity('edit_item', admin_pin, admin_role, {'status': 'failed', 'reason': 'Old category not found', 'item_data': data})
+        return jsonify({'message': f'Old category "{old_category}" not found.'}), 404
 
     item_found = False
     for i, item in enumerate(items_data[old_category]):
@@ -343,8 +452,8 @@ def edit_item():
                 if new_category in items_data:
                     for existing_item in items_data[new_category]:
                         if existing_item['name'].lower() == new_name.lower():
-                            log_activity('edit_item', admin_pin, admin_user['role'], {'status': 'failed', 'reason': 'New item name already exists in target category', 'item_data': data})
-                            return jsonify({'message': f'Item "{new_name}" already exists in category "{new_category}".'}, 409)
+                            log_activity('edit_item', admin_pin, admin_role, {'status': 'failed', 'reason': 'New item name already exists in target category', 'item_data': data})
+                            return jsonify({'message': f'Item "{new_name}" already exists in category "{new_category}".'}), 409
 
             # Remove from old category if category is changing
             if old_category != new_category:
@@ -361,11 +470,12 @@ def edit_item():
             break
 
     if not item_found:
-        log_activity('edit_item', admin_pin, admin_user['role'], {'status': 'failed', 'reason': 'Old item not found in category', 'item_data': data})
-        return jsonify({'message': f'Item "{old_name}" not found in category "{old_category}".'}, 404)
+        log_activity('edit_item', admin_pin, admin_role, {'status': 'failed', 'reason': 'Old item not found in category', 'item_data': data})
+        return jsonify({'message': f'Item "{old_name}" not found in category "{old_category}".'}), 404
 
     save_json_data(ITEMS_FILE, items_data)
-    log_activity('edit_item', admin_pin, admin_user['role'], {'status': 'success', 'old_item': {'category': old_category, 'name': old_name}, 'new_item': {'category': new_category, 'name': new_name, 'price': new_price}})
+    backup_menu()  # Auto-backup after successful save
+    log_activity('edit_item', admin_pin, admin_role, {'status': 'success', 'old_item': {'category': old_category, 'name': old_name}, 'new_item': {'category': new_category, 'name': new_name, 'price': new_price}})
     return jsonify({'message': 'Item updated successfully'})
 
 
@@ -373,24 +483,26 @@ def edit_item():
 def delete_item():
     data = request.json
     admin_pin = data.get('adminPin')
-    is_admin, admin_user = verify_admin(admin_pin)
 
-    if not is_admin:
-        log_activity('delete_item', admin_pin, 'unauthorized', {'status': 'failed', 'reason': 'Invalid Admin PIN'})
-        return jsonify({'message': 'Unauthorized. Admin PIN required.'}, 403)
+    if not check_perm(admin_pin, "manage_items"):
+        log_activity('delete_item', admin_pin, 'unauthorized', {'status': 'failed', 'reason': 'Insufficient permissions'})
+        return jsonify({'message': 'Insufficient permissions.'}), 403
 
     category = data.get('category')
     name = data.get('name')
 
+    admin_user = load_json_data(USERS_FILE).get(admin_pin, None)
+    admin_role = admin_user['role'] if admin_user else 'unknown'
+
     if not all([category, name]):
-        log_activity('delete_item', admin_pin, admin_user['role'], {'status': 'failed', 'reason': 'Missing data', 'item_data': data})
-        return jsonify({'message': 'Missing item data (category or name).'}, 400)
+        log_activity('delete_item', admin_pin, admin_role, {'status': 'failed', 'reason': 'Missing data', 'item_data': data})
+        return jsonify({'message': 'Missing item data (category or name).'}), 400
 
     items_data = load_json_data(ITEMS_FILE)
 
     if category not in items_data:
-        log_activity('delete_item', admin_pin, admin_user['role'], {'status': 'failed', 'reason': 'Category not found', 'item_data': data})
-        return jsonify({'message': f'Category "{category}" not found.'}, 404)
+        log_activity('delete_item', admin_pin, admin_role, {'status': 'failed', 'reason': 'Category not found', 'item_data': data})
+        return jsonify({'message': f'Category "{category}" not found.'}), 404
 
     item_found = False
     for i, item in enumerate(items_data[category]):
@@ -400,14 +512,15 @@ def delete_item():
             break
 
     if not item_found:
-        log_activity('delete_item', admin_pin, admin_user['role'], {'status': 'failed', 'reason': 'Item not found', 'item_data': data})
-        return jsonify({'message': f'Item "{name}" not found in category "{category}".'}, 404)
+        log_activity('delete_item', admin_pin, admin_role, {'status': 'failed', 'reason': 'Item not found', 'item_data': data})
+        return jsonify({'message': f'Item "{name}" not found in category "{category}".'}), 404
 
     if not items_data[category]:  # If category becomes empty after deletion
         del items_data[category]
 
     save_json_data(ITEMS_FILE, items_data)
-    log_activity('delete_item', admin_pin, admin_user['role'], {'status': 'success', 'category': category, 'name': name})
+    backup_menu()  # Auto-backup after successful save
+    log_activity('delete_item', admin_pin, admin_role, {'status': 'success', 'category': category, 'name': name})
     return jsonify({'message': 'Item deleted successfully'})
 
 
@@ -417,6 +530,16 @@ def delete_item():
 def submit_order():
     data = request.json
     items = data.get('items', [])
+
+    # Check if user is banned
+    user_id = data.get('user')
+    if user_id:
+        users = load_json_data(USERS_FILE)
+        if user_id in users:
+            user_info = users[user_id]
+            user_info = upgrade_user(user_info)
+            if user_info.get('banned', False):
+                return jsonify({'message': 'User is banned'}), 403
 
     # Calculate subtotal from items for verification
     calculated_subtotal = sum(float(item.get('price', 0)) * int(item.get('qty', 1)) for item in items)
@@ -501,17 +624,14 @@ def clear_order():
 def admin_stats():
     data = request.json
     admin_pin = data.get('adminPin')
-    users_data = load_json_data(USERS_FILE)  # Renamed to avoid conflict with users variable
 
-    admin_user_id = None
-    for uid, u_data in users_data.items():
-        if u_data.get('role') == 'admin' and uid == admin_pin:
-            admin_user_id = uid
-            break
-
-    if not admin_user_id:
+    if not check_perm(admin_pin, "view_stats"):
         log_activity('admin_login', admin_pin, 'unauthorized', {'status': 'failed'})
-        return jsonify({'message': 'Unauthorized'}, 403)
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    users_data = load_json_data(USERS_FILE)
+
+    admin_user_id = admin_pin if admin_pin in users_data else None
 
     log_activity('admin_login', admin_pin, 'admin', {'status': 'success'})
     # Record admin login for timesheet if not already active
@@ -558,10 +678,9 @@ def admin_stats():
 def admin_timesheet():
     data = request.json
     admin_pin = data.get('adminPin')
-    users = load_json_data(USERS_FILE)
 
-    if not any(u.get('role') == 'admin' and uid == admin_pin for uid, u in users.items()):
-        return jsonify({'message': 'Unauthorized'}, 403)
+    if not check_perm(admin_pin, "view_timesheet"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
 
     timesheet_data = load_json_data(TIMESHEET_FILE)
     return jsonify({'message': 'Timesheet data retrieved', 'timesheet': timesheet_data})
@@ -571,10 +690,9 @@ def admin_timesheet():
 def activity_log():
     data = request.json
     admin_pin = data.get('adminPin')
-    users = load_json_data(USERS_FILE)
 
-    if not any(u.get('role') == 'admin' and uid == admin_pin for uid, u in users.items()):
-        return jsonify({'message': 'Unauthorized'}, 403)
+    if not check_perm(admin_pin, "view_logs"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
 
     logs = load_json_data(ACTIVITY_LOG_FILE)
     return jsonify({'message': 'Activity log retrieved', 'log': logs})
@@ -605,7 +723,7 @@ def analytics_most_ordered():
                         for name, count in item_counter.most_common(20)]
         return jsonify({'most_ordered': most_ordered})
     except Exception as e:
-        return jsonify({'error': str(e)}, 500)
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/api/analytics/hourly_sales', methods=['GET'])
@@ -630,7 +748,7 @@ def analytics_hourly_sales():
         hourly_sales.sort(key=lambda x: x['count'], reverse=True)
         return jsonify({'hourly_sales': hourly_sales})
     except Exception as e:
-        return jsonify({'error': str(e)}, 500)
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/api/analytics/daily_revenue', methods=['GET'])
@@ -673,7 +791,7 @@ def analytics_daily_revenue():
 
         return jsonify({'daily_revenue': daily_revenue})
     except Exception as e:
-        return jsonify({'error': str(e)}, 500)
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/api/analytics/popular_combos', methods=['GET'])
@@ -715,7 +833,7 @@ def analytics_popular_combos():
 
         return jsonify({'popular_combos': popular})
     except Exception as e:
-        return jsonify({'error': str(e)}, 500)
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/api/analytics/summary', methods=['GET'])
@@ -772,7 +890,7 @@ def analytics_summary():
 
         return jsonify({'summary': summary})
     except Exception as e:
-        return jsonify({'error': str(e)}, 500)
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/api/suggestions', methods=['POST'])
@@ -782,16 +900,16 @@ def get_suggestions():
     try:
         data = request.json
         if not data:
-            return jsonify({'error': 'Missing request body'}, 400)
+            return jsonify({'error': 'Missing request body'}), 400
 
         user_id = data.get('userId')
         if not user_id:
-            return jsonify({'error': 'userId is required'}, 400)
+            return jsonify({'error': 'userId is required'}), 400
 
         # Validate user exists
         users = load_json_data(USERS_FILE)
         if user_id not in users:
-            return jsonify({'error': 'Invalid userId'}, 404)
+            return jsonify({'error': 'Invalid userId'}), 404
 
         orders = load_json_data(ORDERS_FILE)
 
@@ -831,7 +949,7 @@ def get_suggestions():
             'suggestions': suggestions
         })
     except Exception as e:
-        return jsonify({'error': str(e)}, 500)
+        return jsonify({'error': str(e)}), 500
 
 
 # ============================================================
@@ -872,7 +990,11 @@ def update_tax_config():
 
     if not is_admin:
         log_activity('update_tax_config', admin_pin, 'unauthorized', {'status': 'failed'})
-        return jsonify({'message': 'Unauthorized. Admin PIN required.'}, 403)
+        return jsonify({'message': 'Unauthorized. Admin PIN required.'}), 403
+
+    if not check_perm(admin_pin, "manage_items"):
+        log_activity('update_tax_config', admin_pin, 'unauthorized', {'status': 'failed', 'reason': 'Insufficient permissions'})
+        return jsonify({'message': 'Insufficient permissions.'}), 403
 
     config = load_json_data(TAX_CONFIG_FILE)
 
@@ -880,10 +1002,10 @@ def update_tax_config():
         try:
             rate = float(data['global_tax_rate'])
             if rate < 0 or rate > 100:
-                return jsonify({'message': 'Tax rate must be between 0 and 100 percent.'}, 400)
+                return jsonify({'message': 'Tax rate must be between 0 and 100 percent.'}), 400
             config['global_tax_rate'] = rate
         except (ValueError, TypeError):
-            return jsonify({'message': 'Invalid tax rate. Must be a number between 0 and 100.'}, 400)
+            return jsonify({'message': 'Invalid tax rate. Must be a number between 0 and 100.'}), 400
 
     if 'category_tax_rates' in data:
         config['category_tax_rates'] = data['category_tax_rates']
@@ -917,7 +1039,11 @@ def manage_discount():
 
     if not is_admin:
         log_activity('manage_discount', admin_pin, 'unauthorized', {'status': 'failed'})
-        return jsonify({'message': 'Unauthorized. Admin PIN required.'}, 403)
+        return jsonify({'message': 'Unauthorized. Admin PIN required.'}), 403
+
+    if not check_perm(admin_pin, "manage_items"):
+        log_activity('manage_discount', admin_pin, 'unauthorized', {'status': 'failed', 'reason': 'Insufficient permissions'})
+        return jsonify({'message': 'Insufficient permissions.'}), 403
 
     action = data.get('action')  # 'add', 'update', 'delete'
 
@@ -930,30 +1056,30 @@ def manage_discount():
         usage_limit = data.get('usage_limit')  # null = unlimited
 
         if not code or not discount_type or value is None:
-            return jsonify({'message': 'Missing required fields: code, discount_type, value.'}, 400)
+            return jsonify({'message': 'Missing required fields: code, discount_type, value.'}), 400
 
         if discount_type not in ('percent', 'flat'):
-            return jsonify({'message': 'discount_type must be \"percent\" or \"flat\".'}, 400)
+            return jsonify({'message': 'discount_type must be "percent" or "flat".'}), 400
 
         try:
             value = float(value)
             if value <= 0:
                 raise ValueError
             if discount_type == 'percent' and value > 100:
-                return jsonify({'message': 'Percentage discount cannot exceed 100%.'}, 400)
+                return jsonify({'message': 'Percentage discount cannot exceed 100%.'}), 400
         except ValueError:
-            return jsonify({'message': 'Invalid value. Must be a positive number.'}, 400)
+            return jsonify({'message': 'Invalid value. Must be a positive number.'}), 400
 
         try:
             min_order = float(min_order) if min_order else 0
         except ValueError:
-            return jsonify({'message': 'Invalid min_order value.'}, 400)
+            return jsonify({'message': 'Invalid min_order value.'}), 400
 
         discounts = load_json_data(DISCOUNTS_FILE)
         code_upper = code.upper().strip()
 
         if action == 'add' and code_upper in discounts:
-            return jsonify({'message': f'Discount code \"{code_upper}\" already exists.'}, 409)
+            return jsonify({'message': f'Discount code "{code_upper}" already exists.'}), 409
 
         discounts[code_upper] = {
             'type': discount_type,
@@ -970,36 +1096,36 @@ def manage_discount():
         log_activity('manage_discount', admin_pin, 'admin', {
             'action': action, 'code': code_upper, 'type': discount_type, 'value': value
         })
-        return jsonify({'message': f'Discount code \"{code_upper}\" {action}ed successfully.', 'discounts': discounts})
+        return jsonify({'message': f'Discount code "{code_upper}" {action}ed successfully.', 'discounts': discounts})
 
     elif action == 'delete':
         code = data.get('code')
         if not code:
-            return jsonify({'message': 'Missing discount code to delete.'}, 400)
+            return jsonify({'message': 'Missing discount code to delete.'}), 400
 
         discounts = load_json_data(DISCOUNTS_FILE)
         code_upper = code.upper().strip()
 
         if code_upper not in discounts:
-            return jsonify({'message': f'Discount code \"{code_upper}\" not found.'}, 404)
+            return jsonify({'message': f'Discount code "{code_upper}" not found.'}), 404
 
         del discounts[code_upper]
         save_json_data(DISCOUNTS_FILE, discounts)
         log_activity('manage_discount', admin_pin, 'admin', {
             'action': 'delete', 'code': code_upper
         })
-        return jsonify({'message': f'Discount code \"{code_upper}\" deleted successfully.', 'discounts': discounts})
+        return jsonify({'message': f'Discount code "{code_upper}" deleted successfully.', 'discounts': discounts})
 
     elif action == 'toggle':
         code = data.get('code')
         if not code:
-            return jsonify({'message': 'Missing discount code to toggle.'}, 400)
+            return jsonify({'message': 'Missing discount code to toggle.'}), 400
 
         discounts = load_json_data(DISCOUNTS_FILE)
         code_upper = code.upper().strip()
 
         if code_upper not in discounts:
-            return jsonify({'message': f'Discount code \"{code_upper}\" not found.'}, 404)
+            return jsonify({'message': f'Discount code "{code_upper}" not found.'}), 404
 
         discounts[code_upper]['active'] = not discounts[code_upper].get('active', True)
         save_json_data(DISCOUNTS_FILE, discounts)
@@ -1007,9 +1133,9 @@ def manage_discount():
         log_activity('manage_discount', admin_pin, 'admin', {
             'action': 'toggle', 'code': code_upper, 'status': status
         })
-        return jsonify({'message': f'Discount code \"{code_upper}\" {status}.', 'discounts': discounts})
+        return jsonify({'message': f'Discount code "{code_upper}" {status}.', 'discounts': discounts})
 
-    return jsonify({'message': 'Invalid action. Use \"add\", \"update\", \"delete\", or \"toggle\".'}, 400)
+    return jsonify({'message': 'Invalid action. Use "add", "update", "delete", or "toggle".'}), 400
 
 
 @app.route('/api/validate_discount', methods=['POST'])
@@ -1069,6 +1195,217 @@ def validate_discount():
 
 
 # ============================================================
+# --- Admin Role & Permission Management ---
+# ============================================================
+
+@app.route('/api/admin/roles', methods=['GET'])
+def admin_roles():
+    """Returns list of all users with their roles and permissions (owner only)."""
+    admin_pin = request.args.get('adminPin', '')
+    if not admin_pin:
+        return jsonify({'message': 'Missing adminPin parameter.'}), 400
+
+    users = load_json_data(USERS_FILE)
+    if admin_pin not in users:
+        return jsonify({'message': 'Unauthorized.'}), 403
+
+    caller = users[admin_pin]
+    caller = upgrade_user(caller)
+    if caller.get('role') != 'owner':
+        return jsonify({'message': 'Owner only.'}), 403
+
+    user_list = []
+    for uid, u_data in users.items():
+        u_data = upgrade_user(u_data)
+        user_list.append({
+            'userId': uid,
+            'name': u_data.get('name', ''),
+            'role': u_data.get('role', 'user'),
+            'permissions': u_data.get('permissions', [])
+        })
+
+    return jsonify({'users': user_list})
+
+
+@app.route('/api/admin/update_permissions', methods=['POST'])
+def update_permissions():
+    """Update a user's permissions (owner only)."""
+    data = request.json
+    owner_pin = data.get('ownerPin')
+    target_user_id = data.get('targetUserId')
+    permissions = data.get('permissions')
+
+    if not owner_pin or not target_user_id or permissions is None:
+        return jsonify({'message': 'Missing required fields: ownerPin, targetUserId, permissions.'}), 400
+
+    users = load_json_data(USERS_FILE)
+    if owner_pin not in users:
+        return jsonify({'message': 'Unauthorized.'}), 403
+
+    owner = users[owner_pin]
+    owner = upgrade_user(owner)
+    if owner.get('role') != 'owner':
+        return jsonify({'message': 'Owner only.'}), 403
+
+    if target_user_id not in users:
+        return jsonify({'message': 'Target user not found.'}), 404
+
+    if not isinstance(permissions, list):
+        return jsonify({'message': 'Permissions must be a list of strings.'}), 400
+
+    users[target_user_id]['permissions'] = permissions
+    save_json_data(USERS_FILE, users)
+    log_activity('update_permissions', owner_pin, 'owner', {
+        'target_user_id': target_user_id,
+        'new_permissions': permissions
+    })
+    return jsonify({'message': 'Permissions updated successfully.', 'userId': target_user_id, 'permissions': permissions})
+
+
+# ============================================================
+# --- User Ban / Unban ---
+# ============================================================
+
+@app.route('/api/users/ban', methods=['POST'])
+def ban_user():
+    """Ban a user (requires ban_users permission)."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+    user_id = data.get('userId')
+    reason = data.get('reason', 'No reason provided')
+
+    if not admin_pin or not user_id:
+        return jsonify({'message': 'Missing required fields: adminPin, userId.'}), 400
+
+    if not check_perm(admin_pin, "ban_users"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    users = load_json_data(USERS_FILE)
+    if user_id not in users:
+        return jsonify({'message': 'User not found.'}), 404
+
+    users[user_id]['banned'] = True
+    users[user_id]['banned_reason'] = reason
+    save_json_data(USERS_FILE, users)
+    log_activity('ban_user', admin_pin, users.get(admin_pin, {}).get('role', 'unknown'), {
+        'banned_user_id': user_id,
+        'reason': reason
+    })
+    return jsonify({'message': f'User {user_id} banned successfully.', 'userId': user_id, 'reason': reason})
+
+
+@app.route('/api/users/unban', methods=['POST'])
+def unban_user():
+    """Unban a user (requires ban_users permission)."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+    user_id = data.get('userId')
+
+    if not admin_pin or not user_id:
+        return jsonify({'message': 'Missing required fields: adminPin, userId.'}), 400
+
+    if not check_perm(admin_pin, "ban_users"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    users = load_json_data(USERS_FILE)
+    if user_id not in users:
+        return jsonify({'message': 'User not found.'}), 404
+
+    if 'banned' in users[user_id]:
+        del users[user_id]['banned']
+    if 'banned_reason' in users[user_id]:
+        del users[user_id]['banned_reason']
+    save_json_data(USERS_FILE, users)
+    log_activity('unban_user', admin_pin, users.get(admin_pin, {}).get('role', 'unknown'), {
+        'unbanned_user_id': user_id
+    })
+    return jsonify({'message': f'User {user_id} unbanned successfully.', 'userId': user_id})
+
+
+# ============================================================
+# --- Menu History & Restore ---
+# ============================================================
+
+@app.route('/api/menu/history', methods=['GET'])
+def menu_history():
+    """Returns list of all menu backup files, sorted newest first."""
+    if not os.path.exists(MENU_BACKUPS_DIR):
+        return jsonify({'backups': []})
+
+    backup_files = glob.glob(os.path.join(MENU_BACKUPS_DIR, 'items_*.json'))
+    backups = []
+    for fpath in backup_files:
+        filename = os.path.basename(fpath)
+        # Parse date from filename: items_YYYY-MM-DD_HH-MM-SS.json
+        stem = filename.replace('items_', '').replace('.json', '')
+        try:
+            dt = datetime.strptime(stem, '%Y-%m-%d_%H-%M-%S')
+            backups.append({
+                'filename': filename,
+                'date': dt.strftime('%Y-%m-%d'),
+                'timestamp': dt.isoformat()
+            })
+        except ValueError:
+            # Skip files that don't match the expected pattern
+            continue
+
+    # Sort newest first
+    backups.sort(key=lambda b: b['timestamp'], reverse=True)
+    return jsonify({'backups': backups})
+
+
+@app.route('/api/menu/restore', methods=['POST'])
+def menu_restore():
+    """Restore a menu backup by date (owner only)."""
+    data = request.json
+    owner_pin = data.get('ownerPin')
+    date_str = data.get('date')
+
+    if not owner_pin or not date_str:
+        return jsonify({'message': 'Missing required fields: ownerPin, date.'}), 400
+
+    users = load_json_data(USERS_FILE)
+    if owner_pin not in users:
+        return jsonify({'message': 'Unauthorized.'}), 403
+
+    owner = users[owner_pin]
+    owner = upgrade_user(owner)
+    if owner.get('role') != 'owner':
+        return jsonify({'message': 'Owner only.'}), 403
+
+    # First create a safety backup of current items.json
+    if os.path.exists(ITEMS_FILE):
+        pre_restore_timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        pre_restore_filename = f'items_PRE_RESTORE_{pre_restore_timestamp}.json'
+        pre_restore_path = os.path.join(MENU_BACKUPS_DIR, pre_restore_filename)
+        if not os.path.exists(MENU_BACKUPS_DIR):
+            os.makedirs(MENU_BACKUPS_DIR, exist_ok=True)
+        shutil.copy2(ITEMS_FILE, pre_restore_path)
+
+    # Find backup file matching the given date: items_YYYY-MM-DD_*.json
+    pattern = os.path.join(MENU_BACKUPS_DIR, f'items_{date_str}_*.json')
+    matching_files = sorted(glob.glob(pattern))
+
+    if not matching_files:
+        return jsonify({'message': f'No backup found for date {date_str}.'}), 404
+
+    # Use the first (oldest) matching backup for that date
+    backup_path = matching_files[0]
+    backup_filename = os.path.basename(backup_path)
+
+    # Read the backup and write to items.json
+    with open(backup_path, 'r') as f:
+        backup_data = json.load(f)
+    save_json_data(ITEMS_FILE, backup_data)
+
+    log_activity('menu_restore', owner_pin, 'owner', {
+        'restored_from': backup_filename,
+        'date': date_str
+    })
+    return jsonify({'message': f'Menu restored from backup {backup_filename}.', 'filename': backup_filename})
+
+
+# ============================================================
 # --- Kitchen Order Queue System ---
 # ============================================================
 
@@ -1082,7 +1419,7 @@ def kitchen_queue():
         active_orders.sort(key=lambda o: o.get('date', ''))
         return jsonify({'queue': active_orders, 'count': len(active_orders)})
     except Exception as e:
-        return jsonify({'error': str(e)}, 500)
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/api/kitchen/claim', methods=['POST'])
@@ -1093,16 +1430,16 @@ def kitchen_claim():
     order_id = data.get('order_id')
 
     if not cook_id:
-        return jsonify({'error': 'cookId is required'}, 400)
+        return jsonify({'error': 'cookId is required'}), 400
     if order_id is None:
-        return jsonify({'error': 'order_id is required'}, 400)
+        return jsonify({'error': 'order_id is required'}), 400
 
     try:
         orders = load_json_data(ORDERS_FILE)
         for order in orders:
             if order.get('order_id') == order_id:
                 if order.get('status') != 'pending':
-                    return jsonify({'error': f'Order #{order_id} is already {order.get("status")}'}, 409)
+                    return jsonify({'error': f'Order #{order_id} is already {order.get("status")}'}), 409
                 order['status'] = 'preparing'
                 order['claimed_by'] = cook_id
                 order['claimed_at'] = datetime.now().isoformat()
@@ -1111,9 +1448,9 @@ def kitchen_claim():
                     'order_id': order_id, 'action': 'claimed'
                 })
                 return jsonify({'message': f'Order #{order_id} claimed', 'order': order})
-        return jsonify({'error': f'Order #{order_id} not found'}, 404)
+        return jsonify({'error': f'Order #{order_id} not found'}), 404
     except Exception as e:
-        return jsonify({'error': str(e)}, 500)
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/api/kitchen/complete', methods=['POST'])
@@ -1124,16 +1461,16 @@ def kitchen_complete():
     order_id = data.get('order_id')
 
     if not cook_id:
-        return jsonify({'error': 'cookId is required'}, 400)
+        return jsonify({'error': 'cookId is required'}), 400
     if order_id is None:
-        return jsonify({'error': 'order_id is required'}, 400)
+        return jsonify({'error': 'order_id is required'}), 400
 
     try:
         orders = load_json_data(ORDERS_FILE)
         for order in orders:
             if order.get('order_id') == order_id:
                 if order.get('status') != 'preparing':
-                    return jsonify({'error': f'Order #{order_id} is not in preparing status (current: {order.get("status")})'}, 409)
+                    return jsonify({'error': f'Order #{order_id} is not in preparing status (current: {order.get("status")})'}), 409
                 order['status'] = 'completed'
                 order['completed_at'] = datetime.now().isoformat()
                 save_json_data(ORDERS_FILE, orders)
@@ -1141,9 +1478,9 @@ def kitchen_complete():
                     'order_id': order_id, 'action': 'completed'
                 })
                 return jsonify({'message': f'Order #{order_id} completed', 'order': order})
-        return jsonify({'error': f'Order #{order_id} not found'}, 404)
+        return jsonify({'error': f'Order #{order_id} not found'}), 404
     except Exception as e:
-        return jsonify({'error': str(e)}, 500)
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/api/kitchen/cancel', methods=['POST'])
@@ -1155,16 +1492,16 @@ def kitchen_cancel():
     reason = data.get('reason', 'No reason provided')
 
     if not cook_id:
-        return jsonify({'error': 'cookId is required'}, 400)
+        return jsonify({'error': 'cookId is required'}), 400
     if order_id is None:
-        return jsonify({'error': 'order_id is required'}, 400)
+        return jsonify({'error': 'order_id is required'}), 400
 
     try:
         orders = load_json_data(ORDERS_FILE)
         for order in orders:
             if order.get('order_id') == order_id:
                 if order.get('status') in ('completed', 'cancelled'):
-                    return jsonify({'error': f'Order #{order_id} is already {order.get("status")}'}, 409)
+                    return jsonify({'error': f'Order #{order_id} is already {order.get("status")}'}), 409
                 order['status'] = 'cancelled'
                 order['cancellation_reason'] = reason
                 order['cancelled_by'] = cook_id
@@ -1174,9 +1511,9 @@ def kitchen_cancel():
                     'order_id': order_id, 'action': 'cancelled', 'reason': reason
                 })
                 return jsonify({'message': f'Order #{order_id} cancelled', 'order': order})
-        return jsonify({'error': f'Order #{order_id} not found'}, 404)
+        return jsonify({'error': f'Order #{order_id} not found'}), 404
     except Exception as e:
-        return jsonify({'error': str(e)}, 500)
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/api/kitchen/stats', methods=['GET'])
@@ -1227,7 +1564,7 @@ def kitchen_stats():
         }
         return jsonify(stats)
     except Exception as e:
-        return jsonify({'error': str(e)}, 500)
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/api/kitchen/order/<int:order_id>', methods=['GET'])
@@ -1238,9 +1575,9 @@ def kitchen_order_detail(order_id):
         for order in orders:
             if order.get('order_id') == order_id:
                 return jsonify({'order': order})
-        return jsonify({'error': f'Order #{order_id} not found'}, 404)
+        return jsonify({'error': f'Order #{order_id} not found'}), 404
     except Exception as e:
-        return jsonify({'error': str(e)}, 500)
+        return jsonify({'error': str(e)}), 500
 
 
 # ============================================================
