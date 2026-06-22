@@ -19,7 +19,7 @@
 ## Priority: MEDIUM
 
 - [x] **Customer order lookup** — From the kiosk mode, allow looking up an order by order number or table number to pull it up for payment. Added `/api/orders/lookup` (GET) and `/api/orders/kiosk_pay` (POST) endpoints. Kiosk overlay has "Find Order" tab with order# or table# search, displays found order items/totals, tip selector, payment method with split support, and "Pay Now" that marks order as paid. Handles single orders and table-lookup with multiple order selection. Prevents double-payment. [worker-2]
-- [ ] **Table tab management** — Each table accumulates a running tab (orders placed from that table). Staff can view a table's tab, add items, and close it out (checkout). Tab history per table.
+- [~] worker-3 **Table tab management** — Each table accumulates a running tab (orders placed from that table). Staff can view a table's tab, add items, and close it out (checkout). Tab history per table.
 - [ ] **Owner activity log filter** — Let owner filter activity log by: admin user, action type, date range. Show who changed what and when.
 - [ ] Add export data to CSV/Excel (orders, timesheet, activity log)
 - [ ] Add date range filtering for order history and stats
