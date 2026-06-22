@@ -16,8 +16,24 @@
   --success: #0f3460;
   --text: #eee;
   --text2: #a0a0b0;
+  --border: #2a2a4e;
+  --hover: #1e2a4a;
+  --card-alt: #1a1a2e;
   --radius: 12px;
   --tap: 48px;
+}
+
+/* ── LIGHT THEME ── */
+.light-theme {
+  --bg: #f0f2f5;
+  --card: #ffffff;
+  --accent: #d63a52;
+  --success: #0f3460;
+  --text: #222222;
+  --text2: #666666;
+  --border: #d0d0d0;
+  --hover: #e0e0e0;
+  --card-alt: #f0f2f5;
 }
 
 html, body {
@@ -59,7 +75,7 @@ button.ghost { background: transparent; color: var(--text2); }
 
 input, select {
   background: var(--bg);
-  border: 2px solid #2a2a4e;
+  border: 2px solid var(--border);
   border-radius: var(--radius);
   color: var(--text);
   font-size: 16px;
@@ -76,7 +92,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 .perm-toggle input { opacity: 0; width: 0; height: 0; }
 .perm-slider {
   position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-  background-color: #2a2a4e; transition: .3s; border-radius: 28px;
+  background-color: var(--border); transition: .3s; border-radius: 28px;
 }
 .perm-slider:before {
   position: absolute; content: ""; height: 22px; width: 22px;
@@ -85,7 +101,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 .perm-toggle input:checked + .perm-slider { background-color: var(--accent); }
 .perm-toggle input:checked + .perm-slider:before { transform: translateX(24px); }
 .perm-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.perm-table th, .perm-table td { padding: 8px 6px; text-align: center; border-bottom: 1px solid #2a2a4e; }
+.perm-table th, .perm-table td { padding: 8px 6px; text-align: center; border-bottom: 1px solid var(--border); }
 .perm-table th { color: var(--text2); font-size: 11px; white-space: nowrap; }
 .perm-table td:first-child { text-align: left; font-weight: 600; }
 .perm-save-btn { font-size: 12px; padding: 6px 12px; min-height: 32px; }
@@ -110,9 +126,9 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 
 /* ── EMPLOYEE PERF TABLE ── */
 .emp-perf-table { width: 100%; border-collapse: collapse; font-size: 14px; }
-.emp-perf-table th { color: var(--text2); font-size: 12px; text-align: left; padding: 10px 8px; border-bottom: 2px solid #2a2a4e; white-space: nowrap; }
-.emp-perf-table td { padding: 10px 8px; border-bottom: 1px solid #2a2a4e; }
-.emp-perf-table tr:hover td { background: #1e2a4a; }
+.emp-perf-table th { color: var(--text2); font-size: 12px; text-align: left; padding: 10px 8px; border-bottom: 2px solid var(--border); white-space: nowrap; }
+.emp-perf-table td { padding: 10px 8px; border-bottom: 1px solid var(--border); }
+.emp-perf-table tr:hover td { background: var(--hover); }
 .emp-perf-table .num { text-align: right; font-variant-numeric: tabular-nums; }
 .emp-perf-table .rank { color: var(--text2); font-size: 12px; width: 30px; text-align: center; }
 .emp-perf-card { background: var(--card); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; }
@@ -140,7 +156,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 }
 #pinPad button {
   font-size: 24px; font-weight: 700; background: var(--card);
-  color: var(--text); border: 2px solid #2a2a4e;
+  color: var(--text); border: 2px solid var(--border);
   min-height: 72px; min-width: 80px;
 }
 #pinPad button:active { border-color: var(--accent); background: var(--accent); }
@@ -161,7 +177,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 #topBar .logout-btn { padding: 8px 16px; font-size: 14px; min-height: 40px; }
 
 #mainTabs {
-  display: flex; gap: 0; border-bottom: 2px solid #2a2a4e;
+  display: flex; gap: 0; border-bottom: 2px solid var(--border);
   background: var(--card); overflow-x: auto; -webkit-overflow-scrolling: touch;
 }
 #mainTabs button {
@@ -242,7 +258,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 .cart-item .ci-price { color: var(--text2); font-size: 13px; }
 .cart-item .ci-qty { display: flex; align-items: center; gap: 6px; }
 .cart-item .ci-qty button {
-  background: #2a2a4e; color: #fff; font-size: 14px; min-width: 30px; min-height: 30px;
+  background: var(--border); color: #fff; font-size: 14px; min-width: 30px; min-height: 30px;
   padding: 4px 8px; border-radius: 6px;
 }
 .cart-item .ci-remove { background: transparent; color: var(--accent); font-size: 18px; padding: 4px; min-width: 30px; min-height: 30px; }
@@ -251,7 +267,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 .payment-methods { display: flex; gap: 8px; flex-wrap: wrap; }
 .payment-methods button {
   flex: 1; min-width: 80px; background: var(--bg); color: var(--text2);
-  border: 2px solid #2a2a4e;
+  border: 2px solid var(--border);
 }
 .payment-methods button.selected { background: var(--success); color: #fff; border-color: var(--success); }
 #cartActions { display: flex; gap: 8px; }
@@ -276,7 +292,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 .history-order .ho-header { display: flex; justify-content: space-between; align-items: center; }
 .history-order .ho-total { color: var(--accent); font-weight: 700; font-size: 18px; }
 .history-order .ho-meta { color: var(--text2); font-size: 13px; margin-top: 4px; }
-.history-order .ho-details { display: none; margin-top: 10px; padding-top: 10px; border-top: 1px solid #2a2a4e; }
+.history-order .ho-details { display: none; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
 .history-order.expanded .ho-details { display: block; }
 .history-order .ho-item { display: flex; justify-content: space-between; padding: 4px 0; font-size: 14px; }
 
@@ -584,7 +600,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 }
 #kioskOverlay .kiosk-item {
   display: flex; justify-content: space-between; align-items: center;
-  background: #16213e; border-radius: 12px; padding: 16px 20px;
+  background: var(--card); border-radius: 12px; padding: 16px 20px;
   margin-bottom: 8px; font-size: 26px;
 }
 #kioskOverlay .kiosk-item .ki-name { font-weight: 600; }
@@ -592,7 +608,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 #kioskOverlay .kiosk-item .ki-price { color: #a0a0b0; }
 #kioskOverlay .kiosk-totals {
   width: 100%; max-width: 700px;
-  background: #16213e; border-radius: 12px; padding: 24px;
+  background: var(--card); border-radius: 12px; padding: 24px;
   margin-bottom: 20px;
 }
 #kioskOverlay .kiosk-totals .kt-row {
@@ -601,37 +617,37 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 }
 #kioskOverlay .kiosk-totals .kt-row.total {
   font-size: 36px; font-weight: 700; color: var(--accent);
-  border-top: 2px solid #2a2a4e; padding-top: 12px; margin-top: 8px;
+  border-top: 2px solid var(--border); padding-top: 12px; margin-top: 8px;
 }
 #kioskOverlay .kiosk-totals .kt-row.tip-line { color: #2ecc71; }
 #kioskOverlay .kiosk-tip {
   width: 100%; max-width: 700px;
   margin-bottom: 20px;
 }
-#kioskOverlay .kiosk-tip h3 { font-size: 28px; text-align: center; margin-bottom: 12px; color: #eee; }
+#kioskOverlay .kiosk-tip h3 { font-size: 28px; text-align: center; margin-bottom: 12px; color: var(--text); }
 #kioskOverlay .kiosk-tip .tip-btns {
   display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
 }
 #kioskOverlay .kiosk-tip .tip-btns button {
   flex: 1; min-width: 120px; min-height: 64px;
   font-size: 24px; font-weight: 700; border-radius: 12px;
-  background: #16213e; color: #eee; border: 2px solid #2a2a4e;
-  cursor: pointer; transition: all 0.2s;
+  background: var(--card); color: var(--text); border: 2px solid var(--border);
+   cursor: pointer;transition: all 0.2s;
 }
 #kioskOverlay .kiosk-tip .tip-btns button:hover,
 #kioskOverlay .kiosk-tip .tip-btns button.selected {
   background: var(--accent); border-color: var(--accent); color: #fff;
 }
 #kioskOverlay .kiosk-tip .tip-btns .tip-custom {
-  background: #1a1a2e; border-color: #555;
+  background: var(--card-alt); border-color: var(--border);
 }
 #kioskOverlay .kiosk-tip .tip-custom-input {
   display: flex; gap: 8px; align-items: center; justify-content: center; margin-top: 10px;
 }
 #kioskOverlay .kiosk-tip .tip-custom-input input {
   width: 160px; font-size: 24px; padding: 12px; text-align: center;
-  background: #1a1a2e; border: 2px solid #555; border-radius: 12px;
-  color: #fff; min-height: 56px;
+  background: var(--card-alt); border: 2px solid var(--border); border-radius: 12px;
+  color: var(--text); min-height: 56px;
 }
 #kioskOverlay .kiosk-tip .tip-custom-input input:focus { border-color: var(--accent); outline: none; }
 #kioskOverlay .kiosk-payment {
@@ -645,8 +661,8 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 #kioskOverlay .kiosk-payment .kiosk-pay-btns button {
   flex: 1; max-width: 200px; min-height: 64px;
   font-size: 24px; font-weight: 600; border-radius: 12px;
-  background: #16213e; color: #eee; border: 2px solid #2a2a4e;
-  cursor: pointer;
+  background: var(--card); color: var(--text); border: 2px solid var(--border);
+   cursor: pointer;
 }
 #kioskOverlay .kiosk-payment .kiosk-pay-btns button.selected {
   background: #0f3460; border-color: #0f3460; color: #fff;
@@ -697,14 +713,14 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 /* ── KIOSK LOOKUP MODE ── */
 .kiosk-mode-tabs {
   display: flex; gap: 0; width: 100%; max-width: 700px;
-  background: #16213e; border-radius: 12px 12px 0 0; overflow: hidden;
+  background: var(--card); border-radius: 12px 12px 0 0; overflow: hidden;
 }
 .kiosk-mode-tabs button {
-  flex: 1; background: #16213e; color: var(--text2); border: none;
+  flex: 1; background: var(--card); color: var(--text2); border: none;
   font-size: 20px; font-weight: 600; padding: 16px 12px; min-height: 56px;
   cursor: pointer; transition: all 0.2s; border-bottom: 3px solid transparent;
 }
-.kiosk-mode-tabs button.active { color: var(--accent); border-bottom-color: var(--accent); background: #1a1a2e; }
+.kiosk-mode-tabs button.active { color: var(--accent); border-bottom-color: var(--accent); background: var(--card-alt); }
 .kiosk-mode-tabs button:active { opacity: 0.7; }
 
 .kiosk-lookup-form {
@@ -715,8 +731,8 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 }
 .klf-row input {
   flex: 1; min-width: 160px; max-width: 240px; font-size: 24px; padding: 16px;
-  min-height: 64px; text-align: center; background: #1a1a2e; border: 2px solid #2a2a4e;
-  border-radius: 12px; color: #fff;
+  min-height: 64px; text-align: center; background: var(--card-alt); border: 2px solid var(--border);
+  border-radius: 12px; color: var(--text);
 }
 .klf-row input:focus { border-color: var(--accent); outline: none; }
 .klf-or { color: var(--text2); font-size: 18px; font-weight: 600; padding: 0 4px; }
@@ -735,7 +751,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 
 .kiosk-lookup-order-info {
   width: 100%; max-width: 700px; text-align: center;
-  background: #16213e; border-radius: 12px; padding: 16px 20px; margin-bottom: 16px;
+  background: var(--card); border-radius: 12px; padding: 16px 20px; margin-bottom: 16px;
 }
 .kiosk-lookup-order-info .kloi-order-num { font-size: 28px; font-weight: 700; color: var(--accent); }
 .kiosk-lookup-order-info .kloi-meta { color: var(--text2); font-size: 18px; margin-top: 4px; }
@@ -745,26 +761,26 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 }
 .kiosk-lookup-items .kli-item {
   display: flex; justify-content: space-between; align-items: center;
-  background: #16213e; border-radius: 10px; padding: 12px 18px; margin-bottom: 6px; font-size: 22px;
+  background: var(--card); border-radius: 10px; padding: 12px 18px; margin-bottom: 6px; font-size: 22px;
 }
 .kiosk-lookup-items .kli-item .kli-name { font-weight: 600; }
 .kiosk-lookup-items .kli-item .kli-qty { color: var(--accent); margin: 0 10px; }
 .kiosk-lookup-items .kli-item .kli-price { color: var(--text2); }
 
 .kiosk-lookup-totals {
-  width: 100%; max-width: 700px; background: #16213e; border-radius: 12px; padding: 20px 24px; margin-bottom: 16px;
+  width: 100%; max-width: 700px; background: var(--card); border-radius: 12px; padding: 20px 24px; margin-bottom: 16px;
 }
 .kiosk-lookup-totals .klt-row {
   display: flex; justify-content: space-between; font-size: 22px; padding: 4px 0;
 }
 .kiosk-lookup-totals .klt-row.total {
   font-size: 32px; font-weight: 700; color: var(--accent);
-  border-top: 2px solid #2a2a4e; padding-top: 10px; margin-top: 6px;
+  border-top: 2px solid var(--border); padding-top: 10px; margin-top: 6px;
 }
 .kiosk-lookup-totals .klt-row.tip-line { color: #2ecc71; }
 
 .kiosk-lookup-back {
-  background: transparent; color: var(--text2); border: 1px solid #2a2a4e;
+  background: transparent; color: var(--text2); border: 1px solid var(--border);
   border-radius: 10px; font-size: 18px; padding: 12px 24px; min-height: 52px;
   cursor: pointer; margin-top: 8px;
 }
@@ -795,8 +811,8 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 
   <!-- Owner username+password mode -->
   <div id="loginOwnerMode" style="display:none;flex-direction:column;align-items:center;gap:12px;">
-    <input type="text" id="ownerUsername" placeholder="Username" autocomplete="username" style="font-size:18px;padding:12px;width:260px;border-radius:var(--radius);background:var(--card);color:var(--text);border:2px solid #2a2a4e;text-align:center;">
-    <input type="password" id="ownerPassword" placeholder="Password" autocomplete="current-password" style="font-size:18px;padding:12px;width:260px;border-radius:var(--radius);background:var(--card);color:var(--text);border:2px solid #2a2a4e;text-align:center;">
+    <input type="text" id="ownerUsername" placeholder="Username" autocomplete="username" style="font-size:18px;padding:12px;width:260px;border-radius:var(--radius);background:var(--card);color:var(--text);border:2px solid var(--border);text-align:center;">
+    <input type="password" id="ownerPassword" placeholder="Password" autocomplete="current-password" style="font-size:18px;padding:12px;width:260px;border-radius:var(--radius);background:var(--card);color:var(--text);border:2px solid var(--border);text-align:center;">
     <button onclick="ownerLogin()" style="font-size:20px;padding:14px 48px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);cursor:pointer;font-weight:700;min-height:56px;">Sign In</button>
   </div>
 
@@ -810,6 +826,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
     <span class="app-title" data-i18n="app.title">🍽️ POS System</span>
     <span class="user-info" id="userInfoDisplay"></span>
     <div style="display:flex;gap:8px;align-items:center;">
+      <button class="ghost logout-btn" id="themeToggle" onclick="toggleTheme()" style="font-size:18px;padding:8px 12px;min-height:40px;" title="Toggle theme">🌙</button>
       <button class="ghost logout-btn" id="langToggle" onclick="switchLanguage(currentLang === 'en' ? 'es' : 'en')" style="font-size:18px;padding:8px 12px;min-height:40px;" title="Switch language">🇪🇸</button>
       <button class="ghost logout-btn" onclick="doLogout()" data-i18n="logout">🚪 Logout</button>
     </div>
@@ -839,7 +856,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
             <div id="discountStatus" style="font-size:13px;margin-top:4px;"></div>
           </div>
           <div id="orderNotesRow" style="display:none;margin-top:4px;">
-            <textarea id="orderNotesInput" placeholder="Order notes / special instructions..." style="width:100%;background:var(--bg);border:2px solid #2a2a4e;border-radius:var(--radius);color:var(--text);font-size:14px;padding:10px 12px;min-height:48px;resize:vertical;font-family:inherit;" rows="2" maxlength="500" data-i18n-placeholder="cart.notes"></textarea>
+            <textarea id="orderNotesInput" placeholder="Order notes / special instructions..." style="width:100%;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:14px;padding:10px 12px;min-height:48px;resize:vertical;font-family:inherit;" rows="2" maxlength="500" data-i18n-placeholder="cart.notes"></textarea>
           </div>
           <div id="tableRow" style="display:none;margin-top:4px;">
             <div style="display:flex;gap:8px;align-items:center;">
@@ -855,15 +872,15 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
               <span id="tipDisplay" style="color:#2ecc71;font-size:14px;font-weight:600;"></span>
             </div>
             <div class="tip-btns" id="cartTipBtns" style="display:flex;gap:6px;flex-wrap:wrap;">
-              <button onclick="selectTip(0)" class="tip-btn" data-tip="0" style="flex:1;min-width:60px;min-height:44px;font-size:14px;font-weight:600;border-radius:8px;background:var(--bg);color:var(--text2);border:2px solid #2a2a4e;cursor:pointer;transition:all 0.2s;">No Tip</button>
-              <button onclick="selectTip(15)" class="tip-btn" data-tip="15" style="flex:1;min-width:60px;min-height:44px;font-size:14px;font-weight:600;border-radius:8px;background:var(--bg);color:var(--text2);border:2px solid #2a2a4e;cursor:pointer;transition:all 0.2s;">15%</button>
-              <button onclick="selectTip(18)" class="tip-btn" data-tip="18" style="flex:1;min-width:60px;min-height:44px;font-size:14px;font-weight:600;border-radius:8px;background:var(--bg);color:var(--text2);border:2px solid #2a2a4e;cursor:pointer;transition:all 0.2s;">18%</button>
-              <button onclick="selectTip(20)" class="tip-btn" data-tip="20" style="flex:1;min-width:60px;min-height:44px;font-size:14px;font-weight:600;border-radius:8px;background:var(--bg);color:var(--text2);border:2px solid #2a2a4e;cursor:pointer;transition:all 0.2s;">20%</button>
-              <button onclick="selectTip(-1)" class="tip-btn tip-custom" style="flex:1;min-width:60px;min-height:44px;font-size:14px;font-weight:600;border-radius:8px;background:var(--bg);color:var(--text2);border:2px solid #2a2a4e;cursor:pointer;transition:all 0.2s;">Custom</button>
+              <button onclick="selectTip(0)" class="tip-btn" data-tip="0" style="flex:1;min-width:60px;min-height:44px;font-size:14px;font-weight:600;border-radius:8px;background:var(--bg);color:var(--text2);border:2px solid var(--border);cursor:pointer;transition:all 0.2s;">No Tip</button>
+              <button onclick="selectTip(15)" class="tip-btn" data-tip="15" style="flex:1;min-width:60px;min-height:44px;font-size:14px;font-weight:600;border-radius:8px;background:var(--bg);color:var(--text2);border:2px solid var(--border);cursor:pointer;transition:all 0.2s;">15%</button>
+              <button onclick="selectTip(18)" class="tip-btn" data-tip="18" style="flex:1;min-width:60px;min-height:44px;font-size:14px;font-weight:600;border-radius:8px;background:var(--bg);color:var(--text2);border:2px solid var(--border);cursor:pointer;transition:all 0.2s;">18%</button>
+              <button onclick="selectTip(20)" class="tip-btn" data-tip="20" style="flex:1;min-width:60px;min-height:44px;font-size:14px;font-weight:600;border-radius:8px;background:var(--bg);color:var(--text2);border:2px solid var(--border);cursor:pointer;transition:all 0.2s;">20%</button>
+              <button onclick="selectTip(-1)" class="tip-btn tip-custom" style="flex:1;min-width:60px;min-height:44px;font-size:14px;font-weight:600;border-radius:8px;background:var(--bg);color:var(--text2);border:2px solid var(--border);cursor:pointer;transition:all 0.2s;">Custom</button>
             </div>
             <div id="customTipRow" style="display:none;margin-top:6px;">
               <div style="display:flex;gap:6px;align-items:center;">
-                <input type="number" id="customTipInput" placeholder="$0.00" step="0.01" min="0" inputmode="decimal" style="flex:1;max-width:140px;min-height:44px;font-size:16px;padding:8px 12px;background:var(--bg);border:2px solid #2a2a4e;border-radius:var(--radius);color:var(--text);">
+                <input type="number" id="customTipInput" placeholder="$0.00" step="0.01" min="0" inputmode="decimal" style="flex:1;max-width:140px;min-height:44px;font-size:16px;padding:8px 12px;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);">
                 <button class="outline" onclick="document.getElementById('customTipInput').value='';updateTipCustom();" style="font-size:13px;padding:8px 14px;min-height:40px;">Clear</button>
               </div>
             </div>
@@ -1313,7 +1330,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
     <div id="refundOrderSummary" style="background:var(--bg);padding:12px;border-radius:8px;margin-bottom:12px;"></div>
     <div style="margin-bottom:12px;">
       <label style="display:block;color:var(--text2);font-size:14px;margin-bottom:4px;" data-i18n="history.refund_reason_placeholder">Reason for refund:</label>
-      <textarea id="refundReasonInput" rows="3" style="width:100%;padding:12px;border-radius:8px;background:var(--bg);border:2px solid #2a2a4e;color:var(--text);font-size:16px;resize:vertical;" placeholder="Enter reason for refund..."></textarea>
+      <textarea id="refundReasonInput" rows="3" style="width:100%;padding:12px;border-radius:8px;background:var(--bg);border:2px solid var(--border);color:var(--text);font-size:16px;resize:vertical;" placeholder="Enter reason for refund..."></textarea>
     </div>
     <div style="display:flex;gap:8px;justify-content:flex-end;">
       <button class="ghost" onclick="closeRefundOverlay()" data-i18n="history.refund_cancel_btn" style="font-size:16px;padding:12px 24px;min-height:48px;">Cancel</button>
@@ -1710,6 +1727,36 @@ function switchLanguage(lang) {
   if (langBtn) langBtn.textContent = currentLang === 'es' ? '🇺🇸' : '🇪🇸';
 }
 
+// ═══════════ THEME TOGGLE ═══════════
+/** Get stored theme or default to 'dark' */
+function detectTheme() {
+  return localStorage.getItem('pos_theme') || 'dark';
+}
+
+/** Apply theme and persist */
+function applyTheme(theme) {
+  const html = document.getElementById('htmlTag');
+  const metaTheme = document.querySelector('meta[name="theme-color"]');
+  if (theme === 'light') {
+    html.classList.add('light-theme');
+    if (metaTheme) metaTheme.content = '#f0f2f5';
+  } else {
+    html.classList.remove('light-theme');
+    if (metaTheme) metaTheme.content = '#1a1a2e';
+  }
+  // Update toggle button icon
+  const btn = document.getElementById('themeToggle');
+  if (btn) btn.textContent = theme === 'light' ? '☀️' : '🌙';
+  localStorage.setItem('pos_theme', theme);
+}
+
+/** Toggle between dark and light theme */
+function toggleTheme() {
+  const current = detectTheme();
+  const next = current === 'dark' ? 'light' : 'dark';
+  applyTheme(next);
+}
+
 // ═══════════ STATE ═══════════
 let currentUser = null; // { id, name, role, permissions }
 let cart = [];
@@ -1760,6 +1807,8 @@ window.addEventListener('DOMContentLoaded', () => {
   }
   // Detect and set language
   currentLang = detectLanguage();
+  // Apply saved theme preference
+  applyTheme(detectTheme());
   // Register service worker
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(() => {});
@@ -2183,7 +2232,7 @@ function renderCart() {
         </div>
       </div>
       <div style="display:flex;gap:6px;align-items:center;">
-        <input type="text" id="itemNote_${i}" value="${escJs(itemNote)}" placeholder="${t('cart.item_note')}" maxlength="200" style="flex:1;min-height:32px;padding:6px 10px;font-size:13px;background:var(--bg);border:1px solid #2a2a4e;border-radius:6px;color:var(--text);" onchange="cart[${i}].note = this.value"/>
+        <input type="text" id="itemNote_${i}" value="${escJs(itemNote)}" placeholder="${t('cart.item_note')}" maxlength="200" style="flex:1;min-height:32px;padding:6px 10px;font-size:13px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);" onchange="cart[${i}].note = this.value"/>
       </div>
     </div>`;
   });
@@ -2268,7 +2317,7 @@ function buildPaymentMethods() {
     inputsDiv.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;width:100%;';
     paymentSplits.forEach((s, i) => {
       const row = document.createElement('div');
-      row.style.cssText = 'display:flex;align-items:center;gap:6px;background:#16213e;padding:6px 10px;border-radius:8px;flex:1;min-width:140px;';
+      row.style.cssText = 'display:flex;align-items:center;gap:6px;background:var(--card);padding:6px 10px;border-radius:8px;flex:1;min-width:140px;';
       const label = document.createElement('span');
       label.textContent = s.method === 'Cash' ? '💵' : s.method === 'Card' ? '💳' : '📱';
       label.style.cssText = 'font-size:16px;';
@@ -2279,7 +2328,7 @@ function buildPaymentMethods() {
       inp.inputMode = 'decimal';
       inp.value = s.amount > 0 ? s.amount.toFixed(2) : '';
       inp.placeholder = '$0.00';
-      inp.style.cssText = 'flex:1;min-width:70px;min-height:40px;padding:4px 8px;background:#1a1a2e;border:1px solid #2a2a4e;border-radius:6px;color:#fff;font-size:14px;';
+      inp.style.cssText = 'flex:1;min-width:70px;min-height:40px;padding:4px 8px;background:var(--card-alt);border:1px solid var(--border);border-radius:6px;color:#fff;font-size:14px;';
       inp.oninput = () => {
         const val = parseFloat(inp.value);
         paymentSplits[i].amount = isNaN(val) ? 0 : Math.round(val * 100) / 100;
@@ -2301,7 +2350,7 @@ function buildPaymentMethods() {
     // Split evenly button
     const eqBtn = document.createElement('button');
     eqBtn.textContent = '↔️ Split Evenly';
-    eqBtn.style.cssText = 'flex:1;background:#0f3460;color:#fff;border:1px solid #2a2a4e;border-radius:8px;padding:8px 12px;min-height:40px;font-size:13px;cursor:pointer;margin-top:4px;';
+    eqBtn.style.cssText = 'flex:1;background:#0f3460;color:#fff;border:1px solid var(--border);border-radius:8px;padding:8px 12px;min-height:40px;font-size:13px;cursor:pointer;margin-top:4px;';
     eqBtn.onclick = () => {
       autoDistribute();
       renderSplitUI();
@@ -2793,9 +2842,9 @@ async function loadOrderHistory() {
             <div class="ho-item" style="color:var(--text2);"><span>${t('history.subtotal')}</span><span>$${parseFloat(o.subtotal || o.total || 0).toFixed(2)}</span></div>
             <div class="ho-item" style="color:var(--text2);"><span>${t('history.tax')}</span><span>$${parseFloat(o.tax_amount).toFixed(2)}</span></div>
             ${hasTip ? \`<div class="ho-item" style="color:#2ecc71;"><span>💬 ${t('receipt.tip')}</span><span>+$${parseFloat(o.tip_amount).toFixed(2)}</span></div>\` : ''}
-            <div class="ho-item" style="font-weight:700;border-top:1px solid #2a2a4e;padding-top:4px;margin-top:4px;"><span>${t('history.total')}</span><span>$${total}</span></div>
+            <div class="ho-item" style="font-weight:700;border-top:1px solid var(--border);padding-top:4px;margin-top:4px;"><span>${t('history.total')}</span><span>$${total}</span></div>
           \` : ''}
-          ${orderNotes ? \`<div class="ho-item" style="color:var(--text2);border-top:1px solid #2a2a4e;padding-top:4px;margin-top:4px;"><span style="font-weight:600;">📝 ${t('history.order_notes')}</span><br/><span style="font-size:13px;">${escHtml(orderNotes)}</span></div>\` : ''}
+          ${orderNotes ? \`<div class="ho-item" style="color:var(--text2);border-top:1px solid var(--border);padding-top:4px;margin-top:4px;"><span style="font-weight:600;">📝 ${t('history.order_notes')}</span><br/><span style="font-size:13px;">${escHtml(orderNotes)}</span></div>\` : ''}
         </div>
       </div>`;
     list.innerHTML = html;
@@ -3615,7 +3664,7 @@ async function viewTableTab(tableNumber) {
       <div style="display:flex;justify-content:space-between;font-weight:600;"><span>Active Orders:</span><span>${data.order_count}</span></div>
       <div style="display:flex;justify-content:space-between;"><span>Subtotal:</span><span>$${data.subtotal.toFixed(2)}</span></div>
       <div style="display:flex;justify-content:space-between;"><span>Tax:</span><span>$${data.tax.toFixed(2)}</span></div>
-      <div style="display:flex;justify-content:space-between;font-size:20px;color:var(--accent);font-weight:700;border-top:2px solid #2a2a4e;padding-top:8px;margin-top:8px;"><span>Total:</span><span>$${data.total.toFixed(2)}</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:20px;color:var(--accent);font-weight:700;border-top:2px solid var(--border);padding-top:8px;margin-top:8px;"><span>Total:</span><span>$${data.total.toFixed(2)}</span></div>
     </div>`;
     html += '<h4 style="margin-bottom:8px;">Orders</h4>';
     data.orders.forEach((o, i) => {
@@ -3632,7 +3681,7 @@ async function viewTableTab(tableNumber) {
             <span>$${((it.price || 0) * (it.qty || 1)).toFixed(2)}</span>
           </div>`).join('')}
         </div>
-        <div style="display:flex;justify-content:space-between;font-weight:600;border-top:1px solid #2a2a4e;padding-top:4px;margin-top:4px;font-size:14px;">
+        <div style="display:flex;justify-content:space-between;font-weight:600;border-top:1px solid var(--border);padding-top:4px;margin-top:4px;font-size:14px;">
           <span>Total</span>
           <span>$${parseFloat(o.total || 0).toFixed(2)}</span>
         </div>
@@ -3669,9 +3718,9 @@ async function checkoutTableTab(tableNumber) {
   });
   paymentHtml += `</div>
     <label style="display:block;margin-bottom:4px;font-weight:600;">💬 Tip Amount ($):</label>
-    <input type="number" id="checkoutTipAmount" value="0" min="0" step="0.5" style="width:100%;padding:12px;font-size:16px;margin-bottom:12px;background:var(--bg);border:1px solid #2a2a4e;border-radius:6px;color:var(--text);" />
+    <input type="number" id="checkoutTipAmount" value="0" min="0" step="0.5" style="width:100%;padding:12px;font-size:16px;margin-bottom:12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);" />
     <label style="display:block;margin-bottom:4px;font-weight:600;">📝 Notes (optional):</label>
-    <input type="text" id="checkoutNotes" placeholder="Tab checkout notes" style="width:100%;padding:12px;font-size:14px;margin-bottom:12px;background:var(--bg);border:1px solid #2a2a4e;border-radius:6px;color:var(--text);" />
+    <input type="text" id="checkoutNotes" placeholder="Tab checkout notes" style="width:100%;padding:12px;font-size:14px;margin-bottom:12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);" />
     <div style="display:flex;gap:8px;margin-top:8px;">
       <button class="outline" onclick="closeTableTab()" style="flex:1;font-size:15px;padding:12px;min-height:48px;">Cancel</button>
       <button class="accent" onclick="confirmCheckoutTableTab(${tableNumber})" style="flex:2;font-size:16px;padding:12px;min-height:48px;font-weight:700;">✅ Confirm Payment</button>
@@ -3754,7 +3803,7 @@ async function viewTableTabHistory(tableNumber) {
             <span>$${((it.price || 0) * (it.qty || 1)).toFixed(2)}</span>
           </div>`).join('')}
         </div>
-        <div style="display:flex;justify-content:space-between;font-weight:600;border-top:1px solid #2a2a4e;padding-top:4px;margin-top:4px;font-size:14px;">
+        <div style="display:flex;justify-content:space-between;font-weight:600;border-top:1px solid var(--border);padding-top:4px;margin-top:4px;font-size:14px;">
           <span>${paymentIcon} ${escHtml(o.payment || 'N/A')}</span>
           <span>$${parseFloat(o.total || 0).toFixed(2)}</span>
         </div>
@@ -3825,10 +3874,10 @@ async function loadInventoryAdmin() {
         '</div>' +
         '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">' +
           '<label style="color:var(--text2);font-size:13px;">Stock: ' +
-            '<input type="number" id="invStock_' + escJs(itemName) + '" value="' + stock + '" min="0" style="width:70px;min-height:36px;padding:4px 8px;font-size:14px;background:var(--bg);border:1px solid #2a2a4e;border-radius:6px;color:var(--text);"/>' +
+            '<input type="number" id="invStock_' + escJs(itemName) + '" value="' + stock + '" min="0" style="width:70px;min-height:36px;padding:4px 8px;font-size:14px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);"/>' +
           '</label>' +
           '<label style="color:var(--text2);font-size:13px;">Alert at: ' +
-            '<input type="number" id="invThresh_' + escJs(itemName) + '" value="' + threshold + '" min="0" style="width:60px;min-height:36px;padding:4px 8px;font-size:14px;background:var(--bg);border:1px solid #2a2a4e;border-radius:6px;color:var(--text);"/>' +
+            '<input type="number" id="invThresh_' + escJs(itemName) + '" value="' + threshold + '" min="0" style="width:60px;min-height:36px;padding:4px 8px;font-size:14px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);"/>' +
           '</label>' +
           '<button class="accent" onclick="updateInventoryItem(\'' + escJs(itemName) + '\')" style="font-size:13px;padding:6px 12px;min-height:36px;">Save</button>' +
         '</div>' +
@@ -4661,7 +4710,7 @@ function renderKioskPaymentMethods() {
   // Amount inputs for each selected method (kiosk mode)
   paymentSplits.forEach((s, i) => {
     const row = document.createElement('div');
-    row.style.cssText = 'display:flex;align-items:center;gap:8px;margin-top:6px;background:#16213e;padding:8px 12px;border-radius:10px;';
+    row.style.cssText = 'display:flex;align-items:center;gap:8px;margin-top:6px;background:var(--card);padding:8px 12px;border-radius:10px;';
     const label = document.createElement('span');
     label.textContent = s.method === 'Cash' ? '💵' : s.method === 'Card' ? '💳' : '📱';
     label.style.fontSize = '22px';
@@ -4672,7 +4721,7 @@ function renderKioskPaymentMethods() {
     inp.inputMode = 'decimal';
     inp.value = s.amount > 0 ? s.amount.toFixed(2) : '';
     inp.placeholder = '$0.00';
-    inp.style.cssText = 'flex:1;min-width:80px;min-height:48px;padding:6px 12px;background:#1a1a2e;border:2px solid #2a2a4e;border-radius:8px;color:#fff;font-size:20px;text-align:center;';
+    inp.style.cssText = 'flex:1;min-width:80px;min-height:48px;padding:6px 12px;background:var(--card-alt);border:2px solid var(--border);border-radius:8px;color:#fff;font-size:20px;text-align:center;';
     inp.oninput = () => {
       const val = parseFloat(inp.value);
       paymentSplits[i].amount = isNaN(val) ? 0 : Math.round(val * 100) / 100;
@@ -4960,7 +5009,7 @@ function renderKioskLookupTableOrders(orders, tableNumber) {
     const total = o.total || 0;
     const itemCount = (o.items || []).reduce((s, i) => s + (i.qty || 1), 0);
     return `
-      <div class="kli-item" style="cursor:pointer;border:2px solid #2a2a4e;" onclick="renderKioskLookupOrder(kioskLookupTableOrders[${orders.indexOf(o)}])">
+      <div class="kli-item" style="cursor:pointer;border:2px solid var(--border);" onclick="renderKioskLookupOrder(kioskLookupTableOrders[${orders.indexOf(o)}])">
         <span class="kli-name">Order #${o.order_id} <span style="color:var(--text2);font-size:16px;">(${itemCount} items)</span></span>
         <span class="kli-price" style="font-weight:700;color:var(--accent);">$${(typeof total === 'number' ? total : 0).toFixed(2)}</span>
       </div>
@@ -5027,7 +5076,7 @@ function renderKioskLookupPayMethods() {
   kioskLookupPaySplits.forEach((s, i) => {
     const total = kioskLookupGetTotal();
     const row = document.createElement('div');
-    row.style.cssText = 'display:flex;align-items:center;gap:8px;margin-top:6px;background:#16213e;padding:8px 12px;border-radius:10px;';
+    row.style.cssText = 'display:flex;align-items:center;gap:8px;margin-top:6px;background:var(--card);padding:8px 12px;border-radius:10px;';
     const label = document.createElement('span');
     label.textContent = s.method === 'Cash' ? '💵' : s.method === 'Card' ? '💳' : '📱';
     label.style.fontSize = '22px';
@@ -5038,7 +5087,7 @@ function renderKioskLookupPayMethods() {
     inp.inputMode = 'decimal';
     inp.value = s.amount > 0 ? s.amount.toFixed(2) : '';
     inp.placeholder = '$0.00';
-    inp.style.cssText = 'flex:1;min-width:80px;min-height:48px;padding:6px 12px;background:#1a1a2e;border:2px solid #2a2a4e;border-radius:8px;color:#fff;font-size:20px;text-align:center;';
+    inp.style.cssText = 'flex:1;min-width:80px;min-height:48px;padding:6px 12px;background:var(--card-alt);border:2px solid var(--border);border-radius:8px;color:#fff;font-size:20px;text-align:center;';
     inp.oninput = () => {
       const val = parseFloat(inp.value);
       kioskLookupPaySplits[i].amount = isNaN(val) ? 0 : Math.round(val * 100) / 100;
@@ -5260,7 +5309,7 @@ async function showFavorites() {
     data.favorites.forEach(fav => {
       const itemCount = fav.items.reduce((sum, it) => sum + it.qty, 0);
       const itemNames = fav.items.map(it => escHtml(it.name) + (it.qty > 1 ? ' x' + it.qty : '')).join(', ');
-      html += `<div class="fav-card" style="background:var(--bg);border-radius:8px;padding:12px;margin-bottom:8px;border:1px solid #2a2a4e;">
+      html += `<div class="fav-card" style="background:var(--bg);border-radius:8px;padding:12px;margin-bottom:8px;border:1px solid var(--border);">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;">
           <div style="flex:1;min-width:0;">
             <div style="font-weight:600;font-size:15px;margin-bottom:4px;">⭐ ${escHtml(fav.name)}</div>

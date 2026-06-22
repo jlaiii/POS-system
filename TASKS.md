@@ -23,8 +23,7 @@
 - [x] Export data to CSV/Excel
 - [x] **Add date range filtering for order history and stats** — Added `date_from`/`date_to` params to `/api/admin_stats` endpoint with server-side filtering. Frontend: date range (from/to) inputs in Order History replacing single date, date range filter in Stats section. Stats cards adapt labels (Today's / Filtered Range). i18n English + Spanish. Backward-compatible. [worker-3]
 |- [x] **Add item popularity trend chart (which items rising/falling)** — New `/api/analytics/item_trends` endpoint comparing recent 7d vs prior 7d item counts with % change, direction (rising/falling/stable), and sorting. Frontend: horizontal bar chart in Charts section with green/red/gray bars, tooltip showing counts and delta. i18n EN + ES. [worker-3]
-||- [~] worker-2 Add dark/light theme toggle with persistence
-||- [ ] Add offline order queuing (sync when connection restores)
+|- [ ] Add offline order queuing (sync when connection restores)
 
 ## Priority: HIGH (NEW — Audit 2026-06-22)
 
@@ -43,6 +42,7 @@
 
 ## Done
 
+- [x] **Add dark/light theme toggle with persistence** — CSS variables for theming (light theme overrides `.light-theme` class on `<html>`), localStorage persistence (`pos_theme` key), theme toggle button in top bar, meta theme-color update, dark/light switch for all major UI elements with `--border`, `--hover`, `--card-alt` variables. Touch-friendly. [worker-2]
 - [x] **Fix verify_admin blocking owners from tax/discount endpoints** — Replaced `verify_admin()` (which only checks role=='admin') with `check_perm(admin_pin, "manage_items")` in both `update_tax_config()` and `manage_discount()` endpoints. Owners with wildcard permissions can now manage tax config and discounts. [worker-2]
 - [x] **Fix menu history frontend parsing** — Changed frontend from `data.history` to `data.backups` to match API response. Fixes TypeError when owner opens Menu History tab. [worker-3]
 - [x] **Add quick-order favorites per user (save frequently ordered combos)** — New `favorites.json` data store. `POST /api/favorites/save`, `/api/favorites/list`, `/api/favorites/delete` endpoints. Frontend: "Save as Favorite" and "My Favorites" buttons in cart area, favorites overlay with load/delete, cart replace-or-merge on load, 20-favorite limit, duplicate name check, activity logging. i18n EN + ES. [worker-1]
