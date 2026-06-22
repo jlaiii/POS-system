@@ -873,8 +873,10 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
     <!-- HISTORY TAB -->
     <div id="historyTab">
       <div id="historyFilter">
-        <input type="date" id="historyDateFilter" onchange="loadOrderHistory()" data-i18n-placeholder="history.filter_date"/>
-        <button class="ghost" onclick="document.getElementById('historyDateFilter').value='';loadOrderHistory();" data-i18n="history.clear">✕ Clear</button>
+        <input type="date" id="historyDateFrom" onchange="loadOrderHistory()" data-i18n-placeholder="history.filter_date_from"/>
+        <span style="color:var(--text2);align-self:center;">→</span>
+        <input type="date" id="historyDateTo" onchange="loadOrderHistory()" data-i18n-placeholder="history.filter_date_to"/>
+        <button class="ghost" onclick="document.getElementById('historyDateFrom').value='';document.getElementById('historyDateTo').value='';loadOrderHistory();" data-i18n="history.clear">✕ Clear</button>
       </div>
       <div id="historyList"><div class="empty-state" data-i18n="history.loading">Loading orders...</div></div>
     </div>
@@ -900,6 +902,12 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
       <div id="adminContent">
         <!-- Stats -->
         <div id="secStats" class="admin-section active">
+          <div class="stats-filter" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center;">
+            <input type="date" id="statsDateFrom" onchange="loadAdminStats()" style="flex:1;min-width:130px;"/>
+            <span style="color:var(--text2);">→</span>
+            <input type="date" id="statsDateTo" onchange="loadAdminStats()" style="flex:1;min-width:130px;"/>
+            <button class="ghost" onclick="document.getElementById('statsDateFrom').value='';document.getElementById('statsDateTo').value='';loadAdminStats();" style="font-size:13px;padding:8px 12px;min-height:36px;">✕ Clear</button>
+          </div>
           <div class="stats-grid" id="statsGrid"><div class="empty-state">Loading stats...</div></div>
           <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
             <button class="accent" onclick="exportOrdersCSV()" style="font-size:14px;padding:12px 20px;min-height:48px;">📥 Export Orders (CSV)</button>
@@ -1285,6 +1293,8 @@ const L10N = {
     'item.no_items': 'No items in this category',
     'item.load_fail': 'Cannot load items',
     'history.filter_date': 'Filter by date',
+    'history.filter_date_from': 'From date',
+    'history.filter_date_to': 'To date',
     'history.clear': '✕ Clear',
     'history.loading': 'Loading orders...',
     'history.empty': 'No orders found',
@@ -1316,6 +1326,10 @@ const L10N = {
     'sold': 'sold',
     'admin.stats.today_revenue': "Today's Revenue",
     'admin.stats.today_orders': "Today's Orders",
+    'admin.stats.today': "Today's",
+    'admin.stats.filtered': 'Filtered Range',
+    'admin.stats.revenue': 'Revenue',
+    'admin.stats.orders': 'Orders',
     'admin.stats.avg_order': 'Avg Order Today',
     'admin.stats.top_item': 'Top Item Today',
     'admin.stats.total_sales': 'Total All-Time Sales',
@@ -1400,6 +1414,8 @@ const L10N = {
     'item.no_items': 'No hay artículos en esta categoría',
     'item.load_fail': 'No se pueden cargar los artículos',
     'history.filter_date': 'Filtrar por fecha',
+    'history.filter_date_from': 'Desde fecha',
+    'history.filter_date_to': 'Hasta fecha',
     'history.clear': '✕ Limpiar',
     'history.loading': 'Cargando pedidos...',
     'history.empty': 'No se encontraron pedidos',
@@ -1431,6 +1447,10 @@ const L10N = {
     'sold': 'vendido',
     'admin.stats.today_revenue': 'Ingresos de hoy',
     'admin.stats.today_orders': 'Pedidos de hoy',
+    'admin.stats.today': 'Hoy',
+    'admin.stats.filtered': 'Rango filtrado',
+    'admin.stats.revenue': 'Ingresos',
+    'admin.stats.orders': 'Pedidos',
     'admin.stats.avg_order': 'Promedio hoy',
     'admin.stats.top_item': 'Artículo más pedido hoy',
     'admin.stats.total_sales': 'Ventas totales',
@@ -2582,19 +2602,20 @@ async function loadOrderHistory() {
   const list = document.getElementById('historyList');
   list.innerHTML = '<div class="empty-state">' + t('loading') + '</div>';
   try {
-    // Use admin_stats to get orders
+    // Build request body with optional date range
+    const body = { adminPin: currentUser.id };
+    const dateFrom = document.getElementById('historyDateFrom').value;
+    const dateTo = document.getElementById('historyDateTo').value;
+    if (dateFrom) body.date_from = dateFrom;
+    if (dateTo) body.date_to = dateTo;
+
     const r = await fetch(BACKEND_URL + '/api/admin_stats', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adminPin: currentUser.id })
+      body: JSON.stringify(body)
     });
     if (!r.ok) { list.innerHTML = '<div class="empty-state">' + t('network_error') + '</div>'; return; }
     const data = await r.json();
     let orders = data.stats.raw_orders || [];
-    // Filter by date if set
-    const dateFilter = document.getElementById('historyDateFilter').value;
-    if (dateFilter) {
-      orders = orders.filter(o => o.date && o.date.startsWith(dateFilter));
-    }
     // Sort by date descending
     orders.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
     if (orders.length === 0) { list.innerHTML = '<div class="empty-state">' + t('history.empty') + '</div>'; return; }
@@ -2664,31 +2685,39 @@ async function loadAdminStats() {
   const grid = document.getElementById('statsGrid');
   grid.innerHTML = '<div class="empty-state">' + t('loading') + '</div>';
   try {
+    const body = { adminPin: currentUser.id };
+    const dateFrom = document.getElementById('statsDateFrom').value;
+    const dateTo = document.getElementById('statsDateTo').value;
+    if (dateFrom) body.date_from = dateFrom;
+    if (dateTo) body.date_to = dateTo;
+
     const r = await fetch(BACKEND_URL + '/api/admin_stats', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adminPin: currentUser.id })
+      body: JSON.stringify(body)
     });
     if (!r.ok) { grid.innerHTML = '<div class="empty-state">' + t('unauthorized') + '</div>'; return; }
     const data = await r.json();
     adminStatsCache = data.stats;
     const s = data.stats;
-    // Compute today's stats
-    const today = new Date().toISOString().slice(0, 10);
-    const todayOrders = (s.raw_orders || []).filter(o => o.date && o.date.startsWith(today));
-    const todayRevenue = todayOrders.reduce((sum, o) => sum + parseFloat(o.total || 0), 0);
-    const todayAvg = todayOrders.length > 0 ? todayRevenue / todayOrders.length : 0;
-    // Find top item today
+    const hasDateFilter = dateFrom || dateTo;
+
+    // Compute stats from the (already server-filtered) raw orders
+    const filteredOrders = s.raw_orders || [];
+    const filteredRevenue = filteredOrders.reduce((sum, o) => sum + parseFloat(o.total || 0), 0);
+    const filteredAvg = filteredOrders.length > 0 ? filteredRevenue / filteredOrders.length : 0;
+    // Find top item in filtered set
     const itemCounts = {};
-    todayOrders.forEach(o => (o.items || []).forEach(it => {
+    filteredOrders.forEach(o => (o.items || []).forEach(it => {
       itemCounts[it.name] = (itemCounts[it.name] || 0) + (it.qty || 1);
     }));
     let topItem = 'N/A', topQty = 0;
     Object.entries(itemCounts).forEach(([k, v]) => { if (v > topQty) { topItem = k; topQty = v; } });
 
+    const filterLabel = hasDateFilter ? t('admin.stats.filtered') : t('admin.stats.today');
     grid.innerHTML = `
-      <div class="stat-card"><div class="stat-val">$${todayRevenue.toFixed(2)}</div><div class="stat-lbl">${t('admin.stats.today_revenue')}</div></div>
-      <div class="stat-card"><div class="stat-val">${todayOrders.length}</div><div class="stat-lbl">${t('admin.stats.today_orders')}</div></div>
-      <div class="stat-card"><div class="stat-val">$${todayAvg.toFixed(2)}</div><div class="stat-lbl">${t('admin.stats.avg_order')}</div></div>
+      <div class="stat-card"><div class="stat-val">$${filteredRevenue.toFixed(2)}</div><div class="stat-lbl">${filterLabel} ${t('admin.stats.revenue')}</div></div>
+      <div class="stat-card"><div class="stat-val">${filteredOrders.length}</div><div class="stat-lbl">${filterLabel} ${t('admin.stats.orders')}</div></div>
+      <div class="stat-card"><div class="stat-val">$${filteredAvg.toFixed(2)}</div><div class="stat-lbl">${t('admin.stats.avg_order')}</div></div>
       <div class="stat-card"><div class="stat-val">${escHtml(topItem)}</div><div class="stat-lbl">${t('admin.stats.top_item')}</div></div>
       <div class="stat-card"><div class="stat-val">$${parseFloat(s.total_sales||0).toFixed(2)}</div><div class="stat-lbl">${t('admin.stats.total_sales')}</div></div>
       <div class="stat-card"><div class="stat-val">${s.total_traffic||0}</div><div class="stat-lbl">${t('admin.stats.total_orders')}</div></div>

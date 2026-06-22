@@ -786,6 +786,33 @@ def admin_stats():
     orders = load_json_data(ORDERS_FILE)
     cleared_orders = load_json_data(CLEARED_ORDERS_FILE)
 
+    # --- Date range filtering ---
+    date_from = data.get('date_from', '').strip()
+    date_to = data.get('date_to', '').strip()
+
+    def filter_by_date_range(order_list, date_field='date'):
+        """Filter a list of order dicts by date_from / date_to."""
+        filtered = order_list
+        if date_from:
+            try:
+                dt_from = datetime.fromisoformat(date_from)
+                filtered = [o for o in filtered if datetime.fromisoformat(o.get(date_field, '')) >= dt_from]
+            except (ValueError, KeyError):
+                pass
+        if date_to:
+            try:
+                if 'T' not in date_to:
+                    dt_to = datetime.fromisoformat(date_to + 'T23:59:59')
+                else:
+                    dt_to = datetime.fromisoformat(date_to)
+                filtered = [o for o in filtered if datetime.fromisoformat(o.get(date_field, '')) <= dt_to]
+            except (ValueError, KeyError):
+                pass
+        return filtered
+
+    orders = filter_by_date_range(orders)
+    cleared_orders = filter_by_date_range(cleared_orders)
+
     processed_orders = []
     for order in orders:
         try:
