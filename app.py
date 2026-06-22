@@ -1939,6 +1939,105 @@ def get_table_tab(table_number):
     })
 
 
+@app.route('/api/tables/tab/<int:table_number>/checkout', methods=['POST'])
+def checkout_table_tab(table_number):
+    """Closes out all active (pending/preparing) orders for a table — marks them as completed with payment info."""
+    data = request.json
+    user_id = data.get('userId', '')
+    payment_method = data.get('payment', 'Cash')
+    payment_splits = data.get('payment_splits')
+    tip_amount = float(data.get('tip_amount', 0))
+    notes = data.get('notes', '')
+
+    if not user_id:
+        return jsonify({'error': 'userId is required'}), 400
+
+    orders = load_json_data(ORDERS_FILE)
+    
+    # Find all active orders for this table
+    table_orders = []
+    for order in orders:
+        if order.get('table_number') == table_number and order.get('status') in ('pending', 'preparing'):
+            table_orders.append(order)
+    
+    if not table_orders:
+        return jsonify({'error': f'No active orders for table #{table_number}'}), 404
+    
+    now = datetime.now().isoformat()
+    checkout_total = 0
+    checkout_subtotal = 0
+    checkout_tax = 0
+    checkout_item_count = 0
+    
+    for order in table_orders:
+        order['status'] = 'completed'
+        order['completed_at'] = now
+        order['tab_checkout'] = True
+        order['tab_checkout_at'] = now
+        order['tab_checkout_by'] = user_id
+        if tip_amount > 0 and order.get('tip_amount', 0) == 0:
+            order['tip_amount'] = round(tip_amount, 2)
+            order['total'] = round(float(order.get('total', 0)) + tip_amount, 2)
+        if payment_splits and isinstance(payment_splits, list) and len(payment_splits) > 0:
+            order['payment_splits'] = payment_splits
+            if len(payment_splits) == 1:
+                order['payment'] = payment_splits[0]['method']
+            else:
+                parts = [f"{s['method']} ${float(s['amount']):.2f}" for s in payment_splits]
+                order['payment'] = 'Split (' + ', '.join(parts) + ')'
+        else:
+            order['payment'] = payment_method
+        order['tab_checkout_notes'] = notes
+        checkout_subtotal += float(order.get('subtotal', 0))
+        checkout_tax += float(order.get('tax_amount', 0))
+        checkout_total += float(order.get('total', 0))
+        checkout_item_count += len(order.get('items', []))
+    
+    save_json_data(ORDERS_FILE, orders)
+    
+    log_activity('tab_checkout', user_id, 'admin', {
+        'table_number': table_number,
+        'order_count': len(table_orders),
+        'total': round(checkout_total, 2),
+        'payment': payment_method
+    })
+    
+    return jsonify({
+        'message': f'Table #{table_number} tab closed successfully.',
+        'table_number': table_number,
+        'order_count': len(table_orders),
+        'item_count': checkout_item_count,
+        'subtotal': round(checkout_subtotal, 2),
+        'tax': round(checkout_tax, 2),
+        'total': round(checkout_total, 2),
+        'payment': payment_method,
+        'orders': [{'order_id': o['order_id'], 'status': o['status']} for o in table_orders]
+    })
+
+
+@app.route('/api/tables/tab/<int:table_number>/history', methods=['GET'])
+def get_table_tab_history(table_number):
+    """Returns completed/cancelled orders for a table (tab history)."""
+    orders = load_json_data(ORDERS_FILE)
+    table_orders = [o for o in orders if o.get('table_number') == table_number and o.get('status') in ('completed', 'cancelled')]
+    
+    # Sort by date descending (most recent first)
+    table_orders.sort(key=lambda o: o.get('date', ''), reverse=True)
+    
+    history_total = sum(float(o.get('total', 0)) for o in table_orders)
+    history_subtotal = sum(float(o.get('subtotal', 0)) for o in table_orders)
+    history_tax = sum(float(o.get('tax_amount', 0)) for o in table_orders)
+    
+    return jsonify({
+        'table_number': table_number,
+        'orders': table_orders,
+        'order_count': len(table_orders),
+        'subtotal': round(history_subtotal, 2),
+        'tax': round(history_tax, 2),
+        'total': round(history_total, 2)
+    })
+
+
 # ============================================================
 # Inventory Tracking System
 # ============================================================

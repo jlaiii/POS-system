@@ -1081,8 +1081,19 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
   <div class="modal-box" style="max-width:500px;max-height:80vh;overflow-y:auto;">
     <h3 id="tableTabTitle">🪑 Table Tab</h3>
     <div id="tableTabContent"><div class="empty-state">Loading...</div></div>
-    <div class="modal-actions">
+    <div class="modal-actions" id="tableTabActions">
       <button class="outline" onclick="closeTableTab()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ TABLE TAB HISTORY OVERLAY ═══════════ -->
+<div id="tableTabHistoryOverlay" class="modal-overlay">
+  <div class="modal-box" style="max-width:550px;max-height:80vh;overflow-y:auto;">
+    <h3 id="tableTabHistoryTitle">🪑 Table Tab History</h3>
+    <div id="tableTabHistoryContent"><div class="empty-state">Loading...</div></div>
+    <div class="modal-actions">
+      <button class="outline" onclick="closeTableTabHistory()">Close</button>
     </div>
   </div>
 </div>
@@ -3095,6 +3106,7 @@ async function loadTableAdmin() {
         </div>
         <div class="ime-actions">
           <button class="outline" onclick="viewTableTab(${t.number})" style="font-size:13px;padding:6px 12px;min-height:36px;">💵 Tab</button>
+          <button class="outline" onclick="viewTableTabHistory(${t.number})" style="font-size:13px;padding:6px 12px;min-height:36px;">📋 History</button>
           <button class="danger" onclick="removeTable(${t.number})" style="font-size:13px;padding:6px 12px;min-height:36px;">🗑️ Remove</button>
         </div>
       </div>`;
@@ -3140,9 +3152,12 @@ async function removeTable(tableNumber) {
 }
 
 async function viewTableTab(tableNumber) {
+  const overlay = document.getElementById('tableTabOverlay');
+  overlay.dataset.tableNumber = tableNumber;
   document.getElementById('tableTabTitle').textContent = '🪑 Table #' + tableNumber + ' - Running Tab';
   document.getElementById('tableTabContent').innerHTML = '<div class="empty-state">Loading tab...</div>';
-  document.getElementById('tableTabOverlay').classList.add('active');
+  document.getElementById('tableTabActions').innerHTML = '<button class="outline" onclick="closeTableTab()">Close</button>';
+  overlay.classList.add('active');
   try {
     const r = await fetch(BACKEND_URL + '/api/tables/tab/' + tableNumber);
     if (!r.ok) { document.getElementById('tableTabContent').innerHTML = '<div class="empty-state">Failed to load tab</div>'; return; }
@@ -3178,7 +3193,14 @@ async function viewTableTab(tableNumber) {
         </div>
       </div>`;
     });
+    // Add checkout and quick-add buttons
+    html += `<div style="display:flex;gap:8px;margin-top:12px;">
+      <button class="accent" onclick="checkoutTableTab(${tableNumber})" style="flex:1;font-size:16px;padding:14px;min-height:52px;font-weight:700;">✅ Close Tab & Checkout</button>
+      <button class="outline" onclick="addItemsToTable(${tableNumber})" style="font-size:14px;padding:14px;min-height:52px;">➕ Add Items</button>
+    </div>`;
     document.getElementById('tableTabContent').innerHTML = html;
+    // Update actions
+    document.getElementById('tableTabActions').innerHTML = '<button class="outline" onclick="closeTableTab()">Close</button>';
   } catch(e) {
     document.getElementById('tableTabContent').innerHTML = '<div class="empty-state">Network error</div>';
   }
@@ -3186,6 +3208,137 @@ async function viewTableTab(tableNumber) {
 
 function closeTableTab() {
   document.getElementById('tableTabOverlay').classList.remove('active');
+}
+
+async function checkoutTableTab(tableNumber) {
+  if (!currentUser || !currentUser.id) { showToast('Please log in first', 'danger'); return; }
+  // Show payment method selection dialog
+  const paymentMethods = ['Cash', 'Card', 'Mobile Pay'];
+  let paymentHtml = `<div style="padding:12px;">
+    <h3 style="margin-bottom:12px;">✅ Close Tab for Table #${tableNumber}</h3>
+    <p style="color:var(--text2);margin-bottom:12px;">This will mark all active orders as paid and close the tab.</p>
+    <label style="display:block;margin-bottom:8px;font-weight:600;">Payment Method:</label>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">`;
+  paymentMethods.forEach((m, i) => {
+    paymentHtml += `<button class="${i === 0 ? 'accent' : 'outline'}" onclick="selectCheckoutPayment('${m}', this)" style="flex:1;min-height:48px;font-size:15px;padding:10px;" id="checkoutPayBtn_${i}">${m}</button>`;
+  });
+  paymentHtml += `</div>
+    <label style="display:block;margin-bottom:4px;font-weight:600;">💬 Tip Amount ($):</label>
+    <input type="number" id="checkoutTipAmount" value="0" min="0" step="0.5" style="width:100%;padding:12px;font-size:16px;margin-bottom:12px;background:var(--bg);border:1px solid #2a2a4e;border-radius:6px;color:var(--text);" />
+    <label style="display:block;margin-bottom:4px;font-weight:600;">📝 Notes (optional):</label>
+    <input type="text" id="checkoutNotes" placeholder="Tab checkout notes" style="width:100%;padding:12px;font-size:14px;margin-bottom:12px;background:var(--bg);border:1px solid #2a2a4e;border-radius:6px;color:var(--text);" />
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <button class="outline" onclick="closeTableTab()" style="flex:1;font-size:15px;padding:12px;min-height:48px;">Cancel</button>
+      <button class="accent" onclick="confirmCheckoutTableTab(${tableNumber})" style="flex:2;font-size:16px;padding:12px;min-height:48px;font-weight:700;">✅ Confirm Payment</button>
+    </div>
+  </div>`;
+  
+  document.getElementById('tableTabTitle').textContent = '✅ Close Tab - Table #' + tableNumber;
+  document.getElementById('tableTabContent').innerHTML = paymentHtml;
+  document.getElementById('tableTabActions').innerHTML = '';
+  
+  // Store selected payment method
+  window._checkoutPaymentMethod = 'Cash';
+}
+
+function selectCheckoutPayment(method, btn) {
+  window._checkoutPaymentMethod = method;
+  document.querySelectorAll('#tableTabContent button[id^="checkoutPayBtn"]').forEach(b => {
+    b.className = 'outline';
+    b.style.flex = '1';
+    b.style.minHeight = '48px';
+    b.style.fontSize = '15px';
+    b.style.padding = '10px';
+  });
+  btn.className = 'accent';
+}
+
+async function confirmCheckoutTableTab(tableNumber) {
+  const tipAmount = parseFloat(document.getElementById('checkoutTipAmount').value) || 0;
+  const notes = document.getElementById('checkoutNotes').value || '';
+  const paymentMethod = window._checkoutPaymentMethod || 'Cash';
+  
+  if (!confirm('Close tab for Table #' + tableNumber + ' with ' + paymentMethod + '? Total will be settled for all orders.')) return;
+  
+  try {
+    const r = await fetch(BACKEND_URL + '/api/tables/tab/' + tableNumber + '/checkout', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: currentUser.id, payment: paymentMethod, tip_amount: tipAmount, notes: notes })
+    });
+    const d = await r.json();
+    if (!r.ok) { showToast(d.error || d.message || 'Checkout failed', 'danger'); return; }
+    showToast('✅ Table #' + tableNumber + ' tab closed! Total: $' + d.total.toFixed(2), 'success');
+    closeTableTab();
+    loadTableAdmin();
+    loadOrderHistory();
+  } catch(e) {
+    showToast('Network error during checkout', 'danger');
+  }
+}
+
+async function viewTableTabHistory(tableNumber) {
+  document.getElementById('tableTabHistoryTitle').textContent = '📋 Table #' + tableNumber + ' - Tab History';
+  document.getElementById('tableTabHistoryContent').innerHTML = '<div class="empty-state">Loading history...</div>';
+  document.getElementById('tableTabHistoryOverlay').classList.add('active');
+  try {
+    const r = await fetch(BACKEND_URL + '/api/tables/tab/' + tableNumber + '/history');
+    if (!r.ok) { document.getElementById('tableTabHistoryContent').innerHTML = '<div class="empty-state">Failed to load history</div>'; return; }
+    const data = await r.json();
+    if (data.order_count === 0) {
+      document.getElementById('tableTabHistoryContent').innerHTML = '<div class="empty-state">No completed orders for this table yet</div>';
+      return;
+    }
+    let html = `<div style="margin-bottom:12px;padding:12px;background:var(--bg);border-radius:8px;">
+      <div style="display:flex;justify-content:space-between;font-weight:600;"><span>Total Orders:</span><span>${data.order_count}</span></div>
+      <div style="display:flex;justify-content:space-between;"><span>Total Revenue:</span><span style="color:var(--accent);font-weight:700;">$${data.total.toFixed(2)}</span></div>
+    </div>`;
+    html += '<h4 style="margin-bottom:8px;">Order History</h4>';
+    data.orders.forEach((o, i) => {
+      const dt = o.date ? new Date(o.date).toLocaleString() : 'Unknown';
+      const items = o.items || [];
+      const paymentIcon = o.payment === 'Card' ? '💳' : (o.payment === 'Mobile Pay' ? '📱' : '💰');
+      const tabBadge = o.tab_checkout ? ' <span style="background:var(--accent);color:#fff;padding:2px 8px;border-radius:4px;font-size:11px;">Tab Checkout</span>' : '';
+      html += `<div style="background:var(--card);border-radius:8px;padding:12px;margin-bottom:8px;">
+        <div style="display:flex;justify-content:space-between;font-size:14px;">
+          <span><strong>Order #${o.order_id}</strong>${tabBadge}</span>
+          <span style="color:var(--text2);">${escHtml(dt)}</span>
+        </div>
+        <div style="margin-top:6px;">
+          ${items.map(it => `<div style="display:flex;justify-content:space-between;font-size:13px;padding:2px 0;">
+            <span>${escHtml(it.name)} x${it.qty || 1}</span>
+            <span>$${((it.price || 0) * (it.qty || 1)).toFixed(2)}</span>
+          </div>`).join('')}
+        </div>
+        <div style="display:flex;justify-content:space-between;font-weight:600;border-top:1px solid #2a2a4e;padding-top:4px;margin-top:4px;font-size:14px;">
+          <span>${paymentIcon} ${escHtml(o.payment || 'N/A')}</span>
+          <span>$${parseFloat(o.total || 0).toFixed(2)}</span>
+        </div>
+      </div>`;
+    });
+    document.getElementById('tableTabHistoryContent').innerHTML = html;
+  } catch(e) {
+    document.getElementById('tableTabHistoryContent').innerHTML = '<div class="empty-state">Network error</div>';
+  }
+}
+
+function closeTableTabHistory() {
+  document.getElementById('tableTabHistoryOverlay').classList.remove('active');
+}
+
+function addItemsToTable(tableNumber) {
+  // Close tab overlay, select table in POS, switch to POS view
+  closeTableTab();
+  const tableSelect = document.getElementById('tableSelect');
+  if (tableSelect) {
+    tableSelect.value = tableNumber;
+    // Trigger change event if the system uses it
+    if (typeof onTableChange === 'function') onTableChange();
+    if (tableSelect.onchange) tableSelect.onchange();
+  }
+  // Switch to main POS tab
+  const posTab = document.getElementById('mainTabPos');
+  if (posTab) switchMainTab('pos');
+  showToast('🪑 Adding items to Table #' + tableNumber, 'info');
 }
 
 // ═══════════ INVENTORY MANAGEMENT ═══════════

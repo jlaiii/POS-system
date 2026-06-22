@@ -19,7 +19,6 @@
 ## Priority: MEDIUM
 
 - [x] **Customer order lookup** — From the kiosk mode, allow looking up an order by order number or table number to pull it up for payment. Added `/api/orders/lookup` (GET) and `/api/orders/kiosk_pay` (POST) endpoints. Kiosk overlay has "Find Order" tab with order# or table# search, displays found order items/totals, tip selector, payment method with split support, and "Pay Now" that marks order as paid. Handles single orders and table-lookup with multiple order selection. Prevents double-payment. [worker-2]
-- [~] worker-3 **Table tab management** — Each table accumulates a running tab (orders placed from that table). Staff can view a table's tab, add items, and close it out (checkout). Tab history per table.
 - [ ] **Owner activity log filter** — Let owner filter activity log by: admin user, action type, date range. Show who changed what and when.
 - [ ] Add export data to CSV/Excel (orders, timesheet, activity log)
 - [ ] Add date range filtering for order history and stats
@@ -43,6 +42,7 @@
 
 ## Done
 
+- [x] **Table tab management** — Checkout/close tab endpoint (POST /api/tables/tab/<table_number>/checkout) marks all active orders as paid in one action. Tab history endpoint (GET /api/tables/tab/<table_number>/history) shows completed orders per table with total revenue. Frontend: "Close Tab & Checkout" button in tab overlay with payment method/tip/notes dialog, "📋 History" button per table in admin panel, tab history overlay with order details, and "➕ Add Items" quick-add button that auto-selects table in POS. [worker-3]
 - [x] **Add inventory tracking** — Separate inventory.json tracked per item name. Stock decremented on order submission. Low-stock alerts (stock <= threshold) and out-of-stock detection. Admin inventory management UI with per-item stock/threshold editing and bulk init. Stock level badges on POS item cards (colored: green/ok, yellow/low, red/out). Out-of-stock items disabled with visual indicator. Low-stock toast warnings on order submit. Auto-creates inventory entries for new menu items. [worker-1]
 - [x] **Add split-payment support** — Support multiple payment methods per order (Cash/Card/Mobile Pay). Toggle payment method buttons with individual amount inputs. Split Evenly button. Validation ensures splits equal total. Payment breakdown stored in `payment_splits` array. Displayed on receipt, order history, kitchen display, and kiosk mode. Backward-compatible with legacy single-payment orders. [worker-3]
 - [x] **Add tip calculation UI** — Percentage buttons (No tip/15%/18%/20%/Custom) in main POS cart tip row. Tip calculated on subtotal, shown in cart total, submitted with order, displayed on receipt and order history. [worker-2]
