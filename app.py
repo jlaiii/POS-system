@@ -2070,6 +2070,114 @@ def low_stock_alerts():
 
 
 # ============================================================
+# Kiosk Order Lookup & Payment
+# ============================================================
+
+
+@app.route('/api/orders/lookup', methods=['GET'])
+def order_lookup():
+    """Look up an order by order_id or table_number (for kiosk payment)."""
+    order_id = request.args.get('order_id', type=int)
+    table_number = request.args.get('table_number', type=int)
+
+    if order_id is None and table_number is None:
+        return jsonify({'error': 'Provide order_id or table_number'}), 400
+
+    orders = load_json_data(ORDERS_FILE)
+
+    if order_id is not None:
+        for order in orders:
+            if order.get('order_id') == order_id:
+                # Don't allow re-paying already-paid or cancelled orders
+                if order.get('status') == 'cancelled':
+                    return jsonify({'found': False, 'message': f'Order #{order_id} was cancelled.'}), 404
+                if order.get('kiosk_paid'):
+                    return jsonify({'found': False, 'message': f'Order #{order_id} has already been paid.'}), 404
+                return jsonify({'order': order, 'found': True})
+        return jsonify({'found': False, 'message': f'Order #{order_id} not found'}), 404
+
+    # Lookup by table number — return unpaid orders
+    table_orders = [
+        o for o in orders
+        if o.get('table_number') == table_number
+        and o.get('status') != 'cancelled'
+        and not o.get('kiosk_paid')
+    ]
+    if not table_orders:
+        return jsonify({
+            'found': False,
+            'message': f'No unpaid orders found for Table {table_number}',
+            'orders': []
+        }), 404
+
+    return jsonify({
+        'found': True,
+        'orders': table_orders,
+        'table_number': table_number,
+        'order_count': len(table_orders)
+    })
+
+
+@app.route('/api/orders/kiosk_pay', methods=['POST'])
+def kiosk_pay():
+    """Pay for an existing order from kiosk mode. Adds tip and payment info."""
+    data = request.json
+    order_id = data.get('order_id')
+    payment_splits = data.get('payment_splits', [])
+    tip_amount = float(data.get('tip_amount', 0))
+    user_id = data.get('user', 'kiosk')
+
+    if order_id is None:
+        return jsonify({'message': 'order_id is required'}), 400
+
+    orders = load_json_data(ORDERS_FILE)
+
+    for order in orders:
+        if order.get('order_id') == order_id:
+            if order.get('status') == 'cancelled':
+                return jsonify({'message': f'Order #{order_id} was cancelled.'}), 409
+            if order.get('kiosk_paid'):
+                return jsonify({'message': f'Order #{order_id} has already been paid.'}), 409
+
+            # Update payment info
+            order['payment_splits'] = payment_splits if payment_splits else order.get('payment_splits')
+            order['tip_amount'] = float(order.get('tip_amount', 0)) + tip_amount
+            order['kiosk_paid'] = True
+            order['kiosk_paid_at'] = datetime.now().isoformat()
+            order['kiosk_paid_by'] = user_id
+
+            # Build payment display string
+            if payment_splits and isinstance(payment_splits, list) and len(payment_splits) > 0:
+                if len(payment_splits) == 1:
+                    order['payment'] = payment_splits[0]['method']
+                else:
+                    parts = [f"{s['method']} ${float(s['amount']):.2f}" for s in payment_splits]
+                    order['payment'] = 'Split (' + ', '.join(parts) + ')'
+
+            # Add tip to total
+            old_total = float(order.get('total', 0))
+            order['total'] = round(old_total + tip_amount, 2)
+
+            save_json_data(ORDERS_FILE, orders)
+
+            log_activity('kiosk_pay', user_id, 'kiosk', {
+                'order_id': order_id,
+                'payment_splits': payment_splits,
+                'tip_amount': tip_amount,
+                'total': order['total']
+            })
+
+            return jsonify({
+                'message': 'Payment successful',
+                'order_id': order_id,
+                'total': order['total'],
+                'order_number': order_id
+            })
+
+    return jsonify({'message': f'Order #{order_id} not found'}), 404
+
+
+# ============================================================
 # Serve the frontend
 # ============================================================
 

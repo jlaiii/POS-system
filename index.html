@@ -672,6 +672,89 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
   #kioskOverlay .kiosk-thankyou h1 { font-size: 40px; }
   #kioskOverlay .kiosk-payment .kiosk-pay-btns button { font-size: 18px; min-height: 52px; }
 }
+
+/* ── KIOSK LOOKUP MODE ── */
+.kiosk-mode-tabs {
+  display: flex; gap: 0; width: 100%; max-width: 700px;
+  background: #16213e; border-radius: 12px 12px 0 0; overflow: hidden;
+}
+.kiosk-mode-tabs button {
+  flex: 1; background: #16213e; color: var(--text2); border: none;
+  font-size: 20px; font-weight: 600; padding: 16px 12px; min-height: 56px;
+  cursor: pointer; transition: all 0.2s; border-bottom: 3px solid transparent;
+}
+.kiosk-mode-tabs button.active { color: var(--accent); border-bottom-color: var(--accent); background: #1a1a2e; }
+.kiosk-mode-tabs button:active { opacity: 0.7; }
+
+.kiosk-lookup-form {
+  width: 100%; max-width: 700px; padding: 20px 0;
+}
+.klf-row {
+  display: flex; gap: 12px; align-items: center; justify-content: center; flex-wrap: wrap;
+}
+.klf-row input {
+  flex: 1; min-width: 160px; max-width: 240px; font-size: 24px; padding: 16px;
+  min-height: 64px; text-align: center; background: #1a1a2e; border: 2px solid #2a2a4e;
+  border-radius: 12px; color: #fff;
+}
+.klf-row input:focus { border-color: var(--accent); outline: none; }
+.klf-or { color: var(--text2); font-size: 18px; font-weight: 600; padding: 0 4px; }
+.kiosk-lookup-btn {
+  display: block; width: 100%; max-width: 300px; margin: 16px auto 0;
+  background: var(--accent); color: #fff; border: none; border-radius: 12px;
+  font-size: 26px; font-weight: 700; padding: 16px; min-height: 64px; cursor: pointer;
+}
+.kiosk-lookup-btn:active { opacity: 0.8; }
+.kiosk-lookup-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.kiosk-lookup-msg {
+  text-align: center; font-size: 18px; min-height: 32px; margin-top: 12px; color: var(--text2);
+}
+.kiosk-lookup-msg.error { color: #e74c3c; }
+.kiosk-lookup-msg.success { color: #2ecc71; }
+
+.kiosk-lookup-order-info {
+  width: 100%; max-width: 700px; text-align: center;
+  background: #16213e; border-radius: 12px; padding: 16px 20px; margin-bottom: 16px;
+}
+.kiosk-lookup-order-info .kloi-order-num { font-size: 28px; font-weight: 700; color: var(--accent); }
+.kiosk-lookup-order-info .kloi-meta { color: var(--text2); font-size: 18px; margin-top: 4px; }
+
+.kiosk-lookup-items {
+  width: 100%; max-width: 700px; max-height: 30vh; overflow-y: auto; margin-bottom: 12px;
+}
+.kiosk-lookup-items .kli-item {
+  display: flex; justify-content: space-between; align-items: center;
+  background: #16213e; border-radius: 10px; padding: 12px 18px; margin-bottom: 6px; font-size: 22px;
+}
+.kiosk-lookup-items .kli-item .kli-name { font-weight: 600; }
+.kiosk-lookup-items .kli-item .kli-qty { color: var(--accent); margin: 0 10px; }
+.kiosk-lookup-items .kli-item .kli-price { color: var(--text2); }
+
+.kiosk-lookup-totals {
+  width: 100%; max-width: 700px; background: #16213e; border-radius: 12px; padding: 20px 24px; margin-bottom: 16px;
+}
+.kiosk-lookup-totals .klt-row {
+  display: flex; justify-content: space-between; font-size: 22px; padding: 4px 0;
+}
+.kiosk-lookup-totals .klt-row.total {
+  font-size: 32px; font-weight: 700; color: var(--accent);
+  border-top: 2px solid #2a2a4e; padding-top: 10px; margin-top: 6px;
+}
+.kiosk-lookup-totals .klt-row.tip-line { color: #2ecc71; }
+
+.kiosk-lookup-back {
+  background: transparent; color: var(--text2); border: 1px solid #2a2a4e;
+  border-radius: 10px; font-size: 18px; padding: 12px 24px; min-height: 52px;
+  cursor: pointer; margin-top: 8px;
+}
+.kiosk-lookup-back:active { opacity: 0.7; }
+
+@media (max-width: 600px) {
+  .kiosk-mode-tabs button { font-size: 16px; padding: 12px 8px; }
+  .klf-row input { font-size: 20px; min-width: 120px; padding: 12px; }
+  .kiosk-lookup-items .kli-item { font-size: 18px; }
+  .kiosk-lookup-order-info .kloi-order-num { font-size: 22px; }
+}
   @page { margin: 0; size: 80mm auto; }
 }
 </style>
@@ -1006,7 +1089,14 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 
 <!-- ═══════════ KIOSK MODE OVERLAY ═══════════ -->
 <div id="kioskOverlay">
-  <div class="kiosk-content">
+  <!-- Mode switch tabs -->
+  <div class="kiosk-mode-tabs">
+    <button class="active" id="kioskModeTabNew" onclick="switchKioskMode('new')">🆕 New Order</button>
+    <button id="kioskModeTabLookup" onclick="switchKioskMode('lookup')">🔍 Find Order</button>
+  </div>
+
+  <!-- NEW ORDER MODE (existing behavior) -->
+  <div class="kiosk-content" id="kioskNewOrderView">
     <div class="kiosk-header">
       <h2>🛒 Your Order</h2>
       <button class="kiosk-exit" onclick="exitKioskMode()">✕ Staff Exit</button>
@@ -1033,6 +1123,58 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
     </div>
     <button class="kiosk-pay-btn" id="kioskPayBtn" onclick="kioskPay()">💵 Pay Now</button>
   </div>
+
+  <!-- LOOKUP MODE (find existing order) -->
+  <div class="kiosk-content" id="kioskLookupView" style="display:none;">
+    <div class="kiosk-header">
+      <h2>🔍 Find Your Order</h2>
+      <button class="kiosk-exit" onclick="exitKioskMode()">✕ Staff Exit</button>
+    </div>
+
+    <!-- Lookup form -->
+    <div id="kioskLookupForm" class="kiosk-lookup-form">
+      <div class="klf-row">
+        <input type="number" id="kioskLookupOrderId" placeholder="Order Number" inputmode="numeric" min="1">
+        <span class="klf-or">or</span>
+        <input type="number" id="kioskLookupTable" placeholder="Table Number" inputmode="numeric" min="1">
+      </div>
+      <button class="kiosk-lookup-btn" onclick="kioskLookupOrder()">🔍 Search</button>
+      <div id="kioskLookupMsg" class="kiosk-lookup-msg"></div>
+    </div>
+
+    <!-- Lookup result (shown after successful search) -->
+    <div id="kioskLookupResult" style="display:none;">
+      <div class="kiosk-lookup-order-info" id="kioskLookupOrderInfo"></div>
+      <div class="kiosk-lookup-items" id="kioskLookupItems"></div>
+      <div class="kiosk-lookup-totals" id="kioskLookupTotals"></div>
+
+      <!-- Tip for looked-up order -->
+      <div class="kiosk-tip">
+        <h3>💬 Add a Tip</h3>
+        <div class="tip-btns">
+          <button onclick="selectKioskLookupTip(0)" class="tip-0">No Tip</button>
+          <button onclick="selectKioskLookupTip(15)" class="tip-15">15%</button>
+          <button onclick="selectKioskLookupTip(18)" class="tip-18">18%</button>
+          <button onclick="selectKioskLookupTip(20)" class="tip-20">20%</button>
+          <button onclick="selectKioskLookupTip(-1)" class="tip-custom">Custom</button>
+        </div>
+        <div class="tip-custom-input" id="kioskLookupCustomTip" style="display:none;">
+          <input type="number" id="kioskLookupCustomTipInput" placeholder="$0.00" step="0.01" min="0" inputmode="decimal" oninput="updateKioskLookupTipCustom()">
+          <button class="outline" onclick="document.getElementById('kioskLookupCustomTipInput').value='';updateKioskLookupTipCustom();" style="font-size:18px;padding:8px 16px;min-height:48px;">Clear</button>
+        </div>
+      </div>
+
+      <!-- Payment methods for looked-up order -->
+      <div class="kiosk-payment">
+        <h3>💳 Payment Method</h3>
+        <div class="kiosk-pay-btns" id="kioskLookupPayMethods"></div>
+      </div>
+      <button class="kiosk-pay-btn" id="kioskLookupPayBtn" onclick="kioskLookupPay()">💵 Pay Now</button>
+      <button class="kiosk-lookup-back" onclick="kioskLookupBack()">← Search Again</button>
+    </div>
+  </div>
+
+  <!-- Thank you screen (shared) -->
   <div class="kiosk-thankyou" id="kioskThankYou">
     <h1>✅ Thank You!</h1>
     <p>Your order has been placed.</p>
@@ -3743,6 +3885,10 @@ function renderItemTaxOverrides() {
 let kioskTipAmount = 0;
 let kioskTipPercent = 0;
 let kioskReturnTimer = null;
+let kioskLookupTipAmount = 0;
+let kioskLookupTipPercent = 0;
+let kioskLookupOrderData = null;
+let kioskLookupPaySplits = [];
 
 function enterKioskMode() {
   if (cart.length === 0) { showToast(t('toast.cart_empty'), 'danger'); return; }
@@ -3754,22 +3900,33 @@ function enterKioskMode() {
   renderKioskCart();
   renderKioskPaymentMethods();
   
+  // Show kiosk overlay defaulting to 'New Order' mode
   document.getElementById('kioskOverlay').classList.add('active');
-  document.querySelector('.kiosk-content').classList.remove('hidden');
+  switchKioskMode('new');
   document.getElementById('kioskThankYou').classList.remove('active');
   
   // Default: No Tip selected
-  document.querySelectorAll('.kiosk-tip .tip-btns button').forEach(b => b.classList.remove('selected'));
-  const noTipBtn = document.querySelector('.tip-0');
+  document.querySelectorAll('#kioskNewOrderView .kiosk-tip .tip-btns button').forEach(b => b.classList.remove('selected'));
+  const noTipBtn = document.querySelector('#kioskNewOrderView .tip-0');
   if (noTipBtn) noTipBtn.classList.add('selected');
   document.getElementById('kioskCustomTip').style.display = 'none';
 }
 
 function exitKioskMode() {
   document.getElementById('kioskOverlay').classList.remove('active');
-  document.querySelector('.kiosk-content').classList.remove('hidden');
   document.getElementById('kioskThankYou').classList.remove('active');
   if (kioskReturnTimer) { clearInterval(kioskReturnTimer); kioskReturnTimer = null; }
+  // Reset lookup state
+  kioskLookupOrderData = null;
+  kioskLookupTipAmount = 0;
+  kioskLookupTipPercent = 0;
+  kioskLookupPaySplits = [];
+  document.getElementById('kioskLookupResult').style.display = 'none';
+  document.getElementById('kioskLookupForm').style.display = 'block';
+  document.getElementById('kioskLookupMsg').textContent = '';
+  document.getElementById('kioskLookupMsg').className = 'kiosk-lookup-msg';
+  document.getElementById('kioskLookupOrderId').value = '';
+  document.getElementById('kioskLookupTable').value = '';
 }
 
 function renderKioskCart() {
@@ -3988,6 +4145,373 @@ async function kioskPay() {
       }
     }, 1000);
   } catch(e) {
+    showToast('Network error', 'danger');
+    btn.disabled = false;
+    btn.textContent = '💵 Pay Now';
+  }
+}
+
+// ═══════════ KIOSK LOOKUP MODE ═══════════
+
+function switchKioskMode(mode) {
+  // Update tabs
+  document.getElementById('kioskModeTabNew').classList.toggle('active', mode === 'new');
+  document.getElementById('kioskModeTabLookup').classList.toggle('active', mode === 'lookup');
+  // Show/hide views
+  document.getElementById('kioskNewOrderView').style.display = mode === 'new' ? '' : 'none';
+  document.getElementById('kioskLookupView').style.display = mode === 'lookup' ? '' : 'none';
+  // Reset lookup form when switching to lookup
+  if (mode === 'lookup') {
+    kioskLookupReset();
+  }
+}
+
+function kioskLookupReset() {
+  kioskLookupOrderData = null;
+  kioskLookupTipAmount = 0;
+  kioskLookupTipPercent = 0;
+  kioskLookupPaySplits = [{method: 'Cash', amount: 0}];
+  document.getElementById('kioskLookupResult').style.display = 'none';
+  document.getElementById('kioskLookupForm').style.display = 'block';
+  document.getElementById('kioskLookupMsg').textContent = '';
+  document.getElementById('kioskLookupMsg').className = 'kiosk-lookup-msg';
+  const cif = document.getElementById('kioskLookupCustomTip');
+  if (cif) cif.style.display = 'none';
+  document.querySelectorAll('#kioskLookupView .kiosk-tip .tip-btns button').forEach(b => b.classList.remove('selected'));
+  const nt = document.querySelector('#kioskLookupView .tip-0');
+  if (nt) nt.classList.add('selected');
+}
+
+async function kioskLookupOrder() {
+  const orderId = document.getElementById('kioskLookupOrderId').value.trim();
+  const tableNum = document.getElementById('kioskLookupTable').value.trim();
+  const msgEl = document.getElementById('kioskLookupMsg');
+  const btn = document.querySelector('.kiosk-lookup-btn');
+
+  if (!orderId && !tableNum) {
+    msgEl.textContent = 'Please enter an Order Number or Table Number';
+    msgEl.className = 'kiosk-lookup-msg error';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Searching...';
+  msgEl.textContent = '';
+  msgEl.className = 'kiosk-lookup-msg';
+
+  try {
+    let url = BACKEND_URL + '/api/orders/lookup?';
+    if (orderId) url += 'order_id=' + encodeURIComponent(orderId);
+    else url += 'table_number=' + encodeURIComponent(tableNum);
+
+    const r = await fetch(url);
+    const data = await r.json();
+
+    if (!r.ok || !data.found) {
+      msgEl.textContent = data.message || 'Order not found';
+      msgEl.className = 'kiosk-lookup-msg error';
+      btn.disabled = false;
+      btn.textContent = '🔍 Search';
+      return;
+    }
+
+    // Handle single order vs table orders
+    if (data.order) {
+      kioskLookupOrderData = data.order;
+      renderKioskLookupOrder(data.order);
+    } else if (data.orders && data.orders.length === 1) {
+      kioskLookupOrderData = data.orders[0];
+      renderKioskLookupOrder(data.orders[0]);
+    } else if (data.orders && data.orders.length > 1) {
+      // Multiple orders for a table — show a list to pick from
+      renderKioskLookupTableOrders(data.orders, data.table_number);
+    } else {
+      msgEl.textContent = 'No orders found';
+      msgEl.className = 'kiosk-lookup-msg error';
+    }
+  } catch (e) {
+    msgEl.textContent = 'Network error. Check connection.';
+    msgEl.className = 'kiosk-lookup-msg error';
+  }
+  btn.disabled = false;
+  btn.textContent = '🔍 Search';
+}
+
+function renderKioskLookupOrder(order) {
+  document.getElementById('kioskLookupForm').style.display = 'none';
+  document.getElementById('kioskLookupMsg').textContent = '';
+  document.getElementById('kioskLookupMsg').className = 'kiosk-lookup-msg';
+
+  // Show order info header
+  const orderDate = order.date ? new Date(order.date).toLocaleString() : '';
+  const tableInfo = order.table_number ? ` · Table ${order.table_number}` : '';
+  document.getElementById('kioskLookupOrderInfo').innerHTML = `
+    <div class="kloi-order-num">Order #${order.order_id}</div>
+    <div class="kloi-meta">${orderDate}${tableInfo}</div>
+  `;
+
+  // Show items
+  const items = order.items || [];
+  document.getElementById('kioskLookupItems').innerHTML = items.map(item => `
+    <div class="kli-item">
+      <span class="kli-name">${escHtml(item.name)}</span>
+      <span class="kli-qty">×${item.qty || 1}</span>
+      <span class="kli-price">$${((item.price || 0) * (item.qty || 1)).toFixed(2)}</span>
+    </div>
+  `).join('');
+
+  // Show original totals
+  renderKioskLookupTotals();
+
+  // Init payment splits for lookup
+  kioskLookupPaySplits = [{method: 'Cash', amount: 0}];
+  renderKioskLookupPayMethods();
+
+  // Reset tip
+  kioskLookupTipAmount = 0;
+  kioskLookupTipPercent = 0;
+  document.querySelectorAll('#kioskLookupView .kiosk-tip .tip-btns button').forEach(b => b.classList.remove('selected'));
+  const nt = document.querySelector('#kioskLookupView .tip-0');
+  if (nt) nt.classList.add('selected');
+  const cif = document.getElementById('kioskLookupCustomTip');
+  if (cif) cif.style.display = 'none';
+
+  document.getElementById('kioskLookupResult').style.display = 'block';
+}
+
+function renderKioskLookupTableOrders(orders, tableNumber) {
+  document.getElementById('kioskLookupForm').style.display = 'none';
+  const itemsEl = document.getElementById('kioskLookupItems');
+  document.getElementById('kioskLookupOrderInfo').innerHTML = `
+    <div class="kloi-order-num">Table ${tableNumber}</div>
+    <div class="kloi-meta">${orders.length} unpaid order(s)</div>
+  `;
+
+  itemsEl.innerHTML = orders.map(o => {
+    const total = o.total || 0;
+    const itemCount = (o.items || []).reduce((s, i) => s + (i.qty || 1), 0);
+    return `
+      <div class="kli-item" style="cursor:pointer;border:2px solid #2a2a4e;" onclick="renderKioskLookupOrder(kioskLookupTableOrders[${orders.indexOf(o)}])">
+        <span class="kli-name">Order #${o.order_id} <span style="color:var(--text2);font-size:16px;">(${itemCount} items)</span></span>
+        <span class="kli-price" style="font-weight:700;color:var(--accent);">$${(typeof total === 'number' ? total : 0).toFixed(2)}</span>
+      </div>
+    `;
+  }).join('');
+  // Store table orders for selection click
+  window.kioskLookupTableOrders = orders;
+  document.getElementById('kioskLookupResult').style.display = 'block';
+  // Hide tip/pay section until an order is selected from the table list
+  document.querySelectorAll('#kioskLookupView .kiosk-tip, #kioskLookupView .kiosk-payment, #kioskLookupView .kiosk-pay-btn, #kioskLookupView .kiosk-lookup-back').forEach(el => el.style.display = 'none');
+}
+
+function renderKioskLookupTotals() {
+  const order = kioskLookupOrderData;
+  if (!order) return;
+  const subtotal = parseFloat(order.subtotal) || 0;
+  const tax = parseFloat(order.tax_amount) || 0;
+  const existingTip = parseFloat(order.tip_amount) || 0;
+  const newTotal = subtotal + tax + existingTip + kioskLookupTipAmount;
+
+  document.getElementById('kioskLookupTotals').innerHTML = `
+    <div class="klt-row"><span>Subtotal</span><span>$${subtotal.toFixed(2)}</span></div>
+    <div class="klt-row"><span>Tax</span><span>$${tax.toFixed(2)}</span></div>
+    ${existingTip > 0 ? `<div class="klt-row"><span>💬 Existing Tip</span><span>$${existingTip.toFixed(2)}</span></div>` : ''}
+    ${kioskLookupTipAmount > 0 ? `<div class="klt-row tip-line"><span>💬 Additional Tip</span><span>+$${kioskLookupTipAmount.toFixed(2)}</span></div>` : ''}
+    <div class="klt-row total"><span>Total Due</span><span>$${newTotal.toFixed(2)}</span></div>
+  `;
+}
+
+function renderKioskLookupPayMethods() {
+  const methods = ['Cash', 'Card', 'Mobile Pay'];
+  const container = document.getElementById('kioskLookupPayMethods');
+  if (!container) return;
+  container.innerHTML = '';
+
+  // Ensure at least one method selected
+  if (kioskLookupPaySplits.length === 0) {
+    kioskLookupPaySplits.push({method: 'Cash', amount: 0});
+  }
+
+  methods.forEach(m => {
+    const existing = kioskLookupPaySplits.find(s => s.method === m);
+    const btn = document.createElement('button');
+    btn.className = existing ? 'selected' : '';
+    btn.textContent = m === 'Cash' ? '💵 Cash' : m === 'Card' ? '💳 Card' : '📱 Mobile Pay';
+    btn.onclick = () => {
+      const idx = kioskLookupPaySplits.findIndex(s => s.method === m);
+      if (idx >= 0) {
+        kioskLookupPaySplits.splice(idx, 1);
+      } else {
+        kioskLookupPaySplits.push({method: m, amount: 0});
+      }
+      if (kioskLookupPaySplits.length === 0) {
+        kioskLookupPaySplits.push({method: 'Cash', amount: 0});
+      }
+      autoDistributeKioskLookup();
+      renderKioskLookupPayMethods();
+      renderKioskLookupTotals();
+    };
+    container.appendChild(btn);
+  });
+
+  // Amount inputs for each selected method
+  kioskLookupPaySplits.forEach((s, i) => {
+    const total = kioskLookupGetTotal();
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:8px;margin-top:6px;background:#16213e;padding:8px 12px;border-radius:10px;';
+    const label = document.createElement('span');
+    label.textContent = s.method === 'Cash' ? '💵' : s.method === 'Card' ? '💳' : '📱';
+    label.style.fontSize = '22px';
+    const inp = document.createElement('input');
+    inp.type = 'number';
+    inp.step = '0.01';
+    inp.min = '0';
+    inp.inputMode = 'decimal';
+    inp.value = s.amount > 0 ? s.amount.toFixed(2) : '';
+    inp.placeholder = '$0.00';
+    inp.style.cssText = 'flex:1;min-width:80px;min-height:48px;padding:6px 12px;background:#1a1a2e;border:2px solid #2a2a4e;border-radius:8px;color:#fff;font-size:20px;text-align:center;';
+    inp.oninput = () => {
+      const val = parseFloat(inp.value);
+      kioskLookupPaySplits[i].amount = isNaN(val) ? 0 : Math.round(val * 100) / 100;
+    };
+    row.appendChild(label);
+    row.appendChild(inp);
+    container.appendChild(row);
+  });
+}
+
+function kioskLookupGetTotal() {
+  const order = kioskLookupOrderData;
+  if (!order) return 0;
+  const subtotal = parseFloat(order.subtotal) || 0;
+  const tax = parseFloat(order.tax_amount) || 0;
+  const existingTip = parseFloat(order.tip_amount) || 0;
+  return Math.round((subtotal + tax + existingTip + kioskLookupTipAmount) * 100) / 100;
+}
+
+function autoDistributeKioskLookup() {
+  const total = kioskLookupGetTotal();
+  if (kioskLookupPaySplits.length === 0) return;
+  const each = Math.round((total / kioskLookupPaySplits.length) * 100) / 100;
+  let remainder = Math.round((total - each * kioskLookupPaySplits.length) * 100) / 100;
+  kioskLookupPaySplits.forEach((s, i) => {
+    s.amount = i === kioskLookupPaySplits.length - 1
+      ? Math.round((each + remainder) * 100) / 100
+      : each;
+  });
+}
+
+function selectKioskLookupTip(percent) {
+  document.querySelectorAll('#kioskLookupView .kiosk-tip .tip-btns button').forEach(b => b.classList.remove('selected'));
+  const cif = document.getElementById('kioskLookupCustomTip');
+  if (cif) cif.style.display = 'none';
+
+  if (percent === -1) {
+    const customBtn = document.querySelector('#kioskLookupView .tip-custom');
+    if (customBtn) customBtn.classList.add('selected');
+    const cif2 = document.getElementById('kioskLookupCustomTip');
+    if (cif2) cif2.style.display = 'flex';
+    const inp = document.getElementById('kioskLookupCustomTipInput');
+    if (inp) inp.focus();
+    kioskLookupTipPercent = -1;
+    updateKioskLookupTipCustom();
+    return;
+  }
+
+  if (percent === 0) {
+    const btn = document.querySelector('#kioskLookupView .tip-0');
+    if (btn) btn.classList.add('selected');
+    kioskLookupTipAmount = 0;
+    kioskLookupTipPercent = 0;
+  } else {
+    const btn = document.querySelector('#kioskLookupView .tip-' + percent);
+    if (btn) btn.classList.add('selected');
+    const order = kioskLookupOrderData;
+    const subtotal = order ? (parseFloat(order.subtotal) || 0) : 0;
+    kioskLookupTipAmount = subtotal * (percent / 100);
+    kioskLookupTipPercent = percent;
+  }
+  renderKioskLookupTotals();
+}
+
+function updateKioskLookupTipCustom() {
+  const val = parseFloat(document.getElementById('kioskLookupCustomTipInput').value);
+  kioskLookupTipAmount = (!isNaN(val) && val >= 0) ? val : 0;
+  renderKioskLookupTotals();
+}
+
+function kioskLookupBack() {
+  document.getElementById('kioskLookupResult').style.display = 'none';
+  document.getElementById('kioskLookupForm').style.display = 'block';
+  document.getElementById('kioskLookupMsg').textContent = '';
+  document.getElementById('kioskLookupMsg').className = 'kiosk-lookup-msg';
+  kioskLookupOrderData = null;
+  // Show hidden elements again
+  document.querySelectorAll('#kioskLookupView .kiosk-tip, #kioskLookupView .kiosk-payment, #kioskLookupView .kiosk-pay-btn, #kioskLookupView .kiosk-lookup-back').forEach(el => el.style.display = '');
+}
+
+async function kioskLookupPay() {
+  const order = kioskLookupOrderData;
+  if (!order) { showToast('No order selected', 'danger'); return; }
+  if (!kioskLookupPaySplits || kioskLookupPaySplits.length === 0) {
+    showToast('Please select a payment method', 'danger');
+    return;
+  }
+
+  const btn = document.getElementById('kioskLookupPayBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Processing...';
+
+  const total = kioskLookupGetTotal();
+  const allocated = kioskLookupPaySplits.reduce((sum, s) => sum + (s.amount || 0), 0);
+  if (Math.abs(Math.round(allocated * 100) / 100 - Math.round(total * 100) / 100) > 0.01) {
+    showToast('⚠️ Payment splits must equal total ($' + total.toFixed(2) + '). Allocated: $' + allocated.toFixed(2), 'danger');
+    btn.disabled = false;
+    btn.textContent = '💵 Pay Now';
+    return;
+  }
+
+  try {
+    const r = await fetch(BACKEND_URL + '/api/orders/kiosk_pay', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        order_id: order.order_id,
+        payment_splits: kioskLookupPaySplits.filter(s => s.amount > 0),
+        tip_amount: Math.round(kioskLookupTipAmount * 100) / 100,
+        user: currentUser ? currentUser.id : 'kiosk'
+      })
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      showToast(data.message || 'Payment failed', 'danger');
+      btn.disabled = false;
+      btn.textContent = '💵 Pay Now';
+      return;
+    }
+
+    // Show thank you
+    document.getElementById('kioskLookupView').style.display = 'none';
+    document.getElementById('kioskNewOrderView').style.display = 'none';
+    document.getElementById('kioskThankYou').classList.add('active');
+    document.getElementById('kioskThankYouTotal').textContent = '$' + total.toFixed(2);
+    document.getElementById('kioskThankYouOrderNum').textContent = 'Order #' + (data.order_number || data.order_id || order.order_id);
+
+    // Countdown to return
+    let count = 10;
+    document.getElementById('kioskCountdownNum').textContent = count;
+    if (kioskReturnTimer) clearInterval(kioskReturnTimer);
+    kioskReturnTimer = setInterval(() => {
+      count--;
+      const el = document.getElementById('kioskCountdownNum');
+      if (el) el.textContent = count;
+      if (count <= 0) {
+        clearInterval(kioskReturnTimer);
+        kioskReturnTimer = null;
+        exitKioskMode();
+      }
+    }, 1000);
+  } catch (e) {
     showToast('Network error', 'danger');
     btn.disabled = false;
     btn.textContent = '💵 Pay Now';
