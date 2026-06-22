@@ -29,6 +29,7 @@ REFUNDED_ORDERS_FILE = 'refunded_orders.json'  # Track refunded/voided orders
 FAVORITES_FILE = 'favorites.json'  # User quick-order favorites
 LOYALTY_FILE = 'loyalty_points.json'  # Customer loyalty points tracking
 SCHEDULED_PRICING_FILE = 'scheduled_pricing.json'  # Scheduled pricing rules (happy hour, daily specials)
+WASTE_FILE = 'waste_log.json'  # Waste/throwaway tracking
 MENU_BACKUPS_DIR = 'menu_backups'
 
 # --- Loyalty Constants ---
@@ -98,7 +99,7 @@ def backup_menu():
 
 
 # Ensure JSON files exist and are initialized correctly
-for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE, INVENTORY_FILE, REFUNDED_ORDERS_FILE, FAVORITES_FILE, LOYALTY_FILE, SCHEDULED_PRICING_FILE]:
+for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE, INVENTORY_FILE, REFUNDED_ORDERS_FILE, FAVORITES_FILE, LOYALTY_FILE, SCHEDULED_PRICING_FILE, WASTE_FILE]:
     if not os.path.exists(f):
         with open(f, 'w') as file:
             if f == USERS_FILE:
@@ -146,6 +147,8 @@ for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMES
                 json.dump({}, file, indent=4)  # Initialize empty favorites dict (user_id -> list of combos)
             elif f == LOYALTY_FILE:
                 json.dump({}, file, indent=4)  # Initialize empty loyalty points dict (phone -> data)
+            elif f == WASTE_FILE:
+                json.dump([], file, indent=4)  # Initialize empty waste log
             else:
                 json.dump([], file)  # Initialize orders.json and cleared_orders.json as empty lists
 
@@ -3054,6 +3057,169 @@ def low_stock_alerts():
             })
     
     return jsonify({'low_stock_items': low_stock_items})
+
+
+# ============================================================
+# Waste / Throwaway Tracking System
+# ============================================================
+
+
+@app.route('/api/waste/log', methods=['POST'])
+def log_waste():
+    """Log a waste/throwaway event (admin only, manage_items)."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+
+    if not check_perm(admin_pin, "manage_items"):
+        log_activity('log_waste', admin_pin, 'unauthorized', {'status': 'failed', 'reason': 'Insufficient permissions'})
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    item_name = data.get('item_name', '').strip()
+    quantity = data.get('quantity')
+    reason = data.get('reason', '').strip()
+    notes = data.get('notes', '').strip()
+
+    if not item_name:
+        return jsonify({'message': 'item_name is required.'}), 400
+    if not reason:
+        return jsonify({'message': 'reason is required.'}), 400
+    try:
+        quantity = int(quantity)
+        if quantity <= 0:
+            raise ValueError
+    except (ValueError, TypeError):
+        return jsonify({'message': 'quantity must be a positive integer.'}), 400
+
+    valid_reasons = ['spoiled_expired', 'burned', 'spilled', 'damaged', 'overproduced', 'other']
+    if reason not in valid_reasons:
+        return jsonify({'message': f'reason must be one of: {", ".join(valid_reasons)}.'}), 400
+
+    users_data = load_json_data(USERS_FILE)
+    admin_user = users_data.get(admin_pin, {})
+    admin_role = admin_user.get('role', 'unknown')
+
+    # Look up item price from menu for cost estimation
+    items_data = load_json_data(ITEMS_FILE)
+    item_price = 0.0
+    for cat, cat_items in items_data.items():
+        for item in cat_items:
+            if item['name'] == item_name:
+                item_price = float(item.get('price', 0))
+                break
+        if item_price > 0:
+            break
+
+    waste_log = load_json_data(WASTE_FILE)
+    entry = {
+        'id': len(waste_log) + 1,
+        'date': datetime.now().isoformat(),
+        'item_name': item_name,
+        'quantity': quantity,
+        'reason': reason,
+        'notes': notes,
+        'logged_by': admin_pin,
+        'logged_by_name': admin_user.get('name', 'Unknown'),
+        'estimated_cost': round(item_price * quantity, 2),
+        'item_price': item_price
+    }
+    waste_log.append(entry)
+    save_json_data(WASTE_FILE, waste_log)
+
+    log_activity('log_waste', admin_pin, admin_role, {
+        'item_name': item_name,
+        'quantity': quantity,
+        'reason': reason,
+        'estimated_cost': entry['estimated_cost'],
+        'notes': notes
+    })
+
+    return jsonify({'message': 'Waste logged successfully.', 'entry': entry})
+
+
+@app.route('/api/waste', methods=['POST'])
+def get_waste_log():
+    """Get waste log entries with optional date filtering (view_stats permission)."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+
+    if not check_perm(admin_pin, "view_stats"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    waste_log = load_json_data(WASTE_FILE)
+
+    # Date filtering
+    date_from = data.get('date_from', '').strip()
+    date_to = data.get('date_to', '').strip()
+
+    if date_from:
+        try:
+            dt_from = datetime.fromisoformat(date_from)
+            waste_log = [e for e in waste_log if datetime.fromisoformat(e.get('date', '')) >= dt_from]
+        except (ValueError, KeyError):
+            pass
+
+    if date_to:
+        try:
+            if 'T' not in date_to:
+                dt_to = datetime.fromisoformat(date_to + 'T23:59:59')
+            else:
+                dt_to = datetime.fromisoformat(date_to)
+            waste_log = [e for e in waste_log if datetime.fromisoformat(e.get('date', '')) <= dt_to]
+        except (ValueError, KeyError):
+            pass
+
+    # Sort by date descending (most recent first)
+    waste_log.sort(key=lambda e: e.get('date', ''), reverse=True)
+
+    return jsonify({'waste_log': waste_log})
+
+
+@app.route('/api/waste/summary', methods=['POST'])
+def waste_summary():
+    """Get aggregated waste summary (view_stats permission)."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+
+    if not check_perm(admin_pin, "view_stats"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    waste_log = load_json_data(WASTE_FILE)
+
+    total_items = sum(e.get('quantity', 0) for e in waste_log)
+    total_cost = sum(e.get('estimated_cost', 0) for e in waste_log)
+    total_entries = len(waste_log)
+
+    # Breakdown by reason
+    by_reason = {}
+    for e in waste_log:
+        r = e.get('reason', 'other')
+        if r not in by_reason:
+            by_reason[r] = {'count': 0, 'quantity': 0, 'cost': 0.0}
+        by_reason[r]['count'] += 1
+        by_reason[r]['quantity'] += e.get('quantity', 0)
+        by_reason[r]['cost'] += e.get('estimated_cost', 0)
+
+    # Breakdown by item
+    by_item = {}
+    for e in waste_log:
+        name = e.get('item_name', '')
+        if name not in by_item:
+            by_item[name] = {'count': 0, 'quantity': 0, 'cost': 0.0}
+        by_item[name]['count'] += 1
+        by_item[name]['quantity'] += e.get('quantity', 0)
+        by_item[name]['cost'] += e.get('estimated_cost', 0)
+
+    # Top wasted items by cost
+    top_items = sorted(by_item.items(), key=lambda x: x[1]['cost'], reverse=True)[:10]
+    top_items_list = [{'item_name': name, 'quantity': v['quantity'], 'cost': round(v['cost'], 2), 'entries': v['count']} for name, v in top_items]
+
+    return jsonify({
+        'total_entries': total_entries,
+        'total_items_wasted': total_items,
+        'total_estimated_cost': round(total_cost, 2),
+        'by_reason': {r: {'entries': v['count'], 'quantity': v['quantity'], 'cost': round(v['cost'], 2)} for r, v in by_reason.items()},
+        'top_items': top_items_list
+    })
 
 
 # ============================================================

@@ -1021,6 +1021,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
         <button onclick="switchAdminSection('employees')" id="asEmployees" data-i18n="admin.employees">👤 Employee Perf</button>
         <button onclick="switchAdminSection('loyalty')" id="asLoyalty">⭐ Loyalty</button>
         <button onclick="switchAdminSection('pricing')" id="asPricing" data-i18n="admin.pricing">⏰ Pricing</button>
+        <button onclick="switchAdminSection('waste')" id="asWaste" data-i18n="admin.waste">🗑️ Waste</button>
       </div>
       <div id="adminContent">
         <!-- Stats -->
@@ -1275,6 +1276,46 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
           </div>
           <div id="activePricingBanner" style="display:none;margin-bottom:12px;padding:12px 16px;background:var(--accent);color:#fff;border-radius:8px;font-size:15px;font-weight:600;"></div>
           <div id="pricingRulesList"><div class="empty-state">Loading...</div></div>
+        </div>
+        <!-- Waste Tracking -->
+        <div id="secWaste" class="admin-section">
+          <h3 data-i18n="admin.waste.title">🗑️ Waste Tracking</h3>
+          <p style="color:var(--text2);margin-bottom:16px;font-size:14px;" data-i18n="admin.waste.desc">Log items thrown away with reason and estimated cost.</p>
+          <!-- Summary Cards -->
+          <div id="wasteSummary" style="display:none;margin-bottom:16px;">
+            <div class="emp-perf-summary" id="wasteSummaryCards"></div>
+          </div>
+          <!-- Log Waste Form -->
+          <div class="card" style="margin-bottom:12px;">
+            <h4 style="margin-bottom:8px;" data-i18n="admin.waste.log_title">🗑️ Log Waste</h4>
+            <div class="form-row" style="flex-wrap:wrap;gap:6px;">
+              <select id="wasteItemSelect" style="max-width:220px;">
+                <option value="" data-i18n="admin.waste.select_item">— Select Item —</option>
+              </select>
+              <input type="number" id="wasteQuantity" placeholder="Qty" min="1" step="1" value="1" style="max-width:70px;"/>
+              <select id="wasteReason" style="max-width:160px;">
+                <option value="spoiled_expired" data-i18n="admin.waste.reason.spoiled">Spoiled / Expired</option>
+                <option value="burned" data-i18n="admin.waste.reason.burned">Burned</option>
+                <option value="spilled" data-i18n="admin.waste.reason.spilled">Spilled</option>
+                <option value="damaged" data-i18n="admin.waste.reason.damaged">Damaged</option>
+                <option value="overproduced" data-i18n="admin.waste.reason.overproduced">Overproduced</option>
+                <option value="other" data-i18n="admin.waste.reason.other">Other</option>
+              </select>
+              <input type="text" id="wasteNotes" placeholder="Notes (optional)" style="flex:1;min-width:120px;"/>
+              <button class="accent" onclick="logWaste()" style="min-height:44px;" data-i18n="admin.waste.log_btn">📝 Log Waste</button>
+            </div>
+          </div>
+          <!-- Waste Log Table -->
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+              <input type="date" id="wasteDateFrom" onchange="loadWasteAdmin()" style="max-width:140px;min-height:36px;font-size:13px;"/>
+              <span style="color:var(--text2);">→</span>
+              <input type="date" id="wasteDateTo" onchange="loadWasteAdmin()" style="max-width:140px;min-height:36px;font-size:13px;"/>
+              <button class="ghost" onclick="document.getElementById('wasteDateFrom').value='';document.getElementById('wasteDateTo').value='';loadWasteAdmin();" style="font-size:13px;padding:6px 12px;min-height:36px;">✕ Clear</button>
+            </div>
+            <button class="outline" onclick="loadWasteAdmin()" style="min-height:36px;font-size:13px;" data-i18n="admin.waste.refresh">🔄 Refresh</button>
+          </div>
+          <div id="wasteLogList"><div class="empty-state" data-i18n="admin.waste.no_data">No waste entries logged yet.</div></div>
         </div>
       </div>
     </div>
@@ -1689,6 +1730,31 @@ const L10N = {
     'admin.pricing.toggled': 'Rule toggled!',
     'item.scheduled_price': 'SALE ${price}',
     'item.original_price': 'was ${price}',
+    'admin.waste': '🗑️ Waste',
+    'admin.waste.title': '🗑️ Waste Tracking',
+    'admin.waste.desc': 'Log items thrown away with reason and estimated cost.',
+    'admin.waste.log_title': '🗑️ Log Waste',
+    'admin.waste.select_item': '— Select Item —',
+    'admin.waste.log_btn': '📝 Log Waste',
+    'admin.waste.refresh': '🔄 Refresh',
+    'admin.waste.no_data': 'No waste entries logged yet.',
+    'admin.waste.reason.spoiled': 'Spoiled / Expired',
+    'admin.waste.reason.burned': 'Burned',
+    'admin.waste.reason.spilled': 'Spilled',
+    'admin.waste.reason.damaged': 'Damaged',
+    'admin.waste.reason.overproduced': 'Overproduced',
+    'admin.waste.reason.other': 'Other',
+    'admin.waste.total_entries': 'Total Entries',
+    'admin.waste.total_items': 'Items Wasted',
+    'admin.waste.total_cost': 'Est. Cost',
+    'admin.waste.entry_id': 'ID',
+    'admin.waste.date': 'Date',
+    'admin.waste.item': 'Item',
+    'admin.waste.qty': 'Qty',
+    'admin.waste.reason': 'Reason',
+    'admin.waste.notes': 'Notes',
+    'admin.waste.logged_by': 'By',
+    'admin.waste.cost': 'Cost',
   },
   es: {
     'app.title': '🍽️ Sistema POS',
@@ -1890,6 +1956,31 @@ const L10N = {
     'admin.pricing.toggled': '¡Regla cambiada!',
     'item.scheduled_price': 'OFERTA ${price}',
     'item.original_price': 'antes ${price}',
+    'admin.waste': '🗑️ Desperdicio',
+    'admin.waste.title': '🗑️ Seguimiento de Desperdicios',
+    'admin.waste.desc': 'Registre artículos desechados con motivo y costo estimado.',
+    'admin.waste.log_title': '🗑️ Registrar Desperdicio',
+    'admin.waste.select_item': '— Seleccionar Artículo —',
+    'admin.waste.log_btn': '📝 Registrar',
+    'admin.waste.refresh': '🔄 Actualizar',
+    'admin.waste.no_data': 'No hay registros de desperdicio aún.',
+    'admin.waste.reason.spoiled': 'Dañado / Vencido',
+    'admin.waste.reason.burned': 'Quemado',
+    'admin.waste.reason.spilled': 'Derramado',
+    'admin.waste.reason.damaged': 'Roto',
+    'admin.waste.reason.overproduced': 'Sobreproducción',
+    'admin.waste.reason.other': 'Otro',
+    'admin.waste.total_entries': 'Total Registros',
+    'admin.waste.total_items': 'Artículos Desechados',
+    'admin.waste.total_cost': 'Costo Est.',
+    'admin.waste.entry_id': 'ID',
+    'admin.waste.date': 'Fecha',
+    'admin.waste.item': 'Artículo',
+    'admin.waste.qty': 'Cant',
+    'admin.waste.reason': 'Motivo',
+    'admin.waste.notes': 'Notas',
+    'admin.waste.logged_by': 'Por',
+    'admin.waste.cost': 'Costo',
   }
 };
 
@@ -2282,6 +2373,7 @@ function showApp() {
     'asInventory': perms.includes('manage_items'),  // Inventory management accessible to item managers
     'asEmployees': perms.includes('view_stats'),  // Employee perf uses view_stats permission
     'asPricing': perms.includes('manage_items'),  // Scheduled pricing uses manage_items permission
+    'asWaste': perms.includes('manage_items'),  // Waste tracking uses manage_items permission
   };
   
   // Show/hide each sub-tab button
@@ -3519,6 +3611,7 @@ function switchAdminSection(sec) {
   else if (sec === 'employees') loadEmployeePerformance();
   else if (sec === 'loyalty') loadLoyaltyAdmin();
   else if (sec === 'pricing') loadPricingRules();
+  else if (sec === 'waste') loadWasteAdmin();
 }
 
 async function loadAdminStats() {
@@ -4524,6 +4617,137 @@ async function initInventory() {
     }
     showToast('Initialized ' + successCount + ' items with 0 stock', 'success');
     loadInventoryAdmin();
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
+}
+
+// ═══════════ WASTE TRACKING ═══════════
+
+async function loadWasteAdmin() {
+  const list = document.getElementById('wasteLogList');
+  if (!list) return;
+  const summaryDiv = document.getElementById('wasteSummary');
+  const summaryCards = document.getElementById('wasteSummaryCards');
+  
+  // Build item dropdown
+  const itemSelect = document.getElementById('wasteItemSelect');
+  try {
+    const itemsRes = await fetch(BACKEND_URL + '/api/items');
+    if (itemsRes.ok) {
+      const items = await itemsRes.json();
+      let itemOpts = '<option value="">— Select Item —</option>';
+      Object.entries(items).forEach(([cat, catItems]) => {
+        catItems.forEach(item => {
+          itemOpts += '<option value="' + escJs(item.name) + '">' + escHtml(item.name) + ' (' + escHtml(cat) + ')</option>';
+        });
+      });
+      itemSelect.innerHTML = itemOpts;
+    }
+  } catch(e) {}
+
+  // Load waste log + summary
+  list.innerHTML = '<div class="empty-state">' + t('loading') + '</div>';
+  try {
+    const body = { adminPin: currentUser.id };
+    const dFrom = document.getElementById('wasteDateFrom').value;
+    const dTo = document.getElementById('wasteDateTo').value;
+    if (dFrom) body.date_from = dFrom;
+    if (dTo) body.date_to = dTo;
+
+    const [logRes, sumRes] = await Promise.all([
+      fetch(BACKEND_URL + '/api/waste', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }),
+      fetch(BACKEND_URL + '/api/waste/summary', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ adminPin: currentUser.id }) })
+    ]);
+
+    // Summary
+    if (sumRes.ok) {
+      const sumData = await sumRes.json();
+      if (sumData.total_entries > 0) {
+        summaryDiv.style.display = 'block';
+        summaryCards.innerHTML =
+          '<div class="stat-card"><div class="stat-val">' + sumData.total_entries + '</div><div class="stat-lbl">' + t('admin.waste.total_entries') + '</div></div>' +
+          '<div class="stat-card"><div class="stat-val">' + sumData.total_items_wasted + '</div><div class="stat-lbl">' + t('admin.waste.total_items') + '</div></div>' +
+          '<div class="stat-card"><div class="stat-val">$' + sumData.total_estimated_cost.toFixed(2) + '</div><div class="stat-lbl">' + t('admin.waste.total_cost') + '</div></div>';
+      } else {
+        summaryDiv.style.display = 'none';
+      }
+    }
+
+    // Log table
+    if (!logRes.ok) { list.innerHTML = '<div class="empty-state">' + t('unauthorized') + '</div>'; return; }
+    const logData = await logRes.json();
+    const wasteLog = logData.waste_log || [];
+
+    if (wasteLog.length === 0) {
+      list.innerHTML = '<div class="empty-state">' + t('admin.waste.no_data') + '</div>';
+      return;
+    }
+
+    const reasonLabels = {
+      'spoiled_expired': t('admin.waste.reason.spoiled'),
+      'burned': t('admin.waste.reason.burned'),
+      'spilled': t('admin.waste.reason.spilled'),
+      'damaged': t('admin.waste.reason.damaged'),
+      'overproduced': t('admin.waste.reason.overproduced'),
+      'other': t('admin.waste.reason.other')
+    };
+    let html = '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:14px;">' +
+      '<thead><tr style="background:var(--card-alt);">' +
+        '<th style="padding:8px;text-align:left;border-bottom:2px solid var(--border);">' + t('admin.waste.entry_id') + '</th>' +
+        '<th style="padding:8px;text-align:left;border-bottom:2px solid var(--border);">' + t('admin.waste.date') + '</th>' +
+        '<th style="padding:8px;text-align:left;border-bottom:2px solid var(--border);">' + t('admin.waste.item') + '</th>' +
+        '<th style="padding:8px;text-align:right;border-bottom:2px solid var(--border);">' + t('admin.waste.qty') + '</th>' +
+        '<th style="padding:8px;text-align:left;border-bottom:2px solid var(--border);">' + t('admin.waste.reason') + '</th>' +
+        '<th style="padding:8px;text-align:left;border-bottom:2px solid var(--border);">' + t('admin.waste.notes') + '</th>' +
+        '<th style="padding:8px;text-align:right;border-bottom:2px solid var(--border);">' + t('admin.waste.cost') + '</th>' +
+        '<th style="padding:8px;text-align:left;border-bottom:2px solid var(--border);">' + t('admin.waste.logged_by') + '</th>' +
+      '</tr></thead><tbody>';
+    wasteLog.forEach(entry => {
+      const d = new Date(entry.date);
+      const dateStr = d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      html += '<tr style="border-bottom:1px solid var(--border);">' +
+        '<td style="padding:8px;color:var(--text2);font-size:13px;">#' + entry.id + '</td>' +
+        '<td style="padding:8px;white-space:nowrap;font-size:13px;">' + dateStr + '</td>' +
+        '<td style="padding:8px;font-weight:600;">' + escHtml(entry.item_name) + '</td>' +
+        '<td style="padding:8px;text-align:right;">' + entry.quantity + '</td>' +
+        '<td style="padding:8px;"><span style="background:var(--accent);color:#fff;font-size:12px;padding:2px 8px;border-radius:6px;">' + escHtml(reasonLabels[entry.reason] || entry.reason) + '</span></td>' +
+        '<td style="padding:8px;color:var(--text2);font-size:13px;max-width:150px;overflow:hidden;text-overflow:ellipsis;">' + escHtml(entry.notes || '') + '</td>' +
+        '<td style="padding:8px;text-align:right;font-weight:600;color:#e74c3c;">$' + entry.estimated_cost.toFixed(2) + '</td>' +
+        '<td style="padding:8px;color:var(--text2);font-size:13px;">' + escHtml(entry.logged_by_name || entry.logged_by) + '</td>' +
+      '</tr>';
+    });
+    html += '</tbody></table></div>';
+    list.innerHTML = html;
+  } catch(e) {
+    list.innerHTML = '<div class="empty-state">' + t('network_error') + '</div>';
+  }
+}
+
+async function logWaste() {
+  const itemName = document.getElementById('wasteItemSelect').value;
+  const quantity = parseInt(document.getElementById('wasteQuantity').value);
+  const reason = document.getElementById('wasteReason').value;
+  const notes = document.getElementById('wasteNotes').value.trim();
+
+  if (!itemName) { showToast('Please select an item', 'danger'); return; }
+  if (!quantity || quantity < 1) { showToast('Quantity must be a positive integer', 'danger'); return; }
+
+  try {
+    const r = await fetch(BACKEND_URL + '/api/waste/log', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        adminPin: currentUser.id,
+        item_name: itemName,
+        quantity: quantity,
+        reason: reason,
+        notes: notes
+      })
+    });
+    const d = await r.json();
+    if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
+    showToast(d.message, 'success');
+    document.getElementById('wasteQuantity').value = '1';
+    document.getElementById('wasteNotes').value = '';
+    loadWasteAdmin();
   } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
 

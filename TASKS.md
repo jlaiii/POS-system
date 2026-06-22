@@ -32,7 +32,6 @@
 
 ## Priority: LOW
 
-- [~] worker-2 Add waste tracking (items thrown away, reason)
 - [ ] Add delivery address management
 - [ ] Add integration webhook for third-party delivery apps
 - [ ] Add table-side ads system — rotating promotional images/videos on table tablets between orders
@@ -52,6 +51,7 @@
 - [x] **Add split-payment support** — Support multiple payment methods per order (Cash/Card/Mobile Pay). Toggle payment method buttons with individual amount inputs. Split Evenly button. Validation ensures splits equal total. Payment breakdown stored in `payment_splits` array. Displayed on receipt, order history, kitchen display, and kiosk mode. Backward-compatible with legacy single-payment orders. [worker-3]
 - [x] **Add tip calculation UI** — Percentage buttons (No tip/15%/18%/20%/Custom) in main POS cart tip row. Tip calculated on subtotal, shown in cart total, submitted with order, displayed on receipt and order history. [worker-2]
 - [x] **Add employee performance dashboard** — New `/api/employee_performance` endpoint with date range filtering, per-employee metrics (orders count, revenue, avg order value, tips, items sold). Frontend: admin sub-tab with summary cards and sortable table, i18n EN/ES, permission-gated (view_stats). [worker-2]
+- [x] **Add waste tracking (items thrown away, reason)** — New `waste_log.json` data store. `POST /api/waste/log` endpoint logs waste entries with item, quantity, reason (spoiled/expired, burned, spilled, damaged, overproduced, other), notes, estimated cost (based on item price). `POST /api/waste` endpoint retrieves log with date filtering. `POST /api/waste/summary` endpoint provides aggregated waste stats (total entries, items, cost, breakdown by reason, top items). Frontend: Admin Waste tab with log form (item dropdown, qty, reason, notes), summary cards, date-filtered log table with reason badges, i18n EN + ES. Activity logging. Permission-gated (manage_items for logging, view_stats for viewing). Dark theme compatible. [worker-2]
 - [x] **Kitchen queue audit & optimize** — Prominent color-coded order age (warning at 5m, critical at 10m+ with pulsing animation), 🚨 PRIORITY badge for orders >10min, quick-claim by tapping entire card body, enhanced 3-note square wave alarm sound, fixed stats endpoint keys (pending/preparing/done_today), 1s clock update, 10s age recheck interval. [worker-1]
 - [x] **Table management system** — Admin assigns tablets to tables by table number. Orders tagged with table number. Running tab tracking per table. Table management in admin panel with tab view modal. Table number selector in cart. [worker-3]
 - [x] **Drive-through order display** — Drive-through tablet/TV view at `/drivethrough`. Shows live cart building with 2s polling, large high-contrast text for outdoor visibility. Cashier toggles "Drive-Through" mode in POS to push cart state live. Shows items, running total, tax. "Please Pull Forward" screen when order submitted. High-contrast dark theme (#0a0a1a bg, #ff3366 accent, #00cc66 success).
