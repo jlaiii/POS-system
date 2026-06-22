@@ -31,7 +31,7 @@
 
 - [x] Add integration webhook for third-party delivery apps — Webhook system that POSTs order data (JSON) to configured URLs on order submission. Admin UI to add/list/test/toggle/delete webhooks. Fire-and-forget via background thread so order submission is not blocked. i18n EN + ES. Permission-gated (manage_items). [worker-1]
 - [x] Add table-side ads system — rotating promotional images/videos on table tablets between orders. Admin management UI, `/api/ads/*` endpoints, `/tablet` display page with auto-rotation, swipe support, i18n EN+ES. [worker-2]
-- [ ] **Add category management (create/rename/delete/reorder menu categories)** — Menu categories are currently free-text strings on items with no dedicated management. Add admin UI to create, rename, delete, and reorder categories. Applies changes across all items in that category. Improves POS item grid organization. [audit]
+- [~] worker-2 **Add category management (create/rename/delete/reorder menu categories)** — Menu categories are currently free-text strings on items with no dedicated management. Add admin UI to create, rename, delete, and reorder categories. Applies changes across all items in that category. Improves POS item grid organization. [audit]
 - [ ] **Add customer profile management (name, contact, order history, total spent)** — Currently customer info is limited to phone-based loyalty lookup. Add customer database with names, contact info, visit history, total spent, and order history per customer. Include admin customer search/browse UI. Standard POS CRM feature. [audit]
 
 ## Done
