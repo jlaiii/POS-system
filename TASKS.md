@@ -18,7 +18,7 @@
 
 ## Priority: MEDIUM
 
-- [ ] **Customer order lookup** — From the kiosk mode, allow looking up an order by order number or table number to pull it up for payment.
+- [~] worker-2 **Customer order lookup** — From the kiosk mode, allow looking up an order by order number or table number to pull it up for payment.
 - [ ] **Table tab management** — Each table accumulates a running tab (orders placed from that table). Staff can view a table's tab, add items, and close it out (checkout). Tab history per table.
 - [ ] **Owner activity log filter** — Let owner filter activity log by: admin user, action type, date range. Show who changed what and when.
 - [ ] Add export data to CSV/Excel (orders, timesheet, activity log)
