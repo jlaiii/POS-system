@@ -1,28 +1,28 @@
 # POS System — Smart Task Queue
 
-> Auto-managed by Hermes Cron. Worker picks 1 task every 30 min.
+> Auto-managed by 3 Hermes Worker Crons (every 30 min each, staggered claims).
+> Workers use `[~]` to claim tasks before working. Never pick a claimed task.
 > Last updated: 2026-06-22
 
 ## Status Legend
-- `[ ]` = pending
-- `[~]` = in progress (worker has claimed it)
+- `[ ]` = pending (available for any worker)
+- `[~]` = in progress (worker has claimed it — DO NOT TOUCH)
 - `[x]` = completed
 - `[-]` = cancelled / no longer relevant
 
 ## Priority: HIGH
 
-- [x] **Granular role/permission system** — Three roles (owner/admin/user/cook) with toggleable permissions per admin. Owner has all perms, can grant/revoke specific perms per admin (ban_users, manage_items, manage_users, view_logs, etc). Owner can revert admin changes.
-- [x] **Menu version history with restore** — Every menu change auto-saves a backup. Owner can browse backup dates and restore items.json to any previous day. Shows diff preview before confirming restore.
-- [x] **User ban/unban system** — Owner and admins with ban_users perm can ban a user (disables their login). Banned users show in admin panel with unban button. Ban reason is logged.
-- [x] **Permission management UI** — Admin panel section where owner sees all admins with toggle switches per permission (ban_users on/off, manage_items on/off, etc). Changes take effect immediately.
-- [ ] **Kitchen queue audit & optimize** — Review the kitchen display system end-to-end. Make sure it's fast-paced friendly: minimize button taps, show order age prominently, add sound alerts for every new order, add priority flagging for orders waiting too long. Test the 8s polling under load.
+- [ ] **POS Kiosk / Customer Payment Mode** — A toggleable mode where the tablet becomes a customer-facing payment terminal at the front counter/door. Worker brings up order or creates it there, customer sees total and pays. Large-print mode for customer visibility. Shows items, tax, tip prompt, total. Payment method selector. "Thank you" screen after payment.
+- [ ] **Table management system** — Admin assigns tablets to tables by table number. Each tablet knows its table number (displayed prominently). Orders are tagged with table number. Customers can order more drinks/food from their table tablet, see running tab. Future: ads on table tablets.
+- [ ] **Kitchen queue audit & optimize** — Review kitchen display end-to-end. Fast-paced: minimize button taps, prominent order age, sound alerts per new order, priority flagging for orders waiting >10 min. Test 8s polling under load.
 - [ ] Add tip calculation UI (percentage buttons: 15%, 18%, 20%, custom)
 - [ ] Add split-payment support (multiple payment methods per order)
 - [ ] Add inventory tracking (decrement stock when ordered, alert on low stock)
 
 ## Priority: MEDIUM
 
-- [x] **Permission management UI** — Admin panel section where owner sees all admins with toggle switches per permission (ban_users on/off, manage_items on/off, etc). Changes take effect immediately.
+- [ ] **Customer order lookup** — From the kiosk mode, allow looking up an order by order number or table number to pull it up for payment.
+- [ ] **Table tab management** — Each table accumulates a running tab (orders placed from that table). Staff can view a table's tab, add items, and close it out (checkout). Tab history per table.
 - [ ] **Owner activity log filter** — Let owner filter activity log by: admin user, action type, date range. Show who changed what and when.
 - [ ] Add export data to CSV/Excel (orders, timesheet, activity log)
 - [ ] Add date range filtering for order history and stats
@@ -35,27 +35,25 @@
 
 ## Priority: LOW
 
-- [x] Add multi-language support (start with Spanish — detect browser language)
 - [ ] Add customer-facing display mode (second screen showing order summary)
 - [ ] Add barcode scanner support for item lookup (camera or hardware scanner)
 - [ ] Add loyalty points system per customer
 - [ ] Add scheduled pricing (happy hour, daily specials)
 - [ ] Add waste tracking (items thrown away, reason)
-- [ ] Add table management for dine-in (assign orders to tables)
 - [ ] Add delivery address management
 - [ ] Add integration webhook for third-party delivery apps
+- [ ] Add table-side ads system — rotating promotional images/videos on table tablets between orders
 
 ## Done
 
 - [x] Granular role/permission system — Three-tier roles (owner/admin/user/cook) with 10 granular permissions. Owner has ["*"] wildcard, can grant/revoke specific perms per admin. Ban/unban users with reason tracking. Permission-aware UI hides unauthorized sections.
 - [x] Menu version history with restore — Every menu change auto-saves timestamped backup to menu_backups/. Owner browses backup dates, restores any day's menu with safety backup of current state. Keep last 30 backups.
-- [x] Multi-language support — English + Spanish with browser language detection, language toggle button (globe) in top bar, translation dictionary (L10N), `t()` helper function, `data-i18n` attributes for static HTML, persistent language preference in localStorage, all major UI strings translated. Use the 🌐 globe button in top bar to switch between English and Español.
-
+- [x] Multi-language support — English + Spanish with browser language detection, language toggle button (globe) in top bar.
 - [x] Kitchen display queue system — Full cook view: order queue with claim/complete/cancel, 8s auto-refresh, sound alerts, fullscreen mode, role-based routing (cook role), order status pipeline (pending→preparing→completed/cancelled)
-- [x] Order notes field — per-item note input in cart items, per-order notes textarea in cart, notes displayed on receipt and order history, stored in backend order records
-- [x] Receipt printing simulation — print-friendly HTML receipt with thermal printer CSS, overlay after order submit, re-print from order history, @media print styles for 80mm thermal printer format
-- [x] Discount/coupon code system — percentage and flat discounts with admin management, coupon input in cart, discount validation endpoint, usage limits, min order amounts
-- [x] Sales tax calculation support — configurable global, per-category, and per-item tax rates with cart tax breakdown, order history display, and admin Tax panel
+- [x] Order notes field — per-item note input in cart items, per-order notes textarea in cart.
+- [x] Receipt printing simulation — print-friendly HTML receipt with thermal printer CSS.
+- [x] Discount/coupon code system — percentage and flat discounts with admin management.
+- [x] Sales tax calculation support — configurable global, per-category, and per-item tax rates.
 - [x] Touch-optimized item grid with category tabs
 - [x] Most-ordered items analytics endpoint
 - [x] Peak hour sales analytics
