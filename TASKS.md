@@ -28,7 +28,7 @@
 
 ## Priority: HIGH (NEW — Audit 2026-06-22)
 
-- [ ] **Add reorder button in order history** — One-click to reload all items from a past order into the cart. Major waiter speed improvement: eliminates need to manually re-add frequent orders.
+- [~] worker-1 **Add reorder button in order history** — One-click to reload all items from a past order into the cart. Major waiter speed improvement: eliminates need to manually re-add frequent orders.
 
 ## Priority: LOW
 
