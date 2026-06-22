@@ -32,7 +32,7 @@
 
 ## Priority: LOW
 
-- [ ] Add loyalty points system per customer
+- [~] worker-3 **Add loyalty points system per customer**
 - [ ] Add scheduled pricing (happy hour, daily specials)
 - [ ] Add waste tracking (items thrown away, reason)
 - [ ] Add delivery address management
