@@ -31,7 +31,7 @@
 
 ## Priority: LOW
 
-- [ ] Add customer-facing display mode (second screen showing order summary)
+- [~] worker-1 Add customer-facing display mode (second screen showing order summary)
 - [ ] Add barcode scanner support for item lookup (camera or hardware scanner)
 - [ ] Add loyalty points system per customer
 - [ ] Add scheduled pricing (happy hour, daily specials)
