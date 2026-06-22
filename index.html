@@ -69,6 +69,36 @@ input, select {
 }
 input:focus, select:focus { outline: none; border-color: var(--accent); }
 
+/* ── PERMISSIONS TOGGLES ── */
+.perm-toggle { 
+  position: relative; display: inline-block; width: 52px; height: 28px; 
+}
+.perm-toggle input { opacity: 0; width: 0; height: 0; }
+.perm-slider {
+  position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #2a2a4e; transition: .3s; border-radius: 28px;
+}
+.perm-slider:before {
+  position: absolute; content: ""; height: 22px; width: 22px;
+  left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%;
+}
+.perm-toggle input:checked + .perm-slider { background-color: var(--accent); }
+.perm-toggle input:checked + .perm-slider:before { transform: translateX(24px); }
+.perm-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.perm-table th, .perm-table td { padding: 8px 6px; text-align: center; border-bottom: 1px solid #2a2a4e; }
+.perm-table th { color: var(--text2); font-size: 11px; white-space: nowrap; }
+.perm-table td:first-child { text-align: left; font-weight: 600; }
+.perm-save-btn { font-size: 12px; padding: 6px 12px; min-height: 32px; }
+
+/* ── ROLE BADGES ── */
+.role-badge {
+  display: inline-block; padding: 2px 10px; border-radius: 12px;
+  font-size: 12px; font-weight: 700; margin-left: 6px;
+}
+.role-badge.owner { background: #f39c12; color: #000; }
+.role-badge.admin { background: #3498db; color: #fff; }
+.role-badge.cook { background: #27ae60; color: #fff; }
+
 /* ── LOGIN SCREEN ── */
 #loginScreen {
   display: flex; flex-direction: column; align-items: center;
@@ -530,6 +560,8 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
         <button onclick="switchAdminSection('discounts')" id="asDiscounts" data-i18n="admin.discounts">🏷️ Discounts</button>
         <button onclick="switchAdminSection('log')" id="asLog" data-i18n="admin.log">📜 Activity Log</button>
         <button onclick="switchAdminSection('timesheet')" id="asTimesheet" data-i18n="admin.timesheet">⏱️ Timesheet</button>
+        <button onclick="switchAdminSection('permissions')" id="asPermissions" data-i18n="admin.permissions" style="display:none;">🔑 Permissions</button>
+        <button onclick="switchAdminSection('menuhistory')" id="asMenuhistory" data-i18n="admin.menu_history" style="display:none;">📋 Menu History</button>
       </div>
       <div id="adminContent">
         <!-- Stats -->
@@ -539,8 +571,8 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
         <!-- Charts -->
         <div id="secCharts" class="admin-section">
           <div class="charts-row">
-            <div class="chart-box"><h4>📅 Daily Revenue (Last 7 Days)</h4><canvas id="chartDailyRevenue"></canvas></div>
-            <div class="chart-box"><h4>💳 Payment Methods</h4><canvas id="chartPaymentMethods"></canvas></div>
+            <div class="chart-box"><h4 data-i18n="admin.charts.daily_revenue">📅 Daily Revenue (Last 7 Days)</h4><canvas id="chartDailyRevenue"></canvas></div>
+            <div class="chart-box"><h4 data-i18n="admin.charts.payment_methods">💳 Payment Methods</h4><canvas id="chartPaymentMethods"></canvas></div>
           </div>
         </div>
         <!-- Most Ordered -->
@@ -638,6 +670,14 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
         <div id="secTimesheet" class="admin-section">
           <div id="timesheetList"><div class="empty-state">Loading...</div></div>
         </div>
+        <!-- Permissions (owner only) -->
+        <div id="secPermissions" class="admin-section">
+          <div id="permissionsList"><div class="empty-state">Loading...</div></div>
+        </div>
+        <!-- Menu History (owner only) -->
+        <div id="secMenuhistory" class="admin-section">
+          <div id="menuHistoryList"><div class="empty-state">Loading...</div></div>
+        </div>
       </div>
     </div>
   </div>
@@ -656,12 +696,12 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
     </div>
   </div>
   <div id="kitchenStats">
-    <span>🟡 Pending: <span class="ks-pending" id="ksPending">0</span></span>
-    <span>🟠 Preparing: <span class="ks-preparing" id="ksPreparing">0</span></span>
-    <span>✅ Done Today: <span class="ks-done" id="ksDone">0</span></span>
+    <span>🟡 ${t('kitchen.pending')} <span class="ks-pending" id="ksPending">0</span></span>
+    <span>🟠 ${t('kitchen.preparing')} <span class="ks-preparing" id="ksPreparing">0</span></span>
+    <span>✅ ${t('kitchen.done_today')} <span class="ks-done" id="ksDone">0</span></span>
   </div>
-  <div id="kitchenLoading"><div class="spinner"></div> Refreshing...</div>
-  <div id="kitchenQueue"><div class="kitchen-empty">No orders — stand by 🍳</div></div>
+  <div id="kitchenLoading"><div class="spinner"></div> ${t('kitchen.refreshing')}</div>
+  <div id="kitchenQueue"><div class="kitchen-empty" data-i18n="kitchen.empty">No orders — stand by 🍳</div></div>
 </div>
 
 <!-- ═══════════ RECEIPT OVERLAY ═══════════ -->
@@ -737,7 +777,13 @@ const L10N = {
     'admin.discounts': '🏷️ Discounts',
     'admin.log': '📜 Activity Log',
     'admin.timesheet': '⏱️ Timesheet',
-    'admin.stats.today_revenue': "Today's Revenue",
+    'admin.permissions': '🔑 Permissions',
+    'admin.menu_history': '📋 Menu History',
+    'ban': 'Ban',
+    'unban': 'Unban',
+    'banned': '🚫 Banned',
+    'banned_reason': 'Banned: {reason}',
+    'sold': 'sold',
     'admin.stats.today_orders': "Today's Orders",
     'admin.stats.avg_order': 'Avg Order Today',
     'admin.stats.top_item': 'Top Item Today',
@@ -759,6 +805,7 @@ const L10N = {
     'receipt.cashier': 'Cashier:',
     'receipt.payment': 'Payment:',
     'toast.cart_empty': 'Cart is empty!',
+    'toast.cart_already_empty': 'Cart already empty',
     'toast.order_submitted': 'Order submitted!',
     'toast.cart_cleared': 'Cart cleared',
     'toast.network_error': 'Network error',
@@ -837,7 +884,13 @@ const L10N = {
     'admin.discounts': '🏷️ Descuentos',
     'admin.log': '📜 Registro de actividad',
     'admin.timesheet': '⏱️ Horario',
-    'admin.stats.today_revenue': 'Ingresos de hoy',
+    'admin.permissions': '🔑 Permisos',
+    'admin.menu_history': '📋 Historial de Menú',
+    'ban': 'Bloquear',
+    'unban': 'Desbloquear',
+    'banned': '🚫 Bloqueado',
+    'banned_reason': 'Bloqueado: {reason}',
+    'sold': 'vendido',
     'admin.stats.today_orders': 'Pedidos de hoy',
     'admin.stats.avg_order': 'Promedio hoy',
     'admin.stats.top_item': 'Artículo más pedido hoy',
@@ -859,6 +912,7 @@ const L10N = {
     'receipt.cashier': 'Cajero:',
     'receipt.payment': 'Pago:',
     'toast.cart_empty': '¡Carrito vacío!',
+    'toast.cart_already_empty': 'Carrito ya vacío',
     'toast.order_submitted': '¡Pedido enviado!',
     'toast.cart_cleared': 'Carrito limpiado',
     'toast.network_error': 'Error de red',
@@ -953,7 +1007,7 @@ function switchLanguage(lang) {
 }
 
 // ═══════════ STATE ═══════════
-let currentUser = null; // { id, name, role }
+let currentUser = null; // { id, name, role, permissions }
 let cart = [];
 let itemsData = {}; // { category: [{name, price}] }
 let selectedPayment = 'Cash';
@@ -980,10 +1034,19 @@ window.addEventListener('DOMContentLoaded', () => {
   const savedId = sessionStorage.getItem('pos_userId');
   const savedRole = sessionStorage.getItem('pos_userRole');
   const savedName = sessionStorage.getItem('pos_userName');
+  const savedPerms = sessionStorage.getItem('pos_permissions');
+  const savedBanned = sessionStorage.getItem('pos_banned');
   if (savedId && savedRole) {
-    currentUser = { id: savedId, name: savedName || 'User', role: savedRole };
+    currentUser = { 
+      id: savedId, 
+      name: savedName || 'User', 
+      role: savedRole,
+      permissions: savedPerms ? JSON.parse(savedPerms) : []
+    };
     showApp();
   }
+  // Detect and set language
+  currentLang = detectLanguage();
   // Register service worker
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(() => {});
@@ -1031,16 +1094,21 @@ async function doLogin(userId) {
       body: JSON.stringify({ userId })
     });
     const data = await r.json();
-    if (!r.ok) { document.getElementById('loginError').textContent = data.message || 'Login failed'; pinValue = ''; renderPinDisplay(); return; }
-    currentUser = { id: userId, name: data.user, role: data.role };
+    if (r.status === 403 && data.banned) {
+      document.getElementById('loginError').textContent = 'Your account has been banned. Reason: ' + (data.reason || 'No reason given') + '. Contact the owner.';
+      pinValue = ''; renderPinDisplay(); return;
+    }
+    if (!r.ok) { document.getElementById('loginError').textContent = data.message || t('login.error'); pinValue = ''; renderPinDisplay(); return; }
+    currentUser = { id: userId, name: data.user, role: data.role, permissions: data.permissions || [] };
     sessionStorage.setItem('pos_userId', userId);
     sessionStorage.setItem('pos_userRole', data.role);
     sessionStorage.setItem('pos_userName', data.user);
+    sessionStorage.setItem('pos_permissions', JSON.stringify(data.permissions || []));
     pinValue = '';
     renderPinDisplay();
     showApp();
   } catch(e) {
-    document.getElementById('loginError').textContent = 'Cannot connect to server';
+    document.getElementById('loginError').textContent = t('login.error');
     pinValue = ''; renderPinDisplay();
   }
 }
@@ -1311,11 +1379,11 @@ async function submitOrder() {
     appliedDiscount = null;
     document.getElementById('orderNotesInput').value = '';
     renderCart();
-  } catch(e) { showToast('Network error', 'danger'); }
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
 
 async function clearCart() {
-  if (cart.length === 0) { showToast('Cart already empty', 'danger'); return; }
+  if (cart.length === 0) { showToast(t('toast.cart_already_empty'), 'danger'); return; }
   const total = cart.reduce((s, i) => s + i.price * i.qty, 0);
   try {
     await fetch(BACKEND_URL + '/api/clear_order', {
@@ -1331,8 +1399,8 @@ async function clearCart() {
     appliedDiscount = null;
     document.getElementById('orderNotesInput').value = '';
     renderCart();
-    showToast('Cart cleared', 'success');
-  } catch(e) { showToast('Network error', 'danger'); }
+    showToast(t('toast.cart_cleared'), 'success');
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
 
 // ═══════════ DISCOUNT / COUPON ═══════════
@@ -1377,7 +1445,7 @@ async function applyDiscount() {
     input.value = '';
     showToast(data.message || 'Discount applied!', 'success');
     renderCart();
-  } catch(e) { showToast('Network error', 'danger'); }
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
 
 function removeDiscount() {
@@ -1390,7 +1458,7 @@ function removeDiscount() {
 // ── Admin Discount Management ──
 async function loadDiscountAdmin() {
   const list = document.getElementById('discountCodesList');
-  list.innerHTML = '<div class="empty-state">Loading...</div>';
+  list.innerHTML = '<div class="empty-state">' + t('loading') + '</div>';
   try {
     const r = await fetch(BACKEND_URL + '/api/discounts');
     if (!r.ok) { list.innerHTML = '<div class="empty-state">Failed to load</div>'; return; }
@@ -1419,7 +1487,7 @@ async function loadDiscountAdmin() {
     });
     html += '</div>';
     list.innerHTML = html;
-  } catch(e) { list.innerHTML = '<div class="empty-state">Network error</div>'; }
+  } catch(e) { list.innerHTML = '<div class="empty-state">' + t('network_error') + '</div>'; }
 }
 
 async function saveDiscountCode() {
@@ -1451,7 +1519,7 @@ async function saveDiscountCode() {
     showToast('Discount code saved!', 'success');
     clearDiscountForm();
     loadDiscountAdmin();
-  } catch(e) { showToast('Network error', 'danger'); }
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
 
 async function toggleDiscount(code) {
@@ -1464,7 +1532,7 @@ async function toggleDiscount(code) {
     if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
     showToast(d.message || 'Toggled', 'success');
     loadDiscountAdmin();
-  } catch(e) { showToast('Network error', 'danger'); }
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
 
 async function deleteDiscount(code) {
@@ -1478,7 +1546,7 @@ async function deleteDiscount(code) {
     if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
     showToast('Discount deleted', 'success');
     loadDiscountAdmin();
-  } catch(e) { showToast('Network error', 'danger'); }
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
 
 function clearDiscountForm() {
@@ -1493,14 +1561,14 @@ function clearDiscountForm() {
 // ═══════════ ORDER HISTORY ═══════════
 async function loadOrderHistory() {
   const list = document.getElementById('historyList');
-  list.innerHTML = '<div class="empty-state">Loading...</div>';
+  list.innerHTML = '<div class="empty-state">' + t('loading') + '</div>';
   try {
     // Use admin_stats to get orders
     const r = await fetch(BACKEND_URL + '/api/admin_stats', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ adminPin: currentUser.id })
     });
-    if (!r.ok) { list.innerHTML = '<div class="empty-state">Cannot load orders</div>'; return; }
+    if (!r.ok) { list.innerHTML = '<div class="empty-state">' + t('network_error') + '</div>'; return; }
     const data = await r.json();
     let orders = data.stats.raw_orders || [];
     // Filter by date if set
@@ -1510,7 +1578,7 @@ async function loadOrderHistory() {
     }
     // Sort by date descending
     orders.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-    if (orders.length === 0) { list.innerHTML = '<div class="empty-state">No orders found</div>'; return; }
+    if (orders.length === 0) { list.innerHTML = '<div class="empty-state">' + t('history.empty') + '</div>'; return; }
     let html = '';
     orders.forEach((o, i) => {
       const dt = o.date ? new Date(o.date).toLocaleString() : 'Unknown';
@@ -1525,21 +1593,22 @@ async function loadOrderHistory() {
           <span><strong>#${orderNum}</strong> — ${dt}</span>
           <span class="ho-total">$${total}</span>
         </div>
-        <div class="ho-meta">Payment: ${escHtml(o.payment || 'N/A')} | User: ${escHtml(o.user || 'N/A')}${hasTax ? ' | Tax: $' + parseFloat(o.tax_amount).toFixed(2) : ''}${orderNotes ? ' | 📝 Has notes' : ''} <button class="ghost" onclick="event.stopPropagation();printHistoryReceipt(${JSON.stringify(o).replace(/"/g, '&quot;')}, ${orderNum})" style="font-size:12px;padding:4px 8px;min-height:28px;color:var(--accent);">🖨️</button></div>
+        <div class="ho-meta">${t('history.payment')} ${escHtml(o.payment || 'N/A')} | ${t('history.user')} ${escHtml(o.user || 'N/A')}${hasTax ? ' | ' + t('history.tax') + ': $' + parseFloat(o.tax_amount).toFixed(2) : ''}${orderNotes ? ' | 📝 ' + t('history.notes') : ''} <button class="ghost" onclick="event.stopPropagation();printHistoryReceipt(${JSON.stringify(o).replace(/"/g, '&quot;')}, ${orderNum})" style="font-size:12px;padding:4px 8px;min-height:28px;color:var(--accent);">🖨️</button></div>
         <div class="ho-details">
           ${items.map((it, idx) => `<div class="ho-item"><span>${escHtml(it.name)} x${it.qty||1}${it.note ? '<br/><span style="color:var(--text2);font-size:12px;padding-left:12px;">📝 ' + escHtml(it.note) + '</span>' : ''}</span><span>$${((it.price||0)*(it.qty||1)).toFixed(2)}</span></div>`).join('')}
           ${hasTax ? `
-            <div class="ho-item" style="color:var(--text2);"><span>Subtotal</span><span>$${parseFloat(o.subtotal || o.total || 0).toFixed(2)}</span></div>
-            <div class="ho-item" style="color:var(--text2);"><span>Tax</span><span>$${parseFloat(o.tax_amount).toFixed(2)}</span></div>
-            <div class="ho-item" style="font-weight:700;border-top:1px solid #2a2a4e;padding-top:4px;margin-top:4px;"><span>Total</span><span>$${total}</span></div>
+            <div class="ho-item" style="color:var(--text2);"><span>${t('history.subtotal')}</span><span>$${parseFloat(o.subtotal || o.total || 0).toFixed(2)}</span></div>
+            <div class="ho-item" style="color:var(--text2);"><span>${t('history.tax')}</span><span>$${parseFloat(o.tax_amount).toFixed(2)}</span></div>
+            <div class="ho-item" style="font-weight:700;border-top:1px solid #2a2a4e;padding-top:4px;margin-top:4px;"><span>${t('history.total')}</span><span>$${total}</span></div>
           ` : ''}
-          ${orderNotes ? `<div class="ho-item" style="color:var(--text2);border-top:1px solid #2a2a4e;padding-top:4px;margin-top:4px;"><span style="font-weight:600;">📝 Order Notes:</span><br/><span style="font-size:13px;">${escHtml(orderNotes)}</span></div>` : ''}
+          ${orderNotes ? `<div class="ho-item" style="color:var(--text2);border-top:1px solid #2a2a4e;padding-top:4px;margin-top:4px;"><span style="font-weight:600;">📝 ${t('history.order_notes')}</span><br/><span style="font-size:13px;">${escHtml(orderNotes)}</span></div>` : ''}
         </div>
       </div>`;
     });
     list.innerHTML = html;
-  } catch(e) { list.innerHTML = '<div class="empty-state">Network error</div>'; }
+  } catch(e) { list.innerHTML = '<div class="empty-state">' + t('network_error') + '</div>'; }
 }
+
 
 // ═══════════ ADMIN ═══════════
 function switchAdminSection(sec) {
@@ -1563,13 +1632,13 @@ function switchAdminSection(sec) {
 
 async function loadAdminStats() {
   const grid = document.getElementById('statsGrid');
-  grid.innerHTML = '<div class="empty-state">Loading...</div>';
+  grid.innerHTML = '<div class="empty-state">' + t('loading') + '</div>';
   try {
     const r = await fetch(BACKEND_URL + '/api/admin_stats', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ adminPin: currentUser.id })
     });
-    if (!r.ok) { grid.innerHTML = '<div class="empty-state">Unauthorized</div>'; return; }
+    if (!r.ok) { grid.innerHTML = '<div class="empty-state">' + t('unauthorized') + '</div>'; return; }
     const data = await r.json();
     adminStatsCache = data.stats;
     const s = data.stats;
@@ -1587,16 +1656,16 @@ async function loadAdminStats() {
     Object.entries(itemCounts).forEach(([k, v]) => { if (v > topQty) { topItem = k; topQty = v; } });
 
     grid.innerHTML = `
-      <div class="stat-card"><div class="stat-val">$${todayRevenue.toFixed(2)}</div><div class="stat-lbl">Today's Revenue</div></div>
-      <div class="stat-card"><div class="stat-val">${todayOrders.length}</div><div class="stat-lbl">Today's Orders</div></div>
-      <div class="stat-card"><div class="stat-val">$${todayAvg.toFixed(2)}</div><div class="stat-lbl">Avg Order Today</div></div>
-      <div class="stat-card"><div class="stat-val">${escHtml(topItem)}</div><div class="stat-lbl">Top Item Today (x${topQty})</div></div>
-      <div class="stat-card"><div class="stat-val">$${parseFloat(s.total_sales||0).toFixed(2)}</div><div class="stat-lbl">Total All-Time Sales</div></div>
-      <div class="stat-card"><div class="stat-val">${s.total_traffic||0}</div><div class="stat-lbl">Total All-Time Orders</div></div>
-      <div class="stat-card"><div class="stat-val">$${parseFloat(s.weekly_sales||0).toFixed(2)}</div><div class="stat-lbl">Sales This Week</div></div>
-      <div class="stat-card"><div class="stat-val">$${parseFloat(s.monthly_sales||0).toFixed(2)}</div><div class="stat-lbl">Sales This Month</div></div>
+      <div class="stat-card"><div class="stat-val">$${todayRevenue.toFixed(2)}</div><div class="stat-lbl">${t('admin.stats.today_revenue')}</div></div>
+      <div class="stat-card"><div class="stat-val">${todayOrders.length}</div><div class="stat-lbl">${t('admin.stats.today_orders')}</div></div>
+      <div class="stat-card"><div class="stat-val">$${todayAvg.toFixed(2)}</div><div class="stat-lbl">${t('admin.stats.avg_order')}</div></div>
+      <div class="stat-card"><div class="stat-val">${escHtml(topItem)}</div><div class="stat-lbl">${t('admin.stats.top_item')}</div></div>
+      <div class="stat-card"><div class="stat-val">$${parseFloat(s.total_sales||0).toFixed(2)}</div><div class="stat-lbl">${t('admin.stats.total_sales')}</div></div>
+      <div class="stat-card"><div class="stat-val">${s.total_traffic||0}</div><div class="stat-lbl">${t('admin.stats.total_orders')}</div></div>
+      <div class="stat-card"><div class="stat-val">$${parseFloat(s.weekly_sales||0).toFixed(2)}</div><div class="stat-lbl">${t('admin.stats.weekly_sales')}</div></div>
+      <div class="stat-card"><div class="stat-val">$${parseFloat(s.monthly_sales||0).toFixed(2)}</div><div class="stat-lbl">${t('admin.stats.monthly_sales')}</div></div>
     `;
-  } catch(e) { grid.innerHTML = '<div class="empty-state">Network error</div>'; }
+  } catch(e) { grid.innerHTML = '<div class="empty-state">' + t('network_error') + '</div>'; }
 }
 
 async function loadAdminCharts() {
@@ -1662,38 +1731,38 @@ async function loadAdminCharts() {
 
 async function loadMostOrdered() {
   const list = document.getElementById('mostOrderedList');
-  list.innerHTML = '<div class="empty-state">Loading...</div>';
+  list.innerHTML = '<div class="empty-state">' + t('loading') + '</div>';
   try {
     const r = await fetch(BACKEND_URL + '/api/analytics/most_ordered');
-    if (!r.ok) { list.innerHTML = '<div class="empty-state">No data</div>'; return; }
+    if (!r.ok) { list.innerHTML = '<div class="empty-state">' + t('no_data') + '</div>'; return; }
     const data = await r.json();
     const items = data.most_ordered || [];
-    if (items.length === 0) { list.innerHTML = '<div class="empty-state">No orders yet</div>'; return; }
+    if (items.length === 0) { list.innerHTML = '<div class="empty-state">' + t('no_orders') + '</div>'; return; }
     list.innerHTML = items.map((it, i) => `
       <div class="most-item">
         <span><span class="rank">#${i+1}</span> ${escHtml(it.name || it.item_name || 'Unknown')}</span>
-        <span>${it.count || it.total_ordered || 0} sold</span>
+        <span>${it.count || it.total_ordered || 0} ${t('sold')}</span>
       </div>
     `).join('');
-  } catch(e) { list.innerHTML = '<div class="empty-state">Network error</div>'; }
+  } catch(e) { list.innerHTML = '<div class="empty-state">' + t('network_error') + '</div>'; }
 }
 
 async function loadUsers() {
   const list = document.getElementById('userList');
-  list.innerHTML = '<div class="empty-state">Loading...</div>';
+  list.innerHTML = '<div class="empty-state">' + t('loading') + '</div>';
   try {
     const r = await fetch(BACKEND_URL + '/api/users');
     if (!r.ok) throw new Error('Failed');
     const users = await r.json();
     const entries = Object.entries(users);
-    if (entries.length === 0) { list.innerHTML = '<div class="empty-state">No users</div>'; return; }
+    if (entries.length === 0) { list.innerHTML = '<div class="empty-state">' + t('no_users') + '</div>'; return; }
     list.innerHTML = entries.map(([id, u]) => `
       <div class="user-entry">
         <div class="ue-info"><strong>${escHtml(u.name)}</strong> — ID: ${escHtml(id)} <span class="ue-role">(${u.role})</span></div>
         <button class="danger" onclick="deleteUser('${escJs(id)}')" style="font-size:13px;padding:6px 12px;min-height:36px;">🗑️ Delete</button>
       </div>
     `).join('');
-  } catch(e) { list.innerHTML = '<div class="empty-state">Network error</div>'; }
+  } catch(e) { list.innerHTML = '<div class="empty-state">' + t('network_error') + '</div>'; }
 }
 
 async function addUser() {
@@ -1713,7 +1782,7 @@ async function addUser() {
     document.getElementById('addUserId').value = '';
     document.getElementById('addUserName').value = '';
     loadUsers();
-  } catch(e) { showToast('Network error', 'danger'); }
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
 
 async function deleteUser(userId) {
@@ -1727,12 +1796,12 @@ async function deleteUser(userId) {
     if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
     showToast('User deleted', 'success');
     loadUsers();
-  } catch(e) { showToast('Network error', 'danger'); }
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
 
 async function loadItemMgmt() {
   const list = document.getElementById('itemMgmtList');
-  list.innerHTML = '<div class="empty-state">Loading...</div>';
+  list.innerHTML = '<div class="empty-state">' + t('loading') + '</div>';
   try {
     const r = await fetch(BACKEND_URL + '/api/items');
     if (!r.ok) throw new Error('Failed');
@@ -1750,7 +1819,7 @@ async function loadItemMgmt() {
       });
     });
     list.innerHTML = html || '<div class="empty-state">No items</div>';
-  } catch(e) { list.innerHTML = '<div class="empty-state">Network error</div>'; }
+  } catch(e) { list.innerHTML = '<div class="empty-state">' + t('network_error') + '</div>'; }
 }
 
 function startEditItem(cat, name, price) {
@@ -1785,7 +1854,7 @@ async function saveEditItem() {
     cancelEditItem();
     loadItemMgmt();
     loadItems();
-  } catch(e) { showToast('Network error', 'danger'); }
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
 
 async function deleteItem(cat, name) {
@@ -1800,7 +1869,7 @@ async function deleteItem(cat, name) {
     showToast('Item deleted', 'success');
     loadItemMgmt();
     loadItems();
-  } catch(e) { showToast('Network error', 'danger'); }
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
 
 async function addItem() {
@@ -1821,12 +1890,12 @@ async function addItem() {
     document.getElementById('addItemPrice').value = '';
     loadItemMgmt();
     loadItems();
-  } catch(e) { showToast('Network error', 'danger'); }
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
 
 async function loadActivityLog() {
   const list = document.getElementById('activityLogList');
-  list.innerHTML = '<div class="empty-state">Loading...</div>';
+  list.innerHTML = '<div class="empty-state">' + t('loading') + '</div>';
   try {
     const r = await fetch(BACKEND_URL + '/api/activity_log', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -1844,12 +1913,12 @@ async function loadActivityLog() {
         ${l.details && Object.keys(l.details).length ? ' — ' + escHtml(JSON.stringify(l.details)) : ''}
       </div>
     `).join('');
-  } catch(e) { list.innerHTML = '<div class="empty-state">Network error</div>'; }
+  } catch(e) { list.innerHTML = '<div class="empty-state">' + t('network_error') + '</div>'; }
 }
 
 async function loadTimesheet() {
   const list = document.getElementById('timesheetList');
-  list.innerHTML = '<div class="empty-state">Loading...</div>';
+  list.innerHTML = '<div class="empty-state">' + t('loading') + '</div>';
   try {
     const r = await fetch(BACKEND_URL + '/api/admin_timesheet', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -1866,7 +1935,7 @@ async function loadTimesheet() {
         <span>${t.duration_hours} hrs</span>
       </div>
     `).join('');
-  } catch(e) { list.innerHTML = '<div class="empty-state">Network error</div>'; }
+  } catch(e) { list.innerHTML = '<div class="empty-state">' + t('network_error') + '</div>'; }
 }
 
 // ═══════════ KITCHEN DISPLAY ═══════════
@@ -1954,7 +2023,7 @@ async function loadKitchenQueue() {
 function renderKitchenQueue(orders) {
   const container = document.getElementById('kitchenQueue');
   if (!orders || orders.length === 0) {
-    container.innerHTML = '<div class="kitchen-empty">No orders — stand by 🍳</div>';
+    container.innerHTML = '<div class="kitchen-empty">' + t('kitchen.empty') + '</div>';
     return;
   }
   // Sort oldest-first
@@ -1979,8 +2048,8 @@ function renderKitchenOrderCard(o) {
   const cookName = o.claimed_by_name || claimedBy;
 
   const statusBadge = status === 'preparing'
-    ? '<span class="koc-badge preparing">🟠 PREPARING' + (cookName ? ' — ' + escHtml(cookName) : '') + '</span>'
-    : '<span class="koc-badge pending">🟡 PENDING</span>';
+    ? '<span class="koc-badge preparing">🟠 ' + (cookName ? escHtml(cookName) : t('kitchen.preparing')) + '</span>'
+    : '<span class="koc-badge pending">🟡 ' + t('kitchen.pending') + '</span>';
 
   const statusClass = status === 'preparing' ? 'status-preparing' : '';
 
@@ -2007,16 +2076,16 @@ function renderKitchenOrderCard(o) {
   // Action buttons
   let actionsHtml = '';
   if (status === 'pending') {
-    actionsHtml = '<button class="koc-btn-claim" onclick="claimKitchenOrder(\'' + escJs(String(oid)) + '\')">✋ CLAIM</button>';
+    actionsHtml = '<button class="koc-btn-claim" onclick="claimKitchenOrder(\'' + escJs(String(oid)) + '\')">' + t('kitchen.claim') + '</button>';
   } else if (status === 'preparing') {
     if (claimedBy === currentUser.id) {
-      actionsHtml = '<button class="koc-btn-done" onclick="completeKitchenOrder(\'' + escJs(String(oid)) + '\')">✅ DONE ✓</button>';
+      actionsHtml = '<button class="koc-btn-done" onclick="completeKitchenOrder(\'' + escJs(String(oid)) + '\')">' + t('kitchen.done') + '</button>';
     } else {
-      actionsHtml = '<span class="koc-claimed-by">👨‍🍳 Being made by ' + escHtml(cookName || claimedBy) + '</span>';
+      actionsHtml = '<span class="koc-claimed-by">👨‍🍳 ' + escHtml(cookName || claimedBy) + '</span>';
     }
   }
   // Cancel button on all non-completed
-  actionsHtml += '<button class="koc-btn-cancel" onclick="cancelKitchenOrder(\'' + escJs(String(oid)) + '\')">✕ Cancel</button>';
+  actionsHtml += '<button class="koc-btn-cancel" onclick="cancelKitchenOrder(\'' + escJs(String(oid)) + '\')">✕ ' + t('kitchen.cancel') + '</button>';
 
   return '<div class="kitchen-order-card ' + statusClass + '">' +
     '<div class="koc-header">' +
@@ -2064,7 +2133,7 @@ async function claimKitchenOrder(orderId) {
     if (!r.ok) { const d = await r.json(); showToast(d.message || 'Failed to claim', 'danger'); return; }
     showToast('Order claimed!', 'success');
     loadKitchenQueue();
-  } catch(e) { showToast('Network error', 'danger'); }
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
 
 async function completeKitchenOrder(orderId) {
@@ -2076,7 +2145,7 @@ async function completeKitchenOrder(orderId) {
     if (!r.ok) { const d = await r.json(); showToast(d.message || 'Failed to complete', 'danger'); return; }
     showToast('Order completed! ✅', 'success');
     loadKitchenQueue();
-  } catch(e) { showToast('Network error', 'danger'); }
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
 
 async function cancelKitchenOrder(orderId) {
@@ -2089,7 +2158,7 @@ async function cancelKitchenOrder(orderId) {
     if (!r.ok) { const d = await r.json(); showToast(d.message || 'Failed to cancel', 'danger'); return; }
     showToast('Order cancelled', 'success');
     loadKitchenQueue();
-  } catch(e) { showToast('Network error', 'danger'); }
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
 
 function playNotificationSound() {
@@ -2144,22 +2213,22 @@ function showReceipt(orderData) {
       <h2>🍽️ POS System</h2>
       <div class="rcpt-info">${escHtml(dateStr)}</div>
       <div class="rcpt-info">Order #${orderData.orderNumber || '—'}</div>
-      <div class="rcpt-info">Payment: ${escHtml(orderData.payment || '—')}</div>
-      ${orderData.user ? `<div class="rcpt-info">Cashier: ${escHtml(String(orderData.user))}</div>` : ''}
+      <div class="rcpt-info">${t('receipt.payment')} ${escHtml(orderData.payment || '—')}</div>
+      ${orderData.user ? `<div class="rcpt-info">${t('receipt.cashier')} ${escHtml(String(orderData.user))}</div>` : ''}
     </div>
     <hr class="rcpt-divider"/>
     ${itemLines}
     ${hasItemNotes ? items.map(item => item.note ? `<div class="rcpt-item" style="color:#555;font-size:12px;padding-left:12px;">📝 ${escHtml(item.name)}: ${escHtml(item.note)}</div>` : '').join('') : ''}
     <hr class="rcpt-divider"/>
-    <div class="rcpt-line"><span>Subtotal</span><span>$${parseFloat(orderData.subtotal || 0).toFixed(2)}</span></div>
-    ${hasTax ? `<div class="rcpt-line"><span>Tax</span><span>$${parseFloat(orderData.tax_amount).toFixed(2)}</span></div>` : ''}
-    ${hasDiscount ? `<div class="rcpt-line"><span>Discount (${escHtml(orderData.discount_code)})</span><span>−$${parseFloat(orderData.discount_amount).toFixed(2)}</span></div>` : ''}
-    <div class="rcpt-total"><span>TOTAL</span><span>$${parseFloat(orderData.total || 0).toFixed(2)}</span></div>
-    ${hasNotes ? `<hr class="rcpt-divider"/><div class="rcpt-item" style="flex-direction:column;gap:4px;"><span style="font-weight:600;">📝 Order Notes:</span><span style="color:#555;font-size:12px;">${escHtml(orderData.notes)}</span></div>` : ''}
+    <div class="rcpt-line"><span>${t('receipt.subtotal')}</span><span>$${parseFloat(orderData.subtotal || 0).toFixed(2)}</span></div>
+    ${hasTax ? `<div class="rcpt-line"><span>${t('receipt.tax')}</span><span>$${parseFloat(orderData.tax_amount).toFixed(2)}</span></div>` : ''}
+    ${hasDiscount ? `<div class="rcpt-line"><span>${t('receipt.discount')} (${escHtml(orderData.discount_code)})</span><span>−$${parseFloat(orderData.discount_amount).toFixed(2)}</span></div>` : ''}
+    <div class="rcpt-total"><span>${t('receipt.total')}</span><span>$${parseFloat(orderData.total || 0).toFixed(2)}</span></div>
+    ${hasNotes ? `<hr class="rcpt-divider"/><div class="rcpt-item" style="flex-direction:column;gap:4px;"><span style="font-weight:600;">📝 ${t('receipt.order_notes')}</span><span style="color:#555;font-size:12px;">${escHtml(orderData.notes)}</span></div>` : ''}
     <hr class="rcpt-divider"/>
     <div class="rcpt-footer">
-      Thank you for your business!<br/>
-      Have a great day 🎉
+      ${t('receipt.thank_you')}<br/>
+      ${t('receipt.have_day')}
     </div>
   `;
   document.getElementById('receiptOverlay').classList.add('active');
@@ -2269,7 +2338,7 @@ async function saveCategoryTaxRate(cat) {
     if (!r.ok) { const d = await r.json(); showToast(d.message || 'Failed', 'danger'); return; }
     showToast('Category rate saved', 'success');
     loadTaxAdmin();
-  } catch(e) { showToast('Network error', 'danger'); }
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
 
 async function clearCategoryTaxRate(cat) {
@@ -2283,7 +2352,7 @@ async function clearCategoryTaxRate(cat) {
     if (!r.ok) { const d = await r.json(); showToast(d.message || 'Failed', 'danger'); return; }
     showToast('Category rate cleared', 'success');
     loadTaxAdmin();
-  } catch(e) { showToast('Network error', 'danger'); }
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
 
 async function saveTaxConfig() {
@@ -2303,7 +2372,7 @@ async function saveTaxConfig() {
     taxConfig = data.config;
     showToast('Global tax rate saved', 'success');
     loadTaxAdmin();
-  } catch(e) { showToast('Network error', 'danger'); }
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
 
 function populateItemSelect() {
@@ -2341,7 +2410,7 @@ async function saveItemTaxOverride() {
     rateInput.value = '';
     sel.value = '';
     loadTaxAdmin();
-  } catch(e) { showToast('Network error', 'danger'); }
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
 
 async function clearItemTaxOverride() {
@@ -2359,7 +2428,7 @@ async function clearItemTaxOverride() {
     showToast('Item override cleared', 'success');
     sel.value = '';
     loadTaxAdmin();
-  } catch(e) { showToast('Network error', 'danger'); }
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
 
 function renderItemTaxOverrides() {
