@@ -1073,6 +1073,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
         <button onclick="switchAdminSection('inventory')" id="asInventory" data-i18n="admin.inventory">📦 Inventory</button>
         <button onclick="switchAdminSection('employees')" id="asEmployees" data-i18n="admin.employees">👤 Employee Perf</button>
         <button onclick="switchAdminSection('loyalty')" id="asLoyalty">⭐ Loyalty</button>
+        <button onclick="switchAdminSection('customers')" id="asCustomers">👥 Customers</button>
         <button onclick="switchAdminSection('pricing')" id="asPricing" data-i18n="admin.pricing">⏰ Pricing</button>
         <button onclick="switchAdminSection('waste')" id="asWaste" data-i18n="admin.waste">🗑️ Waste</button>
         <button onclick="switchAdminSection('webhooks')" id="asWebhooks" data-i18n="admin.webhooks">🔗 Webhooks</button>
@@ -1293,6 +1294,18 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
           <h3 style="margin-bottom:12px;">⭐ Loyalty Points Management</h3>
           <div id="loyaltyAdminContent">
             <div class="empty-state">Loading loyalty customers...</div>
+          </div>
+        </div>
+        <!-- Customer Profile Management (CRM) -->
+        <div id="secCustomers" class="admin-section">
+          <h3 style="margin-bottom:12px;">👥 Customer Profiles (CRM)</h3>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center;">
+            <input type="text" id="customerSearch" placeholder="Search by name or phone..." style="flex:1;min-width:200px;min-height:44px;font-size:14px;padding:8px 12px;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);" onkeyup="if(event.key==='Enter') loadCustomersAdmin()"/>
+            <button class="accent" onclick="loadCustomersAdmin()" style="min-height:44px;">🔍 Search</button>
+            <button class="ghost" onclick="document.getElementById('customerSearch').value='';loadCustomersAdmin();" style="font-size:13px;padding:8px 14px;min-height:44px;">✕ Clear</button>
+          </div>
+          <div id="customersAdminContent">
+            <div class="empty-state">Enter a search term or click Search to list all customers.</div>
           </div>
         </div>
         <!-- Scheduled Pricing -->
@@ -4562,6 +4575,7 @@ function switchAdminSection(sec) {
   else if (sec === 'inventory') loadInventoryAdmin();
   else if (sec === 'employees') loadEmployeePerformance();
   else if (sec === 'loyalty') loadLoyaltyAdmin();
+  else if (sec === 'customers') loadCustomersAdmin();
   else if (sec === 'pricing') loadPricingRules();
   else if (sec === 'waste') loadWasteAdmin();
   else if (sec === 'webhooks') loadWebhooks();
@@ -6256,6 +6270,7 @@ async function loadLoyaltyAdmin() {
       '<th style="padding:10px;text-align:right;border-bottom:2px solid var(--border);">Points</th>' +
       '<th style="padding:10px;text-align:right;border-bottom:2px solid var(--border);">Earned</th>' +
       '<th style="padding:10px;text-align:right;border-bottom:2px solid var(--border);">Redeemed</th>' +
+      '<th style="padding:10px;text-align:right;border-bottom:2px solid var(--border);">Total Spent</th>' +
       '<th style="padding:10px;text-align:center;border-bottom:2px solid var(--border);">Actions</th>' +
       '</tr></thead><tbody>';
     data.customers.forEach(c => {
@@ -6265,6 +6280,7 @@ async function loadLoyaltyAdmin() {
         '<td style="padding:10px;text-align:right;font-weight:600;color:#f39c12;">' + c.points + '</td>' +
         '<td style="padding:10px;text-align:right;color:#2ecc71;">' + c.total_earned + '</td>' +
         '<td style="padding:10px;text-align:right;color:var(--accent);">' + c.total_redeemed + '</td>' +
+        '<td style="padding:10px;text-align:right;color:var(--text2);">$' + (c.total_spent || 0).toFixed(2) + '</td>' +
         '<td style="padding:10px;text-align:center;"><button class="outline" onclick="showLoyaltyAdjust(\'' + escJs(c.phone) + '\', \'' + escJs(c.name) + '\', ' + c.points + ')" style="font-size:12px;padding:6px 10px;min-height:36px;">Adjust</button></td>' +
         '</tr>';
     });
@@ -6313,6 +6329,216 @@ async function doLoyaltyAdjust(phone) {
   } catch(e) {
     showToast('Network error', 'danger');
   }
+}
+
+// ═══════════ CUSTOMER PROFILES (CRM) ADMIN ═══════════
+async function loadCustomersAdmin() {
+  const container = document.getElementById('customersAdminContent');
+  if (!container) return;
+  container.innerHTML = '<div class="empty-state">Loading...</div>';
+  const adminPin = currentUser ? currentUser.id : '';
+  const search = document.getElementById('customerSearch')?.value?.trim() || '';
+  try {
+    const r = await fetch(BACKEND_URL + '/api/customers/list', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin, search })
+    });
+    if (!r.ok) { container.innerHTML = '<div class="empty-state">Permission denied.</div>'; return; }
+    const data = await r.json();
+    if (!data.customers || data.customers.length === 0) {
+      container.innerHTML = '<div class="empty-state">No customers found' + (search ? ' matching "' + escHtml(search) + '"' : '') + '.</div>';
+      return;
+    }
+    let html = '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:14px;">' +
+      '<thead><tr style="background:var(--card-alt);">' +
+      '<th style="padding:10px;text-align:left;border-bottom:2px solid var(--border);">Name</th>' +
+      '<th style="padding:10px;text-align:left;border-bottom:2px solid var(--border);">Phone</th>' +
+      '<th style="padding:10px;text-align:left;border-bottom:2px solid var(--border);">Email</th>' +
+      '<th style="padding:10px;text-align:right;border-bottom:2px solid var(--border);">Total Spent</th>' +
+      '<th style="padding:10px;text-align:right;border-bottom:2px solid var(--border);">Orders</th>' +
+      '<th style="padding:10px;text-align:right;border-bottom:2px solid var(--border);">Points</th>' +
+      '<th style="padding:10px;text-align:center;border-bottom:2px solid var(--border);">Last Visit</th>' +
+      '<th style="padding:10px;text-align:center;border-bottom:2px solid var(--border);">Actions</th>' +
+      '</tr></thead><tbody>';
+    data.customers.forEach(c => {
+      const lastVisit = c.last_visit ? new Date(c.last_visit).toLocaleDateString() : '-';
+      html += '<tr style="border-bottom:1px solid var(--border);">' +
+        '<td style="padding:10px;"><strong>' + escHtml(c.name) + '</strong></td>' +
+        '<td style="padding:10px;color:var(--text2);">' + escHtml(c.phone) + '</td>' +
+        '<td style="padding:10px;color:var(--text2);">' + escHtml(c.email || '-') + '</td>' +
+        '<td style="padding:10px;text-align:right;font-weight:600;color:#2ecc71;">$' + (c.total_spent || 0).toFixed(2) + '</td>' +
+        '<td style="padding:10px;text-align:right;">' + c.total_orders + '</td>' +
+        '<td style="padding:10px;text-align:right;color:#f39c12;">' + c.points + '</td>' +
+        '<td style="padding:10px;text-align:center;color:var(--text2);font-size:13px;">' + lastVisit + '</td>' +
+        '<td style="padding:10px;text-align:center;"><button class="outline" onclick="showCustomerDetail(\'' + escJs(c.phone) + '\')" style="font-size:12px;padding:6px 10px;min-height:36px;">👤 View</button></td>' +
+        '</tr>';
+    });
+    html += '</tbody></table></div>';
+    html += '<p style="color:var(--text2);font-size:13px;margin-top:8px;">Showing ' + data.customers.length + ' customer(s). Click View for full profile & order history.</p>';
+    container.innerHTML = html;
+  } catch(e) {
+    container.innerHTML = '<div class="empty-state">Network error.</div>';
+  }
+}
+
+let customerDetailPhone = '';
+
+async function showCustomerDetail(phone) {
+  customerDetailPhone = phone;
+  const overlay = document.createElement('div');
+  overlay.id = 'customerDetailOverlay';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto;';
+  overlay.innerHTML = '<div style="background:var(--card);max-width:700px;width:100%;border-radius:12px;padding:24px;max-height:90vh;overflow-y:auto;position:relative;"><div class="empty-state">Loading customer details...</div></div>';
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', function(e) { if (e.target === overlay) closeCustomerDetail(); });
+
+  const adminPin = currentUser ? currentUser.id : '';
+  try {
+    const r = await fetch(BACKEND_URL + '/api/customers/detail', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin, phone })
+    });
+    if (!r.ok) { overlay.querySelector('div').innerHTML = '<div class="empty-state">Error loading details.</div><div style="text-align:center;margin-top:12px;"><button class="ghost" onclick="closeCustomerDetail()">Close</button></div>'; return; }
+    const data = await r.json();
+    const c = data.customer;
+    const orders = data.order_history || [];
+
+    let html = '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">' +
+      '<h3 style="margin:0;">👤 ' + escHtml(c.name) + '</h3>' +
+      '<button class="ghost" onclick="closeCustomerDetail()" style="font-size:20px;padding:4px 12px;min-height:44px;">✕</button>' +
+      '</div>';
+
+    // Customer info card
+    html += '<div class="card" style="margin-bottom:12px;">' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:14px;">' +
+      '<div><span style="color:var(--text2);">Phone:</span> <strong>' + escHtml(c.phone) + '</strong></div>' +
+      '<div><span style="color:var(--text2);">Email:</span> <span id="crmEmail">' + escHtml(c.email || '-') + '</span>' +
+      ' <button class="ghost" onclick="editCrmField(\'email\')" style="font-size:11px;padding:2px 6px;min-height:24px;">✏️</button></div>' +
+      '<div style="grid-column:1/-1;"><span style="color:var(--text2);">Address:</span> <span id="crmAddress">' + escHtml(c.address || '-') + '</span>' +
+      ' <button class="ghost" onclick="editCrmField(\'address\')" style="font-size:11px;padding:2px 6px;min-height:24px;">✏️</button></div>' +
+      '<div style="grid-column:1/-1;"><span style="color:var(--text2);">Notes:</span> <span id="crmNotes">' + escHtml(c.notes || '-') + '</span>' +
+      ' <button class="ghost" onclick="editCrmField(\'notes\')" style="font-size:11px;padding:2px 6px;min-height:24px;">✏️</button></div>' +
+      '</div></div>';
+
+    // Stats cards
+    html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;">';
+    html += '<div class="card" style="text-align:center;padding:12px 8px;"><div style="font-size:20px;font-weight:700;color:#2ecc71;">$' + (c.total_spent || 0).toFixed(2) + '</div><div style="font-size:12px;color:var(--text2);">Total Spent</div></div>';
+    html += '<div class="card" style="text-align:center;padding:12px 8px;"><div style="font-size:20px;font-weight:700;">' + c.total_orders + '</div><div style="font-size:12px;color:var(--text2);">Orders</div></div>';
+    html += '<div class="card" style="text-align:center;padding:12px 8px;"><div style="font-size:20px;font-weight:700;color:#f39c12;">' + c.points + '</div><div style="font-size:12px;color:var(--text2);">Points</div></div>';
+    const lastV = c.last_visit ? new Date(c.last_visit).toLocaleDateString() : '-';
+    html += '<div class="card" style="text-align:center;padding:12px 8px;"><div style="font-size:16px;font-weight:700;">' + lastV + '</div><div style="font-size:12px;color:var(--text2);">Last Visit</div></div>';
+    html += '</div>';
+
+    // Loyalty history
+    if (c.history && c.history.length > 0) {
+      html += '<h4 style="margin-bottom:8px;">⭐ Points History</h4>' +
+        '<div style="max-height:150px;overflow-y:auto;margin-bottom:12px;">' +
+        '<table style="width:100%;border-collapse:collapse;font-size:13px;">' +
+        '<thead><tr style="background:var(--card-alt);"><th style="padding:6px;text-align:left;">Date</th><th style="padding:6px;text-align:left;">Type</th><th style="padding:6px;text-align:right;">Points</th></tr></thead><tbody>';
+      c.history.slice(-20).reverse().forEach(h => {
+        const d = h.date ? new Date(h.date).toLocaleDateString() : '-';
+        const pts = h.points || 0;
+        const ptsColor = pts >= 0 ? '#2ecc71' : 'var(--accent)';
+        html += '<tr style="border-bottom:1px solid var(--border);">' +
+          '<td style="padding:6px;color:var(--text2);">' + d + '</td>' +
+          '<td style="padding:6px;">' + escHtml(h.type) + '</td>' +
+          '<td style="padding:6px;text-align:right;font-weight:600;color:' + ptsColor + ';">' + (pts > 0 ? '+' : '') + pts + '</td></tr>';
+      });
+      html += '</tbody></table></div>';
+    }
+
+    // Order history
+    html += '<h4 style="margin-bottom:8px;">📋 Order History (' + orders.length + ')</h4>';
+    if (orders.length === 0) {
+      html += '<div class="empty-state" style="padding:16px;">No orders found for this customer.</div>';
+    } else {
+      html += '<div style="max-height:300px;overflow-y:auto;">' +
+        '<table style="width:100%;border-collapse:collapse;font-size:13px;">' +
+        '<thead><tr style="background:var(--card-alt);">' +
+        '<th style="padding:6px;text-align:left;">Order #</th>' +
+        '<th style="padding:6px;text-align:left;">Date</th>' +
+        '<th style="padding:6px;text-align:right;">Total</th>' +
+        '<th style="padding:6px;text-align:left;">Payment</th>' +
+        '<th style="padding:6px;text-align:left;">Status</th>' +
+        '</tr></thead><tbody>';
+      orders.forEach(o => {
+        const d = o.date ? new Date(o.date).toLocaleDateString() + ' ' + new Date(o.date).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '-';
+        const statusColors = {pending:'#f39c12', preparing:'#3498db', completed:'#2ecc71', cleared:'#95a5a6', refunded:'var(--accent)'};
+        const sc = statusColors[o.status] || 'var(--text2)';
+        html += '<tr style="border-bottom:1px solid var(--border);">' +
+          '<td style="padding:6px;">#' + (o.order_number || o.order_id || '?') + '</td>' +
+          '<td style="padding:6px;color:var(--text2);font-size:12px;">' + d + '</td>' +
+          '<td style="padding:6px;text-align:right;font-weight:600;">$' + (o.total || 0).toFixed(2) + '</td>' +
+          '<td style="padding:6px;">' + escHtml(o.payment_method || '-') + '</td>' +
+          '<td style="padding:6px;"><span style="color:' + sc + ';font-weight:600;">' + escHtml(o.status) + '</span></td></tr>';
+      });
+      html += '</tbody></table></div>';
+    }
+
+    overlay.querySelector('div').innerHTML = html;
+  } catch(e) {
+    overlay.querySelector('div').innerHTML = '<div class="empty-state">Network error.</div><div style="text-align:center;margin-top:12px;"><button class="ghost" onclick="closeCustomerDetail()">Close</button></div>';
+  }
+}
+
+function closeCustomerDetail() {
+  const overlay = document.getElementById('customerDetailOverlay');
+  if (overlay) overlay.remove();
+}
+
+function editCrmField(field) {
+  const span = document.getElementById('crm' + field.charAt(0).toUpperCase() + field.slice(1));
+  if (!span) return;
+  const currentVal = span.textContent === '-' ? '' : span.textContent;
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.value = currentVal;
+  input.style.cssText = 'width:80%;min-height:36px;font-size:13px;padding:4px 8px;background:var(--bg);border:2px solid var(--accent);border-radius:6px;color:var(--text);';
+  input.maxLength = field === 'notes' ? 500 : 200;
+  const saveBtn = document.createElement('button');
+  saveBtn.textContent = '💾';
+  saveBtn.className = 'accent';
+  saveBtn.style.cssText = 'padding:4px 10px;min-height:36px;font-size:13px;margin-left:4px;';
+  const cancelBtn = document.createElement('button');
+  cancelBtn.textContent = '✕';
+  cancelBtn.className = 'ghost';
+  cancelBtn.style.cssText = 'padding:4px 10px;min-height:36px;font-size:13px;margin-left:4px;';
+  const wrapper = document.createElement('span');
+  wrapper.appendChild(input);
+  wrapper.appendChild(saveBtn);
+  wrapper.appendChild(cancelBtn);
+  span.parentNode.replaceChild(wrapper, span);
+  input.focus();
+  saveBtn.onclick = async function() {
+    const val = input.value.trim();
+    try {
+      const r = await fetch(BACKEND_URL + '/api/customers/update', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          adminPin: currentUser ? currentUser.id : '',
+          phone: customerDetailPhone,
+          [field]: val
+        })
+      });
+      const data = await r.json();
+      if (r.ok) {
+        showToast(data.message, 'success');
+        // Refresh the detail view
+        closeCustomerDetail();
+        showCustomerDetail(customerDetailPhone);
+        loadCustomersAdmin();
+      } else {
+        showToast(data.message || 'Failed to update', 'danger');
+      }
+    } catch(e) {
+      showToast('Network error', 'danger');
+    }
+  };
+  cancelBtn.onclick = function() {
+    closeCustomerDetail();
+    showCustomerDetail(customerDetailPhone);
+  };
+  input.addEventListener('keydown', function(e) { if (e.key === 'Enter') saveBtn.click(); if (e.key === 'Escape') cancelBtn.click(); });
 }
 
 async function loadTableSelector() {

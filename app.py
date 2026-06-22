@@ -1036,24 +1036,44 @@ def submit_order():
     customer_phone = data.get('customer_phone', '').strip()
     if customer_phone:
         loyalty_data = load_json_data(LOYALTY_FILE)
-        if customer_phone in loyalty_data:
-            earned = max(1, int(subtotal * LOYALTY_POINTS_PER_DOLLAR))
-            loyalty_data[customer_phone]['points'] += earned
-            loyalty_data[customer_phone]['total_earned'] += earned
-            loyalty_data[customer_phone]['history'].append({
-                'type': 'earned',
-                'points': earned,
-                'order_id': order_id,
-                'subtotal': round(subtotal, 2),
-                'date': datetime.now().isoformat()
-            })
-            loyalty_earned = earned
-            save_json_data(LOYALTY_FILE, loyalty_data)
-            log_activity('loyalty_earn', data.get('user', 'unknown'), 'user', {
-                'customer_phone': customer_phone,
-                'points_earned': earned,
-                'order_id': order_id
-            })
+        if customer_phone not in loyalty_data:
+            # Auto-create a minimal record for spending tracking
+            loyalty_data[customer_phone] = {
+                'phone': customer_phone,
+                'name': customer_phone,
+                'email': '',
+                'notes': '',
+                'address': '',
+                'points': 0,
+                'total_earned': 0,
+                'total_redeemed': 0,
+                'total_spent': 0.0,
+                'total_orders': 0,
+                'last_visit': '',
+                'created_at': datetime.now().isoformat(),
+                'history': []
+            }
+        earned = max(1, int(subtotal * LOYALTY_POINTS_PER_DOLLAR))
+        loyalty_data[customer_phone]['points'] += earned
+        loyalty_data[customer_phone]['total_earned'] += earned
+        loyalty_data[customer_phone]['history'].append({
+            'type': 'earned',
+            'points': earned,
+            'order_id': order_id,
+            'subtotal': round(subtotal, 2),
+            'date': datetime.now().isoformat()
+        })
+        # Track total spending and visit
+        loyalty_data[customer_phone]['total_spent'] = round(loyalty_data[customer_phone].get('total_spent', 0) + subtotal, 2)
+        loyalty_data[customer_phone]['total_orders'] = loyalty_data[customer_phone].get('total_orders', 0) + 1
+        loyalty_data[customer_phone]['last_visit'] = datetime.now().isoformat()
+        loyalty_earned = earned
+        save_json_data(LOYALTY_FILE, loyalty_data)
+        log_activity('loyalty_earn', data.get('user', 'unknown'), 'user', {
+            'customer_phone': customer_phone,
+            'points_earned': earned,
+            'order_id': order_id
+        })
 
     # --- Webhooks: fire to third-party delivery integrations ---
     fire_webhooks_async(order_details)
@@ -3635,7 +3655,20 @@ def loyalty_lookup():
 
     return jsonify({
         'found': True,
-        'customer': loyalty_data[phone]
+        'customer': {
+            'phone': loyalty_data[phone].get('phone', phone),
+            'name': loyalty_data[phone].get('name', ''),
+            'email': loyalty_data[phone].get('email', ''),
+            'notes': loyalty_data[phone].get('notes', ''),
+            'address': loyalty_data[phone].get('address', ''),
+            'points': loyalty_data[phone].get('points', 0),
+            'total_earned': loyalty_data[phone].get('total_earned', 0),
+            'total_redeemed': loyalty_data[phone].get('total_redeemed', 0),
+            'total_spent': loyalty_data[phone].get('total_spent', 0.0),
+            'total_orders': loyalty_data[phone].get('total_orders', 0),
+            'last_visit': loyalty_data[phone].get('last_visit', ''),
+            'created_at': loyalty_data[phone].get('created_at', '')
+        }
     })
 
 
@@ -3657,9 +3690,15 @@ def loyalty_register():
     loyalty_data[phone] = {
         'phone': phone,
         'name': name,
+        'email': '',
+        'notes': '',
+        'address': '',
         'points': 0,
         'total_earned': 0,
         'total_redeemed': 0,
+        'total_spent': 0.0,
+        'total_orders': 0,
+        'last_visit': '',
         'created_at': datetime.now().isoformat(),
         'history': []
     }
@@ -3784,9 +3823,13 @@ def loyalty_customers():
         customers.append({
             'phone': data.get('phone', phone),
             'name': data.get('name', 'Unknown'),
+            'email': data.get('email', ''),
             'points': data.get('points', 0),
             'total_earned': data.get('total_earned', 0),
             'total_redeemed': data.get('total_redeemed', 0),
+            'total_spent': data.get('total_spent', 0.0),
+            'total_orders': data.get('total_orders', 0),
+            'last_visit': data.get('last_visit', ''),
             'created_at': data.get('created_at', '')
         })
 
@@ -3844,6 +3887,177 @@ def loyalty_adjust():
     return jsonify({
         'message': f'Points adjusted by {points_adjust} for {customer["name"]}. New balance: {customer["points"]}.',
         'customer': customer
+    })
+
+
+# ============================================================
+# Customer Profile Management (CRM)
+# ============================================================
+
+
+@app.route('/api/customers/list', methods=['POST'])
+def customers_list():
+    """List/search customers (admin-only). Supports search by name or phone."""
+    data = request.json or {}
+    admin_pin = data.get('adminPin', '')
+
+    if not admin_pin or not check_perm(admin_pin, "manage_items"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    search_query = data.get('search', '').strip().lower()
+    loyalty_data = load_json_data(LOYALTY_FILE)
+
+    customers = []
+    for phone, cd in loyalty_data.items():
+        # Skip if search filter provided and doesn't match
+        if search_query:
+            if search_query not in cd.get('name', '').lower() and search_query not in phone:
+                continue
+
+        customers.append({
+            'phone': cd.get('phone', phone),
+            'name': cd.get('name', 'Unknown'),
+            'email': cd.get('email', ''),
+            'points': cd.get('points', 0),
+            'total_earned': cd.get('total_earned', 0),
+            'total_redeemed': cd.get('total_redeemed', 0),
+            'total_spent': cd.get('total_spent', 0.0),
+            'total_orders': cd.get('total_orders', 0),
+            'last_visit': cd.get('last_visit', ''),
+            'created_at': cd.get('created_at', '')
+        })
+
+    # Sort by total_spent descending
+    customers.sort(key=lambda c: c['total_spent'], reverse=True)
+
+    return jsonify({'customers': customers})
+
+
+@app.route('/api/customers/detail', methods=['POST'])
+def customer_detail():
+    """Get full customer profile with order history."""
+    data = request.json or {}
+    admin_pin = data.get('adminPin', '')
+    phone = data.get('phone', '').strip()
+
+    if not admin_pin or not check_perm(admin_pin, "manage_items"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    if not phone:
+        return jsonify({'message': 'Phone number is required.'}), 400
+
+    loyalty_data = load_json_data(LOYALTY_FILE)
+    if phone not in loyalty_data:
+        return jsonify({'message': 'Customer not found.'}), 404
+
+    customer = loyalty_data[phone]
+
+    # Gather order history from orders.json
+    orders = load_json_data(ORDERS_FILE)
+    order_history = []
+    for o in orders:
+        if o.get('customer_phone', '').strip() == phone:
+            order_history.append({
+                'order_id': o.get('order_id', o.get('id', 0)),
+                'order_number': o.get('order_number', 0),
+                'date': o.get('date', o.get('timestamp', '')),
+                'subtotal': o.get('subtotal', 0),
+                'total': o.get('total', 0),
+                'items': o.get('items', []),
+                'payment_method': o.get('payment', o.get('payment_method', '')),
+                'status': o.get('status', 'pending')
+            })
+
+    # Also check cleared_orders for this phone
+    cleared = load_json_data(CLEARED_ORDERS_FILE)
+    for co in cleared:
+        if co.get('customer_phone', '').strip() == phone:
+            order_history.append({
+                'order_id': co.get('order_id', 0),
+                'order_number': co.get('order_number', 0),
+                'date': co.get('date', co.get('timestamp', '')),
+                'subtotal': co.get('subtotal', 0),
+                'total': co.get('total', 0),
+                'items': co.get('items', []),
+                'payment_method': co.get('payment', co.get('payment_method', '')),
+                'status': 'cleared'
+            })
+
+    # Sort by date descending
+    order_history.sort(key=lambda o: o.get('date', ''), reverse=True)
+
+    # Limit to last 50 orders
+    order_history = order_history[:50]
+
+    return jsonify({
+        'customer': {
+            'phone': customer.get('phone', phone),
+            'name': customer.get('name', 'Unknown'),
+            'email': customer.get('email', ''),
+            'notes': customer.get('notes', ''),
+            'address': customer.get('address', ''),
+            'points': customer.get('points', 0),
+            'total_earned': customer.get('total_earned', 0),
+            'total_redeemed': customer.get('total_redeemed', 0),
+            'total_spent': customer.get('total_spent', 0.0),
+            'total_orders': customer.get('total_orders', 0),
+            'last_visit': customer.get('last_visit', ''),
+            'created_at': customer.get('created_at', ''),
+            'history': customer.get('history', [])
+        },
+        'order_history': order_history
+    })
+
+
+@app.route('/api/customers/update', methods=['POST'])
+def customer_update():
+    """Update customer profile fields (email, notes, address)."""
+    data = request.json or {}
+    admin_pin = data.get('adminPin', '')
+    phone = data.get('phone', '').strip()
+
+    if not admin_pin or not check_perm(admin_pin, "manage_items"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    if not phone:
+        return jsonify({'message': 'Phone number is required.'}), 400
+
+    loyalty_data = load_json_data(LOYALTY_FILE)
+    if phone not in loyalty_data:
+        return jsonify({'message': 'Customer not found.'}), 404
+
+    customer = loyalty_data[phone]
+
+    # Update editable fields
+    if 'email' in data:
+        customer['email'] = data['email'].strip()
+    if 'notes' in data:
+        customer['notes'] = data['notes'].strip()
+    if 'address' in data:
+        customer['address'] = data['address'].strip()
+    if 'name' in data:
+        customer['name'] = data['name'].strip()
+
+    save_json_data(LOYALTY_FILE, loyalty_data)
+
+    log_activity('customer_update', admin_pin, 'admin', {
+        'customer_phone': phone,
+        'updated_fields': [k for k in ['name', 'email', 'notes', 'address'] if k in data]
+    })
+
+    return jsonify({
+        'message': f'Customer {customer["name"]} updated successfully.',
+        'customer': {
+            'phone': customer.get('phone', phone),
+            'name': customer.get('name', 'Unknown'),
+            'email': customer.get('email', ''),
+            'notes': customer.get('notes', ''),
+            'address': customer.get('address', ''),
+            'points': customer.get('points', 0),
+            'total_spent': customer.get('total_spent', 0.0),
+            'total_orders': customer.get('total_orders', 0),
+            'last_visit': customer.get('last_visit', '')
+        }
     })
 
 
