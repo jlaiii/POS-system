@@ -32,7 +32,7 @@
 
 ## Priority: LOW
 
-- [ ] Add scheduled pricing (happy hour, daily specials)
+- [~] worker-1 Add scheduled pricing (happy hour, daily specials)
 - [ ] Add waste tracking (items thrown away, reason)
 - [ ] Add delivery address management
 - [ ] Add integration webhook for third-party delivery apps
