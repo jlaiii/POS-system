@@ -32,7 +32,7 @@
 
 ## Priority: LOW
 
-- [ ] Add integration webhook for third-party delivery apps
+- [~] worker-1 Add integration webhook for third-party delivery apps
 - [ ] Add table-side ads system — rotating promotional images/videos on table tablets between orders
 
 ## Done
