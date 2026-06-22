@@ -1129,6 +1129,68 @@ def delete_delivery_address(key):
     return jsonify({'message': 'Address deleted successfully'})
 
 
+# --- Public Orders List Endpoint (no view_stats required) ---
+
+@app.route('/api/orders/list', methods=['POST'])
+def orders_list():
+    """
+    Returns raw orders and cleared orders for the authenticated user.
+    Does NOT require view_stats permission — any logged-in user (pos_access)
+    can see orders. This fixes the bug where waiters got 'Network error'
+    when clicking the History tab.
+    """
+    data = request.json
+    admin_pin = data.get('adminPin')
+
+    # Basic auth: just verify the user exists (don't require view_stats)
+    users = load_json_data(USERS_FILE)
+    if admin_pin not in users:
+        return jsonify({'message': 'User not found.'}), 403
+
+    user_info = upgrade_user(users[admin_pin])
+    if user_info.get('banned', False):
+        return jsonify({'message': 'User is banned.'}), 403
+
+    orders = load_json_data(ORDERS_FILE)
+    cleared_orders = load_json_data(CLEARED_ORDERS_FILE)
+
+    # --- Date range filtering ---
+    date_from = data.get('date_from', '').strip()
+    date_to = data.get('date_to', '').strip()
+
+    def filter_by_date_range(order_list, date_field='date'):
+        filtered = order_list
+        if date_from:
+            try:
+                dt_from = datetime.fromisoformat(date_from)
+                filtered = [o for o in filtered if datetime.fromisoformat(o.get(date_field, '')) >= dt_from]
+            except (ValueError, KeyError):
+                pass
+        if date_to:
+            try:
+                if 'T' not in date_to:
+                    dt_to = datetime.fromisoformat(date_to + 'T23:59:59')
+                else:
+                    dt_to = datetime.fromisoformat(date_to)
+                filtered = [o for o in filtered if datetime.fromisoformat(o.get(date_field, '')) <= dt_to]
+            except (ValueError, KeyError):
+                pass
+        return filtered
+
+    orders = filter_by_date_range(orders)
+    cleared_orders = filter_by_date_range(cleared_orders)
+
+    # Sort orders by date descending
+    orders.sort(key=lambda o: o.get('date', ''), reverse=True)
+    cleared_orders.sort(key=lambda o: o.get('date', ''), reverse=True)
+
+    return jsonify({
+        'message': 'Orders retrieved',
+        'orders': orders,
+        'cleared_orders': cleared_orders
+    })
+
+
 # --- Refund / Void Order Endpoint ---
 
 @app.route('/api/orders/refund', methods=['POST'])

@@ -3724,13 +3724,13 @@ async function loadOrderHistory() {
     if (dateFrom) body.date_from = dateFrom;
     if (dateTo) body.date_to = dateTo;
 
-    const r = await fetch(BACKEND_URL + '/api/admin_stats', {
+    const r = await fetch(BACKEND_URL + '/api/orders/list', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     });
     if (!r.ok) { list.innerHTML = '<div class="empty-state">' + t('network_error') + '</div>'; return; }
     const data = await r.json();
-    let orders = data.stats.raw_orders || [];
+    let orders = data.orders || [];
     // Sort by date descending
     orders.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
     if (orders.length === 0) { list.innerHTML = '<div class="empty-state">' + t('history.empty') + '</div>'; return; }
