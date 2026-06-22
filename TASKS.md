@@ -2,7 +2,7 @@
 
 > Auto-managed by 3 Hermes Worker Crons (every 30 min each, staggered claims).
 > Workers use `[~]` to claim tasks before working. Never pick a claimed task.
-> Last updated: 2026-06-22 (audit #4)
+> Last updated: 2026-06-22 (audit #5)
 
 ## Status Legend
 - `[ ]` = pending (available for any worker)
@@ -16,6 +16,9 @@
 - [x] **Add barcode scanner support for item lookup (camera or hardware scanner)** — Barcode lookup endpoint `/api/items/barcode/lookup` and setter endpoint `/api/items/set_barcode`. Barcode field in item data model. Frontend: barcode input field (hardware scanner compatible via keyboard wedge Enter), camera scan button (BarcodeDetector API), barcode display in admin item management, barcode field in add/edit item forms. i18n EN + ES. [worker-2]
 - [x] **Add cash register management (opening/closing till, cash drops, reconciliation)** — Opening balance entry at shift start. Cash-in/cash-out (paid-ins, paid-outs, cash drops) with reason tracking. End-of-day drawer count with expected-vs-actual comparison report. Essential cash-handling accountability feature for any retail business. [worker-3]
 
+- [ ] **Add service charge / auto-gratuity for large parties** — Configurable auto-gratuity settings (party size threshold, default percentage) in admin. When cart item count reaches threshold, service charge line auto-appears with label and amount. Display on receipt, kiosk, and order history. Permission-gated (manage_items). i18n EN + ES.
+- [ ] **Add digital receipt delivery (email) and receipt reprint from history** — Email input field during checkout to send receipt. New `/api/orders/receipt` endpoint to regenerate/return receipt HTML for any completed order. "Email Receipt" and "Reprint Receipt" buttons in order history. Email config in admin settings (SMTP). i18n EN + ES.
+
 ## Priority: MEDIUM
 
 - [x] Customer order lookup
@@ -25,17 +28,16 @@
 - [x] **Add order status badges in history view** — Show current order status (pending, preparing, completed, refunded/voided) as color-coded badges in order history list. Currently only refunded status is shown. Helps staff quickly identify order state at a glance without expanding details. Consistent with kitchen display status colors. [worker-3]
 - [x] **Add reorder button in order history** — One-click to reload all items from a past order into the cart. Major waiter speed improvement: eliminates need to manually re-add frequent orders. 🔄 button per order in history list loads items into cart with notes/modifiers, switches to POS tab. [worker-1]
 
-## Priority: MEDIUM (NEW — Audit 2026-06-22)
-
-- [x] **Add item images to grid cards** — Allow attaching image URLs to menu items for visual identification. Display thumbnail images on item grid cards, kitchen tickets, and kiosk mode. Speeds up waiter item location in busy environments. i18n EN + ES. [worker-2]
-
-- [x] **Add recent-order quick-access on POS tab** — Show last 5 orders for the logged-in waiter directly on the POS tab (collapsible "Recent Orders" section above item grid). One-tap reload of entire order into cart without navigating to History tab. Saves 3+ taps for frequent reorders. [worker-1]
+- [ ] **Add item visibility toggle (hide/show menu items without deleting)** — Active/inactive toggle per item in admin item management. Hidden items remain in database but do not appear in POS item grid, kiosk, or search. Useful for seasonal items, out-of-season ingredients, temporary supplier outages. Visual indicator (eye icon) in management list. i18n EN + ES.
+- [ ] **Add order-ready customer pickup display board** — New standalone page (`/pickup-display`) or overlay showing completed orders awaiting collection. Large-format order numbers with visual indicators (new, waiting, collected). Auto-refresh via WebSocket or polling. Independent from kitchen and customer display. Toggle in POS cart to mark order ready for pickup. i18n EN + ES.
 
 ## Priority: LOW
 
 - [x] Add integration webhook for third-party delivery apps — Webhook system that POSTs order data (JSON) to configured URLs on order submission. Admin UI to add/list/test/toggle/delete webhooks. Fire-and-forget via background thread so order submission is not blocked. i18n EN + ES. Permission-gated (manage_items). [worker-1]
 - [x] Add table-side ads system — rotating promotional images/videos on table tablets between orders. Admin management UI, `/api/ads/*` endpoints, `/tablet` display page with auto-rotation, swipe support, i18n EN+ES. [worker-2]
 - [x] **Add category management (create/rename/delete/reorder menu categories)** — Backend: 5 new API endpoints (list, create, rename, delete, reorder) under `/api/categories/*`. Frontend: new admin "📁 Categories" section with create form, category list with up/down reorder arrows, rename button, delete button (only for empty categories). Item counts shown per category. All changes auto-refresh POS grid. Permission-gated (manage_items). i18n EN + ES. Dark theme compatible. Touch-friendly 48px+ targets. [worker-2]
+
+- [ ] **Add combo/meal deal builder for fixed-price bundled items** — Create fixed-price combo deals (e.g., "Lunch Special: Burger + Fries + Drink $12.99") as a single orderable item. Admin builder UI to select child items, set combo price, and manage active combos. One-tap add to cart expands child items for kitchen display. Increases average order value. i18n EN + ES.
 
 ## Done
 
