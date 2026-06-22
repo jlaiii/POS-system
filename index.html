@@ -1320,7 +1320,7 @@ function switchLanguage(lang) {
 let currentUser = null; // { id, name, role, permissions }
 let cart = [];
 let itemsData = {}; // { category: [{name, price}] }
-let selectedPayment = 'Cash';
+let paymentSplits = [{method: 'Cash', amount: 0}]; // [{method, amount}, ...] for split-payment support
 let currentCategory = '';
 let adminStatsCache = null;
 let chartDaily = null;
@@ -1731,6 +1731,9 @@ function renderCart() {
     tipRow.style.display = 'none';
     appliedDiscount = null;
     resetTip();
+    // Reset payment splits to single default when cart is empty
+    paymentSplits = [{method: 'Cash', amount: 0}];
+    buildPaymentMethods();
     return;
   }
   discountRow.style.display = 'block';
@@ -1787,22 +1790,141 @@ function renderCart() {
   totalEl.innerHTML = `${t('cart.subtotal')} $${subtotal.toFixed(2)} | ${t('cart.tax')} $${totalTax.toFixed(2)}${discountHtml}${tipAmount > 0 ? ` | <span style="color:#2ecc71;">💬 Tip: +$${tipAmount.toFixed(2)}</span>` : ''} | <strong>${t('cart.total')} $${finalTotalWithTip.toFixed(2)}</strong>`;
   updateDiscountStatus();
   if (driveThroughMode) pushToDriveThrough();
+  // Rebuild payment splits to stay in sync with cart total
+  buildPaymentMethods();
 }
 
 function buildPaymentMethods() {
   const methods = ['Cash', 'Card', 'Mobile Pay'];
   const container = document.getElementById('paymentMethods');
-  methods.forEach(m => {
-    const btn = document.createElement('button');
-    btn.textContent = m === 'Cash' ? t('payment.cash') : m === 'Card' ? t('payment.card') : t('payment.mobile');
-    if (m === selectedPayment) btn.classList.add('selected');
-    btn.onclick = () => {
-      selectedPayment = m;
-      container.querySelectorAll('button').forEach(b => b.classList.remove('selected'));
-      btn.classList.add('selected');
+  container.innerHTML = '';
+
+  // Helper: get total from cart
+  function getOrderTotal() {
+    let sub = 0, tax = 0;
+    cart.forEach(item => {
+      const lt = item.price * item.qty;
+      sub += lt;
+      const rate = getTaxRate(item.name, item.category || '');
+      tax += lt * rate;
+    });
+    const discAmt = appliedDiscount ? appliedDiscount.discount_amount : 0;
+    const tipAmt = calculateTipAmount(sub);
+    return Math.round((sub + tax - discAmt + tipAmt) * 100) / 100;
+  }
+
+  function renderSplitUI() {
+    container.innerHTML = '';
+    const total = getOrderTotal();
+
+    // Build toggle buttons
+    methods.forEach(m => {
+      const existing = paymentSplits.find(s => s.method === m);
+      const btn = document.createElement('button');
+      btn.className = existing ? 'selected' : '';
+      btn.textContent = m === 'Cash' ? '💵 Cash' : m === 'Card' ? '💳 Card' : '📱 Mobile Pay';
+      btn.onclick = () => {
+        const idx = paymentSplits.findIndex(s => s.method === m);
+        if (idx >= 0) {
+          paymentSplits.splice(idx, 1);
+        } else {
+          paymentSplits.push({method: m, amount: 0});
+        }
+        if (paymentSplits.length === 0) {
+          paymentSplits.push({method: 'Cash', amount: 0});
+        }
+        // Auto-distribute equally
+        autoDistribute();
+        renderSplitUI();
+        renderCart();
+      };
+      container.appendChild(btn);
+    });
+
+    // Amount inputs for each selected method
+    const inputsDiv = document.createElement('div');
+    inputsDiv.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;width:100%;';
+    paymentSplits.forEach((s, i) => {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;gap:6px;background:#16213e;padding:6px 10px;border-radius:8px;flex:1;min-width:140px;';
+      const label = document.createElement('span');
+      label.textContent = s.method === 'Cash' ? '💵' : s.method === 'Card' ? '💳' : '📱';
+      label.style.cssText = 'font-size:16px;';
+      const inp = document.createElement('input');
+      inp.type = 'number';
+      inp.step = '0.01';
+      inp.min = '0';
+      inp.inputMode = 'decimal';
+      inp.value = s.amount > 0 ? s.amount.toFixed(2) : '';
+      inp.placeholder = '$0.00';
+      inp.style.cssText = 'flex:1;min-width:70px;min-height:40px;padding:4px 8px;background:#1a1a2e;border:1px solid #2a2a4e;border-radius:6px;color:#fff;font-size:14px;';
+      inp.oninput = () => {
+        const val = parseFloat(inp.value);
+        paymentSplits[i].amount = isNaN(val) ? 0 : Math.round(val * 100) / 100;
+        updateRemaining();
+        renderCart();
+      };
+      row.appendChild(label);
+      row.appendChild(inp);
+      inputsDiv.appendChild(row);
+    });
+    container.appendChild(inputsDiv);
+
+    // Remaining indicator
+    const remDiv = document.createElement('div');
+    remDiv.id = 'splitRemaining';
+    remDiv.style.cssText = 'width:100%;margin-top:6px;font-size:14px;text-align:center;';
+    container.appendChild(remDiv);
+
+    // Split evenly button
+    const eqBtn = document.createElement('button');
+    eqBtn.textContent = '↔️ Split Evenly';
+    eqBtn.style.cssText = 'flex:1;background:#0f3460;color:#fff;border:1px solid #2a2a4e;border-radius:8px;padding:8px 12px;min-height:40px;font-size:13px;cursor:pointer;margin-top:4px;';
+    eqBtn.onclick = () => {
+      autoDistribute();
+      renderSplitUI();
+      renderCart();
     };
-    container.appendChild(btn);
-  });
+    container.appendChild(eqBtn);
+
+    updateRemaining();
+  }
+
+  function updateRemaining() {
+    const total = getOrderTotal();
+    const allocated = paymentSplits.reduce((sum, s) => sum + (s.amount || 0), 0);
+    const rem = Math.round((total - allocated) * 100) / 100;
+    const el = document.getElementById('splitRemaining');
+    if (!el) return;
+    if (Math.abs(rem) < 0.01) {
+      el.innerHTML = '✅ <span style="color:#2ecc71;">Balanced: $0.00 remaining</span>';
+    } else if (rem > 0) {
+      el.innerHTML = `⚠️ <span style="color:#f39c12;">Remaining: $${rem.toFixed(2)}</span>`;
+    } else {
+      el.innerHTML = `❌ <span style="color:#e94560;">Over by: $${Math.abs(rem).toFixed(2)}</span>`;
+    }
+  }
+
+  function autoDistribute() {
+    const total = getOrderTotal();
+    if (paymentSplits.length === 0) return;
+    const each = Math.round((total / paymentSplits.length) * 100) / 100;
+    let remainder = Math.round((total - each * paymentSplits.length) * 100) / 100;
+    paymentSplits.forEach((s, i) => {
+      if (i === paymentSplits.length - 1) {
+        s.amount = Math.round((each + remainder) * 100) / 100;
+      } else {
+        s.amount = each;
+      }
+    });
+  }
+
+  // Initialize with one default method
+  if (paymentSplits.length === 0 || paymentSplits.every(s => s.amount === 0)) {
+    autoDistribute();
+  }
+  renderSplitUI();
+  updateRemaining();
 }
 
 // ═══════════ TIP CALCULATION ═══════════
@@ -1879,6 +2001,12 @@ async function submitOrder() {
   const discountAmount = appliedDiscount ? appliedDiscount.discount_amount : 0;
   const tipAmount = calculateTipAmount(subtotal);
   const total = subtotal + taxAmount - discountAmount + tipAmount;
+  // Validate split payments add up
+  const allocated = paymentSplits.reduce((sum, s) => sum + (s.amount || 0), 0);
+  if (Math.abs(Math.round(allocated * 100) / 100 - Math.round(total * 100) / 100) > 0.01) {
+    showToast('⚠️ Payment splits must equal the total ($' + total.toFixed(2) + '). Allocated: $' + allocated.toFixed(2), 'danger');
+    return;
+  }
   // Build receipt data before clearing
   const receiptData = {
   items: cart.map(c => ({ name: c.name, price: c.price, qty: c.qty, note: c.note || '' })),
@@ -1888,7 +2016,8 @@ async function submitOrder() {
   discount_code: appliedDiscount ? appliedDiscount.code : null,
   discount_amount: Math.round(discountAmount * 100) / 100,
   total: Math.round(total * 100) / 100,
-  payment: selectedPayment,
+  payment: '',  // will be set from splits
+  payment_splits: paymentSplits.filter(s => s.amount > 0),
   user: currentUser.id,
   date: new Date().toISOString(),
   notes: document.getElementById('orderNotesInput').value.trim(),
@@ -1906,7 +2035,8 @@ async function submitOrder() {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       user: currentUser.id,
-      payment: selectedPayment,
+      payment: '',  // backend will derive from payment_splits
+      payment_splits: paymentSplits.filter(s => s.amount > 0),
       items: cart.map(c => ({ name: c.name, price: c.price, qty: c.qty, note: c.note || '' })),
       subtotal: Math.round(subtotal * 100) / 100,
       tax_amount: Math.round(taxAmount * 100) / 100,
@@ -2202,15 +2332,19 @@ async function loadOrderHistory() {
       const items = o.items || [];
       const hasTax = o.tax_amount !== undefined && o.tax_amount !== null && parseFloat(o.tax_amount) > 0;
     const hasTip = o.tip_amount !== undefined && o.tip_amount !== null && parseFloat(o.tip_amount) > 0;
-      const orderNum = orders.length - i;
-      const orderNotes = o.notes || '';
-      const hasItemNotes = items.some(it => it.note);
-      html += `<div class="history-order" onclick="this.classList.toggle('expanded')">
+    const orderNum = orders.length - i;
+    const orderNotes = o.notes || '';
+    const hasItemNotes = items.some(it => it.note);
+    const hasSplitPayments = o.payment_splits && o.payment_splits.length > 1;
+    const paymentDisplay = hasSplitPayments
+      ? o.payment_splits.map(s => s.method + ' $' + parseFloat(s.amount).toFixed(2)).join(' + ')
+      : (o.payment || 'N/A');
+    html += `<div class="history-order" onclick="this.classList.toggle('expanded')">
         <div class="ho-header">
           <span><strong>#${orderNum}</strong> — ${dt}</span>
           <span class="ho-total">$${total}</span>
         </div>
-        <div class="ho-meta">${t('history.payment')} ${escHtml(o.payment || 'N/A')} | ${t('history.user')} ${escHtml(o.user || 'N/A')}${hasTax ? ' | ' + t('history.tax') + ': $' + parseFloat(o.tax_amount).toFixed(2) : ''}${hasTip ? ' | 💬 ' + t('receipt.tip') + ': $' + parseFloat(o.tip_amount).toFixed(2) : ''}${o.table_number ? ' | 🪑 Table #' + o.table_number : ''}${orderNotes ? ' | 📝 ' + t('history.notes') : ''} <button class="ghost" onclick="event.stopPropagation();printHistoryReceipt(${JSON.stringify(o).replace(/"/g, '&quot;')}, ${orderNum})" style="font-size:12px;padding:4px 8px;min-height:28px;color:var(--accent);">🖨️</button></div>
+        <div class="ho-meta">${t('history.payment')} ${escHtml(paymentDisplay)} | ${t('history.user')} ${escHtml(o.user || 'N/A')}${hasTax ? ' | ' + t('history.tax') + ': $' + parseFloat(o.tax_amount).toFixed(2) : ''}${hasTip ? ' | 💬 ' + t('receipt.tip') + ': $' + parseFloat(o.tip_amount).toFixed(2) : ''}${o.table_number ? ' | 🪑 Table #' + o.table_number : ''}${orderNotes ? ' | 📝 ' + t('history.notes') : ''} <button class="ghost" onclick="event.stopPropagation();printHistoryReceipt(${JSON.stringify(o).replace(/"/g, '&quot;')}, ${orderNum})" style="font-size:12px;padding:4px 8px;min-height:28px;color:var(--accent);">🖨️</button></div>
         <div class="ho-details">
           ${items.map((it, idx) => `<div class="ho-item"><span>${escHtml(it.name)} x${it.qty||1}${it.note ? '<br/><span style="color:var(--text2);font-size:12px;padding-left:12px;">📝 ' + escHtml(it.note) + '</span>' : ''}</span><span>$${((it.price||0)*(it.qty||1)).toFixed(2)}</span></div>`).join('')}
           ${hasTax ? `
@@ -2968,7 +3102,10 @@ function renderKitchenOrderCard(o) {
   const status = (o.status || 'pending').toLowerCase();
   const items = o.items || [];
   const notes = o.notes || '';
-  const payment = o.payment || 'N/A';
+  const paymentSplits = o.payment_splits;
+  const payment = paymentSplits && paymentSplits.length > 1
+    ? paymentSplits.map(s => s.method + ' $' + parseFloat(s.amount).toFixed(2)).join(' + ')
+    : (o.payment || 'N/A');
   const createdAt = o.created_at || o.date || '';
   const claimedBy = o.claimed_by || '';
   const cookName = o.claimed_by_name || claimedBy;
@@ -3176,13 +3313,18 @@ function showReceipt(orderData) {
   const hasTip = orderData.tip_amount !== undefined && orderData.tip_amount !== null && parseFloat(orderData.tip_amount) > 0;
   const hasNotes = orderData.notes && orderData.notes.trim();
   const hasItemNotes = orderData.items && orderData.items.some(it => it.note);
+  const hasSplitPayments = orderData.payment_splits && orderData.payment_splits.length > 1;
+
+  const paymentDisplay = hasSplitPayments
+    ? orderData.payment_splits.map(s => `${s.method} $${parseFloat(s.amount).toFixed(2)}`).join(' + ')
+    : (orderData.payment || '—');
 
   container.innerHTML = `
     <div class="rcpt-header">
       <h2>🍽️ POS System</h2>
       <div class="rcpt-info">${escHtml(dateStr)}</div>
       <div class="rcpt-info">Order #${orderData.orderNumber || '—'}</div>
-      <div class="rcpt-info">${t('receipt.payment')} ${escHtml(orderData.payment || '—')}</div>
+      <div class="rcpt-info">${t('receipt.payment')} ${escHtml(paymentDisplay)}</div>
       ${orderData.user ? `<div class="rcpt-info">${t('receipt.cashier')} ${escHtml(String(orderData.user))}</div>` : ''}
     </div>
     <hr class="rcpt-divider"/>
@@ -3224,6 +3366,7 @@ function printHistoryReceipt(orderData, orderNumber) {
     discount_amount: orderData.discount_amount || 0,
     total: parseFloat(orderData.total || 0),
     payment: orderData.payment || 'N/A',
+    payment_splits: orderData.payment_splits || null,
     user: orderData.user || '—',
     date: orderData.date || new Date().toISOString(),
     orderNumber: orderNumber || '—'
@@ -3491,15 +3634,68 @@ function renderKioskPaymentMethods() {
   if (!container) return;
   container.innerHTML = '';
   methods.forEach(m => {
+    const existing = paymentSplits.find(s => s.method === m);
     const btn = document.createElement('button');
+    btn.className = existing ? 'selected' : '';
     btn.textContent = m === 'Cash' ? '💵 Cash' : m === 'Card' ? '💳 Card' : '📱 Mobile Pay';
-    if (m === selectedPayment) btn.classList.add('selected');
     btn.onclick = () => {
-      selectedPayment = m;
-      container.querySelectorAll('button').forEach(b => b.classList.remove('selected'));
-      btn.classList.add('selected');
+      const idx = paymentSplits.findIndex(s => s.method === m);
+      if (idx >= 0) {
+        paymentSplits.splice(idx, 1);
+      } else {
+        paymentSplits.push({method: m, amount: 0});
+      }
+      if (paymentSplits.length === 0) {
+        paymentSplits.push({method: 'Cash', amount: 0});
+      }
+      autoDistributeKiosk();
+      renderKioskPaymentMethods();
+      renderKioskTotals();
     };
     container.appendChild(btn);
+  });
+
+  // Amount inputs for each selected method (kiosk mode)
+  paymentSplits.forEach((s, i) => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:8px;margin-top:6px;background:#16213e;padding:8px 12px;border-radius:10px;';
+    const label = document.createElement('span');
+    label.textContent = s.method === 'Cash' ? '💵' : s.method === 'Card' ? '💳' : '📱';
+    label.style.fontSize = '22px';
+    const inp = document.createElement('input');
+    inp.type = 'number';
+    inp.step = '0.01';
+    inp.min = '0';
+    inp.inputMode = 'decimal';
+    inp.value = s.amount > 0 ? s.amount.toFixed(2) : '';
+    inp.placeholder = '$0.00';
+    inp.style.cssText = 'flex:1;min-width:80px;min-height:48px;padding:6px 12px;background:#1a1a2e;border:2px solid #2a2a4e;border-radius:8px;color:#fff;font-size:20px;text-align:center;';
+    inp.oninput = () => {
+      const val = parseFloat(inp.value);
+      paymentSplits[i].amount = isNaN(val) ? 0 : Math.round(val * 100) / 100;
+    };
+    row.appendChild(label);
+    row.appendChild(inp);
+    container.appendChild(row);
+  });
+}
+
+function autoDistributeKiosk() {
+  let subtotal = 0, taxAmount = 0;
+  cart.forEach(item => {
+    const lineTotal = item.price * item.qty;
+    subtotal += lineTotal;
+    const rate = getTaxRate(item.name, item.category || '');
+    taxAmount += lineTotal * rate;
+  });
+  const total = Math.round((subtotal + taxAmount + kioskTipAmount) * 100) / 100;
+  if (paymentSplits.length === 0) return;
+  const each = Math.round((total / paymentSplits.length) * 100) / 100;
+  let remainder = Math.round((total - each * paymentSplits.length) * 100) / 100;
+  paymentSplits.forEach((s, i) => {
+    s.amount = i === paymentSplits.length - 1
+      ? Math.round((each + remainder) * 100) / 100
+      : each;
   });
 }
 
@@ -3545,7 +3741,7 @@ function updateKioskTipCustom() {
 
 async function kioskPay() {
   if (cart.length === 0) { showToast('Cart is empty', 'danger'); return; }
-  if (!selectedPayment) { showToast('Please select a payment method', 'danger'); return; }
+  if (!paymentSplits || paymentSplits.length === 0) { showToast('Please select a payment method', 'danger'); return; }
   
   const btn = document.getElementById('kioskPayBtn');
   btn.disabled = true;
@@ -3559,13 +3755,23 @@ async function kioskPay() {
     taxAmount += lineTotal * rate;
   });
   const total = subtotal + taxAmount + kioskTipAmount;
-  
+
+  // Validate split payments add up
+  const allocated = paymentSplits.reduce((sum, s) => sum + (s.amount || 0), 0);
+  if (Math.abs(Math.round(allocated * 100) / 100 - Math.round(total * 100) / 100) > 0.01) {
+    showToast('⚠️ Payment splits must equal the total ($' + total.toFixed(2) + '). Allocated: $' + allocated.toFixed(2), 'danger');
+    btn.disabled = false;
+    btn.textContent = '💵 Pay Now';
+    return;
+  }
+
   try {
     const r = await fetch(BACKEND_URL + '/api/submit_order', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         user: currentUser.id,
-        payment: selectedPayment,
+        payment: '',  // backend will derive from payment_splits
+        payment_splits: paymentSplits.filter(s => s.amount > 0),
         items: cart.map(c => ({ name: c.name, price: c.price, qty: c.qty, note: c.note || '' })),
         subtotal: Math.round(subtotal * 100) / 100,
         tax_amount: Math.round(taxAmount * 100) / 100,

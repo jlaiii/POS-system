@@ -642,6 +642,20 @@ def submit_order():
         counter_data = {"counter": 1}
     order_id = counter_data.get("counter", 1)
 
+    # --- Handle split-payment support ---
+    payment_splits = data.get('payment_splits')
+    payment_display = data.get('payment', '')
+
+    if payment_splits and isinstance(payment_splits, list) and len(payment_splits) > 0:
+        # Build a readable payment summary from splits
+        if len(payment_splits) == 1:
+            payment_display = payment_splits[0]['method']
+        else:
+            parts = [f"{s['method']} ${float(s['amount']):.2f}" for s in payment_splits]
+            payment_display = 'Split (' + ', '.join(parts) + ')'
+    elif not payment_display:
+        payment_display = data.get('payment', 'Cash')
+
     order_details = {
         'order_id': order_id,
         'status': 'pending',
@@ -650,7 +664,8 @@ def submit_order():
         'completed_at': None,
         'date': datetime.now().isoformat(),
         'user': data.get('user'),
-        'payment': data.get('payment'),
+        'payment': payment_display,
+        'payment_splits': payment_splits if payment_splits else None,
         'items': items,
         'subtotal': round(subtotal, 2),
         'tax_amount': round(tax_amount, 2),
@@ -963,12 +978,24 @@ def analytics_summary():
             if user:
                 active_users.add(user)
 
+        # Count payment methods (handle both legacy single and split payments)
+        payment_counter = Counter()
+        for order in today_orders:
+            splits = order.get('payment_splits')
+            if splits and isinstance(splits, list):
+                for s in splits:
+                    payment_counter[s['method']] += 1
+            else:
+                pm = order.get('payment', 'Unknown')
+                payment_counter[pm] += 1
+
         summary = {
             'total_orders_today': total_orders_today,
             'revenue_today': round(revenue_today, 2),
             'avg_order_today': avg_order_today,
             'top_item_today': top_item_today_name,
-            'active_users_count': len(active_users)
+            'active_users_count': len(active_users),
+            'payment_methods': dict(payment_counter)
         }
 
         return jsonify({'summary': summary})
