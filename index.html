@@ -933,6 +933,9 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
             <div class="chart-box"><h4 data-i18n="admin.charts.daily_revenue">📅 Daily Revenue (Last 7 Days)</h4><canvas id="chartDailyRevenue"></canvas></div>
             <div class="chart-box"><h4 data-i18n="admin.charts.payment_methods">💳 Payment Methods</h4><canvas id="chartPaymentMethods"></canvas></div>
           </div>
+          <div class="charts-row">
+            <div class="chart-box" style="grid-column:1/-1;"><h4 data-i18n="admin.charts.item_trends">📈 Item Popularity Trend (7d vs Prior 7d)</h4><canvas id="chartItemTrends"></canvas></div>
+          </div>
         </div>
         <!-- Most Ordered -->
         <div id="secMost" class="admin-section">
@@ -1391,6 +1394,7 @@ const L10N = {
     'admin.stats.monthly_sales': 'Sales This Month',
     'admin.charts.daily_revenue': '📅 Daily Revenue (Last 7 Days)',
     'admin.charts.payment_methods': '💳 Payment Methods',
+    'admin.charts.item_trends': '📈 Item Popularity Trend (7d vs Prior 7d)',
     'history.refund': '↩️ Refund',
     'history.refunded': '↩️ REFUNDED',
     'history.refund_reason': 'Reason: {reason}',
@@ -1533,6 +1537,7 @@ const L10N = {
     'admin.stats.monthly_sales': 'Ventas este mes',
     'admin.charts.daily_revenue': '📅 Ingresos diarios (últimos 7 días)',
     'admin.charts.payment_methods': '💳 Métodos de pago',
+    'admin.charts.item_trends': '📈 Tendencia de popularidad (7d vs 7d anterior)',
     'history.refund': '↩️ Reembolsar',
     'history.refunded': '↩️ REEMBOLSADO',
     'history.refund_reason': 'Motivo: {reason}',
@@ -1663,6 +1668,7 @@ let currentCategory = '';
 let adminStatsCache = null;
 let chartDaily = null;
 let chartPayment = null;
+let chartTrends = null;
 let taxConfig = null; // { global_tax_rate, category_tax_rates, item_tax_overrides }
 let appliedDiscount = null; // { code, type, value, discount_amount, description }
 
@@ -2927,6 +2933,79 @@ async function loadAdminCharts() {
         options: {
           responsive: true,
           plugins: { legend: { labels: { color: '#a0a0b0' } } }
+        }
+      });
+    }
+  } catch(e) {}
+
+  // Item popularity trend chart
+  try {
+    const r = await fetch(BACKEND_URL + '/api/analytics/item_trends');
+    if (r.ok) {
+      const data = await r.json();
+      const trends = data.trends || [];
+      const ctx = document.getElementById('chartItemTrends').getContext('2d');
+      if (chartTrends) chartTrends.destroy();
+
+      if (trends.length === 0) {
+        chartTrends = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: ['No data'],
+            datasets: [{ label: 'Change %', data: [0], backgroundColor: '#555' }]
+          },
+          options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: { beginAtZero: true, ticks: { color: '#a0a0b0' }, grid: { color: '#2a2a4e' } },
+              x: { ticks: { color: '#a0a0b0' }, grid: { display: false } }
+            }
+          }
+        });
+        return;
+      }
+
+      // Show top 15 items sorted by absolute change magnitude
+      const sorted = [...trends].sort((a, b) => Math.abs(b.change_pct) - Math.abs(a.change_pct)).slice(0, 15);
+      const labels = sorted.map(t => t.name);
+      const values = sorted.map(t => t.change_pct);
+      const bgColors = sorted.map(t => {
+        if (t.direction === 'rising') return '#2ecc71';
+        if (t.direction === 'falling') return '#e74c3c';
+        return '#7f8c8d';
+      });
+
+      chartTrends = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Change %',
+            data: values,
+            backgroundColor: bgColors,
+            borderRadius: 4
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                afterLabel: function(context) {
+                  const idx = context.dataIndex;
+                  const t = sorted[idx];
+                  return `Recent 7d: ${t.recent_count} | Prior 7d: ${t.previous_count} | Δ: ${t.change >= 0 ? '+' : ''}${t.change}`;
+                }
+              }
+            }
+          },
+          scales: {
+            y: { ticks: { color: '#a0a0b0', font: { size: 12 } }, grid: { display: false } },
+            x: { beginAtZero: true, ticks: { color: '#a0a0b0', callback: function(v) { return v + '%'; } }, grid: { color: '#2a2a4e' } }
+          }
         }
       });
     }

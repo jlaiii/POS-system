@@ -1144,6 +1144,93 @@ def analytics_popular_combos():
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/api/analytics/item_trends', methods=['GET'])
+def analytics_item_trends():
+    """Returns item popularity trends — comparing recent 7 days vs previous 7 days.
+    Returns items sorted by trend (rising first), with change percentage and direction.
+    """
+    try:
+        orders = load_json_data(ORDERS_FILE)
+        now = datetime.now()
+
+        # Define two periods: recent = last 7 days, previous = 7-14 days ago
+        recent_cutoff = now - timedelta(days=7)
+        previous_cutoff = now - timedelta(days=14)
+
+        recent_counts = Counter()
+        previous_counts = Counter()
+
+        for order in orders:
+            try:
+                order_date = order.get('date', '')
+                if not order_date:
+                    continue
+                dt = datetime.fromisoformat(order_date)
+            except (ValueError, TypeError):
+                continue
+
+            items = order.get('items', [])
+            if not isinstance(items, list):
+                continue
+
+            # Determine which period this order belongs to
+            if dt >= recent_cutoff:
+                counter = recent_counts
+            elif dt >= previous_cutoff:
+                counter = previous_counts
+            else:
+                continue  # Outside both windows
+
+            for item in items:
+                if isinstance(item, dict) and 'name' in item:
+                    counter[item['name']] += int(item.get('qty', 1))
+                elif isinstance(item, str):
+                    counter[item] += 1
+
+        # Build trend data for all items that appear in either period
+        all_item_names = set(recent_counts.keys()) | set(previous_counts.keys())
+        trends = []
+        for name in all_item_names:
+            recent = recent_counts.get(name, 0)
+            previous = previous_counts.get(name, 0)
+
+            # Calculate change percentage
+            if previous > 0:
+                change_pct = round(((recent - previous) / previous) * 100, 1)
+            elif recent > 0:
+                change_pct = 100.0  # New item (from 0 to something)
+            else:
+                change_pct = 0.0
+
+            # Determine direction
+            if change_pct > 5:
+                direction = 'rising'
+            elif change_pct < -5:
+                direction = 'falling'
+            else:
+                direction = 'stable'
+
+            trends.append({
+                'name': name,
+                'recent_count': recent,
+                'previous_count': previous,
+                'change': recent - previous,
+                'change_pct': change_pct,
+                'direction': direction
+            })
+
+        # Sort: rising first (by change_pct descending), then stable, then falling
+        def sort_key(t):
+            order = {'rising': 0, 'stable': 1, 'falling': 2}
+            return (order[t['direction']], -t['change_pct'] if t['direction'] == 'rising' else t['change_pct'])
+
+        trends.sort(key=sort_key)
+
+        return jsonify({'trends': trends, 'period_days': 7})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 @app.route('/api/analytics/summary', methods=['GET'])
 def analytics_summary():
     """Returns quick summary: total_orders_today, revenue_today, avg_order_today, top_item_today, active_users_count."""
