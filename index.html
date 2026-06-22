@@ -1046,6 +1046,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
         <button onclick="switchAdminSection('pricing')" id="asPricing" data-i18n="admin.pricing">⏰ Pricing</button>
         <button onclick="switchAdminSection('waste')" id="asWaste" data-i18n="admin.waste">🗑️ Waste</button>
         <button onclick="switchAdminSection('webhooks')" id="asWebhooks" data-i18n="admin.webhooks">🔗 Webhooks</button>
+        <button onclick="switchAdminSection('ads')" id="asAds" data-i18n="admin.ads">📺 Ads</button>
       </div>
       <div id="adminContent">
         <!-- Stats -->
@@ -1356,6 +1357,35 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
           </div>
           <!-- Webhook List -->
           <div id="webhooksList"><div class="empty-state" data-i18n="admin.webhooks.no_webhooks">No webhooks configured yet.</div></div>
+        </div>
+        <!-- Table-side Ads -->
+        <div id="secAds" class="admin-section">
+          <h3 data-i18n="admin.ads.title">📺 Table-Side Ads</h3>
+          <p style="color:var(--text2);margin-bottom:16px;font-size:14px;" data-i18n="admin.ads.desc">Manage promotional ads that rotate on table tablets between orders. Use image URLs for photos or promotional graphics.</p>
+          <!-- Add Ad Form -->
+          <div class="card" style="margin-bottom:12px;">
+            <h4 style="margin-bottom:8px;" data-i18n="admin.ads.add_title">➕ Add Promotional Ad</h4>
+            <div class="form-row" style="flex-wrap:wrap;gap:6px;">
+              <input type="text" id="adTitle" placeholder="Ad title" style="flex:1;min-width:140px;" data-i18n-placeholder="admin.ads.title_placeholder"/>
+              <input type="url" id="adImageUrl" placeholder="https://example.com/ad-image.jpg" style="flex:2;min-width:200px;" data-i18n-placeholder="admin.ads.image_url_placeholder"/>
+              <input type="url" id="adLinkUrl" placeholder="Link URL (optional)" style="flex:1;min-width:140px;" data-i18n-placeholder="admin.ads.link_url_placeholder"/>
+              <input type="number" id="adDuration" placeholder="Duration (sec)" value="10" min="5" max="60" style="width:120px;flex:none;"/>
+              <button class="accent" onclick="addAd()" style="min-height:44px;" data-i18n="admin.ads.add_btn">➕ Add Ad</button>
+            </div>
+          </div>
+          <!-- Rotation Interval -->
+          <div class="card" style="margin-bottom:12px;">
+            <h4 style="margin-bottom:8px;" data-i18n="admin.ads.rotation">🔄 Rotation Settings</h4>
+            <div class="form-row" style="flex-wrap:wrap;gap:6px;align-items:center;">
+              <span data-i18n="admin.ads.rotate_every">Rotate every</span>
+              <input type="number" id="adRotationInterval" value="10" min="5" max="120" style="width:80px;flex:none;"/>
+              <span data-i18n="admin.ads.seconds">seconds</span>
+              <button class="outline" onclick="setAdRotationInterval()" style="min-height:44px;" data-i18n="admin.ads.set_interval">Set Interval</button>
+              <a href="/tablet" target="_blank" class="btn outline" style="text-decoration:none;margin-left:auto;min-height:44px;" data-i18n="admin.ads.open_tablet">📱 Open Tablet View</a>
+            </div>
+          </div>
+          <!-- Ads List -->
+          <div id="adsList"><div class="empty-state" data-i18n="admin.ads.no_ads">No ads configured yet. Add one above.</div></div>
         </div>
       </div>
     </div>
@@ -1817,6 +1847,33 @@ const L10N = {
     'admin.webhooks.test_btn': '📡 Test',
     'admin.webhooks.disable_btn': 'Disable',
     'admin.webhooks.enable_btn': 'Enable',
+    'admin.ads': '📺 Ads',
+    'admin.ads.title': '📺 Table-Side Ads',
+    'admin.ads.desc': 'Manage promotional ads that rotate on table tablets between orders. Use image URLs for photos or promotional graphics.',
+    'admin.ads.add_title': '➕ Add Promotional Ad',
+    'admin.ads.title_placeholder': 'Ad title',
+    'admin.ads.image_url_placeholder': 'https://example.com/ad-image.jpg',
+    'admin.ads.link_url_placeholder': 'Link URL (optional)',
+    'admin.ads.add_btn': '➕ Add Ad',
+    'admin.ads.rotation': '🔄 Rotation Settings',
+    'admin.ads.rotate_every': 'Rotate every',
+    'admin.ads.seconds': 'seconds',
+    'admin.ads.set_interval': 'Set Interval',
+    'admin.ads.open_tablet': '📱 Open Tablet View',
+    'admin.ads.no_ads': 'No ads configured yet. Add one above.',
+    'admin.ads.active': 'Active',
+    'admin.ads.inactive': 'Inactive',
+    'admin.ads.toggle': 'Toggle',
+    'admin.ads.edit': 'Edit',
+    'admin.ads.delete': 'Delete',
+    'admin.ads.edit_title': '✏️ Edit Ad',
+    'admin.ads.save': '💾 Save',
+    'admin.ads.cancel': 'Cancel',
+    'admin.ads.added': 'Ad added!',
+    'admin.ads.updated': 'Ad updated!',
+    'admin.ads.deleted': 'Ad deleted!',
+    'admin.ads.toggled': 'Ad toggled!',
+    'admin.ads.interval_updated': 'Rotation interval updated!',
   },
   es: {
     'app.title': '🍽️ Sistema POS',
@@ -2065,6 +2122,33 @@ const L10N = {
     'admin.webhooks.test_btn': '📡 Probar',
     'admin.webhooks.disable_btn': 'Desactivar',
     'admin.webhooks.enable_btn': 'Activar',
+    'admin.ads': '📺 Anuncios',
+    'admin.ads.title': '📺 Anuncios en Mesas',
+    'admin.ads.desc': 'Administre anuncios promocionales que rotan en las tablets de las mesas entre pedidos. Use URLs de imágenes para fotos o gráficos promocionales.',
+    'admin.ads.add_title': '➕ Agregar Anuncio Promocional',
+    'admin.ads.title_placeholder': 'Título del anuncio',
+    'admin.ads.image_url_placeholder': 'https://ejemplo.com/anuncio-imagen.jpg',
+    'admin.ads.link_url_placeholder': 'URL de enlace (opcional)',
+    'admin.ads.add_btn': '➕ Agregar Anuncio',
+    'admin.ads.rotation': '🔄 Configuración de Rotación',
+    'admin.ads.rotate_every': 'Rotar cada',
+    'admin.ads.seconds': 'segundos',
+    'admin.ads.set_interval': 'Establecer Intervalo',
+    'admin.ads.open_tablet': '📱 Vista de Tablet',
+    'admin.ads.no_ads': 'No hay anuncios configurados aún. Agregue uno arriba.',
+    'admin.ads.active': 'Activo',
+    'admin.ads.inactive': 'Inactivo',
+    'admin.ads.toggle': 'Cambiar',
+    'admin.ads.edit': 'Editar',
+    'admin.ads.delete': 'Eliminar',
+    'admin.ads.edit_title': '✏️ Editar Anuncio',
+    'admin.ads.save': '💾 Guardar',
+    'admin.ads.cancel': 'Cancelar',
+    'admin.ads.added': '¡Anuncio agregado!',
+    'admin.ads.updated': '¡Anuncio actualizado!',
+    'admin.ads.deleted': '¡Anuncio eliminado!',
+    'admin.ads.toggled': '¡Anuncio cambiado!',
+    'admin.ads.interval_updated': '¡Intervalo de rotación actualizado!',
   }
 };
 
@@ -2459,6 +2543,7 @@ function showApp() {
     'asPricing': perms.includes('manage_items'),  // Scheduled pricing uses manage_items permission
     'asWaste': perms.includes('manage_items'),  // Waste tracking uses manage_items permission
     'asWebhooks': perms.includes('manage_items'),  // Webhook integration uses manage_items permission
+    'asAds': perms.includes('manage_items'),  // Table-side ads uses manage_items permission
   };
   
   // Show/hide each sub-tab button
@@ -3777,6 +3862,7 @@ function switchAdminSection(sec) {
   else if (sec === 'pricing') loadPricingRules();
   else if (sec === 'waste') loadWasteAdmin();
   else if (sec === 'webhooks') loadWebhooks();
+  else if (sec === 'ads') loadAds();
 }
 
 async function loadAdminStats() {
@@ -5009,6 +5095,127 @@ async function deleteWebhook(whId) {
     if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
     showToast(d.message, 'success');
     loadWebhooks();
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
+}
+
+// ═══════════ TABLE-SIDE ADS ═══════════
+
+async function loadAds() {
+  try {
+    const r = await fetch(BACKEND_URL + '/api/ads');
+    const data = await r.json();
+    if (!r.ok) { document.getElementById('adsList').innerHTML = '<div class="empty-state">Failed to load ads.</div>'; return; }
+    renderAdsList(data);
+  } catch(e) {
+    document.getElementById('adsList').innerHTML = '<div class="empty-state">' + t('toast.network_error') + '</div>';
+  }
+}
+
+function renderAdsList(data) {
+  const ads = data.ads || [];
+  const interval = data.rotation_interval || 10;
+  const container = document.getElementById('adsList');
+  
+  // Update rotation interval input
+  const intervalInput = document.getElementById('adRotationInterval');
+  if (intervalInput) intervalInput.value = interval;
+
+  if (ads.length === 0) {
+    container.innerHTML = '<div class="empty-state">' + t('admin.ads.no_ads') + '</div>';
+    return;
+  }
+
+  container.innerHTML = ads.map(function(ad) {
+    const isActive = ad.active !== false;
+    const duration = ad.duration || 10;
+    var html = '';
+    html += '<div class="card" style="margin-bottom:10px;overflow:hidden;">';
+    html += '<div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;">';
+    html += '<div style="flex-shrink:0;width:80px;height:60px;border-radius:8px;overflow:hidden;background:var(--bg);display:flex;align-items:center;justify-content:center;">';
+    html += '<img src="' + escHtml(ad.image_url) + '" alt="' + escHtml(ad.title) + '" style="max-width:100%;max-height:100%;object-fit:contain;" onerror="this.style.display=\'none\'"/>';
+    html += '</div>';
+    html += '<div style="flex:1;min-width:150px;">';
+    html += '<strong>' + escHtml(ad.title) + '</strong>';
+    html += '<div style="color:var(--text2);font-size:13px;">';
+    html += duration + 's ' + String.fromCharCode(183) + ' ' + (isActive ? '\u2705 ' + t('admin.ads.active') : '\u26D4 ' + t('admin.ads.inactive'));
+    html += '</div>';
+    if (ad.link_url) {
+      html += '<div style="color:var(--text2);font-size:12px;">\uD83D\uDD17 ' + escHtml(ad.link_url) + '</div>';
+    }
+    html += '</div>';
+    html += '<div style="display:flex;gap:6px;flex-wrap:wrap;">';
+    html += '<button class="ghost" onclick="toggleAd(\'' + ad.id + '\')" style="padding:8px 12px;min-height:36px;font-size:13px;" data-i18n="admin.ads.toggle">' + (isActive ? '\u23F8\uFE0F' : '\u25B6\uFE0F') + '</button>';
+    html += '<button class="ghost" onclick="deleteAd(\'' + ad.id + '\')" style="padding:8px 12px;min-height:36px;font-size:13px;color:#e94560;" data-i18n="admin.ads.delete">\uD83D\uDDD1\uFE0F</button>';
+    html += '</div>';
+    html += '</div>';
+    html += '</div>';
+    return html;
+  }).join('');
+}
+
+async function addAd() {
+  const title = document.getElementById('adTitle').value.trim();
+  const imageUrl = document.getElementById('adImageUrl').value.trim();
+  const linkUrl = document.getElementById('adLinkUrl').value.trim();
+  const duration = parseInt(document.getElementById('adDuration').value) || 10;
+
+  if (!title || !imageUrl) {
+    showToast('Title and image URL are required.', 'danger');
+    return;
+  }
+
+  try {
+    const r = await fetch(BACKEND_URL + '/api/ads/add', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, title, image_url: imageUrl, link_url: linkUrl, duration })
+    });
+    const d = await r.json();
+    if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
+    showToast(t('admin.ads.added'), 'success');
+    document.getElementById('adTitle').value = '';
+    document.getElementById('adImageUrl').value = '';
+    document.getElementById('adLinkUrl').value = '';
+    loadAds();
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
+}
+
+async function toggleAd(adId) {
+  try {
+    const r = await fetch(BACKEND_URL + '/api/ads/' + adId + '/toggle', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id })
+    });
+    const d = await r.json();
+    if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
+    showToast(t('admin.ads.toggled'), 'success');
+    loadAds();
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
+}
+
+async function deleteAd(adId) {
+  if (!confirm(t('admin.ads.delete') + '?')) return;
+  try {
+    const r = await fetch(BACKEND_URL + '/api/ads/' + adId + '/delete', {
+      method: 'DELETE', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id })
+    });
+    const d = await r.json();
+    if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
+    showToast(t('admin.ads.deleted'), 'success');
+    loadAds();
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
+}
+
+async function setAdRotationInterval() {
+  const interval = parseInt(document.getElementById('adRotationInterval').value) || 10;
+  try {
+    const r = await fetch(BACKEND_URL + '/api/ads/interval', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, interval })
+    });
+    const d = await r.json();
+    if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
+    showToast(t('admin.ads.interval_updated'), 'success');
   } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
 

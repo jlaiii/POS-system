@@ -35,6 +35,7 @@ SCHEDULED_PRICING_FILE = 'scheduled_pricing.json'  # Scheduled pricing rules (ha
 WASTE_FILE = 'waste_log.json'  # Waste/throwaway tracking
 DELIVERY_ADDRESSES_FILE = 'delivery_addresses.json'  # Saved delivery addresses
 WEBHOOKS_FILE = 'webhooks.json'  # Webhook integration URLs for third-party delivery apps
+TABLE_ADS_FILE = 'table_ads.json'  # Table-side promotional ads
 MENU_BACKUPS_DIR = 'menu_backups'
 
 # --- Loyalty Constants ---
@@ -104,7 +105,7 @@ def backup_menu():
 
 
 # Ensure JSON files exist and are initialized correctly
-for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE, INVENTORY_FILE, REFUNDED_ORDERS_FILE, FAVORITES_FILE, LOYALTY_FILE, SCHEDULED_PRICING_FILE, WASTE_FILE, DELIVERY_ADDRESSES_FILE, WEBHOOKS_FILE]:
+for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE, INVENTORY_FILE, REFUNDED_ORDERS_FILE, FAVORITES_FILE, LOYALTY_FILE, SCHEDULED_PRICING_FILE, WASTE_FILE, DELIVERY_ADDRESSES_FILE, WEBHOOKS_FILE, TABLE_ADS_FILE]:
     if not os.path.exists(f):
         with open(f, 'w') as file:
             if f == USERS_FILE:
@@ -158,6 +159,8 @@ for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMES
                 json.dump({}, file, indent=4)  # Initialize empty delivery addresses dict
             elif f == WEBHOOKS_FILE:
                 json.dump({}, file, indent=4)  # Initialize empty webhooks dict
+            elif f == TABLE_ADS_FILE:
+                json.dump({"ads": [], "rotation_interval": 10}, file, indent=4)  # Initialize empty table ads
             else:
                 json.dump([], file)  # Initialize orders.json and cleared_orders.json as empty lists
 
@@ -4036,6 +4039,184 @@ def test_webhook(wh_id):
 
 
 # ============================================================
+# Table-side Ads System
+# ============================================================
+
+@app.route('/api/ads', methods=['GET'])
+def get_ads():
+    """List all ads. Requires manage_items permission."""
+    data = load_json_data(TABLE_ADS_FILE)
+    return jsonify(data)
+
+
+@app.route('/api/ads/add', methods=['POST'])
+def add_ad():
+    """Add a new ad. Requires manage_items permission."""
+    req = request.json
+    admin_pin = req.get('adminPin')
+    if not check_perm(admin_pin, "manage_items"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    title = req.get('title', '').strip()
+    image_url = req.get('image_url', '').strip()
+    link_url = req.get('link_url', '').strip()
+    duration = int(req.get('duration', 10))
+
+    if not title or not image_url:
+        return jsonify({'message': 'Title and image URL are required.'}), 400
+
+    ads_data = load_json_data(TABLE_ADS_FILE)
+    if not isinstance(ads_data, dict):
+        ads_data = {"ads": [], "rotation_interval": 10}
+    
+    ad_id = str(secrets.token_hex(4))
+    new_ad = {
+        'id': ad_id,
+        'title': title,
+        'image_url': image_url,
+        'link_url': link_url,
+        'duration': max(5, min(60, duration)),  # 5-60 seconds
+        'active': True,
+        'created_at': datetime.now().isoformat()
+    }
+    ads_data['ads'].append(new_ad)
+    save_json_data(TABLE_ADS_FILE, ads_data)
+
+    log_activity('ad_add', admin_pin, 'admin', {'title': title})
+    return jsonify({'message': 'Ad added successfully', 'ad': new_ad})
+
+
+@app.route('/api/ads/<ad_id>/update', methods=['PUT'])
+def update_ad(ad_id):
+    """Update an ad. Requires manage_items permission."""
+    req = request.json
+    admin_pin = req.get('adminPin')
+    if not check_perm(admin_pin, "manage_items"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    ads_data = load_json_data(TABLE_ADS_FILE)
+    if not isinstance(ads_data, dict):
+        return jsonify({'message': 'No ads data.'}), 404
+
+    found = None
+    for ad in ads_data.get('ads', []):
+        if ad.get('id') == ad_id:
+            found = ad
+            break
+
+    if not found:
+        return jsonify({'message': 'Ad not found.'}), 404
+
+    if 'title' in req and req['title'].strip():
+        found['title'] = req['title'].strip()
+    if 'image_url' in req and req['image_url'].strip():
+        found['image_url'] = req['image_url'].strip()
+    if 'link_url' in req:
+        found['link_url'] = req['link_url'].strip()
+    if 'duration' in req:
+        found['duration'] = max(5, min(60, int(req['duration'])))
+
+    save_json_data(TABLE_ADS_FILE, ads_data)
+    log_activity('ad_update', admin_pin, 'admin', {'ad_id': ad_id, 'title': found['title']})
+    return jsonify({'message': 'Ad updated successfully', 'ad': found})
+
+
+@app.route('/api/ads/<ad_id>/toggle', methods=['POST'])
+def toggle_ad(ad_id):
+    """Toggle ad active/inactive. Requires manage_items permission."""
+    req = request.json
+    admin_pin = req.get('adminPin')
+    if not check_perm(admin_pin, "manage_items"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    ads_data = load_json_data(TABLE_ADS_FILE)
+    if not isinstance(ads_data, dict):
+        return jsonify({'message': 'No ads data.'}), 404
+
+    found = None
+    for ad in ads_data.get('ads', []):
+        if ad.get('id') == ad_id:
+            found = ad
+            break
+
+    if not found:
+        return jsonify({'message': 'Ad not found.'}), 404
+
+    found['active'] = not found.get('active', True)
+    save_json_data(TABLE_ADS_FILE, ads_data)
+
+    status = 'enabled' if found['active'] else 'disabled'
+    log_activity('ad_toggle', admin_pin, 'admin', {'ad_id': ad_id, 'status': status})
+    return jsonify({'message': f'Ad {status}', 'ad': found})
+
+
+@app.route('/api/ads/<ad_id>/delete', methods=['DELETE'])
+def delete_ad(ad_id):
+    """Delete an ad. Requires manage_items permission."""
+    req = request.json if request.is_json else {}
+    admin_pin = req.get('adminPin', request.args.get('adminPin', ''))
+    if not check_perm(admin_pin, "manage_items"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    ads_data = load_json_data(TABLE_ADS_FILE)
+    if not isinstance(ads_data, dict):
+        return jsonify({'message': 'No ads data.'}), 404
+
+    ads_list = ads_data.get('ads', [])
+    found = None
+    for ad in ads_list:
+        if ad.get('id') == ad_id:
+            found = ad
+            break
+
+    if not found:
+        return jsonify({'message': 'Ad not found.'}), 404
+
+    ads_data['ads'] = [a for a in ads_list if a.get('id') != ad_id]
+    save_json_data(TABLE_ADS_FILE, ads_data)
+
+    log_activity('ad_delete', admin_pin, 'admin', {'title': found.get('title')})
+    return jsonify({'message': 'Ad deleted successfully'})
+
+
+@app.route('/api/ads/interval', methods=['POST'])
+def set_ads_interval():
+    """Set the global rotation interval. Requires manage_items permission."""
+    req = request.json
+    admin_pin = req.get('adminPin')
+    if not check_perm(admin_pin, "manage_items"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    interval = int(req.get('interval', 10))
+    interval = max(5, min(120, interval))
+
+    ads_data = load_json_data(TABLE_ADS_FILE)
+    if not isinstance(ads_data, dict):
+        ads_data = {"ads": [], "rotation_interval": 10}
+    ads_data['rotation_interval'] = interval
+    save_json_data(TABLE_ADS_FILE, ads_data)
+
+    return jsonify({'message': f'Rotation interval set to {interval}s', 'interval': interval})
+
+
+@app.route('/api/ads/current')
+def get_current_ad():
+    """Return the currently active ads for table tablets to display."""
+    ads_data = load_json_data(TABLE_ADS_FILE)
+    if not isinstance(ads_data, dict):
+        return jsonify({'ads': [], 'interval': 10})
+
+    active_ads = [a for a in ads_data.get('ads', []) if a.get('active', True)]
+    interval = ads_data.get('rotation_interval', 10)
+
+    return jsonify({
+        'ads': active_ads,
+        'interval': interval,
+        'total': len(active_ads)
+    })
+
+
+# ============================================================
 # Serve the frontend
 # ============================================================
 
@@ -4052,6 +4233,12 @@ def serve_drivethrough():
 @app.route('/customer-display')
 def serve_customer_display():
     return send_from_directory(app.static_folder, 'customer-display.html')
+
+
+@app.route('/tablet')
+def serve_tablet():
+    """Serve the table-side ad display page for table tablets."""
+    return send_from_directory(app.static_folder, 'tablet.html')
 
 
 if __name__ == '__main__':

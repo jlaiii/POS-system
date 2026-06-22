@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"/>
+<title>Tablet Ads</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #1a1a2e;
+  --card: #16213e;
+  --accent: #e94560;
+  --text: #eee;
+  --text2: #a0a0b0;
+}
+
+html, body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#adContainer {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.ad-slide {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.8s ease-in-out;
+  padding: 20px;
+}
+
+.ad-slide.active {
+  opacity: 1;
+}
+
+.ad-slide img {
+  max-width: 90vw;
+  max-height: 75vh;
+  object-fit: contain;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+
+.ad-title {
+  margin-top: 20px;
+  font-size: clamp(24px, 4vw, 48px);
+  font-weight: 700;
+  text-align: center;
+  color: var(--accent);
+  text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.ad-link {
+  margin-top: 12px;
+  color: var(--text2);
+  font-size: clamp(14px, 2vw, 24px);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+#adDots {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 12px;
+  z-index: 10;
+}
+
+.dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  transition: background 0.3s;
+}
+
+.dot.active {
+  background: var(--accent);
+  transform: scale(1.3);
+}
+
+#noAdsMessage {
+  font-size: 28px;
+  color: var(--text2);
+  text-align: center;
+  padding: 40px;
+}
+
+#connectionStatus {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  font-size: 14px;
+  color: var(--text2);
+  opacity: 0.7;
+  z-index: 20;
+}
+
+/* Order active overlay */
+#orderActiveOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(26,26,46,0.92);
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 40px;
+}
+
+#orderActiveOverlay.show {
+  display: flex;
+}
+
+#orderActiveOverlay h1 {
+  font-size: clamp(36px, 6vw, 72px);
+  margin-bottom: 16px;
+  color: var(--accent);
+}
+
+#orderActiveOverlay p {
+  font-size: clamp(18px, 3vw, 36px);
+  color: var(--text2);
+  text-align: center;
+  line-height: 1.6;
+}
+
+@media (max-width: 600px) {
+  .ad-title { font-size: 20px; }
+  .ad-slide img { max-height: 60vh; }
+  #adDots { bottom: 16px; gap: 8px; }
+  .dot { width: 10px; height: 10px; }
+}
+</style>
+</head>
+<body>
+<div id="adContainer">
+  <div id="adSlides"></div>
+  <div id="adDots"></div>
+  <div id="noAdsMessage">No ads available<br/><span style="font-size:18px;color:var(--text2);">Waiting for content...</span></div>
+  <div id="connectionStatus">● Connected</div>
+</div>
+
+<div id="orderActiveOverlay">
+  <h1>🍽️ Order in Progress</h1>
+  <p>Your table has an active order.<br/>Please wait while we prepare your items.</p>
+</div>
+
+<script>
+const BACKEND = '';
+let adsData = { ads: [], interval: 10 };
+let currentIndex = 0;
+let rotateTimer = null;
+let pollTimer = null;
+
+async function fetchAds() {
+  try {
+    const r = await fetch(BACKEND + '/api/ads/current');
+    if (!r.ok) throw new Error('Fetch failed');
+    adsData = await r.json();
+    document.getElementById('connectionStatus').textContent = '● Connected';
+    document.getElementById('connectionStatus').style.color = '#4ade80';
+    renderAds();
+  } catch (e) {
+    document.getElementById('connectionStatus').textContent = '○ Disconnected';
+    document.getElementById('connectionStatus').style.color = '#e94560';
+  }
+}
+
+function renderAds() {
+  const ads = adsData.ads || [];
+  const interval = adsData.interval || 10;
+  const slidesEl = document.getElementById('adSlides');
+  const dotsEl = document.getElementById('adDots');
+  const noAdsEl = document.getElementById('noAdsMessage');
+
+  if (ads.length === 0) {
+    slidesEl.innerHTML = '';
+    dotsEl.innerHTML = '';
+    noAdsEl.style.display = 'block';
+    if (rotateTimer) clearInterval(rotateTimer);
+    rotateTimer = null;
+    return;
+  }
+
+  noAdsEl.style.display = 'none';
+
+  // Build slides
+  slidesEl.innerHTML = ads.map((ad, i) => `
+    <div class="ad-slide ${i === 0 ? 'active' : ''}" data-index="${i}" onclick="handleAdClick('${escHtml(ad.link_url || '')}')">
+      <img src="${escHtml(ad.image_url)}" alt="${escHtml(ad.title)}" loading="${i === 0 ? 'eager' : 'lazy'}"/>
+      <div class="ad-title">${escHtml(ad.title)}</div>
+      ${ad.link_url ? '<div class="ad-link">🔗 Learn More</div>' : ''}
+    </div>
+  `).join('');
+
+  // Build dots
+  dotsEl.innerHTML = ads.map((_, i) => `
+    <div class="dot ${i === 0 ? 'active' : ''}" onclick="goToAd(${i})"></div>
+  `).join('');
+
+  currentIndex = 0;
+
+  // Clear old timer
+  if (rotateTimer) clearInterval(rotateTimer);
+  rotateTimer = setInterval(() => {
+    nextAd();
+  }, interval * 1000);
+}
+
+function nextAd() {
+  const ads = adsData.ads || [];
+  if (ads.length < 2) return;
+  goToAd((currentIndex + 1) % ads.length);
+}
+
+function goToAd(index) {
+  const ads = adsData.ads || [];
+  if (index < 0 || index >= ads.length) return;
+  currentIndex = index;
+
+  document.querySelectorAll('.ad-slide').forEach((el, i) => {
+    el.classList.toggle('active', i === index);
+  });
+  document.querySelectorAll('.dot').forEach((el, i) => {
+    el.classList.toggle('active', i === index);
+  });
+}
+
+function handleAdClick(url) {
+  if (url) window.open(url, '_blank');
+}
+
+function escHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// Poll every 30s for new ads
+fetchAds();
+pollTimer = setInterval(fetchAds, 30000);
+
+// Touch swipe support for tablets
+let touchStartX = 0;
+let touchEndX = 0;
+document.addEventListener('touchstart', e => {
+  touchStartX = e.changedTouches[0].screenX;
+}, { passive: true });
+document.addEventListener('touchend', e => {
+  touchEndX = e.changedTouches[0].screenX;
+  const diff = touchStartX - touchEndX;
+  const ads = adsData.ads || [];
+  if (Math.abs(diff) > 50) {
+    if (diff > 0) nextAd();
+    else goToAd((currentIndex - 1 + ads.length) % ads.length);
+  }
+}, { passive: true });
+
+// Keyboard support
+document.addEventListener('keydown', e => {
+  const ads = adsData.ads || [];
+  if (e.key === 'ArrowRight') nextAd();
+  else if (e.key === 'ArrowLeft') goToAd((currentIndex - 1 + ads.length) % ads.length);
+});
+</script>
+</body>
+</html>
