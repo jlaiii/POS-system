@@ -9,6 +9,9 @@ import hashlib
 import secrets
 import csv
 import io
+import threading
+import urllib.request
+import urllib.error
 from collections import defaultdict, Counter
 
 app = Flask(__name__, static_folder='.', static_url_path='')
@@ -31,6 +34,7 @@ LOYALTY_FILE = 'loyalty_points.json'  # Customer loyalty points tracking
 SCHEDULED_PRICING_FILE = 'scheduled_pricing.json'  # Scheduled pricing rules (happy hour, daily specials)
 WASTE_FILE = 'waste_log.json'  # Waste/throwaway tracking
 DELIVERY_ADDRESSES_FILE = 'delivery_addresses.json'  # Saved delivery addresses
+WEBHOOKS_FILE = 'webhooks.json'  # Webhook integration URLs for third-party delivery apps
 MENU_BACKUPS_DIR = 'menu_backups'
 
 # --- Loyalty Constants ---
@@ -100,7 +104,7 @@ def backup_menu():
 
 
 # Ensure JSON files exist and are initialized correctly
-for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE, INVENTORY_FILE, REFUNDED_ORDERS_FILE, FAVORITES_FILE, LOYALTY_FILE, SCHEDULED_PRICING_FILE, WASTE_FILE, DELIVERY_ADDRESSES_FILE]:
+for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE, INVENTORY_FILE, REFUNDED_ORDERS_FILE, FAVORITES_FILE, LOYALTY_FILE, SCHEDULED_PRICING_FILE, WASTE_FILE, DELIVERY_ADDRESSES_FILE, WEBHOOKS_FILE]:
     if not os.path.exists(f):
         with open(f, 'w') as file:
             if f == USERS_FILE:
@@ -152,6 +156,8 @@ for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMES
                 json.dump([], file, indent=4)  # Initialize empty waste log
             elif f == DELIVERY_ADDRESSES_FILE:
                 json.dump({}, file, indent=4)  # Initialize empty delivery addresses dict
+            elif f == WEBHOOKS_FILE:
+                json.dump({}, file, indent=4)  # Initialize empty webhooks dict
             else:
                 json.dump([], file)  # Initialize orders.json and cleared_orders.json as empty lists
 
@@ -217,6 +223,38 @@ def log_activity(activity_type, user_id, user_role, details=None):
     logs = load_json_data(ACTIVITY_LOG_FILE)
     logs.append(log_entry)
     save_json_data(ACTIVITY_LOG_FILE, logs)
+
+
+def fire_webhooks(order_data):
+    """Send order data to all enabled webhook URLs in background thread."""
+    webhooks = load_json_data(WEBHOOKS_FILE)
+    if not isinstance(webhooks, dict):
+        return
+    for wh_id, wh in webhooks.items():
+        if not wh.get('enabled', True):
+            continue
+        url = wh.get('url', '').strip()
+        if not url:
+            continue
+        try:
+            payload = json.dumps({
+                'event': 'order.created',
+                'timestamp': datetime.now().isoformat(),
+                'data': order_data
+            }).encode('utf-8')
+            req = urllib.request.Request(url, data=payload,
+                headers={'Content-Type': 'application/json'},
+                method='POST')
+            # Short timeout so we don't block
+            urllib.request.urlopen(req, timeout=10)
+        except Exception:
+            pass  # Fire-and-forget; log failure silently
+
+
+def fire_webhooks_async(order_data):
+    """Fire webhooks in a daemon thread so the HTTP response isn't blocked."""
+    t = threading.Thread(target=fire_webhooks, args=(order_data,), daemon=True)
+    t.start()
 
 
 # In-memory storage for active admin sessions (for timesheet calculation)
@@ -843,6 +881,9 @@ def submit_order():
                 'points_earned': earned,
                 'order_id': order_id
             })
+
+    # --- Webhooks: fire to third-party delivery integrations ---
+    fire_webhooks_async(order_details)
 
     return jsonify({
         'message': 'Order submitted successfully',
@@ -3863,6 +3904,135 @@ def export_activity_log_csv():
 
     csv_content = generate_csv(rows, headers)
     return jsonify({'csv': csv_content, 'filename': 'activity_log_export.csv'})
+
+
+# ============================================================
+# Webhook Integration Endpoints
+# ============================================================
+
+@app.route('/api/webhooks', methods=['GET'])
+def get_webhooks():
+    """List all configured webhooks. Requires manage_items permission."""
+    data = request.json if request.is_json else {}
+    admin_pin = data.get('adminPin', request.args.get('adminPin', ''))
+    if not check_perm(admin_pin, "manage_items"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+    webhooks = load_json_data(WEBHOOKS_FILE)
+    if not isinstance(webhooks, dict):
+        webhooks = {}
+    return jsonify({'message': 'Webhooks retrieved', 'webhooks': webhooks})
+
+
+@app.route('/api/webhooks', methods=['POST'])
+def add_webhook():
+    """Add a new webhook URL. Requires manage_items permission."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+    if not check_perm(admin_pin, "manage_items"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    url = data.get('url', '').strip()
+    name = data.get('name', '').strip()
+
+    if not url:
+        return jsonify({'message': 'URL is required.'}), 400
+    if not url.startswith('http://') and not url.startswith('https://'):
+        return jsonify({'message': 'URL must start with http:// or https://'}), 400
+    if not name:
+        name = url
+
+    webhooks = load_json_data(WEBHOOKS_FILE)
+    if not isinstance(webhooks, dict):
+        webhooks = {}
+
+    wh_id = str(int(datetime.now().timestamp()))
+    webhooks[wh_id] = {
+        'id': wh_id,
+        'url': url,
+        'name': name,
+        'enabled': True,
+        'created_at': datetime.now().isoformat()
+    }
+    save_json_data(WEBHOOKS_FILE, webhooks)
+
+    log_activity('webhook_add', admin_pin, 'admin', {'name': name, 'url': url})
+
+    return jsonify({'message': 'Webhook added successfully', 'webhook': webhooks[wh_id]})
+
+
+@app.route('/api/webhooks/<wh_id>', methods=['DELETE'])
+def delete_webhook(wh_id):
+    """Delete a webhook. Requires manage_items permission."""
+    data = request.json if request.is_json else {}
+    admin_pin = data.get('adminPin', request.args.get('adminPin', ''))
+    if not check_perm(admin_pin, "manage_items"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    webhooks = load_json_data(WEBHOOKS_FILE)
+    if not isinstance(webhooks, dict) or wh_id not in webhooks:
+        return jsonify({'message': 'Webhook not found.'}), 404
+
+    removed = webhooks.pop(wh_id)
+    save_json_data(WEBHOOKS_FILE, webhooks)
+
+    log_activity('webhook_delete', admin_pin, 'admin', {'name': removed.get('name'), 'url': removed.get('url')})
+
+    return jsonify({'message': 'Webhook deleted successfully'})
+
+
+@app.route('/api/webhooks/<wh_id>/toggle', methods=['POST'])
+def toggle_webhook(wh_id):
+    """Enable/disable a webhook. Requires manage_items permission."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+    if not check_perm(admin_pin, "manage_items"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    webhooks = load_json_data(WEBHOOKS_FILE)
+    if not isinstance(webhooks, dict) or wh_id not in webhooks:
+        return jsonify({'message': 'Webhook not found.'}), 404
+
+    webhooks[wh_id]['enabled'] = not webhooks[wh_id].get('enabled', True)
+    save_json_data(WEBHOOKS_FILE, webhooks)
+
+    status = 'enabled' if webhooks[wh_id]['enabled'] else 'disabled'
+    log_activity('webhook_toggle', admin_pin, 'admin', {'name': webhooks[wh_id].get('name'), 'status': status})
+
+    return jsonify({'message': f'Webhook {status}', 'webhook': webhooks[wh_id]})
+
+
+@app.route('/api/webhooks/<wh_id>/test', methods=['POST'])
+def test_webhook(wh_id):
+    """Send a test payload to a webhook. Requires manage_items permission."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+    if not check_perm(admin_pin, "manage_items"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    webhooks = load_json_data(WEBHOOKS_FILE)
+    if not isinstance(webhooks, dict) or wh_id not in webhooks:
+        return jsonify({'message': 'Webhook not found.'}), 404
+
+    wh = webhooks[wh_id]
+    test_payload = {
+        'event': 'test',
+        'timestamp': datetime.now().isoformat(),
+        'data': {'message': 'This is a test from POS System'}
+    }
+
+    try:
+        payload = json.dumps(test_payload).encode('utf-8')
+        req = urllib.request.Request(wh['url'], data=payload,
+            headers={'Content-Type': 'application/json'},
+            method='POST')
+        urllib.request.urlopen(req, timeout=10)
+        return jsonify({'message': 'Test webhook sent successfully'})
+    except urllib.error.HTTPError as e:
+        return jsonify({'message': f'HTTP error: {e.code} {e.reason}'}), 400
+    except urllib.error.URLError as e:
+        return jsonify({'message': f'Connection error: {e.reason}'}), 400
+    except Exception as e:
+        return jsonify({'message': f'Error: {str(e)}'}), 400
 
 
 # ============================================================

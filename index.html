@@ -1045,6 +1045,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
         <button onclick="switchAdminSection('loyalty')" id="asLoyalty">⭐ Loyalty</button>
         <button onclick="switchAdminSection('pricing')" id="asPricing" data-i18n="admin.pricing">⏰ Pricing</button>
         <button onclick="switchAdminSection('waste')" id="asWaste" data-i18n="admin.waste">🗑️ Waste</button>
+        <button onclick="switchAdminSection('webhooks')" id="asWebhooks" data-i18n="admin.webhooks">🔗 Webhooks</button>
       </div>
       <div id="adminContent">
         <!-- Stats -->
@@ -1339,6 +1340,22 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
             <button class="outline" onclick="loadWasteAdmin()" style="min-height:36px;font-size:13px;" data-i18n="admin.waste.refresh">🔄 Refresh</button>
           </div>
           <div id="wasteLogList"><div class="empty-state" data-i18n="admin.waste.no_data">No waste entries logged yet.</div></div>
+        </div>
+        <!-- Webhooks Integration -->
+        <div id="secWebhooks" class="admin-section">
+          <h3 data-i18n="admin.webhooks.title">🔗 Webhook Integration</h3>
+          <p style="color:var(--text2);margin-bottom:16px;font-size:14px;" data-i18n="admin.webhooks.desc">Configure webhooks to send order data to third-party delivery apps (DoorDash, UberEats, etc.) when orders are placed.</p>
+          <!-- Add Webhook Form -->
+          <div class="card" style="margin-bottom:12px;">
+            <h4 style="margin-bottom:8px;" data-i18n="admin.webhooks.add_title">➕ Add Webhook</h4>
+            <div class="form-row" style="flex-wrap:wrap;gap:6px;">
+              <input type="text" id="webhookName" placeholder="Name (e.g., DoorDash)" style="flex:1;min-width:140px;" data-i18n-placeholder="admin.webhooks.name_placeholder"/>
+              <input type="url" id="webhookUrl" placeholder="https://example.com/webhook" style="flex:2;min-width:200px;" data-i18n-placeholder="admin.webhooks.url_placeholder"/>
+              <button class="accent" onclick="addWebhook()" style="min-height:44px;" data-i18n="admin.webhooks.add_btn">➕ Add Webhook</button>
+            </div>
+          </div>
+          <!-- Webhook List -->
+          <div id="webhooksList"><div class="empty-state" data-i18n="admin.webhooks.no_webhooks">No webhooks configured yet.</div></div>
         </div>
       </div>
     </div>
@@ -1786,6 +1803,20 @@ const L10N = {
     'admin.waste.notes': 'Notes',
     'admin.waste.logged_by': 'By',
     'admin.waste.cost': 'Cost',
+    'admin.webhooks': '🔗 Webhooks',
+    'admin.webhooks.title': '🔗 Webhook Integration',
+    'admin.webhooks.desc': 'Configure webhooks to send order data to third-party delivery apps (DoorDash, UberEats, etc.) when orders are placed.',
+    'admin.webhooks.add_title': '➕ Add Webhook',
+    'admin.webhooks.name_placeholder': 'Name (e.g., DoorDash)',
+    'admin.webhooks.url_placeholder': 'https://example.com/webhook',
+    'admin.webhooks.add_btn': '➕ Add Webhook',
+    'admin.webhooks.no_webhooks': 'No webhooks configured yet.',
+    'admin.webhooks.enabled': 'Enabled',
+    'admin.webhooks.disabled': 'Disabled',
+    'admin.webhooks.created': 'Created:',
+    'admin.webhooks.test_btn': '📡 Test',
+    'admin.webhooks.disable_btn': 'Disable',
+    'admin.webhooks.enable_btn': 'Enable',
   },
   es: {
     'app.title': '🍽️ Sistema POS',
@@ -2020,6 +2051,20 @@ const L10N = {
     'admin.waste.notes': 'Notas',
     'admin.waste.logged_by': 'Por',
     'admin.waste.cost': 'Costo',
+    'admin.webhooks': '🔗 Webhooks',
+    'admin.webhooks.title': '🔗 Integración de Webhook',
+    'admin.webhooks.desc': 'Configure webhooks para enviar datos de pedidos a aplicaciones de entrega de terceros (DoorDash, UberEats, etc.) cuando se realicen pedidos.',
+    'admin.webhooks.add_title': '➕ Agregar Webhook',
+    'admin.webhooks.name_placeholder': 'Nombre (ej. DoorDash)',
+    'admin.webhooks.url_placeholder': 'https://ejemplo.com/webhook',
+    'admin.webhooks.add_btn': '➕ Agregar Webhook',
+    'admin.webhooks.no_webhooks': 'No hay webhooks configurados aún.',
+    'admin.webhooks.enabled': 'Activado',
+    'admin.webhooks.disabled': 'Desactivado',
+    'admin.webhooks.created': 'Creado:',
+    'admin.webhooks.test_btn': '📡 Probar',
+    'admin.webhooks.disable_btn': 'Desactivar',
+    'admin.webhooks.enable_btn': 'Activar',
   }
 };
 
@@ -2413,6 +2458,7 @@ function showApp() {
     'asEmployees': perms.includes('view_stats'),  // Employee perf uses view_stats permission
     'asPricing': perms.includes('manage_items'),  // Scheduled pricing uses manage_items permission
     'asWaste': perms.includes('manage_items'),  // Waste tracking uses manage_items permission
+    'asWebhooks': perms.includes('manage_items'),  // Webhook integration uses manage_items permission
   };
   
   // Show/hide each sub-tab button
@@ -3730,6 +3776,7 @@ function switchAdminSection(sec) {
   else if (sec === 'loyalty') loadLoyaltyAdmin();
   else if (sec === 'pricing') loadPricingRules();
   else if (sec === 'waste') loadWasteAdmin();
+  else if (sec === 'webhooks') loadWebhooks();
 }
 
 async function loadAdminStats() {
@@ -4866,6 +4913,102 @@ async function logWaste() {
     document.getElementById('wasteQuantity').value = '1';
     document.getElementById('wasteNotes').value = '';
     loadWasteAdmin();
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
+}
+
+// ═══════════ WEBHOOKS ═══════════
+async function loadWebhooks() {
+  const list = document.getElementById('webhooksList');
+  if (!list) return;
+  list.innerHTML = '<div class="empty-state">' + t('loading') + '</div>';
+  try {
+    const r = await fetch(BACKEND_URL + '/api/webhooks?adminPin=' + encodeURIComponent(currentUser.id), {
+      method: 'GET', headers: { 'Content-Type': 'application/json' }
+    });
+    if (!r.ok) { list.innerHTML = '<div class="empty-state">' + t('unauthorized') + '</div>'; return; }
+    const data = await r.json();
+    const webhooks = data.webhooks || {};
+    const keys = Object.keys(webhooks);
+    if (keys.length === 0) {
+      list.innerHTML = '<div class="empty-state">' + t('admin.webhooks.no_webhooks') + '</div>';
+      return;
+    }
+    let html = '<div style="display:flex;flex-direction:column;gap:8px;">';
+    keys.forEach(k => {
+      const wh = webhooks[k];
+      const enabled = wh.enabled !== false;
+      html += '<div class="card" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:12px 16px;">';
+      html += '<div style="flex:1;min-width:120px;">';
+      html += '<strong>' + escHtml(wh.name || '') + '</strong>';
+      html += '<div style="font-size:12px;color:var(--text2);word-break:break-all;">' + escHtml(wh.url) + '</div>';
+      html += '<div style="font-size:11px;color:var(--text2);">' + t('admin.webhooks.created') + ' ' + (wh.created_at || '').split('T')[0] + '</div>';
+      html += '</div>';
+      html += '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">';
+      html += '<span class="badge" style="background:' + (enabled ? 'var(--success,#00cc66)' : 'var(--text2,#888)') + ';color:#fff;padding:4px 10px;border-radius:12px;font-size:12px;">' + (enabled ? t('admin.webhooks.enabled') : t('admin.webhooks.disabled')) + '</span>';
+      html += '<button class="ghost" onclick="testWebhook(\'' + k + '\')" style="min-height:36px;font-size:12px;padding:6px 10px;" data-i18n="admin.webhooks.test_btn">📡 Test</button>';
+      html += '<button class="ghost" onclick="toggleWebhook(\'' + k + '\')" style="min-height:36px;font-size:12px;padding:6px 10px;">' + (enabled ? '🔴 ' + t('admin.webhooks.disable_btn') : '🟢 ' + t('admin.webhooks.enable_btn')) + '</button>';
+      html += '<button class="ghost" onclick="deleteWebhook(\'' + k + '\')" style="min-height:36px;font-size:12px;padding:6px 10px;color:var(--danger,#e94560);">🗑️</button>';
+      html += '</div></div>';
+    });
+    html += '</div>';
+    list.innerHTML = html;
+  } catch(e) { list.innerHTML = '<div class="empty-state">' + t('network_error') + '</div>'; }
+}
+
+async function addWebhook() {
+  const name = document.getElementById('webhookName').value.trim();
+  const url = document.getElementById('webhookUrl').value.trim();
+  if (!url) { showToast('URL is required', 'danger'); return; }
+  if (!url.startsWith('http://') && !url.startsWith('https://')) { showToast('URL must start with http:// or https://', 'danger'); return; }
+  try {
+    const r = await fetch(BACKEND_URL + '/api/webhooks', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, name: name || undefined, url: url })
+    });
+    const d = await r.json();
+    if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
+    showToast(d.message, 'success');
+    document.getElementById('webhookName').value = '';
+    document.getElementById('webhookUrl').value = '';
+    loadWebhooks();
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
+}
+
+async function testWebhook(whId) {
+  try {
+    const r = await fetch(BACKEND_URL + '/api/webhooks/test/' + whId, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id })
+    });
+    const d = await r.json();
+    showToast(d.message, r.ok ? 'success' : 'danger');
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
+}
+
+async function toggleWebhook(whId) {
+  try {
+    const r = await fetch(BACKEND_URL + '/api/webhooks/' + whId + '/toggle', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id })
+    });
+    const d = await r.json();
+    if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
+    showToast(d.message, 'success');
+    loadWebhooks();
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
+}
+
+async function deleteWebhook(whId) {
+  if (!confirm('Delete this webhook?')) return;
+  try {
+    const r = await fetch(BACKEND_URL + '/api/webhooks/' + whId, {
+      method: 'DELETE', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id })
+    });
+    const d = await r.json();
+    if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
+    showToast(d.message, 'success');
+    loadWebhooks();
   } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
 

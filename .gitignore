@@ -16,3 +16,9 @@ tables.json
 refunded_orders.json
 inventory.json
 menu_backups/
+favorites.json
+loyalty_points.json
+scheduled_pricing.json
+waste_log.json
+delivery_addresses.json
+webhooks.json
