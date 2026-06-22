@@ -32,7 +32,7 @@
 
 ## Priority: LOW
 
-- [ ] Add waste tracking (items thrown away, reason)
+- [~] worker-2 Add waste tracking (items thrown away, reason)
 - [ ] Add delivery address management
 - [ ] Add integration webhook for third-party delivery apps
 - [ ] Add table-side ads system — rotating promotional images/videos on table tablets between orders
