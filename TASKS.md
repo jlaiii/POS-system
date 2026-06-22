@@ -27,7 +27,6 @@
 - [x] **Add order status badges in history view** — Show current order status (pending, preparing, completed, refunded/voided) as color-coded badges in order history list. Currently only refunded status is shown. Helps staff quickly identify order state at a glance without expanding details. Consistent with kitchen display status colors. [worker-3]
 - [x] **Add reorder button in order history** — One-click to reload all items from a past order into the cart. Major waiter speed improvement: eliminates need to manually re-add frequent orders. 🔄 button per order in history list loads items into cart with notes/modifiers, switches to POS tab. [worker-1]
 
-- [~] worker-1 **Add item visibility toggle (hide/show menu items without deleting)** — Active/inactive toggle per item in admin item management. Hidden items remain in database but do not appear in POS item grid, kiosk, or search. Useful for seasonal items, out-of-season ingredients, temporary supplier outages. Visual indicator (eye icon) in management list. i18n EN + ES.
 - [ ] **Add order-ready customer pickup display board** — New standalone page (`/pickup-display`) or overlay showing completed orders awaiting collection. Large-format order numbers with visual indicators (new, waiting, collected). Auto-refresh via WebSocket or polling. Independent from kitchen and customer display. Toggle in POS cart to mark order ready for pickup. i18n EN + ES.
 
 ## Priority: LOW
@@ -40,6 +39,7 @@
 
 ## Done
 
+- [x] **Add item visibility toggle (hide/show menu items without deleting)** — Active/inactive toggle per item in admin item management. Hidden items remain in database but do not appear in POS item grid, kiosk, or search. Useful for seasonal items, out-of-season ingredients, temporary supplier outages. Visual indicator (eye icon) in management list. i18n EN + ES. [worker-1]
 - [x] **Add service charge / auto-gratuity for large parties** — Configurable auto-gratuity settings (party size threshold, default percentage) in admin. When cart item count reaches threshold, service charge line auto-appears with label and amount. Display on receipt, kiosk, and order history. Permission-gated (manage_items). i18n EN + ES. [worker-3]
 
 - [x] **Add course/meal prep timing (appetizer/main/dessert)** — Allow marking items with course type so kitchen knows preparation order. Items marked as "Appetizer" show with 🥗 flag and suggested 5-min prep target, "Main" normal, "Dessert" 🍰 flagged to prepare after mains. Display course badge on kitchen order cards. [worker-3]

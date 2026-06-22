@@ -2245,6 +2245,12 @@ const L10N = {
     'item.search': '🔍 Search items...',
     'item.search_no_results': 'No items match "{query}"',
     'item.image_url': 'Image URL',
+    'item.visible': '👁️ Visible',
+    'item.hidden': '🚫 Hidden',
+    'item.show': 'Show',
+    'item.hide': 'Hide',
+    'item.show_toast': '{name} is now visible',
+    'item.hide_toast': '{name} is now hidden',
     'draft.restore_title': 'Unsaved Draft Found',
     'draft.restore_desc': 'You have a cart with items from {time}. Restore it?',
     'draft.restore': '🔄 Restore Draft',
@@ -2607,6 +2613,12 @@ const L10N = {
     'item.search': '🔍 Buscar artículos...',
     'item.search_no_results': 'Ningún artículo coincide con "{query}"',
     'item.image_url': 'URL de imagen',
+    'item.visible': '👁️ Visible',
+    'item.hidden': '🚫 Oculto',
+    'item.show': 'Mostrar',
+    'item.hide': 'Ocultar',
+    'item.show_toast': '{name} ahora es visible',
+    'item.hide_toast': '{name} ahora está oculto',
     'draft.restore_title': 'Borrador no guardado encontrado',
     'draft.restore_desc': 'Tienes un carrito con artículos de {time}. ¿Restaurarlo?',
     'draft.restore': '🔄 Restaurar borrador',
@@ -3248,6 +3260,8 @@ function renderCategories() {
   const container = document.getElementById('catTabs');
   container.innerHTML = '';
   Object.keys(itemsData).forEach(cat => {
+    const hasVisible = (itemsData[cat] || []).some(item => item.active !== false);
+    if (!hasVisible) return;
     const btn = document.createElement('button');
     btn.textContent = cat;
     if (cat === currentCategory) btn.classList.add('active');
@@ -3272,6 +3286,7 @@ function renderItems() {
     let results = [];
     Object.keys(itemsData).forEach(cat => {
       (itemsData[cat] || []).forEach(item => {
+        if (item.active === false) return;
         if (item.name.toLowerCase().includes(term)) {
           results.push({ ...item, _category: cat });
         }
@@ -3330,6 +3345,7 @@ function renderItems() {
       return;
     }
     items.forEach(item => {
+      if (item.active === false) return;
       const inv = inventoryData[item.name] || {};
       const stock = inv.stock !== undefined ? inv.stock : null;
       const threshold = inv.low_stock_threshold || 10;
@@ -5328,8 +5344,9 @@ async function loadItemMgmt() {
         const bcHtml = bc ? `<span class="ime-barcode" style="color:var(--text2);font-size:12px;font-family:monospace;margin-left:8px;">📷 ${escHtml(bc)}</span>` : '';
         const courseBadge = course === 'appetizer' ? '<span style="font-size:14px;margin-left:6px;" title="Appetizer — prepare first (5 min)">🥗</span>' : (course === 'dessert' ? '<span style="font-size:14px;margin-left:6px;" title="Dessert — prepare after mains">🍰</span>' : '');
         html += `<div class="item-mgmt-entry">
-          <div class="ime-info">${imgHtml}<span class="ime-cat">${escHtml(cat)}</span> — ${escHtml(item.name)} <span class="ime-price">$${item.price.toFixed(2)}</span>${bcHtml}${courseBadge}${item.modifiers && item.modifiers.groups && item.modifiers.groups.length > 0 ? '<span style="color:#f39c12;font-size:11px;margin-left:6px;">⚙️</span>' : ''}</div>
+          <div class="ime-info">${imgHtml}<span class="ime-cat">${escHtml(cat)}</span> — ${escHtml(item.name)} <span class="ime-price">$${item.price.toFixed(2)}</span>${bcHtml}${courseBadge}${item.modifiers && item.modifiers.groups && item.modifiers.groups.length > 0 ? '<span style="color:#f39c12;font-size:11px;margin-left:6px;">⚙️</span>' : ''} ${item.active === false ? '<span style="color:var(--text2);font-size:11px;margin-left:6px;" data-i18n="item.hidden">🚫 Hidden</span>' : '<span style="color:#2ecc71;font-size:11px;margin-left:6px;" data-i18n="item.visible">👁️ Visible</span>'}</div>
           <div class="ime-actions">
+            <button class="outline" onclick='toggleItemVisibility(${JSON.stringify(cat)},${JSON.stringify(item.name)})' style="font-size:13px;padding:6px 12px;min-height:36px;" title="${item.active === false ? t('item.show') : t('item.hide')}">${item.active === false ? '👁️' : '🚫'}</button>
             <button class="outline" onclick='startEditItem(${JSON.stringify(cat)},${JSON.stringify(item.name)},${item.price},${JSON.stringify(bc)},${JSON.stringify(imgUrl)},${JSON.stringify(course)})' style="font-size:13px;padding:6px 12px;min-height:36px;">✏️</button>
             <button class="outline" onclick='editItemModifiers(${JSON.stringify(cat)},${JSON.stringify(item.name)})' style="font-size:13px;padding:6px 12px;min-height:36px;">⚙️</button>
             <button class="danger" onclick='deleteItem(${JSON.stringify(cat)},${JSON.stringify(item.name)})' style="font-size:13px;padding:6px 12px;min-height:36px;">🗑️</button>
@@ -5392,6 +5409,20 @@ async function deleteItem(cat, name) {
     const d = await r.json();
     if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
     showToast('Item deleted', 'success');
+    loadItemMgmt();
+    loadItems();
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
+}
+
+async function toggleItemVisibility(cat, name) {
+  try {
+    const r = await fetch(BACKEND_URL + '/api/items/toggle_visibility', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, category: cat, name })
+    });
+    const d = await r.json();
+    if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
+    showToast(d.active ? t('item.show_toast', {name}) : t('item.hide_toast', {name}), 'success');
     loadItemMgmt();
     loadItems();
   } catch(e) { showToast(t('toast.network_error'), 'danger'); }

@@ -628,7 +628,7 @@ def add_item():
             log_activity('add_item', admin_pin, admin_role, {'status': 'failed', 'reason': 'Item already exists', 'item_data': data})
             return jsonify({'message': f'Item "{name}" already exists in category "{category}".'}), 409
 
-    items_data[category].append({"name": name, "price": price, "barcode": data.get('barcode', ''), "image_url": data.get('image_url', ''), "course": data.get('course', 'main')})
+    items_data[category].append({"name": name, "price": price, "barcode": data.get('barcode', ''), "image_url": data.get('image_url', ''), "course": data.get('course', 'main'), "active": True})
     save_json_data(ITEMS_FILE, items_data)
     backup_menu()  # Auto-backup after successful save
     
@@ -705,7 +705,8 @@ def edit_item():
                 old_image_url = items_data[old_category][i].get('image_url', '')
                 old_barcode = items_data[old_category][i].get('barcode', '')
                 old_course = item.get('course', 'main')
-                items_data[new_category].append({"name": new_name, "price": new_price, "barcode": data.get('barcode', old_barcode), "image_url": data.get('image_url', old_image_url), "course": data.get('course', old_course)})
+                old_active = item.get('active', True)
+                items_data[new_category].append({"name": new_name, "price": new_price, "barcode": data.get('barcode', old_barcode), "image_url": data.get('image_url', old_image_url), "course": data.get('course', old_course), "active": old_active})
             else:  # Only name/price/barcode changing within same category
                 items_data[old_category][i]["name"] = new_name
                 items_data[old_category][i]["price"] = new_price
@@ -783,6 +784,8 @@ def barcode_lookup():
     items_data = load_json_data(ITEMS_FILE)
     for cat, cat_items in items_data.items():
         for item in cat_items:
+            if item.get('active', True) is False:
+                continue
             item_barcode = item.get('barcode', '')
             if item_barcode and item_barcode == barcode:
                 return jsonify({
@@ -868,6 +871,47 @@ def set_item_image():
     admin_role = admin_user['role'] if admin_user else 'unknown'
     log_activity('set_item_image', admin_pin, admin_role, {'category': category, 'name': name, 'image_url': image_url})
     return jsonify({'message': 'Image URL updated successfully'})
+
+
+@app.route('/api/items/toggle_visibility', methods=['POST'])
+def toggle_item_visibility():
+    """Toggle the active/inactive state of a menu item. Inactive items don't appear in POS/kiosk."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+
+    if not check_perm(admin_pin, "manage_items"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    category = data.get('category')
+    name = data.get('name')
+
+    if not all([category, name]):
+        return jsonify({'message': 'Category and name are required.'}), 400
+
+    items_data = load_json_data(ITEMS_FILE)
+    if category not in items_data:
+        return jsonify({'message': f'Category "{category}" not found.'}), 404
+
+    found = False
+    for item in items_data[category]:
+        if item['name'] == name:
+            current = item.get('active', True)
+            item['active'] = not current
+            found = True
+            new_state = item['active']
+            break
+
+    if not found:
+        return jsonify({'message': f'Item "{name}" not found in category "{category}".'}), 404
+
+    save_json_data(ITEMS_FILE, items_data)
+    backup_menu()
+    admin_user = load_json_data(USERS_FILE).get(admin_pin, None)
+    admin_role = admin_user['role'] if admin_user else 'unknown'
+    log_activity('toggle_item_visibility', admin_pin, admin_role, {
+        'category': category, 'name': name, 'new_active': new_state
+    })
+    return jsonify({'message': 'Item visibility toggled', 'active': new_state})
 
 
 # --- Item Modifier Support Endpoints ---
