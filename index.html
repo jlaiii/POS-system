@@ -945,6 +945,29 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
               </div>
             </div>
           </div>
+          <div id="deliveryRow" style="display:none;margin-top:6px;">
+            <div style="display:flex;gap:6px;align-items:center;margin-bottom:4px;">
+              <span style="color:var(--text2);font-size:13px;font-weight:600;">📮 Delivery Address:</span>
+              <label style="display:flex;align-items:center;gap:4px;font-size:13px;color:var(--text2);cursor:pointer;">
+                <input type="checkbox" id="deliveryToggle" onchange="toggleDeliveryForm()" style="width:18px;height:18px;cursor:pointer;"> <span data-i18n="delivery.enable">Add delivery info</span>
+              </label>
+            </div>
+            <div id="deliveryForm" style="display:none;background:var(--card);border-radius:8px;padding:10px;margin-top:4px;">
+              <div style="display:flex;flex-direction:column;gap:8px;">
+                <input type="text" id="delStreet" placeholder="Street address" style="flex:1;min-height:44px;font-size:14px;padding:8px 12px;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);" maxlength="200" data-i18n-placeholder="delivery.street"/>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                  <input type="text" id="delCity" placeholder="City" style="flex:2;min-width:100px;min-height:44px;font-size:14px;padding:8px 12px;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);" maxlength="100" data-i18n-placeholder="delivery.city"/>
+                  <input type="text" id="delState" placeholder="State" style="flex:1;min-width:70px;min-height:44px;font-size:14px;padding:8px 12px;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);" maxlength="50" data-i18n-placeholder="delivery.state"/>
+                  <input type="text" id="delZip" placeholder="ZIP code" style="flex:1;min-width:80px;min-height:44px;font-size:14px;padding:8px 12px;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);" maxlength="20" data-i18n-placeholder="delivery.zip"/>
+                </div>
+                <textarea id="delInstructions" placeholder="Delivery instructions (gate code, landmark, etc.)" style="width:100%;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:14px;padding:10px 12px;min-height:44px;resize:vertical;font-family:inherit;" rows="1" maxlength="300" data-i18n-placeholder="delivery.instructions"></textarea>
+                <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+                  <button class="outline" onclick="saveDeliveryAddress()" style="font-size:12px;padding:6px 12px;min-height:40px;border-color:#4fc3f7;color:#4fc3f7;" data-i18n="delivery.save">💾 Save for reuse</button>
+                  <span id="deliverySaveStatus" style="font-size:12px;color:var(--text2);"></span>
+                </div>
+              </div>
+            </div>
+          </div>
           <div id="loyaltyRow" style="display:none;margin-top:6px;">
             <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:4px;">
               <span style="color:var(--text2);font-size:13px;font-weight:600;white-space:nowrap;">⭐ Loyalty:</span>
@@ -1554,6 +1577,14 @@ const L10N = {
     'cart.clear': '🗑️ Clear',
     'cart.each': 'each',
     'cart.item_note': 'Item note...',
+    'delivery.enable': 'Add delivery info',
+    'delivery.street': 'Street address',
+    'delivery.city': 'City',
+    'delivery.state': 'State',
+    'delivery.zip': 'ZIP code',
+    'delivery.instructions': 'Delivery instructions (gate code, landmark, etc.)',
+    'delivery.save': '💾 Save for reuse',
+    'receipt.delivery_to': 'Deliver to',
     'payment.cash': '💵 Cash',
     'payment.card': '💳 Card',
     'payment.mobile': '📱 Mobile Pay',
@@ -1781,6 +1812,14 @@ const L10N = {
     'cart.clear': '🗑️ Limpiar',
     'cart.each': 'cada uno',
     'cart.item_note': 'Nota del artículo...',
+    'delivery.enable': 'Agregar dirección de envío',
+    'delivery.street': 'Dirección',
+    'delivery.city': 'Ciudad',
+    'delivery.state': 'Estado',
+    'delivery.zip': 'Código postal',
+    'delivery.instructions': 'Instrucciones de entrega (código de puerta, punto de referencia, etc.)',
+    'delivery.save': '💾 Guardar para reutilizar',
+    'receipt.delivery_to': 'Entregar a',
     'payment.cash': '💵 Efectivo',
     'payment.card': '💳 Tarjeta',
     'payment.mobile': '📱 Pago móvil',
@@ -2862,6 +2901,7 @@ async function submitOrder() {
   cart.forEach((c, i) => {
   if (c.note) receiptData.item_notes[i] = c.note;
   });
+  receiptData.delivery_address = getDeliveryAddress();
   // Include table number if selected
   const selectedTable = document.getElementById('tableSelect') ? document.getElementById('tableSelect').value : '';
   if (selectedTable) receiptData.table_number = parseInt(selectedTable);
@@ -2882,7 +2922,8 @@ async function submitOrder() {
       notes: document.getElementById('orderNotesInput').value.trim(),
       item_notes: receiptData.item_notes,
       table_number: selectedTable ? parseInt(selectedTable) : null,
-      customer_phone: loyaltyCustomerPhone || ''
+      customer_phone: loyaltyCustomerPhone || '',
+      delivery_address: getDeliveryAddress()
     })
     });
     if (!r.ok) { const d = await r.json(); showToast(d.message || 'Failed', 'danger'); return; }
@@ -3074,6 +3115,80 @@ async function syncQueuedOrders() {
   }
 
   if (badge) badge.classList.remove('syncing');
+}
+
+// ═══════════ DELIVERY ADDRESS ═══════════
+
+function toggleDeliveryForm() {
+  const checked = document.getElementById('deliveryToggle').checked;
+  document.getElementById('deliveryForm').style.display = checked ? 'block' : 'none';
+  if (!checked) {
+    // Clear fields when unchecking
+    document.getElementById('delStreet').value = '';
+    document.getElementById('delCity').value = '';
+    document.getElementById('delState').value = '';
+    document.getElementById('delZip').value = '';
+    document.getElementById('delInstructions').value = '';
+  }
+}
+
+function getDeliveryAddress() {
+  const checked = document.getElementById('deliveryToggle') && document.getElementById('deliveryToggle').checked;
+  if (!checked) return null;
+  const street = document.getElementById('delStreet').value.trim();
+  const city = document.getElementById('delCity').value.trim();
+  const state = document.getElementById('delState').value.trim();
+  const zip = document.getElementById('delZip').value.trim();
+  const instructions = document.getElementById('delInstructions').value.trim();
+  if (!street && !city) return null; // Need at least street or city
+  return {
+    street: street,
+    city: city,
+    state: state,
+    zip: zip,
+    instructions: instructions
+  };
+}
+
+function formatDeliveryAddress(addr) {
+  if (!addr) return '';
+  const parts = [];
+  if (addr.street) parts.push(addr.street);
+  const cityState = [];
+  if (addr.city) cityState.push(addr.city);
+  if (addr.state) cityState.push(addr.state);
+  if (addr.zip) cityState.push(addr.zip);
+  if (cityState.length > 0) parts.push(cityState.join(', '));
+  if (addr.instructions) parts.push('(' + addr.instructions + ')');
+  return parts.join(', ');
+}
+
+async function saveDeliveryAddress() {
+  const addr = getDeliveryAddress();
+  if (!addr) {
+    document.getElementById('deliverySaveStatus').textContent = '⚠️ Enter address first';
+    return;
+  }
+  const label = addr.street || addr.city || 'Saved Address';
+  try {
+    const r = await fetch(BACKEND_URL + '/api/delivery_addresses/save', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        label: label,
+        address: addr,
+        user: currentUser ? currentUser.id : '',
+        phone: loyaltyCustomerPhone || ''
+      })
+    });
+    if (r.ok) {
+      document.getElementById('deliverySaveStatus').textContent = '✅ Saved!';
+      setTimeout(() => { document.getElementById('deliverySaveStatus').textContent = ''; }, 3000);
+    } else {
+      document.getElementById('deliverySaveStatus').textContent = '❌ Save failed';
+    }
+  } catch(e) {
+    document.getElementById('deliverySaveStatus').textContent = '❌ Network error';
+  }
 }
 
 // ═══════════ DRIVE-THROUGH DISPLAY ═══════════
@@ -3497,6 +3612,8 @@ async function loadOrderHistory() {
     const hasTip = o.tip_amount !== undefined && o.tip_amount !== null && parseFloat(o.tip_amount) > 0;
     const orderNum = orders.length - i;
     const orderNotes = o.notes || '';
+    const deliveryAddr = o.delivery_address;
+    const hasDelivery = deliveryAddr && (deliveryAddr.street || deliveryAddr.city);
     const hasItemNotes = items.some(it => it.note);
     const hasSplitPayments = o.payment_splits && o.payment_splits.length > 1;
     const paymentDisplay = hasSplitPayments
@@ -3511,7 +3628,7 @@ async function loadOrderHistory() {
           <span><strong>#${orderNum}</strong> — ${dt}${refundBadge}</span>
           <span class="ho-total">$${total}</span>
         </div>
-        <div class="ho-meta">${t('history.payment')} ${escHtml(paymentDisplay)} | ${t('history.user')} ${escHtml(o.user || 'N/A')}${hasTax ? ' | ' + t('history.tax') + ': $' + parseFloat(o.tax_amount).toFixed(2) : ''}${hasTip ? ' | 💬 ' + t('receipt.tip') + ': $' + parseFloat(o.tip_amount).toFixed(2) : ''}${o.table_number ? ' | 🪪 Table #' + o.table_number : ''}${orderNotes ? ' | 📝 ' + t('history.notes') : ''}${refundReasonStr} <button class="ghost" onclick="event.stopPropagation();printHistoryReceipt(${JSON.stringify(o).replace(/"/g, '&quot;')}, ${orderNum})" style="font-size:12px;padding:4px 8px;min-height:28px;color:var(--accent);">🖨️</button>${canRefund && !isRefunded ? \`<button class="ghost" onclick="event.stopPropagation();showRefundOverlay({order_id: ${o.order_id}, total: '${total}', date: '${(o.date || '').replace(/'/g, "\\'")}', payment: '${(o.payment || '').replace(/'/g, "\\'")}', user: '${(o.user || '').replace(/'/g, "\\'")}', orderNum: ${orderNum}})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#e74c3c;">!a9️</button>\` : ''}</div>
+        <div class="ho-meta">${t('history.payment')} ${escHtml(paymentDisplay)} | ${t('history.user')} ${escHtml(o.user || 'N/A')}${hasTax ? ' | ' + t('history.tax') + ': $' + parseFloat(o.tax_amount).toFixed(2) : ''}${hasTip ? ' | 💬 ' + t('receipt.tip') + ': $' + parseFloat(o.tip_amount).toFixed(2) : ''}${o.table_number ? ' | 🪪 Table #' + o.table_number : ''}${hasDelivery ? ' | 📮 ' + escHtml(formatDeliveryAddress(deliveryAddr)) : ''}${orderNotes ? ' | 📝 ' + t('history.notes') : ''}${refundReasonStr} <button class="ghost" onclick="event.stopPropagation();printHistoryReceipt(${JSON.stringify(o).replace(/"/g, '&quot;')}, ${orderNum})" style="font-size:12px;padding:4px 8px;min-height:28px;color:var(--accent);">🖨️</button>${canRefund && !isRefunded ? \`<button class="ghost" onclick="event.stopPropagation();showRefundOverlay({order_id: ${o.order_id}, total: '${total}', date: '${(o.date || '').replace(/'/g, "\\'")}', payment: '${(o.payment || '').replace(/'/g, "\\'")}', user: '${(o.user || '').replace(/'/g, "\\'")}', orderNum: ${orderNum}})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#e74c3c;">!a9️</button>\` : ''}</div>
         <div class="ho-details">
           ${items.map((it, idx) => \`<div class="ho-item"><span>${escHtml(it.name)} x${it.qty||1}${it.note ? '<br/><span style="color:var(--text2);font-size:12px;padding-left:12px;">📝 ' + escHtml(it.note) + '</span>' : ''}</span><span>$${((it.price||0)*(it.qty||1)).toFixed(2)}</span></div>\`).join('')}
           ${hasTax ? \`
@@ -3521,6 +3638,7 @@ async function loadOrderHistory() {
             <div class="ho-item" style="font-weight:700;border-top:1px solid var(--border);padding-top:4px;margin-top:4px;"><span>${t('history.total')}</span><span>$${total}</span></div>
           \` : ''}
           ${orderNotes ? \`<div class="ho-item" style="color:var(--text2);border-top:1px solid var(--border);padding-top:4px;margin-top:4px;"><span style="font-weight:600;">📝 ${t('history.order_notes')}</span><br/><span style="font-size:13px;">${escHtml(orderNotes)}</span></div>\` : ''}
+          ${hasDelivery ? \`<div class="ho-item" style="color:var(--text2);border-top:1px solid var(--border);padding-top:4px;margin-top:4px;"><span style="font-weight:600;">📮 ${t('receipt.delivery_to')}</span><br/><span style="font-size:13px;">${escHtml(formatDeliveryAddress(deliveryAddr))}</span></div>\` : ''}
         </div>
       </div>`;
     list.innerHTML = html;
@@ -5392,6 +5510,7 @@ function showReceipt(orderData) {
       <div class="rcpt-info">Order #${orderData.orderNumber || '—'}</div>
       <div class="rcpt-info">${t('receipt.payment')} ${escHtml(paymentDisplay)}</div>
       ${orderData.user ? `<div class="rcpt-info">${t('receipt.cashier')} ${escHtml(String(orderData.user))}</div>` : ''}
+      ${orderData.delivery_address ? `<div class="rcpt-info">📮 ${t('receipt.delivery_to')}: ${escHtml(formatDeliveryAddress(orderData.delivery_address))}</div>` : ''}
     </div>
     <hr class="rcpt-divider"/>
     ${itemLines}
@@ -5436,7 +5555,8 @@ function printHistoryReceipt(orderData, orderNumber) {
     payment_splits: orderData.payment_splits || null,
     user: orderData.user || '—',
     date: orderData.date || new Date().toISOString(),
-    orderNumber: orderNumber || '—'
+    orderNumber: orderNumber || '—',
+    delivery_address: orderData.delivery_address || null
   };
   showReceipt(receiptData);
 }

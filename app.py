@@ -30,6 +30,7 @@ FAVORITES_FILE = 'favorites.json'  # User quick-order favorites
 LOYALTY_FILE = 'loyalty_points.json'  # Customer loyalty points tracking
 SCHEDULED_PRICING_FILE = 'scheduled_pricing.json'  # Scheduled pricing rules (happy hour, daily specials)
 WASTE_FILE = 'waste_log.json'  # Waste/throwaway tracking
+DELIVERY_ADDRESSES_FILE = 'delivery_addresses.json'  # Saved delivery addresses
 MENU_BACKUPS_DIR = 'menu_backups'
 
 # --- Loyalty Constants ---
@@ -99,7 +100,7 @@ def backup_menu():
 
 
 # Ensure JSON files exist and are initialized correctly
-for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE, INVENTORY_FILE, REFUNDED_ORDERS_FILE, FAVORITES_FILE, LOYALTY_FILE, SCHEDULED_PRICING_FILE, WASTE_FILE]:
+for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE, INVENTORY_FILE, REFUNDED_ORDERS_FILE, FAVORITES_FILE, LOYALTY_FILE, SCHEDULED_PRICING_FILE, WASTE_FILE, DELIVERY_ADDRESSES_FILE]:
     if not os.path.exists(f):
         with open(f, 'w') as file:
             if f == USERS_FILE:
@@ -149,6 +150,8 @@ for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMES
                 json.dump({}, file, indent=4)  # Initialize empty loyalty points dict (phone -> data)
             elif f == WASTE_FILE:
                 json.dump([], file, indent=4)  # Initialize empty waste log
+            elif f == DELIVERY_ADDRESSES_FILE:
+                json.dump({}, file, indent=4)  # Initialize empty delivery addresses dict
             else:
                 json.dump([], file)  # Initialize orders.json and cleared_orders.json as empty lists
 
@@ -768,7 +771,8 @@ def submit_order():
         'total': round(total, 2),
         'notes': data.get('notes', ''),  # Per-order special instructions
         'item_notes': data.get('item_notes', {}),  # Per-item notes {index: note_string}
-        'table_number': data.get('table_number')  # Table number for table management
+        'table_number': data.get('table_number'),  # Table number for table management
+        'delivery_address': data.get('delivery_address')  # Delivery address info
     }
     orders = load_json_data(ORDERS_FILE)
     orders.append(order_details)
@@ -944,7 +948,8 @@ def sync_orders():
             'total': round(total, 2),
             'notes': order_data.get('notes', ''),
             'item_notes': order_data.get('item_notes', {}),
-            'table_number': order_data.get('table_number')
+            'table_number': order_data.get('table_number'),
+            'delivery_address': order_data.get('delivery_address')
         }
         orders_data.append(order_details)
 
@@ -983,6 +988,101 @@ def sync_orders():
     save_json_data(INVENTORY_FILE, inventory)
 
     return jsonify({'results': results})
+
+
+# --- Delivery Address Management Endpoints ---
+
+@app.route('/api/orders/<int:order_id>/delivery_address', methods=['GET'])
+def get_delivery_address(order_id):
+    """Get delivery address for a specific order."""
+    orders = load_json_data(ORDERS_FILE)
+    for order in orders:
+        if order.get('order_id') == order_id:
+            addr = order.get('delivery_address')
+            if addr:
+                return jsonify({'delivery_address': addr})
+            return jsonify({'delivery_address': None}), 404
+    return jsonify({'message': 'Order not found'}), 404
+
+
+@app.route('/api/orders/<int:order_id>/delivery_address', methods=['POST'])
+def update_delivery_address(order_id):
+    """Update delivery address for a specific order."""
+    data = request.json
+    address = data.get('address')
+    if not address:
+        return jsonify({'message': 'Address data is required'}), 400
+
+    orders = load_json_data(ORDERS_FILE)
+    found = False
+    for order in orders:
+        if order.get('order_id') == order_id:
+            order['delivery_address'] = address
+            found = True
+            break
+
+    if not found:
+        return jsonify({'message': 'Order not found'}), 404
+
+    save_json_data(ORDERS_FILE, orders)
+    return jsonify({'message': 'Delivery address updated successfully'})
+
+
+@app.route('/api/delivery_addresses', methods=['GET'])
+def list_delivery_addresses():
+    """List saved delivery addresses, optionally filtered by user or phone."""
+    user_id = request.args.get('user', '')
+    phone = request.args.get('phone', '')
+    addresses = load_json_data(DELIVERY_ADDRESSES_FILE)
+
+    if user_id:
+        results = {k: v for k, v in addresses.items() if v.get('user') == user_id}
+    elif phone:
+        results = {k: v for k, v in addresses.items() if v.get('phone') == phone}
+    else:
+        results = addresses
+
+    return jsonify({'addresses': results})
+
+
+@app.route('/api/delivery_addresses/save', methods=['POST'])
+def save_delivery_address():
+    """Save a delivery address for future reuse."""
+    data = request.json
+    label = data.get('label', '').strip()
+    address = data.get('address')
+    user = data.get('user', '')
+    phone = data.get('phone', '')
+
+    if not address or not isinstance(address, dict):
+        return jsonify({'message': 'Valid address data is required'}), 400
+
+    addresses = load_json_data(DELIVERY_ADDRESSES_FILE)
+
+    # Generate a unique key
+    key = label if label else f"addr_{len(addresses) + 1}_{datetime.now().timestamp()}"
+    addresses[key] = {
+        'address': address,
+        'user': user,
+        'phone': phone,
+        'label': label,
+        'saved_at': datetime.now().isoformat()
+    }
+
+    save_json_data(DELIVERY_ADDRESSES_FILE, addresses)
+    return jsonify({'message': 'Address saved successfully', 'key': key})
+
+
+@app.route('/api/delivery_addresses/<path:key>', methods=['DELETE'])
+def delete_delivery_address(key):
+    """Delete a saved delivery address."""
+    addresses = load_json_data(DELIVERY_ADDRESSES_FILE)
+    if key not in addresses:
+        return jsonify({'message': 'Address not found'}), 404
+
+    del addresses[key]
+    save_json_data(DELIVERY_ADDRESSES_FILE, addresses)
+    return jsonify({'message': 'Address deleted successfully'})
 
 
 # --- Refund / Void Order Endpoint ---
