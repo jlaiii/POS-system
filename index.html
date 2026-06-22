@@ -486,10 +486,23 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 <!-- ═══════════ LOGIN SCREEN ═══════════ -->
 <div id="loginScreen">
   <div class="logo">🍽️ POS</div>
-  <div class="subtitle" data-i18n="login.subtitle">Enter PIN to continue</div>
-  <div id="pinDisplay"></div>
-  <div id="pinPad"></div>
+  <div class="subtitle" id="loginSubtitle" data-i18n="login.subtitle">Enter PIN to continue</div>
+
+  <!-- PIN mode -->
+  <div id="loginPinMode">
+    <div id="pinDisplay"></div>
+    <div id="pinPad"></div>
+  </div>
+
+  <!-- Owner username+password mode -->
+  <div id="loginOwnerMode" style="display:none;flex-direction:column;align-items:center;gap:12px;">
+    <input type="text" id="ownerUsername" placeholder="Username" autocomplete="username" style="font-size:18px;padding:12px;width:260px;border-radius:var(--radius);background:var(--card);color:var(--text);border:2px solid #2a2a4e;text-align:center;">
+    <input type="password" id="ownerPassword" placeholder="Password" autocomplete="current-password" style="font-size:18px;padding:12px;width:260px;border-radius:var(--radius);background:var(--card);color:var(--text);border:2px solid #2a2a4e;text-align:center;">
+    <button onclick="ownerLogin()" style="font-size:20px;padding:14px 48px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);cursor:pointer;font-weight:700;min-height:56px;">Sign In</button>
+  </div>
+
   <div id="loginError"></div>
+  <button class="ghost" id="loginModeToggle" onclick="toggleLoginMode()" style="margin-top:12px;font-size:14px;color:var(--text2);">🔑 Owner Login</button>
 </div>
 
 <!-- ═══════════ MAIN APP ═══════════ -->
@@ -562,6 +575,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
         <button onclick="switchAdminSection('timesheet')" id="asTimesheet" data-i18n="admin.timesheet">⏱️ Timesheet</button>
         <button onclick="switchAdminSection('permissions')" id="asPermissions" data-i18n="admin.permissions" style="display:none;">🔑 Permissions</button>
         <button onclick="switchAdminSection('menuhistory')" id="asMenuhistory" data-i18n="admin.menu_history" style="display:none;">📋 Menu History</button>
+        <button onclick="switchAdminSection('credentials')" id="asCredentials" data-i18n="admin.credentials" style="display:none;">🔐 Owner Credentials</button>
       </div>
       <div id="adminContent">
         <!-- Stats -->
@@ -677,6 +691,13 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
         <!-- Menu History (owner only) -->
         <div id="secMenuhistory" class="admin-section">
           <div id="menuHistoryList"><div class="empty-state">Loading...</div></div>
+        </div>
+        <!-- Owner Credentials (owner only) -->
+        <div id="secCredentials" class="admin-section">
+          <h3>🔐 Owner Account Credentials</h3>
+          <p style="color:var(--text2);margin-bottom:20px;">Set a username and password for secure owner login. You can still use your PIN as well.</p>
+          <div id="ownerCredStatus" style="margin-bottom:16px;color:var(--text2);">Checking...</div>
+          <button onclick="setupOwnerCredentials()" style="font-size:18px;padding:14px 32px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);cursor:pointer;font-weight:600;min-height:56px;">🔐 Set/Update Credentials</button>
         </div>
       </div>
     </div>
@@ -1076,7 +1097,7 @@ function buildPinPad() {
 
 let pinValue = '';
 function pinAdd(digit) {
-  if (pinValue.length >= 4) return;
+  if (pinValue.length >= 10) return;
   pinValue += digit;
   renderPinDisplay();
 }
@@ -1085,7 +1106,7 @@ function pinDelete() {
   renderPinDisplay();
 }
 function pinEnter() {
-  if (pinValue.length !== 4) return;
+  if (pinValue.length < 4) return;
   doLogin(pinValue);
 }
 function renderPinDisplay() {
@@ -1117,6 +1138,101 @@ async function doLogin(userId) {
   } catch(e) {
     document.getElementById('loginError').textContent = t('login.error');
     pinValue = ''; renderPinDisplay();
+  }
+}
+
+// ═══════════ LOGIN MODE TOGGLE ═══════════
+let loginMode = 'pin'; // 'pin' | 'owner'
+
+function toggleLoginMode() {
+  loginMode = loginMode === 'pin' ? 'owner' : 'pin';
+  const pinMode = document.getElementById('loginPinMode');
+  const ownerMode = document.getElementById('loginOwnerMode');
+  const subtitle = document.getElementById('loginSubtitle');
+  const toggle = document.getElementById('loginModeToggle');
+
+  if (loginMode === 'pin') {
+    pinMode.style.display = 'block';
+    ownerMode.style.display = 'none';
+    subtitle.textContent = 'Enter PIN to continue';
+    toggle.textContent = '🔑 Owner Login';
+  } else {
+    pinMode.style.display = 'none';
+    ownerMode.style.display = 'flex';
+    subtitle.textContent = 'Owner Sign In';
+    toggle.textContent = '🔢 PIN Login';
+  }
+  document.getElementById('loginError').textContent = '';
+}
+
+async function ownerLogin() {
+  const username = document.getElementById('ownerUsername').value.trim();
+  const password = document.getElementById('ownerPassword').value;
+  document.getElementById('loginError').textContent = '';
+
+  if (!username || !password) {
+    document.getElementById('loginError').textContent = 'Enter username and password';
+    return;
+  }
+
+  try {
+    const r = await fetch(BACKEND_URL + '/api/login', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await r.json();
+    if (r.status === 403 && data.banned) {
+      document.getElementById('loginError').textContent = 'Account banned: ' + (data.reason || 'No reason');
+      return;
+    }
+    if (!r.ok) { document.getElementById('loginError').textContent = data.message || 'Login failed'; return; }
+    currentUser = { id: data.userId || username, name: data.user, role: data.role, permissions: data.permissions || [] };
+    sessionStorage.setItem('pos_userId', currentUser.id);
+    sessionStorage.setItem('pos_userRole', data.role);
+    sessionStorage.setItem('pos_userName', data.user);
+    sessionStorage.setItem('pos_permissions', JSON.stringify(data.permissions || []));
+    showApp();
+  } catch(e) {
+    document.getElementById('loginError').textContent = 'Connection error';
+  }
+}
+
+// ═══════════ OWNER CREDENTIALS SETUP ═══════════
+async function setupOwnerCredentials() {
+  const pin = prompt('Enter your owner PIN to confirm:');
+  if (!pin) return;
+  const username = prompt('Choose a username (min 3 chars):');
+  if (!username || username.length < 3) { alert('Username must be at least 3 characters'); return; }
+  const password = prompt('Choose a password (min 6 chars):');
+  if (!password || password.length < 6) { alert('Password must be at least 6 characters'); return; }
+
+  try {
+    const r = await fetch(BACKEND_URL + '/api/owner/credentials', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ownerPin: pin, username, password })
+    });
+    const data = await r.json();
+    alert(data.message);
+    if (r.ok) {
+      document.getElementById('ownerCredStatus').textContent = '✅ Credentials set — Username: ' + username;
+    }
+  } catch(e) {
+    alert('Connection error');
+  }
+}
+
+async function loadCredentialsStatus() {
+  try {
+    const r = await fetch(BACKEND_URL + '/api/owner/credentials/status');
+    const data = await r.json();
+    const el = document.getElementById('ownerCredStatus');
+    if (data.has_credentials) {
+      el.textContent = '✅ Credentials set — Username: ' + data.username;
+    } else {
+      el.textContent = '⚠️ No credentials set yet. Set a username and password for secure owner login.';
+    }
+  } catch(e) {
+    document.getElementById('ownerCredStatus').textContent = 'Could not check credentials status.';
   }
 }
 
@@ -1176,7 +1292,8 @@ function showApp() {
     'asLog': perms.includes('view_logs'),
     'asTimesheet': perms.includes('view_timesheet'),
     'asPermissions': isOwner,
-    'asMenuhistory': isOwner
+    'asMenuhistory': isOwner,
+    'asCredentials': isOwner
   };
   
   // Show/hide each sub-tab button
@@ -1689,6 +1806,7 @@ function switchAdminSection(sec) {
   else if (sec === 'timesheet') loadTimesheet();
   else if (sec === 'permissions') loadPermissions();
   else if (sec === 'menuhistory') loadMenuHistory();
+  else if (sec === 'credentials') loadCredentialsStatus();
 }
 
 async function loadAdminStats() {

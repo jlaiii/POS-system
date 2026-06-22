@@ -5,6 +5,8 @@ from datetime import datetime, timedelta
 import os
 import shutil
 import glob
+import hashlib
+import secrets
 from collections import defaultdict, Counter
 
 app = Flask(__name__, static_folder='.', static_url_path='')
@@ -165,6 +167,18 @@ def save_json_data(filepath, data):
         json.dump(data, f, indent=4)
 
 
+def hash_password(password, salt=None):
+    """Hash a password with SHA-256 + salt. Returns (hash_hex, salt_hex)."""
+    if salt is None:
+        salt = secrets.token_hex(16)
+    h = hashlib.sha256((salt + password).encode()).hexdigest()
+    return h, salt
+
+def verify_password(password, stored_hash, stored_salt):
+    """Verify a password against stored hash and salt."""
+    h, _ = hash_password(password, stored_salt)
+    return h == stored_hash
+
 def log_activity(activity_type, user_id, user_role, details=None):
     log_entry = {
         'timestamp': datetime.now().isoformat(),
@@ -204,17 +218,37 @@ def get_users():
 def login():
     data = request.json
     user_id = data.get('userId')
+    username = data.get('username')
+    password = data.get('password')
     users = load_json_data(USERS_FILE)
 
+    # Owner username+password login
+    if username and password:
+        for uid, u_data in users.items():
+            if u_data.get('username') == username:
+                stored_hash = u_data.get('password_hash')
+                stored_salt = u_data.get('password_salt')
+                if stored_hash and stored_salt and verify_password(password, stored_hash, stored_salt):
+                    if u_data.get('banned', False):
+                        reason = u_data.get('banned_reason', 'No reason provided')
+                        return jsonify({'message': f'User is banned. Reason: {reason}', 'banned': True}), 403
+                    u_data = upgrade_user(u_data)
+                    users[uid] = u_data
+                    save_json_data(USERS_FILE, users)
+                    log_activity('login', uid, u_data['role'], {'status': 'success', 'method': 'password', 'user_name': u_data['name']})
+                    if u_data['role'] in ('admin', 'owner'):
+                        active_admin_sessions[uid] = datetime.now()
+                    return jsonify({'message': 'Login successful', 'user': u_data['name'], 'role': u_data['role'], 'permissions': u_data.get('permissions', [])})
+        log_activity('login', username, 'unknown', {'status': 'failed', 'method': 'password'})
+        return jsonify({'message': 'Invalid username or password'}), 401
+
+    # PIN login (existing)
     if user_id in users:
         user_info = users[user_id]
-        # Upgrade permissions structure if needed
         user_info = upgrade_user(user_info)
-        # Save upgraded user data back
         users[user_id] = user_info
         save_json_data(USERS_FILE, users)
 
-        # Check if user is banned
         if user_info.get('banned', False):
             reason = user_info.get('banned_reason', 'No reason provided')
             log_activity('login', user_id, user_info.get('role', 'unknown'),
@@ -222,13 +256,56 @@ def login():
             return jsonify({'message': f'User is banned. Reason: {reason}', 'banned': True}), 403
 
         if user_info.get('role') in ['user', 'admin', 'owner', 'cook']:
-            log_activity('login', user_id, user_info['role'], {'status': 'success', 'user_name': user_info['name']})
-            # If it's an admin or owner logging in, record their start time for timesheet
+            log_activity('login', user_id, user_info['role'], {'status': 'success', 'method': 'pin', 'user_name': user_info['name']})
             if user_info['role'] in ('admin', 'owner'):
                 active_admin_sessions[user_id] = datetime.now()
-            return jsonify({'message': 'Login successful', 'user': user_info['name'], 'role': user_info['role']})
-    log_activity('login', user_id, 'unknown', {'status': 'failed'})
+            return jsonify({'message': 'Login successful', 'user': user_info['name'], 'role': user_info['role'], 'permissions': user_info.get('permissions', [])})
+    log_activity('login', user_id, 'unknown', {'status': 'failed', 'method': 'pin'})
     return jsonify({'message': 'Invalid User ID or role'}), 401
+
+# Owner credentials management
+@app.route('/api/owner/credentials', methods=['POST'])
+def owner_credentials():
+    """Owner sets or updates their username and password."""
+    data = request.json
+    owner_pin = data.get('ownerPin')
+    username = data.get('username')
+    password = data.get('password')
+
+    users = load_json_data(USERS_FILE)
+    if owner_pin not in users or users[owner_pin].get('role') != 'owner':
+        return jsonify({'message': 'Owner credentials required'}), 403
+
+    if not username or not password:
+        return jsonify({'message': 'Username and password required'}), 400
+    if len(password) < 6:
+        return jsonify({'message': 'Password must be at least 6 characters'}), 400
+    if len(username) < 3:
+        return jsonify({'message': 'Username must be at least 3 characters'}), 400
+
+    # Check username not taken by another user
+    for uid, u_data in users.items():
+        if uid != owner_pin and u_data.get('username') == username:
+            return jsonify({'message': 'Username already taken'}), 409
+
+    pw_hash, pw_salt = hash_password(password)
+    users[owner_pin]['username'] = username
+    users[owner_pin]['password_hash'] = pw_hash
+    users[owner_pin]['password_salt'] = pw_salt
+    save_json_data(USERS_FILE, users)
+
+    log_activity('owner_credentials', owner_pin, 'owner', {'status': 'success', 'username': username})
+    return jsonify({'message': 'Owner credentials updated successfully'})
+
+@app.route('/api/owner/credentials/status', methods=['GET'])
+def owner_credentials_status():
+    """Check if owner has set credentials."""
+    users = load_json_data(USERS_FILE)
+    for uid, u_data in users.items():
+        if u_data.get('role') == 'owner':
+            has_creds = bool(u_data.get('username') and u_data.get('password_hash'))
+            return jsonify({'has_credentials': has_creds, 'username': u_data.get('username', '')})
+    return jsonify({'has_credentials': False, 'username': ''})
 
 
 @app.route('/api/logout', methods=['POST'])
@@ -279,10 +356,10 @@ def add_user():
         log_activity('add_user', admin_pin, admin_user['role'] if admin_user else 'unknown',
                      {'status': 'failed', 'reason': 'Missing data', 'new_user_id': new_user_id})
         return jsonify({'message': 'Missing user data.'}), 400
-    if len(new_user_id) != 4 or not new_user_id.isdigit():
+    if len(new_user_id) < 4 or len(new_user_id) > 10 or not new_user_id.isdigit():
         log_activity('add_user', admin_pin, admin_user['role'] if admin_user else 'unknown',
                      {'status': 'failed', 'reason': 'Invalid User ID format', 'new_user_id': new_user_id})
-        return jsonify({'message': 'User ID must be a 4-digit number.'}), 400
+        return jsonify({'message': 'User ID must be a 4-10 digit number.'}), 400
     if new_user_id in users:
         log_activity('add_user', admin_pin, admin_user['role'] if admin_user else 'unknown',
                      {'status': 'failed', 'reason': 'User ID exists', 'new_user_id': new_user_id})
