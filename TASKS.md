@@ -23,7 +23,7 @@
 - [x] Export data to CSV/Excel
 - [x] **Add date range filtering for order history and stats** — Added `date_from`/`date_to` params to `/api/admin_stats` endpoint with server-side filtering. Frontend: date range (from/to) inputs in Order History replacing single date, date range filter in Stats section. Stats cards adapt labels (Today's / Filtered Range). i18n English + Spanish. Backward-compatible. [worker-3]
 |- [x] **Add item popularity trend chart (which items rising/falling)** — New `/api/analytics/item_trends` endpoint comparing recent 7d vs prior 7d item counts with % change, direction (rising/falling/stable), and sorting. Frontend: horizontal bar chart in Charts section with green/red/gray bars, tooltip showing counts and delta. i18n EN + ES. [worker-3]
-|- [ ] Add offline order queuing (sync when connection restores)
+|- [~] worker-3 Add offline order queuing (sync when connection restores)
 
 ## Priority: HIGH (NEW — Audit 2026-06-22)
 
