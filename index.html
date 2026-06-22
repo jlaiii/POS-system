@@ -223,6 +223,34 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 }
 #catTabs button.active { background: var(--accent); color: #fff; }
 
+/* ── BARCODE SCANNER ── */
+#barcodeScanner {
+  margin-bottom: 8px;
+}
+.barcode-input-row {
+  display: flex; gap: 6px; align-items: stretch;
+}
+#barcodeInput {
+  flex: 1; min-height: 48px; font-size: 18px; font-family: monospace;
+  padding: 8px 14px; background: var(--bg); border: 2px solid var(--accent);
+  border-radius: var(--radius); color: var(--text); letter-spacing: 2px;
+  text-transform: uppercase;
+}
+#barcodeInput:focus { outline: none; box-shadow: 0 0 0 3px rgba(233,69,96,0.3); }
+.barcode-scan-btn, .barcode-clear-btn {
+  min-height: 48px; min-width: 48px; font-size: 20px;
+  background: var(--card); border: 2px solid var(--border);
+  border-radius: var(--radius); color: var(--text); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.2s;
+}
+.barcode-scan-btn:hover, .barcode-clear-btn:hover { background: var(--card-alt, #1e2a4a); }
+#barcodeStatus {
+  font-size: 13px; min-height: 20px; padding: 4px 0; color: var(--text2);
+}
+#barcodeStatus.success { color: #2ecc71; font-weight: 600; }
+#barcodeStatus.error { color: #e74c3c; font-weight: 600; }
+
 #posMain {
   display: flex; gap: 12px; flex: 1; overflow: hidden;
   flex-direction: column;
@@ -866,6 +894,14 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
   <div id="tabContent">
     <!-- POS TAB -->
     <div id="posTab" class="active">
+      <div id="barcodeScanner">
+        <div class="barcode-input-row">
+          <input type="text" id="barcodeInput" placeholder="Scan barcode..." autofocus inputmode="numeric" data-i18n-placeholder="barcode.placeholder"/>
+          <button class="barcode-scan-btn" onclick="scanBarcodeCamera()" title="Scan with camera" data-i18n="barcode.camera_btn">📷</button>
+          <button class="barcode-clear-btn" onclick="clearBarcodeInput()" title="Clear">✕</button>
+        </div>
+        <div id="barcodeStatus"></div>
+      </div>
       <div id="catTabs"></div>
       <div id="posMain">
         <div id="itemGrid"></div>
@@ -1009,6 +1045,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
               <input type="text" id="addItemCategory" placeholder="Category"/>
               <input type="text" id="addItemName" placeholder="Item name"/>
               <input type="number" id="addItemPrice" placeholder="Price" step="0.01" min="0.01"/>
+              <input type="text" id="addItemBarcode" placeholder="Barcode (optional)" style="max-width:160px;"/>
               <button class="accent" onclick="addItem()">Add</button>
             </div>
           </div>
@@ -1020,6 +1057,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
               <input type="text" id="editNewCat" placeholder="Category"/>
               <input type="text" id="editNewName" placeholder="Name"/>
               <input type="number" id="editNewPrice" placeholder="Price" step="0.01" min="0.01"/>
+              <input type="text" id="editNewBarcode" placeholder="Barcode" style="max-width:160px;"/>
               <button class="success" onclick="saveEditItem()">Save</button>
               <button class="ghost" onclick="cancelEditItem()">Cancel</button>
             </div>
@@ -1497,6 +1535,14 @@ const L10N = {
     'toast.network_error': 'Network error',
     'toast.discount_applied': 'Discount applied!',
     'toast.discount_removed': 'Discount removed',
+    'barcode.placeholder': 'Scan barcode...',
+    'barcode.camera_btn': '📷',
+    'barcode.not_found': 'No item found for barcode {code}',
+    'barcode.lookup_error': 'Error looking up barcode',
+    'barcode.camera_unavailable': 'Camera scanner requires Chrome on Android/desktop. Use a hardware scanner.',
+    'barcode.camera_denied': 'Camera access denied. Use a hardware scanner.',
+    'barcode.scan_timeout': 'Scan cancelled (timeout)',
+    'barcode.added': '{name} added!',
     'loading': 'Loading...',
     'network_error': 'Network error',
     'unauthorized': 'Unauthorized',
@@ -1694,6 +1740,14 @@ const L10N = {
     'offline.synced': '📶 ¡{count} pedido(s) sin conexión sincronizado(s)!',
     'offline.sync_failed': '📶 Error al sincronizar algunos pedidos sin conexión',
     'offline.queue_badge': '📶 {count}',
+    'barcode.placeholder': 'Escanear código de barras...',
+    'barcode.camera_btn': '📷',
+    'barcode.not_found': 'No se encontró artículo para el código {code}',
+    'barcode.lookup_error': 'Error al buscar código de barras',
+    'barcode.camera_unavailable': 'El escáner de cámara requiere Chrome en Android/escritorio. Use un escáner físico.',
+    'barcode.camera_denied': 'Acceso a cámara denegado. Use un escáner físico.',
+    'barcode.scan_timeout': 'Escaneo cancelado (tiempo agotado)',
+    'barcode.added': '¡{name} añadido!',
   }
 };
 
@@ -2109,6 +2163,7 @@ function showApp() {
   
   loadTaxConfig();
   loadTableSelector();
+  setupBarcodeScanner();
   if (currentUser.role === 'cook') {
     showKitchenView();
   } else {
@@ -3461,10 +3516,12 @@ async function loadItemMgmt() {
     let html = '';
     Object.entries(data).forEach(([cat, items]) => {
       items.forEach(item => {
+        const bc = item.barcode || '';
+        const bcHtml = bc ? `<span class="ime-barcode" style="color:var(--text2);font-size:12px;font-family:monospace;margin-left:8px;">📷 ${escHtml(bc)}</span>` : '';
         html += `<div class="item-mgmt-entry">
-          <div class="ime-info"><span class="ime-cat">${escHtml(cat)}</span> — ${escHtml(item.name)} <span class="ime-price">$${item.price.toFixed(2)}</span></div>
+          <div class="ime-info"><span class="ime-cat">${escHtml(cat)}</span> — ${escHtml(item.name)} <span class="ime-price">$${item.price.toFixed(2)}</span>${bcHtml}</div>
           <div class="ime-actions">
-            <button class="outline" onclick='startEditItem(${JSON.stringify(cat)},${JSON.stringify(item.name)},${item.price})' style="font-size:13px;padding:6px 12px;min-height:36px;">✏️</button>
+            <button class="outline" onclick='startEditItem(${JSON.stringify(cat)},${JSON.stringify(item.name)},${item.price},${JSON.stringify(bc)})' style="font-size:13px;padding:6px 12px;min-height:36px;">✏️</button>
             <button class="danger" onclick='deleteItem(${JSON.stringify(cat)},${JSON.stringify(item.name)})' style="font-size:13px;padding:6px 12px;min-height:36px;">🗑️</button>
           </div>
         </div>`;
@@ -3474,13 +3531,14 @@ async function loadItemMgmt() {
   } catch(e) { list.innerHTML = '<div class="empty-state">' + t('network_error') + '</div>'; }
 }
 
-function startEditItem(cat, name, price) {
+function startEditItem(cat, name, price, barcode) {
   document.getElementById('editItemForm').classList.add('active');
   document.getElementById('editOldCat').value = cat;
   document.getElementById('editOldName').value = name;
   document.getElementById('editNewCat').value = cat;
   document.getElementById('editNewName').value = name;
   document.getElementById('editNewPrice').value = price;
+  document.getElementById('editNewBarcode').value = barcode || '';
   document.getElementById('editItemForm').scrollIntoView({ behavior: 'smooth' });
 }
 
@@ -3494,11 +3552,12 @@ async function saveEditItem() {
   const newCat = document.getElementById('editNewCat').value.trim();
   const newName = document.getElementById('editNewName').value.trim();
   const newPrice = parseFloat(document.getElementById('editNewPrice').value);
+  const newBarcode = document.getElementById('editNewBarcode').value.trim();
   if (!newCat || !newName || isNaN(newPrice) || newPrice <= 0) { showToast('Fill all fields correctly', 'danger'); return; }
   try {
     const r = await fetch(BACKEND_URL + '/api/edit_item', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adminPin: currentUser.id, oldCategory: oldCat, oldName, newCategory: newCat, newName, newPrice })
+      body: JSON.stringify({ adminPin: currentUser.id, oldCategory: oldCat, oldName, newCategory: newCat, newName, newPrice, barcode: newBarcode })
     });
     const d = await r.json();
     if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
@@ -3528,11 +3587,12 @@ async function addItem() {
   const category = document.getElementById('addItemCategory').value.trim();
   const name = document.getElementById('addItemName').value.trim();
   const price = parseFloat(document.getElementById('addItemPrice').value);
+  const barcode = document.getElementById('addItemBarcode').value.trim();
   if (!category || !name || isNaN(price) || price <= 0) { showToast('Fill all fields correctly', 'danger'); return; }
   try {
     const r = await fetch(BACKEND_URL + '/api/add_item', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adminPin: currentUser.id, category, name, price })
+      body: JSON.stringify({ adminPin: currentUser.id, category, name, price, barcode })
     });
     const d = await r.json();
     if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
@@ -3540,6 +3600,7 @@ async function addItem() {
     document.getElementById('addItemCategory').value = '';
     document.getElementById('addItemName').value = '';
     document.getElementById('addItemPrice').value = '';
+    document.getElementById('addItemBarcode').value = '';
     loadItemMgmt();
     loadItems();
   } catch(e) { showToast(t('toast.network_error'), 'danger'); }
@@ -4645,6 +4706,160 @@ function escHtml(s) {
 
 function escJs(s) {
   return s.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"');
+}
+
+/* ── BARCODE SCANNER ── */
+
+function setupBarcodeScanner() {
+  const input = document.getElementById('barcodeInput');
+  if (!input) return;
+  // Hardware scanners act as keyboard wedge — listen for Enter
+  input.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const code = this.value.trim();
+      if (code) {
+        lookupBarcode(code);
+      }
+    }
+  });
+  // Auto-focus when POS tab becomes active
+  const posTab = document.getElementById('posTab');
+  if (posTab) {
+    const observer = new MutationObserver(() => {
+      if (posTab.classList.contains('active')) {
+        setTimeout(() => input.focus(), 100);
+      }
+    });
+    observer.observe(posTab, { attributes: true, attributeFilter: ['class'] });
+  }
+}
+
+async function lookupBarcode(code) {
+  const status = document.getElementById('barcodeStatus');
+  status.textContent = '🔍 ' + t('loading');
+  status.className = '';
+  try {
+    const r = await fetch(BACKEND_URL + '/api/items/barcode/lookup', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ barcode: code })
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      status.textContent = '❌ ' + t('barcode.not_found', { code });
+      status.className = 'error';
+      document.getElementById('barcodeInput').value = '';
+      document.getElementById('barcodeInput').focus();
+      return;
+    }
+    // Add the scanned item to cart
+    addToCart(data.name, data.price, data.category);
+    status.textContent = '✅ ' + t('barcode.added', { name: data.name });
+    status.className = 'success';
+    document.getElementById('barcodeInput').value = '';
+    document.getElementById('barcodeInput').focus();
+    // Clear status after 3s
+    setTimeout(() => { status.textContent = ''; status.className = ''; }, 3000);
+  } catch(e) {
+    status.textContent = '❌ ' + t('barcode.lookup_error');
+    status.className = 'error';
+    document.getElementById('barcodeInput').focus();
+  }
+}
+
+function clearBarcodeInput() {
+  document.getElementById('barcodeInput').value = '';
+  document.getElementById('barcodeStatus').textContent = '';
+  document.getElementById('barcodeStatus').className = '';
+  document.getElementById('barcodeInput').focus();
+}
+
+async function scanBarcodeCamera() {
+  const status = document.getElementById('barcodeStatus');
+  // Check if BarcodeDetector is available
+  if (!('BarcodeDetector' in window)) {
+    status.textContent = '📷 ' + t('barcode.camera_unavailable');
+    status.className = 'error';
+    return;
+  }
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    const video = document.createElement('video');
+    video.srcObject = stream;
+    video.setAttribute('playsinline', '');
+    video.setAttribute('autoplay', '');
+    video.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:9999;background:#000;';
+    
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:10000;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;';
+    overlay.innerHTML = '<div style="background:rgba(0,0,0,0.7);color:#fff;padding:16px 24px;border-radius:12px;font-size:20px;margin-bottom:20px;">📷 ' + t('barcode.camera_btn') + '</div><div style="width:280px;height:120px;border:4px solid var(--accent,#e94560);border-radius:12px;box-shadow:0 0 40px rgba(233,69,96,0.4);"></div>';
+    
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = '✕ ' + t('cancel');
+    closeBtn.style.cssText = 'position:fixed;bottom:40px;left:50%;transform:translateX(-50%);z-index:10001;background:var(--accent,#e94560);color:#fff;border:none;border-radius:12px;padding:16px 40px;font-size:18px;cursor:pointer;min-height:52px;';
+    
+    document.body.appendChild(video);
+    document.body.appendChild(overlay);
+    document.body.appendChild(closeBtn);
+    
+    // Wait for video to play
+    await video.play();
+    
+    const detector = new BarcodeDetector({ formats: ['qr_code', 'ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'code_93', 'codabar', 'itf', 'data_matrix', 'aztec', 'pdf417'] });
+    
+    let found = false;
+    const scanInterval = setInterval(async () => {
+      if (found) return;
+      try {
+        const barcodes = await detector.detect(video);
+        for (const b of barcodes) {
+          if (b.rawValue) {
+            found = true;
+            // Clean up
+            stream.getTracks().forEach(t => t.stop());
+            video.remove();
+            overlay.remove();
+            closeBtn.remove();
+            clearInterval(scanInterval);
+            // Look up the barcode
+            document.getElementById('barcodeInput').value = b.rawValue;
+            lookupBarcode(b.rawValue);
+            break;
+          }
+        }
+      } catch(e) {
+        // Detection error, keep trying
+      }
+    }, 500);
+    
+    // Timeout after 30 seconds
+    setTimeout(() => {
+      if (!found) {
+        stream.getTracks().forEach(t => t.stop());
+        video.remove();
+        overlay.remove();
+        closeBtn.remove();
+        clearInterval(scanInterval);
+        status.textContent = '📷 ' + t('barcode.scan_timeout');
+        status.className = 'error';
+      }
+    }, 30000);
+    
+    closeBtn.onclick = () => {
+      stream.getTracks().forEach(t => t.stop());
+      video.remove();
+      overlay.remove();
+      closeBtn.remove();
+      clearInterval(scanInterval);
+      status.textContent = '';
+      status.className = '';
+      document.getElementById('barcodeInput').focus();
+    };
+  } catch(e) {
+    status.textContent = '📷 ' + t('barcode.camera_denied');
+    status.className = 'error';
+  }
 }
 
 function showToast(msg, type) {

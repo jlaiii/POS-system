@@ -101,24 +101,24 @@ for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMES
             elif f == ITEMS_FILE:
                 json.dump({
                     "Foods": [
-                        {"name": "Hamburger - Normal", "price": 6},
-                        {"name": "Hamburger - All the Fixings", "price": 8},
-                        {"name": "Hotdog - Loaded", "price": 7},
-                        {"name": "Hotdog - Plain", "price": 5},
-                        {"name": "Taco - Beef & Cheese", "price": 7},
-                        {"name": "Taco - Chicken with Salsa", "price": 7}
+                        {"name": "Hamburger - Normal", "price": 6, "barcode": ""},
+                        {"name": "Hamburger - All the Fixings", "price": 8, "barcode": ""},
+                        {"name": "Hotdog - Loaded", "price": 7, "barcode": ""},
+                        {"name": "Hotdog - Plain", "price": 5, "barcode": ""},
+                        {"name": "Taco - Beef & Cheese", "price": 7, "barcode": ""},
+                        {"name": "Taco - Chicken with Salsa", "price": 7, "barcode": ""}
                     ],
                     "Drinks": [
-                        {"name": "Lemonade", "price": 3},
-                        {"name": "Coke", "price": 3},
-                        {"name": "Water Bottle", "price": 2}
+                        {"name": "Lemonade", "price": 3, "barcode": ""},
+                        {"name": "Coke", "price": 3, "barcode": ""},
+                        {"name": "Water Bottle", "price": 2, "barcode": ""}
                     ],
                     "Snacks": [
-                        {"name": "Raspia (Fruit Slush)", "price": 4},
-                        {"name": "Chips (Large Bag)", "price": 3},
-                        {"name": "Chocolate Bar", "price": 2},
-                        {"name": "Mixed Nuts (Small Pack)", "price": 4},
-                        {"name": "Granola Bar", "price": 2}
+                        {"name": "Raspia (Fruit Slush)", "price": 4, "barcode": ""},
+                        {"name": "Chips (Large Bag)", "price": 3, "barcode": ""},
+                        {"name": "Chocolate Bar", "price": 2, "barcode": ""},
+                        {"name": "Mixed Nuts (Small Pack)", "price": 4, "barcode": ""},
+                        {"name": "Granola Bar", "price": 2, "barcode": ""}
                     ]
                 }, file, indent=4)  # Initialize with default items
             elif f == TAX_CONFIG_FILE:
@@ -489,7 +489,7 @@ def add_item():
             log_activity('add_item', admin_pin, admin_role, {'status': 'failed', 'reason': 'Item already exists', 'item_data': data})
             return jsonify({'message': f'Item "{name}" already exists in category "{category}".'}), 409
 
-    items_data[category].append({"name": name, "price": price})
+    items_data[category].append({"name": name, "price": price, "barcode": data.get('barcode', '')})
     save_json_data(ITEMS_FILE, items_data)
     backup_menu()  # Auto-backup after successful save
     
@@ -562,10 +562,12 @@ def edit_item():
 
                 if new_category not in items_data:
                     items_data[new_category] = []
-                items_data[new_category].append({"name": new_name, "price": new_price})
-            else:  # Only name/price changing within same category
+                items_data[new_category].append({"name": new_name, "price": new_price, "barcode": data.get('barcode', items_data[old_category][i].get('barcode', ''))})
+            else:  # Only name/price/barcode changing within same category
                 items_data[old_category][i]["name"] = new_name
                 items_data[old_category][i]["price"] = new_price
+                if 'barcode' in data and data.get('barcode') is not None:
+                    items_data[old_category][i]["barcode"] = data.get('barcode', '')
             break
 
     if not item_found:
@@ -621,6 +623,66 @@ def delete_item():
     backup_menu()  # Auto-backup after successful save
     log_activity('delete_item', admin_pin, admin_role, {'status': 'success', 'category': category, 'name': name})
     return jsonify({'message': 'Item deleted successfully'})
+
+
+@app.route('/api/items/barcode/lookup', methods=['POST'])
+def barcode_lookup():
+    """Look up an item by barcode. Returns the item info or 404."""
+    data = request.json
+    barcode = data.get('barcode', '').strip()
+    if not barcode:
+        return jsonify({'message': 'Barcode is required.'}), 400
+
+    items_data = load_json_data(ITEMS_FILE)
+    for cat, cat_items in items_data.items():
+        for item in cat_items:
+            item_barcode = item.get('barcode', '')
+            if item_barcode and item_barcode == barcode:
+                return jsonify({
+                    'category': cat,
+                    'name': item['name'],
+                    'price': item['price'],
+                    'barcode': item_barcode
+                })
+    return jsonify({'message': f'No item found with barcode "{barcode}".'}), 404
+
+
+@app.route('/api/items/set_barcode', methods=['POST'])
+def set_item_barcode():
+    """Set or update the barcode for an existing item."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+
+    if not check_perm(admin_pin, "manage_items"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    category = data.get('category')
+    name = data.get('name')
+    barcode = data.get('barcode', '').strip()
+
+    if not all([category, name]):
+        return jsonify({'message': 'Category and name are required.'}), 400
+
+    items_data = load_json_data(ITEMS_FILE)
+    if category not in items_data:
+        return jsonify({'message': f'Category "{category}" not found.'}), 404
+
+    found = False
+    for item in items_data[category]:
+        if item['name'] == name:
+            item['barcode'] = barcode
+            found = True
+            break
+
+    if not found:
+        return jsonify({'message': f'Item "{name}" not found in category "{category}".'}), 404
+
+    save_json_data(ITEMS_FILE, items_data)
+    backup_menu()
+    admin_user = load_json_data(USERS_FILE).get(admin_pin, None)
+    admin_role = admin_user['role'] if admin_user else 'unknown'
+    log_activity('set_barcode', admin_pin, admin_role, {'category': category, 'name': name, 'barcode': barcode})
+    return jsonify({'message': 'Barcode updated successfully'})
 
 
 # --- Order Management Endpoints ---
