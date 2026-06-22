@@ -1947,6 +1947,11 @@ const L10N = {
     'admin.ads.interval_updated': 'Rotation interval updated!',
     'item.search': '🔍 Search items...',
     'item.search_no_results': 'No items match "{query}"',
+    'draft.restore_title': 'Unsaved Draft Found',
+    'draft.restore_desc': 'You have a cart with items from {time}. Restore it?',
+    'draft.restore': '🔄 Restore Draft',
+    'draft.discard': '🗑️ Discard',
+    'draft.restored': '🔄 Cart restored from draft',
   },
   es: {
     'app.title': '🍽️ Sistema POS',
@@ -2224,6 +2229,11 @@ const L10N = {
     'admin.ads.interval_updated': '¡Intervalo de rotación actualizado!',
     'item.search': '🔍 Buscar artículos...',
     'item.search_no_results': 'Ningún artículo coincide con "{query}"',
+    'draft.restore_title': 'Borrador no guardado encontrado',
+    'draft.restore_desc': 'Tienes un carrito con artículos de {time}. ¿Restaurarlo?',
+    'draft.restore': '🔄 Restaurar borrador',
+    'draft.discard': '🗑️ Descartar',
+    'draft.restored': '🔄 Carrito restaurado del borrador',
   }
 };
 
@@ -2466,6 +2476,22 @@ window.addEventListener('DOMContentLoaded', () => {
       syncQueuedOrders();
     }
   }, 30000);
+  // Auto-save draft on non-cart state changes: order notes, delivery toggle, table select
+  var draftInputs = ['orderNotesInput', 'deliveryToggle', 'tableSelect'];
+  draftInputs.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('change', saveCartDraft);
+      if (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT') {
+        el.addEventListener('input', saveCartDraft);
+      }
+    }
+  });
+  // Also save draft on delivery address field changes
+  ['delStreet','delCity','delState','delZip','delInstructions'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('input', saveCartDraft);
+  });
 });
 
 // ═══════════ PIN PAD ═══════════
@@ -2722,6 +2748,8 @@ function showApp() {
   }
   // Apply language after UI is set up
   switchLanguage(currentLang);
+  // Check for saved cart draft
+  checkCartDraft();
 }
 
 // ═══════════ MAIN TABS ═══════════
@@ -3004,6 +3032,7 @@ function renderCart() {
   if (customerDisplayMode) pushToCustomerDisplay();
   // Rebuild payment splits to stay in sync with cart total
   buildPaymentMethods();
+  saveCartDraft();
 }
 
 function buildPaymentMethods() {
@@ -3453,6 +3482,112 @@ async function syncQueuedOrders() {
   }
 
   if (badge) badge.classList.remove('syncing');
+}
+
+// ═══════════ AUTO-SAVE DRAFT ORDERS ═══════════
+
+/** Save current cart state to localStorage as a recoverable draft */
+function saveCartDraft() {
+  if (!cart || cart.length === 0) {
+    clearCartDraft();
+    return;
+  }
+  const deliveryToggle = document.getElementById('deliveryToggle');
+  let deliveryAddress = null;
+  if (deliveryToggle && deliveryToggle.checked) {
+    deliveryAddress = getDeliveryAddress();
+  }
+  const tableSelect = document.getElementById('tableSelect');
+  const tableNumber = tableSelect ? tableSelect.value : '';
+  const notesInput = document.getElementById('orderNotesInput');
+  const orderNotes = notesInput ? notesInput.value.trim() : '';
+  const draft = {
+    cart: cart.map(function(c) { return Object.assign({}, c); }),
+    paymentSplits: paymentSplits.map(function(s) { return Object.assign({}, s); }),
+    appliedDiscount: appliedDiscount ? Object.assign({}, appliedDiscount) : null,
+    selectedTipMode: selectedTipMode,
+    selectedTipValue: selectedTipValue,
+    orderNotes: orderNotes,
+    deliveryAddress: deliveryAddress,
+    tableNumber: tableNumber,
+    loyaltyCustomerPhone: loyaltyCustomerPhone,
+    savedAt: new Date().toISOString()
+  };
+  try { localStorage.setItem('pos_cart_draft', JSON.stringify(draft)); }
+  catch(e) { /* storage full */ }
+}
+
+/** Clear the saved draft from localStorage */
+function clearCartDraft() {
+  try { localStorage.removeItem('pos_cart_draft'); }
+  catch(e) { /* ignore */ }
+}
+
+/** Check for a saved draft and prompt user to restore it */
+function checkCartDraft() {
+  try {
+    var raw = localStorage.getItem('pos_cart_draft');
+    if (!raw) return;
+    var draft = JSON.parse(raw);
+    if (!draft.cart || draft.cart.length === 0) { clearCartDraft(); return; }
+    // Check if draft is too old (> 24 hours)
+    var savedAt = new Date(draft.savedAt);
+    var now = new Date();
+    var hoursAgo = (now - savedAt) / (1000 * 60 * 60);
+    if (hoursAgo > 24) { clearCartDraft(); return; }
+    showDraftRestorePrompt(draft);
+  } catch(e) { clearCartDraft(); }
+}
+
+/** Show a modal with restore/discard options for a found draft */
+function showDraftRestorePrompt(draft) {
+  var overlay = document.createElement('div');
+  overlay.className = 'draft-overlay';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.75);z-index:9999;display:flex;align-items:center;justify-content:center;';
+  var timeStr = new Date(draft.savedAt).toLocaleTimeString();
+  var itemCount = draft.cart.length;
+  var totalPrice = draft.cart.reduce(function(sum, i) { return sum + i.price * i.qty; }, 0).toFixed(2);
+  overlay.innerHTML = '<div class="draft-modal" style="background:var(--card,#16213e);border:2px solid var(--accent,#e94560);border-radius:16px;padding:32px;max-width:420px;width:90%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,0.5);">' +
+    '<h3 style="margin:0 0 12px 0;font-size:20px;color:#fff;">' + t('draft.restore_title') + '</h3>' +
+    '<p style="margin:0 0 20px 0;color:#ccc;font-size:15px;line-height:1.5;">' + t('draft.restore_desc', { time: timeStr }) + '</p>' +
+    '<p style="margin:0 0 24px 0;color:#aaa;font-size:13px;">' + itemCount + ' item(s) · $' + totalPrice + '</p>' +
+    '<div style="display:flex;gap:12px;justify-content:center;">' +
+    '<button class="accent" id="draftRestoreBtn" style="padding:12px 28px;font-size:16px;min-height:48px;border-radius:10px;border:none;background:var(--accent,#e94560);color:#fff;cursor:pointer;font-weight:600;">' + t('draft.restore') + '</button>' +
+    '<button class="danger" id="draftDiscardBtn" style="padding:12px 28px;font-size:16px;min-height:48px;border-radius:10px;border:none;background:#444;color:#fff;cursor:pointer;font-weight:600;">' + t('draft.discard') + '</button>' +
+    '</div></div>';
+  document.body.appendChild(overlay);
+  document.getElementById('draftRestoreBtn').onclick = function() { restoreCartDraft(draft); overlay.remove(); };
+  document.getElementById('draftDiscardBtn').onclick = function() { clearCartDraft(); overlay.remove(); };
+}
+
+/** Restore cart state from a saved draft */
+function restoreCartDraft(draft) {
+  cart = draft.cart.map(function(c) { return Object.assign({}, c); });
+  paymentSplits = draft.paymentSplits ? draft.paymentSplits.map(function(s) { return Object.assign({}, s); }) : [{method:'Cash', amount:0}];
+  appliedDiscount = draft.appliedDiscount ? Object.assign({}, draft.appliedDiscount) : null;
+  selectedTipMode = draft.selectedTipMode || null;
+  selectedTipValue = draft.selectedTipValue || 0;
+  loyaltyCustomerPhone = draft.loyaltyCustomerPhone || '';
+  var notesInput = document.getElementById('orderNotesInput');
+  if (notesInput && draft.orderNotes) notesInput.value = draft.orderNotes;
+  var tableSelect = document.getElementById('tableSelect');
+  if (tableSelect && draft.tableNumber) tableSelect.value = draft.tableNumber;
+  if (draft.deliveryAddress) {
+    var deliveryToggle = document.getElementById('deliveryToggle');
+    if (deliveryToggle) { deliveryToggle.checked = true; }
+    var fld;
+    fld = document.getElementById('delStreet'); if (fld && draft.deliveryAddress.street) fld.value = draft.deliveryAddress.street;
+    fld = document.getElementById('delCity'); if (fld && draft.deliveryAddress.city) fld.value = draft.deliveryAddress.city;
+    fld = document.getElementById('delState'); if (fld && draft.deliveryAddress.state) fld.value = draft.deliveryAddress.state;
+    fld = document.getElementById('delZip'); if (fld && draft.deliveryAddress.zip) fld.value = draft.deliveryAddress.zip;
+    fld = document.getElementById('delInstructions'); if (fld && draft.deliveryAddress.instructions) fld.value = draft.deliveryAddress.instructions;
+    var deliveryForm = document.getElementById('deliveryForm');
+    if (deliveryForm) deliveryForm.style.display = 'block';
+  }
+  renderCart();
+  buildPaymentMethods();
+  clearCartDraft();
+  showToast(t('draft.restored'), 'success');
 }
 
 // ═══════════ DELIVERY ADDRESS ═══════════

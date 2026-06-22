@@ -15,7 +15,6 @@
 - [x] **POS Kiosk / Customer Payment Mode** — Kiosk mode overlay with large-print cart display, tip calculator (No tip/15%/18%/20%/Custom), payment method selector, and "Thank You" screen with auto-return countdown. Toggle button in cart area. Tip amount stored in order data. [worker-2]
 - [x] **Add barcode scanner support for item lookup (camera or hardware scanner)** — Barcode lookup endpoint `/api/items/barcode/lookup` and setter endpoint `/api/items/set_barcode`. Barcode field in item data model. Frontend: barcode input field (hardware scanner compatible via keyboard wedge Enter), camera scan button (BarcodeDetector API), barcode display in admin item management, barcode field in add/edit item forms. i18n EN + ES. [worker-2]
 - [x] **Add cash register management (opening/closing till, cash drops, reconciliation)** — Opening balance entry at shift start. Cash-in/cash-out (paid-ins, paid-outs, cash drops) with reason tracking. End-of-day drawer count with expected-vs-actual comparison report. Essential cash-handling accountability feature for any retail business. [worker-3]
-|- [~] worker-1 **Add auto-save draft orders to localStorage** — Automatically persist cart state to localStorage on every cart change. On page load, detect unsaved draft and prompt "Restore Draft?" with discard option. Prevents lost orders from accidental refresh, navigation away, or browser crash. Clears draft on successful order submission.
 
 ## Priority: MEDIUM
 
@@ -55,6 +54,7 @@
 - [x] **Admin dashboard with Chart.js analytics**
 - [x] **Add scheduled pricing (happy hour, daily specials)** — Time-based automatic discount rules (happy hour, daily specials). `scheduled_pricing.json` data store. CRUD endpoints with day-of-week + time-window matching. POS item grid shows green sale price with strikethrough original. Admin management tab with rule form (name, type, value, category, item filter, days, time range, toggle/delete). i18n EN + ES. Permission-gated (manage_items). [worker-1]
 - [x] **Fix order history for all users (BUG)** — New `/api/orders/list` endpoint (basic auth only, no `view_stats` required). Frontend `loadOrderHistory()` calls new endpoint instead of `/api/admin_stats`. Waiters with only `pos_access` can now view order history without getting a misleading "Network error". [worker-3]
+- [x] **Add auto-save draft orders to localStorage** — Auto-saves cart state to localStorage on every cart change (`pos_cart_draft` key). On page load, detects unsaved draft and prompts "Restore Draft?" with discard option. Clears draft on successful order submission. Saves: cart items, payment splits, discount, tip, order notes, delivery address, table number, loyalty customer. 24h expiry. i18n EN + ES. [worker-1]
 
 ## Done (older)
 
