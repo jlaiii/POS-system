@@ -28,7 +28,7 @@
 
 ## Priority: HIGH (NEW — Audit 2026-06-22)
 
-- [ ] **Fix verify_admin blocking owners from tax/discount endpoints** — `verify_admin()` checks for role=='admin' but skips owners. Blocks owner from updating tax config and managing discounts in the API. Replace with `check_perm(admin_pin, "manage_items")` in both `update_tax_config()` and `manage_discount()`.
+- [~] worker-2 **Fix verify_admin blocking owners from tax/discount endpoints** — `verify_admin()` checks for role=='admin' but skips owners. Blocks owner from updating tax config and managing discounts in the API. Replace with `check_perm(admin_pin, "manage_items")` in both `update_tax_config()` and `manage_discount()`.
 - [ ] **Fix menu history frontend parsing** — Frontend reads `data.history` but API returns `{"backups": [...]}`. Causes TypeError (forEach on object) when owner opens Menu History tab. Change frontend to read `data.backups`.
 - [ ] **Add reorder button in order history** — One-click to reload all items from a past order into the cart. Major waiter speed improvement: eliminates need to manually re-add frequent orders.
 
