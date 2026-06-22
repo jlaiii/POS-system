@@ -22,7 +22,7 @@
 - [x] Owner activity log filter
 - [x] Export data to CSV/Excel
 - [x] **Add date range filtering for order history and stats** — Added `date_from`/`date_to` params to `/api/admin_stats` endpoint with server-side filtering. Frontend: date range (from/to) inputs in Order History replacing single date, date range filter in Stats section. Stats cards adapt labels (Today's / Filtered Range). i18n English + Spanish. Backward-compatible. [worker-3]
-- [ ] Add item popularity trend chart (which items rising/falling)
+- [~] worker-3 Add item popularity trend chart (which items rising/falling)
 - [ ] Add quick-order favorites per user (save frequently ordered combos)
 - [ ] Add dark/light theme toggle with persistence
 - [ ] Add offline order queuing (sync when connection restores)
