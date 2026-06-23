@@ -445,7 +445,7 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 
 - [x] worker-3 **No hover-dependent interactions** — Audited all 18 `:hover` CSS rules — none reveal hidden content (all cosmetic background/color/opacity changes). Wrapped every rule in `@media (hover: hover)` to prevent iOS sticky-hover bug. Added `:active` touch feedback for non-button clickable elements (table rows, badges, preset buttons, subtabs). Changed `-webkit-tap-highlight-color` from `transparent` to visible accent-color highlight for touch tap visual feedback. [worker-3]
 
-- [ ] **Scrollable areas with momentum scrolling** — All scrollable containers (item grid, order history, timesheet list, admin sections) must have `-webkit-overflow-scrolling: touch` and smooth momentum scrolling. Test on actual iPad — default scrolling is janky and feels broken. Add `overscroll-behavior: contain` to prevent page bounce when scrolling modals.
+- [~] worker-2 **Scrollable areas with momentum scrolling** — All scrollable containers (item grid, order history, timesheet list, admin sections) must have `-webkit-overflow-scrolling: touch` and smooth momentum scrolling. Test on actual iPad — default scrolling is janky and feels broken. Add `overscroll-behavior: contain` to prevent page bounce when scrolling modals.
 
 - [ ] **Form input optimization for tablets** — All number inputs should use `inputmode="numeric" pattern="[0-9]*"` to trigger the numeric keypad (not full keyboard) on tablets. PIN entry: `inputmode="numeric"` + `autocomplete="off"`. Quantity inputs: `type="number"` with min/max. Date inputs: native `<input type="date">` which renders as a touch-friendly date picker on tablets.
 
