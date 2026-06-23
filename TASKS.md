@@ -316,7 +316,7 @@ New `tickets.json` data store. Each ticket:
 
 ### Priority: MEDIUM
 
-- [~] worker-3 **Conflict detection for time-off requests** — When admin views a pending time-off, show warning if too many employees already approved for same dates.
+- [x] worker-3 **Conflict detection for time-off requests** — When admin views a pending time-off, show warning if too many employees already approved for same dates. Backend: `check_timeoff_conflicts()` helper, queue and respond endpoints attach `conflict_warning` with count/names/threshold. Configurable `max_staff_off_per_day` in timesheet_config.json (default 3). Frontend: red warning banner in admin ticket card, warning toast on approve. [worker-3]
 - [ ] **Ticket filtering and search** — Admin queue: filter by type, status, employee, date range. Search by text.
 - [ ] **Recurring time-off patterns** — Allow employee to request recurring time-off (e.g., "every Tuesday for the next 3 months").
 - [ ] **Calendar view for time-off** — Visual calendar in admin showing who's off on which days.

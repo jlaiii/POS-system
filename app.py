@@ -727,6 +727,7 @@ def get_timesheet_config():
         'overtime_daily_threshold': 8,   # hours per day before OT kicks in
         'overtime_weekly_threshold': 40, # hours per week before OT kicks in
         'late_grace_minutes': 5,
+        'max_staff_off_per_day': 3,      # max employees off same day before warning
         'offsite_backup': {
             'enabled': False,
             'host': '',
@@ -753,6 +754,7 @@ def save_timesheet_config(config):
         'overtime_daily_threshold': 8,
         'overtime_weekly_threshold': 40,
         'late_grace_minutes': 5,
+        'max_staff_off_per_day': 3,
         'offsite_backup': {
             'enabled': False,
             'host': '',
@@ -11864,6 +11866,61 @@ def generate_ticket_id():
     return f"TKT-{max_num + 1:03d}"
 
 
+def check_timeoff_conflicts(ticket, all_tickets):
+    """Check if a time-off ticket conflicts with already-approved time-off requests from OTHER employees.
+    Returns a dict with conflict info, or None if no conflict.
+    """
+    if ticket.get('type') != 'time_off':
+        return None
+    t_from = ticket.get('date_from')
+    t_to = ticket.get('date_to')
+    if not t_from or not t_to:
+        return None
+    try:
+        d1 = datetime.strptime(t_from, '%Y-%m-%d')
+        d2 = datetime.strptime(t_to, '%Y-%m-%d')
+    except (ValueError, TypeError):
+        return None
+
+    # Get the configurable threshold
+    ts_config = get_timesheet_config()
+    threshold = ts_config.get('max_staff_off_per_day', 3)
+
+    # Count other users with approved time-off that overlaps
+    conflict_users = set()
+    conflict_names = set()
+    for existing in all_tickets:
+        if existing.get('id') == ticket.get('id'):
+            continue
+        if existing.get('user_id') == ticket.get('user_id'):
+            continue  # Same user, don't count
+        if existing.get('type') != 'time_off':
+            continue
+        if existing.get('status') != 'approved':
+            continue
+        ed_from = existing.get('date_from')
+        ed_to = existing.get('date_to')
+        if not ed_from or not ed_to:
+            continue
+        try:
+            ed1 = datetime.strptime(ed_from, '%Y-%m-%d')
+            ed2 = datetime.strptime(ed_to, '%Y-%m-%d')
+            # Check overlap
+            if d1 <= ed2 and d2 >= ed1:
+                conflict_users.add(existing.get('user_id'))
+                conflict_names.add(existing.get('user_name', 'Unknown'))
+        except (ValueError, TypeError):
+            continue
+
+    if len(conflict_users) >= threshold:
+        return {
+            'conflict_count': len(conflict_users),
+            'employee_names': sorted(conflict_names),
+            'threshold': threshold
+        }
+    return None
+
+
 @app.route('/api/tickets/submit', methods=['POST'])
 def ticket_submit():
     """Submit a new employee ticket/request."""
@@ -12024,6 +12081,13 @@ def ticket_queue():
     resolved = [t for t in tickets if t.get('status') in ('approved', 'denied')]
     pending.sort(key=lambda t: t.get('created_at', ''), reverse=True)
     resolved.sort(key=lambda t: t.get('responded_at', ''), reverse=True)
+
+    # Attach conflict warnings for pending time-off tickets
+    for t in pending:
+        conflict = check_timeoff_conflicts(t, tickets)
+        if conflict:
+            t['conflict_warning'] = conflict
+
     return jsonify({'pending': pending, 'resolved': resolved})
 
 
@@ -12053,8 +12117,15 @@ def ticket_respond():
     admin_users = load_json_data(USERS_FILE)
     admin_name = admin_users.get(admin_pin, {}).get('name', 'Unknown')
     found = False
+    conflict_warning = None
     for t in tickets:
         if t.get('id') == ticket_id:
+            # Check for time-off conflict before approving
+            if action == 'approved' and t.get('type') == 'time_off':
+                conflict = check_timeoff_conflicts(t, tickets)
+                if conflict:
+                    conflict_warning = conflict
+                    t['conflict_warning'] = conflict
             t['status'] = action
             t['responded_by'] = admin_pin
             t['responded_at'] = datetime.now().isoformat()
@@ -12071,7 +12142,11 @@ def ticket_respond():
     log_activity('ticket_responded', admin_pin, admin_users.get(admin_pin, {}).get('role', 'unknown'),
                  {'ticket_id': ticket_id, 'action': action, 'reason': reason})
 
-    return jsonify({'message': f'Ticket {action} successfully!', 'ticket_id': ticket_id, 'status': action})
+    resp = {'message': f'Ticket {action} successfully!', 'ticket_id': ticket_id, 'status': action}
+    if conflict_warning:
+        resp['conflict_warning'] = conflict_warning
+        resp['message'] += f" ⚠️ {conflict_warning['conflict_count']} other employees already off on those dates."
+    return jsonify(resp)
 
 
 @app.route('/api/tickets/mark_read', methods=['POST'])

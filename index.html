@@ -5997,6 +5997,11 @@ function renderTicketCard(t, isPending) {
       ${t.priority ? ' · Priority: ' + t.priority : ''}
     </div>
     ${timeInfo}
+    ${t.conflict_warning ? `<div style="margin-top:8px;padding:8px 10px;background:rgba(231,76,60,0.1);border-left:3px solid #e74c3c;border-radius:var(--radius);font-size:12px;">
+      ⚠️ <strong>Staffing Conflict</strong> — ${t.conflict_warning.conflict_count} other employees already approved off on these dates:
+      <span style="color:#e74c3c;font-weight:600;">${escHtml(t.conflict_warning.employee_names.join(', '))}</span>
+      <span style="display:block;font-size:11px;color:var(--text2);margin-top:2px;">Threshold: ${t.conflict_warning.threshold} employees — consider rescheduling or approving with caution.</span>
+    </div>` : ''}
     ${t.description ? '<div style="color:var(--text);font-size:13px;margin-top:6px;padding:6px 8px;background:var(--bg);border-radius:var(--radius);">' + escHtml(t.description) + '</div>' : ''}
     ${t.response_note ? '<div style="border-top:1px solid var(--border);margin-top:8px;padding-top:6px;font-size:12px;color:var(--text2);"><em>Response: ' + escHtml(t.response_note) + '</em></div>' : ''}
     ${t.responded_at ? '<div style="font-size:11px;color:var(--text2);margin-top:4px;">🕐 ' + (t.status === 'approved' ? 'Approved' : 'Denied') + respondBy + respondedAt + '</div>' : ''}
@@ -6034,6 +6039,12 @@ async function respondToTicket(ticketId, action) {
       return;
     }
     showToast(data.message || 'Ticket ' + action + ' successfully!', 'success');
+    if (data.conflict_warning) {
+      // Also show a warning toast about staffing conflict
+      setTimeout(() => {
+        showToast('⚠️ ' + data.conflict_warning.conflict_count + ' other employee(s) already off on those dates: ' + (data.conflict_warning.employee_names || []).join(', '), 'warning');
+      }, 500);
+    }
     loadTicketQueue();
   } catch (e) {
     showToast('Network error responding to ticket.', 'error');
