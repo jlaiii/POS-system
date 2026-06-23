@@ -1462,6 +1462,150 @@ def security_unblock_ip():
     return jsonify({'message': 'IP unblocked successfully.', 'blocked_ips': blocked})
 
 
+@app.route('/api/security/block_user', methods=['POST'])
+def security_block_user():
+    """Block a user account and invalidate all sessions. Requires ban_users permission.
+    Body: { adminPin, userId, reason (optional) }
+    Sets banned=true + banned_reason, removes from active_admin_sessions."""
+    data = request.json or {}
+    admin_pin = data.get('adminPin', '')
+    user_id = str(data.get('userId', ''))
+    reason = data.get('reason', '').strip() or 'No reason provided'
+
+    if not admin_pin or not user_id:
+        return jsonify({'message': 'Missing required fields: adminPin, userId.'}), 400
+    if not check_perm(admin_pin, "ban_users"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    users = load_json_data(USERS_FILE)
+    if not isinstance(users, dict):
+        return jsonify({'message': 'Users data not found.'}), 500
+    if user_id not in users:
+        return jsonify({'message': 'User not found.'}), 404
+
+    users[user_id]['banned'] = True
+    users[user_id]['banned_reason'] = reason
+    save_json_data(USERS_FILE, users)
+
+    # Invalidate all sessions for this user
+    if user_id in active_admin_sessions:
+        del active_admin_sessions[user_id]
+
+    admin_data = users.get(admin_pin, {})
+    admin_name = admin_data.get('name', admin_pin)
+    log_activity('user_blocked', admin_pin, admin_data.get('role', 'unknown'), {
+        'blocked_user_id': user_id,
+        'blocked_user_name': users[user_id].get('name', ''),
+        'reason': reason,
+        'sessions_cleared': True
+    })
+    
+    log_security_event(
+        'HIGH',
+        'access_control',
+        f"User {users[user_id].get('name', user_id)} blocked by admin ({admin_name})",
+        detail=f"User {user_id} ({users[user_id].get('name', '')}) was blocked. Reason: {reason}. All sessions invalidated.",
+        affected_user=user_id,
+        affected_user_name=users[user_id].get('name', '')
+    )
+
+    return jsonify({'message': f'User {user_id} blocked successfully. Sessions invalidated.', 'userId': user_id, 'reason': reason})
+
+
+@app.route('/api/security/unblock_user', methods=['POST'])
+def security_unblock_user():
+    """Unblock a user account. Requires ban_users permission.
+    Body: { adminPin, userId }
+    Removes banned and banned_reason flags."""
+    data = request.json or {}
+    admin_pin = data.get('adminPin', '')
+    user_id = str(data.get('userId', ''))
+
+    if not admin_pin or not user_id:
+        return jsonify({'message': 'Missing required fields: adminPin, userId.'}), 400
+    if not check_perm(admin_pin, "ban_users"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    users = load_json_data(USERS_FILE)
+    if not isinstance(users, dict):
+        return jsonify({'message': 'Users data not found.'}), 500
+    if user_id not in users:
+        return jsonify({'message': 'User not found.'}), 404
+
+    if 'banned' in users[user_id]:
+        del users[user_id]['banned']
+    if 'banned_reason' in users[user_id]:
+        del users[user_id]['banned_reason']
+    save_json_data(USERS_FILE, users)
+
+    admin_data = users.get(admin_pin, {})
+    admin_name = admin_data.get('name', admin_pin)
+    log_activity('user_unblocked', admin_pin, admin_data.get('role', 'unknown'), {
+        'unblocked_user_id': user_id,
+        'unblocked_user_name': users[user_id].get('name', '')
+    })
+
+    log_security_event(
+        'MEDIUM',
+        'access_control',
+        f"User {users[user_id].get('name', user_id)} unblocked by admin ({admin_name})",
+        detail=f"User {user_id} ({users[user_id].get('name', '')}) was unblocked.",
+        affected_user=user_id,
+        affected_user_name=users[user_id].get('name', '')
+    )
+
+    return jsonify({'message': f'User {user_id} unblocked successfully.', 'userId': user_id})
+
+
+@app.route('/api/security/force_logout', methods=['POST'])
+def security_force_logout():
+    """Force logout a user by ending all their active sessions without banning them.
+    Requires manage_users permission.
+    Body: { adminPin, userId }
+    Removes user from active_admin_sessions."""
+    data = request.json or {}
+    admin_pin = data.get('adminPin', '')
+    user_id = str(data.get('userId', ''))
+
+    if not admin_pin or not user_id:
+        return jsonify({'message': 'Missing required fields: adminPin, userId.'}), 400
+    if not check_perm(admin_pin, "manage_users"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    users = load_json_data(USERS_FILE)
+    if not isinstance(users, dict):
+        return jsonify({'message': 'Users data not found.'}), 500
+    if user_id not in users:
+        return jsonify({'message': 'User not found.'}), 404
+
+    had_session = user_id in active_admin_sessions
+    if had_session:
+        del active_admin_sessions[user_id]
+
+    admin_data = users.get(admin_pin, {})
+    user_name = users[user_id].get('name', user_id)
+    log_activity('force_logout', admin_pin, admin_data.get('role', 'unknown'), {
+        'target_user_id': user_id,
+        'target_user_name': user_name,
+        'had_active_session': had_session
+    })
+
+    log_security_event(
+        'MEDIUM',
+        'access_control',
+        f"Force logout for {user_name} by admin",
+        detail=f"Admin forced logout for user {user_id} ({user_name}). Had session: {had_session}.",
+        affected_user=user_id,
+        affected_user_name=user_name
+    )
+
+    return jsonify({
+        'message': f'User {user_name} logged out successfully.',
+        'userId': user_id,
+        'had_active_session': had_session
+    })
+
+
 # Owner credentials management
 @app.route('/api/owner/credentials', methods=['POST'])
 def owner_credentials():

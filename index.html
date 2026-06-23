@@ -8506,13 +8506,18 @@ async function loadUsers() {
     list.innerHTML = entries.map(([id, u]) => {
       let banBtn = '';
       if (canBan) {
-        if (u.banned) {
-          banBtn = `<span style="color:#e74c3c;font-weight:600;margin-right:6px;">${t('banned')}</span>
-            <button class="success" onclick="unbanUser('${escJs(id)}')" style="font-size:13px;padding:6px 12px;min-height:36px;">${t('unban')}</button>`;
-        } else {
-          banBtn = `<button class="danger" onclick="banUser('${escJs(id)}')" style="font-size:13px;padding:6px 12px;min-height:36px;">${t('ban')}</button>`;
+          if (u.banned) {
+            banBtn = `<span style="color:#e74c3c;font-weight:600;margin-right:6px;">${t('banned')}</span>
+              <button class="success" onclick="unblockUser('${escJs(id)}')" style="font-size:13px;padding:6px 12px;min-height:36px;">${t('unban')}</button>`;
+          } else {
+            banBtn = `<button class="danger" onclick="blockUser('${escJs(id)}')" style="font-size:13px;padding:6px 12px;min-height:36px;">🔒 Block</button>`;
+          }
         }
-      }
+        // Force Logout button (manage_users permission)
+        let forceLogoutBtn = '';
+        if (perms.includes('manage_users')) {
+          forceLogoutBtn = `<button class="outline" onclick="forceLogout('${escJs(id)}')" style="font-size:12px;padding:4px 10px;min-height:36px;color:#e67e22;border-color:#e67e22;" title="Force logout (end all sessions)">🚪 Logout</button>`;
+        }
       const payRate = u.pay_rate ? '$' + parseFloat(u.pay_rate).toFixed(2) + '/hr' : '<span style="color:var(--text2);font-style:italic;">' + t('user.no_rate') + '</span>';
       const schedStart = u.scheduled_start ? u.scheduled_start : '<span style="color:var(--text2);font-style:italic;">' + t('user.scheduled_start_not_set') + '</span>';
       const twofaBadge = u.totp_enabled
@@ -8543,6 +8548,7 @@ async function loadUsers() {
           <button class="outline" onclick="editScheduledStart('${escJs(id)}')" style="font-size:12px;padding:4px 10px;min-height:36px;" title="${t('user.scheduled_start_edit_title')}">${t('user.scheduled_start_btn')}</button>
           ${twofaBtns}
           ${clearLockoutBtn}
+          ${forceLogoutBtn}
           ${banBtn}
           <button class="danger" onclick="deleteUser('${escJs(id)}')" style="font-size:13px;padding:6px 12px;min-height:36px;">🗑️ Delete</button>
         </div>
@@ -8576,6 +8582,49 @@ async function unbanUser(userId) {
     const d = await r.json();
     if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
     showToast('User unbanned', 'success');
+    loadUsers();
+  } catch(e) { showToast('Network error', 'danger'); }
+}
+
+async function blockUser(userId) {
+  const reason = prompt('🔒 Reason for blocking account? This will end all active sessions for this user.');
+  if (reason === null) return;
+  try {
+    const r = await fetch(BACKEND_URL + '/api/security/block_user', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, userId, reason })
+    });
+    const d = await r.json();
+    if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
+    showToast('🚫 User blocked — sessions invalidated', 'success');
+    loadUsers();
+  } catch(e) { showToast('Network error', 'danger'); }
+}
+
+async function unblockUser(userId) {
+  if (!confirm('Unblock this user? They will be able to log in again.')) return;
+  try {
+    const r = await fetch(BACKEND_URL + '/api/security/unblock_user', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, userId })
+    });
+    const d = await r.json();
+    if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
+    showToast('✅ User unblocked', 'success');
+    loadUsers();
+  } catch(e) { showToast('Network error', 'danger'); }
+}
+
+async function forceLogout(userId) {
+  if (!confirm('Force logout for this user? This will end all their active sessions without banning them.')) return;
+  try {
+    const r = await fetch(BACKEND_URL + '/api/security/force_logout', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, userId })
+    });
+    const d = await r.json();
+    if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
+    showToast('🚪 ' + (d.message || 'Force logout completed'), 'success');
     loadUsers();
   } catch(e) { showToast('Network error', 'danger'); }
 }
