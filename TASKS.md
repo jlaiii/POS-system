@@ -158,8 +158,6 @@ Use Python `pyotp` (pure Python, no C extensions, `pip install pyotp qrcode`):
 
 ### Priority: HIGH
 
-- [~] worker-3 **2FA setup endpoint + QR code generation** — `POST /api/auth/2fa/setup`: user requests to enable 2FA. Generates a `totp_secret`, stores it as `totp_secret` on user (but `totp_enabled` stays false until verified). Returns `provisioning_uri` (for QR) and `secret` (for manual entry). Requires user to be logged in (their own account — they can only set up 2FA for themselves). If 2FA is already enabled, returns 409 "2FA already enabled — disable first."
-
 - [ ] **2FA verify endpoint** — `POST /api/auth/2fa/verify`: user submits a 6-digit code from their authenticator app to confirm setup. Validates against `totp_secret`. If valid: sets `totp_enabled = true`, generates 8 backup codes (random 10-char alphanumeric strings, sha256 hashed before storing), sets `totp_setup_at`. Returns the 8 backup codes (plaintext — ONLY time they're shown. Display with big warning: "Save these now. They will never be shown again. Store them somewhere safe."). If invalid code: returns 400 "Invalid code. Try again."
 
 - [ ] **Login flow with 2FA challenge** — Modify `POST /api/login` to check `totp_enabled`. If 2FA is disabled: login proceeds as normal (PIN only). If 2FA is enabled: after PIN validation, do NOT issue a session yet. Instead, return `{"2fa_required": true, "user_id": "1234"}`. Frontend shows a 6-digit code input. User enters code → `POST /api/auth/2fa/verify_login` validates the TOTP code + session token. If valid: issue the normal session. If invalid: increment a rate-limit counter (max 5 attempts per minute). After 5 failures: temporarily lock account for 15 minutes.
@@ -615,6 +613,7 @@ New `security_events.json` (append-only log of flagged events):
 
 ## Done
 
+|- [x] **2FA setup endpoint + QR code generation** — `POST /api/auth/2fa/setup`: generates TOTP secret via pyotp, stores on user, returns provisioning_uri + QR code data URI. 409 if 2FA already enabled. [worker-3]
 |- [x] **Add scheduled_start field to users.json** — Backend: `scheduled_start` field in user data model (default null), exposed via `/api/users`, accepted in `/api/add_user`, new `POST /api/users/update_scheduled_start` endpoint with permission-gating and activity logging. Frontend: display in user management list, edit button (prompt for HH:MM), time input in add-user form, clear support. i18n EN + ES. [worker-3]
 |- [x] **Scheduled start admin UI in User Management** — "Scheduled Start" time input per user (type="time") in add user form. Display + edit button in user entry cards. Stored/loaded from users.json. [worker-3]
 |- [x] **Shift notes on clock-out** — When clocking out, optional textarea for shift notes. Stored as `notes` field on shift record. Displayed in timesheet view. Admin can also add notes. [worker-3]

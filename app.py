@@ -10,10 +10,13 @@ import hashlib
 import secrets
 import csv
 import io
+import base64
 import threading
 import urllib.request
 import urllib.error
 from collections import defaultdict, Counter
+import pyotp
+import qrcode
 
 app = Flask(__name__, static_folder='.', static_url_path='')
 CORS(app)  # Enable CORS for all origins
@@ -82,6 +85,15 @@ def upgrade_user(user_data):
     # Ensure scheduled_start field exists
     if 'scheduled_start' not in user_data:
         user_data['scheduled_start'] = None
+    # Ensure 2FA/TOTP fields exist
+    if 'totp_secret' not in user_data:
+        user_data['totp_secret'] = None
+    if 'totp_enabled' not in user_data:
+        user_data['totp_enabled'] = False
+    if 'totp_backup_codes' not in user_data:
+        user_data['totp_backup_codes'] = []
+    if 'totp_setup_at' not in user_data:
+        user_data['totp_setup_at'] = None
     return user_data
 
 
@@ -552,6 +564,59 @@ def logout():
         save_json_data(TIMESHEET_FILE, timesheet_data)
 
     return jsonify({'message': 'Logout successful'})
+
+
+@app.route('/api/auth/2fa/setup', methods=['POST'])
+def twofa_setup():
+    """User requests to enable 2FA. Generates a TOTP secret and returns provisioning URI + QR code data URI."""
+    data = request.json
+    user_id = str(data.get('userId', ''))
+
+    if not user_id:
+        return jsonify({'message': 'User ID is required.'}), 400
+
+    users = load_json_data(USERS_FILE)
+
+    if user_id not in users:
+        return jsonify({'message': 'User not found.'}), 404
+
+    user_data = upgrade_user(users[user_id])
+
+    # Check if 2FA is already enabled
+    if user_data.get('totp_enabled', False):
+        return jsonify({'message': '2FA already enabled — disable first.'}), 409
+
+    # Generate a new TOTP secret
+    secret = pyotp.random_base32()
+    user_name = user_data.get('name', 'User')
+    issuer = 'POS System'
+
+    # Create provisioning URI for authenticator app
+    totp = pyotp.TOTP(secret)
+    provisioning_uri = totp.provisioning_uri(name=user_name, issuer_name=issuer)
+
+    # Generate QR code as a base64 data URI
+    qr = qrcode.make(provisioning_uri)
+    buf = io.BytesIO()
+    qr.save(buf, format='PNG')
+    buf.seek(0)
+    qr_data_uri = 'data:image/png;base64,' + base64.b64encode(buf.getvalue()).decode('ascii')
+
+    # Store the secret (but totp_enabled stays False until verified)
+    user_data['totp_secret'] = secret
+    users[user_id] = user_data
+    save_json_data(USERS_FILE, users)
+
+    log_activity('2fa_setup_initiated', user_id, user_data.get('role', 'unknown'),
+                 {'status': 'secret_generated', 'totp_secret_length': len(secret)})
+
+    return jsonify({
+        'secret': secret,
+        'provisioning_uri': provisioning_uri,
+        'qr_data_uri': qr_data_uri,
+        'issuer': issuer,
+        'user_name': user_name
+    })
 
 
 @app.route('/api/add_user', methods=['POST'])
