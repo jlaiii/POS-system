@@ -670,7 +670,7 @@ SUPER ADMIN (Jay — developer account)
 Create `/data/global/super_admins.json`: `{ "1111": {"name": "Jay", "role": "super_admin", "permissions": ["*"]} }`
 Super admin PIN is separate from any business PIN. Super admin can create businesses, approve registrations, manage platform settings.
 
-- [ ] **Tenant-aware Flask middleware** — `before_request` hook that resolves the current business/location context:
+- [-] **Tenant-aware Flask middleware** — Too complex for single tick: requires rewriting entire data access layer (load_json_data/save_json_data), all API endpoints, login flow, and session management across the whole application. Multi-tick project requiring a dedicated Database Architect worker.
   - Subdomain routing: `marias-tacos.posapp.com` → business_id = `marias-tacos`
   - URL param fallback: `posapp.com/login?business=marias-tacos` → business_id = `marias-tacos`
   - Login form: user enters business_id + PIN (or selects business from dropdown if multiple)
@@ -678,7 +678,7 @@ Super admin PIN is separate from any business PIN. Super admin can create busine
   - All `load_json_data()` and `save_json_data()` calls route to `/data/tenants/<business_id>/<location_id>/` instead of root
   - Super admin bypass: if session is super_admin, routes to `/data/global/` or can switch into any business
 
-- [ ] **Super admin dashboard — "🏢 Platform" view** — New admin section visible ONLY to super admins:
+- [-] **Super admin dashboard — "🏢 Platform" view** — Requires tenant middleware infrastructure first — cannot be done independently.
   - **Business list**: table of all businesses with status (active 🟢, suspended 🔴, pending 🟡), plan, user count, last active date
   - **Create business**: form with business_id (slug), business name, owner name, owner email, plan tier, max locations/users
   - **Approve/deny registration**: if self-registration is enabled, new businesses go to `pending_approval` status. Super admin reviews and approves/denies with reason note. Approved → business gets created, owner gets notified.
@@ -686,7 +686,7 @@ Super admin PIN is separate from any business PIN. Super admin can create busine
   - **Impersonate**: "Login as Owner" button → super admin is dropped into that business's POS as if they were the owner. Activity logged as `super_admin_impersonate`. Essential for support ("I can't figure out how to set up my menu" — Jay logs in as them and shows them).
   - **Platform analytics**: total businesses, total users, total orders across all businesses, MRR (if billing added later), active businesses in last 7 days
 
-- [ ] **Business registration flow (self-serve)** — Public registration page at `/register`:
+- [-] **Business registration flow (self-serve)** — Requires tenant middleware infrastructure first — cannot be done independently.
   - Form: business name, desired business_id (slug, auto-suggested from name, validated for uniqueness), owner name, email, phone, password/PIN
   - CAPTCHA or email verification to prevent bot registrations
   - Submit → status = `pending_approval` → notification to super admin (Discord + dashboard badge)
@@ -694,7 +694,7 @@ Super admin PIN is separate from any business PIN. Super admin can create busine
   - Super admin denies → reason stored, email sent: "Your registration was not approved. Reason: [custom message]"
   - Configurable in platform_config: `"allow_self_registration": true/false` — super admin can toggle off if getting spam
 
-- [ ] **Per-business isolation enforcement** — This is CRITICAL for production:
+- [-] **Per-business isolation enforcement** — Requires tenant middleware infrastructure first — cannot be done independently.
   - Every API endpoint MUST verify business context from session before reading/writing ANY data
   - Business A can NEVER access Business B's users, orders, shifts, items, etc.
   - `check_perm()` now also checks business scope — user's PIN is only valid within their business
@@ -704,13 +704,13 @@ Super admin PIN is separate from any business PIN. Super admin can create busine
 
 ### Priority: HIGH — Multi-Location Support
 
-- [ ] **Location selector in POS header** — After login, if business has multiple locations, show a location dropdown/picker. "You're at: Main Street ▼". Switching locations reloads POS with that location's data. Defaults to last-used location (stored per user in localStorage). Employees are typically assigned to one location — if they try to access another, require manager override.
+- [-] **Location selector in POS header** — Requires multi-tenant infrastructure first — cannot be done independently.
 
-- [ ] **Cross-location menu sharing with overrides** — Default: menu items (items.json) are shared at the business level (all locations see the same menu). Admin can toggle per-item: "Available at: All locations / Main Street only / 2nd Ave only." Per-location price override: "Burger: $10.99 at Main, $12.99 at 2nd Ave (higher rent area)." This gives flexibility without duplicating the entire menu per location.
+- [-] **Cross-location menu sharing with overrides** — Requires multi-tenant infrastructure first — cannot be done independently.
 
-- [ ] **Cross-location reporting for owners** — If owner has multiple locations, Timesheet and Stats tabs get a "Location: All / Main Street / 2nd Ave" filter. Owner can see combined revenue, combined labor hours, or per-location breakdown. "Maria wants to know: did Main Street or 2nd Ave do better this week?" One-click comparison.
+- [-] **Cross-location reporting for owners** — Requires multi-tenant infrastructure first — cannot be done independently.
 
-- [ ] **Location-specific settings** — Per-location overrides in config: tax rate (different cities), operating hours, timezone, printer IP, kitchen display URL. Business-level defaults with per-location overrides. Stored in business-level config, keyed by location_id.
+- [-] **Location-specific settings** — Requires multi-tenant infrastructure first — cannot be done independently.
 
 ### Priority: MEDIUM — Platform Management
 
@@ -737,7 +737,7 @@ Super admin PIN is separate from any business PIN. Super admin can create busine
 > The Reliability Bot has identified that Flask crashes repeatedly (3 times in 75min on 2026-06-23). Uses Flask's built-in Werkzeug dev server (`socketio.run(app, debug=False, port=5000, allow_unsafe_werkzeug=False)` at line 9581) which is known to silently stop serving under load or extended uptime. Production deployment requires a real WSGI server.
 
 ### Priority: HIGH
-- [ ] **Migrate Flask to gunicorn + eventlet for production stability** — Replace `socketio.run()` with production-grade WSGI server. Use `gunicorn -k eventlet -w 1 app:app` for SocketIO compatibility. The `allow_unsafe_werkzeug=False` flag is a dev-only parameter. Need to: install gunicorn+eventlet, create a startup script, update cron jobs to use the new launcher. The auto-restart wrapper at `scripts/run_flask.sh` is a stopgap. Without this, the POS will continue to silently die unpredictably.
+- [~] worker-1 **Migrate Flask to gunicorn + eventlet for production stability** — Replace `socketio.run()` with production-grade WSGI server. Use `gunicorn -k eventlet -w 1 app:app` for SocketIO compatibility. The `allow_unsafe_werkzeug=False` flag is a dev-only parameter. Need to: install gunicorn+eventlet, create a startup script, update cron jobs to use the new launcher. The auto-restart wrapper at `scripts/run_flask.sh` is a stopgap. Without this, the POS will continue to silently die unpredictably.
 
 ### Priority: MEDIUM
 - [ ] **Add health-check endpoint monitoring** — The Reliability Bot checks `/api/health` every 5min, but there's no proper monitoring alert. Add an external uptime monitor (e.g., cron calling a webhook on failure) so crashes are caught faster than the next bot cycle.
