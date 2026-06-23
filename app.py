@@ -478,6 +478,14 @@ def get_client_ip():
 
 @app.route('/api/users', methods=['GET'])
 def get_users():
+    # Require authentication — adminPin as query param, must have manage_users permission
+    admin_pin = request.args.get('adminPin', '')
+    if not admin_pin:
+        log_activity('get_users', 'anonymous', 'unauthorized', {'status': 'failed', 'reason': 'Missing adminPin'})
+        return jsonify({'message': 'Authentication required.'}), 401
+    if not check_perm(admin_pin, "manage_users"):
+        log_activity('get_users', admin_pin, 'unauthorized', {'status': 'failed', 'reason': 'Insufficient permissions'})
+        return jsonify({'message': 'Insufficient permissions.'}), 403
     users = load_json_data(USERS_FILE)
     display_users = {}
     for uid, user_data in users.items():

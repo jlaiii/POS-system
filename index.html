@@ -7838,7 +7838,7 @@ async function loadUsers() {
   const list = document.getElementById('userList');
   list.innerHTML = '<div class="empty-state">' + t('loading') + '</div>';
   try {
-    const r = await fetch(BACKEND_URL + '/api/users');
+    const r = await fetch(BACKEND_URL + '/api/users?adminPin=' + encodeURIComponent(currentUser.id));
     if (!r.ok) throw new Error('Failed');
     const users = await r.json();
     const entries = Object.entries(users);
