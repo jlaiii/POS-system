@@ -443,6 +443,26 @@ twofa_failed_attempts = {}  # {user_id: {'count': int, 'lock_until': datetime or
 # Structure: {user_id: {'count': int, 'lock_until': datetime or None, 'window_start': datetime}}
 login_failed_attempts = {}
 
+# In-memory clock in/out attempt tracking — resets on server restart
+# Structure: {ip_or_user_id: {'count': int, 'lock_until': datetime or None, 'window_start': datetime}}
+clock_failed_attempts = {}
+
+def _record_clock_failure(key):
+    """Record a failed clock in/out attempt. Locks after 10 failures per 60s window for 15min."""
+    now = datetime.now()
+    if key not in clock_failed_attempts:
+        clock_failed_attempts[key] = {'count': 0, 'lock_until': None, 'window_start': now}
+    attempt = clock_failed_attempts[key]
+    if attempt.get('window_start') and (now - attempt['window_start']).total_seconds() > 60:
+        attempt['count'] = 0
+        attempt['window_start'] = now
+    attempt['count'] += 1
+    if attempt['window_start'] is None:
+        attempt['window_start'] = now
+    if attempt['count'] >= 10:
+        attempt['lock_until'] = now + timedelta(minutes=15)
+
+
 
 def get_client_ip():
     """Get client IP from request, handling X-Forwarded-For for proxied requests."""
@@ -3417,22 +3437,66 @@ def clock_in():
     """Clock in an employee for their shift. Records start time."""
     data = request.json
     user_id = data.get('adminPin')  # Uses adminPin field for user identification
+    client_ip = get_client_ip()
+    now = datetime.now()
 
     if not user_id:
         return jsonify({'message': 'User ID required.'}), 400
 
+    # --- Rate limiting: IP-based (prevents bulk PIN enumeration) ---
+    def check_clock_rate_limit(key):
+        """Track rate limit by IP or user_id. 10 attempts per 60s, lock 15min."""
+        if key not in clock_failed_attempts:
+            clock_failed_attempts[key] = {'count': 0, 'lock_until': None, 'window_start': now}
+        attempt = clock_failed_attempts[key]
+        if attempt.get('window_start') and (now - attempt['window_start']).total_seconds() > 60:
+            attempt['count'] = 0
+            attempt['window_start'] = now
+        # Check lock
+        if attempt.get('lock_until') and now < attempt['lock_until']:
+            remaining = int((attempt['lock_until'] - now).total_seconds())
+            return True, remaining
+        # Clear expired lock
+        if attempt.get('lock_until') and now >= attempt['lock_until']:
+            attempt['lock_until'] = None
+            attempt['count'] = 0
+        return False, None
+
+    # Check IP-based rate limit
+    ip_locked, ip_retry = check_clock_rate_limit(f'ip:{client_ip}')
+    if ip_locked:
+        log_activity('clock_in_rate_limited', 'ip:' + client_ip, 'unknown',
+                     {'reason': 'ip_locked', 'remaining_seconds': ip_retry})
+        return jsonify({'message': 'Too many attempts. Try again later.'}), 429
+
+    # Check user_id-based rate limit (if user_id looks like a valid PIN)
+    if user_id and user_id.isdigit():
+        uid_locked, uid_retry = check_clock_rate_limit(f'uid:{user_id}')
+        if uid_locked:
+            log_activity('clock_in_rate_limited', user_id, 'unknown',
+                         {'reason': 'user_locked', 'remaining_seconds': uid_retry})
+            return jsonify({'message': 'Too many attempts. Try again later.'}), 429
+
     users = load_json_data(USERS_FILE)
+
+    # Generic error path — same message whether user exists or not (prevents enumeration)
     if user_id not in users:
-        return jsonify({'message': 'User not found.'}), 404
+        _record_clock_failure(f'ip:{client_ip}')
+        if user_id and user_id.isdigit():
+            _record_clock_failure(f'uid:{user_id}')
+        log_activity('clock_in_failed', user_id or 'unknown', 'unknown',
+                     {'status': 'failed', 'reason': 'invalid_pin', 'ip': client_ip})
+        return jsonify({'message': 'Invalid PIN.'}), 401
 
     user_data = users[user_id]
     if user_data.get('banned', False):
-        return jsonify({'message': 'User is banned.'}), 403
+        _record_clock_failure(f'ip:{client_ip}')
+        if user_id and user_id.isdigit():
+            _record_clock_failure(f'uid:{user_id}')
+        return jsonify({'message': 'Invalid PIN.'}), 401
 
     if user_id in active_shifts:
         return jsonify({'message': 'Already clocked in.'}), 409
-
-    now = datetime.now()
 
     # --- Late detection ---
     scheduled_start = user_data.get('scheduled_start')
@@ -3464,6 +3528,12 @@ def clock_in():
         except (ValueError, TypeError, IndexError):
             pass  # Invalid scheduled_start format, skip late detection
     # --- End late detection ---
+
+    # Clear rate limit on success
+    if f'ip:{client_ip}' in clock_failed_attempts:
+        del clock_failed_attempts[f'ip:{client_ip}']
+    if f'uid:{user_id}' in clock_failed_attempts:
+        del clock_failed_attempts[f'uid:{user_id}']
 
     active_shifts[user_id] = {
         'clock_in_time': now,
@@ -3498,11 +3568,41 @@ def clock_out():
     """Clock out an employee. Records end time and duration."""
     data = request.json
     user_id = data.get('adminPin')
+    client_ip = get_client_ip()
+    now = datetime.now()
 
     if not user_id:
         return jsonify({'message': 'User ID required.'}), 400
 
+    # --- Rate limiting (IP + user_id based) ---
+    def check_clock_out_rate_limit(key):
+        if key not in clock_failed_attempts:
+            clock_failed_attempts[key] = {'count': 0, 'lock_until': None, 'window_start': now}
+        attempt = clock_failed_attempts[key]
+        if attempt.get('window_start') and (now - attempt['window_start']).total_seconds() > 60:
+            attempt['count'] = 0
+            attempt['window_start'] = now
+        if attempt.get('lock_until') and now < attempt['lock_until']:
+            remaining = int((attempt['lock_until'] - now).total_seconds())
+            return True, remaining
+        if attempt.get('lock_until') and now >= attempt['lock_until']:
+            attempt['lock_until'] = None
+            attempt['count'] = 0
+        return False, None
+
+    ip_locked, ip_retry = check_clock_out_rate_limit(f'clock_out_ip:{client_ip}')
+    if ip_locked:
+        return jsonify({'message': 'Too many attempts. Try again later.'}), 429
+
+    if user_id and user_id.isdigit():
+        uid_locked, uid_retry = check_clock_out_rate_limit(f'clock_out_uid:{user_id}')
+        if uid_locked:
+            return jsonify({'message': 'Too many attempts. Try again later.'}), 429
+
     if user_id not in active_shifts:
+        _record_clock_failure(f'clock_out_ip:{client_ip}')
+        if user_id and user_id.isdigit():
+            _record_clock_failure(f'clock_out_uid:{user_id}')
         return jsonify({'message': 'Not clocked in.'}), 409
 
     users = load_json_data(USERS_FILE)
@@ -3567,6 +3667,12 @@ def clock_out():
         'clock_out_time': clock_out_time.isoformat(),
         'duration_hours': duration_hours
     })
+
+    # Clear rate limits on success
+    if f'clock_out_ip:{client_ip}' in clock_failed_attempts:
+        del clock_failed_attempts[f'clock_out_ip:{client_ip}']
+    if f'clock_out_uid:{user_id}' in clock_failed_attempts:
+        del clock_failed_attempts[f'clock_out_uid:{user_id}']
 
     return jsonify({
         'message': 'Clocked out successfully.',
@@ -8727,4 +8833,4 @@ def ticket_respond():
 
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True, port=5000, allow_unsafe_werkzeug=True)
+    socketio.run(app, debug=False, port=5000, allow_unsafe_werkzeug=False)
