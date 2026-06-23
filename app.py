@@ -2852,6 +2852,63 @@ def clock_excuse_late():
     })
 
 
+@app.route('/api/clock/flag_late', methods=['POST'])
+def clock_flag_late():
+    """Admin manually flags a shift as late (with late_minutes)."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+
+    if not check_perm(admin_pin, "view_timesheet"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    shift_index = data.get('shift_index')
+    if shift_index is None or not isinstance(shift_index, int):
+        return jsonify({'message': 'shift_index (integer) is required.'}), 400
+
+    late_minutes = data.get('late_minutes')
+    if late_minutes is None or not isinstance(late_minutes, (int, float)):
+        return jsonify({'message': 'late_minutes (number) is required.'}), 400
+    late_minutes = int(round(late_minutes))
+
+    note = (data.get('note') or '').strip()
+
+    shift_log = load_json_data(SHIFT_FILE)
+    if shift_index < 0 or shift_index >= len(shift_log):
+        return jsonify({'message': 'Invalid shift_index.'}), 404
+
+    shift = shift_log[shift_index]
+
+    old_late_minutes = shift.get('late_minutes')
+    old_late_excused = shift.get('late_excused', False)
+
+    shift['late_minutes'] = late_minutes
+    shift['late_excused'] = False  # freshly flagged, not excused
+    if note:
+        shift['late_note'] = note
+
+    save_json_data(SHIFT_FILE, shift_log)
+
+    users = load_json_data(USERS_FILE)
+    admin_user = users.get(admin_pin, {})
+    admin_name = admin_user.get('name', admin_pin)
+
+    log_activity('late_flagged', admin_pin, admin_user.get('role', 'admin'), {
+        'shift_index': shift_index,
+        'user_id': shift.get('user_id'),
+        'user_name': shift.get('user_name'),
+        'old_late_minutes': old_late_minutes,
+        'new_late_minutes': late_minutes,
+        'old_late_excused': old_late_excused,
+        'new_late_excused': False,
+        'note': note
+    })
+
+    return jsonify({
+        'message': 'Shift flagged as late successfully.',
+        'shift': shift
+    })
+
+
 @app.route('/api/clock/break', methods=['POST'])
 def clock_break():
     """Start or end a break for a clocked-in employee."""
