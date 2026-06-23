@@ -1309,6 +1309,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
               <input type="text" id="addUserName" placeholder="User name"/>
               <select id="addUserRole"><option value="user">User</option><option value="admin">Admin</option><option value="cook">Cook</option><option value="owner">Owner</option></select>
               <input type="number" id="addUserPayRate" placeholder="Pay rate ($/hr)" step="0.25" min="0" style="max-width:140px;"/>
+              <input type="time" id="addUserSchedStart" style="max-width:150px;" title="Scheduled start time (optional)"/>
               <button class="accent" onclick="addUser()">Add</button>
             </div>
           </div>
@@ -2605,6 +2606,15 @@ const L10N = {
     'timesheet.last_month': '⬅️ Last Month',
     'timesheet.biweekly': '🔄 Bi-weekly',
     'timesheet.custom': '✏️ Custom',
+    'user.scheduled_start': '🕐 Scheduled start:',
+    'user.scheduled_start_btn': '🕐 Schedule',
+    'user.scheduled_start_edit_title': 'Edit scheduled start time',
+    'user.scheduled_start_not_set': 'Not set',
+    'user.scheduled_start_updated': 'Scheduled start time updated!',
+    'user.scheduled_start_prompt': 'Enter scheduled start time (HH:MM, 24h format) for user {userId} (leave empty to clear):',
+    'user.scheduled_start_invalid_format': 'Invalid time format. Use HH:MM (e.g., 09:00).',
+    'user.no_rate': 'No rate set',
+    'user.pay_rate_edit_title': 'Edit pay rate',
   },
   es: {
     'app.title': '🍽️ Sistema POS',
@@ -3021,6 +3031,15 @@ const L10N = {
     'timesheet.last_month': '⬅️ Mes Pasado',
     'timesheet.biweekly': '🔄 Quincenal',
     'timesheet.custom': '✏️ Personalizado',
+    'user.scheduled_start': '🕐 Hora programada:',
+    'user.scheduled_start_btn': '🕐 Horario',
+    'user.scheduled_start_edit_title': 'Editar hora programada',
+    'user.scheduled_start_not_set': 'No establecida',
+    'user.scheduled_start_updated': '¡Hora programada actualizada!',
+    'user.scheduled_start_prompt': 'Ingrese la hora programada (HH:MM, formato 24h) para el usuario {userId} (deje vacío para limpiar):',
+    'user.scheduled_start_invalid_format': 'Formato de hora inválido. Use HH:MM (ej. 09:00).',
+    'user.no_rate': 'Sin tarifa',
+    'user.pay_rate_edit_title': 'Editar tarifa de pago',
   }
 };
 
@@ -6274,11 +6293,13 @@ async function loadUsers() {
           banBtn = `<button class="danger" onclick="banUser('${escJs(id)}')" style="font-size:13px;padding:6px 12px;min-height:36px;">${t('ban')}</button>`;
         }
       }
-      const payRate = u.pay_rate ? '$' + parseFloat(u.pay_rate).toFixed(2) + '/hr' : '<span style="color:var(--text2);font-style:italic;">No rate set</span>';
+      const payRate = u.pay_rate ? '$' + parseFloat(u.pay_rate).toFixed(2) + '/hr' : '<span style="color:var(--text2);font-style:italic;">' + t('user.no_rate') + '</span>';
+      const schedStart = u.scheduled_start ? u.scheduled_start : '<span style="color:var(--text2);font-style:italic;">' + t('user.scheduled_start_not_set') + '</span>';
       return `<div class="user-entry">
-        <div class="ue-info"><strong>${escHtml(u.name)}</strong> — ID: ${escHtml(id)} <span class="ue-role">(${u.role})</span>${u.banned ? ' <span style="color:#e74c3c;font-weight:700;">🚫 Banned</span>' : ''}<br><span style="font-size:13px;color:var(--text2);">💰 Pay rate: <span id="prDisplay_${escJs(id)}">${payRate}</span></span></div>
+        <div class="ue-info"><strong>${escHtml(u.name)}</strong> — ID: ${escHtml(id)} <span class="ue-role">(${u.role})</span>${u.banned ? ' <span style="color:#e74c3c;font-weight:700;">🚫 Banned</span>' : ''}<br><span style="font-size:13px;color:var(--text2);">💰 Pay rate: <span id="prDisplay_${escJs(id)}">${payRate}</span></span><br><span style="font-size:13px;color:var(--text2);">${t('user.scheduled_start')} <span id="ssDisplay_${escJs(id)}">${schedStart}</span></span></div>
         <div style="display:flex;gap:6px;align-items:center;">
-          <button class="outline" onclick="editPayRate('${escJs(id)}')" style="font-size:12px;padding:4px 10px;min-height:36px;" title="Edit pay rate">💰 Edit Rate</button>
+          <button class="outline" onclick="editPayRate('${escJs(id)}')" style="font-size:12px;padding:4px 10px;min-height:36px;" title="${t('user.pay_rate_edit_title')}">💰 Edit Rate</button>
+          <button class="outline" onclick="editScheduledStart('${escJs(id)}')" style="font-size:12px;padding:4px 10px;min-height:36px;" title="${t('user.scheduled_start_edit_title')}">${t('user.scheduled_start_btn')}</button>
           ${banBtn}
           <button class="danger" onclick="deleteUser('${escJs(id)}')" style="font-size:13px;padding:6px 12px;min-height:36px;">🗑️ Delete</button>
         </div>
@@ -6345,16 +6366,47 @@ async function editPayRate(userId) {
   } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
 
+async function editScheduledStart(userId) {
+  const display = document.getElementById('ssDisplay_' + userId);
+  const currentText = display ? display.textContent.trim() : '';
+  const currentVal = currentText !== t('user.scheduled_start_not_set') && currentText !== 'Not set' && currentText !== 'No establecida' ? currentText : '';
+  const newTime = prompt(t('user.scheduled_start_prompt', { userId: userId }), currentVal);
+  if (newTime === null) return; // cancelled
+  const timeStr = newTime.trim();
+  if (timeStr !== '' && !/^\d{2}:\d{2}$/.test(timeStr)) {
+    showToast(t('user.scheduled_start_invalid_format'), 'danger');
+    return;
+  }
+  try {
+    const body = { adminPin: currentUser.id, userId };
+    if (timeStr) {
+      body.scheduledStart = timeStr;
+    } else {
+      body.scheduledStart = null;
+    }
+    const r = await fetch(BACKEND_URL + '/api/users/update_scheduled_start', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const d = await r.json();
+    if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
+    showToast(t('user.scheduled_start_updated'), 'success');
+    loadUsers();
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
+}
+
 async function addUser() {
   const userId = document.getElementById('addUserId').value.trim();
   const userName = document.getElementById('addUserName').value.trim();
   const userRole = document.getElementById('addUserRole').value;
   const payRate = document.getElementById('addUserPayRate').value.trim();
+  const schedStart = document.getElementById('addUserSchedStart').value.trim();
   if (!userId || !userName) { showToast('Fill all fields', 'danger'); return; }
   if (userId.length !== 4 || !/^\d{4}$/.test(userId)) { showToast('PIN must be 4 digits', 'danger'); return; }
   try {
     const body = { adminPin: currentUser.id, userId, userName, userRole };
     if (payRate) body.payRate = parseFloat(payRate);
+    if (schedStart) body.scheduledStart = schedStart;
     const r = await fetch(BACKEND_URL + '/api/add_user', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)

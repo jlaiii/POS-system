@@ -66,8 +66,8 @@
 > Currently there is no concept of when an employee is *supposed* to start. Clock-in just records the actual time. The owner/admin needs to see who's late, how late, and be able to flag/excuse lateness. They also need to fix clock-in/out times when employees forget (system error, forgot to clock out, clocked in under wrong PIN, etc.).
 
 #### Per-user scheduled start time
-- [~] worker-3 Add `scheduled_start` field to each user in `users.json` — a string like `"09:00"` (24h format, local time). This is the time the employee is expected to clock in each workday. If unset or null, no lateness check for that user.
-- [ ] Admin can set this in the User Management panel — add a "Scheduled Start" time input per user (type="time"). Stored and loaded from `users.json`.
+- [x] worker-3 Add `scheduled_start` field to each user in `users.json` — a string like `"09:00"` (24h format, local time). This is the time the employee is expected to clock in each workday. If unset or null, no lateness check for that user.
+- [x] worker-3 Admin can set this in the User Management panel — add a "Scheduled Start" time input per user (type="time"). Stored and loaded from `users.json`.
 
 #### Auto-late detection on clock-in
 - [ ] `POST /api/clock/in`: after recording the clock-in, compare the actual `clock_in_time` against the user's `scheduled_start` for today.
@@ -265,7 +265,9 @@ New `tickets.json` data store. Each ticket:
 
 ## Done
 
-- [x] **Shift notes on clock-out** — When clocking out, optional textarea for shift notes. Stored as `notes` field on shift record. Displayed in timesheet view. Admin can also add notes. [worker-3]
+|- [x] **Add scheduled_start field to users.json** — Backend: `scheduled_start` field in user data model (default null), exposed via `/api/users`, accepted in `/api/add_user`, new `POST /api/users/update_scheduled_start` endpoint with permission-gating and activity logging. Frontend: display in user management list, edit button (prompt for HH:MM), time input in add-user form, clear support. i18n EN + ES. [worker-3]
+|- [x] **Scheduled start admin UI in User Management** — "Scheduled Start" time input per user (type="time") in add user form. Display + edit button in user entry cards. Stored/loaded from users.json. [worker-3]
+|- [x] **Shift notes on clock-out** — When clocking out, optional textarea for shift notes. Stored as `notes` field on shift record. Displayed in timesheet view. Admin can also add notes. [worker-3]
 - [x] **Admin shift edit / correction with audit trail** — `POST /api/clock/edit` endpoint with full audit trail. [worker-1]
 - [x] **Add auto-table suggestion for waiters** — Auto-select last used table per user in localStorage. [worker-1]
 - [x] **Add employee clock-in/clock-out system** — `/api/clock/in`, `/api/clock/out`, `/api/clock/status`, `/api/admin_shifts`, `/api/export/shifts_csv`. Punch clock button in POS header. Activity logging. i18n EN + ES. [worker-3]

@@ -79,6 +79,9 @@ def upgrade_user(user_data):
     # Ensure pay_rate field exists
     if 'pay_rate' not in user_data:
         user_data['pay_rate'] = None
+    # Ensure scheduled_start field exists
+    if 'scheduled_start' not in user_data:
+        user_data['scheduled_start'] = None
     return user_data
 
 
@@ -424,7 +427,8 @@ def get_users():
             'permissions': user_data.get('permissions', []),
             'banned': user_data.get('banned', False),
             'banned_reason': user_data.get('banned_reason', ''),
-            'pay_rate': user_data.get('pay_rate', None)
+            'pay_rate': user_data.get('pay_rate', None),
+            'scheduled_start': user_data.get('scheduled_start', None)
         }
     return jsonify(display_users)
 
@@ -605,6 +609,18 @@ def add_user():
     else:
         new_user_data['pay_rate'] = None
 
+    # Store scheduled_start if provided
+    scheduled_start = data.get('scheduledStart')
+    if scheduled_start is not None and isinstance(scheduled_start, str) and scheduled_start.strip():
+        # Basic validation: HH:MM format
+        import re
+        if re.match(r'^\d{2}:\d{2}$', scheduled_start.strip()):
+            new_user_data['scheduled_start'] = scheduled_start.strip()
+        else:
+            new_user_data['scheduled_start'] = None
+    else:
+        new_user_data['scheduled_start'] = None
+
     users[new_user_id] = new_user_data
     save_json_data(USERS_FILE, users)
     log_activity('add_user', admin_pin, admin_user['role'] if admin_user else 'unknown',
@@ -693,6 +709,55 @@ def update_user_pay_rate():
         'message': 'Pay rate updated successfully.',
         'user_id': user_id,
         'pay_rate': users[user_id]['pay_rate']
+    })
+
+
+@app.route('/api/users/update_scheduled_start', methods=['POST'])
+def update_user_scheduled_start():
+    """Update scheduled_start for an existing user."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+    user_id = data.get('userId')
+    scheduled_start = data.get('scheduledStart')
+
+    # Verify caller has manage_users permission
+    if not check_perm(admin_pin, "manage_users"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    if not user_id:
+        return jsonify({'message': 'User ID is required.'}), 400
+
+    users = load_json_data(USERS_FILE)
+
+    if user_id not in users:
+        return jsonify({'message': 'User not found.'}), 404
+
+    admin_user = users.get(admin_pin, {})
+
+    # Store the old value for audit
+    old_scheduled_start = users[user_id].get('scheduled_start', None)
+
+    # Update scheduled_start
+    if scheduled_start is not None and isinstance(scheduled_start, str) and scheduled_start.strip():
+        import re
+        if re.match(r'^\d{2}:\d{2}$', scheduled_start.strip()):
+            users[user_id]['scheduled_start'] = scheduled_start.strip()
+        else:
+            return jsonify({'message': 'Scheduled start must be in HH:MM format (e.g., 09:00).'}), 400
+    else:
+        users[user_id]['scheduled_start'] = None
+
+    save_json_data(USERS_FILE, users)
+
+    log_activity('update_scheduled_start', admin_pin, admin_user.get('role', 'unknown'),
+                 {'status': 'success', 'target_user_id': user_id,
+                  'old_scheduled_start': old_scheduled_start, 'new_scheduled_start': users[user_id]['scheduled_start'],
+                  'user_name': users[user_id].get('name', 'Unknown')})
+
+    return jsonify({
+        'message': 'Scheduled start time updated successfully.',
+        'user_id': user_id,
+        'scheduled_start': users[user_id]['scheduled_start']
     })
 
 
