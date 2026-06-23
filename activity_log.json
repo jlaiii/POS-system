@@ -868,5 +868,325 @@
         "details": {
             "status": "invalid_code"
         }
+    },
+    {
+        "timestamp": "2026-06-23T07:27:23.680374",
+        "type": "login",
+        "user_id": null,
+        "user_role": "unknown",
+        "details": {
+            "status": "failed",
+            "method": "pin"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T07:27:24.749217",
+        "type": "admin_login",
+        "user_id": null,
+        "user_role": "unauthorized",
+        "details": {
+            "status": "failed"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T07:27:41.324116",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T07:27:42.439593",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T07:27:46.706325",
+        "type": "clock_in",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "status": "success",
+            "user_name": "Owner",
+            "clock_in_time": "2026-06-23T07:27:46.706310",
+            "late_minutes": null,
+            "scheduled_start": null
+        }
+    },
+    {
+        "timestamp": "2026-06-23T07:27:49.524922",
+        "type": "clock_out",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "status": "success",
+            "user_name": "Owner",
+            "clock_in_time": "2026-06-23T07:27:46.706310",
+            "clock_out_time": "2026-06-23T07:27:49.524526",
+            "duration_hours": 0.0
+        }
+    },
+    {
+        "timestamp": "2026-06-23T07:32:24.254388",
+        "type": "login",
+        "user_id": "1234",
+        "user_role": "user",
+        "details": {
+            "status": "2fa_required",
+            "method": "pin",
+            "user_name": "Employee One"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T07:32:30.562453",
+        "type": "2fa_login_success",
+        "user_id": "1234",
+        "user_role": "user",
+        "details": {
+            "status": "success",
+            "user_name": "Employee One"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T07:32:30.565614",
+        "type": "2fa_login_failed",
+        "user_id": "1234",
+        "user_role": "user",
+        "details": {
+            "status": "invalid_code",
+            "attempt": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-23T07:32:43.322644",
+        "type": "2fa_login_failed",
+        "user_id": "1234",
+        "user_role": "user",
+        "details": {
+            "status": "invalid_code",
+            "attempt": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-23T07:32:43.325927",
+        "type": "2fa_login_failed",
+        "user_id": "1234",
+        "user_role": "user",
+        "details": {
+            "status": "invalid_code",
+            "attempt": 2
+        }
+    },
+    {
+        "timestamp": "2026-06-23T07:32:43.329982",
+        "type": "2fa_login_failed",
+        "user_id": "1234",
+        "user_role": "user",
+        "details": {
+            "status": "invalid_code",
+            "attempt": 3
+        }
+    },
+    {
+        "timestamp": "2026-06-23T07:32:43.332567",
+        "type": "2fa_login_failed",
+        "user_id": "1234",
+        "user_role": "user",
+        "details": {
+            "status": "invalid_code",
+            "attempt": 4
+        }
+    },
+    {
+        "timestamp": "2026-06-23T07:32:43.334876",
+        "type": "2fa_login_failed",
+        "user_id": "1234",
+        "user_role": "user",
+        "details": {
+            "status": "invalid_code",
+            "attempt": 5
+        }
+    },
+    {
+        "timestamp": "2026-06-23T07:32:43.336088",
+        "type": "2fa_login_locked",
+        "user_id": "1234",
+        "user_role": "user",
+        "details": {
+            "status": "account_locked_15min",
+            "attempts": 5
+        }
+    },
+    {
+        "timestamp": "2026-06-23T07:32:43.340819",
+        "type": "2fa_login_rate_limited",
+        "user_id": "1234",
+        "user_role": "unknown",
+        "details": {
+            "reason": "account_locked",
+            "remaining_seconds": 899
+        }
+    },
+    {
+        "timestamp": "2026-06-23T07:32:43.343054",
+        "type": "2fa_login_rate_limited",
+        "user_id": "1234",
+        "user_role": "unknown",
+        "details": {
+            "reason": "account_locked",
+            "remaining_seconds": 899
+        }
+    },
+    {
+        "timestamp": "2026-06-23T07:58:37.459865",
+        "type": "2fa_backup_regenerated",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "status": "success",
+            "target_user_id": "1234",
+            "target_user_name": "Employee One",
+            "old_codes_count": 0,
+            "new_codes_count": 8
+        }
+    },
+    {
+        "timestamp": "2026-06-23T07:59:20.937048",
+        "type": "2fa_setup_initiated",
+        "user_id": "1234",
+        "user_role": "user",
+        "details": {
+            "status": "secret_generated",
+            "totp_secret_length": 32
+        }
+    },
+    {
+        "timestamp": "2026-06-23T07:59:21.040229",
+        "type": "2fa_verify_success",
+        "user_id": "1234",
+        "user_role": "user",
+        "details": {
+            "status": "enabled",
+            "backup_codes_count": 8
+        }
+    },
+    {
+        "timestamp": "2026-06-23T07:59:21.144866",
+        "type": "2fa_disabled_by_admin",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "status": "success",
+            "target_user_id": "1234",
+            "target_user_name": "Employee One",
+            "target_user_role": "user",
+            "reason": "Lost phone - user cannot access authenticator app",
+            "old_values": {
+                "totp_enabled": true,
+                "totp_secret_set": true,
+                "totp_backup_codes_count": 8,
+                "totp_setup_at": "2026-06-23T07:59:21.039863"
+            }
+        }
+    },
+    {
+        "timestamp": "2026-06-23T07:59:26.894671",
+        "type": "2fa_setup_initiated",
+        "user_id": "1234",
+        "user_role": "user",
+        "details": {
+            "status": "secret_generated",
+            "totp_secret_length": 32
+        }
+    },
+    {
+        "timestamp": "2026-06-23T07:59:27.063837",
+        "type": "2fa_verify_failed",
+        "user_id": "1234",
+        "user_role": "user",
+        "details": {
+            "status": "invalid_code"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T07:59:32.051036",
+        "type": "2fa_setup_initiated",
+        "user_id": "1234",
+        "user_role": "user",
+        "details": {
+            "status": "secret_generated",
+            "totp_secret_length": 32
+        }
+    },
+    {
+        "timestamp": "2026-06-23T07:59:32.165335",
+        "type": "2fa_verify_success",
+        "user_id": "1234",
+        "user_role": "user",
+        "details": {
+            "status": "enabled",
+            "backup_codes_count": 8
+        }
+    },
+    {
+        "timestamp": "2026-06-23T07:59:32.204935",
+        "type": "2fa_backup_regenerated",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "status": "success",
+            "target_user_id": "1234",
+            "target_user_name": "Employee One",
+            "old_codes_count": 8,
+            "new_codes_count": 8
+        }
+    },
+    {
+        "timestamp": "2026-06-23T08:06:16.442894",
+        "type": "login",
+        "user_id": null,
+        "user_role": "unknown",
+        "details": {
+            "status": "failed",
+            "method": "pin"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T08:06:18.646506",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T08:06:24.049342",
+        "type": "login",
+        "user_id": null,
+        "user_role": "unknown",
+        "details": {
+            "status": "failed",
+            "method": "pin"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T08:06:33.860558",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner"
+        }
     }
 ]

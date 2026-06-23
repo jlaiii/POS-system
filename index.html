@@ -2698,6 +2698,14 @@ const L10N = {
     'twofa.disabled_toast': '2FA disabled for {name}.',
     'twofa.regenerated_toast': 'Backup codes regenerated for {name}. Save the new codes.',
     'twofa.status_label': '🔐 2FA:',
+    'user.reset_pin_btn': '🔑 Reset PIN',
+    'user.reset_pin_prompt': 'Enter new PIN (4-8 digits) for user {userId}:',
+    'user.reset_pin_reason': 'Enter reason for resetting PIN:',
+    'user.reset_pin_force': 'Force PIN change on next login?',
+    'user.reset_pin_reason_required': 'Reason is required.',
+    'user.reset_pin_invalid': 'PIN must be 4-8 digits.',
+    'user.reset_pin_success': 'PIN reset for {name}. User will be notified on next login.',
+    'user.pin_reset_notification': '⚠️ Your PIN was reset by {name}. Please use your new PIN.',
   },
   es: {
     'app.title': '🍽️ Sistema POS',
@@ -3139,6 +3147,14 @@ const L10N = {
     'twofa.disabled_toast': '2FA desactivada para {name}.',
     'twofa.regenerated_toast': 'Códigos de respaldo regenerados para {name}. Guarde los nuevos códigos.',
     'twofa.status_label': '🔐 2FA:',
+    'user.reset_pin_btn': '🔑 Restablecer PIN',
+    'user.reset_pin_prompt': 'Ingrese nuevo PIN (4-8 dígitos) para el usuario {userId}:',
+    'user.reset_pin_reason': 'Ingrese la razón para restablecer el PIN:',
+    'user.reset_pin_force': '¿Forzar cambio de PIN en el próximo inicio de sesión?',
+    'user.reset_pin_reason_required': 'Se requiere una razón.',
+    'user.reset_pin_invalid': 'El PIN debe tener 4-8 dígitos.',
+    'user.reset_pin_success': 'PIN restablecido para {name}. El usuario será notificado en el próximo inicio de sesión.',
+    'user.pin_reset_notification': '⚠️ Su PIN fue restablecido por {name}. Use su nuevo PIN.',
   }
 };
 
@@ -3467,6 +3483,12 @@ async function doLogin(userId) {
     pinValue = '';
     renderPinDisplay();
     showApp();
+    if (data.pin_reset_info) {
+      showToast(data.pin_reset_info.message, 'warning', 8000);
+    }
+    if (data.force_pin_change_required) {
+      showToast('⚠️ Your PIN was reset and you are required to change it. Use the new PIN provided by your admin.', 'warning', 10000);
+    }
   } catch(e) {
     document.getElementById('loginError').textContent = t('login.error');
     pinValue = ''; renderPinDisplay();
@@ -3671,6 +3693,12 @@ async function ownerLogin() {
     sessionStorage.setItem('pos_userName', data.user);
     sessionStorage.setItem('pos_permissions', JSON.stringify(data.permissions || []));
     showApp();
+    if (data.pin_reset_info) {
+      showToast(data.pin_reset_info.message, 'warning', 8000);
+    }
+    if (data.force_pin_change_required) {
+      showToast('⚠️ Your PIN was reset and you are required to change it. Use the new PIN provided by your admin.', 'warning', 10000);
+    }
   } catch(e) {
     document.getElementById('loginError').textContent = 'Connection error';
   }
@@ -6731,6 +6759,7 @@ async function loadUsers() {
         <div class="ue-info"><strong>${escHtml(u.name)}</strong> — ID: ${escHtml(id)} <span class="ue-role">(${u.role})</span>${u.banned ? ' <span style="color:#e74c3c;font-weight:700;">🚫 Banned</span>' : ''}<br><span style="font-size:13px;color:var(--text2);">💰 Pay rate: <span id="prDisplay_${escJs(id)}">${payRate}</span></span><br><span style="font-size:13px;color:var(--text2);">${t('user.scheduled_start')} <span id="ssDisplay_${escJs(id)}">${schedStart}</span></span><br><span style="font-size:13px;color:var(--text2);">${t('twofa.status_label')} ${twofaBadge}</span></div>
         <div style="display:flex;gap:6px;align-items:center;">
           <button class="outline" onclick="editPayRate('${escJs(id)}')" style="font-size:12px;padding:4px 10px;min-height:36px;" title="${t('user.pay_rate_edit_title')}">💰 Edit Rate</button>
+          ${perms.includes('manage_users') ? `<button class="outline" onclick="resetPin('${escJs(id)}')" style="font-size:12px;padding:4px 10px;min-height:36px;" title="${t('user.reset_pin_btn')}">${t('user.reset_pin_btn')}</button>` : ''}
           <button class="outline" onclick="editScheduledStart('${escJs(id)}')" style="font-size:12px;padding:4px 10px;min-height:36px;" title="${t('user.scheduled_start_edit_title')}">${t('user.scheduled_start_btn')}</button>
           ${twofaBtns}
           ${banBtn}
@@ -6868,6 +6897,40 @@ async function editScheduledStart(userId) {
     const d = await r.json();
     if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
     showToast(t('user.scheduled_start_updated'), 'success');
+    loadUsers();
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
+}
+
+async function resetPin(userId) {
+  const name = document.querySelector(`#userList .user-entry:has(button[onclick*="'${escJs(userId)}'"]) .ue-info strong`)?.textContent || userId;
+  const newPin = prompt(t('user.reset_pin_prompt', { userId: userId }));
+  if (newPin === null) return;
+  const pinStr = newPin.trim();
+  if (!pinStr || !/^\d{4,8}$/.test(pinStr)) {
+    showToast(t('user.reset_pin_invalid'), 'danger');
+    return;
+  }
+  const reason = prompt(t('user.reset_pin_reason'));
+  if (reason === null) return;
+  if (!reason.trim()) {
+    showToast(t('user.reset_pin_reason_required'), 'danger');
+    return;
+  }
+  const forceChange = confirm(t('user.reset_pin_force'));
+  try {
+    const r = await fetch(BACKEND_URL + '/api/users/reset_pin', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        adminPin: currentUser.id,
+        userId,
+        newPin: pinStr,
+        reason: reason.trim(),
+        forceChange
+      })
+    });
+    const d = await r.json();
+    if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
+    showToast(t('user.reset_pin_success', { name }), 'success');
     loadUsers();
   } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
@@ -9588,15 +9651,21 @@ function closeModal() {
   overlay.classList.remove('active');
 }
 
-function showToast(msg, type) {
+function showToast(msg, type, duration) {
   const existing = document.querySelector('.toast');
   if (existing) existing.remove();
   const toast = document.createElement('div');
   toast.className = 'toast';
-  toast.style.background = type === 'danger' ? '#c0392b' : 'var(--success)';
+  if (type === 'danger') {
+    toast.style.background = '#c0392b';
+  } else if (type === 'warning') {
+    toast.style.background = '#e67e22';
+  } else {
+    toast.style.background = 'var(--success)';
+  }
   toast.textContent = msg;
   document.body.appendChild(toast);
-  setTimeout(() => toast.remove(), 2500);
+  setTimeout(() => toast.remove(), duration || 2500);
 }
 
 // ═══════════ TAX CONFIG ═══════════

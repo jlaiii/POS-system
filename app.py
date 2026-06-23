@@ -94,6 +94,12 @@ def upgrade_user(user_data):
         user_data['totp_backup_codes'] = []
     if 'totp_setup_at' not in user_data:
         user_data['totp_setup_at'] = None
+    # Ensure PIN reset notification field exists
+    if 'pin_reset_notification' not in user_data:
+        user_data['pin_reset_notification'] = None
+    # Ensure force_pin_change field exists
+    if 'force_pin_change' not in user_data:
+        user_data['force_pin_change'] = False
     return user_data
 
 
@@ -444,7 +450,9 @@ def get_users():
             'banned_reason': user_data.get('banned_reason', ''),
             'pay_rate': user_data.get('pay_rate', None),
             'scheduled_start': user_data.get('scheduled_start', None),
-            'totp_enabled': user_data.get('totp_enabled', False)
+            'totp_enabled': user_data.get('totp_enabled', False),
+            'pin_reset_notification': user_data.get('pin_reset_notification', None),
+            'force_pin_change': user_data.get('force_pin_change', False)
         }
     return jsonify(display_users)
 
@@ -477,7 +485,38 @@ def login():
                     log_activity('login', uid, u_data['role'], {'status': 'success', 'method': 'password', 'user_name': u_data['name']})
                     if u_data['role'] in ('admin', 'owner'):
                         active_admin_sessions[uid] = datetime.now()
-                    return jsonify({'message': 'Login successful', 'user': u_data['name'], 'role': u_data['role'], 'permissions': u_data.get('permissions', [])})
+
+                    # Check for PIN reset notification (password login path)
+                    pin_reset_info = None
+                    force_change_required = False
+                    if u_data.get('pin_reset_notification'):
+                        notif = u_data['pin_reset_notification']
+                        pin_reset_info = {
+                            'message': f'⚠️ Your PIN was reset by {notif.get("reset_by_name", "Unknown")} on {notif.get("reset_at", "unknown")}. Reason: {notif.get("reason", "Not provided")}. Use your new PIN.',
+                            'reset_by': notif.get('reset_by_name', 'Unknown'),
+                            'reset_at': notif.get('reset_at', ''),
+                            'reason': notif.get('reason', '')
+                        }
+                        users[uid]['pin_reset_notification'] = None
+
+                    if u_data.get('force_pin_change', False):
+                        force_change_required = True
+                        users[uid]['force_pin_change'] = False
+
+                    if pin_reset_info or force_change_required:
+                        save_json_data(USERS_FILE, users)
+
+                    response_data = {
+                        'message': 'Login successful',
+                        'user': u_data['name'],
+                        'role': u_data['role'],
+                        'permissions': u_data.get('permissions', [])
+                    }
+                    if pin_reset_info:
+                        response_data['pin_reset_info'] = pin_reset_info
+                    if force_change_required:
+                        response_data['force_pin_change_required'] = True
+                    return jsonify(response_data)
         log_activity('login', username, 'unknown', {'status': 'failed', 'method': 'password'})
         return jsonify({'message': 'Invalid username or password'}), 401
 
@@ -502,7 +541,38 @@ def login():
             log_activity('login', user_id, user_info['role'], {'status': 'success', 'method': 'pin', 'user_name': user_info['name']})
             if user_info['role'] in ('admin', 'owner'):
                 active_admin_sessions[user_id] = datetime.now()
-            return jsonify({'message': 'Login successful', 'user': user_info['name'], 'role': user_info['role'], 'permissions': user_info.get('permissions', [])})
+
+            # Check for PIN reset notification
+            pin_reset_info = None
+            force_change_required = False
+            if user_info.get('pin_reset_notification'):
+                notif = user_info['pin_reset_notification']
+                pin_reset_info = {
+                    'message': f'⚠️ Your PIN was reset by {notif.get("reset_by_name", "Unknown")} on {notif.get("reset_at", "unknown")}. Reason: {notif.get("reason", "Not provided")}. Use your new PIN.',
+                    'reset_by': notif.get('reset_by_name', 'Unknown'),
+                    'reset_at': notif.get('reset_at', ''),
+                    'reason': notif.get('reason', '')
+                }
+                users[user_id]['pin_reset_notification'] = None
+
+            if user_info.get('force_pin_change', False):
+                force_change_required = True
+                users[user_id]['force_pin_change'] = False
+
+            if pin_reset_info or force_change_required:
+                save_json_data(USERS_FILE, users)
+
+            response_data = {
+                'message': 'Login successful',
+                'user': user_info['name'],
+                'role': user_info['role'],
+                'permissions': user_info.get('permissions', [])
+            }
+            if pin_reset_info:
+                response_data['pin_reset_info'] = pin_reset_info
+            if force_change_required:
+                response_data['force_pin_change_required'] = True
+            return jsonify(response_data)
     log_activity('login', user_id, 'unknown', {'status': 'failed', 'method': 'pin'})
     return jsonify({'message': 'Invalid User ID or role'}), 401
 
@@ -789,12 +859,30 @@ def twofa_verify_login():
     if user_data['role'] in ('admin', 'owner'):
         active_admin_sessions[user_id] = datetime.now()
 
-    return jsonify({
+    # Check for PIN reset notification
+    response_data = {
         'message': 'Login successful',
         'user': user_data['name'],
         'role': user_data['role'],
         'permissions': user_data.get('permissions', [])
-    })
+    }
+    if user_data.get('pin_reset_notification'):
+        notif = user_data['pin_reset_notification']
+        response_data['pin_reset_info'] = {
+            'message': f'⚠️ Your PIN was reset by {notif.get("reset_by_name", "Unknown")} on {notif.get("reset_at", "unknown")}. Reason: {notif.get("reason", "Not provided")}. Use your new PIN.',
+            'reset_by': notif.get('reset_by_name', 'Unknown'),
+            'reset_at': notif.get('reset_at', ''),
+            'reason': notif.get('reason', '')
+        }
+        users[user_id]['pin_reset_notification'] = None
+        save_json_data(USERS_FILE, users)
+
+    if user_data.get('force_pin_change', False):
+        response_data['force_pin_change_required'] = True
+        users[user_id]['force_pin_change'] = False
+        save_json_data(USERS_FILE, users)
+
+    return jsonify(response_data)
 
 
 @app.route('/api/auth/2fa/backup_login', methods=['POST'])
@@ -908,14 +996,33 @@ def twofa_backup_login():
         log_activity('2fa_backup_codes_low', user_id, user_data.get('role', 'unknown'),
                      {'remaining_codes': remaining_codes, 'user_name': user_data['name']})
 
-    return jsonify({
+    response_data = {
         'message': response_msg,
         'user': user_data['name'],
         'role': user_data['role'],
         'permissions': user_data.get('permissions', []),
         'backup_codes_remaining': remaining_codes,
         'logged_in_via_backup_code': True
-    })
+    }
+
+    # Check for PIN reset notification
+    if user_data.get('pin_reset_notification'):
+        notif = user_data['pin_reset_notification']
+        response_data['pin_reset_info'] = {
+            'message': f'⚠️ Your PIN was reset by {notif.get("reset_by_name", "Unknown")} on {notif.get("reset_at", "unknown")}. Reason: {notif.get("reason", "Not provided")}. Use your new PIN.',
+            'reset_by': notif.get('reset_by_name', 'Unknown'),
+            'reset_at': notif.get('reset_at', ''),
+            'reason': notif.get('reason', '')
+        }
+        users[user_id]['pin_reset_notification'] = None
+        save_json_data(USERS_FILE, users)
+
+    if user_data.get('force_pin_change', False):
+        response_data['force_pin_change_required'] = True
+        users[user_id]['force_pin_change'] = False
+        save_json_data(USERS_FILE, users)
+
+    return jsonify(response_data)
 
 
 @app.route('/api/add_user', methods=['POST'])
@@ -1241,6 +1348,101 @@ def regenerate_backup_codes():
         'backup_codes_count': len(backup_codes),
         'user_id': user_id,
         'warn': 'Save these backup codes now. The old codes have been invalidated.'
+    })
+
+
+@app.route('/api/users/reset_pin', methods=['POST'])
+def reset_user_pin():
+    """Admin/owner resets another user's PIN. Requires manage_users permission.
+    The user's login ID (PIN) is changed to the new value.
+    Only owner can reset an admin's PIN. Logs to activity_log with audit trail.
+    Optionally sets force_pin_change flag so user is prompted to change PIN on next login."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+    user_id = data.get('userId')
+    new_pin = data.get('newPin')
+    reason = data.get('reason', '')
+    force_change = data.get('forceChange', False)
+
+    # Verify caller has manage_users permission
+    if not check_perm(admin_pin, "manage_users"):
+        log_activity('pin_reset_by_admin', admin_pin, 'unauthorized',
+                     {'status': 'failed', 'reason': 'Insufficient permissions',
+                      'target_user_id': user_id})
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    if not user_id:
+        return jsonify({'message': 'User ID is required.'}), 400
+
+    if not new_pin or not isinstance(new_pin, str):
+        return jsonify({'message': 'New PIN is required.'}), 400
+
+    # Validate new PIN: 4-8 digits
+    if not new_pin.isdigit() or len(new_pin) < 4 or len(new_pin) > 8:
+        return jsonify({'message': 'New PIN must be 4-8 digits.'}), 400
+
+    if not reason or not reason.strip():
+        return jsonify({'message': 'Reason is required to reset PIN.'}), 400
+
+    users = load_json_data(USERS_FILE)
+
+    if user_id not in users:
+        return jsonify({'message': 'User not found.'}), 404
+
+    # Check new PIN is not already taken
+    if new_pin in users:
+        return jsonify({'message': 'New PIN is already in use by another user.'}), 409
+
+    admin_user = users.get(admin_pin, {})
+    target_user = users[user_id]
+    target_user = upgrade_user(target_user)
+
+    # Only owner can reset PIN on admins
+    if target_user.get('role') == 'admin' and admin_user.get('role') != 'owner':
+        return jsonify({'message': 'Only the owner can reset PINs for admin accounts.'}), 403
+
+    # Only owner can reset PIN on owner
+    if target_user.get('role') == 'owner' and admin_user.get('role') != 'owner':
+        return jsonify({'message': 'Only the owner can reset the owner PIN.'}), 403
+
+    # Don't allow self-reset
+    if admin_pin == user_id:
+        return jsonify({'message': 'Use the Change PIN feature to change your own PIN.'}), 400
+
+    # Move user data from old PIN to new PIN
+    user_data = users[user_id]
+
+    # Set PIN reset notification (shown on next login)
+    user_data['pin_reset_notification'] = {
+        'reset_by': admin_pin,
+        'reset_by_name': admin_user.get('name', 'Unknown'),
+        'reset_by_role': admin_user.get('role', 'unknown'),
+        'reset_at': datetime.now().isoformat(),
+        'reason': reason.strip()
+    }
+
+    # Optionally force PIN change on next login
+    if force_change:
+        user_data['force_pin_change'] = True
+
+    # Remove old entry and create new one under the new PIN
+    del users[user_id]
+    users[new_pin] = user_data
+
+    save_json_data(USERS_FILE, users)
+
+    log_activity('pin_reset_by_admin', admin_pin, admin_user.get('role', 'unknown'),
+                 {'status': 'success', 'old_user_id': user_id, 'new_user_id': new_pin,
+                  'target_user_name': target_user.get('name', 'Unknown'),
+                  'target_user_role': target_user.get('role', 'unknown'),
+                  'reason': reason.strip(),
+                  'force_pin_change': force_change})
+
+    return jsonify({
+        'message': f'PIN reset for {target_user.get("name", user_id)}. New PIN: {new_pin}. User will be notified on next login.',
+        'user_id': new_pin,
+        'old_user_id': user_id,
+        'force_pin_change': force_change
     })
 
 
