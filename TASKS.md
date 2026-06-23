@@ -250,7 +250,7 @@ Use Python `pyotp` (pure Python, no C extensions, `pip install pyotp qrcode`):
 
 ### Priority: MEDIUM
 
-- [ ] **Off-server backup (scp/rsync to VPS backup location)** — Extend backup script to optionally copy the latest backup to a remote location:
+- [~] worker-1 **Off-server backup (scp/rsync to VPS backup location)** — Extend backup script to optionally copy the latest backup to a remote location:
   - Config in `timesheet_config.json`: `"offsite_backup": {"enabled": false, "host": "", "path": "", "ssh_key": ""}`
   - Uses `scp` with SSH key
   - Falls back gracefully if remote is unreachable (logs warning, doesn't fail)
