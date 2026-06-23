@@ -552,7 +552,7 @@ New `security_events.json` (append-only log of flagged events):
   - **Simultaneous logins**: same user logged in from 2 different IPs → flag as HIGH ("Carlos logged in from 192.168.1.5 AND 45.67.89.10 simultaneously")
   - All flags go to `security_events.json` with severity. Owner sees count badge on Security tab.
 
-- [ ] **Account blocking & force logout** — In User Management, owner can click "🔒 Block Account" on any user. This sets `banned: true` (already exists), logs reason, and immediately invalidates all their sessions. Also: "Force Logout" button that ends all active sessions for a user without banning them (useful for "your session is acting weird, log out and back in"). `POST /api/security/block_user` and `/unblock_user` endpoints. Blocked users get "Account blocked — contact owner" on login attempt. Show block reason to the user.
+- [~] worker-1 **Account blocking & force logout** — In User Management, owner can click "🔒 Block Account" on any user. This sets `banned: true` (already exists), logs reason, and immediately invalidates all their sessions. Also: "Force Logout" button that ends all active sessions for a user without banning them (useful for "your session is acting weird, log out and back in"). `POST /api/security/block_user` and `/unblock_user` endpoints. Blocked users get "Account blocked — contact owner" on login attempt. Show block reason to the user.
 
 ### Priority: MEDIUM
 
