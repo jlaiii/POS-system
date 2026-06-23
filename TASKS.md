@@ -39,7 +39,7 @@
 
 ## New Tasks (from Audit #6)
 
-- [ ] **Add employee clock-in/clock-out system** — Real restaurant staff need to clock in/out for shifts. Current timesheet only tracks admin login/logout. New "clock_in" endpoint, punch clock UI in POS header, shift tracking separate from login. Essential for payroll and shift management.
+- [~] worker-3 **Add employee clock-in/clock-out system** — Real restaurant staff need to clock in/out for shifts. Current timesheet only tracks admin login/logout. New "clock_in" endpoint, punch clock UI in POS header, shift tracking separate from login. Essential for payroll and shift management.
 
 - [ ] **Add kitchen display table grouping** — Kitchen orders should be groupable by table number so cooks can see all items for a table together. Currently each order submission creates a separate card. When same table gets multiple orders (appetizers then mains), they should be visually grouped or merged in the kitchen queue.
 
