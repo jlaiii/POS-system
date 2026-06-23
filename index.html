@@ -1377,8 +1377,28 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
             <h3 style="margin:0;">⏱️ Timesheet</h3>
             <button class="accent" onclick="exportTimesheetCSV()" style="font-size:14px;padding:12px 20px;min-height:48px;">📥 Export Timesheet (CSV)</button>
           </div>
+          <div class="card" style="margin-bottom:12px;padding:10px 14px;">
+            <div class="form-row" style="gap:8px;flex-wrap:wrap;align-items:center;">
+              <label style="font-size:13px;color:var(--text2);">📅 From:</label>
+              <input type="date" id="timesheetDateFrom" style="max-width:160px;min-height:40px;font-size:14px;">
+              <label style="font-size:13px;color:var(--text2);">To:</label>
+              <input type="date" id="timesheetDateTo" style="max-width:160px;min-height:40px;font-size:14px;">
+              <button class="accent" onclick="loadTimesheet()" style="min-height:40px;padding:8px 16px;font-size:13px;">🔍 Filter</button>
+              <button class="outline" onclick="document.getElementById('timesheetDateFrom').value='';document.getElementById('timesheetDateTo').value='';loadTimesheet()" style="min-height:40px;padding:8px 16px;font-size:13px;">✕ Clear</button>
+            </div>
+          </div>
           <div id="timesheetList"><div class="empty-state">Loading...</div></div>
           <h4 style="margin-top:20px;margin-bottom:8px;font-size:16px;color:var(--accent);">👤 Employee Shifts (Clock In/Out)</h4>
+          <div class="card" style="margin-bottom:12px;padding:10px 14px;">
+            <div class="form-row" style="gap:8px;flex-wrap:wrap;align-items:center;">
+              <label style="font-size:13px;color:var(--text2);">📅 From:</label>
+              <input type="date" id="shiftsDateFrom" style="max-width:160px;min-height:40px;font-size:14px;">
+              <label style="font-size:13px;color:var(--text2);">To:</label>
+              <input type="date" id="shiftsDateTo" style="max-width:160px;min-height:40px;font-size:14px;">
+              <button class="accent" onclick="loadShifts()" style="min-height:40px;padding:8px 16px;font-size:13px;">🔍 Filter</button>
+              <button class="outline" onclick="document.getElementById('shiftsDateFrom').value='';document.getElementById('shiftsDateTo').value='';loadShifts()" style="min-height:40px;padding:8px 16px;font-size:13px;">✕ Clear</button>
+            </div>
+          </div>
           <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
             <button class="accent" onclick="exportShiftsCSV()" style="font-size:13px;padding:10px 16px;min-height:40px;">📥 Export Shifts (CSV)</button>
           </div>
@@ -3315,9 +3335,14 @@ async function loadShifts() {
   const container = document.getElementById('shiftList');
   if (!container) return;
   try {
+    const params = { adminPin: currentUser.id };
+    const dateFrom = document.getElementById('shiftsDateFrom')?.value || '';
+    const dateTo = document.getElementById('shiftsDateTo')?.value || '';
+    if (dateFrom) params.date_from = dateFrom;
+    if (dateTo) params.date_to = dateTo;
     const r = await fetch(BACKEND_URL + '/api/admin_shifts', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adminPin: currentUser.id })
+      body: JSON.stringify(params)
     });
     if (!r.ok) { container.innerHTML = '<div class=\"empty-state\">Unauthorized</div>'; return; }
     const data = await r.json();
@@ -3357,9 +3382,14 @@ async function loadShifts() {
 
 async function exportShiftsCSV() {
   try {
+    const params = { adminPin: currentUser.id };
+    const dateFrom = document.getElementById('shiftsDateFrom')?.value || '';
+    const dateTo = document.getElementById('shiftsDateTo')?.value || '';
+    if (dateFrom) params.date_from = dateFrom;
+    if (dateTo) params.date_to = dateTo;
     const r = await fetch(BACKEND_URL + '/api/export/shifts_csv', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adminPin: currentUser.id })
+      body: JSON.stringify(params)
     });
     if (!r.ok) { showToast('Unauthorized', 'error'); return; }
     const data = await r.json();
@@ -6031,9 +6061,14 @@ async function loadTimesheet() {
   const list = document.getElementById('timesheetList');
   list.innerHTML = '<div class="empty-state">' + t('loading') + '</div>';
   try {
+    const params = { adminPin: currentUser.id };
+    const dateFrom = document.getElementById('timesheetDateFrom')?.value || '';
+    const dateTo = document.getElementById('timesheetDateTo')?.value || '';
+    if (dateFrom) params.date_from = dateFrom;
+    if (dateTo) params.date_to = dateTo;
     const r = await fetch(BACKEND_URL + '/api/admin_timesheet', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adminPin: currentUser.id })
+      body: JSON.stringify(params)
     });
     if (!r.ok) { list.innerHTML = '<div class="empty-state">Unauthorized</div>'; return; }
     const data = await r.json();
@@ -6080,9 +6115,14 @@ async function exportOrdersCSV() {
 
 async function exportTimesheetCSV() {
   try {
+    const params = { adminPin: currentUser.id };
+    const dateFrom = document.getElementById('timesheetDateFrom')?.value || '';
+    const dateTo = document.getElementById('timesheetDateTo')?.value || '';
+    if (dateFrom) params.date_from = dateFrom;
+    if (dateTo) params.date_to = dateTo;
     const r = await fetch(BACKEND_URL + '/api/export/timesheet_csv', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adminPin: currentUser.id })
+      body: JSON.stringify(params)
     });
     if (!r.ok) { const d = await r.json(); showToast(d.message || 'Export failed', 'danger'); return; }
     const data = await r.json();

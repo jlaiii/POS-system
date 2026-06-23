@@ -2200,6 +2200,40 @@ def admin_timesheet():
         return jsonify({'message': 'Insufficient permissions.'}), 403
 
     timesheet_data = load_json_data(TIMESHEET_FILE)
+
+    # Apply optional date range filtering on login_time
+    date_from = (data.get('date_from') or '').strip()
+    date_to = (data.get('date_to') or '').strip()
+    if date_from or date_to:
+        filtered = []
+        for entry in timesheet_data:
+            login_time_str = entry.get('login_time', '')
+            if not login_time_str:
+                continue
+            try:
+                login_dt = datetime.fromisoformat(login_time_str)
+            except (ValueError, TypeError):
+                continue
+            if date_from:
+                try:
+                    dt_from = datetime.fromisoformat(date_from)
+                    if login_dt < dt_from:
+                        continue
+                except ValueError:
+                    pass
+            if date_to:
+                try:
+                    if 'T' not in date_to:
+                        dt_to = datetime.fromisoformat(date_to + 'T23:59:59')
+                    else:
+                        dt_to = datetime.fromisoformat(date_to)
+                    if login_dt > dt_to:
+                        continue
+                except ValueError:
+                    pass
+            filtered.append(entry)
+        timesheet_data = filtered
+
     return jsonify({'message': 'Timesheet data retrieved', 'timesheet': timesheet_data})
 
 
@@ -2334,6 +2368,40 @@ def admin_shifts():
         return jsonify({'message': 'Insufficient permissions.'}), 403
 
     shift_log = load_json_data(SHIFT_FILE)
+
+    # Apply optional date range filtering on clock_in_time
+    date_from = (data.get('date_from') or '').strip()
+    date_to = (data.get('date_to') or '').strip()
+    if date_from or date_to:
+        filtered = []
+        for entry in shift_log:
+            clock_in_str = entry.get('clock_in_time', '')
+            if not clock_in_str:
+                continue
+            try:
+                clock_in_dt = datetime.fromisoformat(clock_in_str)
+            except (ValueError, TypeError):
+                continue
+            if date_from:
+                try:
+                    dt_from = datetime.fromisoformat(date_from)
+                    if clock_in_dt < dt_from:
+                        continue
+                except ValueError:
+                    pass
+            if date_to:
+                try:
+                    if 'T' not in date_to:
+                        dt_to = datetime.fromisoformat(date_to + 'T23:59:59')
+                    else:
+                        dt_to = datetime.fromisoformat(date_to)
+                    if clock_in_dt > dt_to:
+                        continue
+                except ValueError:
+                    pass
+            filtered.append(entry)
+        shift_log = filtered
+
     # Also include active (currently clocked-in) shifts
     active_shift_list = []
     for uid, shift in active_shifts.items():
@@ -2367,6 +2435,40 @@ def export_shifts_csv():
         return jsonify({'message': 'Insufficient permissions.'}), 403
 
     shift_log = load_json_data(SHIFT_FILE)
+
+    # Apply optional date range filtering on clock_in_time
+    date_from = (data.get('date_from') or '').strip()
+    date_to = (data.get('date_to') or '').strip()
+    if date_from or date_to:
+        filtered = []
+        for entry in shift_log:
+            clock_in_str = entry.get('clock_in_time', '')
+            if not clock_in_str:
+                continue
+            try:
+                clock_in_dt = datetime.fromisoformat(clock_in_str)
+            except (ValueError, TypeError):
+                continue
+            if date_from:
+                try:
+                    dt_from = datetime.fromisoformat(date_from)
+                    if clock_in_dt < dt_from:
+                        continue
+                except ValueError:
+                    pass
+            if date_to:
+                try:
+                    if 'T' not in date_to:
+                        dt_to = datetime.fromisoformat(date_to + 'T23:59:59')
+                    else:
+                        dt_to = datetime.fromisoformat(date_to)
+                    if clock_in_dt > dt_to:
+                        continue
+                except ValueError:
+                    pass
+            filtered.append(entry)
+        shift_log = filtered
+
     headers = ['User ID', 'User Name', 'Clock In Time', 'Clock Out Time', 'Duration (Hours)']
 
     rows = []
@@ -5184,6 +5286,40 @@ def export_timesheet_csv():
         return jsonify({'message': 'Insufficient permissions.'}), 403
 
     timesheet = load_json_data(TIMESHEET_FILE)
+
+    # Apply optional date range filtering on login_time
+    date_from = (data.get('date_from') or '').strip()
+    date_to = (data.get('date_to') or '').strip()
+    if date_from or date_to:
+        filtered = []
+        for entry in timesheet:
+            login_time_str = entry.get('login_time', '')
+            if not login_time_str:
+                continue
+            try:
+                login_dt = datetime.fromisoformat(login_time_str)
+            except (ValueError, TypeError):
+                continue
+            if date_from:
+                try:
+                    dt_from = datetime.fromisoformat(date_from)
+                    if login_dt < dt_from:
+                        continue
+                except ValueError:
+                    pass
+            if date_to:
+                try:
+                    if 'T' not in date_to:
+                        dt_to = datetime.fromisoformat(date_to + 'T23:59:59')
+                    else:
+                        dt_to = datetime.fromisoformat(date_to)
+                    if login_dt > dt_to:
+                        continue
+                except ValueError:
+                    pass
+            filtered.append(entry)
+        timesheet = filtered
+
     headers = ['User ID', 'Login Time', 'Logout Time', 'Duration (Hours)']
 
     rows = []
