@@ -305,7 +305,7 @@ New `tickets.json` data store. Each ticket:
 
 ### Priority: HIGH
 
-- [ ] **Employee ticket submission UI** — New "📋 Requests" tab visible to all logged-in employees (not just admins). Clean form with dropdown to select type: "🕐 Time Off Request", "🐛 Report Issue", "💬 Feedback / Suggestion", "📝 Other". Form adapts to type: time-off shows date range picker, issue/feedback shows priority selector. Subject + description fields. Submit button stores to `tickets.json`. Toast confirmation. "My Tickets" list below form showing user's own submissions with status badges.
+- [~] worker-1 **Employee ticket submission UI** — New "📋 Requests" tab visible to all logged-in employees (not just admins). Clean form with dropdown to select type: "🕐 Time Off Request", "🐛 Report Issue", "💬 Feedback / Suggestion", "📝 Other". Form adapts to type: time-off shows date range picker, issue/feedback shows priority selector. Subject + description fields. Submit button stores to `tickets.json`. Toast confirmation. "My Tickets" list below form showing user's own submissions with status badges.
 
 - [ ] **Smart date picker for time-off requests** — Two date inputs (from → to) with native date picker. Auto-calculates total business days requested. Validates: can't request past dates, can't request >30 days without override. Shows total days prominently. Prevents overlapping requests.
 
