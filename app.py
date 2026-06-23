@@ -4181,6 +4181,147 @@ def clock_break():
         })
 
 
+@app.route('/api/clock/missing_clockout', methods=['POST'])
+def clock_missing_clockout():
+    """Detect active shifts over 8 hours (potential forgotten clock-outs)."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+
+    if not check_perm(admin_pin, "view_timesheet"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    now = datetime.now()
+    threshold_hours = 8
+    users = load_json_data(USERS_FILE)
+    overdue = []
+
+    for uid, shift in list(active_shifts.items()):
+        duration_hours = (now - shift['clock_in_time']).total_seconds() / 3600
+        if duration_hours >= threshold_hours:
+            user_data = users.get(uid, {})
+            overdue.append({
+                'user_id': uid,
+                'user_name': shift.get('user_name', user_data.get('name', 'Unknown')),
+                'clock_in_time': shift['clock_in_time'].isoformat(),
+                'duration_hours': round(duration_hours, 2),
+                'on_break': shift.get('on_break', False),
+                'breaks': shift.get('breaks', []),
+                'scheduled_start': shift.get('scheduled_start'),
+                'late_minutes': shift.get('late_minutes'),
+                'late_excused': shift.get('late_excused', False),
+                'late_note': shift.get('late_note')
+            })
+
+    return jsonify({
+        'count': len(overdue),
+        'overdue_shifts': overdue
+    })
+
+
+@app.route('/api/clock/force_out', methods=['POST'])
+def clock_force_out():
+    """Admin force-clocks out an employee with estimated time + reason."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+    target_user_id = (data.get('user_id') or '').strip()
+    clock_out_str = (data.get('clock_out_time') or '').strip()
+    reason = (data.get('reason') or '').strip()
+
+    if not check_perm(admin_pin, "view_timesheet"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    if not target_user_id:
+        return jsonify({'message': 'Target user_id is required.'}), 400
+
+    if not reason:
+        return jsonify({'message': 'Reason is required.'}), 400
+
+    if target_user_id not in active_shifts:
+        return jsonify({'message': 'User is not clocked in.'}), 409
+
+    now = datetime.now()
+
+    # Parse estimated clock-out time
+    if clock_out_str and clock_out_str.lower() != 'now':
+        try:
+            clock_out_time = datetime.fromisoformat(clock_out_str)
+        except (ValueError, TypeError):
+            return jsonify({'message': 'Invalid clock_out_time format. Use ISO format or "now".'}), 400
+    else:
+        clock_out_time = now
+
+    users = load_json_data(USERS_FILE)
+    user_data = users.get(target_user_id, {})
+
+    shift = active_shifts.pop(target_user_id)
+    clock_in_time = shift['clock_in_time']
+    duration_hours = round((clock_out_time - clock_in_time).total_seconds() / 3600, 2)
+
+    # Calculate break total
+    breaks = shift.get('breaks', [])
+    total_break_minutes = 0
+    completed_breaks = []
+    for b in breaks:
+        if b.get('end') is None and b.get('start'):
+            try:
+                start_dt = datetime.fromisoformat(b['start'])
+                dur = (clock_out_time - start_dt).total_seconds() / 60
+                b['end'] = clock_out_time.isoformat()
+                b['duration_minutes'] = round(dur, 1)
+            except (ValueError, TypeError):
+                b['end'] = clock_out_time.isoformat()
+                b['duration_minutes'] = 0
+        mins = b.get('duration_minutes', 0) or 0
+        total_break_minutes += mins
+        completed_breaks.append(b)
+
+    break_hours = round(total_break_minutes / 60, 2)
+    paid_hours = round(duration_hours - break_hours, 2)
+
+    shift_record = {
+        'user_id': target_user_id,
+        'user_name': shift.get('user_name', user_data.get('name', 'Unknown')),
+        'clock_in_time': clock_in_time.isoformat(),
+        'clock_out_time': clock_out_time.isoformat(),
+        'duration_hours': duration_hours,
+        'breaks': completed_breaks,
+        'break_hours': break_hours,
+        'paid_hours': paid_hours,
+        'scheduled_start': shift.get('scheduled_start'),
+        'late_minutes': shift.get('late_minutes'),
+        'late_excused': shift.get('late_excused', False),
+        'late_note': shift.get('late_note'),
+        'forced': True,
+        'force_out_reason': reason,
+        'force_out_by': admin_pin,
+        'force_out_at': now.isoformat()
+    }
+
+    shift_log = load_json_data(SHIFT_FILE)
+    shift_log.append(shift_record)
+    save_json_data(SHIFT_FILE, shift_log)
+
+    log_activity('clock_force_out', admin_pin, user_data.get('role', 'admin'), {
+        'action': 'force_clock_out',
+        'target_user': target_user_id,
+        'target_user_name': shift_record['user_name'],
+        'clock_in_time': clock_in_time.isoformat(),
+        'clock_out_time': clock_out_time.isoformat(),
+        'duration_hours': duration_hours,
+        'reason': reason
+    })
+
+    return jsonify({
+        'message': f'Force clocked out {shift_record["user_name"]} successfully.',
+        'user_name': shift_record['user_name'],
+        'clock_in_time': clock_in_time.isoformat(),
+        'clock_out_time': clock_out_time.isoformat(),
+        'duration_hours': duration_hours,
+        'paid_hours': paid_hours,
+        'reason': reason
+    })
+
+
 @app.route('/api/admin_shifts', methods=['POST'])
 def admin_shifts():
     """Get all shift records (completed) for admin timesheet view."""

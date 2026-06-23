@@ -1589,6 +1589,17 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
               </div>
             </div>
           </div>
+          <!-- Missing clock-out alert banner -->
+          <div id="missingClockoutBanner" style="display:none;margin-bottom:12px;">
+            <div class="card" style="padding:12px 16px;border-left:4px solid #e74c3c;background:rgba(231,76,60,0.08);">
+              <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                <span id="missingClockoutCount" style="font-size:15px;font-weight:700;color:#e74c3c;">⚠️</span>
+                <span id="missingClockoutText" style="font-size:14px;flex:1;">Loading...</span>
+                <button class="danger" onclick="showForceClockoutModal()" style="font-size:13px;padding:8px 16px;min-height:40px;">🔧 Force Clock Out</button>
+                <button class="ghost" onclick="dismissMissingClockoutBanner()" style="font-size:12px;min-height:36px;padding:4px 10px;">✕ Dismiss</button>
+              </div>
+            </div>
+          </div>
           <!-- Unified period selector -->
           <div class="card" style="margin-bottom:12px;padding:10px 14px;">
             <div class="form-row" style="gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px;">
@@ -8439,13 +8450,165 @@ async function loadTimesheetDashboard() {
       container.innerHTML = '<div class="empty-state">No shift data found for this period. Select a date range and click Filter.</div>';
       // Still try to load approval status
       renderTsApprovalStatus(approvalData, params);
+      // Check for missing clockouts even when no period data
+      loadMissingClockouts();
       return;
     }
 
     // Render the dashboard
     renderTsDashboard(container, employees, approvalData, params);
+
+    // After dashboard render, check for missing clock-outs
+    loadMissingClockouts();
   } catch(e) {
     container.innerHTML = '<div class="empty-state">' + t('network_error') + '</div>';
+  }
+}
+
+// ═══════════ MISSING CLOCK-OUT DETECTION ═══════════
+
+/** Track whether banner has been dismissed this session */
+let _missingClockoutDismissed = false;
+
+/** Fetch missing clockout data and show/hide banner */
+async function loadMissingClockouts() {
+  if (_missingClockoutDismissed) return;
+  const banner = document.getElementById('missingClockoutBanner');
+  if (!banner) return;
+  try {
+    const r = await fetch(BACKEND_URL + '/api/clock/missing_clockout', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id })
+    });
+    if (!r.ok) { banner.style.display = 'none'; return; }
+    const data = await r.json();
+    if (data.count > 0) {
+      document.getElementById('missingClockoutCount').textContent = '⚠️ ' + data.count;
+      const names = data.overdue_shifts.map(s => escHtml(s.user_name)).join(', ');
+      document.getElementById('missingClockoutText').textContent =
+        data.count + ' employee(s) have active shifts over 8 hours — possible forgotten clock-outs: ' + names;
+      // Store overdue data for the modal
+      window._overdueShifts = data.overdue_shifts;
+      banner.style.display = '';
+    } else {
+      banner.style.display = 'none';
+    }
+  } catch(e) {
+    banner.style.display = 'none';
+  }
+}
+
+/** Dismiss the missing clockout banner for this session */
+function dismissMissingClockoutBanner() {
+  _missingClockoutDismissed = true;
+  document.getElementById('missingClockoutBanner').style.display = 'none';
+}
+
+/** Show the force clock-out modal */
+function showForceClockoutModal() {
+  const overlay = document.getElementById('forceClockoutOverlay');
+  if (!overlay) return;
+  // Populate employee dropdown from overdue data
+  const select = document.getElementById('forceClockoutEmployee');
+  select.innerHTML = '<option value="">— Select employee —</option>';
+  if (window._overdueShifts) {
+    window._overdueShifts.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s.user_id;
+      opt.textContent = s.user_name + ' (#' + s.user_id + ') — ' + s.duration_hours.toFixed(1) + 'h since ' + new Date(s.clock_in_time).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+      select.appendChild(opt);
+    });
+  }
+  // Set default time to now (local)
+  const now = new Date();
+  const localStr = now.getFullYear() + '-' +
+    String(now.getMonth()+1).padStart(2,'0') + '-' +
+    String(now.getDate()).padStart(2,'0') + 'T' +
+    String(now.getHours()).padStart(2,'0') + ':' +
+    String(now.getMinutes()).padStart(2,'0');
+  document.getElementById('forceClockoutTime').value = localStr;
+  document.getElementById('forceClockoutReason').value = '';
+  document.getElementById('forceClockoutError').style.display = 'none';
+  document.getElementById('forceClockoutStatus').style.display = 'none';
+  document.getElementById('forceClockoutBtn').disabled = false;
+  document.getElementById('forceClockoutBtn').textContent = '🔧 Force Clock Out';
+  overlay.style.display = 'flex';
+}
+
+/** Close the force clock-out modal */
+function closeForceClockoutModal() {
+  document.getElementById('forceClockoutOverlay').style.display = 'none';
+}
+
+/** Submit force clock-out */
+async function forceClockoutSubmit() {
+  const userId = document.getElementById('forceClockoutEmployee').value;
+  const reason = document.getElementById('forceClockoutReason').value.trim();
+  const timeInput = document.getElementById('forceClockoutTime').value;
+  const errorEl = document.getElementById('forceClockoutError');
+  const statusEl = document.getElementById('forceClockoutStatus');
+  const btn = document.getElementById('forceClockoutBtn');
+
+  if (!userId) {
+    errorEl.textContent = 'Please select an employee.';
+    errorEl.style.display = '';
+    return;
+  }
+  if (!reason) {
+    errorEl.textContent = 'Please provide a reason.';
+    errorEl.style.display = '';
+    return;
+  }
+
+  errorEl.style.display = 'none';
+  statusEl.style.display = 'none';
+  btn.disabled = true;
+  btn.textContent = '⏳ Processing...';
+
+  try {
+    const body = {
+      adminPin: currentUser.id,
+      user_id: userId,
+      reason: reason
+    };
+    if (timeInput) {
+      // Convert local datetime to ISO
+      const dt = new Date(timeInput);
+      if (!isNaN(dt.getTime())) {
+        body.clock_out_time = dt.toISOString();
+      }
+    }
+    const r = await fetch(BACKEND_URL + '/api/clock/force_out', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      errorEl.textContent = data.message || 'Force clock-out failed.';
+      errorEl.style.display = '';
+      btn.disabled = false;
+      btn.textContent = '🔧 Force Clock Out';
+      return;
+    }
+    // Success
+    statusEl.style.color = '#4caf50';
+    statusEl.innerHTML = '✅ ' + escHtml(data.user_name) + ' clocked out — ' + data.duration_hours.toFixed(2) + 'h' +
+      (data.reason ? ' (Reason: ' + escHtml(data.reason) + ')' : '');
+    statusEl.style.display = '';
+    btn.textContent = '✅ Done';
+    // Remove this user from dropdown
+    const opt = document.querySelector('#forceClockoutEmployee option[value="' + userId + '"]');
+    if (opt) opt.remove();
+    // Refresh dashboard after 1 second
+    setTimeout(() => {
+      closeForceClockoutModal();
+      loadTimesheetDashboard();
+    }, 1500);
+  } catch(e) {
+    errorEl.textContent = 'Network error: ' + e.message;
+    errorEl.style.display = '';
+    btn.disabled = false;
+    btn.textContent = '🔧 Force Clock Out';
   }
 }
 
@@ -13577,6 +13740,37 @@ async function submitChangePin() {
     <div class="modal-actions" style="gap:8px;">
       <button class="accent" onclick="submitChangePin()" style="min-height:48px;font-size:15px;padding:10px 24px;">🔑 Change PIN</button>
       <button class="outline" onclick="closeChangePinModal()" style="min-height:48px;font-size:15px;padding:10px 24px;">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ FORCE CLOCK-OUT MODAL ═══════════ -->
+<div id="forceClockoutOverlay" class="modal-overlay" style="display:none;">
+  <div class="modal-box" style="max-width:480px;">
+    <h3 style="margin-bottom:4px;">🔧 Force Clock Out Employee</h3>
+    <p style="font-size:13px;color:var(--text2);margin:0 0 12px 0;">Manually clock out an employee who forgot to clock out. An estimated clock-out time will be recorded.</p>
+    <div id="forceClockoutForm">
+      <div style="margin-bottom:10px;">
+        <label for="forceClockoutEmployee" style="font-size:13px;color:var(--text2);font-weight:600;">Employee *</label>
+        <select id="forceClockoutEmployee" style="width:100%;min-height:48px;font-size:15px;padding:8px 12px;margin-top:4px;border-radius:8px;border:2px solid var(--border);background:var(--bg);color:var(--text);">
+          <option value="">— Select employee —</option>
+        </select>
+      </div>
+      <div style="margin-bottom:10px;">
+        <label for="forceClockoutTime" style="font-size:13px;color:var(--text2);font-weight:600;">Estimated Clock-Out Time</label>
+        <input type="datetime-local" id="forceClockoutTime" style="width:100%;min-height:48px;font-size:15px;padding:8px 12px;margin-top:4px;border-radius:8px;border:2px solid var(--border);background:var(--bg);color:var(--text);">
+        <div style="font-size:12px;color:var(--text2);margin-top:3px;">Leave empty to use current time.</div>
+      </div>
+      <div style="margin-bottom:10px;">
+        <label for="forceClockoutReason" style="font-size:13px;color:var(--text2);font-weight:600;">Reason *</label>
+        <textarea id="forceClockoutReason" rows="2" placeholder="e.g., Employee forgot to clock out at end of shift" style="width:100%;min-height:60px;font-size:14px;padding:8px 12px;margin-top:4px;border-radius:8px;border:2px solid var(--border);background:var(--bg);color:var(--text);resize:vertical;"></textarea>
+      </div>
+      <div id="forceClockoutError" style="color:var(--accent);font-size:14px;margin-bottom:10px;display:none;"></div>
+      <div id="forceClockoutStatus" style="font-size:13px;margin-bottom:10px;display:none;"></div>
+    </div>
+    <div class="modal-actions" style="gap:8px;">
+      <button class="danger" onclick="forceClockoutSubmit()" id="forceClockoutBtn" style="min-height:48px;font-size:15px;padding:10px 24px;">🔧 Force Clock Out</button>
+      <button class="outline" onclick="closeForceClockoutModal()" style="min-height:48px;font-size:15px;padding:10px 24px;">Cancel</button>
     </div>
   </div>
 </div>

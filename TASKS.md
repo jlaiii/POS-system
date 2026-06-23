@@ -117,7 +117,7 @@
 
 - [x] worker-1 **Timesheet UI overhaul for timekeeper usability** — Redesigned admin Timesheet tab as unified timekeeper dashboard with period selector (presets + date range), summary bar, sortable employee cards (name/hours/pay/OT/shifts), expandable dense shift detail tables with visual indicators (active/OT/late/edited), export buttons (CSV/PDF) always visible, collapsible admin login log section. Dark theme, touch-compatible. Backward-compatible redirects from old function calls.
 
-- [~] worker-1 **Missing clock-out detection & alert** — Detect employees who clocked in but never clocked out (e.g., 8h+ since clock-in with no clock-out). Show alert banner in admin Timesheet: "⚠️ 2 employees have active shifts over 8 hours — possible forgotten clock-outs." Allow admin to force clock-out with estimated time + note.
+- [x] worker-1 **Missing clock-out detection & alert** — Detect employees who clocked in but never clocked out (e.g., 8h+ since clock-in with no clock-out). Show alert banner in admin Timesheet: "⚠️ 2 employees have active shifts over 8 hours — possible forgotten clock-outs." Allow admin to force clock-out with estimated time + note. [worker-1 — New POST /api/clock/missing_clockout and POST /api/clock/force_out endpoints, alert banner in Timesheet, force clock-out modal with employee selector/time/reason, on-the-fly break auto-close, activity logging]
 
 ### Priority: LOW
 
