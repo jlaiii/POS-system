@@ -1,10 +1,10 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-23T08:05:57
-> Total checks: 34
-> Healthy: 34 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-23T08:34:04
+> Total checks: 35
+> Healthy: 34 | Broken: 1 | Fixed this cycle: 1
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 (curl /api/health or root) — OK (200)
+- [x] Flask app responds on port 5000 (curl /api/health or root) — OK (200, verified 2026-06-23T08:34)
 - [x] All JSON data files exist and are valid — OK (31 JSON files, all parseable)
 - [x] users.json has at least owner PIN 1111 — OK (Owner, role: owner, permissions: ["*"])
 - [x] Git repo is clean (no uncommitted changes from crashes) — OK
@@ -48,7 +48,10 @@
 - (none yet — first run)
 
 ## FIXES APPLIED
-- (none yet — first run)
+- 2026-06-23 **Flask process was down** — Flask (app.py) was not responding on port 5000 when checked at 08:34. No crash log found (log file did not exist). Root cause unknown — possible OOM kill or previous worker crash. Restarted `python3 app.py` in background. Verified 200 OK on `/` and `/api/health`, `/api/login`, `/api/items` all functional. Downtime: unknown (last healthy check at 08:06). **[Fixed this run]**
+
+## DISCOVERED (failures you've seen before — check every 2h)
+- Flask process can die silently. Check every run (already in CRITICAL tier). Consider adding a systemd service or supervisor to auto-restart.
 
 ## NOTES
 - Endpoints use `userId` for PIN login and `adminPin` for admin endpoints, NOT `pin`
