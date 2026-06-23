@@ -543,7 +543,7 @@ New `security_events.json` (append-only log of flagged events):
 
 - [x] worker-3 **IP blocklist management** — `POST /api/security/blocklist/add` and `/remove` endpoints. Owner adds IP to blocklist → all requests from that IP get 403 Forbidden. Auto-block: after `auto_block_threshold` failed logins from same IP in 5 minutes, auto-add to blocklist for `auto_block_duration_minutes`. Auto-block events logged as security_events. Owner can set permanent block ("until manually removed"). IP allowlist mode: if `ip_allowlist` is non-empty, ONLY those IPs can access — everything else gets 403. This is the nuclear option for "only allow the restaurant's static IP." [worker-3 — Added POST /api/security/blocklist/add + allowlist endpoints. before_request hook enforces blocklist (403) and allowlist. Auto-block on 5 failed logins/same IP/5min. log_security_event() helper. Frontend: add/remove IP forms, allowlist card in Security dashboard. All endpoints tested.]
 
-- [ ] **Anomaly detection engine** — Background thread (or per-request check) that flags unusual patterns:
+- [~] worker-2 **Anomaly detection engine** — Background thread (or per-request check) that flags unusual patterns:
   - **Off-hours login**: login between `anomaly_hours_start` and `anomaly_hours_end` → flag as MEDIUM, log to security_events, show yellow banner on dashboard: "⚠️ Carlos logged in at 3:14 AM"
   - **Failed login spike**: >5 failed logins from same IP in 5 minutes → flag as HIGH, auto-block if enabled
   - **Rapid orders**: >10 orders in 5 minutes from same user → flag as MEDIUM (possible fraud or "fat finger" auto-submit)
