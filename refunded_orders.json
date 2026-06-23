@@ -113,5 +113,183 @@
         "reason": "Reliability Bot - order lifecycle test",
         "refunded_at": "2026-06-23T14:26:14.105325",
         "refunded_by": "1111"
+    },
+    {
+        "order_id": 14,
+        "original_order": {
+            "order_id": 14,
+            "status": "refunded",
+            "claimed_by": null,
+            "claimed_at": null,
+            "completed_at": null,
+            "date": "2026-06-23T15:24:45.846255",
+            "user": null,
+            "payment": "Cash",
+            "payment_splits": null,
+            "items": [
+                {
+                    "name": "TestItem \ud83c\udf89",
+                    "price": 1.99,
+                    "qty": 1
+                }
+            ],
+            "subtotal": 1.99,
+            "tax_amount": 0.0,
+            "tip_amount": 0.0,
+            "service_charge_amount": 0.0,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 1.99,
+            "notes": "",
+            "item_notes": {},
+            "table_number": null,
+            "delivery_address": null,
+            "customer_email": "",
+            "refund_reason": "Test order - cleanup",
+            "refunded_at": "2026-06-23T15:25:05.514736",
+            "refunded_by": "1111"
+        },
+        "reason": "Test order - cleanup",
+        "refunded_at": "2026-06-23T15:25:05.514736",
+        "refunded_by": "1111"
+    },
+    {
+        "order_id": 23,
+        "original_order": {
+            "order_id": 23,
+            "status": "refunded",
+            "claimed_by": null,
+            "claimed_at": null,
+            "completed_at": null,
+            "date": "2026-06-23T17:56:36.494715",
+            "user": "5678",
+            "payment": "Cash",
+            "payment_splits": null,
+            "items": [
+                {
+                    "name": "Chips (Large Bag)",
+                    "price": 3,
+                    "qty": 1
+                },
+                {
+                    "name": "Coke",
+                    "price": 3,
+                    "qty": 2
+                }
+            ],
+            "subtotal": 9.0,
+            "tax_amount": 0.72,
+            "tip_amount": 0.0,
+            "service_charge_amount": 0.0,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 9.72,
+            "notes": "",
+            "item_notes": {},
+            "table_number": 4,
+            "delivery_address": null,
+            "customer_email": "",
+            "refund_reason": "Customer double-ordered chips and Coke",
+            "refunded_at": "2026-06-23T17:57:38.277971",
+            "refunded_by": "1111"
+        },
+        "reason": "Customer double-ordered chips and Coke",
+        "refunded_at": "2026-06-23T17:57:38.277971",
+        "refunded_by": "1111"
+    },
+    {
+        "order_id": 26,
+        "original_order": {
+            "order_id": 26,
+            "status": "refunded",
+            "claimed_by": null,
+            "claimed_at": null,
+            "completed_at": null,
+            "date": "2026-06-23T18:32:26.911814",
+            "user": "1111",
+            "payment": "Cash",
+            "payment_splits": null,
+            "items": [
+                {
+                    "name": "Hamburger - Normal",
+                    "price": 6,
+                    "qty": 2,
+                    "category": "Foods"
+                },
+                {
+                    "name": "Hotdog - Loaded",
+                    "price": 7,
+                    "qty": 1,
+                    "category": "Foods"
+                },
+                {
+                    "name": "Coke",
+                    "price": 2,
+                    "qty": 3,
+                    "category": "Drinks"
+                }
+            ],
+            "subtotal": 25.0,
+            "tax_amount": 2.5,
+            "tip_amount": 0.0,
+            "service_charge_amount": 0.0,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 27.5,
+            "notes": "",
+            "item_notes": {},
+            "table_number": 5,
+            "delivery_address": null,
+            "customer_email": "",
+            "refund_reason": "Customer changed mind - walkthrough test",
+            "refunded_at": "2026-06-23T18:32:39.633651",
+            "refunded_by": "1111"
+        },
+        "reason": "Customer changed mind - walkthrough test",
+        "refunded_at": "2026-06-23T18:32:39.633651",
+        "refunded_by": "1111"
+    },
+    {
+        "order_id": 55,
+        "original_order": {
+            "order_id": 55,
+            "status": "refunded",
+            "claimed_by": null,
+            "claimed_at": null,
+            "completed_at": null,
+            "date": "2026-06-23T19:22:09.915855",
+            "user": "1111",
+            "payment": {
+                "method": "cash",
+                "amount": 6.0
+            },
+            "payment_splits": null,
+            "items": [
+                {
+                    "name": "Test Item SRE",
+                    "price": 5.0,
+                    "quantity": 1,
+                    "category": "Beverages"
+                }
+            ],
+            "subtotal": 5.0,
+            "tax_amount": 0.0,
+            "tip_amount": 0.0,
+            "service_charge_amount": 0.0,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 5.5,
+            "notes": "",
+            "item_notes": {},
+            "table_number": null,
+            "delivery_address": null,
+            "customer_email": "",
+            "refund_reason": "No reason provided",
+            "refunded_at": "2026-06-23T19:22:28.343724",
+            "refunded_by": "1111"
+        },
+        "reason": "No reason provided",
+        "refunded_at": "2026-06-23T19:22:28.343724",
+        "refunded_by": "1111"
     }
 ]

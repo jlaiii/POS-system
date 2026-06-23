@@ -1,1 +1,12 @@
-{}
+{
+    "SAVE10": {
+        "type": "percent",
+        "value": 10.0,
+        "min_order": 0,
+        "active": true,
+        "description": "10% off your order",
+        "usage_limit": null,
+        "times_used": 0,
+        "created_at": "2026-06-23T17:56:22.559930"
+    }
+}

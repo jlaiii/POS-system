@@ -286,6 +286,22 @@ def log_activity(activity_type, user_id, user_role, details=None):
     save_json_data(ACTIVITY_LOG_FILE, logs)
 
 
+def check_get_auth(admin_pin, permission):
+    """Check authentication for GET endpoints that pass adminPin as query param.
+    Returns (user_data, None) on success, or (None, (response, status_code)) on failure."""
+    if not admin_pin:
+        return None, (jsonify({'message': 'Authentication required.'}), 401)
+    if not check_perm(admin_pin, permission):
+        log_activity('unauthorized_access', admin_pin, 'unknown',
+                     {'status': 'denied', 'reason': f'Missing {permission} permission',
+                      'endpoint': request.path})
+        return None, (jsonify({'message': 'Insufficient permissions.'}), 403)
+    users = load_json_data(USERS_FILE)
+    if admin_pin not in users:
+        return None, (jsonify({'message': 'Unauthorized.'}), 403)
+    return users[admin_pin], None
+
+
 def get_timesheet_config():
     """Load timesheet config with defaults."""
     defaults = {
@@ -1037,7 +1053,11 @@ def owner_credentials():
 
 @app.route('/api/owner/credentials/status', methods=['GET'])
 def owner_credentials_status():
-    """Check if owner has set credentials."""
+    """Check if owner has set credentials. Requires manage_users permission."""
+    admin_pin = request.args.get('adminPin', '')
+    _, err_response = check_get_auth(admin_pin, "manage_users")
+    if err_response:
+        return err_response
     users = load_json_data(USERS_FILE)
     for uid, u_data in users.items():
         if u_data.get('role') == 'owner':
@@ -2902,7 +2922,11 @@ def sync_orders():
 
 @app.route('/api/orders/<int:order_id>/delivery_address', methods=['GET'])
 def get_delivery_address(order_id):
-    """Get delivery address for a specific order."""
+    """Get delivery address for a specific order. Requires manage_orders permission."""
+    admin_pin = request.args.get('adminPin', '')
+    _, err_response = check_get_auth(admin_pin, "manage_orders")
+    if err_response:
+        return err_response
     orders = load_json_data(ORDERS_FILE)
     for order in orders:
         if order.get('order_id') == order_id:
@@ -2938,7 +2962,12 @@ def update_delivery_address(order_id):
 
 @app.route('/api/delivery_addresses', methods=['GET'])
 def list_delivery_addresses():
-    """List saved delivery addresses, optionally filtered by user or phone."""
+    """List saved delivery addresses, optionally filtered by user or phone.
+    Requires manage_orders permission."""
+    admin_pin = request.args.get('adminPin', '')
+    _, err_response = check_get_auth(admin_pin, "manage_orders")
+    if err_response:
+        return err_response
     user_id = request.args.get('user', '')
     phone = request.args.get('phone', '')
     addresses = load_json_data(DELIVERY_ADDRESSES_FILE)
@@ -3095,7 +3124,11 @@ def orders_recent():
 
 @app.route('/api/email/config', methods=['GET'])
 def get_email_config():
-    """Get the current SMTP email configuration."""
+    """Get the current SMTP email configuration. Requires manage_items permission."""
+    admin_pin = request.args.get('adminPin', '')
+    _, err_response = check_get_auth(admin_pin, "manage_items")
+    if err_response:
+        return err_response
     config = load_json_data(EMAIL_CONFIG_FILE)
     if not isinstance(config, dict):
         config = {"server": "", "port": 587, "username": "", "password": "", "from_addr": "", "use_tls": True, "enabled": False}
@@ -3151,7 +3184,11 @@ def save_email_config():
 
 @app.route('/api/orders/receipt/<int:order_id>', methods=['GET'])
 def get_order_receipt(order_id):
-    """Return receipt HTML for a completed order."""
+    """Return receipt HTML for a completed order. Requires manage_orders permission."""
+    admin_pin = request.args.get('adminPin', '')
+    _, err_response = check_get_auth(admin_pin, "manage_orders")
+    if err_response:
+        return err_response
     # Look in both orders and cleared orders
     all_orders = load_json_data(ORDERS_FILE) + load_json_data(CLEARED_ORDERS_FILE)
     order = None
@@ -5433,7 +5470,12 @@ def activity_log():
 
 @app.route('/api/analytics/most_ordered', methods=['GET'])
 def analytics_most_ordered():
-    """Returns top 20 most-ordered items by frequency across all orders."""
+    """Returns top 20 most-ordered items by frequency across all orders.
+    Requires view_stats permission (adminPin as query param)."""
+    admin_pin = request.args.get('adminPin', '')
+    _, err_response = check_get_auth(admin_pin, "view_stats")
+    if err_response:
+        return err_response
     try:
         orders = load_json_data(ORDERS_FILE)
         item_counter = Counter()
@@ -5457,7 +5499,12 @@ def analytics_most_ordered():
 
 @app.route('/api/analytics/hourly_sales', methods=['GET'])
 def analytics_hourly_sales():
-    """Returns sales counts grouped by hour of day (0-23) for all time."""
+    """Returns sales counts grouped by hour of day (0-23) for all time.
+    Requires view_stats permission (adminPin as query param)."""
+    admin_pin = request.args.get('adminPin', '')
+    _, err_response = check_get_auth(admin_pin, "view_stats")
+    if err_response:
+        return err_response
     try:
         orders = load_json_data(ORDERS_FILE)
         hourly_counts = [0] * 24  # Index 0 = midnight (00:00-00:59), ..., 23 = 11 PM
@@ -5482,7 +5529,12 @@ def analytics_hourly_sales():
 
 @app.route('/api/analytics/daily_revenue', methods=['GET'])
 def analytics_daily_revenue():
-    """Returns daily revenue for the last 30 days [{date, revenue, order_count}]."""
+    """Returns daily revenue for the last 30 days [{date, revenue, order_count}].
+    Requires view_stats permission (adminPin as query param)."""
+    admin_pin = request.args.get('adminPin', '')
+    _, err_response = check_get_auth(admin_pin, "view_stats")
+    if err_response:
+        return err_response
     try:
         orders = load_json_data(ORDERS_FILE)
         now = datetime.now()
@@ -5525,7 +5577,12 @@ def analytics_daily_revenue():
 
 @app.route('/api/analytics/popular_combos', methods=['GET'])
 def analytics_popular_combos():
-    """Returns items frequently ordered together (pairs that appear in same order at least 2 times)."""
+    """Returns items frequently ordered together (pairs that appear in same order at least 2 times).
+    Requires view_stats permission (adminPin as query param)."""
+    admin_pin = request.args.get('adminPin', '')
+    _, err_response = check_get_auth(admin_pin, "view_stats")
+    if err_response:
+        return err_response
     try:
         orders = load_json_data(ORDERS_FILE)
         pair_counter = Counter()
@@ -5569,7 +5626,11 @@ def analytics_popular_combos():
 def analytics_item_trends():
     """Returns item popularity trends — comparing recent 7 days vs previous 7 days.
     Returns items sorted by trend (rising first), with change percentage and direction.
-    """
+    Requires view_stats permission (adminPin as query param)."""
+    admin_pin = request.args.get('adminPin', '')
+    _, err_response = check_get_auth(admin_pin, "view_stats")
+    if err_response:
+        return err_response
     try:
         orders = load_json_data(ORDERS_FILE)
         now = datetime.now()
@@ -5654,7 +5715,12 @@ def analytics_item_trends():
 
 @app.route('/api/analytics/summary', methods=['GET'])
 def analytics_summary():
-    """Returns quick summary: total_orders_today, revenue_today, avg_order_today, top_item_today, active_users_count."""
+    """Returns quick summary: total_orders_today, revenue_today, avg_order_today, top_item_today, active_users_count.
+    Requires view_stats permission (adminPin as query param)."""
+    admin_pin = request.args.get('adminPin', '')
+    _, err_response = check_get_auth(admin_pin, "view_stats")
+    if err_response:
+        return err_response
     try:
         orders = load_json_data(ORDERS_FILE)
         now = datetime.now()
@@ -6464,7 +6530,12 @@ def clear_lockout():
 
 @app.route('/api/menu/history', methods=['GET'])
 def menu_history():
-    """Returns list of all menu backup files, sorted newest first."""
+    """Returns list of all menu backup files, sorted newest first.
+    Requires manage_items permission (adminPin as query param)."""
+    admin_pin = request.args.get('adminPin', '')
+    _, err_response = check_get_auth(admin_pin, "manage_items")
+    if err_response:
+        return err_response
     if not os.path.exists(MENU_BACKUPS_DIR):
         return jsonify({'backups': []})
 
@@ -7221,7 +7292,12 @@ def get_table_tab_history(table_number):
 
 @app.route('/api/inventory', methods=['GET'])
 def get_inventory():
-    """Returns all inventory data merged with item names from menu."""
+    """Returns all inventory data merged with item names from menu.
+    Requires manage_items permission (adminPin as query param)."""
+    admin_pin = request.args.get('adminPin', '')
+    _, err_response = check_get_auth(admin_pin, "manage_items")
+    if err_response:
+        return err_response
     inventory = load_json_data(INVENTORY_FILE)
     items = load_json_data(ITEMS_FILE)
     
@@ -7307,7 +7383,12 @@ def update_inventory():
 
 @app.route('/api/inventory/low_stock', methods=['GET'])
 def low_stock_alerts():
-    """Returns items that are low on stock or out of stock."""
+    """Returns items that are low on stock or out of stock.
+    Requires manage_items permission (adminPin as query param)."""
+    admin_pin = request.args.get('adminPin', '')
+    _, err_response = check_get_auth(admin_pin, "manage_items")
+    if err_response:
+        return err_response
     inventory = load_json_data(INVENTORY_FILE)
     items = load_json_data(ITEMS_FILE)
     
@@ -9639,6 +9720,10 @@ def test_webhook(wh_id):
 @app.route('/api/ads', methods=['GET'])
 def get_ads():
     """List all ads. Requires manage_items permission."""
+    admin_pin = request.args.get('adminPin', '')
+    _, err_response = check_get_auth(admin_pin, "manage_items")
+    if err_response:
+        return err_response
     data = load_json_data(TABLE_ADS_FILE)
     return jsonify(data)
 

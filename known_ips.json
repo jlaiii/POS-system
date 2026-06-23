@@ -1,27 +1,32 @@
 {
   "1111": {
-    "ips": [],
-    "last_seen": "2026-06-23T06:51:47",
-    "note": "Owner — no IP data available in activity log; tracking starts now"
+    "ips": ["127.0.0.1"],
+    "last_seen": "2026-06-23T18:22:44",
+    "note": "Owner — all activity via localhost (curl testing)"
   },
   "1234": {
-    "ips": [],
-    "last_seen": null,
-    "note": "Employee One — no IP data available in activity log"
+    "ips": ["127.0.0.1"],
+    "last_seen": "2026-06-23T15:47:07",
+    "note": "Employee One — localhost only"
   },
   "5678": {
-    "ips": [],
-    "last_seen": null,
-    "note": "Employee Two — no IP data available in activity log"
+    "ips": ["127.0.0.1"],
+    "last_seen": "2026-06-23T17:56:40",
+    "note": "Employee Two — localhost only"
   },
   "2222": {
-    "ips": [],
-    "last_seen": null,
-    "note": "Manager — no IP data available in activity log"
+    "ips": ["127.0.0.1"],
+    "last_seen": "2026-06-23T17:49:27",
+    "note": "Manager — localhost only"
   },
   "123456": {
     "ips": [],
     "last_seen": null,
-    "note": "Carlos — no IP data available in activity log"
+    "note": "Carlos — no activity recorded yet"
+  },
+  "9999": {
+    "ips": ["127.0.0.1"],
+    "last_seen": "2026-06-23T18:22:42",
+    "note": "Test2FA — localhost only"
   }
 }

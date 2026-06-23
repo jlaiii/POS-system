@@ -79,7 +79,17 @@
             "kitchen_access"
         ],
         "banned": false,
-        "banned_reason": ""
+        "banned_reason": "",
+        "pay_rate": null,
+        "scheduled_start": null,
+        "totp_secret": null,
+        "totp_enabled": false,
+        "totp_backup_codes": [],
+        "totp_setup_at": null,
+        "pin_reset_notification": null,
+        "force_pin_change": false,
+        "temp_pin": null,
+        "temp_pin_expiry": null
     },
     "123456": {
         "name": "Carlos",
@@ -110,6 +120,10 @@
             "7fdb4f4f67761cde51b1391cf87045ed6fc556b6e9a1fd25729430800d0efced",
             "6183ac353ef6ab9fce2c67cd4eeacd9e3f4ac8f3968425d46c3074e966cd70e1"
         ],
-        "totp_setup_at": "2026-06-23T14:00:00"
+        "totp_setup_at": "2026-06-23T14:00:00",
+        "pin_reset_notification": null,
+        "force_pin_change": false,
+        "temp_pin": null,
+        "temp_pin_expiry": null
     }
 }

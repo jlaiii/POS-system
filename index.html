@@ -8205,7 +8205,7 @@ async function loadAdminStats() {
 async function loadAdminCharts() {
   // Daily revenue chart
   try {
-    const r = await fetch(BACKEND_URL + '/api/analytics/daily_revenue');
+    const r = await fetch(BACKEND_URL + '/api/analytics/daily_revenue?adminPin=' + encodeURIComponent(currentUser.id));
     if (r.ok) {
       const data = await r.json();
       const labels = (data.daily_revenue || []).map(d => d.date).slice(-7);
@@ -8237,7 +8237,7 @@ async function loadAdminCharts() {
 
   // Payment methods chart
   try {
-    const r = await fetch(BACKEND_URL + '/api/analytics/summary');
+    const r = await fetch(BACKEND_URL + '/api/analytics/summary?adminPin=' + encodeURIComponent(currentUser.id));
     if (r.ok) {
       const data = await r.json();
       const paymentCounts = data.payment_methods || {};
@@ -8264,7 +8264,7 @@ async function loadAdminCharts() {
 
   // Item popularity trend chart
   try {
-    const r = await fetch(BACKEND_URL + '/api/analytics/item_trends');
+    const r = await fetch(BACKEND_URL + '/api/analytics/item_trends?adminPin=' + encodeURIComponent(currentUser.id));
     if (r.ok) {
       const data = await r.json();
       const trends = data.trends || [];
@@ -8340,7 +8340,7 @@ async function loadMostOrdered() {
   const list = document.getElementById('mostOrderedList');
   list.innerHTML = '<div class="empty-state">' + t('loading') + '</div>';
   try {
-    const r = await fetch(BACKEND_URL + '/api/analytics/most_ordered');
+    const r = await fetch(BACKEND_URL + '/api/analytics/most_ordered?adminPin=' + encodeURIComponent(currentUser.id));
     if (!r.ok) { list.innerHTML = '<div class="empty-state">' + t('no_data') + '</div>'; return; }
     const data = await r.json();
     const items = data.most_ordered || [];

@@ -1,6 +1,6 @@
 # POS Database Migration Tasks
 > Last run: 2026-06-23 23:xx UTC
-> Current phase: Phase 2 — Migration Scripts (1/24 complete)
+> Current phase: Phase 2 — Migration Scripts (2/24 complete)
 
 ## Phase 1: Schema Design
 - [x] Design all SQLite table schemas (users, shift_log, orders, items, inventory, etc.)
@@ -10,7 +10,7 @@
 
 ## Phase 2: Migration Scripts (one at a time)
 - [x] Write migrate_users.py — users table migration (6 rows verified ✓)
-- [ ] Write migrate_shift_log.py — shift_log table migration
+- [x] Write migrate_shift_log.py — shift_log table migration (16 rows verified ✓)
 - [ ] Write migrate_activity_log.py — activity_log table migration
 - [ ] Write migrate_items.py — items table migration (flatten categories)
 - [ ] Write migrate_inventory.py — inventory table migration
@@ -63,6 +63,7 @@
 ## COMPLETED (this session)
 - [x] **Initial setup** — Created DB_TASKS.md, db.py, migrations/, and first migration script (users)
 - [x] **migrate_users.py** — Migrated 6 users from users.json to SQLite. Verified row count matches. Idempotency tested. Commit: 0df93e1
+- [x] **migrate_shift_log.py** — Migrated 16 shifts from shift_log.json to SQLite. All fields preserved (edits JSON, breaks JSON, late tracking). Idempotency tested. Commit: 12e292b
 
 ## ROLLBACK PLAN (always keep current)
 How to revert to JSON mode if DB breaks:

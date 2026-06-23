@@ -45,13 +45,13 @@
 
 ## FIXED (this session)
 
-- [x] **All inventory items had stock=0 causing false "OUT OF STOCK" warnings** — Updated `inventory.json` to set every item's stock to 100. This stops the spurious warnings on every order while preserving the inventory tracking system for when real stock counts are configured. Commit: a3e7f2d (pending)
+- [x] **All inventory items had stock=0 causing false "OUT OF STOCK" warnings** — Updated `inventory.json` to set every item's stock to 100. This stops the spurious warnings on every order while preserving the inventory tracking system for when real stock counts are configured. Commit: `0d968ac`
 
-- [x] **Cart quantity +/- buttons too small (30×30px)** — Increased `.cart-item .ci-qty button` min-width and min-height from 30px to 48px for proper touch targets. Same for `.cart-item .ci-remove`. Uses `var(--tap)` to stay consistent with the rest of the UI. Commit: pending
+- [x] **Cart quantity +/- buttons too small (30×30px)** — Increased `.cart-item .ci-qty button` min-width and min-height from 30px to 48px for proper touch targets. Same for `.cart-item .ci-remove`. Uses `var(--tap)` to stay consistent with the rest of the UI. Commit: `0d968ac`
 
-- [x] **Viewport meta disallowed user scaling** — Removed `user-scalable=no` from viewport meta tag to allow pinch-zoom for accessibility. Changed to `maximum-scale=5.0` as a safety limit.
+- [x] **Viewport meta disallowed user scaling** — Removed `user-scalable=no` from viewport meta tag to allow pinch-zoom for accessibility. Changed to `maximum-scale=5.0` as a safety limit. Commit: `0d968ac`
 
-- [x] **Added `touch-action: manipulation` to global button/input styles** — Added `touch-action: manipulation` to `button, .btn, input, select` to eliminate the 300ms tap delay on mobile browsers.
+- [x] **Added `touch-action: manipulation` to global button/input styles** — Added `touch-action: manipulation` to `button, .btn, input, select` to eliminate the 300ms tap delay on mobile browsers. Commit: `0d968ac`
 
 ## PREVIOUSLY FIXED (archive)
 

@@ -1,5 +1,5 @@
 # POS Security Tasks
-> Last run: 2026-06-23 15:25 UTC
+> Last run: 2026-06-23 19:30 UTC
 
 ## CRITICAL — LOGIN & AUTH SECURITY (check every run)
 
@@ -12,6 +12,16 @@
 ### CRITICAL: GET /api/users leaked ALL user PINs with no auth
 - [x] **Add auth check to GET /api/users** — `GET /api/users` returned all users including PINs as dict keys with zero authentication. Anyone on the network could enumerate every user PIN. Added `adminPin` query parameter requirement with `manage_users` permission check. Updated frontend to pass `currentUser.id`. Verified: no auth → 401, invalid PIN → 403, valid user without perm → 403, owner → 200.
 
+### CRITICAL: 15 unauthenticated GET endpoints exposed sensitive data
+- [x] **Add auth to 6 analytics endpoints** — `/api/analytics/most_ordered`, `/api/analytics/hourly_sales`, `/api/analytics/daily_revenue`, `/api/analytics/popular_combos`, `/api/analytics/item_trends`, `/api/analytics/summary` all leaked sales/revenue/item data with zero auth. Added `view_stats` permission check via `adminPin` query param. Updated frontend to pass `currentUser.id` in fetch calls. Commit: TBD
+- [x] **Add auth to /api/owner/credentials/status** — Leaked owner username and whether credentials exist. Added `manage_users` permission check.
+- [x] **Add auth to delivery address endpoints** — `/api/delivery_addresses` GET and `/api/orders/<id>/delivery_address` GET leaked customer addresses. Added `manage_orders` permission check.
+- [x] **Add auth to /api/email/config** — Leaked SMTP server/port/username (password was masked). Added `manage_items` permission check.
+- [x] **Add auth to /api/orders/receipt/<id>** — Anyone could view any order's receipt. Added `manage_orders` permission check.
+- [x] **Add auth to /api/menu/history** — Leaked menu backup filenames/dates. Added `manage_items` permission check.
+- [x] **Add auth to /api/inventory and /api/inventory/low_stock** — Leaked inventory stock levels. Added `manage_items` permission check.
+- [x] **Add auth to /api/ads GET** — Documentation said "requires manage_items" but no actual check. Fixed: added `manage_items` permission check.
+
 ### HIGH: PIN stored as plaintext dict key
 - [ ] **Hash PINs** — User ID IS the PIN, stored as the dict key in users.json in plaintext. Anyone with file-system access (or backup access) sees all PINs. Requires architectural change: separate `user_id` (internal) from `pin_hash`. Postgres/Long-term: store PIN hash, not the PIN itself.
 
@@ -23,23 +33,14 @@
 
 ## HIGH — DATA PROTECTION & COMPLIANCE
 
-### HIGH: 6 analytics endpoints wide open (no auth)
-- [ ] **Add auth checks to analytics endpoints** — 6 GET endpoints at `/api/analytics/*` have zero auth. Exposes all sales data, revenue, order patterns, item trends. Add `check_perm(pin, "view_stats")` via query param or convert to POST.
-
-### HIGH: Multiple GET endpoints expose data with no auth
-- [ ] **Add auth to unauthenticated GET endpoints** — Audit found these additional unauthenticated endpoints:
-  - `GET /api/orders/receipt/<int:order_id>` — Returns full receipt HTML for any order. Anyone can view any order details.
-  - `GET /api/orders/<int:order_id>/delivery_address` — Returns delivery address for any order.
-  - `GET /api/delivery_addresses` — Lists all saved delivery addresses (by query param filter, or all if no filter).
-  - `GET /api/owner/credentials/status` — Leaks whether owner has set credentials + owner's username.
-  - `GET /api/email/config` — Returns SMTP config (server, port, username exposed, password masked).
-  - `GET /api/kitchen/queue` — Returns all active orders with full details.
-
 ### HIGH: CORS wide open
 - [ ] **Restrict CORS** — `CORS(app)` on line 22 allows all origins. SocketIO has `cors_allowed_origins="*"`. Restrict to known domains.
 
 ### HIGH: PIN complexity not enforced — only warns
 - [ ] **Block weak PINs instead of warning** — The `change_pin` endpoint checks for guessable patterns but only warns. Should reject weak PINs (1111, 1234, 0000, etc.) with a 400 error and suggest a stronger one.
+
+### HIGH: TOTP secrets stored in plaintext in world-readable users.json
+- [ ] **Protect TOTP secrets** — `totp_secret` for user "1234" is stored in plaintext in users.json (now 600, but was 644). If 2FA is compromised, an attacker with TOTP secret can generate valid codes. Either encrypt TOTP secrets at rest or restrict file access further.
 
 ## MEDIUM — HARDENING
 
@@ -49,11 +50,14 @@
 ### MEDIUM: App runs as root
 - [ ] **Run as non-root user** — All processes run as root. Any compromised endpoint gives full system access.
 
-### MEDIUM: users.json is world-readable (644)
-- [ ] **Restrict file permissions** — `users.json` is 644 (world-readable). PINs are stored as plaintext dict keys. Change to 600. Note: `security_config.json`, `known_ips.json`, `login_attempts.json` are already 600.
+### MEDIUM: users.json file permissions hardened
+- [x] **Restrict file permissions on sensitive files** — Changed users.json, login_attempts.json, security_config.json, known_ips.json, shift_log.json, activity_log.json, security_events.json, email_config.json, delivery_addresses.json, orders.json, cleared_orders.json from 644 to 600. Prevents other system users from reading employee PINs, shift data, and customer info.
 
 ### MEDIUM: No app.secret_key configured
 - [ ] **Set Flask secret_key** — No `app.secret_key` is configured anywhere. While the app doesn't use Flask sessions (uses PIN-based auth), future session implementations need this. Should load from environment variable.
+
+### MEDIUM: Kitchen/display endpoints still unauthenticated
+- [ ] **Add optional API key auth for kitchen/drivethrough/pickup displays** — `/api/kitchen/queue`, `/api/kitchen/stats`, `/api/kitchen/order/<id>`, `/api/drivethrough/*`, `/api/customer-display/*`, `/api/pickup-display/*` have no auth. These are intentionally public for displays, but should have an optional shared-secret API key mechanism to prevent network snooping in multi-tenant deployments.
 
 ## LOW — POLISH
 
@@ -68,7 +72,17 @@
 - [x] **Add rate limiting + PIN verification to clock-in/out** — Added `clock_failed_attempts` tracking, `_record_clock_failure()` helper, IP-based and user-ID-based rate limiting (10/60s, 15min lock), and generic "Invalid PIN." error messages that don't reveal whether a user exists. Prevents PIN enumeration and brute-force clock-in/out.
 
 ## COMPLETED (this run)
-- [x] **Add auth check to GET /api/users** — Added `adminPin` query parameter with `manage_users` permission check to prevent anonymous PIN enumeration. Updated frontend to pass `currentUser.id`. Tested: no auth → 401, bad perm → 403, owner → 200. Commit: `Add auth check to GET /api/users endpoint (prevents anonymous PIN enumeration)`
+- [x] **Add auth check to GET /api/users** — Added `adminPin` query parameter with `manage_users` permission check to prevent anonymous PIN enumeration. Updated frontend to pass `currentUser.id`. Tested: no auth → 401, bad perm → 403, owner → 200.
+- [x] **Add auth to 6 analytics GET endpoints (view_stats)** — All revenue/sales/trend analytics now require `adminPin` with `view_stats` permission. Updated frontend fetch calls.
+- [x] **Add auth to /api/owner/credentials/status (manage_users)** — Prevents leaking owner username.
+- [x] **Add auth to delivery address endpoints (manage_orders)** — /api/delivery_addresses and /api/orders/<id>/delivery_address no longer public.
+- [x] **Add auth to /api/email/config GET (manage_items)** — SMTP config no longer publicly readable.
+- [x] **Add auth to /api/orders/receipt/<id> GET (manage_orders)** — Receipts no longer publicly viewable.
+- [x] **Add auth to /api/menu/history GET (manage_items)** — Menu backup history no longer public.
+- [x] **Add auth to /api/inventory and /api/inventory/low_stock GET (manage_items)** — Inventory levels no longer public.
+- [x] **Add auth to /api/ads GET (manage_items)** — Fixed missing auth check that was documented but not implemented.
+- [x] **Add reusable check_get_auth() helper** — Created a centralized `check_get_auth(admin_pin, permission)` function for GET endpoint authentication, reducing code duplication and ensuring consistent auth patterns.
+- [x] **Harden file permissions** — Changed 11 sensitive JSON files from 644 (world-readable) to 600 (owner-only). Includes users.json (PINs), shift_log.json (employee data), activity_log.json (audit trail), orders.json, delivery_addresses.json, and others.
 
 ## WATCHLIST (monitor, don't fix yet)
 - Multi-tenant: No business_id scoping on data access — will be a problem when multi-tenant is deployed
