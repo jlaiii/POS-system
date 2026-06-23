@@ -449,7 +449,7 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 
 - [x] worker-3 **Form input optimization for tablets** — All number inputs now use `inputmode="numeric"/"decimal"` + `pattern="[0-9]*"` to trigger the correct keypad (numeric or decimal) on tablets. PIN entry fields have `autocomplete="off"`. Quantity inputs have `min`/`max` constraints. Date inputs already used native `<input type="date">`. [worker-3]
 
-- [ ] **Orientation handling (portrait + landscape)** — Restaurant tablets get mounted in both orientations (landscape on counter stands, portrait when handheld). Test every view in both orientations. Ensure the POS item grid, kitchen display, and admin panels don't break or have hidden content. Use CSS media queries: `@media (orientation: portrait)` and `@media (orientation: landscape)`. Kitchen display especially — landscape is standard for wall-mounted screens.
+- [~] worker-2 **Orientation handling (portrait + landscape)** — Restaurant tablets get mounted in both orientations (landscape on counter stands, portrait when handheld). Test every view in both orientations. Ensure the POS item grid, kitchen display, and admin panels don't break or have hidden content. Use CSS media queries: `@media (orientation: portrait)` and `@media (orientation: landscape)`. Kitchen display especially — landscape is standard for wall-mounted screens.
 
 - [ ] **Fast tap response (no 300ms delay)** — Mobile browsers add a 300ms delay to distinguish tap from double-tap. This makes the POS feel sluggish. Fix with: `touch-action: manipulation` on all interactive elements, or use a fastclick polyfill. The difference between "instant" and "300ms delay" is the difference between "professional POS" and "janky web app."
 
