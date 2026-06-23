@@ -737,7 +737,7 @@ Super admin PIN is separate from any business PIN. Super admin can create busine
 > The Reliability Bot has identified that Flask crashes repeatedly (3 times in 75min on 2026-06-23). Uses Flask's built-in Werkzeug dev server (`socketio.run(app, debug=False, port=5000, allow_unsafe_werkzeug=False)` at line 9581) which is known to silently stop serving under load or extended uptime. Production deployment requires a real WSGI server.
 
 ### Priority: HIGH
-- [~] worker-1 **Migrate Flask to gunicorn + eventlet for production stability** — Replace `socketio.run()` with production-grade WSGI server. Use `gunicorn -k eventlet -w 1 app:app` for SocketIO compatibility. The `allow_unsafe_werkzeug=False` flag is a dev-only parameter. Need to: install gunicorn+eventlet, create a startup script, update cron jobs to use the new launcher. The auto-restart wrapper at `scripts/run_flask.sh` is a stopgap. Without this, the POS will continue to silently die unpredictably.
+- [x] worker-1 **Migrate Flask to gunicorn + eventlet for production stability** — Replaced `socketio.run()` dev server with production-grade gunicorn+eventlet. Added `async_mode='eventlet'` to SocketIO constructor. Created `scripts/run_gunicorn.sh` with configurable port/workers. Updated `scripts/run_flask.sh` auto-restart wrapper to use gunicorn. Verified: server starts, responds 200 on root and API endpoints. No more Werkzeug dev server crashes.
 
 ### Priority: MEDIUM
 - [ ] **Add health-check endpoint monitoring** — The Reliability Bot checks `/api/health` every 5min, but there's no proper monitoring alert. Add an external uptime monitor (e.g., cron calling a webhook on failure) so crashes are caught faster than the next bot cycle.

@@ -25,7 +25,11 @@ app = Flask(__name__, static_folder='.', static_url_path='')
 CORS(app)  # Enable CORS for all origins
 
 # --- SocketIO for real-time updates ---
-socketio = SocketIO(app, cors_allowed_origins="*")
+# NOTE: Production deployment uses gunicorn + eventlet:
+#   gunicorn -k eventlet -w 1 app:app
+# The `app` Flask object is used as the WSGI entry point; Flask-SocketIO
+# hooks into the eventlet async worker transparently when async_mode='eventlet'.
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
 
 # --- IP Blocklist / Allowlist Enforcement (before every request) ---
 # In-memory IP failed attempt tracking for auto-block
@@ -11996,4 +12000,14 @@ platform_sessions = {}
 
 
 if __name__ == '__main__':
+    # PRODUCTION: use gunicorn + eventlet (see scripts/run_gunicorn.sh)
+    #   gunicorn -k eventlet -w 1 --bind 0.0.0.0:5000 app:app
+    #
+    # DEVELOPMENT: run directly (dev server, not for production use)
+    # socketio.run(app, debug=False, port=5000, allow_unsafe_werkzeug=False)
+    #
+    # The socketio object is the WSGI application that wraps the Flask app.
+    # When running under gunicorn with eventlet worker, SocketIO handles
+    # both HTTP and WebSocket transparently via async_mode='eventlet'.
+
     socketio.run(app, debug=False, port=5000, allow_unsafe_werkzeug=False)

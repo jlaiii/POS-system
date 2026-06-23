@@ -3865,5 +3865,276 @@
             "user_name": "Owner",
             "ip": "127.0.0.1"
         }
+    },
+    {
+        "timestamp": "2026-06-23T20:15:33.760769",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T20:15:41.814398",
+        "type": "submit_order",
+        "user_id": "1111",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 56,
+            "subtotal": 600.0,
+            "tax_amount": 0.0,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 600.0,
+            "payment_method": "Credit Card",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-23T20:16:19.414665",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T20:16:20.458161",
+        "type": "submit_order",
+        "user_id": "1111",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 57,
+            "subtotal": 600.0,
+            "tax_amount": 0.0,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 600.0,
+            "payment_method": "Credit Card",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-23T20:23:31.363957",
+        "type": "user_blocked",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "blocked_user_id": "2222",
+            "blocked_user_name": "Manager",
+            "reason": "Test block from cron",
+            "sessions_cleared": true
+        }
+    },
+    {
+        "timestamp": "2026-06-23T20:23:39.712530",
+        "type": "user_unblocked",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "unblocked_user_id": "2222",
+            "unblocked_user_name": "Manager"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T20:25:06.117654",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T20:25:18.759580",
+        "type": "clock_in",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee One",
+            "clock_in_time": "2026-06-23T20:25:18.759435",
+            "late_minutes": null,
+            "scheduled_start": null
+        }
+    },
+    {
+        "timestamp": "2026-06-23T20:25:21.423510",
+        "type": "clock_out",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee One",
+            "clock_in_time": "2026-06-23T20:25:18.759435",
+            "clock_out_time": "2026-06-23T20:25:21.422751",
+            "duration_hours": 0.0
+        }
+    },
+    {
+        "timestamp": "2026-06-23T20:25:31.818861",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T20:26:16.438124",
+        "type": "shift_edited",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "shift_index": 17,
+            "user_id": "1234",
+            "user_name": "Employee One",
+            "changes": {
+                "clock_out_time": {
+                    "old": "2026-06-23T20:25:21.422751",
+                    "new": "2026-06-23T20:25:30"
+                }
+            },
+            "reason": "SRE Bot test - edit audit trail"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T20:26:20.719480",
+        "type": "shift_edited",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "shift_index": 17,
+            "user_id": "1234",
+            "user_name": "Employee One",
+            "changes": {
+                "clock_out_time": {
+                    "old": "2026-06-23T20:25:30",
+                    "new": "2026-06-23T20:25:21.422751"
+                }
+            },
+            "reason": "SRE Bot - reverting test edit"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T20:32:53.050626",
+        "type": "platform_login",
+        "user_id": "1111",
+        "user_role": "super_admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "name": "Jay (Platform Owner)",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T20:33:17.073809",
+        "type": "platform_login",
+        "user_id": "1111",
+        "user_role": "super_admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "name": "Jay (Platform Owner)",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T20:33:29.833500",
+        "type": "platform_login",
+        "user_id": "1111",
+        "user_role": "super_admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "name": "Jay (Platform Owner)",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T20:33:29.841978",
+        "type": "platform_business_created",
+        "user_id": "1111",
+        "user_role": "super_admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "business_id": "test-cafe",
+            "business_name": "Test Cafe",
+            "owner_name": "Test Owner",
+            "owner_email": "test@cafe.com"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T20:33:29.850088",
+        "type": "platform_business_status_change",
+        "user_id": "1111",
+        "user_role": "super_admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "business_id": "test-cafe",
+            "old_status": "active",
+            "new_status": "suspended",
+            "reason": "Testing suspension"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T20:53:46.223745",
+        "type": "discord_webhook_set",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "has_url": true
+        }
+    },
+    {
+        "timestamp": "2026-06-23T20:53:52.067340",
+        "type": "discord_webhook_set",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "has_url": false
+        }
     }
 ]

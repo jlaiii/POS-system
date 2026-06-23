@@ -78,8 +78,6 @@
             "pos_access",
             "kitchen_access"
         ],
-        "banned": false,
-        "banned_reason": "",
         "pay_rate": null,
         "scheduled_start": null,
         "totp_secret": null,
