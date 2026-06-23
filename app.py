@@ -2801,6 +2801,57 @@ def clock_note():
     })
 
 
+@app.route('/api/clock/excuse_late', methods=['POST'])
+def clock_excuse_late():
+    """Admin excuses a late shift (sets late_excused = true)."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+
+    if not check_perm(admin_pin, "view_timesheet"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    shift_index = data.get('shift_index')
+    if shift_index is None or not isinstance(shift_index, int):
+        return jsonify({'message': 'shift_index (integer) is required.'}), 400
+
+    note = (data.get('note') or '').strip()
+
+    shift_log = load_json_data(SHIFT_FILE)
+    if shift_index < 0 or shift_index >= len(shift_log):
+        return jsonify({'message': 'Invalid shift_index.'}), 404
+
+    shift = shift_log[shift_index]
+
+    old_late_excused = shift.get('late_excused', False)
+    if old_late_excused:
+        return jsonify({'message': 'Shift is already excused.'}), 409
+
+    old_late_note = shift.get('late_note')
+    shift['late_excused'] = True
+    if note:
+        shift['late_note'] = note
+
+    save_json_data(SHIFT_FILE, shift_log)
+
+    users = load_json_data(USERS_FILE)
+    admin_user = users.get(admin_pin, {})
+    admin_name = admin_user.get('name', admin_pin)
+
+    log_activity('late_excused', admin_pin, admin_user.get('role', 'admin'), {
+        'shift_index': shift_index,
+        'user_id': shift.get('user_id'),
+        'user_name': shift.get('user_name'),
+        'old_late_excused': old_late_excused,
+        'new_late_excused': True,
+        'note': note
+    })
+
+    return jsonify({
+        'message': 'Shift late mark excused successfully.',
+        'shift': shift
+    })
+
+
 @app.route('/api/clock/break', methods=['POST'])
 def clock_break():
     """Start or end a break for a clocked-in employee."""
