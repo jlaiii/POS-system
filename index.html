@@ -488,6 +488,8 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 /* ── ADMIN TAB ── */
 #adminTab { display: none; flex-direction: column; gap: 12px; }
 #adminTab.active { display: flex; }
+#requestsTab { display: none; flex-direction: column; gap: 12px; padding: 0; }
+#requestsTab.active { display: flex; }
 #adminSubTabs {
   display: flex; gap: 4px; overflow-x: auto; flex-wrap: wrap;
   -webkit-overflow-scrolling: touch;
@@ -1164,6 +1166,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
     <button onclick="switchMainTab('history')" id="mainTabHistory" data-i18n="tab.history">📋 History</button>
     <button onclick="switchMainTab('admin')" id="mainTabAdmin" style="display:none;" data-i18n="tab.admin">⚙️ Admin</button>
     <button onclick="showKitchenView()" id="mainTabKitchen" style="display:none;" data-i18n="tab.kitchen">🔪 Kitchen</button>
+    <button onclick="switchMainTab('requests')" id="mainTabRequests" data-i18n="tab.requests">📋 Requests</button>
   </div>
 
   <div id="tabContent">
@@ -2015,6 +2018,47 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
   </div>
 </div>
 
+<!-- ═══════════ REQUESTS / TICKET TAB ═══════════ -->
+<div id="requestsTab">
+  <div style="padding:12px 16px;max-width:800px;margin:0 auto;">
+    <h2 style="font-size:22px;margin-bottom:4px;" data-i18n="requests.title">📋 Requests & Tickets</h2>
+    <p style="color:var(--text2);font-size:14px;margin-bottom:16px;" data-i18n="requests.subtitle">Submit time-off requests, report issues, or send feedback</p>
+
+    <!-- Submit Form -->
+    <div class="card" style="margin-bottom:16px;">
+      <h4 style="margin-bottom:12px;" data-i18n="requests.new">🆕 New Request</h4>
+      <div class="form-row" style="flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+        <select id="requestType" style="flex:1;min-width:160px;" onchange="onRequestTypeChange()">
+          <option value="time_off" data-i18n="requests.type.time_off">🕐 Time Off Request</option>
+          <option value="issue" data-i18n="requests.type.issue">🐛 Report Issue</option>
+          <option value="feedback" data-i18n="requests.type.feedback">💬 Feedback / Suggestion</option>
+          <option value="other" data-i18n="requests.type.other">📝 Other</option>
+        </select>
+        <select id="requestPriority" style="flex:1;min-width:120px;display:none;">
+          <option value="normal" data-i18n="requests.priority.normal">🔵 Normal</option>
+          <option value="urgent" data-i18n="requests.priority.urgent">🔴 Urgent</option>
+          <option value="low" data-i18n="requests.priority.low">🟢 Low</option>
+        </select>
+      </div>
+      <div id="requestDateRow" style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+        <input type="date" id="requestDateFrom" style="flex:1;min-width:130px;" onchange="onRequestDateChange()"/>
+        <span style="color:var(--text2);display:flex;align-items:center;">→</span>
+        <input type="date" id="requestDateTo" style="flex:1;min-width:130px;" onchange="onRequestDateChange()"/>
+        <span id="requestDaysBadge" style="display:none;background:var(--accent);color:#fff;padding:8px 14px;border-radius:var(--radius);font-size:14px;font-weight:600;white-space:nowrap;align-items:center;"></span>
+      </div>
+      <input type="text" id="requestSubject" placeholder="Subject" style="margin-bottom:8px;"/>
+      <textarea id="requestDescription" placeholder="Description..." style="width:100%;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:14px;padding:10px 12px;min-height:80px;resize:vertical;font-family:inherit;margin-bottom:8px;" rows="3" maxlength="2000"></textarea>
+      <button class="accent" onclick="submitTicket()" style="width:100%;min-height:48px;" data-i18n="requests.submit">✅ Submit Request</button>
+    </div>
+
+    <!-- My Tickets -->
+    <div class="card">
+      <h4 style="margin-bottom:12px;" data-i18n="requests.my_tickets">📋 My Tickets</h4>
+      <div id="myTicketsList"><div class="empty-state" data-i18n="requests.no_tickets">No tickets yet — submit one above.</div></div>
+    </div>
+  </div>
+</div>
+
 <!-- ═══════════ KITCHEN DISPLAY VIEW ═══════════ -->
 <div id="kitchenView">
   <div id="kitchenHeader">
@@ -2731,6 +2775,24 @@ const L10N = {
     'user.temp_pin_share': 'Temporary PIN: {tempPin}\n\nShare this with the employee. It expires in 1 hour and can only be used once.\n\nAfter login, the employee should set a new PIN.',
     'user.failed_attempts': 'failed login attempt(s)',
     'user.clear_lockout_btn': '🔓 Clear Lockout',
+    'tab.requests': '📋 Requests',
+    'requests.title': '📋 Requests & Tickets',
+    'requests.subtitle': 'Submit time-off requests, report issues, or send feedback',
+    'requests.new': '🆕 New Request',
+    'requests.type.time_off': '🕐 Time Off Request',
+    'requests.type.issue': '🐛 Report Issue',
+    'requests.type.feedback': '💬 Feedback / Suggestion',
+    'requests.type.other': '📝 Other',
+    'requests.priority.normal': '🔵 Normal',
+    'requests.priority.urgent': '🔴 Urgent',
+    'requests.priority.low': '🟢 Low',
+    'requests.date_from': 'From date',
+    'requests.date_to': 'To date',
+    'requests.subject': 'Subject',
+    'requests.description': 'Description...',
+    'requests.submit': '✅ Submit Request',
+    'requests.my_tickets': '📋 My Tickets',
+    'requests.no_tickets': 'No tickets yet — submit one above.',
   },
   es: {
     'app.title': '🍽️ Sistema POS',
@@ -3187,6 +3249,24 @@ const L10N = {
     'user.temp_pin_share': 'PIN temporal: {tempPin}\n\nCompártalo con el empleado. Expira en 1 hora y solo se puede usar una vez.\n\nDespués de iniciar sesión, el empleado debe establecer un nuevo PIN.',
     'user.failed_attempts': 'intento(s) de inicio de sesión fallido(s)',
     'user.clear_lockout_btn': '🔓 Desbloquear',
+    'tab.requests': '📋 Solicitudes',
+    'requests.title': '📋 Solicitudes y Tickets',
+    'requests.subtitle': 'Envíe solicitudes de tiempo libre, reporte problemas o envíe comentarios',
+    'requests.new': '🆕 Nueva Solicitud',
+    'requests.type.time_off': '🕐 Solicitar Tiempo Libre',
+    'requests.type.issue': '🐛 Reportar Problema',
+    'requests.type.feedback': '💬 Comentario / Sugerencia',
+    'requests.type.other': '📝 Otro',
+    'requests.priority.normal': '🔵 Normal',
+    'requests.priority.urgent': '🔴 Urgente',
+    'requests.priority.low': '🟢 Baja',
+    'requests.date_from': 'Desde fecha',
+    'requests.date_to': 'Hasta fecha',
+    'requests.subject': 'Asunto',
+    'requests.description': 'Descripción...',
+    'requests.submit': '✅ Enviar Solicitud',
+    'requests.my_tickets': '📋 Mis Tickets',
+    'requests.no_tickets': 'Aún no hay tickets — envíe uno arriba.',
   }
 };
 
@@ -4561,6 +4641,8 @@ function showApp() {
   checkCartDraft();
   // Check employee clock status
   checkClockStatus();
+  // Initialize request type form state
+  if (document.getElementById('requestType')) onRequestTypeChange();
 }
 
 // ═══════════ MAIN TABS ═══════════
@@ -4570,6 +4652,7 @@ function switchMainTab(tab) {
   document.getElementById('posTab').classList.remove('active');
   document.getElementById('historyTab').classList.remove('active');
   document.getElementById('adminTab').classList.remove('active');
+  document.getElementById('requestsTab').classList.remove('active');
   if (tab === 'pos') {
     document.getElementById('posTab').classList.add('active');
     loadItems();
@@ -4587,7 +4670,148 @@ function switchMainTab(tab) {
     document.getElementById('adminTab').classList.add('active');
     loadAdminStats();
     switchAdminSection('stats');
+  } else if (tab === 'requests') {
+    document.getElementById('requestsTab').classList.add('active');
+    loadMyTickets();
   }
+}
+
+// ═══════════ TICKET / REQUEST SYSTEM ═══════════
+
+function onRequestTypeChange() {
+  const type = document.getElementById('requestType').value;
+  const prioritySelect = document.getElementById('requestPriority');
+  const dateRow = document.getElementById('requestDateRow');
+  prioritySelect.style.display = (type === 'issue' || type === 'feedback') ? '' : 'none';
+  dateRow.style.display = (type === 'time_off') ? 'flex' : 'none';
+  // Clear days badge when hiding
+  if (type !== 'time_off') {
+    document.getElementById('requestDaysBadge').style.display = 'none';
+  }
+}
+
+// Auto-calculate days when date range changes for time-off
+function onRequestDateChange() {
+  const from = document.getElementById('requestDateFrom').value;
+  const to = document.getElementById('requestDateTo').value;
+  const badge = document.getElementById('requestDaysBadge');
+  if (from && to) {
+    const d1 = new Date(from);
+    const d2 = new Date(to);
+    if (d2 >= d1) {
+      const days = Math.floor((d2 - d1) / (1000 * 60 * 60 * 24)) + 1;
+      badge.textContent = `📅 ${days} day${days !== 1 ? 's' : ''}`;
+      badge.style.display = 'flex';
+      return;
+    }
+  }
+  badge.style.display = 'none';
+}
+
+async function submitTicket() {
+  const type = document.getElementById('requestType').value;
+  const subject = document.getElementById('requestSubject').value.trim();
+  const description = document.getElementById('requestDescription').value.trim();
+
+  if (!subject) {
+    showToast('Please enter a subject.', 'error');
+    return;
+  }
+
+  const payload = {
+    userId: currentUser.id,
+    type: type,
+    subject: subject,
+    description: description
+  };
+
+  if (type === 'time_off') {
+    payload.date_from = document.getElementById('requestDateFrom').value;
+    payload.date_to = document.getElementById('requestDateTo').value;
+  }
+
+  if (type === 'issue' || type === 'feedback') {
+    payload.priority = document.getElementById('requestPriority').value;
+  }
+
+  try {
+    const res = await fetch(BACKEND_URL + '/api/tickets/submit', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(data.message || 'Failed to submit ticket.', 'error');
+      return;
+    }
+    // Clear form
+    document.getElementById('requestSubject').value = '';
+    document.getElementById('requestDescription').value = '';
+    document.getElementById('requestDateFrom').value = '';
+    document.getElementById('requestDateTo').value = '';
+    document.getElementById('requestDaysBadge').style.display = 'none';
+    showToast(data.message || 'Ticket submitted successfully!', 'success');
+    loadMyTickets();
+  } catch (e) {
+    showToast('Network error submitting ticket.', 'error');
+  }
+}
+
+async function loadMyTickets() {
+  const listEl = document.getElementById('myTicketsList');
+  if (!listEl) return;
+  listEl.innerHTML = '<div class="empty-state">Loading...</div>';
+
+  try {
+    const res = await fetch(BACKEND_URL + '/api/tickets/my', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({userId: currentUser.id})
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      listEl.innerHTML = '<div class="empty-state">Failed to load tickets.</div>';
+      return;
+    }
+    renderMyTickets(data.tickets || []);
+  } catch (e) {
+    listEl.innerHTML = '<div class="empty-state">Network error.</div>';
+  }
+}
+
+function renderMyTickets(tickets) {
+  const listEl = document.getElementById('myTicketsList');
+  if (!tickets || tickets.length === 0) {
+    listEl.innerHTML = '<div class="empty-state">No tickets yet — submit one above.</div>';
+    return;
+  }
+
+  let html = '';
+  tickets.forEach(t => {
+    const typeIcon = {time_off: '🕐', issue: '🐛', feedback: '💬', other: '📝'}[t.type] || '📝';
+    const statusBadge = t.status === 'approved' ? '<span style="background:#2ecc71;color:#fff;padding:3px 10px;border-radius:10px;font-size:12px;font-weight:700;">✅ Approved</span>'
+      : t.status === 'denied' ? '<span style="background:#e74c3c;color:#fff;padding:3px 10px;border-radius:10px;font-size:12px;font-weight:700;">❌ Denied</span>'
+      : '<span style="background:#f39c12;color:#000;padding:3px 10px;border-radius:10px;font-size:12px;font-weight:700;">⏳ Pending</span>';
+
+    const date = t.created_at ? new Date(t.created_at).toLocaleDateString() : '';
+    const timeInfo = t.date_from && t.date_to ? `<span style="color:var(--text2);font-size:13px;">📅 ${t.date_from} → ${t.date_to}${t.total_days ? ' (' + t.total_days + ' days)' : ''}</span>` : '';
+
+    html += `<div class="card" style="margin-bottom:8px;padding:12px 16px;">
+      <div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:4px;">
+        <div>
+          <strong>${typeIcon} ${escHtml(t.subject)}</strong>
+          <span style="margin-left:6px;">${statusBadge}</span>
+        </div>
+        <span style="color:var(--text2);font-size:12px;">${date}</span>
+      </div>
+      ${timeInfo ? '<div style="margin-top:4px;">' + timeInfo + '</div>' : ''}
+      ${t.description ? '<div style="color:var(--text2);font-size:13px;margin-top:4px;">' + escHtml(t.description.substring(0, 200)) + (t.description.length > 200 ? '...' : '') + '</div>' : ''}
+      ${t.response_note ? '<div style="border-top:1px solid var(--border);margin-top:6px;padding-top:6px;font-size:13px;color:var(--text2);"><em>Response: ' + escHtml(t.response_note) + '</em></div>' : ''}
+      <div style="font-size:11px;color:var(--text2);margin-top:4px;">ID: ${escHtml(t.id)} | Type: ${t.type}</div>
+    </div>`;
+  });
+  listEl.innerHTML = html;
 }
 
 // ═══════════ POS TAB ═══════════

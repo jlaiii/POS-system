@@ -50,6 +50,7 @@ SERVICE_CHARGE_FILE = 'service_charge_config.json'  # Auto-gratuity / service ch
 EMAIL_CONFIG_FILE = 'email_config.json'  # Email/SMTP configuration for digital receipts
 SHIFT_FILE = 'shift_log.json'  # Employee shift clock-in/clock-out records
 TIMESHEET_CONFIG_FILE = 'timesheet_config.json'  # Timesheet configuration (overtime thresholds, late grace period)
+TICKETS_FILE = 'tickets.json'  # Employee self-service tickets/requests
 
 # --- Loyalty Constants ---
 LOYALTY_POINTS_PER_DOLLAR = 1  # 1 point per $1 spent
@@ -144,7 +145,7 @@ def backup_menu():
 
 
 # Ensure JSON files exist and are initialized correctly
-for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE, INVENTORY_FILE, REFUNDED_ORDERS_FILE, FAVORITES_FILE, LOYALTY_FILE, SCHEDULED_PRICING_FILE, WASTE_FILE, DELIVERY_ADDRESSES_FILE, WEBHOOKS_FILE, TABLE_ADS_FILE, CASH_DRAWER_FILE, COMBOS_FILE, SERVICE_CHARGE_FILE, EMAIL_CONFIG_FILE, SHIFT_FILE]:
+for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE, INVENTORY_FILE, REFUNDED_ORDERS_FILE, FAVORITES_FILE, LOYALTY_FILE, SCHEDULED_PRICING_FILE, WASTE_FILE, DELIVERY_ADDRESSES_FILE, WEBHOOKS_FILE, TABLE_ADS_FILE, CASH_DRAWER_FILE, COMBOS_FILE, SERVICE_CHARGE_FILE, EMAIL_CONFIG_FILE, SHIFT_FILE, TICKETS_FILE]:
     if not os.path.exists(f):
         with open(f, 'w') as file:
             if f == USERS_FILE:
@@ -223,7 +224,7 @@ def load_json_data(filepath):
             if filepath == USERS_FILE and not isinstance(data, dict):
                 print(f"Warning: {filepath} is not a dictionary. Initializing as empty dict.")
                 return {}
-            if filepath in [ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE] and not isinstance(data, list):
+            if filepath in [ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, TICKETS_FILE] and not isinstance(data, list):
                 print(f"Warning: {filepath} is not a list. Initializing as empty list.")
                 return []
             if filepath == ITEMS_FILE and not isinstance(data, dict):
@@ -8553,6 +8554,176 @@ def combos_toggle():
     log_activity('combo_toggle', admin_pin, admin_role, {'combo_id': combo_id})
 
     return jsonify({'message': 'Combo toggled successfully!', 'combos': combos})
+
+
+# ═══════════ TICKET / REQUEST SYSTEM ═══════════
+
+def generate_ticket_id():
+    """Generate a sequential ticket ID like TKT-001, TKT-002, etc."""
+    tickets = load_json_data(TICKETS_FILE)
+    if not tickets:
+        return "TKT-001"
+    max_num = 0
+    for t in tickets:
+        tid = t.get('id', '')
+        if tid.startswith('TKT-'):
+            try:
+                num = int(tid[4:])
+                if num > max_num:
+                    max_num = num
+            except ValueError:
+                pass
+    return f"TKT-{max_num + 1:03d}"
+
+
+@app.route('/api/tickets/submit', methods=['POST'])
+def ticket_submit():
+    """Submit a new employee ticket/request."""
+    data = request.json
+    if not data:
+        return jsonify({'message': 'Request body is required.'}), 400
+
+    user_id = data.get('userId')
+    ticket_type = data.get('type')
+    subject = data.get('subject', '').strip()
+    description = data.get('description', '').strip()
+
+    if not user_id or not ticket_type or not subject:
+        return jsonify({'message': 'userId, type, and subject are required.'}), 400
+
+    if ticket_type not in ('time_off', 'issue', 'feedback', 'other'):
+        return jsonify({'message': 'Invalid type. Must be: time_off, issue, feedback, or other.'}), 400
+
+    # Build ticket
+    users = load_json_data(USERS_FILE)
+    user_data = users.get(user_id, {})
+    user_name = user_data.get('name', 'Unknown')
+
+    ticket = {
+        'id': generate_ticket_id(),
+        'user_id': user_id,
+        'user_name': user_name,
+        'type': ticket_type,
+        'status': 'pending',
+        'subject': subject,
+        'description': description,
+        'created_at': datetime.now().isoformat(),
+        'responded_by': None,
+        'responded_at': None,
+        'response_note': None,
+        'priority': 'normal',
+    }
+
+    # Type-specific fields
+    if ticket_type == 'time_off':
+        date_from = data.get('date_from')
+        date_to = data.get('date_to')
+        if date_from and date_to:
+            try:
+                d1 = datetime.fromisoformat(date_from)
+                d2 = datetime.fromisoformat(date_to)
+                ticket['date_from'] = date_from
+                ticket['date_to'] = date_to
+                ticket['total_days'] = max((d2 - d1).days + 1, 1)
+            except (ValueError, TypeError):
+                ticket['date_from'] = date_from
+                ticket['date_to'] = date_to
+                ticket['total_days'] = 1
+        else:
+            ticket['date_from'] = date_from
+            ticket['date_to'] = date_to
+            ticket['total_days'] = 1
+
+    if ticket_type in ('issue', 'feedback'):
+        ticket['priority'] = data.get('priority', 'normal')
+        if ticket['priority'] not in ('normal', 'low', 'urgent'):
+            ticket['priority'] = 'normal'
+
+    tickets = load_json_data(TICKETS_FILE)
+    tickets.append(ticket)
+    save_json_data(TICKETS_FILE, tickets)
+
+    log_activity('ticket_submitted', user_id, user_data.get('role', 'user'),
+                 {'ticket_id': ticket['id'], 'type': ticket_type, 'subject': subject})
+
+    return jsonify({'message': 'Ticket submitted successfully!', 'ticket': ticket}), 201
+
+
+@app.route('/api/tickets/my', methods=['POST'])
+def ticket_my():
+    """Get all tickets for the current user."""
+    data = request.json
+    user_id = data.get('userId') if data else None
+    if not user_id:
+        return jsonify({'message': 'userId is required.'}), 400
+
+    tickets = load_json_data(TICKETS_FILE)
+    user_tickets = [t for t in tickets if t.get('user_id') == user_id]
+    # Sort newest first
+    user_tickets.sort(key=lambda t: t.get('created_at', ''), reverse=True)
+    return jsonify({'tickets': user_tickets})
+
+
+@app.route('/api/tickets/queue', methods=['POST'])
+def ticket_queue():
+    """Get all tickets for admin review. Permission-gated (manage_users or manage_tickets)."""
+    data = request.json
+    admin_pin = data.get('adminPin') if data else None
+    if not admin_pin or not (check_perm(admin_pin, 'manage_users')):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    tickets = load_json_data(TICKETS_FILE)
+    pending = [t for t in tickets if t.get('status') == 'pending']
+    resolved = [t for t in tickets if t.get('status') in ('approved', 'denied')]
+    pending.sort(key=lambda t: t.get('created_at', ''), reverse=True)
+    resolved.sort(key=lambda t: t.get('responded_at', ''), reverse=True)
+    return jsonify({'pending': pending, 'resolved': resolved})
+
+
+@app.route('/api/tickets/respond', methods=['POST'])
+def ticket_respond():
+    """Admin approves or denies a ticket."""
+    data = request.json
+    if not data:
+        return jsonify({'message': 'Request body is required.'}), 400
+
+    admin_pin = data.get('adminPin')
+    if not admin_pin or not (check_perm(admin_pin, 'manage_users')):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    ticket_id = data.get('ticket_id')
+    action = data.get('action')  # 'approved' or 'denied'
+    reason = data.get('reason', '').strip()
+
+    if not ticket_id or not action:
+        return jsonify({'message': 'ticket_id and action are required.'}), 400
+    if action not in ('approved', 'denied'):
+        return jsonify({'message': 'Action must be approved or denied.'}), 400
+    if action == 'denied' and not reason:
+        return jsonify({'message': 'Reason is required when denying a ticket.'}), 400
+
+    tickets = load_json_data(TICKETS_FILE)
+    admin_users = load_json_data(USERS_FILE)
+    admin_name = admin_users.get(admin_pin, {}).get('name', 'Unknown')
+    found = False
+    for t in tickets:
+        if t.get('id') == ticket_id:
+            t['status'] = action
+            t['responded_by'] = admin_pin
+            t['responded_at'] = datetime.now().isoformat()
+            t['response_note'] = reason if reason else None
+            found = True
+            break
+
+    if not found:
+        return jsonify({'message': f'Ticket {ticket_id} not found.'}), 404
+
+    save_json_data(TICKETS_FILE, tickets)
+
+    log_activity('ticket_responded', admin_pin, admin_users.get(admin_pin, {}).get('role', 'unknown'),
+                 {'ticket_id': ticket_id, 'action': action, 'reason': reason})
+
+    return jsonify({'message': f'Ticket {action} successfully!', 'ticket_id': ticket_id, 'status': action})
 
 
 if __name__ == '__main__':
