@@ -249,7 +249,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 
 #mainTabs {
   display: flex; gap: 0; border-bottom: 2px solid var(--border);
-  background: var(--card); overflow-x: auto; -webkit-overflow-scrolling: touch;
+  background: var(--card); overflow-x: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
 }
 #mainTabs button {
   background: transparent; color: var(--text2); border-radius: 0;
@@ -258,7 +258,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 }
 #mainTabs button.active { color: var(--accent); border-bottom-color: var(--accent); }
 
-#tabContent { flex: 1; padding: 12px; overflow-y: auto; }
+#tabContent { flex: 1; padding: 12px; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
 
 /* ── POS TAB ── */
 #posTab { display: none; flex-direction: column; gap: 12px; height: 100%; }
@@ -290,7 +290,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 .recent-orders-body {
   border-top: 1px solid var(--border);
   max-height: 320px;
-  overflow-y: auto;
+  overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
 }
 .recent-order-item {
   display: flex;
@@ -336,7 +336,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 
 #catTabs {
   display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px;
-  -webkit-overflow-scrolling: touch;
+  -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
 }
 #catTabs button {
   background: var(--card); color: var(--text2); font-size: 14px;
@@ -393,7 +393,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 
 #itemGrid {
   display: grid; grid-template-columns: repeat(2, 1fr);
-  gap: 10px; flex: 1; overflow-y: auto; align-content: start;
+  gap: 10px; flex: 1; overflow-y: auto; align-content: start; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
 }
 @media (min-width: 600px) { #itemGrid { grid-template-columns: repeat(3, 1fr); } }
 @media (min-width: 900px) { #itemGrid { grid-template-columns: repeat(4, 1fr); } }
@@ -439,11 +439,11 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 #cart {
   background: var(--card); border-radius: var(--radius); padding: 14px;
   display: flex; flex-direction: column; gap: 10px;
-  min-width: 280px; max-width: 380px; max-height: 100%; overflow-y: auto;
+  min-width: 280px; max-width: 380px; max-height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
 }
 @media (max-width: 767px) { #cart { max-width: 100%; max-height: 40vh; } }
 #cart h3 { font-size: 18px; color: var(--accent); text-align: center; }
-#cartItems { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+#cartItems { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
 .cart-item {
   display: flex; align-items: center; justify-content: space-between;
   padding: 8px 10px; background: var(--bg); border-radius: 8px; font-size: 14px;
@@ -517,7 +517,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 #myPayTab.active { display: flex; }
 #adminSubTabs {
   display: flex; gap: 4px; overflow-x: auto; flex-wrap: wrap;
-  -webkit-overflow-scrolling: touch;
+  -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
 }
 #adminSubTabs button {
   background: var(--card); color: var(--text2); font-size: 13px;
@@ -667,6 +667,13 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 .modal-box {
   background: var(--card); border-radius: var(--radius); padding: 24px;
   max-width: 400px; width: 90%; display: flex; flex-direction: column; gap: 12px;
+  -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+}
+/* Touch momentum + no bounce for all inline-scrollable containers (JS-generated tables, customer details, etc.) */
+div[style*="overflow-y:auto"]:not(.modal-box),
+div[style*="overflow-x:auto"]:not(.modal-box) {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 .modal-box h3 { color: var(--accent); }
 .modal-box .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
@@ -690,7 +697,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 #receiptOverlay.active { display: flex; }
 #receiptBox {
   background: #fff; color: #222; border-radius: 8px;
-  max-width: 380px; width: 95%; max-height: 90vh; overflow-y: auto;
+  max-width: 380px; width: 95%; max-height: 90vh; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
   font-family: 'Courier New', 'Consolas', monospace; font-size: 13px;
   padding: 20px 18px;
 }
@@ -753,7 +760,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 }
 
 #kitchenQueue {
-  flex: 1; padding: 12px; overflow-y: auto;
+  flex: 1; padding: 12px; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
   display: grid; grid-template-columns: 1fr; gap: 12px; align-content: start;
 }
 @media (min-width: 768px) and (orientation: landscape) {
@@ -937,7 +944,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 @media (hover: hover) { #kioskOverlay .kiosk-header .kiosk-exit:hover { color: #fff; border-color: #666; } }
 #kioskOverlay .kiosk-cart {
   width: 100%; max-width: 700px; max-height: 40vh;
-  overflow-y: auto; margin-bottom: 20px;
+  overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; margin-bottom: 20px;
 }
 #kioskOverlay .kiosk-item {
   display: flex; justify-content: space-between; align-items: center;
@@ -1104,7 +1111,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 .kiosk-lookup-order-info .kloi-meta { color: var(--text2); font-size: 18px; margin-top: 4px; }
 
 .kiosk-lookup-items {
-  width: 100%; max-width: 700px; max-height: 30vh; overflow-y: auto; margin-bottom: 12px;
+  width: 100%; max-width: 700px; max-height: 30vh; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; margin-bottom: 12px;
 }
 .kiosk-lookup-items .kli-item {
   display: flex; justify-content: space-between; align-items: center;

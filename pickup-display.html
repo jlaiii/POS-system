@@ -74,7 +74,7 @@ body {
 /* ── ORDER GRID ── */
 .pb-grid {
   flex: 1;
-  overflow-y: auto;
+  overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
   padding: 16px 0;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
