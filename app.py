@@ -5486,6 +5486,270 @@ def timesheet_pay_period():
     })
 
 
+@app.route('/api/export/pay_period_csv', methods=['POST'])
+def export_pay_period_csv():
+    """Export pay period summary data as CSV (employee-level)."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+
+    if not check_perm(admin_pin, "view_timesheet"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    shift_log = load_json_data(SHIFT_FILE)
+    users = load_json_data(USERS_FILE)
+
+    date_from = (data.get('date_from') or '').strip()
+    date_to = (data.get('date_to') or '').strip()
+
+    def shift_in_range(entry, clock_in_key='clock_in_time'):
+        clock_in_str = entry.get(clock_in_key, '')
+        if not clock_in_str:
+            return False
+        try:
+            clock_in_dt = datetime.fromisoformat(clock_in_str)
+        except (ValueError, TypeError):
+            return False
+        if date_from:
+            try:
+                dt_from = datetime.fromisoformat(date_from)
+                if clock_in_dt < dt_from:
+                    return False
+            except ValueError:
+                pass
+        if date_to:
+            try:
+                if 'T' not in date_to:
+                    dt_to = datetime.fromisoformat(date_to + 'T23:59:59')
+                else:
+                    dt_to = datetime.fromisoformat(date_to)
+                if clock_in_dt > dt_to:
+                    return False
+            except ValueError:
+                pass
+        return True
+
+    filtered_shifts = []
+    for entry in shift_log:
+        if shift_in_range(entry):
+            filtered_shifts.append(entry)
+
+    user_data_map = {}
+    for entry in filtered_shifts:
+        uid = entry.get('user_id', 'unknown')
+        if uid not in users:
+            continue
+        if uid not in user_data_map:
+            user_data_map[uid] = {
+                'user_name': entry.get('user_name', users[uid].get('name', 'Unknown')),
+                'total_hours': 0.0,
+                'shift_count': 0
+            }
+        ud = user_data_map[uid]
+        ud['total_hours'] += entry.get('duration_hours', 0)
+        ud['shift_count'] += 1
+
+    # Weekly overtime calculation
+    weekly_hours_by_user = defaultdict(lambda: defaultdict(float))
+    for entry in filtered_shifts:
+        uid = entry.get('user_id', '')
+        ck = entry.get('clock_in_time', '')
+        if not ck:
+            continue
+        try:
+            dt = datetime.fromisoformat(ck)
+            week_key = f"{dt.isocalendar()[0]}-W{dt.isocalendar()[1]:02d}"
+            weekly_hours_by_user[uid][week_key] += entry.get('duration_hours', 0)
+        except (ValueError, TypeError):
+            pass
+
+    headers = ['Employee Name', 'User ID', 'Total Hours', 'Overtime Hours', 'Pay Rate', 'Estimated Pay', 'Shift Count']
+    rows = []
+    for uid, ud in user_data_map.items():
+        total_hours = round(ud['total_hours'], 2)
+        week_ots = []
+        for wk, wh in weekly_hours_by_user.get(uid, {}).items():
+            if wh > 40:
+                week_ots.append(round(wh - 40, 2))
+        overtime_hours = round(sum(week_ots), 2)
+        pay_rate = users.get(uid, {}).get('pay_rate', 0) or 0
+        estimated_pay = round(total_hours * pay_rate, 2) if pay_rate > 0 else 0
+        rows.append({
+            'Employee Name': ud['user_name'],
+            'User ID': uid,
+            'Total Hours': total_hours,
+            'Overtime Hours': overtime_hours,
+            'Pay Rate': pay_rate,
+            'Estimated Pay': estimated_pay,
+            'Shift Count': ud['shift_count']
+        })
+
+    rows.sort(key=lambda r: r['Total Hours'], reverse=True)
+    csv_content = generate_csv(rows, headers)
+    return jsonify({'csv': csv_content, 'filename': f'pay_period_{date_from or "all"}_{date_to or "all"}.csv'})
+
+
+@app.route('/api/export/pay_period_pdf', methods=['POST'])
+def export_pay_period_pdf():
+    """Generate a printable HTML pay period report (browser Print → PDF)."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+
+    if not check_perm(admin_pin, "view_timesheet"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    shift_log = load_json_data(SHIFT_FILE)
+    users = load_json_data(USERS_FILE)
+
+    date_from = (data.get('date_from') or '').strip()
+    date_to = (data.get('date_to') or '').strip()
+
+    def shift_in_range(entry, clock_in_key='clock_in_time'):
+        clock_in_str = entry.get(clock_in_key, '')
+        if not clock_in_str:
+            return False
+        try:
+            clock_in_dt = datetime.fromisoformat(clock_in_str)
+        except (ValueError, TypeError):
+            return False
+        if date_from:
+            try:
+                dt_from = datetime.fromisoformat(date_from)
+                if clock_in_dt < dt_from:
+                    return False
+            except ValueError:
+                pass
+        if date_to:
+            try:
+                if 'T' not in date_to:
+                    dt_to = datetime.fromisoformat(date_to + 'T23:59:59')
+                else:
+                    dt_to = datetime.fromisoformat(date_to)
+                if clock_in_dt > dt_to:
+                    return False
+            except ValueError:
+                pass
+        return True
+
+    filtered_shifts = []
+    for entry in shift_log:
+        if shift_in_range(entry):
+            filtered_shifts.append(entry)
+
+    user_data_map = {}
+    for entry in filtered_shifts:
+        uid = entry.get('user_id', 'unknown')
+        if uid not in users:
+            continue
+        if uid not in user_data_map:
+            user_data_map[uid] = {
+                'user_name': entry.get('user_name', users[uid].get('name', 'Unknown')),
+                'total_hours': 0.0,
+                'shift_count': 0,
+                'shifts': []
+            }
+        ud = user_data_map[uid]
+        ud['total_hours'] += entry.get('duration_hours', 0)
+        ud['shift_count'] += 1
+        ud['shifts'].append(entry)
+
+    weekly_hours_by_user = defaultdict(lambda: defaultdict(float))
+    for entry in filtered_shifts:
+        uid = entry.get('user_id', '')
+        ck = entry.get('clock_in_time', '')
+        if not ck:
+            continue
+        try:
+            dt = datetime.fromisoformat(ck)
+            week_key = f"{dt.isocalendar()[0]}-W{dt.isocalendar()[1]:02d}"
+            weekly_hours_by_user[uid][week_key] += entry.get('duration_hours', 0)
+        except (ValueError, TypeError):
+            pass
+
+    now_str = datetime.now().strftime('%Y-%m-%d %H:%M')
+    period_label = f"{date_from or 'Earliest'} to {date_to or 'Latest'}"
+
+    html = f"""<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>Pay Period Report</title>
+<style>
+  @page {{ margin: 20mm 15mm; }}
+  body {{ font-family: 'Segoe UI', Arial, sans-serif; font-size: 11pt; color: #222; line-height: 1.4; }}
+  h1 {{ font-size: 18pt; margin-bottom: 4px; color: #1a1a2e; }}
+  .meta {{ color: #666; font-size: 10pt; margin-bottom: 20px; }}
+  table {{ width: 100%; border-collapse: collapse; margin-bottom: 16px; }}
+  th {{ background: #1a1a2e; color: #fff; padding: 8px 10px; text-align: left; font-size: 10pt; }}
+  td {{ padding: 6px 10px; border-bottom: 1px solid #ddd; font-size: 10pt; }}
+  tr:nth-child(even) {{ background: #f8f8fc; }}
+  .total-row {{ font-weight: bold; background: #eef0f7 !important; }}
+  .ot {{ color: #e94560; }}
+  .section-title {{ font-size: 13pt; font-weight: 700; margin: 20px 0 10px; color: #1a1a2e; border-bottom: 2px solid #1a1a2e; padding-bottom: 4px; }}
+  .employee-name {{ font-weight: 600; font-size: 11pt; margin: 14px 0 6px; color: #16213e; }}
+  .shift-table {{ margin-left: 0; }}
+  .footer {{ margin-top: 30px; font-size: 9pt; color: #999; text-align: center; border-top: 1px solid #ddd; padding-top: 10px; }}
+</style></head>
+<body>
+<h1>📊 Pay Period Report</h1>
+<div class="meta">
+  <strong>Period:</strong> {period_label}<br>
+  <strong>Generated:</strong> {now_str}<br>
+  <strong>Total Employees:</strong> {len(user_data_map)}
+</div>
+<div class="section-title">Employee Summary</div>
+<table>
+<thead><tr>
+  <th>Employee</th>
+  <th>Total Hours</th>
+  <th>Overtime</th>
+  <th>Pay Rate</th>
+  <th>Est. Gross Pay</th>
+  <th>Shifts</th>
+</tr></thead>
+<tbody>"""
+    grand_total_hours = 0
+    grand_total_pay = 0
+    grand_total_ot = 0
+
+    for uid, ud in sorted(user_data_map.items(), key=lambda x: x[1]['total_hours'], reverse=True):
+        total_hours = round(ud['total_hours'], 2)
+        week_ots = []
+        for wk, wh in weekly_hours_by_user.get(uid, {}).items():
+            if wh > 40:
+                week_ots.append(round(wh - 40, 2))
+        overtime_hours = round(sum(week_ots), 2)
+        pay_rate = users.get(uid, {}).get('pay_rate', 0) or 0
+        estimated_pay = round(total_hours * pay_rate, 2) if pay_rate > 0 else 0
+        grand_total_hours += total_hours
+        grand_total_pay += estimated_pay
+        grand_total_ot += overtime_hours
+        ot_str = f'<span class="ot">{overtime_hours:.2f}</span>' if overtime_hours > 0 else '0.00'
+        html += f"<tr><td>{ud['user_name']} ({uid})</td><td>{total_hours:.2f}</td><td>{ot_str}</td><td>${pay_rate:.2f}</td><td>${estimated_pay:.2f}</td><td>{ud['shift_count']}</td></tr>"
+
+    html += f"""</tbody>
+<tfoot>
+<tr class="total-row"><td>TOTAL</td><td>{grand_total_hours:.2f}</td><td>{grand_total_ot:.2f}</td><td>—</td><td>${grand_total_pay:.2f}</td><td>—</td></tr>
+</tfoot>
+</table>"""
+
+    # Detailed shift logs per employee
+    html += '<div class="section-title">Shift Details</div>'
+    for uid, ud in sorted(user_data_map.items(), key=lambda x: x[1]['user_name']):
+        html += f'<div class="employee-name">👤 {ud["user_name"]} ({uid}) — {ud["shift_count"]} shift(s), {round(ud["total_hours"], 2):.2f} hrs</div>'
+        html += '<table class="shift-table"><thead><tr><th>Clock In</th><th>Clock Out</th><th>Duration</th></tr></thead><tbody>'
+        for s in sorted(ud['shifts'], key=lambda x: x.get('clock_in_time', '')):
+            ci = s.get('clock_in_time', '—')
+            co = s.get('clock_out_time', '—')
+            dur = s.get('duration_hours', 0)
+            html += f'<tr><td>{ci}</td><td>{co}</td><td>{dur:.2f} hrs</td></tr>'
+        html += '</tbody></table>'
+
+    html += f"""
+<div class="footer">Pay Period Report — Generated by POS System on {now_str} | This is not an official tax document</div>
+</body>
+</html>"""
+
+    return jsonify({'html': html, 'filename': f'pay_period_report_{date_from or "all"}_{date_to or "all"}.html'})
+
+
 @app.route('/api/export/activity_log_csv', methods=['POST'])
 def export_activity_log_csv():
     data = request.json

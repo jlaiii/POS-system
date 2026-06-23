@@ -511,6 +511,10 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 .pp-shift-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px; flex-wrap: wrap; gap: 4px; }
 .pp-shift-row:last-child { border-bottom: none; }
 .pp-active-badge { background: #4caf50; color: #fff; font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
+/* Pay period preset buttons */
+.pp-preset { font-size: 13px; padding: 8px 14px; min-height: 44px; background: var(--card); color: var(--text); border: 2px solid var(--border); border-radius: var(--radius); cursor: pointer; transition: all .15s; font-weight: 500; white-space: nowrap; }
+.pp-preset:hover { border-color: var(--accent); background: var(--card-alt); }
+.pp-preset.active { border-color: var(--accent); background: var(--accent); color: #fff; }
 
 .log-filters { background: var(--card); border-radius: var(--radius); padding: 12px 16px; margin-bottom: 12px; }
 .log-filter-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: end; }
@@ -1445,7 +1449,16 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
               <h4 style="margin:0;font-size:15px;color:var(--accent);">💰 Pay Period Summary</h4>
               <button class="accent" onclick="loadPayPeriod()" style="font-size:14px;padding:12px 20px;min-height:48px;">🔄 Refresh</button>
             </div>
+            <!-- Quick preset date selector -->
             <div class="card" style="margin-bottom:12px;padding:10px 14px;">
+              <div class="form-row" style="gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px;">
+                <button class="pp-preset" onclick="setPayPeriodPreset('this-week', this)" data-i18n="timesheet.this_week">📅 This Week</button>
+                <button class="pp-preset" onclick="setPayPeriodPreset('last-week', this)" data-i18n="timesheet.last_week">⬅️ Last Week</button>
+                <button class="pp-preset" onclick="setPayPeriodPreset('this-month', this)" data-i18n="timesheet.this_month">📅 This Month</button>
+                <button class="pp-preset" onclick="setPayPeriodPreset('last-month', this)" data-i18n="timesheet.last_month">⬅️ Last Month</button>
+                <button class="pp-preset" onclick="setPayPeriodPreset('biweekly', this)" data-i18n="timesheet.biweekly">🔄 Bi-weekly</button>
+                <button class="pp-preset" onclick="setPayPeriodPreset('custom', this)" data-i18n="timesheet.custom">✏️ Custom</button>
+              </div>
               <div class="form-row" style="gap:8px;flex-wrap:wrap;align-items:center;">
                 <label style="font-size:13px;color:var(--text2);">📅 From:</label>
                 <input type="date" id="payPeriodDateFrom" style="max-width:160px;min-height:40px;font-size:14px;">
@@ -1454,8 +1467,23 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
                 <button class="accent" onclick="loadPayPeriod()" style="min-height:40px;padding:8px 16px;font-size:13px;">🔍 Filter</button>
                 <button class="outline" onclick="document.getElementById('payPeriodDateFrom').value='';document.getElementById('payPeriodDateTo').value='';loadPayPeriod()" style="min-height:40px;padding:8px 16px;font-size:13px;">✕ Clear</button>
               </div>
+              <!-- Bi-weekly config (hidden by default) -->
+              <div id="biweeklyConfig" style="display:none;margin-top:10px;padding:10px;background:var(--card-alt);border-radius:6px;">
+                <div class="form-row" style="gap:8px;align-items:center;flex-wrap:wrap;">
+                  <label style="font-size:13px;color:var(--text2);font-weight:600;">📅 Pay period start date:</label>
+                  <input type="date" id="biweeklyStartDate" style="max-width:180px;min-height:40px;font-size:14px;">
+                  <button class="accent" onclick="saveBiweeklyStart()" style="min-height:40px;padding:8px 16px;font-size:13px;">💾 Save</button>
+                  <span id="biweeklySavedBadge" style="display:none;font-size:13px;color:#4caf50;">✅ Saved</span>
+                </div>
+                <div style="font-size:12px;color:var(--text2);margin-top:6px;">Set the pay period start date. Periods advance every 14 days from this date.</div>
+              </div>
             </div>
-            <div id="payPeriodSummary"><div class="empty-state">Set a date range and click Filter to view pay period summary.</div></div>
+            <div id="payPeriodSummary"><div class="empty-state">Select a preset or date range and click Filter to view pay period summary.</div></div>
+            <!-- Export buttons -->
+            <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+              <button class="accent" onclick="exportPayPeriodCSV()" style="font-size:14px;padding:12px 20px;min-height:48px;">📥 Export Pay Period (CSV)</button>
+              <button class="outline" onclick="exportPayPeriodPDF()" style="font-size:14px;padding:12px 20px;min-height:48px;">📄 Export Pay Period (PDF)</button>
+            </div>
           </div>
         </div>
         <!-- Permissions (owner only) -->
@@ -2495,6 +2523,12 @@ const L10N = {
     'combo.confirm_title': '🍱 Add Combo to Cart',
     'combo.confirm_desc': 'This combo includes the following items at ${price}:',
     'combo.confirm_add': '✅ Add to Cart',
+    'timesheet.this_week': '📅 This Week',
+    'timesheet.last_week': '⬅️ Last Week',
+    'timesheet.this_month': '📅 This Month',
+    'timesheet.last_month': '⬅️ Last Month',
+    'timesheet.biweekly': '🔄 Bi-weekly',
+    'timesheet.custom': '✏️ Custom',
   },
   es: {
     'app.title': '🍽️ Sistema POS',
@@ -2901,6 +2935,12 @@ const L10N = {
     'combo.confirm_title': '🍱 Agregar Combo al Carrito',
     'combo.confirm_desc': 'Este combo incluye los siguientes artículos por ${price}:',
     'combo.confirm_add': '✅ Agregar al Carrito',
+    'timesheet.this_week': '📅 Esta Semana',
+    'timesheet.last_week': '⬅️ Semana Pasada',
+    'timesheet.this_month': '📅 Este Mes',
+    'timesheet.last_month': '⬅️ Mes Pasado',
+    'timesheet.biweekly': '🔄 Quincenal',
+    'timesheet.custom': '✏️ Personalizado',
   }
 };
 
@@ -3502,6 +3542,163 @@ async function loadPayPeriod() {
 function togglePayPeriodDetails(userId) {
   const el = document.getElementById('ppDetails_' + userId);
   if (el) el.style.display = el.style.display === 'none' ? '' : 'none';
+}
+
+// ═══════════ PAY PERIOD PRESETS ═══════════
+
+function getMonday(d) {
+  const date = new Date(d);
+  const day = date.getDay();
+  const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+  date.setDate(diff);
+  date.setHours(0,0,0,0);
+  return date;
+}
+
+function getSunday(d) {
+  const monday = getMonday(d);
+  const sunday = new Date(monday);
+  sunday.setDate(sunday.getDate() + 6);
+  sunday.setHours(23,59,59,0);
+  return sunday;
+}
+
+function formatDateInput(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return y + '-' + m + '-' + day;
+}
+
+function setPayPeriodPreset(preset, btn) {
+  const fromEl = document.getElementById('payPeriodDateFrom');
+  const toEl = document.getElementById('payPeriodDateTo');
+  const biweeklyConfig = document.getElementById('biweeklyConfig');
+  const now = new Date();
+  let from, to;
+
+  // Update active state on buttons
+  document.querySelectorAll('.pp-preset').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+
+  switch (preset) {
+    case 'this-week': {
+      from = getMonday(now);
+      to = getSunday(now);
+      biweeklyConfig.style.display = 'none';
+      break;
+    }
+    case 'last-week': {
+      const lastWeek = new Date(now);
+      lastWeek.setDate(lastWeek.getDate() - 7);
+      from = getMonday(lastWeek);
+      to = getSunday(lastWeek);
+      biweeklyConfig.style.display = 'none';
+      break;
+    }
+    case 'this-month': {
+      from = new Date(now.getFullYear(), now.getMonth(), 1);
+      to = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+      biweeklyConfig.style.display = 'none';
+      break;
+    }
+    case 'last-month': {
+      from = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      to = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+      biweeklyConfig.style.display = 'none';
+      break;
+    }
+    case 'biweekly': {
+      biweeklyConfig.style.display = 'block';
+      // Load saved start date or default to 1st of current month
+      const saved = localStorage.getItem('pos_biweekly_start');
+      if (saved) {
+        document.getElementById('biweeklyStartDate').value = saved;
+      } else {
+        const defaultStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        document.getElementById('biweeklyStartDate').value = formatDateInput(defaultStart);
+      }
+      // Calculate current pay period
+      const ppStart = new Date(document.getElementById('biweeklyStartDate').value + 'T00:00:00');
+      const diffDays = Math.floor((now - ppStart) / (1000 * 60 * 60 * 24));
+      const periodNum = Math.floor(diffDays / 14);
+      from = new Date(ppStart);
+      from.setDate(from.getDate() + periodNum * 14);
+      to = new Date(from);
+      to.setDate(to.getDate() + 13);
+      to.setHours(23, 59, 59, 0);
+      break;
+    }
+    case 'custom': {
+      biweeklyConfig.style.display = 'none';
+      // Don't auto-set dates, let user pick
+      fromEl.value = '';
+      toEl.value = '';
+      loadPayPeriod();
+      return;
+    }
+    default: {
+      biweeklyConfig.style.display = 'none';
+      return;
+    }
+  }
+
+  if (from) fromEl.value = formatDateInput(from);
+  if (to) toEl.value = formatDateInput(to);
+
+  // Auto-load
+  loadPayPeriod();
+}
+
+function saveBiweeklyStart() {
+  const val = document.getElementById('biweeklyStartDate').value;
+  if (val) {
+    localStorage.setItem('pos_biweekly_start', val);
+    const badge = document.getElementById('biweeklySavedBadge');
+    badge.style.display = 'inline';
+    setTimeout(() => { badge.style.display = 'none'; }, 3000);
+  }
+}
+
+async function exportPayPeriodCSV() {
+  try {
+    const params = { adminPin: currentUser.id };
+    const dateFrom = document.getElementById('payPeriodDateFrom')?.value || '';
+    const dateTo = document.getElementById('payPeriodDateTo')?.value || '';
+    if (dateFrom) params.date_from = dateFrom;
+    if (dateTo) params.date_to = dateTo;
+    const r = await fetch(BACKEND_URL + '/api/export/pay_period_csv', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params)
+    });
+    if (!r.ok) { const d = await r.json(); showToast(d.message || 'Export failed', 'danger'); return; }
+    const data = await r.json();
+    downloadCSV(data.csv, data.filename);
+    showToast('✅ Pay period CSV exported!', 'success');
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
+}
+
+async function exportPayPeriodPDF() {
+  try {
+    const params = { adminPin: currentUser.id };
+    const dateFrom = document.getElementById('payPeriodDateFrom')?.value || '';
+    const dateTo = document.getElementById('payPeriodDateTo')?.value || '';
+    if (dateFrom) params.date_from = dateFrom;
+    if (dateTo) params.date_to = dateTo;
+    const r = await fetch(BACKEND_URL + '/api/export/pay_period_pdf', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params)
+    });
+    if (!r.ok) { const d = await r.json(); showToast(d.message || 'Export failed', 'danger'); return; }
+    const data = await r.json();
+    // Open in new window for printing
+    const w = window.open('', '_blank');
+    w.document.write(data.html);
+    w.document.close();
+    w.focus();
+    setTimeout(() => { w.print(); }, 500);
+    showToast('✅ Pay period PDF report opened!', 'success');
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
 
 async function exportShiftsCSV() {
