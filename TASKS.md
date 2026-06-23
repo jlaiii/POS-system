@@ -188,6 +188,118 @@ Use Python `pyotp` (pure Python, no C extensions, `pip install pyotp qrcode`):
 
 - [ ] **WebAuthn / Passkey support (future)** — Optional upgrade path: support for hardware security keys (YubiKey) and platform passkeys (Face ID, Touch ID, Windows Hello) via WebAuthn API. Faster than typing TOTP codes, phishing-resistant. Requires `webauthn` Python library. Phase this in after TOTP is stable.
 
+## Account Recovery & Admin Controls (NEW — June 2026)
+
+> Currently if an employee forgets their PIN, there's no recovery path — they're locked out until the owner manually edits `users.json`. The owner needs in-app controls to reset PINs, set temporary passwords, view login history, and recover accounts without touching raw JSON files.
+
+### Priority: HIGH
+
+- [ ] **Admin PIN reset for any user** — In User Management, owner/admin can click "Reset PIN" on any user. Prompts for new PIN (4-8 digits). Requires `manage_users` permission. Only owner can reset another admin's PIN. Logs to activity_log: `pin_reset_by_admin` with who did it, to whom, timestamp. User gets notified on next login: "⚠️ Your PIN was reset by Owner on June 23. Use your new PIN." Optional: "Force PIN change on next login" checkbox — if checked, user is prompted to choose a new PIN immediately after logging in with the temp one.
+
+- [ ] **Temporary access code for locked-out employees** — Owner can generate a one-time temporary PIN for any user. Valid for 1 hour only, single-use (expires after login). Stored as `temp_pin` + `temp_pin_expiry` on user record. Login flow: if `temp_pin` exists and is not expired, accept it alongside the normal PIN. After use: clear the temp PIN. Use case: "Boss, I forgot my PIN and I'm standing at the register." Owner generates a temp code via their phone/admin panel, employee uses it once, then sets a new PIN.
+
+- [ ] **Employee self-service PIN change** — "Change PIN" button in POS header/profile area. User enters current PIN → new PIN (twice for confirmation). Validates: new PIN must be 4-8 digits, can't be same as current, can't be easily guessable (no 1111, 1234, etc. — warn but don't block). `POST /api/auth/change_pin` endpoint. Logs to activity_log. If user has 2FA enabled, require TOTP code to change PIN (prevents someone who shoulder-surfed the PIN from locking the real user out).
+
+- [ ] **Login attempt audit per user** — Track failed login attempts per user (in memory, resets on restart). After 5 failed PIN attempts: lock that user's account for 10 minutes. Show in User Management: "3 failed login attempts today." Activity log: `login_failed` events with IP (if available) and timestamp. Admin can "Clear Lockout" to immediately unlock a user. This is a simpler rate-limit on PIN entry (complementing the 2FA rate limit).
+
+- [ ] **Password support (optional PIN alternative)** — Allow users to set a password instead of / in addition to PIN. Password rules: 8+ chars, at least 1 letter + 1 number. Stored as `password_hash` + `password_salt` (already exists in user model). Login accepts either PIN or password. Admin can force password complexity policy via config. This is for owner/admin accounts that need stronger auth than a 4-digit PIN.
+
+### Priority: MEDIUM
+
+- [ ] **Account lockout notification** — When a user gets locked out (too many failed PIN attempts), send Discord notification to admin channel: "🔒 Carlos (1234) locked out after 5 failed PIN attempts. [Unlock in User Management]." Also show a banner in admin Timesheet/Dashboard.
+
+- [ ] **Login session management** — Track active sessions per user. Show "Active Sessions" in Security settings: list of devices/locations logged in, with "Log Out Everywhere" button. Sessions stored in memory with a session token + expiry (default 8h active, 24h idle). On PIN change: optionally "Log out all other sessions."
+
+- [ ] **User account history timeline** — Per-user timeline in User Management: PIN changes, 2FA setup/disable, login successes/failures, lockouts, temp PIN usage, permission changes. Chronological, filterable. Gives owner full visibility into account activity. "Carlos's PIN was reset 3 times this month — is someone messing with him or does he keep forgetting?"
+
+### Priority: LOW
+
+- [ ] **Bulk PIN reset for shift change** — At shift change, owner can reset PINs for all clocked-out employees in one action. Each gets a unique random temp PIN delivered via printed slip or displayed on screen. Useful for high-turnover environments where new hires get fresh PINs each shift.
+
+- [ ] **Biometric / device-bound PIN** — If the POS terminal has a fingerprint reader or camera, allow biometric auth as a faster alternative to PIN. Uses WebAuthn platform authenticator. "Tap to clock in" — employee taps fingerprint, auto-identified, clocked in. No PIN needed. This is aspirational but worth listing.
+
+## Database Backup & Disaster Recovery (NEW — June 2026)
+
+> The Database Architect worker is migrating from flat JSON files to SQLite. Once migrated, database integrity becomes critical — a corrupted or lost `pos.db` means lost orders, shifts, users, inventory, everything. This section covers automated backup, verification, retention, and disaster recovery procedures.
+
+### Current state (pre-migration)
+- All data is JSON files — easy to back up with `cp` or `tar`
+- The System Auditor already checks JSON integrity every 4h
+- No automated off-server backups
+- No retention policy
+- Restore = manual file copy
+
+### Target state (post-migration)
+- SQLite database (`pos.db`) backed up automatically
+- JSON files also backed up (kept as secondary backup during transition)
+- Backups verified (not just copied — actually opened and checked)
+- Retention: hourly (24), daily (7), weekly (4), monthly (12)
+- Off-server copy to VPS backup location or S3-compatible storage
+- Restore procedure documented and tested
+- Backup status reported in Discord
+
+### Priority: HIGH
+
+- [ ] **SQLite backup script** — Create `/root/pos-system-work/scripts/backup_db.py`:
+  - Uses `sqlite3 pos.db ".backup pos-backup.db"` (safe — consistent snapshot even during writes)
+  - Timestamped filename: `backups/pos_2026-06-23_14-00-00.db`
+  - Verifies backup: opens the backup file, runs `PRAGMA integrity_check`, checks row counts on key tables vs live DB
+  - Compresses with gzip: `pos_2026-06-23_14-00-00.db.gz` (SQLite compresses well — 10:1 ratio typical)
+  - Returns exit code 0 (success) or non-zero (failure with error message)
+  - Idempotent — can run multiple times, won't overwrite (uses timestamp)
+
+- [ ] **JSON backup script** — Create `/root/pos-system-work/scripts/backup_json.py`:
+  - Copies all JSON files to `backups/json/YYYY-MM-DD_HH-MM-SS/`
+  - Validates each file is valid JSON (catches partial writes)
+  - Creates a tar.gz of the directory
+  - Lists file sizes so you can spot anomalies (0-byte files = corruption)
+
+- [ ] **Automated backup cron job** — New cron: "POS Database Backup" runs HOURLY. Calls `backup_db.py` (if pos.db exists) AND `backup_json.py`. Delivers to Discord on failure only (success = silent). Tools: terminal + file only. no_agent=true (script-only, no LLM needed). This is a watchdog — if backup fails, owner needs to know immediately.
+
+- [ ] **Backup retention cleanup** — The backup script includes retention logic:
+  - Keep all hourly backups from last 24 hours
+  - Keep one per day for last 7 days
+  - Keep one per week for last 4 weeks  
+  - Keep one per month for last 12 months
+  - Delete anything outside these windows
+  - Dry-run mode to show what would be deleted without deleting
+
+- [ ] **Database health check script** — Create `/root/pos-system-work/scripts/db_health.py`:
+  - Runs `PRAGMA integrity_check` — must return "ok"
+  - Runs `PRAGMA foreign_key_check` — must return no rows
+  - Checks file size isn't 0 and hasn't shrunk dramatically (>50% drop = possible corruption)
+  - Runs `PRAGMA quick_check` (faster than integrity_check)
+  - Reports: "OK — 14 tables, 2,847 rows, 1.2MB" or "FAIL — integrity check returned: ..."
+  - Can be run standalone or by the backup script as pre-backup validation
+
+### Priority: MEDIUM
+
+- [ ] **Off-server backup (scp/rsync to VPS backup location)** — Extend backup script to optionally copy the latest backup to a remote location:
+  - Config in `timesheet_config.json`: `"offsite_backup": {"enabled": false, "host": "", "path": "", "ssh_key": ""}`
+  - Uses `scp` with SSH key
+  - Falls back gracefully if remote is unreachable (logs warning, doesn't fail)
+  - Keeps same retention policy on remote
+
+- [ ] **Restore procedure documentation + script** — Create `/root/pos-system-work/scripts/restore_db.py`:
+  - Lists available backups with timestamps and sizes: `python3 restore_db.py --list`
+  - Restore: `python3 restore_db.py backups/pos_2026-06-23_14-00-00.db.gz`
+  - Steps: decompress → verify integrity → stop Flask → replace pos.db → restart Flask → verify app responds
+  - Confirmation prompt: "⚠️ This will replace the current database. All changes since the backup will be lost. Continue? (yes/no)"
+  - Creates a backup of the CURRENT database before restoring (safety net)
+  - Also supports `--json` flag to restore from JSON backup (populates SQLite from JSON files)
+
+- [ ] **Database migration rollback** — If SQLite migration goes wrong, the Database Architect worker can flip `use_database: false` to revert to JSON mode. But we also need a script that re-populates JSON files from SQLite (reverse migration), so the JSON files stay in sync during the transition period. `scripts/sync_json_from_db.py` — reads all tables, writes JSON files. Run by the Database Architect after each migration step.
+
+- [ ] **Backup monitoring in Discord** — Extend the backup cron to send a daily summary at 6am: "📦 DB Backup Report: 24 hourly backups (all OK), 7 daily retained, oldest: June 16. Total backup size: 84MB (compressed). Last integrity check: PASSED." This gives the owner confidence that backups are working without having to check.
+
+### Priority: LOW
+
+- [ ] **Point-in-time recovery (WAL archive)** — SQLite WAL (Write-Ahead Log) mode enables point-in-time recovery. Configure `PRAGMA journal_mode=WAL` and periodically archive WAL files. Combined with full backups, this allows restoring to any point in time, not just hourly snapshots. More complex but essential for financial data (orders, payments).
+
+- [ ] **Automated restore test** — Weekly cron: pick a random backup, restore it to a temp location, verify key metrics (table count, row count, recent order exists), report results. "Restore test: backup from June 20 restored successfully — 14 tables, 2,847 rows, all checks passed." Catches backup corruption before you need it. Delete temp DB after test.
+
+- [ ] **Database migration to PostgreSQL (future)** — If the restaurant scales to multiple locations or needs concurrent write access, upgrade path from SQLite to PostgreSQL. `scripts/migrate_sqlite_to_pg.py` using pgloader or manual export/import. Keep this as a documented option, not an immediate task.
+
 ## Employee Self-Service Portal — Tickets, Requests & Issues (NEW — June 2026)
 
 > Currently there's no way for employees to submit time-off requests, report issues, or give feedback without texting the manager. This is a lightweight internal ticketing/request system where employees log in, submit, and admin/owner approves or denies.
