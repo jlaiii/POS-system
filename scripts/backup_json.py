@@ -2,29 +2,32 @@
 """
 POS System — JSON Data Backup Script
 ======================================
-Creates timestamped backups of all JSON data files in the project root.
-
-What it does:
-  1. Scans for all .json files in the project root directory
-  2. Validates each file is well-formed JSON (catches partial writes/corruption)
-  3. Copies validated files to a timestamped directory: backups/json/YYYY-MM-DD_HH-MM-SS/
-  4. Lists each file's size for anomaly spotting (0-byte files = corruption)
-  5. Creates a compressed tar.gz archive of the backup directory
+Creates timestamped backups of all JSON data files in the project root,
+then applies retention cleanup to keep only:
+  - All hourly backups from last 24 hours
+  - One per day for last 7 days
+  - One per week for last 4 weeks
+  - One per month for last 12 months
 
 Usage:
-  python3 scripts/backup_json.py              # normal run
-  python3 scripts/backup_json.py --dry-run    # show what would be done, don't copy
-  python3 scripts/backup_json.py --quiet      # only output errors
+  python3 scripts/backup_json.py                      # normal run (backup + cleanup)
+  python3 scripts/backup_json.py --dry-run            # show what would be done
+  python3 scripts/backup_json.py --quiet              # only output errors
+  python3 scripts/backup_json.py --cleanup-only       # only run retention cleanup
+  python3 scripts/backup_json.py --dry-run --cleanup-only  # preview cleanup only
 
 Returns exit code 0 on success, non-zero on failure.
 """
 
 import json
 import os
+import re
 import sys
 import tarfile
 import glob
-from datetime import datetime
+import shutil
+from datetime import datetime, timedelta
+from collections import defaultdict
 
 # ── Configuration ──────────────────────────────────────────────────────────
 
@@ -60,7 +63,7 @@ def get_data_json_files():
     ]
 
 
-def validate_json(filepath):
+def validate_json_file(filepath):
     """Return (is_valid, error_msg). Tries to parse the file as JSON."""
     try:
         with open(filepath, 'r', encoding='utf-8') as f:
@@ -85,17 +88,188 @@ def readable_size(size_bytes):
     return f"{size_bytes:.1f} TB"
 
 
-# ── Main ───────────────────────────────────────────────────────────────────
+def parse_backup_timestamp(name):
+    """Parse YYYY-MM-DD_HH-MM-SS from a backup filename or directory name.
+    Returns a datetime object or None if no match."""
+    match = re.match(r'^(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})', name)
+    if match:
+        return datetime.strptime(match.group(1), '%Y-%m-%d_%H-%M-%S')
+    return None
+
+
+def get_all_backups():
+    """Return sorted list of (timestamp, path, is_archive, name) for all
+    backup items (both .tar.gz files and timestamped directories) in BACKUP_BASE."""
+    if not os.path.isdir(BACKUP_BASE):
+        return []
+    backups = []
+    for entry in sorted(os.listdir(BACKUP_BASE)):
+        path = os.path.join(BACKUP_BASE, entry)
+        ts = parse_backup_timestamp(entry)
+        if ts:
+            is_archive = entry.endswith('.tar.gz')
+            backups.append((ts, path, is_archive, entry))
+    return sorted(backups, key=lambda x: x[0])
+
+
+# ── Retention Cleanup ──────────────────────────────────────────────────────
+
+def retention_cleanup(dry_run=False, quiet=False):
+    """Apply retention policy to backups/json/ directory.
+
+    Rules:
+      - Keep ALL backups from the last 24 hours (hourly granularity)
+      - Keep 1 per day for days 1-7 ago (daily granularity)
+      - Keep 1 per week for weeks 1-4 ago (weekly granularity)
+      - Keep 1 per month for months 1-12 ago (monthly granularity)
+      - Delete everything outside these windows
+
+    dry_run: if True, only print what would be deleted, don't actually delete.
+    Returns 0 on success, 1 on error.
+    """
+    now = datetime.now()
+    backups = get_all_backups()
+
+    if not backups:
+        log("  📭 No backups found for cleanup.", quiet)
+        return 0
+
+    # Timestamp thresholds
+    cutoff_24h = now - timedelta(hours=24)
+    cutoff_7d = now - timedelta(days=7)
+    cutoff_4w = now - timedelta(weeks=4)
+    cutoff_12m = now - timedelta(days=365)
+
+    # Phase 1: Keep ALL backups from last 24 hours
+    keep = set()
+    for ts, path, is_archive, name in backups:
+        if ts >= cutoff_24h:
+            keep.add(name)
+
+    # Phase 2: Keep 1 per day for days 1-7 ago
+    # Consider backups older than 24h but within 7 days
+    daily_candidates = [
+        (ts, name) for ts, _, _, name in backups
+        if ts < cutoff_24h and ts >= cutoff_7d
+    ]
+    by_day = {}
+    for ts, name in daily_candidates:
+        day_key = ts.strftime('%Y-%m-%d')
+        if day_key not in by_day or ts > by_day[day_key][0]:
+            by_day[day_key] = (ts, name)
+    for ts, name in by_day.values():
+        keep.add(name)
+
+    # Phase 3: Keep 1 per ISO week for weeks 1-4 ago
+    # Consider backups older than 7 days but within 4 weeks
+    weekly_candidates = [
+        (ts, name) for ts, _, _, name in backups
+        if ts < cutoff_7d and ts >= cutoff_4w and name not in keep
+    ]
+    by_week = {}
+    for ts, name in weekly_candidates:
+        week_key = ts.strftime('%Y-W%W')
+        if week_key not in by_week or ts > by_week[week_key][0]:
+            by_week[week_key] = (ts, name)
+    for ts, name in by_week.values():
+        keep.add(name)
+
+    # Phase 4: Keep 1 per month for months 1-12 ago
+    # Consider backups older than 4 weeks but within 12 months
+    monthly_candidates = [
+        (ts, name) for ts, _, _, name in backups
+        if ts < cutoff_4w and ts >= cutoff_12m and name not in keep
+    ]
+    by_month = {}
+    for ts, name in monthly_candidates:
+        month_key = ts.strftime('%Y-%m')
+        if month_key not in by_month or ts > by_month[month_key][0]:
+            by_month[month_key] = (ts, name)
+    for ts, name in by_month.values():
+        keep.add(name)
+
+    # Phase 5: Identify items to delete (anything NOT in keep)
+    to_delete = [
+        (name, path, is_archive) for ts, path, is_archive, name in backups
+        if name not in keep
+    ]
+
+    if not to_delete:
+        log(f"  🧹 Retention cleanup: nothing to delete ({len(keep)} kept).", quiet)
+        return 0
+
+    log(f"", quiet)
+    log(f"  {'='*60}", quiet)
+    log(f"  Retention Cleanup", quiet)
+    log(f"  {'='*60}", quiet)
+    log(f"  Total backups   : {len(backups)}", quiet)
+    log(f"  Kept            : {len(keep)}", quiet)
+    log(f"  To delete       : {len(to_delete)}", quiet)
+
+    if dry_run:
+        log(f"  {'─'*60}", quiet)
+        log(f"  Would delete ({len(to_delete)} items):", quiet)
+        for name, path, is_archive in sorted(to_delete, key=lambda x: x[0]):
+            size_str = ""
+            try:
+                if os.path.isfile(path):
+                    size_str = f" ({readable_size(os.path.getsize(path))})"
+                elif os.path.isdir(path):
+                    total = sum(os.path.getsize(os.path.join(dp, f))
+                                for dp, dn, filenames in os.walk(path)
+                                for f in filenames)
+                    size_str = f" ({readable_size(total)})"
+            except OSError:
+                pass
+            log(f"     - {name}{size_str}", quiet)
+        log(f"  🏁 Dry-run — no files deleted.", quiet)
+        log(f"  {'='*60}", quiet)
+        return 0
+
+    # Actually delete
+    deleted_count = 0
+    failed_count = 0
+    for name, path, is_archive in sorted(to_delete, key=lambda x: x[0]):
+        try:
+            if os.path.isfile(path):
+                os.remove(path)
+                log(f"  🗑️  Deleted archive: {name}", quiet)
+            elif os.path.isdir(path):
+                shutil.rmtree(path)
+                log(f"  🗑️  Deleted dir   : {name}", quiet)
+            deleted_count += 1
+        except Exception as e:
+            log(f"  ❌ Failed to delete {name}: {e}", quiet)
+            failed_count += 1
+
+    log(f"  {'─'*60}", quiet)
+    log(f"  🧹 Retention cleanup complete.", quiet)
+    if failed_count > 0:
+        log(f"  ⚠️  {failed_count} item(s) could not be deleted.", quiet)
+    log(f"  Kept {len(keep)}, deleted {deleted_count}.", quiet)
+    log(f"  {'='*60}", quiet)
+
+    return 1 if failed_count > 0 else 0
+
+
+# ── Backup Logic ───────────────────────────────────────────────────────────
 
 def main():
-    dry_run = '--dry-run' in sys.argv
-    quiet = '--quiet' in sys.argv
+    args = set(sys.argv[1:])
+    dry_run = '--dry-run' in args
+    quiet = '--quiet' in args
+    cleanup_only = '--cleanup-only' in args
+
+    # ── Cleanup-only mode ──
+    if cleanup_only:
+        return retention_cleanup(dry_run=dry_run, quiet=quiet)
 
     files = get_data_json_files()
 
     if not files:
         log("No JSON data files found to back up.", quiet)
-        return 0
+        # Still run cleanup even if no new files to back up
+        return retention_cleanup(dry_run=dry_run, quiet=quiet)
 
     timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
     backup_dir = os.path.join(BACKUP_BASE, timestamp)
@@ -120,7 +294,7 @@ def main():
         fname = os.path.basename(fpath)
         size = os.path.getsize(fpath)
         file_sizes[fpath] = size
-        is_valid, err = validate_json(fpath)
+        is_valid, err = validate_json_file(fpath)
 
         size_str = readable_size(size)
         if is_valid:
@@ -169,7 +343,7 @@ def main():
     copied_count = 0
     for fpath in files:
         fname = os.path.basename(fpath)
-        is_valid, _ = validate_json(fpath, quiet)
+        is_valid, _ = validate_json_file(fpath)
         if not is_valid:
             continue
         try:
@@ -203,30 +377,25 @@ def main():
         return 1
 
     # ── Summary ──
-    total_size = sum(file_sizes[f] for f in files if validate_json(f, quiet=True)[0])
+    total_size = sum(
+        file_sizes[f] for f in files
+        if validate_json_file(f)[0]
+    )
     log(f"\n{'='*60}", quiet)
     log(f"  ✅ Backup complete!", quiet)
     log(f"  📍 Directory : {backup_dir}", quiet)
     log(f"  🗜️  Archive   : {tarball_path}", quiet)
     log(f"  📄 Files     : {copied_count}", quiet)
     log(f"  📦 Data size : {readable_size(total_size)} (uncompressed)", quiet)
-    log(f"{'='*60}\n", quiet)
+    log(f"{'='*60}", quiet)
 
+    # ── Retention cleanup ──
+    ret = retention_cleanup(dry_run=False, quiet=quiet)
+    if ret != 0:
+        log("  ⚠️  Retention cleanup had warnings.", quiet)
+
+    log("", quiet)
     return 0
-
-
-def validate_json(filepath, quiet=False):
-    """Return (is_valid, error_msg). Tries to parse the file as JSON."""
-    try:
-        with open(filepath, 'r', encoding='utf-8') as f:
-            json.load(f)
-        return True, None
-    except json.JSONDecodeError as e:
-        return False, f"JSON decode error: {e}"
-    except FileNotFoundError:
-        return False, "File not found"
-    except Exception as e:
-        return False, str(e)
 
 
 if __name__ == '__main__':

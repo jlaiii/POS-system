@@ -244,13 +244,7 @@ Use Python `pyotp` (pure Python, no C extensions, `pip install pyotp qrcode`):
 
 - [x] worker-1 **Automated backup cron job** — Registered `pos-backup.py` as Hermes cron job (hourly interval, no_agent=true, Discord delivery on failure only, silent on success). The script backs up all JSON data files with validation, optionally backs up SQLite (if pos.db exists during/after migration), and cleans up old backups per retention policy (24h hourly, 7d daily, 4w weekly, 12m monthly). Tested: runs cleanly, produces valid tar.gz archive, exits 0 on success with no output (silent). [worker-1]
 
-- [~] worker-3 **Backup retention cleanup** — The backup script includes retention logic:
-  - Keep all hourly backups from last 24 hours
-  - Keep one per day for last 7 days
-  - Keep one per week for last 4 weeks  
-  - Keep one per month for last 12 months
-  - Delete anything outside these windows
-  - Dry-run mode to show what would be deleted without deleting
+- [x] worker-3 **Backup retention cleanup** — Added `retention_cleanup()` to `backup_json.py`: keeps all hourly backups from last 24h, 1/day for last 7 days, 1/week for last 4 weeks, 1/month for last 12 months. Dry-run mode (`--dry-run --cleanup-only`) previews deletions. Integrated into normal backup flow (runs after each backup). Also supports standalone `--cleanup-only` mode. [worker-3]
 
 - [ ] **Database health check script** — Create `/root/pos-system-work/scripts/db_health.py`:
   - Runs `PRAGMA integrity_check` — must return "ok"
