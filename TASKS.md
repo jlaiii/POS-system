@@ -2,7 +2,7 @@
 
 > Auto-managed by 3 Hermes Worker Crons (every 30 min each, staggered claims).
 > Workers use `[~]` to claim tasks before working. Never pick a claimed task.
-> Last updated: 2026-06-23 (audit #9 — 2FA rate limit marked done + 3 new tasks: refund inventory, backup code UI, re-fire items)
+> Last updated: 2026-06-23 (audit #10 — verified: all [x] tasks confirmed implemented; found: missing service worker/PWA icons, 2FA frontend UI still gap, 0 orders in last 24h, gunicorn migration still pending)
 
 ## Status Legend
 - `[ ]` = pending (available for any worker)
@@ -420,7 +420,11 @@ New `tickets.json` data store. Each ticket:
 
 |- [ ] **MEDIUM: System-wide data backup & restore** — Currently only menu backups exist. Add full system backup endpoint (`POST /api/system/backup`) that creates a downloadable zip of all JSON data files (users, orders, items, configs, shifts, etc.). Add restore endpoint (`POST /api/system/restore`) to load from a backup zip. Admin UI in Settings panel with one-click backup download and file-upload restore. Auto-scheduled daily backup with configurable retention (keep last N backups). Critical for disaster recovery — without this, a disk failure or corruption means total data loss.
 
-|- [ ] **MEDIUM: Customer online ordering portal** — Mobile-friendly standalone page (e.g. `/order`) for customers to browse menu, view item details + images, add to cart with modifiers/notes, and place pickup or delivery orders. Reuses existing backend (orders, items, combos, delivery addresses, payment processing). Integrates with existing pickup-display, kitchen queue, and order notification system. No staff intervention needed for order placement. Essential for any restaurant wanting to accept direct online orders without third-party delivery apps.
+||- [ ] **MEDIUM: Customer online ordering portal** — Mobile-friendly standalone page (e.g. `/order`) for customers to browse menu, view item details + images, add to cart with modifiers/notes, and place pickup or delivery orders. Reuses existing backend (orders, items, combos, delivery addresses, payment processing). Integrates with existing pickup-display, kitchen queue, and order notification system. No staff intervention needed for order placement. Essential for any restaurant wanting to accept direct online orders without third-party delivery apps.|
+||
+||- [ ] **MEDIUM: Service worker + proper PWA icons** — No `sw.js` service worker file exists, and `manifest.json` only has an SVG icon (no 192px/512px PNG icons). Without a service worker, the app cannot cache assets for offline use or be properly installed as a PWA on tablets/iPads. Apple-touch-icon and apple-mobile-web-app-capable meta tags missing for iOS home screen. Add `sw.js` with cache-first static asset strategy, register in index.html, add multi-size PNG icons.|
+||
+||- [ ] **MEDIUM: 2FA frontend login/setup UI — currently no frontend** — All backend 2FA endpoints exist and work (setup, verify, verify_login, backup_login, admin reset/disable), but there is ZERO frontend code for 2FA in index.html. No setup UI, no login challenge screen, no backup code management UI. This means anyone who enables 2FA through the API is effectively LOCKED OUT on the frontend. Implement the 2FA setup flow, login challenge with TOTP input, and backup code fallback. Reuses existing backend endpoints. (Consolidates existing pending 2FA frontend tasks at lines 171, 173, 175.)|
 
 ## Production Readiness & Mobile Optimization (NEW — June 2026)
 
