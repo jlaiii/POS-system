@@ -2422,23 +2422,63 @@ def clock_in():
         return jsonify({'message': 'Already clocked in.'}), 409
 
     now = datetime.now()
+
+    # --- Late detection ---
+    scheduled_start = user_data.get('scheduled_start')
+    late_minutes = None
+    late_excused = False
+    late_note = (data.get('late_note') or '').strip() or None
+
+    if scheduled_start:
+        try:
+            parts = scheduled_start.split(':')
+            scheduled_hour = int(parts[0])
+            scheduled_min = int(parts[1])
+
+            # Build today's scheduled datetime
+            scheduled_dt = now.replace(hour=scheduled_hour, minute=scheduled_min, second=0, microsecond=0)
+
+            # Get grace period from timesheet config
+            ts_config = get_timesheet_config()
+            grace_minutes = ts_config.get('late_grace_minutes', 5)
+
+            # Threshold = scheduled time + grace period
+            threshold_dt = scheduled_dt + timedelta(minutes=grace_minutes)
+
+            # Compare clock-in time against threshold
+            if now > threshold_dt:
+                late_minutes = round((now - scheduled_dt).total_seconds() / 60)
+                if late_minutes < 0:
+                    late_minutes = 0
+        except (ValueError, TypeError, IndexError):
+            pass  # Invalid scheduled_start format, skip late detection
+    # --- End late detection ---
+
     active_shifts[user_id] = {
         'clock_in_time': now,
         'user_name': user_data.get('name', 'Unknown'),
         'breaks': [],
-        'on_break': False
+        'on_break': False,
+        'scheduled_start': scheduled_start,
+        'late_minutes': late_minutes,
+        'late_excused': late_excused,
+        'late_note': late_note
     }
 
     log_activity('clock_in', user_id, user_data.get('role', 'user'), {
         'status': 'success',
         'user_name': user_data.get('name', 'Unknown'),
-        'clock_in_time': now.isoformat()
+        'clock_in_time': now.isoformat(),
+        'late_minutes': late_minutes,
+        'scheduled_start': scheduled_start
     })
 
     return jsonify({
         'message': 'Clocked in successfully.',
         'clock_in_time': now.isoformat(),
-        'user_name': user_data.get('name', 'Unknown')
+        'user_name': user_data.get('name', 'Unknown'),
+        'late_minutes': late_minutes,
+        'late_excused': late_excused
     })
 
 
@@ -2493,7 +2533,11 @@ def clock_out():
         'duration_hours': duration_hours,
         'breaks': completed_breaks,
         'break_hours': break_hours,
-        'paid_hours': paid_hours
+        'paid_hours': paid_hours,
+        'scheduled_start': shift.get('scheduled_start'),
+        'late_minutes': shift.get('late_minutes'),
+        'late_excused': shift.get('late_excused', False),
+        'late_note': shift.get('late_note')
     }
 
     # Store optional notes from employee
@@ -2566,7 +2610,10 @@ def clock_status():
             'on_break': shift.get('on_break', False),
             'break_count': len(breaks),
             'break_hours': break_hours,
-            'paid_hours': round(duration_hours - break_hours, 2)
+            'paid_hours': round(duration_hours - break_hours, 2),
+            'late_minutes': shift.get('late_minutes'),
+            'late_excused': shift.get('late_excused', False),
+            'scheduled_start': shift.get('scheduled_start')
         })
     else:
         return jsonify({
@@ -2639,6 +2686,41 @@ def clock_edit():
     existing_break_hours = shift.get('break_hours', 0)
     shift['break_hours'] = existing_break_hours
     shift['paid_hours'] = round(shift['duration_hours'] - existing_break_hours, 2)
+
+    # Re-run late detection if clock_in_time changed
+    if new_clock_in_str:
+        try:
+            users = load_json_data(USERS_FILE)
+            uid = shift.get('user_id')
+            user_data = users.get(uid, {})
+            scheduled_start = user_data.get('scheduled_start')
+            if scheduled_start:
+                parts = scheduled_start.split(':')
+                sched_hour = int(parts[0])
+                sched_min = int(parts[1])
+                ci_dt = datetime.fromisoformat(shift['clock_in_time'])
+                scheduled_dt = ci_dt.replace(hour=sched_hour, minute=sched_min, second=0, microsecond=0)
+                ts_config = get_timesheet_config()
+                grace_minutes = ts_config.get('late_grace_minutes', 5)
+                threshold_dt = scheduled_dt + timedelta(minutes=grace_minutes)
+                if ci_dt > threshold_dt:
+                    new_late = round((ci_dt - scheduled_dt).total_seconds() / 60)
+                    if new_late < 0:
+                        new_late = 0
+                else:
+                    new_late = None
+            else:
+                new_late = None
+
+            old_late = shift.get('late_minutes')
+            if old_late != new_late:
+                changes['late_minutes'] = {'old': old_late, 'new': new_late}
+                shift['late_minutes'] = new_late
+                if new_late is None:
+                    shift['late_excused'] = False
+                    changes['late_excused'] = {'old': shift.get('late_excused', False), 'new': False}
+        except (ValueError, TypeError, IndexError):
+            pass
 
     # Get admin name for audit trail
     users = load_json_data(USERS_FILE)
@@ -2859,7 +2941,10 @@ def admin_shifts():
             'on_break': shift.get('on_break', False),
             'breaks': breaks,
             'break_hours': break_hours,
-            'paid_hours': round(duration_hours - break_hours, 2)
+            'paid_hours': round(duration_hours - break_hours, 2),
+            'late_minutes': shift.get('late_minutes'),
+            'late_excused': shift.get('late_excused', False),
+            'scheduled_start': shift.get('scheduled_start')
         })
 
     return jsonify({
@@ -2913,7 +2998,7 @@ def export_shifts_csv():
             filtered.append(entry)
         shift_log = filtered
 
-    headers = ['User ID', 'User Name', 'Clock In Time', 'Clock Out Time', 'Duration (Hours)', 'Break (Hours)', 'Paid (Hours)']
+    headers = ['User ID', 'User Name', 'Clock In Time', 'Clock Out Time', 'Duration (Hours)', 'Break (Hours)', 'Paid (Hours)', 'Late (Minutes)', 'Late Excused', 'Notes']
 
     rows = []
     for entry in shift_log:
@@ -2924,7 +3009,10 @@ def export_shifts_csv():
             'Clock Out Time': entry.get('clock_out_time', ''),
             'Duration (Hours)': entry.get('duration_hours', 0),
             'Break (Hours)': entry.get('break_hours', 0),
-            'Paid (Hours)': entry.get('paid_hours', entry.get('duration_hours', 0))
+            'Paid (Hours)': entry.get('paid_hours', entry.get('duration_hours', 0)),
+            'Late (Minutes)': entry.get('late_minutes') if entry.get('late_minutes') else '',
+            'Late Excused': 'Yes' if entry.get('late_excused') else '',
+            'Notes': entry.get('notes', '')
         })
 
     csv_content = generate_csv(rows, headers)
@@ -5905,7 +5993,10 @@ def timesheet_pay_period():
             'duration_hours': entry.get('duration_hours', 0),
             'break_hours': entry.get('break_hours', 0),
             'paid_hours': shift_hours,
-            'active': entry.get('active', False)
+            'active': entry.get('active', False),
+            'late_minutes': entry.get('late_minutes'),
+            'late_excused': entry.get('late_excused', False),
+            'late_note': entry.get('late_note')
         })
 
     # Calculate weekly overtime: group completed shifts by ISO week

@@ -193,11 +193,16 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 #topBar .offline-badge.syncing { background: #3498db; animation: pulse-badge 1s infinite; }
 #clockBtn.clocked-in { background: #2ecc71; color: #fff; border-color: #2ecc71; animation: none; }
 #clockBtn.clocked-in:hover { background: #27ae60; }
+#clockBtn.late-clock-in { animation: pulse-late 1s ease-in-out 3; border-color: #e74c3c !important; box-shadow: 0 0 15px rgba(231,76,60,0.5); }
 #breakBtn.on-break { background: #f39c12; color: #fff; border-color: #f39c12; }
 #breakBtn.on-break:hover { background: #e67e22; }
 @keyframes pulse-badge {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
+}
+@keyframes pulse-late {
+  0%, 100% { box-shadow: 0 0 5px rgba(231,76,60,0.3); background: var(--accent); }
+  50% { box-shadow: 0 0 25px rgba(231,76,60,0.8); background: #e74c3c; }
 }
 
 #mainTabs {
@@ -534,6 +539,23 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
   line-height: 18px;
 }
 .shift-edited-badge:hover { opacity: 0.85; }
+.shift-late-badge {
+  display: inline-block;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(231,76,60,0.15);
+  color: #e74c3c;
+  font-weight: 600;
+  vertical-align: middle;
+  min-height: 22px;
+  line-height: 18px;
+  cursor: default;
+}
+.shift-late-badge.excused {
+  background: rgba(149,165,166,0.15);
+  color: #95a5a6;
+}
 .shift-edit-btn {
   font-size: 12px;
   padding: 4px 10px;
@@ -2262,6 +2284,7 @@ const L10N = {
     'clock.in': '⏰ Clock In',
     'clock.out': '⏰ Clock Out',
     'clock.clocked_in': 'Clocked in!',
+    'clock.clocked_in_late': '⚠️ Clocked in — {minutes} min late',
     'clock.clocked_out': 'Clocked out',
     'clock.start_break': '☕ Start Break',
     'clock.end_break': '🔙 End Break',
@@ -2687,6 +2710,7 @@ const L10N = {
     'clock.in': '⏰ Entrada',
     'clock.out': '⏰ Salida',
     'clock.clocked_in': '¡Registrado!',
+    'clock.clocked_in_late': '⚠️ Registrado — {minutes} min tarde',
     'clock.clocked_out': 'Registrado salida',
     'clock.start_break': '☕ Iniciar Descanso',
     'clock.end_break': '🔙 Terminar Descanso',
@@ -3483,7 +3507,11 @@ async function checkClockStatus() {
     if (data.clocked_in) {
       btn.textContent = '⏰ Clock Out';
       btn.classList.add('clocked-in');
-      btn.title = 'Clocked in since ' + new Date(data.clock_in_time).toLocaleTimeString();
+      let title = 'Clocked in since ' + new Date(data.clock_in_time).toLocaleTimeString();
+      if (data.late_minutes && data.late_minutes > 0) {
+        title += ' — ⚠️ ' + data.late_minutes + ' min late';
+      }
+      btn.title = title;
       if (clockTimer) clearInterval(clockTimer);
       clockTimer = setInterval(() => checkClockStatus(), 30000);
       // Show break button
@@ -3524,7 +3552,14 @@ async function toggleClock() {
       });
       const data = await r.json();
       if (r.ok) {
-        showToast('Clocked in!', 'success');
+        if (data.late_minutes && data.late_minutes > 0) {
+          showToast(t('clock.clocked_in_late', { minutes: data.late_minutes }), 'warning');
+          // Red pulse animation on clock button for 30 seconds
+          btn.classList.add('late-clock-in');
+          setTimeout(() => btn.classList.remove('late-clock-in'), 30000);
+        } else {
+          showToast(t('clock.clocked_in'), 'success');
+        }
         checkClockStatus();
       } else {
         showToast(data.message || 'Error', 'error');
@@ -3664,20 +3699,34 @@ async function loadShifts() {
         const notesHtml = notes
           ? `<div style="margin-top:4px;font-size:13px;color:var(--text2);border-left:3px solid #e94560;padding-left:10px;">📝 ${escHtml(notes)}</div>`
           : '';
+        // Late badge
+        let lateBadge = '';
+        let lateBorderColor = 'var(--border)';
+        if (s.late_minutes && s.late_minutes > 0) {
+          if (s.late_excused) {
+            lateBadge = `<span class="shift-late-badge excused" title="Excused late — ${s.late_minutes} min">🔕 ${s.late_minutes} min</span>`;
+            lateBorderColor = '#95a5a6';
+          } else {
+            lateBadge = `<span class="shift-late-badge" title="Late — ${s.late_minutes} min">🕐 ${s.late_minutes} min</span>`;
+            lateBorderColor = '#e74c3c';
+          }
+        }
+        const lateNote = s.late_note ? `<div style="margin-top:2px;font-size:12px;color:var(--text2);font-style:italic;">📌 ${escHtml(s.late_note)}</div>` : '';
         return `
-        <div class="ts-entry">
+        <div class="ts-entry" style="border-left-color:${lateBorderColor};">
           <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
             <span><strong>${escHtml(s.user_name || s.user_id)}</strong> (${escHtml(s.user_id)}) ${editBadge}</span>
             <span style="color:var(--text2);font-size:13px;">${new Date(s.clock_in_time).toLocaleString()} → ${new Date(s.clock_out_time).toLocaleString()}</span>
             <span style="font-weight:600;">${s.duration_hours} hrs</span>
             ${s.break_hours ? `<span style="font-size:12px;color:var(--text2);">☕ ${s.break_hours}h break</span>` : ''}
             <span style="font-size:13px;color:var(--accent);font-weight:500;">Paid: ${s.paid_hours || s.duration_hours} hrs</span>
+            ${lateBadge}
             <div style="margin-left:auto;display:flex;gap:4px;">
               <button class="shift-edit-btn" onclick="openShiftEditModal(${actualIndex})" title="Edit shift times" style="font-size:12px;padding:4px 10px;min-height:32px;">✏️ Edit</button>
               <button class="shift-edit-btn" onclick="adminAddNote(${actualIndex})" title="Add/edit shift notes" style="font-size:12px;padding:4px 10px;min-height:32px;">📝 Note</button>
             </div>
           </div>
-          ${notesHtml}
+          ${notesHtml}${lateNote}
         </div>
       `}).join('');
     }
@@ -3722,6 +3771,7 @@ async function loadPayPeriod() {
     employees.forEach(emp => {
       const hasOT = emp.overtime_hours > 0;
       const dailyOTShifts = emp.shifts.filter(s => s.exceeds_daily_ot).length;
+      const lateShifts = emp.shifts ? emp.shifts.filter(s => s.late_minutes && s.late_minutes > 0 && !s.late_excused).length : 0;
       const payDisplay = emp.estimated_pay !== null ? '$' + emp.estimated_pay.toFixed(2) : '<span style="color:var(--text2);font-size:13px;">No rate set</span>';
       html += '<div class="pp-card">';
       html += '<div class="pp-card-header">';
@@ -3733,6 +3783,9 @@ async function loadPayPeriod() {
       html += '<div class="pp-stat"><div class="pp-stat-value ' + (hasOT ? 'orange' : 'green') + '">' + emp.overtime_hours.toFixed(1) + '</div><div class="pp-stat-label">Overtime</div></div>';
       html += '<div class="pp-stat"><div class="pp-stat-value">' + (emp.pay_rate > 0 ? '$' + emp.pay_rate.toFixed(2) : '—') + '</div><div class="pp-stat-label">Rate/hr</div></div>';
       html += '<div class="pp-stat"><div class="pp-stat-value gold">' + payDisplay + '</div><div class="pp-stat-label">Est. Gross Pay</div></div>';
+      if (lateShifts > 0) {
+        html += '<div class="pp-stat"><div class="pp-stat-value" style="color:#e74c3c;">' + lateShifts + '</div><div class="pp-stat-label">Late Shifts</div></div>';
+      }
       html += '</div>';
       // Show daily OT shift count if any
       if (dailyOTShifts > 0) {
@@ -3748,16 +3801,26 @@ async function loadPayPeriod() {
         let otBadges = '';
         if (s.exceeds_daily_ot) otBadges += ' <span class="badge-ot-daily" style="background:#ff9800;color:#fff;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:600;">⬆ Daily OT</span>';
         if (s.exceeds_weekly_ot) otBadges += ' <span class="badge-ot-weekly" style="background:#e94560;color:#fff;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:600;">📈 Weekly OT</span>';
+        // Late badge
+        if (s.late_minutes && s.late_minutes > 0) {
+          if (s.late_excused) {
+            otBadges += ' <span style="background:#95a5a6;color:#fff;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:600;">🔕 ' + s.late_minutes + ' min</span>';
+          } else {
+            otBadges += ' <span style="background:#e74c3c;color:#fff;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:600;">🕐 ' + s.late_minutes + ' min</span>';
+          }
+        }
         // Show day total if more than one shift on this day
         const dayTotalNote = s.day_total_hours > s.duration_hours ? ' <span style="font-size:11px;color:var(--text2);">(' + s.day_total_hours.toFixed(1) + 'h this day)</span>' : '';
         const sBreak = s.break_hours ? ' <span style="font-size:11px;color:var(--text2);">☕ ' + s.break_hours.toFixed(2) + 'h break</span>' : '';
         const sPaid = ' <span style="font-size:11px;color:var(--accent);">Paid: ' + (s.paid_hours || s.duration_hours).toFixed(2) + 'h</span>';
         const sNotes = s.notes || '';
         const sNotesHtml = sNotes ? '<div style="font-size:12px;color:var(--text2);margin-top:2px;padding-left:6px;border-left:2px solid #e94560;">📝 ' + escHtml(sNotes) + '</div>' : '';
+        const sLateNote = s.late_note ? '<div style="font-size:12px;color:var(--text2);margin-top:2px;padding-left:6px;border-left:2px solid #e74c3c;">📌 ' + escHtml(s.late_note) + '</div>' : '';
         html += '<div class="pp-shift-row">';
         html += '<span>' + clockIn + ' → ' + clockOut + '</span>';
         html += '<span><strong>' + s.duration_hours.toFixed(2) + ' hrs</strong>' + otBadges + dayTotalNote + sBreak + sPaid + '</span>';
         html += sNotesHtml;
+        html += sLateNote;
         html += '</div>';
       });
       html += '</div>';
