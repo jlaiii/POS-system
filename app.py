@@ -4976,19 +4976,23 @@ def admin_stats():
     for order in processed_orders:
         payment = str(order.get('payment', '')).strip().lower()
         total = order['total']
-        if payment == 'cash' or payment.startswith('split') and 'cash' in payment:
+        if payment == 'cash' or (payment.startswith('split') and 'cash' in payment):
             # For split payments, attribute the cash portion if available
             splits = order.get('payment_splits')
             if splits and isinstance(splits, list):
                 cash_portion = sum(float(s.get('amount', 0)) for s in splits if s.get('method', '').lower() == 'cash')
                 card_portion = sum(float(s.get('amount', 0)) for s in splits if s.get('method', '').lower() in ('card', 'credit card', 'debit'))
                 if cash_portion > 0 or card_portion > 0:
+                    # Cap attribution at the actual total (split amounts may exceed total due to discounts/tips)
+                    split_sum = cash_portion + card_portion
+                    if split_sum > total and split_sum > 0:
+                        ratio = total / split_sum
+                        cash_portion = round(cash_portion * ratio, 2)
+                        card_portion = round(card_portion * ratio, 2)
                     cash_total += cash_portion
                     card_total += card_portion
                     if cash_portion > 0: cash_count += 1
                     if card_portion > 0: card_count += 1
-                    other_portion = total - cash_portion - card_portion
-                    if other_portion > 0: other_total += other_portion; other_count += 1
                     continue
             cash_total += total
             cash_count += 1
