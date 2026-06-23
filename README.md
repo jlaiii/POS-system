@@ -6,23 +6,45 @@ This Point of Sale (POS) system is provided for **personal use and testing purpo
 
 ## Features
 
-* User login with different roles (User, Admin)
+### Point of Sale
+- Item grid with category tabs, search, and barcode scanner support
+- Cart with modifiers, notes, discounts, service charges, and split payments
+- Table management with running tabs and auto-table suggestion
+- Kiosk / customer payment mode with tip calculator
+- Cash register management (till opening/closing, cash drops, reconciliation)
+- Customer profiles with loyalty points, order history, and total spent tracking
+- Digital receipt delivery (email) and receipt reprint
+- Offline order queuing with auto-sync on reconnect
 
-* POS functionality for adding items to a cart and submitting orders
+### Kitchen & Display
+- Kitchen display queue with claim/complete/cancel, sound alerts, and fullscreen mode
+- Order-ready customer pickup display board
+- Customer-facing display mode (second screen showing order summary)
+- Drive-through order display with high-contrast outdoor theme
+- Table-side digital menu & ad display (tablet.html)
 
-* Admin panel for:
+### Employee Timekeeping
+- Clock-in / clock-out with live duration tracking
+- Admin timesheet view (completed + active shifts, date filtering, CSV export)
+- Pay period summaries with per-employee hours, overtime, estimated pay
+- **Scheduled shifts & lateness tracking** — per-user scheduled start times, auto-late detection on clock-in with configurable grace period, late flags with excuse toggle, admin shift time edit/correction with full audit trail, employee late notes
+- Missing clock-out detection & alerts (coming soon)
+- Break tracking for unpaid meal breaks (coming soon)
 
-    * Viewing sales statistics
+### Admin Panel
+- Sales statistics dashboard with Chart.js analytics (revenue, orders, peak hours, item trends)
+- User management with granular role/permission system (owner/admin/user/cook)
+- Menu management (items, categories, modifiers, combos/meal deals, scheduled pricing)
+- Inventory tracking with low-stock alerts
+- Waste tracking (spoiled, burned, overproduced — with cost estimation)
+- Activity log with filtering
+- Webhook integration for third-party delivery apps
+- Multi-language support (English + Spanish)
 
-    * Managing users (add, delete)
-
-    * Managing menu items (add, edit, delete categories and items)
-
-    * Viewing timesheet data
-
-    * Viewing activity logs
-
-* Data persistence using JSON files (users, orders, cleared orders, activity log, timesheet, items)
+### Data
+- All data stored as JSON files (users, orders, shifts, inventory, waste, loyalty points, tickets, etc.)
+- CSV export for shifts, timesheets, and pay period summaries
+- Menu version history with timestamped backups (last 30 retained)
 
 ## Setup and Running
 

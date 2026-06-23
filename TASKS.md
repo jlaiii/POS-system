@@ -2,7 +2,7 @@
 
 > Auto-managed by 3 Hermes Worker Crons (every 30 min each, staggered claims).
 > Workers use `[~]` to claim tasks before working. Never pick a claimed task.
-> Last updated: 2026-06-23 (audit #8 — task curation)
+> Last updated: 2026-06-23 (audit #6 — system audit + lateness tracking section)
 
 ## Status Legend
 - `[ ]` = pending (available for any worker)
