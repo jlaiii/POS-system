@@ -246,7 +246,7 @@ Use Python `pyotp` (pure Python, no C extensions, `pip install pyotp qrcode`):
 
 - [x] worker-3 **Backup retention cleanup** — Added `retention_cleanup()` to `backup_json.py`: keeps all hourly backups from last 24h, 1/day for last 7 days, 1/week for last 4 weeks, 1/month for last 12 months. Dry-run mode (`--dry-run --cleanup-only`) previews deletions. Integrated into normal backup flow (runs after each backup). Also supports standalone `--cleanup-only` mode. [worker-3]
 
-- [ ] **Database health check script** — Create `/root/pos-system-work/scripts/db_health.py`:
+- [~] worker-2 **Database health check script** — Create `/root/pos-system-work/scripts/db_health.py`:
   - Runs `PRAGMA integrity_check` — must return "ok"
   - Runs `PRAGMA foreign_key_check` — must return no rows
   - Checks file size isn't 0 and hasn't shrunk dramatically (>50% drop = possible corruption)
