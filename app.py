@@ -2393,6 +2393,99 @@ def clock_status():
         })
 
 
+@app.route('/api/clock/edit', methods=['POST'])
+def clock_edit():
+    """Admin edit shift clock-in/out times with audit trail."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+
+    if not check_perm(admin_pin, "view_timesheet"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    shift_index = data.get('shift_index')
+    if shift_index is None or not isinstance(shift_index, int):
+        return jsonify({'message': 'shift_index (integer) is required.'}), 400
+
+    reason = (data.get('reason') or '').strip()
+    if not reason:
+        return jsonify({'message': 'reason is required.'}), 400
+
+    shift_log = load_json_data(SHIFT_FILE)
+    if shift_index < 0 or shift_index >= len(shift_log):
+        return jsonify({'message': 'Invalid shift_index.'}), 404
+
+    shift = shift_log[shift_index]
+
+    new_clock_in_str = data.get('new_clock_in')
+    new_clock_out_str = data.get('new_clock_out')
+
+    if not new_clock_in_str and not new_clock_out_str:
+        return jsonify({'message': 'Provide at least one of new_clock_in or new_clock_out.'}), 400
+
+    changes = {}
+    old_clock_in = shift.get('clock_in_time')
+    old_clock_out = shift.get('clock_out_time')
+
+    if new_clock_in_str:
+        try:
+            datetime.fromisoformat(new_clock_in_str)
+        except (ValueError, TypeError):
+            return jsonify({'message': 'Invalid new_clock_in format. Use ISO format (e.g. 2026-06-23T09:00:00).'}), 400
+        changes['clock_in_time'] = {'old': old_clock_in, 'new': new_clock_in_str}
+        shift['clock_in_time'] = new_clock_in_str
+
+    if new_clock_out_str:
+        try:
+            datetime.fromisoformat(new_clock_out_str)
+        except (ValueError, TypeError):
+            return jsonify({'message': 'Invalid new_clock_out format. Use ISO format (e.g. 2026-06-23T17:00:00).'}), 400
+        changes['clock_out_time'] = {'old': old_clock_out, 'new': new_clock_out_str}
+        shift['clock_out_time'] = new_clock_out_str
+
+    # Recalculate duration
+    try:
+        ci = datetime.fromisoformat(shift['clock_in_time'])
+        co = datetime.fromisoformat(shift['clock_out_time']) if shift.get('clock_out_time') else None
+        if co:
+            shift['duration_hours'] = round((co - ci).total_seconds() / 3600, 2)
+        else:
+            shift['duration_hours'] = 0
+    except (ValueError, TypeError):
+        shift['duration_hours'] = 0
+
+    # Get admin name for audit trail
+    users = load_json_data(USERS_FILE)
+    admin_user = users.get(admin_pin, {})
+    admin_name = admin_user.get('name', admin_pin)
+
+    # Build/append edits array
+    if 'edits' not in shift:
+        shift['edits'] = []
+    shift['edits'].append({
+        'edited_by': admin_pin,
+        'edited_by_name': admin_name,
+        'edited_at': datetime.now().isoformat(),
+        'reason': reason,
+        'changes': changes
+    })
+    shift['edited'] = True
+
+    save_json_data(SHIFT_FILE, shift_log)
+
+    log_activity('shift_edited', admin_pin, admin_user.get('role', 'admin'), {
+        'shift_index': shift_index,
+        'user_id': shift.get('user_id'),
+        'user_name': shift.get('user_name'),
+        'changes': changes,
+        'reason': reason
+    })
+
+    return jsonify({
+        'message': 'Shift updated successfully.',
+        'shift': shift
+    })
+
+
 @app.route('/api/admin_shifts', methods=['POST'])
 def admin_shifts():
     """Get all shift records (completed) for admin timesheet view."""

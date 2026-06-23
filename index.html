@@ -516,6 +516,35 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 .pp-preset:hover { border-color: var(--accent); background: var(--card-alt); }
 .pp-preset.active { border-color: var(--accent); background: var(--accent); color: #fff; }
 
+/* Shift edit badge and button */
+.shift-edited-badge {
+  display: inline-block;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: #ff9800;
+  color: #fff;
+  cursor: pointer;
+  margin-left: 6px;
+  font-weight: 600;
+  vertical-align: middle;
+  min-height: 22px;
+  line-height: 18px;
+}
+.shift-edited-badge:hover { opacity: 0.85; }
+.shift-edit-btn {
+  font-size: 12px;
+  padding: 4px 10px;
+  min-height: 32px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--text);
+  transition: background .15s;
+}
+.shift-edit-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+
 .log-filters { background: var(--card); border-radius: var(--radius); padding: 12px 16px; margin-bottom: 12px; }
 .log-filter-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: end; }
 .log-filter-group { display: flex; flex-direction: column; gap: 4px; }
@@ -3474,9 +3503,9 @@ async function loadShifts() {
     }
     let html = '';
     if (active.length > 0) {
-      html += '<div style=\"margin-bottom:8px;font-weight:600;color:#2ecc71;\">🟢 Currently Clocked In:</div>';
+      html += '<div style="margin-bottom:8px;font-weight:600;color:#2ecc71;">🟢 Currently Clocked In:</div>';
       html += active.map(s => `
-        <div class=\"ts-entry\" style=\"border-left:3px solid #2ecc71;\">
+        <div class="ts-entry" style="border-left:3px solid #2ecc71;">
           <span><strong>${escHtml(s.user_name)}</strong> (${escHtml(s.user_id)})</span>
           <span>Since ${new Date(s.clock_in_time).toLocaleString()}</span>
           <span>${s.duration_hours} hrs</span>
@@ -3485,14 +3514,23 @@ async function loadShifts() {
     }
     if (completed.length > 0) {
       const reversed = completed.slice().reverse();
-      if (html) html += '<div style=\"margin-top:12px;margin-bottom:8px;font-weight:600;\">✅ Completed Shifts:</div>';
-      html += reversed.slice(0, 100).map(s => `
-        <div class=\"ts-entry\">
-          <span><strong>${escHtml(s.user_name || s.user_id)}</strong> (${escHtml(s.user_id)})</span>
+      if (html) html += '<div style="margin-top:12px;margin-bottom:8px;font-weight:600;">✅ Completed Shifts:</div>';
+      html += reversed.slice(0, 100).map((s, i) => {
+        // Actual index in the original (non-reversed) shift_log array
+        const actualIndex = completed.length - 1 - i;
+        const isEdited = s.edited;
+        const edits = s.edits || [];
+        const editBadge = isEdited
+          ? `<span class="shift-edited-badge" onclick="showShiftEditHistory(${actualIndex})" title="Click to view edit history">⚠️ Edited</span>`
+          : '';
+        return `
+        <div class="ts-entry">
+          <span><strong>${escHtml(s.user_name || s.user_id)}</strong> (${escHtml(s.user_id)}) ${editBadge}</span>
           <span>${new Date(s.clock_in_time).toLocaleString()} → ${new Date(s.clock_out_time).toLocaleString()}</span>
           <span>${s.duration_hours} hrs</span>
+          <button class="shift-edit-btn" onclick="openShiftEditModal(${actualIndex})" title="Edit shift times" style="font-size:12px;padding:4px 10px;min-height:32px;">✏️ Edit</button>
         </div>
-      `).join('');
+      `}).join('');
     }
     container.innerHTML = html;
   } catch(e) {
@@ -10413,6 +10451,246 @@ function getActiveCombos() {
   if (!comboData || !comboData.combos) return [];
   return comboData.combos.filter(c => c.active !== false);
 }
+
+/* ───── Shift Edit / Correction Functions ───── */
+
+/** Track which shift index is being edited */
+let _editingShiftIndex = -1;
+
+/** Open the shift edit modal for a given shift index */
+function openShiftEditModal(shiftIndex) {
+  _editingShiftIndex = shiftIndex;
+  const overlay = document.getElementById('shiftEditOverlay');
+  const errDiv = document.getElementById('shiftEditError');
+  errDiv.style.display = 'none';
+  document.getElementById('shiftEditClockIn').value = '';
+  document.getElementById('shiftEditClockOut').value = '';
+  document.getElementById('shiftEditReason').value = '';
+
+  // Fetch current shift data
+  fetch(BACKEND_URL + '/api/admin_shifts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ adminPin: currentUser.id })
+  })
+  .then(r => r.json())
+  .then(data => {
+    const shifts = data.shifts || [];
+    const shift = shifts[shiftIndex];
+    if (!shift) {
+      errDiv.textContent = 'Shift not found at index ' + shiftIndex;
+      errDiv.style.display = 'block';
+      return;
+    }
+    document.getElementById('shiftEditEmployee').textContent =
+      escHtml(shift.user_name || 'Unknown') + ' (' + escHtml(shift.user_id) + ')';
+    document.getElementById('shiftEditCurrentTimes').innerHTML =
+      'Clock In: <strong>' + new Date(shift.clock_in_time).toLocaleString() + '</strong><br>' +
+      'Clock Out: <strong>' + (shift.clock_out_time ? new Date(shift.clock_out_time).toLocaleString() : '—') + '</strong><br>' +
+      'Duration: <strong>' + shift.duration_hours + ' hrs</strong>';
+
+    // Pre-fill datetime-local inputs with current values (in local YYYY-MM-DDTHH:MM format)
+    try {
+      const ci = new Date(shift.clock_in_time);
+      document.getElementById('shiftEditClockIn').value = ci.toISOString().slice(0, 16);
+    } catch(e) {}
+    try {
+      if (shift.clock_out_time) {
+        const co = new Date(shift.clock_out_time);
+        document.getElementById('shiftEditClockOut').value = co.toISOString().slice(0, 16);
+      }
+    } catch(e) {}
+
+    overlay.classList.add('active');
+  })
+  .catch(e => {
+    errDiv.textContent = 'Failed to load shift data: ' + e.message;
+    errDiv.style.display = 'block';
+  });
+}
+
+/** Submit the shift edit */
+async function submitShiftEdit() {
+  const errDiv = document.getElementById('shiftEditError');
+  errDiv.style.display = 'none';
+  const reason = document.getElementById('shiftEditReason').value.trim();
+  if (!reason) {
+    errDiv.textContent = 'Please enter a reason for the edit.';
+    errDiv.style.display = 'block';
+    return;
+  }
+
+  const clockInInput = document.getElementById('shiftEditClockIn').value;
+  const clockOutInput = document.getElementById('shiftEditClockOut').value;
+
+  const params = {
+    adminPin: currentUser.id,
+    shift_index: _editingShiftIndex,
+    reason: reason
+  };
+
+  // Convert datetime-local (local time) to ISO string
+  if (clockInInput) {
+    params.new_clock_in = new Date(clockInInput).toISOString();
+  }
+  if (clockOutInput) {
+    params.new_clock_out = new Date(clockOutInput).toISOString();
+  }
+
+  if (!params.new_clock_in && !params.new_clock_out) {
+    errDiv.textContent = 'Please provide at least one new time or cancel.';
+    errDiv.style.display = 'block';
+    return;
+  }
+
+  try {
+    const r = await fetch(BACKEND_URL + '/api/clock/edit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params)
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      errDiv.textContent = data.message || 'Failed to edit shift.';
+      errDiv.style.display = 'block';
+      return;
+    }
+    closeShiftEdit();
+    showToast('✅ ' + data.message, 'success');
+    loadShifts(); // Refresh the shift list
+  } catch(e) {
+    errDiv.textContent = 'Network error: ' + e.message;
+    errDiv.style.display = 'block';
+  }
+}
+
+/** Close shift edit modal */
+function closeShiftEdit() {
+  document.getElementById('shiftEditOverlay').classList.remove('active');
+  _editingShiftIndex = -1;
+}
+
+/** Show shift edit history for a given shift index */
+async function showShiftEditHistory(shiftIndex) {
+  const overlay = document.getElementById('shiftEditHistoryOverlay');
+  const content = document.getElementById('shiftEditHistoryContent');
+  content.innerHTML = '<div class="empty-state">Loading...</div>';
+  overlay.classList.add('active');
+
+  try {
+    const r = await fetch(BACKEND_URL + '/api/admin_shifts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id })
+    });
+    const data = await r.json();
+    const shifts = data.shifts || [];
+    const shift = shifts[shiftIndex];
+    if (!shift) {
+      content.innerHTML = '<div class="empty-state">Shift not found.</div>';
+      return;
+    }
+    const edits = shift.edits || [];
+    if (edits.length === 0) {
+      content.innerHTML = '<div class="empty-state">No edit history for this shift.</div>';
+      return;
+    }
+
+    let html = '<div style="margin-bottom:12px;padding:10px;background:var(--card-alt);border-radius:6px;">';
+    html += '<strong>' + escHtml(shift.user_name || shift.user_id) + '</strong><br>';
+    html += '<span style="font-size:13px;color:var(--text2);">' + new Date(shift.clock_in_time).toLocaleString() + ' → ' +
+      (shift.clock_out_time ? new Date(shift.clock_out_time).toLocaleString() : '—') + '</span>';
+    html += '</div>';
+
+    edits.forEach((edit, idx) => {
+      html += '<div class="card" style="margin-bottom:8px;padding:10px 14px;border-left:3px solid #ff9800;">';
+      html += '<div style="font-size:12px;color:var(--text2);margin-bottom:4px;">';
+      html += '<strong style="color:var(--text);">' + escHtml(edit.edited_by_name || edit.edited_by) + '</strong>';
+      html += ' at ' + new Date(edit.edited_at).toLocaleString();
+      html += '</div>';
+      const changes = edit.changes || {};
+      if (changes.clock_in_time) {
+        html += '<div style="font-size:12px;margin:2px 0;"><span style="color:var(--text2);">Clock In:</span> ';
+        html += '<span style="color:#e74c3c;text-decoration:line-through;">' + escHtml(formatDateTime(changes.clock_in_time.old)) + '</span> ';
+        html += '<span style="color:#2ecc71;">→ ' + escHtml(formatDateTime(changes.clock_in_time.new)) + '</span></div>';
+      }
+      if (changes.clock_out_time) {
+        html += '<div style="font-size:12px;margin:2px 0;"><span style="color:var(--text2);">Clock Out:</span> ';
+        html += '<span style="color:#e74c3c;text-decoration:line-through;">' + escHtml(formatDateTime(changes.clock_out_time.old)) + '</span> ';
+        html += '<span style="color:#2ecc71;">→ ' + escHtml(formatDateTime(changes.clock_out_time.new)) + '</span></div>';
+      }
+      html += '<div style="font-size:12px;color:var(--text2);margin-top:4px;padding-top:4px;border-top:1px solid var(--border);">';
+      html += 'Reason: <em>' + escHtml(edit.reason || '—') + '</em></div>';
+      html += '</div>';
+    });
+
+    content.innerHTML = html;
+  } catch(e) {
+    content.innerHTML = '<div class="empty-state">Error loading edit history.</div>';
+  }
+}
+
+/** Close shift edit history modal */
+function closeShiftEditHistory() {
+  document.getElementById('shiftEditHistoryOverlay').classList.remove('active');
+}
+
+/** Format ISO datetime string for display in edit history (date only style) */
+function formatDateTime(isoStr) {
+  if (!isoStr) return '—';
+  try {
+    return new Date(isoStr).toLocaleString();
+  } catch(e) {
+    return isoStr;
+  }
+}
 </script>
+<!-- ═══════════ SHIFT EDIT OVERLAY ═══════════ -->
+<div id="shiftEditOverlay" class="modal-overlay">
+  <div class="modal-box" style="max-width:480px;max-height:80vh;overflow-y:auto;">
+    <h3>✏️ Edit Shift Times</h3>
+    <div id="shiftEditForm" style="margin-top:12px;">
+      <div style="margin-bottom:12px;">
+        <label style="font-size:13px;color:var(--text2);font-weight:600;">Employee</label>
+        <div id="shiftEditEmployee" style="padding:8px 0;font-size:15px;"></div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="font-size:13px;color:var(--text2);font-weight:600;">Current Times</label>
+        <div id="shiftEditCurrentTimes" style="padding:8px 0;font-size:13px;color:var(--text2);"></div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <label for="shiftEditClockIn" style="font-size:13px;color:var(--text2);font-weight:600;">New Clock-In Time</label>
+        <input type="datetime-local" id="shiftEditClockIn" style="width:100%;min-height:44px;font-size:14px;margin-top:4px;padding:8px;border-radius:6px;border:1px solid var(--border);background:var(--input-bg);color:var(--text);">
+        <div style="font-size:12px;color:var(--text2);margin-top:4px;">Leave empty to keep current time</div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <label for="shiftEditClockOut" style="font-size:13px;color:var(--text2);font-weight:600;">New Clock-Out Time</label>
+        <input type="datetime-local" id="shiftEditClockOut" style="width:100%;min-height:44px;font-size:14px;margin-top:4px;padding:8px;border-radius:6px;border:1px solid var(--border);background:var(--input-bg);color:var(--text);">
+        <div style="font-size:12px;color:var(--text2);margin-top:4px;">Leave empty to keep current time</div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <label for="shiftEditReason" style="font-size:13px;color:var(--text2);font-weight:600;">Reason for Edit <span style="color:var(--accent);">*</span></label>
+        <textarea id="shiftEditReason" rows="2" style="width:100%;min-height:44px;font-size:14px;margin-top:4px;padding:8px;border-radius:6px;border:1px solid var(--border);background:var(--input-bg);color:var(--text);resize:vertical;" placeholder="E.g. Employee forgot to clock out"></textarea>
+      </div>
+      <div id="shiftEditError" style="color:var(--accent);font-size:13px;margin-bottom:8px;display:none;"></div>
+    </div>
+    <div class="modal-actions" style="gap:8px;">
+      <button class="accent" onclick="submitShiftEdit()" style="min-height:48px;font-size:15px;padding:10px 24px;">💾 Save Changes</button>
+      <button class="outline" onclick="closeShiftEdit()" style="min-height:48px;font-size:15px;padding:10px 24px;">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ SHIFT EDIT HISTORY OVERLAY ═══════════ -->
+<div id="shiftEditHistoryOverlay" class="modal-overlay">
+  <div class="modal-box" style="max-width:550px;max-height:80vh;overflow-y:auto;">
+    <h3>📋 Shift Edit History</h3>
+    <div id="shiftEditHistoryContent"><div class="empty-state">No edit history.</div></div>
+    <div class="modal-actions">
+      <button class="outline" onclick="closeShiftEditHistory()">Close</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

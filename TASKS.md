@@ -57,7 +57,7 @@
 
 |- [x] worker-2 **Overtime detection and flagging** — Configurable thresholds in admin (default: 8h/day, 40h/week). New `timesheet_config.json` with `GET/POST /api/timesheet/config` endpoint. Backend pay_period/CSV/PDF exports use configurable thresholds. Frontend: Timesheet Config card in Timesheet section with daily/weekly OT threshold + late grace inputs. Shift badges: orange "⬆ Daily OT" for shifts exceeding daily threshold, red "📈 Weekly OT" for employees with weekly OT. Total OT in summary bar. CSV export already had Overtime Hours column.
 
-- [~] worker-1 **Admin shift edit / correction with audit trail** — Timekeeper needs ability to correct clock-in/out times (employee forgot to clock out, clocked in wrong, system error). New `POST /api/clock/edit` endpoint: accepts `shift_index` (from shift_log array), new `clock_in_time` / `clock_out_time` (or null to keep original). Logs edit in activity_log with old→new values and `edited_by` (admin PIN). Edited shifts flagged with ⚠️ icon in UI. Edit history viewable per shift. `edited` boolean stored on shift record. Permission-gated (manage_items or new `edit_timesheet` perm?).
+- [x] worker-1 **Admin shift edit / correction with audit trail** — Timekeeper can correct clock-in/out times on completed shifts. New `POST /api/clock/edit` endpoint with full audit trail (`edits[]` array on shift records: edited_by, edited_by_name, edited_at, reason, old→new values). Recalculates duration. ⚠️ Edited badge in timesheet UI with click-to-view edit history popup. Activity logging for all edits. Permission-gated (view_timesheet). [worker-1]
 
 - [ ] **Shift notes on clock-out** — When clocking out, optional textarea for shift notes (e.g., "covered closing duties", "stayed late for deep clean", "short shift — left early with permission"). Stored as `notes` field on shift record. Displayed in timesheet view. Admin can also add notes on individual shifts after the fact.
 
@@ -291,6 +291,8 @@ New `tickets.json` data store. Each ticket:
 - [ ] **Wake-on-proximity / screensaver mode** — If the device supports it (camera-based), dim screen to 20% when no one is nearby, brighten to full when motion detected. Falls back to the ad rotator as screensaver. Works on tablets with front-facing cameras via a simple motion-detection approach (compare frames every 2 seconds for significant change).
 
 ## Done
+
+- [x] **Admin shift edit / correction with audit trail** — `POST /api/clock/edit` endpoint with full audit trail (edits[] array: edited_by, edited_by_name, edited_at, reason, old→new values). Recalculates duration. ⚠️ Edited badge in Employee Shifts timesheet with click-to-view edit history popup. Activity logging. Permission-gated (view_timesheet). [worker-1]
 
 - [x] **Add auto-table suggestion for waiters** — When a waiter returns to the POS tab, auto-select the table they were last working on (stored per-user in localStorage). Saves 1-2 taps per order cycle, adds up over a shift. [worker-1]
 
