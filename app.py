@@ -515,7 +515,8 @@ def login():
                         'message': 'Login successful',
                         'user': u_data['name'],
                         'role': u_data['role'],
-                        'permissions': u_data.get('permissions', [])
+                        'permissions': u_data.get('permissions', []),
+                        'totp_enabled': u_data.get('totp_enabled', False)
                     }
                     if pin_reset_info:
                         response_data['pin_reset_info'] = pin_reset_info
@@ -581,7 +582,8 @@ def login():
                 'user': user_info['name'],
                 'role': user_info['role'],
                 'permissions': user_info.get('permissions', []),
-                'temp_pin_used': True
+                'temp_pin_used': True,
+                'totp_enabled': user_info.get('totp_enabled', False)
             }
             return jsonify(response_data)
         log_activity('login', user_id, 'unknown', {'status': 'failed', 'method': 'temp_pin'})
@@ -632,7 +634,8 @@ def login():
                 'message': 'Login successful',
                 'user': user_info['name'],
                 'role': user_info['role'],
-                'permissions': user_info.get('permissions', [])
+                'permissions': user_info.get('permissions', []),
+                'totp_enabled': user_info.get('totp_enabled', False)
             }
             if pin_reset_info:
                 response_data['pin_reset_info'] = pin_reset_info
@@ -930,7 +933,8 @@ def twofa_verify_login():
         'message': 'Login successful',
         'user': user_data['name'],
         'role': user_data['role'],
-        'permissions': user_data.get('permissions', [])
+        'permissions': user_data.get('permissions', []),
+        'totp_enabled': user_data.get('totp_enabled', False)
     }
     if user_data.get('pin_reset_notification'):
         notif = user_data['pin_reset_notification']
@@ -1415,6 +1419,96 @@ def regenerate_backup_codes():
         'user_id': user_id,
         'warn': 'Save these backup codes now. The old codes have been invalidated.'
     })
+
+
+@app.route('/api/auth/change_pin', methods=['POST'])
+def change_pin():
+    """Employee self-service PIN change.
+    User enters current PIN, new PIN (twice), and optionally a TOTP code if 2FA is enabled.
+    Validates: new PIN 4-8 digits, not same as current, not already taken.
+    Warns on easily guessable PINs but does not block.
+    Moves user record from old PIN key to new PIN key in users.json.
+    Logs to activity_log.
+    """
+    data = request.json
+    user_id = str(data.get('userId', ''))
+    current_pin = str(data.get('currentPin', ''))
+    new_pin = str(data.get('newPin', ''))
+    new_pin_confirm = str(data.get('newPinConfirm', ''))
+    totp_code = str(data.get('totpCode', '')).strip()
+
+    if not user_id or not current_pin or not new_pin or not new_pin_confirm:
+        return jsonify({'message': 'All fields are required.'}), 400
+
+    # Validate current PIN matches user_id (PIN is the user ID key)
+    if current_pin != user_id:
+        return jsonify({'message': 'Current PIN is incorrect.'}), 403
+
+    # Validate new PIN format
+    if not new_pin.isdigit() or len(new_pin) < 4 or len(new_pin) > 8:
+        return jsonify({'message': 'New PIN must be 4-8 digits.'}), 400
+
+    # Validate new PIN confirmation matches
+    if new_pin != new_pin_confirm:
+        return jsonify({'message': 'New PIN confirmation does not match.'}), 400
+
+    # Validate new PIN is different
+    if new_pin == current_pin:
+        return jsonify({'message': 'New PIN must be different from current PIN.'}), 400
+
+    users = load_json_data(USERS_FILE)
+
+    if user_id not in users:
+        return jsonify({'message': 'User not found.'}), 404
+
+    user_data = upgrade_user(users[user_id])
+
+    # Check new PIN is not already taken by another user
+    if new_pin in users:
+        return jsonify({'message': 'New PIN is already in use by another user.'}), 409
+
+    # If user has 2FA enabled, require a valid TOTP code
+    if user_data.get('totp_enabled', False):
+        if not totp_code:
+            return jsonify({'message': '2FA is enabled. Please provide your 6-digit TOTP code.'}), 400
+        if not totp_code.isdigit() or len(totp_code) != 6:
+            return jsonify({'message': 'TOTP code must be 6 digits.'}), 400
+        secret = user_data.get('totp_secret')
+        if not secret:
+            return jsonify({'message': '2FA configuration error. Contact admin.'}), 500
+        totp = pyotp.TOTP(secret)
+        if not totp.verify(totp_code, valid_window=1):
+            log_activity('pin_change_failed', user_id, user_data.get('role', 'unknown'),
+                         {'status': 'invalid_totp', 'user_name': user_data.get('name', 'Unknown')})
+            return jsonify({'message': 'Invalid TOTP code. Try again.'}), 400
+
+    # Check for easily guessable PINs — warn but don't block
+    guessable_patterns = ['1111', '2222', '3333', '4444', '5555', '6666', '7777', '8888', '9999',
+                          '0000', '1234', '4321', '1212', '1122', '12345', '123456', '12345678',
+                          '000000', '111111', '222222']
+    is_guessable = new_pin in guessable_patterns
+
+    # Move user data from old PIN to new PIN
+    user_data_copy = dict(user_data)
+    del users[user_id]
+    users[new_pin] = user_data_copy
+    save_json_data(USERS_FILE, users)
+
+    log_activity('pin_changed', new_pin, user_data_copy.get('role', 'unknown'),
+                 {'old_user_id': user_id, 'new_user_id': new_pin,
+                  'user_name': user_data_copy.get('name', 'Unknown'),
+                  'totp_verified': user_data.get('totp_enabled', False)})
+
+    response = {
+        'message': 'PIN changed successfully.',
+        'new_user_id': new_pin,
+        'user_name': user_data_copy.get('name', 'Unknown'),
+        'user_role': user_data_copy.get('role', 'unknown')
+    }
+    if is_guessable:
+        response['warn'] = 'Your new PIN is easy to guess. Consider choosing a more secure PIN.'
+
+    return jsonify(response)
 
 
 @app.route('/api/users/reset_pin', methods=['POST'])

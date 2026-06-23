@@ -1138,6 +1138,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
       <button class="ghost logout-btn" id="langToggle" onclick="switchLanguage(currentLang === 'en' ? 'es' : 'en')" style="font-size:18px;padding:8px 12px;min-height:40px;" title="Switch language">🇪🇸</button>
       <button class="ghost logout-btn" id="clockBtn" onclick="toggleClock()" style="font-size:14px;padding:8px 14px;min-height:40px;display:none;" title="Clock in/out">⏰ Clock In</button>
       <button class="ghost logout-btn" id="breakBtn" onclick="toggleBreak()" style="font-size:14px;padding:8px 14px;min-height:40px;display:none;" title="Start/end break">☕ Break</button>
+      <button class="ghost logout-btn" id="changePinBtn" onclick="showChangePinModal()" style="font-size:14px;padding:8px 14px;min-height:40px;display:none;" title="Change PIN">🔑 Change PIN</button>
       <button class="ghost logout-btn" onclick="doLogout()" data-i18n="logout">🚪 Logout</button>
     </div>
   </div>
@@ -3353,12 +3354,14 @@ window.addEventListener('DOMContentLoaded', () => {
   const savedName = sessionStorage.getItem('pos_userName');
   const savedPerms = sessionStorage.getItem('pos_permissions');
   const savedBanned = sessionStorage.getItem('pos_banned');
+  const savedTotp = sessionStorage.getItem('pos_totp_enabled');
   if (savedId && savedRole) {
     currentUser = { 
       id: savedId, 
       name: savedName || 'User', 
       role: savedRole,
-      permissions: savedPerms ? JSON.parse(savedPerms) : []
+      permissions: savedPerms ? JSON.parse(savedPerms) : [],
+      totp_enabled: savedTotp === '1'
     };
     showApp();
   }
@@ -3483,11 +3486,12 @@ async function doLogin(userId) {
       return;
     }
     if (!r.ok) { document.getElementById('loginError').textContent = data.message || t('login.error'); pinValue = ''; renderPinDisplay(); return; }
-    currentUser = { id: userId, name: data.user, role: data.role, permissions: data.permissions || [] };
+    currentUser = { id: userId, name: data.user, role: data.role, permissions: data.permissions || [], totp_enabled: data.totp_enabled || false };
     sessionStorage.setItem('pos_userId', userId);
     sessionStorage.setItem('pos_userRole', data.role);
     sessionStorage.setItem('pos_userName', data.user);
     sessionStorage.setItem('pos_permissions', JSON.stringify(data.permissions || []));
+    sessionStorage.setItem('pos_totp_enabled', data.totp_enabled ? '1' : '0');
     pinValue = '';
     renderPinDisplay();
     showApp();
@@ -3572,11 +3576,12 @@ async function verify2FA() {
       // Login successful
       document.getElementById('login2faMode').style.display = 'none';
       document.getElementById('loginModeToggle').style.display = '';
-      currentUser = { id: twofaUserId, name: data.user, role: data.role, permissions: data.permissions || [] };
+      currentUser = { id: twofaUserId, name: data.user, role: data.role, permissions: data.permissions || [], totp_enabled: true };
       sessionStorage.setItem('pos_userId', twofaUserId);
       sessionStorage.setItem('pos_userRole', data.role);
       sessionStorage.setItem('pos_userName', data.user);
       sessionStorage.setItem('pos_permissions', JSON.stringify(data.permissions || []));
+      sessionStorage.setItem('pos_totp_enabled', '1');
       twofaUserId = null;
       twofaUserName = null;
       showApp();
@@ -3695,11 +3700,12 @@ async function ownerLogin() {
       return;
     }
     if (!r.ok) { document.getElementById('loginError').textContent = data.message || 'Login failed'; return; }
-    currentUser = { id: data.userId || username, name: data.user, role: data.role, permissions: data.permissions || [] };
+    currentUser = { id: data.userId || username, name: data.user, role: data.role, permissions: data.permissions || [], totp_enabled: data.totp_enabled || false };
     sessionStorage.setItem('pos_userId', currentUser.id);
     sessionStorage.setItem('pos_userRole', data.role);
     sessionStorage.setItem('pos_userName', data.user);
     sessionStorage.setItem('pos_permissions', JSON.stringify(data.permissions || []));
+    sessionStorage.setItem('pos_totp_enabled', data.totp_enabled ? '1' : '0');
     showApp();
     if (data.pin_reset_info) {
       showToast(data.pin_reset_info.message, 'warning', 8000);
@@ -3760,6 +3766,9 @@ async function checkClockStatus() {
   const brkBtn = document.getElementById('breakBtn');
   if (!currentUser) { btn.style.display = 'none'; if (brkBtn) brkBtn.style.display = 'none'; return; }
   btn.style.display = '';
+  // Show change PIN button for all logged-in users
+  const pinBtn = document.getElementById('changePinBtn');
+  if (pinBtn) pinBtn.style.display = '';
   try {
     const r = await fetch(BACKEND_URL + '/api/clock/status', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -11458,6 +11467,111 @@ function formatDateTime(isoStr) {
     return isoStr;
   }
 }
+
+// ═══════════ CHANGE PIN ═══════════
+
+/** Show the Change PIN modal */
+function showChangePinModal() {
+  const overlay = document.getElementById('changePinOverlay');
+  if (!overlay) return;
+  // Clear form
+  document.getElementById('changePinCurrent').value = '';
+  document.getElementById('changePinNew').value = '';
+  document.getElementById('changePinConfirm').value = '';
+  document.getElementById('changePinTotp').value = '';
+  document.getElementById('changePinError').style.display = 'none';
+  document.getElementById('changePinWarn').style.display = 'none';
+  document.getElementById('changePinGuessableWarn').style.display = 'none';
+  // Check if user has 2FA enabled — show TOTP field
+  const totpRow = document.getElementById('changePinTotpRow');
+  if (window.currentUser && window.currentUser.totp_enabled) {
+    totpRow.style.display = '';
+  } else {
+    totpRow.style.display = 'none';
+  }
+  overlay.classList.add('active');
+  // Focus current PIN field
+  setTimeout(() => document.getElementById('changePinCurrent').focus(), 100);
+}
+
+/** Close the Change PIN modal */
+function closeChangePinModal() {
+  document.getElementById('changePinOverlay').classList.remove('active');
+}
+
+/** Submit PIN change request */
+async function submitChangePin() {
+  const currentPin = document.getElementById('changePinCurrent').value.trim();
+  const newPin = document.getElementById('changePinNew').value.trim();
+  const newPinConfirm = document.getElementById('changePinConfirm').value.trim();
+  const totpCode = document.getElementById('changePinTotp').value.trim();
+  const errorEl = document.getElementById('changePinError');
+  const warnEl = document.getElementById('changePinWarn');
+  const guessableWarnEl = document.getElementById('changePinGuessableWarn');
+
+  // Hide any previous messages
+  errorEl.style.display = 'none';
+  warnEl.style.display = 'none';
+  guessableWarnEl.style.display = 'none';
+
+  // Client-side validation
+  if (!currentPin) { errorEl.textContent = 'Please enter your current PIN.'; errorEl.style.display = ''; return; }
+  if (!newPin) { errorEl.textContent = 'Please enter a new PIN.'; errorEl.style.display = ''; return; }
+  if (!newPinConfirm) { errorEl.textContent = 'Please confirm your new PIN.'; errorEl.style.display = ''; return; }
+  if (!/^\d+$/.test(newPin) || newPin.length < 4 || newPin.length > 8) {
+    errorEl.textContent = 'New PIN must be 4-8 digits.'; errorEl.style.display = ''; return;
+  }
+  if (newPin !== newPinConfirm) {
+    errorEl.textContent = 'New PIN confirmation does not match.'; errorEl.style.display = ''; return;
+  }
+  if (newPin === currentPin) {
+    errorEl.textContent = 'New PIN must be different from your current PIN.'; errorEl.style.display = ''; return;
+  }
+
+  if (!window.currentUser || !window.currentUser.id) {
+    errorEl.textContent = 'You must be logged in to change your PIN.'; errorEl.style.display = ''; return;
+  }
+
+  try {
+    const r = await fetch(BACKEND_URL + '/api/auth/change_pin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: window.currentUser.id,
+        currentPin: currentPin,
+        newPin: newPin,
+        newPinConfirm: newPinConfirm,
+        totpCode: totpCode || ''
+      })
+    });
+
+    const data = await r.json();
+
+    if (!r.ok) {
+      errorEl.textContent = data.message || 'Failed to change PIN.';
+      errorEl.style.display = '';
+      return;
+    }
+
+    // Success
+    closeChangePinModal();
+
+    // Update stored session info
+    window.currentUser.id = data.new_user_id;
+    sessionStorage.setItem('pos_userId', data.new_user_id);
+
+    let toastMsg = '✅ PIN changed successfully!';
+    if (data.warn) {
+      toastMsg += ' ⚠️ ' + data.warn;
+    }
+    showToast(toastMsg, data.warn ? 'warning' : 'success', 6000);
+
+  } catch (e) {
+    errorEl.textContent = 'Cannot connect to server. Check your connection.';
+    errorEl.style.display = '';
+  }
+}
+
 </script>
 <!-- ═══════════ SHIFT EDIT OVERLAY ═══════════ -->
 <div id="shiftEditOverlay" class="modal-overlay">
@@ -11514,6 +11628,40 @@ function formatDateTime(isoStr) {
     <div id="latePopoverContent"><div class="empty-state">Loading...</div></div>
     <div class="modal-actions" style="margin-top:12px;">
       <button class="outline" onclick="closeLatePopover()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ CHANGE PIN MODAL ═══════════ -->
+<div id="changePinOverlay" class="modal-overlay">
+  <div class="modal-box" style="max-width:420px;">
+    <h3 style="margin-bottom:4px;">🔑 Change PIN</h3>
+    <p style="font-size:13px;color:var(--text2);margin:0 0 12px 0;">Update your login PIN. Your PIN is used to log in to the POS system.</p>
+    <div id="changePinForm">
+      <div style="margin-bottom:10px;">
+        <label for="changePinCurrent" style="font-size:13px;color:var(--text2);font-weight:600;">Current PIN</label>
+        <input type="password" id="changePinCurrent" inputmode="numeric" pattern="[0-9]*" autocomplete="off" maxlength="8" placeholder="Enter current PIN" style="width:100%;min-height:48px;font-size:16px;padding:10px 14px;margin-top:4px;border-radius:8px;border:2px solid var(--border);background:var(--bg);color:var(--text);text-align:center;letter-spacing:4px;" value="">
+      </div>
+      <div style="margin-bottom:10px;">
+        <label for="changePinNew" style="font-size:13px;color:var(--text2);font-weight:600;">New PIN</label>
+        <input type="password" id="changePinNew" inputmode="numeric" pattern="[0-9]*" autocomplete="off" maxlength="8" placeholder="Enter new PIN (4-8 digits)" style="width:100%;min-height:48px;font-size:16px;padding:10px 14px;margin-top:4px;border-radius:8px;border:2px solid var(--border);background:var(--bg);color:var(--text);text-align:center;letter-spacing:4px;" value="">
+      </div>
+      <div style="margin-bottom:10px;">
+        <label for="changePinConfirm" style="font-size:13px;color:var(--text2);font-weight:600;">Confirm New PIN</label>
+        <input type="password" id="changePinConfirm" inputmode="numeric" pattern="[0-9]*" autocomplete="off" maxlength="8" placeholder="Re-enter new PIN" style="width:100%;min-height:48px;font-size:16px;padding:10px 14px;margin-top:4px;border-radius:8px;border:2px solid var(--border);background:var(--bg);color:var(--text);text-align:center;letter-spacing:4px;" value="">
+      </div>
+      <div id="changePinTotpRow" style="margin-bottom:10px;display:none;">
+        <label for="changePinTotp" style="font-size:13px;color:var(--text2);font-weight:600;">🔐 2FA Code</label>
+        <input type="text" id="changePinTotp" inputmode="numeric" pattern="[0-9]*" autocomplete="off" maxlength="6" placeholder="Enter 6-digit code from authenticator app" style="width:100%;min-height:48px;font-size:16px;padding:10px 14px;margin-top:4px;border-radius:8px;border:2px solid var(--border);background:var(--bg);color:var(--text);text-align:center;letter-spacing:4px;" value="">
+        <div style="font-size:12px;color:var(--text2);margin-top:4px;">2FA is enabled on your account — enter a code from your authenticator app to authorize the PIN change.</div>
+      </div>
+      <div id="changePinError" style="color:var(--accent);font-size:14px;margin-bottom:10px;display:none;"></div>
+      <div id="changePinWarn" style="color:#f39c12;font-size:13px;margin-bottom:10px;display:none;"></div>
+      <div id="changePinGuessableWarn" style="color:#f39c12;font-size:13px;margin-bottom:10px;display:none;"></div>
+    </div>
+    <div class="modal-actions" style="gap:8px;">
+      <button class="accent" onclick="submitChangePin()" style="min-height:48px;font-size:15px;padding:10px 24px;">🔑 Change PIN</button>
+      <button class="outline" onclick="closeChangePinModal()" style="min-height:48px;font-size:15px;padding:10px 24px;">Cancel</button>
     </div>
   </div>
 </div>
