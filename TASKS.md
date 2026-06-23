@@ -385,7 +385,7 @@ New `tickets.json` data store. Each ticket:
 
 - [x] worker-2 **Combo/meal deal showcase section** — "🔥 Featured Combos" horizontal scrollable row with combo cards, child items listed, combo price with strikethrough savings. [worker-2 — Fixed field names (combo_price, child_items), added strikethrough original price + green savings badge, calculates savings from menu item prices, child items with quantities in card + detail overlay]
 
-- [ ] **Auto-return to ads after inactivity** — After 30-60 seconds of no touch interaction, auto-transition back to ad rotator with 5-second countdown toast.
+- [~] worker-1 **Auto-return to ads after inactivity** — After 30-60 seconds of no touch interaction, auto-transition back to ad rotator with 5-second countdown toast.
 
 - [ ] **Restaurant info bar** — Persistent footer: restaurant name, hours today, Wi-Fi info, "📞 Call Server" button (SocketIO `tablet_call_server` event), table number from URL param.
 
