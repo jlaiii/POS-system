@@ -183,6 +183,51 @@ New `tickets.json` data store. Each ticket:
 
 - [ ] **Tax withholding estimator** — Optional: if employee fills in W-4 info (filing status, allowances), show estimated federal/state tax withholding per period. Gross → estimated net. Big disclaimer: "Estimate only — consult a tax professional." Gives employees a rough idea of take-home without running separate calculators.
 
+## Table-Side Digital Menu & Ad Display (NEW — June 2026)
+
+> The existing `/tablet` page (`tablet.html`) is a pure ad rotator — it cycles through promoted images. This needs to become a full table-side digital menu that customers pick up at their table. **Ads should still play as the idle/screensaver**, but there should be an overlay button to view the menu, browse items with images/prices, and see restaurant info. This is the customer-facing menu experience, not the POS ordering screen.
+
+### What already exists
+- `tablet.html` at `/tablet` — ad rotator with slideshow, swipe support, dot navigation, "Order in Progress" overlay
+- `/api/ads/current` — returns active ads JSON (no auth needed, public endpoint)
+- `/api/items` (GET) — returns full menu with categories and items (no auth needed)
+- `/api/combos/list` (GET) — returns active combos (no auth needed)
+- Item images already supported (from item images task above)
+
+### Priority: HIGH
+
+- [ ] **"View Menu" button overlay on ad screen** — Add a persistent floating button on the ad rotator screen: "🍽️ View Menu" (bottom-center, large, 60px+, semi-transparent bg). Always visible on top of ads. When tapped, transitions smoothly to the menu view (slide-up or fade). When in menu view, a "← Back" or "✕" button returns to the ad rotator. The button should be subtle enough not to ruin the ad aesthetic but obvious enough that customers find it. Configurable: admin can choose to auto-show menu on wake vs. show ads first.
+
+- [ ] **Customer-facing menu display** — Full menu view with category tabs across the top (horizontally scrollable on mobile). Each category shows item cards in a grid: item image (or placeholder if no image), name, description (truncated to 2 lines), price. Large touch targets (min 150px cards). No "add to cart" or ordering functionality — this is display-only, not self-ordering. Pulls data from existing `/api/items` endpoint. Filters hidden items (`visible: false`). Honors category order from admin settings.
+
+- [ ] **Item detail popup** — Tap an item card → fullscreen overlay with: large item image, full description, price, dietary badges (spicy 🌶️, vegetarian 🥬, gluten-free 🌾 — from item tags field), modifier options shown as bullet points (e.g., "Available in: Small / Medium / Large"). Swipe left/right to browse items in same category without closing the popup. Close button returns to menu grid.
+
+- [ ] **Combo/meal deal showcase section** — Below the category tabs, a "🔥 Featured Combos" horizontal scrollable row showing combo cards: combo image (or collage of child item images), combo name, child items listed, combo price with strikethrough individual total (showing savings). Pulls from `/api/combos/list`. Only shows active combos. Tap opens combo detail with full breakdown.
+
+- [ ] **Auto-return to ads after inactivity** — After 30-60 seconds of no touch interaction in the menu view, auto-transition back to the ad rotator. Shows a 5-second countdown toast: "Returning to ads in 5...". Tap anywhere to cancel. Prevents the menu from being stuck open when a customer walks away. Timeout configurable in admin.
+
+- [ ] **Restaurant info bar** — Persistent footer bar showing: restaurant name (configurable), hours today (from config), Wi-Fi info if configured, "📞 Call Server" button (triggers a subtle notification on the POS/kitchen display — new SocketIO event `tablet_call_server` with table number). Table number displayed in corner so servers know which table to go to. Table number set via URL param: `/tablet?table=5`.
+
+### Priority: MEDIUM
+
+- [ ] **Dark/light theme toggle on tablet** — Tablet menu respects the POS system's dark theme (matches existing `tablet.html` dark aesthetic). Add a sun/moon toggle in the corner for customers who prefer light mode. Persists per-session only (resets when returning to ads after inactivity).
+
+- [ ] **Language toggle (EN/ES)** — Same i18n system as the main POS. Tablet menu auto-detects browser language but allows manual toggle. Menu item names/descriptions remain in admin's language, but UI labels ("View Menu", "Featured Combos", "Call Server") translate. Essential for restaurants with Spanish-speaking clientele.
+
+- [ ] **Happy hour / specials badge on items** — If scheduled pricing is active (from the existing happy hour system), show a "⚡ Happy Hour" or "🎉 Special" badge on the item card with the discounted price displayed in green next to the strikethrough original. Auto-hides when special ends. Makes the tablet feel alive and dynamic.
+
+- [ ] **"Order This" QR code** — Small QR code icon on each item card or in the detail popup. When tapped (or on hover for non-touch), expands to show a QR code that links to an online ordering page or the item itself. Useful for restaurants that do app-based ordering alongside table service. QR data is a URL configurable per item or globally.
+
+### Priority: LOW
+
+- [ ] **Allergen filter toggle** — Filter button that lets customers show/hide items by allergen: "🥜 Peanuts", "🥛 Dairy", "🌾 Gluten", "🦐 Shellfish". Items tagged with allergens in admin get filtered out when toggle is on. Shows "3 items hidden" count. Data comes from a new `allergens` array field on items.
+
+- [ ] **Nutritional info popup** — Optional per-item: calories, protein, carbs, fat. Stored as `nutrition: {calories, protein_g, carbs_g, fat_g}` on item. Shown in a collapsible section in the item detail popup. Appealing to health-conscious diners.
+
+- [ ] **"Most Popular" badge** — Items tagged by admin as "popular" or auto-calculated from most-ordered analytics show a "⭐ Most Popular" badge on their card. Helps indecisive customers pick. Admin can manually pin popular items or let the system auto-rank from last 30 days of orders.
+
+- [ ] **Wake-on-proximity / screensaver mode** — If the device supports it (camera-based), dim screen to 20% when no one is nearby, brighten to full when motion detected. Falls back to the ad rotator as screensaver. Works on tablets with front-facing cameras via a simple motion-detection approach (compare frames every 2 seconds for significant change).
+
 ## Done
 
 - [x] **Add auto-table suggestion for waiters** — When a waiter returns to the POS tab, auto-select the table they were last working on (stored per-user in localStorage). Saves 1-2 taps per order cycle, adds up over a shift. [worker-1]
