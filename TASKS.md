@@ -256,7 +256,7 @@ Use Python `pyotp` (pure Python, no C extensions, `pip install pyotp qrcode`):
   - Falls back gracefully if remote is unreachable (logs warning, doesn't fail)
   - Keeps same retention policy on remote
 
-- [ ] **Restore procedure documentation + script** — Create `/root/pos-system-work/scripts/restore_db.py`:
+|- [~] worker-2 **Restore procedure documentation + script** — Create `/root/pos-system-work/scripts/restore_db.py`:
   - Lists available backups with timestamps and sizes: `python3 restore_db.py --list`
   - Restore: `python3 restore_db.py backups/pos_2026-06-23_14-00-00.db.gz`
   - Steps: decompress → verify integrity → stop Flask → replace pos.db → restart Flask → verify app responds
