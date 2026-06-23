@@ -193,6 +193,8 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 #topBar .offline-badge.syncing { background: #3498db; animation: pulse-badge 1s infinite; }
 #clockBtn.clocked-in { background: #2ecc71; color: #fff; border-color: #2ecc71; animation: none; }
 #clockBtn.clocked-in:hover { background: #27ae60; }
+#breakBtn.on-break { background: #f39c12; color: #fff; border-color: #f39c12; }
+#breakBtn.on-break:hover { background: #e67e22; }
 @keyframes pulse-badge {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
@@ -1074,6 +1076,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
       <button class="ghost logout-btn" id="themeToggle" onclick="toggleTheme()" style="font-size:18px;padding:8px 12px;min-height:40px;" title="Toggle theme">🌙</button>
       <button class="ghost logout-btn" id="langToggle" onclick="switchLanguage(currentLang === 'en' ? 'es' : 'en')" style="font-size:18px;padding:8px 12px;min-height:40px;" title="Switch language">🇪🇸</button>
       <button class="ghost logout-btn" id="clockBtn" onclick="toggleClock()" style="font-size:14px;padding:8px 14px;min-height:40px;display:none;" title="Clock in/out">⏰ Clock In</button>
+      <button class="ghost logout-btn" id="breakBtn" onclick="toggleBreak()" style="font-size:14px;padding:8px 14px;min-height:40px;display:none;" title="Start/end break">☕ Break</button>
       <button class="ghost logout-btn" onclick="doLogout()" data-i18n="logout">🚪 Logout</button>
     </div>
   </div>
@@ -2258,6 +2261,10 @@ const L10N = {
     'clock.out': '⏰ Clock Out',
     'clock.clocked_in': 'Clocked in!',
     'clock.clocked_out': 'Clocked out',
+    'clock.start_break': '☕ Start Break',
+    'clock.end_break': '🔙 End Break',
+    'clock.on_break': 'On Break',
+    'clock.break': 'Break',
     'admin.permissions': '🔑 Permissions',
     'admin.menu_history': '📋 Menu History',
     'admin.tables': '🪑 Tables',
@@ -2670,6 +2677,10 @@ const L10N = {
     'clock.out': '⏰ Salida',
     'clock.clocked_in': '¡Registrado!',
     'clock.clocked_out': 'Registrado salida',
+    'clock.start_break': '☕ Iniciar Descanso',
+    'clock.end_break': '🔙 Terminar Descanso',
+    'clock.on_break': 'En Descanso',
+    'clock.break': 'Descanso',
     'admin.permissions': '🔑 Permisos',
     'admin.menu_history': '📋 Historial de Menú',
     'admin.tables': '🪑 Mesas',
@@ -3439,7 +3450,8 @@ let clockTimer = null;
 
 async function checkClockStatus() {
   const btn = document.getElementById('clockBtn');
-  if (!currentUser) { btn.style.display = 'none'; return; }
+  const brkBtn = document.getElementById('breakBtn');
+  if (!currentUser) { btn.style.display = 'none'; if (brkBtn) brkBtn.style.display = 'none'; return; }
   btn.style.display = '';
   try {
     const r = await fetch(BACKEND_URL + '/api/clock/status', {
@@ -3454,11 +3466,25 @@ async function checkClockStatus() {
       btn.title = 'Clocked in since ' + new Date(data.clock_in_time).toLocaleTimeString();
       if (clockTimer) clearInterval(clockTimer);
       clockTimer = setInterval(() => checkClockStatus(), 30000);
+      // Show break button
+      if (brkBtn) {
+        brkBtn.style.display = '';
+        if (data.on_break) {
+          brkBtn.textContent = '🔙 End Break';
+          brkBtn.classList.add('on-break');
+          brkBtn.title = 'On break — click to end break';
+        } else {
+          brkBtn.textContent = '☕ Start Break';
+          brkBtn.classList.remove('on-break');
+          brkBtn.title = 'Start a break';
+        }
+      }
     } else {
       btn.textContent = '⏰ Clock In';
       btn.classList.remove('clocked-in');
       btn.title = 'Click to clock in';
       if (clockTimer) { clearInterval(clockTimer); clockTimer = null; }
+      if (brkBtn) { brkBtn.style.display = 'none'; brkBtn.classList.remove('on-break'); }
     }
   } catch(e) {
     btn.textContent = '⏰ ?';
@@ -3493,6 +3519,28 @@ async function toggleClock() {
   }
 }
 
+async function toggleBreak() {
+  if (!currentUser) return;
+  const brkBtn = document.getElementById('breakBtn');
+  const isOnBreak = brkBtn.classList.contains('on-break');
+  const action = isOnBreak ? 'end' : 'start';
+  try {
+    const r = await fetch(BACKEND_URL + '/api/clock/break', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, action: action })
+    });
+    const data = await r.json();
+    if (r.ok) {
+      showToast(data.message, 'success');
+      checkClockStatus();
+    } else {
+      showToast(data.message || 'Error', 'error');
+    }
+  } catch(e) {
+    showToast('Network error', 'error');
+  }
+}
+
 function closeClockOutNotes() {
   document.getElementById('clockOutNotesOverlay').classList.remove('active');
 }
@@ -3509,8 +3557,13 @@ async function confirmClockOut() {
     const data = await r.json();
     if (r.ok) {
       const hrs = data.duration_hours;
+      const breakHrs = data.break_hours || 0;
+      const paidHrs = data.paid_hours || hrs;
+      let toastMsg = 'Clocked out (' + hrs + ' hrs';
+      if (breakHrs > 0) toastMsg += ', ☕ ' + breakHrs + ' break';
+      toastMsg += ', paid ' + paidHrs + ' hrs)';
       const noteSuffix = data.notes ? ' — ' + data.notes : '';
-      showToast('Clocked out (' + hrs + ' hrs)' + noteSuffix, 'success');
+      showToast(toastMsg + noteSuffix, 'success');
       if (clockTimer) { clearInterval(clockTimer); clockTimer = null; }
       checkClockStatus();
     } else {
@@ -3571,6 +3624,8 @@ async function loadShifts() {
           <span><strong>${escHtml(s.user_name)}</strong> (${escHtml(s.user_id)})</span>
           <span>Since ${new Date(s.clock_in_time).toLocaleString()}</span>
           <span>${s.duration_hours} hrs</span>
+          ${s.on_break ? '<span style="color:#f39c12;font-weight:600;">☕ ON BREAK</span>' : ''}
+          ${s.break_hours ? `<span style="font-size:12px;color:var(--text2);">☕ ${s.break_hours}h break</span>` : ''}
         </div>
       `).join('');
     }
@@ -3595,6 +3650,8 @@ async function loadShifts() {
             <span><strong>${escHtml(s.user_name || s.user_id)}</strong> (${escHtml(s.user_id)}) ${editBadge}</span>
             <span style="color:var(--text2);font-size:13px;">${new Date(s.clock_in_time).toLocaleString()} → ${new Date(s.clock_out_time).toLocaleString()}</span>
             <span style="font-weight:600;">${s.duration_hours} hrs</span>
+            ${s.break_hours ? `<span style="font-size:12px;color:var(--text2);">☕ ${s.break_hours}h break</span>` : ''}
+            <span style="font-size:13px;color:var(--accent);font-weight:500;">Paid: ${s.paid_hours || s.duration_hours} hrs</span>
             <div style="margin-left:auto;display:flex;gap:4px;">
               <button class="shift-edit-btn" onclick="openShiftEditModal(${actualIndex})" title="Edit shift times" style="font-size:12px;padding:4px 10px;min-height:32px;">✏️ Edit</button>
               <button class="shift-edit-btn" onclick="adminAddNote(${actualIndex})" title="Add/edit shift notes" style="font-size:12px;padding:4px 10px;min-height:32px;">📝 Note</button>
@@ -3673,11 +3730,13 @@ async function loadPayPeriod() {
         if (s.exceeds_weekly_ot) otBadges += ' <span class="badge-ot-weekly" style="background:#e94560;color:#fff;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:600;">📈 Weekly OT</span>';
         // Show day total if more than one shift on this day
         const dayTotalNote = s.day_total_hours > s.duration_hours ? ' <span style="font-size:11px;color:var(--text2);">(' + s.day_total_hours.toFixed(1) + 'h this day)</span>' : '';
+        const sBreak = s.break_hours ? ' <span style="font-size:11px;color:var(--text2);">☕ ' + s.break_hours.toFixed(2) + 'h break</span>' : '';
+        const sPaid = ' <span style="font-size:11px;color:var(--accent);">Paid: ' + (s.paid_hours || s.duration_hours).toFixed(2) + 'h</span>';
         const sNotes = s.notes || '';
         const sNotesHtml = sNotes ? '<div style="font-size:12px;color:var(--text2);margin-top:2px;padding-left:6px;border-left:2px solid #e94560;">📝 ' + escHtml(sNotes) + '</div>' : '';
         html += '<div class="pp-shift-row">';
         html += '<span>' + clockIn + ' → ' + clockOut + '</span>';
-        html += '<span><strong>' + s.duration_hours.toFixed(2) + ' hrs</strong>' + otBadges + dayTotalNote + '</span>';
+        html += '<span><strong>' + s.duration_hours.toFixed(2) + ' hrs</strong>' + otBadges + dayTotalNote + sBreak + sPaid + '</span>';
         html += sNotesHtml;
         html += '</div>';
       });

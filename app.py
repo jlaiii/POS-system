@@ -2297,7 +2297,9 @@ def clock_in():
     now = datetime.now()
     active_shifts[user_id] = {
         'clock_in_time': now,
-        'user_name': user_data.get('name', 'Unknown')
+        'user_name': user_data.get('name', 'Unknown'),
+        'breaks': [],
+        'on_break': False
     }
 
     log_activity('clock_in', user_id, user_data.get('role', 'user'), {
@@ -2334,12 +2336,37 @@ def clock_out():
     clock_out_time = datetime.now()
     duration_hours = round((clock_out_time - clock_in_time).total_seconds() / 3600, 2)
 
+    # Calculate break total
+    breaks = shift.get('breaks', [])
+    total_break_minutes = 0
+    completed_breaks = []
+    for b in breaks:
+        if b.get('end') is None and b.get('start'):
+            # Auto-close open break on clock-out
+            try:
+                start_dt = datetime.fromisoformat(b['start'])
+                dur = (clock_out_time - start_dt).total_seconds() / 60
+                b['end'] = clock_out_time.isoformat()
+                b['duration_minutes'] = round(dur, 1)
+            except (ValueError, TypeError):
+                b['end'] = clock_out_time.isoformat()
+                b['duration_minutes'] = 0
+        mins = b.get('duration_minutes', 0) or 0
+        total_break_minutes += mins
+        completed_breaks.append(b)
+
+    break_hours = round(total_break_minutes / 60, 2)
+    paid_hours = round(duration_hours - break_hours, 2)
+
     shift_record = {
         'user_id': user_id,
         'user_name': user_name,
         'clock_in_time': clock_in_time.isoformat(),
         'clock_out_time': clock_out_time.isoformat(),
-        'duration_hours': duration_hours
+        'duration_hours': duration_hours,
+        'breaks': completed_breaks,
+        'break_hours': break_hours,
+        'paid_hours': paid_hours
     }
 
     # Store optional notes from employee
@@ -2364,6 +2391,8 @@ def clock_out():
         'clock_in_time': clock_in_time.isoformat(),
         'clock_out_time': clock_out_time.isoformat(),
         'duration_hours': duration_hours,
+        'break_hours': break_hours,
+        'paid_hours': paid_hours,
         'notes': notes if notes else None
     })
 
@@ -2386,11 +2415,31 @@ def clock_status():
         clock_in_time = shift['clock_in_time']
         now = datetime.now()
         duration_hours = round((now - clock_in_time).total_seconds() / 3600, 2)
+        breaks = shift.get('breaks', [])
+        total_break_minutes = sum(
+            (b.get('duration_minutes') or 0) for b in breaks
+            if b.get('duration_minutes') is not None
+        )
+        # Include any currently-running break in total
+        if shift.get('on_break'):
+            for b in reversed(breaks):
+                if b.get('end') is None and b.get('start'):
+                    try:
+                        sd = datetime.fromisoformat(b['start'])
+                        total_break_minutes += (now - sd).total_seconds() / 60
+                    except (ValueError, TypeError):
+                        pass
+                    break
+        break_hours = round(total_break_minutes / 60, 2)
         return jsonify({
             'clocked_in': True,
             'clock_in_time': clock_in_time.isoformat(),
             'duration_hours': duration_hours,
-            'user_name': user_name
+            'user_name': user_name,
+            'on_break': shift.get('on_break', False),
+            'break_count': len(breaks),
+            'break_hours': break_hours,
+            'paid_hours': round(duration_hours - break_hours, 2)
         })
     else:
         return jsonify({
@@ -2458,6 +2507,11 @@ def clock_edit():
             shift['duration_hours'] = 0
     except (ValueError, TypeError):
         shift['duration_hours'] = 0
+
+    # Recalculate break_hours and paid_hours
+    existing_break_hours = shift.get('break_hours', 0)
+    shift['break_hours'] = existing_break_hours
+    shift['paid_hours'] = round(shift['duration_hours'] - existing_break_hours, 2)
 
     # Get admin name for audit trail
     users = load_json_data(USERS_FILE)
@@ -2538,6 +2592,70 @@ def clock_note():
     })
 
 
+@app.route('/api/clock/break', methods=['POST'])
+def clock_break():
+    """Start or end a break for a clocked-in employee."""
+    data = request.json
+    user_id = data.get('adminPin')
+    action = data.get('action', '').strip().lower()
+
+    if not user_id:
+        return jsonify({'message': 'User ID required.'}), 400
+
+    if action not in ('start', 'end'):
+        return jsonify({'message': 'Action must be "start" or "end".'}), 400
+
+    if user_id not in active_shifts:
+        return jsonify({'message': 'Not clocked in.'}), 409
+
+    shift = active_shifts[user_id]
+
+    if action == 'start':
+        if shift.get('on_break'):
+            return jsonify({'message': 'Already on break.'}), 409
+        if 'breaks' not in shift:
+            shift['breaks'] = []
+        shift['breaks'].append({
+            'start': datetime.now().isoformat(),
+            'end': None,
+            'duration_minutes': None
+        })
+        shift['on_break'] = True
+        return jsonify({
+            'message': 'Break started.',
+            'on_break': True,
+            'break_count': len(shift['breaks'])
+        })
+    else:  # action == 'end'
+        if not shift.get('on_break'):
+            return jsonify({'message': 'Not currently on break.'}), 409
+        breaks = shift.get('breaks', [])
+        # Find the last break without an end
+        for b in reversed(breaks):
+            if b.get('end') is None and b.get('start'):
+                try:
+                    start_dt = datetime.fromisoformat(b['start'])
+                    end_dt = datetime.now()
+                    duration = (end_dt - start_dt).total_seconds() / 60
+                    b['end'] = end_dt.isoformat()
+                    b['duration_minutes'] = round(duration, 1)
+                except (ValueError, TypeError):
+                    b['end'] = datetime.now().isoformat()
+                    b['duration_minutes'] = 0
+                break
+        shift['on_break'] = False
+        total_break_minutes = sum(
+            bk.get('duration_minutes', 0) or 0
+            for bk in shift.get('breaks', [])
+        )
+        return jsonify({
+            'message': 'Break ended.',
+            'on_break': False,
+            'break_duration_minutes': total_break_minutes,
+            'break_count': len(shift.get('breaks', []))
+        })
+
+
 @app.route('/api/admin_shifts', methods=['POST'])
 def admin_shifts():
     """Get all shift records (completed) for admin timesheet view."""
@@ -2589,13 +2707,32 @@ def admin_shifts():
         user_data = users.get(uid, {})
         now = datetime.now()
         duration_hours = round((now - shift['clock_in_time']).total_seconds() / 3600, 2)
+        breaks = shift.get('breaks', [])
+        total_break_minutes = sum(
+            (b.get('duration_minutes') or 0) for b in breaks
+            if b.get('duration_minutes') is not None
+        )
+        if shift.get('on_break'):
+            for b in reversed(breaks):
+                if b.get('end') is None and b.get('start'):
+                    try:
+                        sd = datetime.fromisoformat(b['start'])
+                        total_break_minutes += (now - sd).total_seconds() / 60
+                    except (ValueError, TypeError):
+                        pass
+                    break
+        break_hours = round(total_break_minutes / 60, 2)
         active_shift_list.append({
             'user_id': uid,
             'user_name': shift.get('user_name', user_data.get('name', 'Unknown')),
             'clock_in_time': shift['clock_in_time'].isoformat(),
             'clock_out_time': None,
             'duration_hours': duration_hours,
-            'active': True
+            'active': True,
+            'on_break': shift.get('on_break', False),
+            'breaks': breaks,
+            'break_hours': break_hours,
+            'paid_hours': round(duration_hours - break_hours, 2)
         })
 
     return jsonify({
@@ -2649,7 +2786,7 @@ def export_shifts_csv():
             filtered.append(entry)
         shift_log = filtered
 
-    headers = ['User ID', 'User Name', 'Clock In Time', 'Clock Out Time', 'Duration (Hours)']
+    headers = ['User ID', 'User Name', 'Clock In Time', 'Clock Out Time', 'Duration (Hours)', 'Break (Hours)', 'Paid (Hours)']
 
     rows = []
     for entry in shift_log:
@@ -2658,7 +2795,9 @@ def export_shifts_csv():
             'User Name': entry.get('user_name', ''),
             'Clock In Time': entry.get('clock_in_time', ''),
             'Clock Out Time': entry.get('clock_out_time', ''),
-            'Duration (Hours)': entry.get('duration_hours', 0)
+            'Duration (Hours)': entry.get('duration_hours', 0),
+            'Break (Hours)': entry.get('break_hours', 0),
+            'Paid (Hours)': entry.get('paid_hours', entry.get('duration_hours', 0))
         })
 
     csv_content = generate_csv(rows, headers)
@@ -5629,12 +5768,16 @@ def timesheet_pay_period():
                 'shifts': []
             }
         ud = user_data_map[uid]
-        ud['total_hours'] += entry.get('duration_hours', 0)
+        # Use paid_hours if available, else fall back to duration_hours
+        shift_hours = entry.get('paid_hours', entry.get('duration_hours', 0))
+        ud['total_hours'] += shift_hours
         ud['shift_count'] += 1
         ud['shifts'].append({
             'clock_in_time': entry.get('clock_in_time', ''),
             'clock_out_time': entry.get('clock_out_time', ''),
             'duration_hours': entry.get('duration_hours', 0),
+            'break_hours': entry.get('break_hours', 0),
+            'paid_hours': shift_hours,
             'active': entry.get('active', False)
         })
 
@@ -5702,6 +5845,8 @@ def timesheet_pay_period():
                 'clock_in_time': s.get('clock_in_time', ''),
                 'clock_out_time': s.get('clock_out_time', ''),
                 'duration_hours': s.get('duration_hours', 0),
+                'break_hours': s.get('break_hours', 0),
+                'paid_hours': s.get('paid_hours', s.get('duration_hours', 0)),
                 'active': s.get('active', False),
                 'exceeds_daily_ot': s.get('duration_hours', 0) > OT_DAILY,
                 'exceeds_weekly_ot': overtime_hours > 0,
@@ -5791,7 +5936,8 @@ def export_pay_period_csv():
                 'shift_count': 0
             }
         ud = user_data_map[uid]
-        ud['total_hours'] += entry.get('duration_hours', 0)
+        shift_hours_csv = entry.get('paid_hours', entry.get('duration_hours', 0))
+        ud['total_hours'] += shift_hours_csv
         ud['shift_count'] += 1
 
     # Weekly overtime calculation
@@ -5896,7 +6042,8 @@ def export_pay_period_pdf():
                 'shifts': []
             }
         ud = user_data_map[uid]
-        ud['total_hours'] += entry.get('duration_hours', 0)
+        shift_hours_pdf = entry.get('paid_hours', entry.get('duration_hours', 0))
+        ud['total_hours'] += shift_hours_pdf
         ud['shift_count'] += 1
         ud['shifts'].append(entry)
 
