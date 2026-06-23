@@ -204,7 +204,7 @@ Use Python `pyotp` (pure Python, no C extensions, `pip install pyotp qrcode`):
 
 ### Priority: MEDIUM
 
-- [ ] **Account lockout notification** — When a user gets locked out (too many failed PIN attempts), send Discord notification to admin channel: "🔒 Carlos (1234) locked out after 5 failed PIN attempts. [Unlock in User Management]." Also show a banner in admin Timesheet/Dashboard.
+- [~] worker-2 **Account lockout notification** — When a user gets locked out (too many failed PIN attempts), send Discord notification to admin channel: "🔒 Carlos (1234) locked out after 5 failed PIN attempts. [Unlock in User Management]." Also show a banner in admin Timesheet/Dashboard.
 
 - [ ] **Login session management** — Track active sessions per user. Show "Active Sessions" in Security settings: list of devices/locations logged in, with "Log Out Everywhere" button. Sessions stored in memory with a session token + expiry (default 8h active, 24h idle). On PIN change: optionally "Log out all other sessions."
 
