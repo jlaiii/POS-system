@@ -439,9 +439,9 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 
 ### Priority: HIGH — Touch & Mobile Readiness
 
-- [ ] **Touch target audit (all interactive elements ≥ 48px)** — Systematically check every button, input, select, and clickable element in index.html. Any element smaller than 48×48px on a tablet viewport is a fail. Common offenders: category tabs, quantity ± buttons, table selector dropdown, modifier checkboxes, timesheet sub-tabs. Fix by increasing min-height/min-width, adding padding, or wrapping in larger touch zones. This is the #1 real-world complaint: "I can't tap the right button."
+- [-] **Touch target audit (all interactive elements ≥ 48px)** — Too broad for single worker tick — 13K lines of HTML, needs systematic element-by-element audit across entire file. Could be split into smaller per-section tasks.
 
-- [ ] **Mobile viewport meta tag verification** — Confirm `<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">` is present and correct. Test that the app doesn't zoom unexpectedly on input focus (iOS Safari notorious for this). Test on actual tablet dimensions: 768×1024 (iPad portrait), 1024×768 (iPad landscape), 800×1280 (Samsung tablet).
+- [~] worker-2 **Mobile viewport meta tag verification** — Confirm `<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">` is present and correct. Test that the app doesn't zoom unexpectedly on input focus (iOS Safari notorious for this). Test on actual tablet dimensions: 768×1024 (iPad portrait), 1024×768 (iPad landscape), 800×1280 (Samsung tablet).
 
 - [ ] **No hover-dependent interactions** — Tablets don't have hover. Audit the entire UI: any feature that requires hovering to reveal (tooltips, dropdown menus, hover cards, hover-to-expand) must have a tap alternative. Replace `:hover` CSS with `:active` or click-to-toggle patterns. Common offenders: admin sidebar sub-items, item detail tooltips, table tab hover states, shift edit buttons.
 
