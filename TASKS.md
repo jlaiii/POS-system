@@ -537,7 +537,7 @@ New `security_events.json` (append-only log of flagged events):
 
 ### Priority: HIGH
 
-- [ ] **IP tracking on all requests** — Capture `request.remote_addr` on every Flask request. Add `ip_address` field to activity_log entries for login, clock-in, order submit, and any admin action. Store in `login_attempts.json`: `{user_id, ip, timestamp, success, user_agent}`. This is the foundation — without IP tracking, none of the below works. Handle `X-Forwarded-For` header for proxied requests (VPS behind nginx/Cloudflare).
+- [~] worker-3 **IP tracking on all requests** — Capture `request.remote_addr` on every Flask request. Add `ip_address` field to activity_log entries for login, clock-in, order submit, and any admin action. Store in `login_attempts.json`: `{user_id, ip, timestamp, success, user_agent}`. This is the foundation — without IP tracking, none of the below works. Handle `X-Forwarded-For` header for proxied requests (VPS behind nginx/Cloudflare).
 
 - [ ] **Owner security dashboard — "🛡️ Security" admin tab** — New admin tab with real-time security overview:
   - **Live feed**: scrollable list of recent security events (logins, blocks, flags) — newest first, auto-refresh every 30s
