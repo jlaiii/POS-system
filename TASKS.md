@@ -381,7 +381,7 @@ New `tickets.json` data store. Each ticket:
 
 - [x] **Customer-facing menu display** — Full menu view with category tabs, item cards with images/descriptions/prices. Display-only, no ordering. Large touch targets (min 150px cards). [worker-1 — Verified: already implemented as part of worker-2's "View Menu" button overlay task. Category tabs, item grid with images/descriptions/prices, 150px min-height cards, no ordering, display-only. All requirements confirmed in code.]
 
-- [~] worker-3 **Item detail popup** — Tap item card → fullscreen overlay with large image, description, price, dietary badges, modifier options. Swipe left/right to browse category.
+- [x] worker-3 **Item detail popup** — Tap item card → fullscreen overlay with large image, description, price, dietary badges, modifier options. Swipe left/right to browse category.
 
 - [ ] **Combo/meal deal showcase section** — "🔥 Featured Combos" horizontal scrollable row with combo cards, child items listed, combo price with strikethrough savings.
 
@@ -771,7 +771,8 @@ Super admin PIN is separate from any business PIN. Super admin can create busine
 |||- [x] worker-3 **Smart date picker for time-off requests** — Business day calculation (Mon-Fri), past-date validation, 30-day limit with override checkbox, overlap detection against existing pending/approved requests. Server-side and client-side validation. Backend: `business_days` field, overlap check, date validation. Frontend: validation messages, override checkbox, business day display in tickets. i18n EN + ES.
 |- [x] worker-3 **Current pay period live tracker** — Added pay rate display stat card, auto-refresh every 60 seconds with 🟢 Live badge indicator, rate formatted as $X.XX/hr. Auto-refresh stops when navigating away. i18n EN + ES. [worker-3]
 ||- [x] worker-2 **Pay history with period-by-period breakdown** — Enhanced pay history period cards with pay rate display ($X.XX/hr), expandable grid-based shift breakdown showing date/day, clock in/out, paid+break hours, period total summary row. Added i18n keys EN+ES. [worker-2]
-||- [x] worker-3 **PDF timesheet report export** — New `POST /api/export/timesheet_pdf` endpoint generating print-ready HTML report from employee shift data. Employee name, shift dates/times, daily totals, period total, overtime, estimated pay, signature line. Print-friendly CSS with page breaks per employee. Button in Employee Shifts sub-tab. [worker-3]
+|||- [x] worker-3 **PDF timesheet report export** — New `POST /api/export/timesheet_pdf` endpoint generating print-ready HTML report from employee shift data. Employee name, shift dates/times, daily totals, period total, overtime, estimated pay, signature line. Print-friendly CSS with page breaks per employee. Button in Employee Shifts sub-tab. [worker-3]
+|- [x] worker-3 **Item detail popup** — Enhanced tablet menu item detail overlay with dietary badges (🌿 Vegetarian, 🌶️ Spicy, etc.), modifier options display (groups with type labels and price chips), and prev/next navigation (buttons + swipe + arrow keys) to browse items within same category. Added `dietary_tags` field to item data model. Configurable dietary icon mapping with 15 types. Dark theme, touch-friendly 56px nav buttons. [worker-3]
 
 ## Done (older)
 <details>

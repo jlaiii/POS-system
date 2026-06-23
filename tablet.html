@@ -377,6 +377,128 @@ body {
   line-height: 1.5;
 }
 
+/* Dietary badges row */
+.detail-dietary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 12px;
+}
+
+.dietary-badge {
+  background: rgba(233,69,96,0.15);
+  color: var(--accent);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: clamp(13px, 1.4vw, 16px);
+  font-weight: 600;
+  border: 1px solid rgba(233,69,96,0.25);
+}
+
+/* Modifier section in detail */
+.detail-modifiers {
+  width: 100%;
+  max-width: 500px;
+  margin-top: 16px;
+}
+
+.detail-modifiers h4 {
+  font-size: clamp(14px, 1.5vw, 18px);
+  color: var(--text2);
+  margin-bottom: 8px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.detail-modifier-group {
+  margin-bottom: 12px;
+  background: var(--card);
+  border-radius: 12px;
+  padding: 12px 16px;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+.modifier-group-name {
+  font-size: clamp(13px, 1.3vw, 16px);
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.modifier-group-type {
+  font-size: clamp(11px, 1vw, 13px);
+  color: var(--text2);
+  margin-left: 6px;
+  font-weight: 400;
+}
+
+.modifier-options-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.modifier-option-chip {
+  background: rgba(255,255,255,0.06);
+  color: var(--text2);
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: clamp(12px, 1.1vw, 14px);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+.modifier-option-chip .price-mod {
+  color: var(--accent);
+  font-weight: 600;
+  margin-left: 4px;
+}
+
+/* Detail navigation bar */
+.detail-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 20px;
+  padding: 12px 0;
+}
+
+.detail-nav-btn {
+  background: var(--card);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: var(--text);
+  font-size: clamp(28px, 3vw, 36px);
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  cursor: pointer;
+  touch-action: manipulation;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, transform 0.15s;
+  min-height: 56px;
+  min-width: 56px;
+}
+
+.detail-nav-btn:active {
+  background: var(--accent);
+  transform: scale(0.92);
+}
+
+.detail-nav-btn:disabled {
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.detail-nav-count {
+  font-size: clamp(14px, 1.4vw, 16px);
+  color: var(--text2);
+  font-weight: 500;
+}
+
 #itemDetailOverlay .detail-meta {
   display: flex;
   gap: 12px;
@@ -546,11 +668,21 @@ body {
 <!-- Item Detail Overlay -->
 <div id="itemDetailOverlay" onclick="closeItemDetail(event)">
   <button class="detail-close" onclick="closeItemDetail()">← Back</button>
-  <img class="detail-img" id="detailImg" src="" alt=""/>
-  <div class="detail-name" id="detailName"></div>
-  <div class="detail-price" id="detailPrice"></div>
-  <div class="detail-desc" id="detailDesc"></div>
-  <div class="detail-meta" id="detailMeta"></div>
+  <div class="detail-inner" style="width:100%;max-width:500px;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;align-items:center;padding:20px 24px 10px;max-height:90vh;">
+    <img class="detail-img" id="detailImg" src="" alt=""/>
+    <div class="detail-name" id="detailName"></div>
+    <div class="detail-price" id="detailPrice"></div>
+    <div class="detail-dietary" id="detailDietary"></div>
+    <div class="detail-desc" id="detailDesc"></div>
+    <div class="detail-modifiers" id="detailModifiers"></div>
+    <div class="detail-meta" id="detailMeta"></div>
+    <!-- Navigation -->
+    <div class="detail-nav">
+      <button class="detail-nav-btn" id="detailPrevBtn" onclick="navigateItem(-1)">‹</button>
+      <span class="detail-nav-count" id="detailNavCount"></span>
+      <button class="detail-nav-btn" id="detailNextBtn" onclick="navigateItem(1)">›</button>
+    </div>
+  </div>
 </div>
 
 <div id="orderActiveOverlay">
@@ -570,6 +702,17 @@ let activeCategory = '';
 let combosData = [];
 let idleTimer = null;
 const IDLE_TIMEOUT = 45000; // 45s idle → return to ads
+let detailCategoryItems = []; // Items in current category for navigation
+let detailCurrentIdx = 0; // Current index in detailCategoryItems
+
+// Dietary tag icon mapping
+const DIETARY_ICONS = {
+  'vegetarian': '🌿', 'vegan': '🥦', 'gluten-free': '🌾',
+  'spicy': '🌶️', 'nuts': '🥜', 'dairy': '🥛',
+  'eggs': '🥚', 'seafood': '🦐', 'shellfish': '🦐',
+  'soy': '🫘', 'organic': '🌱', 'halal': '☪️',
+  'kosher': '✡️', 'sugar-free': '🍃', 'low-carb': '🥬'
+};
 
 // ---- Ad functions ----
 async function fetchAds() {
@@ -762,25 +905,101 @@ function showItemDetail(name) {
   const item = findItemByName(name);
   if (!item) return;
 
+  // Build the list of items in same category for nav
+  const itemsInCat = (menuItemsData[activeCategory] || []).filter(it => it.active !== false);
+  detailCategoryItems = itemsInCat;
+  detailCurrentIdx = itemsInCat.findIndex(it => it.name === name);
+  if (detailCurrentIdx === -1) detailCurrentIdx = 0;
+
+  renderItemDetail(item);
+  document.getElementById('itemDetailOverlay').classList.add('show');
+  resetIdleTimer();
+}
+
+function renderItemDetail(item) {
+  // Image
   document.getElementById('detailImg').src = item.image_url || '';
   document.getElementById('detailImg').style.display = item.image_url ? 'block' : 'none';
   document.getElementById('detailName').textContent = item.name;
   document.getElementById('detailPrice').textContent = '$' + parseFloat(item.price).toFixed(2);
   document.getElementById('detailDesc').textContent = item.description || '';
 
+  // Dietary badges
+  const dietaryEl = document.getElementById('detailDietary');
+  const tags = item.dietary_tags || [];
+  if (tags.length > 0) {
+    dietaryEl.innerHTML = tags.map(tag => {
+      const icon = DIETARY_ICONS[tag.toLowerCase().trim()] || '🏷️';
+      return `<span class="dietary-badge">${icon} ${escHtml(tag)}</span>`;
+    }).join('');
+    dietaryEl.style.display = 'flex';
+  } else {
+    dietaryEl.style.display = 'none';
+  }
+
+  // Modifier groups
+  const modEl = document.getElementById('detailModifiers');
+  const modifiers = item.modifiers || {};
+  const groups = modifiers.groups || [];
+  if (groups.length > 0) {
+    modEl.innerHTML = '<h4>⚙️ Customize Your Order</h4>' + groups.map(g => {
+      const typeLabel = g.type === 'multiple' ? '(Choose any)' : '(Choose one)';
+      const optionsHtml = (g.options || []).map(opt => {
+        const priceStr = opt.price_mod && opt.price_mod > 0
+          ? `<span class="price-mod">+$${parseFloat(opt.price_mod).toFixed(2)}</span>`
+          : opt.price_mod && opt.price_mod < 0
+            ? `<span class="price-mod">-$${Math.abs(parseFloat(opt.price_mod)).toFixed(2)}</span>`
+            : '';
+        return `<span class="modifier-option-chip">${escHtml(opt.name)}${priceStr}</span>`;
+      }).join('');
+      return `<div class="detail-modifier-group">
+        <div class="modifier-group-name">${escHtml(g.name)} <span class="modifier-group-type">${typeLabel}</span></div>
+        <div class="modifier-options-list">${optionsHtml}</div>
+      </div>`;
+    }).join('');
+    modEl.style.display = 'block';
+  } else {
+    modEl.style.display = 'none';
+  }
+
+  // Meta badges (course, barcode)
   const metaEl = document.getElementById('detailMeta');
   let badges = [];
   if (item.course) badges.push('🍽️ ' + item.course.charAt(0).toUpperCase() + item.course.slice(1));
   if (item.barcode) badges.push('📦 ' + item.barcode);
   metaEl.innerHTML = badges.map(b => `<span class="detail-badge">${b}</span>`).join('');
 
-  document.getElementById('itemDetailOverlay').classList.add('show');
+  // Update nav buttons
+  updateDetailNav();
+}
+
+function updateDetailNav() {
+  const prevBtn = document.getElementById('detailPrevBtn');
+  const nextBtn = document.getElementById('detailNextBtn');
+  const countEl = document.getElementById('detailNavCount');
+  prevBtn.disabled = detailCurrentIdx <= 0;
+  nextBtn.disabled = detailCurrentIdx >= detailCategoryItems.length - 1;
+  countEl.textContent = detailCategoryItems.length > 0
+    ? `${detailCurrentIdx + 1} / ${detailCategoryItems.length}`
+    : '';
+}
+
+function navigateItem(direction) {
+  const newIdx = detailCurrentIdx + direction;
+  if (newIdx < 0 || newIdx >= detailCategoryItems.length) return;
+  detailCurrentIdx = newIdx;
+  const item = detailCategoryItems[newIdx];
+  if (item) {
+    renderItemDetail(item);
+  }
   resetIdleTimer();
 }
 
 function closeItemDetail(e) {
   if (e && e.target !== e.currentTarget) return; // Only close when clicking backdrop
   document.getElementById('itemDetailOverlay').classList.remove('show');
+  detailCategoryItems = [];
+  detailCurrentIdx = 0;
   resetIdleTimer();
 }
 
@@ -788,11 +1007,19 @@ function showComboDetail(name) {
   const combo = combosData.find(c => c.name === name);
   if (!combo) return;
 
+  // For combos, show in detail popup
+  detailCategoryItems = combosData;
+  detailCurrentIdx = combosData.findIndex(c => c.name === name);
+  if (detailCurrentIdx === -1) detailCurrentIdx = 0;
+
   document.getElementById('detailImg').style.display = 'none';
   document.getElementById('detailName').textContent = combo.name + ' (Combo)';
   document.getElementById('detailPrice').textContent = '$' + parseFloat(combo.price).toFixed(2);
   document.getElementById('detailDesc').textContent = 'Includes: ' + (combo.items || []).join(' + ');
+  document.getElementById('detailDietary').style.display = 'none';
+  document.getElementById('detailModifiers').style.display = 'none';
   document.getElementById('detailMeta').innerHTML = '<span class="detail-badge">🔥 Combo Deal</span>';
+  updateDetailNav();
 
   document.getElementById('itemDetailOverlay').classList.add('show');
   resetIdleTimer();
@@ -864,6 +1091,15 @@ document.addEventListener('touchend', e => {
   touchEndX = e.changedTouches[0].screenX;
   const diff = touchStartX - touchEndX;
   const ads = adsData.ads || [];
+
+  // If detail overlay is open, swipe browses items
+  const detailOpen = document.getElementById('itemDetailOverlay').classList.contains('show');
+  if (detailOpen && Math.abs(diff) > 50) {
+    if (diff > 0) navigateItem(1);
+    else navigateItem(-1);
+    return;
+  }
+
   if (Math.abs(diff) > 50) {
     if (diff > 0) nextAd();
     else goToAd((currentIndex - 1 + ads.length) % ads.length);
@@ -872,13 +1108,18 @@ document.addEventListener('touchend', e => {
 
 // Keyboard support
 document.addEventListener('keydown', e => {
+  const detailOpen = document.getElementById('itemDetailOverlay').classList.contains('show');
   const ads = adsData.ads || [];
+  if (detailOpen) {
+    if (e.key === 'ArrowRight') { navigateItem(1); e.preventDefault(); }
+    else if (e.key === 'ArrowLeft') { navigateItem(-1); e.preventDefault(); }
+    else if (e.key === 'Escape') { closeItemDetail(); e.preventDefault(); }
+    return;
+  }
   if (e.key === 'ArrowRight') nextAd();
   else if (e.key === 'ArrowLeft') goToAd((currentIndex - 1 + ads.length) % ads.length);
   else if (e.key === 'Escape') {
-    if (document.getElementById('itemDetailOverlay').classList.contains('show')) {
-      closeItemDetail();
-    } else if (document.getElementById('menuView').classList.contains('show')) {
+    if (document.getElementById('menuView').classList.contains('show')) {
       showAdsView();
     }
   }

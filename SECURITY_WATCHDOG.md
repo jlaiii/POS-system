@@ -1,11 +1,13 @@
 # POS Security Watchdog
 
->| Last run: 2026-06-23T13:36:14 UTC
->| Total events tracked: 4 (2 unresolved, 1 new LOW)
->| Active blocks: 0 IPs
->| Unresolved alerts: 2 (SEC-001, SEC-003), 1 new LOW (SEC-004)
+> Last run: 2026-06-23T14:11:18 UTC
+> Total events tracked: 4 (2 unresolved)
+> Active blocks: 0 IPs
+> Unresolved alerts: 2 (SEC-001, SEC-003)
 
 ## Current Run Findings
+- [INFO] **Window 13:54-14:11 UTC** — 2 new activity log entries (1785 total). Owner login at 13:57:28 (PIN, 127.0.0.1, success) + admin_login at 13:57:29. No failed logins. No orders, refunds, or clock events. login_attempts.json still empty. Flask app UP (200). Backups running (14:10 backup present).
+- [INFO] **Window 13:36-13:54 UTC** — No new activity. 0 new log entries (1764 total, unchanged). No logins, no orders, no clock events. login_attempts.json still empty.
 - [INFO] **Window 13:09-13:36 UTC** — 4 new activity log entries (155 total). login_attempts.json still empty.
 - [LOW] **SEC-004: Order submitted with null user_id** — Order 9 placed at 13:28:53 with `user_id: null` (item: "Test Burger" $9.99, cash). Immediately refunded (13:29:02) by Owner (1111) with reason "No reason provided". Either a code bug (unauthenticated order submission) or Owner test. Flagging as LOW — no harm done but the null user path should be reviewed.
 - [LOW] **Shift data loss** — Owner clock-in (13:29:18) and clock-out (13:29:22) recorded in activity_log but NOT captured in shift_log.json. All previous 0-duration test shifts ARE present in shift_log. This mirrors SEC-003 pattern (save_json_data race condition). Shift appears lost.
@@ -34,10 +36,10 @@ None.
 - SEC-002: [LOW] Employee One (1234) 2FA lockout resolved — 2FA re-setup successfully by Owner at 07:59:32.
 
 ## System State
-- **Current time**: 2026-06-23T13:36:14 UTC — daytime, outside off-hours window (anomaly hours: 22:00-06:00)
-- **Activity log**: 155 entries (1764 lines), entries up to 13:29:22. Gap persists from 08:06:33 to 10:48:23 (entries 09:07-09:45 still missing — SEC-003).
-- **New entries this window**: submit_order(user_id=null, order 9, $10.79) → refund_order(Owner, order 9) → clock_in(Owner)→ clock_out(Owner, 4 sec). Order 9 refunded immediately with "No reason provided".
-- **Failed logins in window (27min)**: 0 failed logins detected. login_attempts.json still empty. No brute force monitoring possible.
+- **Current time**: 2026-06-23T14:11:18 UTC — daytime, outside off-hours window (anomaly hours: 22:00-06:00)
+- **Activity log**: 1785 lines, entries up to 13:57:29. Gap persists from 08:06:33 to 10:48:23 (entries 09:07-09:45 still missing — SEC-003).
+- **New entries this window (17min)**: 2 entries: Owner login (13:57:28, PIN, success, 127.0.0.1) + admin_login (13:57:29). No failed logins, orders, or clock events.
+- **Failed logins in window (17min)**: 0 failed logins detected. login_attempts.json still empty. No brute force monitoring possible.
 - **Flask app**: UP — running (PID 68345, port 5000). Held steady.
 - **Orders**: orders.json empty (all cleared). refunded_orders.json has 2 entries (orders 6, 9).
 - **Users**: 6 users. Owner 2FA still broken (SEC-001). Employee One 2FA OK. Test2FA 2FA OK.

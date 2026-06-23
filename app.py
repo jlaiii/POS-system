@@ -1848,7 +1848,7 @@ def add_item():
             log_activity('add_item', admin_pin, admin_role, {'status': 'failed', 'reason': 'Item already exists', 'item_data': data})
             return jsonify({'message': f'Item "{name}" already exists in category "{category}".'}), 409
 
-    items_data[category].append({"name": name, "price": price, "barcode": data.get('barcode', ''), "image_url": data.get('image_url', ''), "course": data.get('course', 'main'), "active": True})
+    items_data[category].append({"name": name, "price": price, "barcode": data.get('barcode', ''), "image_url": data.get('image_url', ''), "course": data.get('course', 'main'), "active": True, "dietary_tags": data.get('dietary_tags', [])})
     save_json_data(ITEMS_FILE, items_data)
     backup_menu()  # Auto-backup after successful save
     
@@ -1926,7 +1926,7 @@ def edit_item():
                 old_barcode = items_data[old_category][i].get('barcode', '')
                 old_course = item.get('course', 'main')
                 old_active = item.get('active', True)
-                items_data[new_category].append({"name": new_name, "price": new_price, "barcode": data.get('barcode', old_barcode), "image_url": data.get('image_url', old_image_url), "course": data.get('course', old_course), "active": old_active})
+                items_data[new_category].append({"name": new_name, "price": new_price, "barcode": data.get('barcode', old_barcode), "image_url": data.get('image_url', old_image_url), "course": data.get('course', old_course), "active": old_active, "dietary_tags": item.get('dietary_tags', [])})
             else:  # Only name/price/barcode changing within same category
                 items_data[old_category][i]["name"] = new_name
                 items_data[old_category][i]["price"] = new_price

@@ -1707,5 +1707,80 @@
             "status": "failed",
             "reason": "Insufficient permissions"
         }
+    },
+    {
+        "timestamp": "2026-06-23T13:28:53.236745",
+        "type": "submit_order",
+        "user_id": null,
+        "user_role": "user",
+        "details": {
+            "order_id": 9,
+            "subtotal": 9.99,
+            "tax_amount": 0.0,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 10.79,
+            "payment_method": "cash",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-23T13:29:02.245695",
+        "type": "refund_order",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "order_id": 9,
+            "reason": "No reason provided",
+            "refunded_by_name": "Owner",
+            "order_total": 10.79
+        }
+    },
+    {
+        "timestamp": "2026-06-23T13:29:18.529792",
+        "type": "clock_in",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "status": "success",
+            "user_name": "Owner",
+            "clock_in_time": "2026-06-23T13:29:18.529628",
+            "late_minutes": null,
+            "scheduled_start": null
+        }
+    },
+    {
+        "timestamp": "2026-06-23T13:29:22.522059",
+        "type": "clock_out",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "status": "success",
+            "user_name": "Owner",
+            "clock_in_time": "2026-06-23T13:29:18.529628",
+            "clock_out_time": "2026-06-23T13:29:22.521498",
+            "duration_hours": 0.0
+        }
+    },
+    {
+        "timestamp": "2026-06-23T13:57:28.515145",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T13:57:29.580876",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "details": {
+            "status": "success"
+        }
     }
 ]

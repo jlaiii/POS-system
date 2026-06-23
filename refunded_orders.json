@@ -34,5 +34,45 @@
         "reason": "Customer changed mind",
         "refunded_at": "2026-06-22T11:43:47.251220",
         "refunded_by": "1111"
+    },
+    {
+        "order_id": 9,
+        "original_order": {
+            "order_id": 9,
+            "status": "refunded",
+            "claimed_by": null,
+            "claimed_at": null,
+            "completed_at": null,
+            "date": "2026-06-23T13:28:53.236293",
+            "user": null,
+            "payment": "cash",
+            "payment_splits": null,
+            "items": [
+                {
+                    "name": "Test Burger",
+                    "price": 9.99,
+                    "quantity": 1,
+                    "category": "Burgers"
+                }
+            ],
+            "subtotal": 9.99,
+            "tax_amount": 0.0,
+            "tip_amount": 0.0,
+            "service_charge_amount": 0.0,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 10.79,
+            "notes": "",
+            "item_notes": {},
+            "table_number": null,
+            "delivery_address": null,
+            "customer_email": "",
+            "refund_reason": "No reason provided",
+            "refunded_at": "2026-06-23T13:29:02.245026",
+            "refunded_by": "1111"
+        },
+        "reason": "No reason provided",
+        "refunded_at": "2026-06-23T13:29:02.245026",
+        "refunded_by": "1111"
     }
 ]
