@@ -84,7 +84,7 @@
 - [x] worker-2 `POST /api/clock/in` response includes `late_minutes` and `late_excused` so the clock-in toast can say "⚠️ Clocked in 23 minutes late" when applicable.
 
 #### Admin late shift flagging & excuse
-|- [~] worker-1 New endpoint `POST /api/clock/excuse_late`: admin sets `late_excused = true` on a completed shift. Accepts `shift_index` (position in shift_log array), `adminPin`, optional `note`. Requires `view_timesheet` permission.
+- [~] worker-1 New endpoint `POST /api/clock/excuse_late`: admin sets `late_excused = true` on a completed shift. Accepts `shift_index` (position in shift_log array), `adminPin`, optional `note`. Requires `view_timesheet` permission.
 - [ ] New endpoint `POST /api/clock/flag_late`: admin manually flags a shift as late (even if auto-detection didn't catch it — e.g., no scheduled time set). Sets `late_minutes` to admin-provided value. Requires `view_timesheet` permission.
 - [ ] Both endpoints log to activity_log: `late_excused` or `late_flagged` with old→new values and admin PIN.
 - [ ] UI: in the Employee Shifts timesheet view, late shifts get a red 🕐 badge showing minutes late. Excused late shifts get a gray 🔕 badge instead. Admin clicks the badge to toggle excuse/flag via a small popover with note field.
