@@ -2141,6 +2141,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
     <div class="card" style="margin-bottom:16px;padding:16px 20px;">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
         <h4 style="margin:0;font-size:15px;color:var(--accent);" data-i18n="mypay.current_title">⏱️ Current Period</h4>
+        <span id="myPayLiveBadge" style="display:none;font-size:12px;color:#2ecc71;font-weight:600;" data-i18n="mypay.live_badge">🟢 Live</span>
         <span id="myPayCurrentDates" style="font-size:13px;color:var(--text2);"></span>
       </div>
       <div id="myPayClockStatus" style="font-size:14px;margin-top:8px;padding:8px 12px;border-radius:6px;"></div>
@@ -2148,6 +2149,10 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
         <div style="flex:1;min-width:100px;text-align:center;padding:12px;background:var(--card-alt);border-radius:8px;">
           <div style="font-size:24px;font-weight:700;color:var(--accent);" id="myPayCurrentHours">0</div>
           <div style="font-size:12px;color:var(--text2);margin-top:4px;" data-i18n="mypay.hours">Hours</div>
+        </div>
+        <div style="flex:1;min-width:100px;text-align:center;padding:12px;background:var(--card-alt);border-radius:8px;">
+          <div style="font-size:24px;font-weight:700;color:var(--text);" id="myPayCurrentRate">$0.00/hr</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:4px;" data-i18n="mypay.pay_rate">Pay Rate</div>
         </div>
         <div style="flex:1;min-width:100px;text-align:center;padding:12px;background:var(--card-alt);border-radius:8px;">
           <div style="font-size:24px;font-weight:700;color:#2ecc71;" id="myPayCurrentGross">$0.00</div>
@@ -2943,7 +2948,9 @@ const L10N = {
     'mypay.est_gross': 'Est. Gross',
     'mypay.shifts_this_period': 'Shifts',
     'mypay.progress': 'Period progress',
+    'mypay.pay_rate': 'Pay Rate',
     'mypay.pay_rate_hint': 'Pay rate determines estimated gross',
+    'mypay.live_badge': '🟢 Live',
     'mypay.history_title': '📋 Pay History',
     'mypay.refresh': '🔄 Refresh',
     'mypay.no_history': 'No pay history yet.',
@@ -3444,7 +3451,9 @@ const L10N = {
     'mypay.est_gross': 'Bruto Estimado',
     'mypay.shifts_this_period': 'Turnos',
     'mypay.progress': 'Progreso del período',
+    'mypay.pay_rate': 'Tarifa por Hora',
     'mypay.pay_rate_hint': 'La tarifa de pago determina el bruto estimado',
+    'mypay.live_badge': '🟢 En Vivo',
     'mypay.history_title': '📋 Historial de Pago',
     'mypay.refresh': '🔄 Actualizar',
     'mypay.no_history': 'Aún no hay historial de pago.',
@@ -5094,6 +5103,7 @@ function switchMainTab(tab) {
   document.getElementById('requestsTab').classList.remove('active');
   document.getElementById('myPayTab').classList.remove('active');
   if (tab === 'pos') {
+    stopMyPayAutoRefresh();
     document.getElementById('posTab').classList.add('active');
     loadItems();
     loadTableSelector();
@@ -5104,13 +5114,16 @@ function switchMainTab(tab) {
       if (searchInput) searchInput.focus();
     }, 100);
   } else if (tab === 'history') {
+    stopMyPayAutoRefresh();
     document.getElementById('historyTab').classList.add('active');
     loadOrderHistory();
   } else if (tab === 'admin') {
+    stopMyPayAutoRefresh();
     document.getElementById('adminTab').classList.add('active');
     loadAdminStats();
     switchAdminSection('stats');
   } else if (tab === 'requests') {
+    stopMyPayAutoRefresh();
     document.getElementById('requestsTab').classList.add('active');
     // Mark all responses as read and show alert banners
     markReadAndShowAlerts();
@@ -5118,6 +5131,7 @@ function switchMainTab(tab) {
   } else if (tab === 'mypay') {
     document.getElementById('myPayTab').classList.add('active');
     loadMyPay();
+    startMyPayAutoRefresh();
   }
 }
 
@@ -9829,6 +9843,27 @@ async function loadMyPay() {
   }
 }
 
+// Auto-refresh for My Pay tab (60s polling while active)
+let myPayRefreshInterval = null;
+
+function startMyPayAutoRefresh() {
+  stopMyPayAutoRefresh();
+  // Show live badge
+  const badge = document.getElementById('myPayLiveBadge');
+  if (badge) badge.style.display = 'inline';
+  myPayRefreshInterval = setInterval(loadMyPay, 60000);
+}
+
+function stopMyPayAutoRefresh() {
+  if (myPayRefreshInterval) {
+    clearInterval(myPayRefreshInterval);
+    myPayRefreshInterval = null;
+  }
+  // Hide live badge
+  const badge = document.getElementById('myPayLiveBadge');
+  if (badge) badge.style.display = 'none';
+}
+
 function renderMyPay(data) {
   /** Render all pay sections from the API response. */
 
@@ -9842,6 +9877,17 @@ function renderMyPay(data) {
   const cp = data.current_period || {};
   document.getElementById('myPayCurrentDates').textContent = cp.start_date + ' — ' + cp.end_date;
   document.getElementById('myPayCurrentHours').textContent = cp.hours != null ? cp.hours.toFixed(1) : '0';
+  // Pay rate display
+  const rateEl = document.getElementById('myPayCurrentRate');
+  if (rateEl) {
+    if (cp.has_pay_rate && cp.pay_rate != null) {
+      rateEl.textContent = '$' + cp.pay_rate.toFixed(2) + '/hr';
+      rateEl.style.color = 'var(--text)';
+    } else {
+      rateEl.textContent = '—';
+      rateEl.style.color = 'var(--text2)';
+    }
+  }
   document.getElementById('myPayCurrentGross').textContent = cp.has_pay_rate && cp.estimated_gross != null ? '$' + cp.estimated_gross.toFixed(2) : '—';
   document.getElementById('myPayCurrentShifts').textContent = cp.shift_count || 0;
 
