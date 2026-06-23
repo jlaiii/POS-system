@@ -2,7 +2,7 @@
 
 > Auto-managed by 3 Hermes Worker Crons (every 30 min each, staggered claims).
 > Workers use `[~]` to claim tasks before working. Never pick a claimed task.
-> Last updated: 2026-06-23 (audit #6 — system audit)
+> Last updated: 2026-06-23 (audit #7 — system audit)
 
 ## Status Legend
 - `[ ]` = pending (available for any worker)
@@ -37,7 +37,7 @@
 
 - [x] **Add combo/meal deal builder for fixed-price bundled items** — Create fixed-price combo deals (e.g., "Lunch Special: Burger + Fries + Drink $12.99") as a single orderable item. Admin builder UI to select child items, set combo price, and manage active combos. One-tap add to cart expands child items for kitchen display. Increases average order value. i18n EN + ES. [worker-2]
 
-## New Tasks (from Audit #6)
+## New Tasks (from prior audits)
 
 - [x] **Add kitchen display table grouping** — Kitchen orders should be groupable by table number so cooks can see all items for a table together. Currently each order submission creates a separate card. When same table gets multiple orders (appetizers then mains), they should be visually grouped or merged in the kitchen queue. [worker-2 — Table-grouped collapsible cards with nested order display, table badge on standalone cards, backend sorted by table then date]
 
@@ -55,7 +55,7 @@
 
 - [x] worker-3 **Pay period selector with Weekly / Bi-weekly / Monthly presets** — Date range picker in Timesheet view with quick-select buttons: "This Week", "Last Week", "This Month", "Last Month", "Custom". "This Week" and "Last Week" auto-calculate Mon-Sun. "Bi-weekly" option with pay period start date config. CSV/PDF export button that exports only the selected period. Replace the current bare "Export CSV" that dumps everything. [worker-3 — Quick-select date presets, bi-weekly config, pay period CSV+PDF export endpoints, i18n EN+ES]
 
-|- [x] worker-2 **Overtime detection and flagging** — Configurable thresholds in admin (default: 8h/day, 40h/week). New `timesheet_config.json` with `GET/POST /api/timesheet/config` endpoint. Backend pay_period/CSV/PDF exports use configurable thresholds. Frontend: Timesheet Config card in Timesheet section with daily/weekly OT threshold + late grace inputs. Shift badges: orange "⬆ Daily OT" for shifts exceeding daily threshold, red "📈 Weekly OT" for employees with weekly OT. Total OT in summary bar. CSV export already had Overtime Hours column.
+- [x] worker-2 **Overtime detection and flagging** — Configurable thresholds in admin (default: 8h/day, 40h/week). New `timesheet_config.json` with `GET/POST /api/timesheet/config` endpoint. Backend pay_period/CSV/PDF exports use configurable thresholds. Frontend: Timesheet Config card in Timesheet section with daily/weekly OT threshold + late grace inputs. Shift badges: orange "⬆ Daily OT" for shifts exceeding daily threshold, red "📈 Weekly OT" for employees with weekly OT. Total OT in summary bar. CSV export already had Overtime Hours column.
 
 - [x] worker-1 **Admin shift edit / correction with audit trail** — Timekeeper can correct clock-in/out times on completed shifts. New `POST /api/clock/edit` endpoint with full audit trail (`edits[]` array on shift records: edited_by, edited_by_name, edited_at, reason, old→new values). Recalculates duration. ⚠️ Edited badge in timesheet UI with click-to-view edit history popup. Activity logging for all edits. Permission-gated (view_timesheet). [worker-1]
 
@@ -68,62 +68,48 @@
 > Currently there is no concept of when an employee is *supposed* to start. Clock-in just records the actual time. The owner/admin needs to see who's late, how late, and be able to flag/excuse lateness. They also need to fix clock-in/out times when employees forget (system error, forgot to clock out, clocked in under wrong PIN, etc.).
 
 #### Per-user scheduled start time
-- Add `scheduled_start` field to each user in `users.json` — a string like `"09:00"` (24h format, local time). This is the time the employee is expected to clock in each workday. If unset or null, no lateness check for that user.
-- Admin can set this in the User Management panel — add a "Scheduled Start" time input per user (type="time"). Stored and loaded from `users.json`.
+- [ ] Add `scheduled_start` field to each user in `users.json` — a string like `"09:00"` (24h format, local time). This is the time the employee is expected to clock in each workday. If unset or null, no lateness check for that user.
+- [ ] Admin can set this in the User Management panel — add a "Scheduled Start" time input per user (type="time"). Stored and loaded from `users.json`.
 
 #### Auto-late detection on clock-in
-- `POST /api/clock/in`: after recording the clock-in, compare the actual `clock_in_time` against the user's `scheduled_start` for today.
-- If `scheduled_start` is set: parse today's date + scheduled time → `scheduled_dt`. If `clock_in_time > scheduled_dt + grace_period`, flag the shift as late.
-- Grace period: configurable in admin (default 5 minutes). Stored in a new `timesheet_config.json` file: `{ "late_grace_minutes": 5 }`. Admin can change via a new `POST /api/timesheet/config` endpoint (read/write). Anyone within grace period is on-time, not late.
-- Calculate `late_minutes = round((clock_in_time - scheduled_dt).total_seconds() / 60)`. Store on the active shift.
+- [ ] `POST /api/clock/in`: after recording the clock-in, compare the actual `clock_in_time` against the user's `scheduled_start` for today.
+- [ ] If `scheduled_start` is set: parse today's date + scheduled time → `scheduled_dt`. If `clock_in_time > scheduled_dt + grace_period`, flag the shift as late.
+- [ ] Grace period: configurable in admin (default 5 minutes). Stored in a new `timesheet_config.json` file: `{ "late_grace_minutes": 5 }`. Admin can change via a new `POST /api/timesheet/config` endpoint (read/write). Anyone within grace period is on-time, not late.
+- [ ] Calculate `late_minutes = round((clock_in_time - scheduled_dt).total_seconds() / 60)`. Store on the active shift.
 
 #### Late flag on shift records
-- Add new fields to shift records in `shift_log.json` and `active_shifts`:
+- [ ] Add new fields to shift records in `shift_log.json` and `active_shifts`:
   - `scheduled_start`: string or null (the expected start time that was checked against)
   - `late_minutes`: int or null (minutes past scheduled + grace. null = on time or no schedule. >0 = late)
   - `late_excused`: boolean (default false, admin can toggle — see below)
   - `late_note`: string or null (reason if provided at clock-in, or admin note)
-- `POST /api/clock/in` response includes `late_minutes` and `late_excused` so the clock-in toast can say "⚠️ Clocked in 23 minutes late" when applicable.
+- [ ] `POST /api/clock/in` response includes `late_minutes` and `late_excused` so the clock-in toast can say "⚠️ Clocked in 23 minutes late" when applicable.
 
 #### Admin late shift flagging & excuse
-- New endpoint `POST /api/clock/excuse_late`: admin sets `late_excused = true` on a completed shift. Accepts `shift_index` (position in shift_log array), `adminPin`, optional `note`. Requires `view_timesheet` permission.
-- New endpoint `POST /api/clock/flag_late`: admin manually flags a shift as late (even if auto-detection didn't catch it — e.g., no scheduled time set). Sets `late_minutes` to admin-provided value. Requires `view_timesheet` permission.
-- Both endpoints log to activity_log: `late_excused` or `late_flagged` with old→new values and admin PIN.
-- UI: in the Employee Shifts timesheet view, late shifts get a red 🕐 badge showing minutes late. Excused late shifts get a gray 🔕 badge instead. Admin clicks the badge to toggle excuse/flag via a small popover with note field.
+- [ ] New endpoint `POST /api/clock/excuse_late`: admin sets `late_excused = true` on a completed shift. Accepts `shift_index` (position in shift_log array), `adminPin`, optional `note`. Requires `view_timesheet` permission.
+- [ ] New endpoint `POST /api/clock/flag_late`: admin manually flags a shift as late (even if auto-detection didn't catch it — e.g., no scheduled time set). Sets `late_minutes` to admin-provided value. Requires `view_timesheet` permission.
+- [ ] Both endpoints log to activity_log: `late_excused` or `late_flagged` with old→new values and admin PIN.
+- [ ] UI: in the Employee Shifts timesheet view, late shifts get a red 🕐 badge showing minutes late. Excused late shifts get a gray 🔕 badge instead. Admin clicks the badge to toggle excuse/flag via a small popover with note field.
 
 #### Admin shift time edit / correction (completes + expands the existing task)
-- `POST /api/clock/edit`: admin can edit `clock_in_time` and/or `clock_out_time` on any completed shift. Accepts `shift_index` (position in shift_log array), `new_clock_in` (ISO string or null to keep original), `new_clock_out` (ISO string or null), `adminPin`, `reason` (required — text). Requires `view_timesheet` permission.
-- Recalculates `duration_hours` from edited times. Re-runs late detection on the edited `clock_in_time` (so if admin fixes a clock-in that was actually on-time, the late flag auto-clears).
-- Stores edit audit trail on the shift record under a new `edits` array:
-  ```json
-  "edits": [
-    {
-      "edited_by": "1111",
-      "edited_by_name": "Owner",
-      "edited_at": "2026-06-23T14:30:00",
-      "reason": "Employee forgot to clock out — confirmed left at 5pm",
-      "changes": {
-        "clock_in_time": {"old": "...", "new": "..."},
-        "clock_out_time": {"old": null, "new": "2026-06-23T17:00:00"}
-      }
-    }
-  ]
-  ```
-- Edited shifts show an ⚠️ "Edited" badge in the timesheet UI. Clicking the badge shows the full edit history (timestamps, who, reason, old→new values).
-- Activity log records `shift_edited` with full details.
-- **Clock-in for someone else's shift**: if admin needs to clock someone in retroactively (employee called saying they forgot, but they're already working), admin uses `/api/clock/edit` to set the clock_in_time on the shift record after the fact. System does NOT create a new shift — it edits the existing one. This handles the "user friendly fix time" scenario.
+- [x] `POST /api/clock/edit`: admin can edit clock_in_time and/or clock_out_time on any completed shift. Accepts `shift_index` (position in shift_log array), `new_clock_in` (ISO string or null to keep original), `new_clock_out` (ISO string or null), `adminPin`, `reason` (required — text). Requires `view_timesheet` permission.
+- [x] Recalculates `duration_hours` from edited times. Re-runs late detection on the edited `clock_in_time` (so if admin fixes a clock-in that was actually on-time, the late flag auto-clears).
+- [x] Stores edit audit trail on the shift record under a new `edits` array.
+- [x] Edited shifts show an ⚠️ "Edited" badge in the timesheet UI. Clicking the badge shows the full edit history (timestamps, who, reason, old→new values).
+- [x] Activity log records `shift_edited` with full details.
+- [x] **Clock-in for someone else's shift**: if admin needs to clock someone in retroactively, admin uses `/api/clock/edit` to set the clock_in_time on the shift record after the fact. System does NOT create a new shift — it edits the existing one.
 
 #### Late clock-in reason (employee self-report)
-- The clock-in POST body accepts an optional `late_note` field. If an employee knows they're late, they can include a reason: "Traffic on I-69", "Flat tire", etc.
-- This is stored as `late_note` on the shift record (separate from the general `notes` field).
-- Displayed in the timesheet view next to the late badge.
+- [ ] The clock-in POST body accepts an optional `late_note` field. If an employee knows they're late, they can include a reason: "Traffic on I-69", "Flat tire", etc.
+- [ ] This is stored as `late_note` on the shift record.
+- [ ] Displayed in the timesheet view next to the late badge.
 
 #### Frontend changes summary
-- **Clock button**: if user has a `scheduled_start` and they clock in late, the toast changes from "Clocked in successfully" to "⚠️ Clocked in — 23 min late". The clock button shows a red pulse animation for 30 seconds after a late clock-in.
-- **Employee Shifts timesheet tab**: late shifts get red left-border + 🕐 badge showing minutes. Excused shifts get gray left-border + 🔕 badge. Click badge → popover with "Excuse" / "Flag Late" toggle + note textarea. Edited shifts get ⚠️ badge → click shows edit history.
-- **Pay Period summary**: new column "Late Shifts" showing count of unexcused late shifts per employee. Late shifts with excused=true don't count against the employee in the summary.
-- **User Management**: new "Scheduled Start" time input per user (type="time", empty = no schedule).
-- **Admin Settings > Timesheet Config**: new section with "Late Grace Period (minutes)" number input, reads/writes `timesheet_config.json`.
+- [ ] **Clock button**: if user has a `scheduled_start` and they clock in late, the toast changes from "Clocked in successfully" to "⚠️ Clocked in — 23 min late". The clock button shows a red pulse animation for 30 seconds after a late clock-in.
+- [ ] **Employee Shifts timesheet tab**: late shifts get red left-border + 🕐 badge showing minutes. Excused shifts get gray left-border + 🔕 badge. Click badge → popover with "Excuse" / "Flag Late" toggle + note textarea. Edited shifts get ⚠️ badge → click shows edit history.
+- [ ] **Pay Period summary**: new column "Late Shifts" showing count of unexcused late shifts per employee. Late shifts with excused=true don't count against the employee in the summary.
+- [ ] **User Management**: new "Scheduled Start" time input per user (type="time", empty = no schedule).
+- [ ] **Admin Settings > Timesheet Config**: new section with "Late Grace Period (minutes)" number input, reads/writes `timesheet_config.json`.
 
 ### Priority: MEDIUM
 
@@ -170,192 +156,173 @@ New `tickets.json` data store. Each ticket:
 
 ### Priority: HIGH
 
-- [ ] **Employee ticket submission UI** — New "📋 Requests" tab visible to all logged-in employees (not just admins). Clean form with dropdown to select type: "🕐 Time Off Request", "🐛 Report Issue", "💬 Feedback / Suggestion", "📝 Other". Form adapts to type: time-off shows date range picker (calendar-style start/end date with total days auto-calc), issue/feedback shows priority selector. Subject + description fields. Submit button stores to `tickets.json`. Toast confirmation. "My Tickets" list below form showing user's own submissions with status badges (🟡 pending, 🟢 approved, 🔴 denied).
+- [ ] **Employee ticket submission UI** — New "📋 Requests" tab visible to all logged-in employees (not just admins). Clean form with dropdown to select type: "🕐 Time Off Request", "🐛 Report Issue", "💬 Feedback / Suggestion", "📝 Other". Form adapts to type: time-off shows date range picker, issue/feedback shows priority selector. Subject + description fields. Submit button stores to `tickets.json`. Toast confirmation. "My Tickets" list below form showing user's own submissions with status badges.
 
-- [ ] **Smart date picker for time-off requests** — Two date inputs (from → to) with a mini calendar or native date picker. Auto-calculates total business days requested (excludes weekends? toggle per config). Validates: can't request past dates, can't request >30 days without override. Shows total days prominently so employee sees "Requesting 3 days off" before submitting. Prevents overlapping requests (checks against existing approved time-off for same user in date range).
+- [ ] **Smart date picker for time-off requests** — Two date inputs (from → to) with native date picker. Auto-calculates total business days requested. Validates: can't request past dates, can't request >30 days without override. Shows total days prominently. Prevents overlapping requests.
 
-- [ ] **Admin/owner ticket management dashboard** — New admin sub-tab "📋 Ticket Queue" (permission-gated: `manage_users` or new `manage_tickets` perm). Two-column layout: **Pending** (left) and **Resolved** (right). Each ticket card shows: type icon, employee name, subject, date submitted, priority badge (for issues), date range (for time-off). Approve ✅ and Deny ❌ buttons on pending tickets. Deny prompts for reason note (required). Approve auto-sets status and timestamp. Resolved column shows all approved/denied with responder info, filterable by type and date. Activity logging for all approve/deny actions.
+- [ ] **Admin/owner ticket management dashboard** — New admin sub-tab "📋 Ticket Queue" (permission-gated: `manage_users` or new `manage_tickets` perm). Two-column layout: **Pending** (left) and **Resolved** (right). Each ticket card shows type icon, employee name, subject, date submitted, priority badge. Approve ✅ and Deny ❌ buttons on pending tickets. Deny prompts for reason note (required). Approve auto-sets status and timestamp. Activity logging for all actions.
 
-- [ ] **Ticket status notifications** — When admin approves/denies a ticket, employee sees a notification badge on their "📋 Requests" tab. In-tab alert banner: "Your time-off request for June 28-30 was ✅ approved" or "❌ denied — reason: short staffed that weekend". No email/push needed — in-app notification is sufficient for POS terminal context. Notification persists until employee views the ticket. Unread count badge on tab button.
+- [ ] **Ticket status notifications** — When admin approves/denies a ticket, employee sees a notification badge on their "📋 Requests" tab. In-tab alert banner: "Your time-off request was ✅ approved" or "❌ denied". Unread count badge on tab button.
 
-- [ ] **API endpoints for ticket CRUD** — `POST /api/tickets/submit` (employee creates), `POST /api/tickets/my` (employee fetches their own), `POST /api/tickets/queue` (admin fetches all, filterable by status/type/user), `POST /api/tickets/respond` (admin approve/deny with note). All endpoints use existing `adminPin` auth pattern. Permission-gated: submit requires basic auth (any logged-in user), queue/respond requires `manage_users` or new `manage_tickets` permission.
+- [ ] **API endpoints for ticket CRUD** — `POST /api/tickets/submit`, `POST /api/tickets/my`, `POST /api/tickets/queue`, `POST /api/tickets/respond`. Permission-gated.
 
 ### Priority: MEDIUM
 
-- [ ] **Conflict detection for time-off requests** — When admin views a pending time-off, show warning if too many employees already approved for same dates ("⚠️ 3 of 5 servers already off June 28 — approving this leaves only 2"). Configurable per-role staffing minimums. Helps manager avoid accidentally approving everyone for the same weekend.
-
-- [ ] **Ticket filtering and search** — Admin queue: filter by type (time_off/issue/feedback), status (pending/approved/denied), employee, date range. Search by subject/description text. Sort by date submitted, priority. Essential once there are 20+ tickets.
-
-- [ ] **Recurring time-off patterns** — Allow employee to request recurring time-off (e.g., "every Tuesday for the next 3 months" for school/childcare). Auto-generates individual ticket entries or a parent ticket with child date instances. Admin approves the pattern once instead of weekly.
-
-- [ ] **Calendar view for time-off** — Visual calendar in admin showing who's off on which days. Color-coded by employee. Month/week toggle. Click a day to see who's off. Makes staffing gaps obvious. Uses the same ticket data — just rendered as a calendar grid instead of a list.
+- [ ] **Conflict detection for time-off requests** — When admin views a pending time-off, show warning if too many employees already approved for same dates.
+- [ ] **Ticket filtering and search** — Admin queue: filter by type, status, employee, date range. Search by text.
+- [ ] **Recurring time-off patterns** — Allow employee to request recurring time-off (e.g., "every Tuesday for the next 3 months").
+- [ ] **Calendar view for time-off** — Visual calendar in admin showing who's off on which days.
 
 ### Priority: LOW
 
-- [ ] **Issue/bug ticket triage labels** — Admin can tag issue tickets: "POS bug", "hardware", "menu error", "customer complaint", "other". Filter by label. Helps prioritize fixes.
-
-- [ ] **Ticket response templates** — Admin can save common response notes as templates: "Approved — enjoy your time off", "Denied — peak season, please reschedule for after [date]", "Issue acknowledged — will investigate". Quick-select dropdown when responding.
-
-- [ ] **Employee feedback analytics** — Aggregate feedback tickets by category over time. "Top 3 issues employees are reporting this month." Dashboard card in admin showing feedback trends. Helps owner spot systemic problems (e.g., "3 complaints about the same broken printer").
-
-- [ ] **Auto-approve for low-risk time-off** — Configurable rule: auto-approve time-off if requested >2 weeks in advance AND no other approvals for same date. Reduces admin overhead. Can be toggled off.
+- [ ] **Issue/bug ticket triage labels** — Admin can tag issue tickets: "POS bug", "hardware", "menu error", "customer complaint", "other".
+- [ ] **Ticket response templates** — Admin can save common response notes as templates.
+- [ ] **Employee feedback analytics** — Aggregate feedback tickets by category over time.
+- [ ] **Auto-approve for low-risk time-off** — Configurable rule: auto-approve time-off if requested >2 weeks in advance AND no other approvals for same date.
 
 ## Employee Pay Portal — Pay Stubs, History & Downloads (NEW — June 2026)
 
-> Employees should be able to log in and see their own pay: hours worked, pay rate, gross/net, per-period and YTD totals, downloadable pay stubs, and a way to flag discrepancies. This is the employee-facing side — the admin/timekeeper sees the full timesheet dashboard (from the Timekeeper section above). Employee only sees their own data.
+> Employees should be able to log in and see their own pay: hours worked, pay rate, gross/net, per-period and YTD totals, downloadable pay stubs, and a way to flag discrepancies.
 
 ### Key design decisions
 
 - **Data source**: shift_log.json (clocked hours) × user pay_rate from users.json
 - **No actual payroll processing** — this is informational/reporting, not ACH/bank integration
-- **"Request Review"** feeds into the existing ticket system (type: `pay_review`) so admin can investigate
-- **Pay stubs are generated on the fly** from shift data — no separate pay_stubs.json data store needed. Each "stub" is a computed view of a pay period's shifts + rates.
+- **"Request Review"** feeds into the existing ticket system (type: `pay_review`)
+- **Pay stubs are generated on the fly** from shift data — no separate pay_stubs.json needed
 
 ### Priority: HIGH
 
-- [ ] **Employee "My Pay" tab** — New "💰 My Pay" tab visible to all logged-in employees (not admin-only). Shows three sections: **Current Period** (in-progress pay period with live hours so far), **Pay History** (list of past periods with totals), **Year-to-Date** summary card. Employee sees ONLY their own data — scoped by their `adminPin`/user_id. No permission needed beyond basic login.
+- [ ] **Employee "My Pay" tab** — New "💰 My Pay" tab visible to all logged-in employees. Shows three sections: **Current Period**, **Pay History**, **Year-to-Date** summary card.
 
-- [ ] **Current pay period live tracker** — Shows the current pay period date range, hours worked so far (from completed shifts + currently clocked-in live duration), pay rate, estimated gross pay so far. Auto-updates every 60 seconds while clocked in. Progress bar showing what % of a standard 40h week is done. "You've worked 24.5 of 40 hours this week — estimated gross: $367.50." This is motivational and lets employees self-monitor.
+- [ ] **Current pay period live tracker** — Shows current pay period date range, hours worked so far, pay rate, estimated gross pay so far. Auto-updates every 60 seconds while clocked in. Progress bar.
 
-- [ ] **Pay history with period-by-period breakdown** — List of past pay periods with: date range, total hours, pay rate at that time, gross pay, shift count. Click any period to expand into a detailed shift list (date, clock in/out, hours, breaks, notes). This is the employee's personal ledger — they should be able to trace every dollar back to specific shifts. Data pulled from `/api/timesheet/pay_period` filtered to the employee's user_id.
+- [ ] **Pay history with period-by-period breakdown** — List of past pay periods with date range, total hours, pay rate, gross pay, shift count. Expand to detailed shift list.
 
-- [ ] **Downloadable pay stub (PDF)** — "Download Pay Stub" button per pay period in history. Generates a clean PDF with: employee name, pay period dates, itemized shift list with hours, total hours, pay rate, gross pay, YTD totals, employer info (configurable in admin settings), and a "This is not an official tax document" disclaimer. Uses the PDF export pipeline from the Timesheet system task. Stored in activity_log as `pay_stub_download` event.
+- [ ] **Downloadable pay stub (PDF)** — "Download Pay Stub" button per pay period. Generates clean PDF with employee name, pay period dates, itemized shift list, total hours, pay rate, gross pay, YTD totals.
 
-- [ ] **Pay history CSV export** — "Export My Pay History" button at bottom of Pay History. Downloads a CSV with all past periods: period_start, period_end, hours, rate, gross, shift_count. Simple, clean, spreadsheet-ready. Employee can do their own math or share with accountant.
+- [ ] **Pay history CSV export** — "Export My Pay History" button at bottom of Pay History.
 
-- [ ] **"Request Pay Review" action** — If employee thinks hours or pay are wrong, a "⚠️ Request Review" button on any pay period or shift. Opens a pre-filled ticket form (type: `pay_review`, subject auto-populated with period/suspected issue, description field for employee to explain). Feeds directly into the ticket system — admin sees it in the Ticket Queue. Links the pay period data so admin can cross-reference. This is the "something looks wrong, look into it" flow.
+- [ ] **"Request Pay Review" action** — "⚠️ Request Review" button on any pay period or shift. Opens pre-filled ticket form (type: `pay_review`).
 
 ### Priority: MEDIUM
 
-- [ ] **Year-to-date (YTD) earnings card** — Summary card at top of My Pay showing: YTD gross pay, YTD hours worked, average hours/week, average hourly effective rate (total gross ÷ total hours). Updates in real time as shifts are completed. Gives employees a quick financial snapshot without digging through periods.
-
-- [ ] **Multi-rate support (different rates for different shifts)** — Some employees work multiple roles (e.g., server at $8/hr, cook at $15/hr). Allow per-shift or per-role pay rate override. If an employee clocks in as "cook" for half their shift and "server" for the other half, the pay period calculates a weighted average. Stored as optional `pay_rate_override` on shift record (null = use user default).
-
-- [ ] **Pay stub email delivery** — Auto-email pay stub PDF to employee when admin marks a pay period as "paid" (from the timesheet approval workflow). Uses existing email config (SMTP from digital receipts feature). Employee gets a clean email: "Your pay stub for June 16-30 is ready. Gross: $1,247.50. Download attached PDF." Reduces "hey boss, can I get my stub?" conversations.
-
-- [ ] **Tip tracking in My Pay** — Since tips are already tracked per order and employee, aggregate tip data per pay period in My Pay: total credit card tips, total cash tips (employee-entered). Separate line from hourly pay. "This period: Hours $380.00 + Tips $412.50 = $792.50." Helps tipped employees understand their true take-home.
+- [ ] **Year-to-date (YTD) earnings card** — Summary card at top of My Pay showing YTD gross pay, YTD hours, average hours/week, average hourly rate.
+- [ ] **Multi-rate support** — Per-shift or per-role pay rate override.
+- [ ] **Pay stub email delivery** — Auto-email pay stub PDF to employee when admin marks a pay period as "paid".
+- [ ] **Tip tracking in My Pay** — Aggregate tip data per pay period.
 
 ### Priority: LOW
 
-- [ ] **Direct deposit info display** — Read-only display of employee's direct deposit details (bank name, last 4 of account) stored in user profile. "Payments go to: Chase ****1234." Employee can verify but not edit — must request admin change. Reduces "which account is my deposit going to?" questions.
-
-- [ ] **Pay comparison charts** — Simple bar chart in My Pay showing period-by-period gross pay for last 6 periods. Line overlay showing hours trend. Employee can see if their hours are trending up or down. Helps them plan finances.
-
-- [ ] **Tax withholding estimator** — Optional: if employee fills in W-4 info (filing status, allowances), show estimated federal/state tax withholding per period. Gross → estimated net. Big disclaimer: "Estimate only — consult a tax professional." Gives employees a rough idea of take-home without running separate calculators.
+- [ ] **Direct deposit info display** — Read-only display of employee's direct deposit details.
+- [ ] **Pay comparison charts** — Bar chart in My Pay showing period-by-period gross pay for last 6 periods.
+- [ ] **Tax withholding estimator** — Optional W-4 based tax estimates.
 
 ## Table-Side Digital Menu & Ad Display (NEW — June 2026)
 
-> The existing `/tablet` page (`tablet.html`) is a pure ad rotator — it cycles through promoted images. This needs to become a full table-side digital menu that customers pick up at their table. **Ads should still play as the idle/screensaver**, but there should be an overlay button to view the menu, browse items with images/prices, and see restaurant info. This is the customer-facing menu experience, not the POS ordering screen.
+> The existing `/tablet` page is a pure ad rotator. This needs to become a full table-side digital menu with ads as idle screensaver.
 
 ### What already exists
-- `tablet.html` at `/tablet` — ad rotator with slideshow, swipe support, dot navigation, "Order in Progress" overlay
-- `/api/ads/current` — returns active ads JSON (no auth needed, public endpoint)
-- `/api/items` (GET) — returns full menu with categories and items (no auth needed)
-- `/api/combos/list` (GET) — returns active combos (no auth needed)
-- Item images already supported (from item images task above)
+- `tablet.html` at `/tablet` — ad rotator with slideshow, swipe support, dot navigation
+- `/api/ads/current` — returns active ads JSON
+- `/api/items` (GET) — returns full menu with categories and items
+- `/api/combos/list` (GET) — returns active combos
+- Item images already supported
 
 ### Priority: HIGH
 
-- [ ] **"View Menu" button overlay on ad screen** — Add a persistent floating button on the ad rotator screen: "🍽️ View Menu" (bottom-center, large, 60px+, semi-transparent bg). Always visible on top of ads. When tapped, transitions smoothly to the menu view (slide-up or fade). When in menu view, a "← Back" or "✕" button returns to the ad rotator. The button should be subtle enough not to ruin the ad aesthetic but obvious enough that customers find it. Configurable: admin can choose to auto-show menu on wake vs. show ads first.
+- [ ] **"View Menu" button overlay on ad screen** — Persistent floating button on the ad rotator: "🍽️ View Menu". When tapped, transitions to menu view. "← Back" returns to ad rotator.
 
-- [ ] **Customer-facing menu display** — Full menu view with category tabs across the top (horizontally scrollable on mobile). Each category shows item cards in a grid: item image (or placeholder if no image), name, description (truncated to 2 lines), price. Large touch targets (min 150px cards). No "add to cart" or ordering functionality — this is display-only, not self-ordering. Pulls data from existing `/api/items` endpoint. Filters hidden items (`visible: false`). Honors category order from admin settings.
+- [ ] **Customer-facing menu display** — Full menu view with category tabs, item cards with images/descriptions/prices. Display-only, no ordering. Large touch targets (min 150px cards).
 
-- [ ] **Item detail popup** — Tap an item card → fullscreen overlay with: large item image, full description, price, dietary badges (spicy 🌶️, vegetarian 🥬, gluten-free 🌾 — from item tags field), modifier options shown as bullet points (e.g., "Available in: Small / Medium / Large"). Swipe left/right to browse items in same category without closing the popup. Close button returns to menu grid.
+- [ ] **Item detail popup** — Tap item card → fullscreen overlay with large image, description, price, dietary badges, modifier options. Swipe left/right to browse category.
 
-- [ ] **Combo/meal deal showcase section** — Below the category tabs, a "🔥 Featured Combos" horizontal scrollable row showing combo cards: combo image (or collage of child item images), combo name, child items listed, combo price with strikethrough individual total (showing savings). Pulls from `/api/combos/list`. Only shows active combos. Tap opens combo detail with full breakdown.
+- [ ] **Combo/meal deal showcase section** — "🔥 Featured Combos" horizontal scrollable row with combo cards, child items listed, combo price with strikethrough savings.
 
-- [ ] **Auto-return to ads after inactivity** — After 30-60 seconds of no touch interaction in the menu view, auto-transition back to the ad rotator. Shows a 5-second countdown toast: "Returning to ads in 5...". Tap anywhere to cancel. Prevents the menu from being stuck open when a customer walks away. Timeout configurable in admin.
+- [ ] **Auto-return to ads after inactivity** — After 30-60 seconds of no touch interaction, auto-transition back to ad rotator with 5-second countdown toast.
 
-- [ ] **Restaurant info bar** — Persistent footer bar showing: restaurant name (configurable), hours today (from config), Wi-Fi info if configured, "📞 Call Server" button (triggers a subtle notification on the POS/kitchen display — new SocketIO event `tablet_call_server` with table number). Table number displayed in corner so servers know which table to go to. Table number set via URL param: `/tablet?table=5`.
+- [ ] **Restaurant info bar** — Persistent footer: restaurant name, hours today, Wi-Fi info, "📞 Call Server" button (SocketIO `tablet_call_server` event), table number from URL param.
 
 ### Priority: MEDIUM
 
-- [ ] **Dark/light theme toggle on tablet** — Tablet menu respects the POS system's dark theme (matches existing `tablet.html` dark aesthetic). Add a sun/moon toggle in the corner for customers who prefer light mode. Persists per-session only (resets when returning to ads after inactivity).
-
-- [ ] **Language toggle (EN/ES)** — Same i18n system as the main POS. Tablet menu auto-detects browser language but allows manual toggle. Menu item names/descriptions remain in admin's language, but UI labels ("View Menu", "Featured Combos", "Call Server") translate. Essential for restaurants with Spanish-speaking clientele.
-
-- [ ] **Happy hour / specials badge on items** — If scheduled pricing is active (from the existing happy hour system), show a "⚡ Happy Hour" or "🎉 Special" badge on the item card with the discounted price displayed in green next to the strikethrough original. Auto-hides when special ends. Makes the tablet feel alive and dynamic.
-
-- [ ] **"Order This" QR code** — Small QR code icon on each item card or in the detail popup. When tapped (or on hover for non-touch), expands to show a QR code that links to an online ordering page or the item itself. Useful for restaurants that do app-based ordering alongside table service. QR data is a URL configurable per item or globally.
+- [ ] **Dark/light theme toggle on tablet** — Sun/moon toggle in corner for customers.
+- [ ] **Language toggle (EN/ES)** — UI labels translate, item names remain in admin's language.
+- [ ] **Happy hour / specials badge on items** — Show "⚡ Happy Hour" badge with discounted price when scheduled pricing is active.
+- [ ] **"Order This" QR code** — QR code icon on each item linking to online ordering page.
 
 ### Priority: LOW
 
-- [ ] **Allergen filter toggle** — Filter button that lets customers show/hide items by allergen: "🥜 Peanuts", "🥛 Dairy", "🌾 Gluten", "🦐 Shellfish". Items tagged with allergens in admin get filtered out when toggle is on. Shows "3 items hidden" count. Data comes from a new `allergens` array field on items.
+- [ ] **Allergen filter toggle** — Filter button to show/hide items by allergen.
+- [ ] **Nutritional info popup** — Optional per-item calorie/protein/carbs/fat display.
+- [ ] **"Most Popular" badge** — Auto-calculated from most-ordered analytics.
+- [ ] **Wake-on-proximity / screensaver mode** — Dim screen when no one nearby, brighten on motion.
 
-- [ ] **Nutritional info popup** — Optional per-item: calories, protein, carbs, fat. Stored as `nutrition: {calories, protein_g, carbs_g, fat_g}` on item. Shown in a collapsible section in the item detail popup. Appealing to health-conscious diners.
+## New Tasks (from Audit #7 — 2026-06-23)
 
-- [ ] **"Most Popular" badge** — Items tagged by admin as "popular" or auto-calculated from most-ordered analytics show a "⭐ Most Popular" badge on their card. Helps indecisive customers pick. Admin can manually pin popular items or let the system auto-rank from last 30 days of orders.
+- [ ] **HIGH: Kitchen offline degradation** — When WebSocket disconnects, the kitchen display silently stops showing new orders. Implement automatic polling fallback (every 8s) triggered by socket disconnect event, with visible "⚠️ Offline — updating every 8s" banner. Currently the main POS has polling fallback but kitchen view doesn't. This is critical for reliability during network blips.
 
-- [ ] **Wake-on-proximity / screensaver mode** — If the device supports it (camera-based), dim screen to 20% when no one is nearby, brighten to full when motion detected. Falls back to the ad rotator as screensaver. Works on tablets with front-facing cameras via a simple motion-detection approach (compare frames every 2 seconds for significant change).
+- [ ] **MEDIUM: Table status overview dashboard** — Add a color-coded table grid view showing all tables with status (empty/occupied/order-in-progress/ready-to-serve/needs-bussing). Click a table to see its current tab/orders, mark it bussed, or transfer to another waiter. Most modern POS systems have this as the primary floor-plan view. Saves waiters from guessing which tables need attention.
+
+- [ ] **MEDIUM: Order transfer between waiters** — Add ability to transfer a table's active orders from one waiter to another via admin panel. Essential for shift changes, meal breaks, and when a waiter gets overwhelmed. Store `transferred_from` / `transferred_at` on order records for audit. Activity logging. Simple UI in admin tables section.
 
 ## Done
 
-- [x] **Shift notes on clock-out** — When clocking out, optional textarea for shift notes (e.g., "covered closing duties", "stayed late for deep clean", "short shift — left early with permission"). Stored as `notes` field on shift record. Displayed in timesheet view. Admin can also add notes on individual shifts after the fact. [worker-3 — Clock-out modal with notes textarea, `/api/clock/note` admin endpoint, notes shown in shift entries and pay period breakdown]
-
-- [x] **Admin shift edit / correction with audit trail** — `POST /api/clock/edit` endpoint with full audit trail (edits[] array: edited_by, edited_by_name, edited_at, reason, old→new values). Recalculates duration. ⚠️ Edited badge in Employee Shifts timesheet with click-to-view edit history popup. Activity logging. Permission-gated (view_timesheet). [worker-1]
-
-- [x] **Add auto-table suggestion for waiters** — When a waiter returns to the POS tab, auto-select the table they were last working on (stored per-user in localStorage). Saves 1-2 taps per order cycle, adds up over a shift. [worker-1]
-
-- [x] **Add employee clock-in/clock-out system** — New `/api/clock/in`, `/api/clock/out`, `/api/clock/status`, `/api/admin_shifts`, `/api/export/shifts_csv` endpoints. Punch clock button in POS header (⏰) showing Clock In/Out status with live duration. Shift records in admin Timesheet view with active/completed shift display. Activity logging for all clock events. i18n EN + ES. [worker-3]
-- [x] **Add combo/meal deal builder for fixed-price bundled items** — Create fixed-price combo deals (e.g., "Lunch Special: Burger + Fries + Drink $12.99") as a single orderable item. Admin builder UI to select child items, set combo price, and manage active combos. One-tap add to cart expands child items for kitchen display. Increases average order value. i18n EN + ES. [worker-2]
-- [x] **Add item visibility toggle (hide/show menu items without deleting)** — Active/inactive toggle per item in admin item management. Hidden items remain in database but do not appear in POS item grid, kiosk, or search. Useful for seasonal items, out-of-season ingredients, temporary supplier outages. Visual indicator (eye icon) in management list. i18n EN + ES. [worker-1]
-- [x] **Add service charge / auto-gratuity for large parties** — Configurable auto-gratuity settings (party size threshold, default percentage) in admin. When cart item count reaches threshold, service charge line auto-appears with label and amount. Display on receipt, kiosk, and order history. Permission-gated (manage_items). i18n EN + ES. [worker-3]
-
-- [x] **Add course/meal prep timing (appetizer/main/dessert)** — Allow marking items with course type so kitchen knows preparation order. Items marked as "Appetizer" show with 🥗 flag and suggested 5-min prep target, "Main" normal, "Dessert" 🍰 flagged to prepare after mains. Display course badge on kitchen order cards. [worker-3]
-
-- [x] **Add recent-order quick-access on POS tab** — Show last 5 orders for the logged-in waiter directly on the POS tab (collapsible "Recent Orders" section above item grid). One-tap reload of entire order into cart without navigating to History tab. Saves 3+ taps for frequent reorders. [worker-1]
-
-- [x] **Add item images to grid cards** — Allow attaching image URLs to menu items for visual identification. Display thumbnail images on item grid cards, kitchen tickets, and kiosk mode. Speeds up waiter item location in busy environments. i18n EN + ES. [worker-2]
-
-- [x] **Add customer profile management (name, contact, order history, total spent)** — Currently customer info is limited to phone-based loyalty lookup. Extended customer data model with email, address, notes, total_spent, total_orders, last_visit. New endpoints: `/api/customers/list` (search), `/api/customers/detail` (order history), `/api/customers/update`. Spending auto-tracked on order submission. New admin "👥 Customers" CRM tab with search, sortable table, and full-profile detail overlay. Auto-creates customer records when orders come in with unrecognized phone. [worker-3]
-
-- [x] **Add quick-change cash calculator for cash payments** — When Cash payment method is selected, shows "Amount Tendered" input with auto-calculated change due. Quick preset denomination buttons ($5, $10, $20, $50) fill the tendered amount. Change shown in large green font; negative (still owed) shown in red. i18n EN + ES. Dark theme compatible. Touch-friendly 48px+ targets. [worker-1]
-
-- [x] **Add item modifier support (sizes, options, extras)** — Allow menu items to have variants (small/medium/large), modifiers (extra cheese, no onions), and customizations. Store modifiers in cart items, display on kitchen tickets and receipts. Industry-standard POS feature. Backend: `POST /api/items/modifiers/save` and `POST /api/items/modifiers/get` endpoints, modifier groups stored in items.json. Frontend: modifier selection overlay on item add, modifier badge on item cards, modifier display in cart/kitchen/receipt/order history/kiosk, admin modifier editor UI in item management. i18n EN + ES. [worker-2]
-
-- [x] **Multi-language support** — English + Spanish with browser language detection, language toggle button (globe) in top bar.
-- [x] **Kitchen display queue system** — Full cook view: order queue with claim/complete/cancel, 8s auto-refresh, sound alerts, fullscreen mode, role-based routing (cook role), order status pipeline (pending→preparing→completed/cancelled)
-- [x] **Order notes field** — per-item note input in cart items, per-order notes textarea in cart.
-- [x] **Receipt printing simulation** — print-friendly HTML receipt with thermal printer CSS.
-- [x] **Discount/coupon code system** — percentage and flat discounts with admin management.
-- [x] **Sales tax calculation support** — configurable global, per-category, and per-item tax rates.
-- [x] **Touch-optimized item grid with category tabs**
-- [x] **Most-ordered items analytics endpoint**
-- [x] **Peak hour sales analytics**
-- [x] **Daily revenue tracking**
-- [x] **PWA manifest + service worker for installable app**
-- [x] **Add loyalty points system per customer** — New `loyalty_points.json` data store. `POST /api/loyalty/register`, `/lookup`, `/redeem`, `/confirm_redeem`, `/adjust`, and `GET /api/loyalty/customers` endpoints. Points auto-earned on order submission (1 pt per $1 subtotal). Redeem 100 pts = $5 off, applied as discount in cart. Frontend: customer phone lookup+register in cart area with points display, "Redeem Points" button, ⭐ Loyalty admin tab with customer table and points adjustment. Points earned shown in toast and on receipt. Activity logging. Dark theme compatible. Touch-friendly 44px+ targets. [worker-3]
-- [x] **Admin dashboard with Chart.js analytics**
-- [x] **Add scheduled pricing (happy hour, daily specials)** — Time-based automatic discount rules (happy hour, daily specials). `scheduled_pricing.json` data store. CRUD endpoints with day-of-week + time-window matching. POS item grid shows green sale price with strikethrough original. Admin management tab with rule form (name, type, value, category, item filter, days, time range, toggle/delete). i18n EN + ES. Permission-gated (manage_items). [worker-1]
-- [x] **Fix order history for all users (BUG)** — New `/api/orders/list` endpoint (basic auth only, no `view_stats` required). Frontend `loadOrderHistory()` calls new endpoint instead of `/api/admin_stats`. Waiters with only `pos_access` can now view order history without getting a misleading "Network error". [worker-3]
-- [x] **Add auto-save draft orders to localStorage** — Auto-saves cart state to localStorage on every cart change (`pos_cart_draft` key). On page load, detects unsaved draft and prompts "Restore Draft?" with discard option. Clears draft on successful order submission. Saves: cart items, payment splits, discount, tip, order notes, delivery address, table number, loyalty customer. 24h expiry. i18n EN + ES. [worker-1]
+- [x] **Shift notes on clock-out** — When clocking out, optional textarea for shift notes. Stored as `notes` field on shift record. Displayed in timesheet view. Admin can also add notes. [worker-3]
+- [x] **Admin shift edit / correction with audit trail** — `POST /api/clock/edit` endpoint with full audit trail. [worker-1]
+- [x] **Add auto-table suggestion for waiters** — Auto-select last used table per user in localStorage. [worker-1]
+- [x] **Add employee clock-in/clock-out system** — `/api/clock/in`, `/api/clock/out`, `/api/clock/status`, `/api/admin_shifts`, `/api/export/shifts_csv`. Punch clock button in POS header. Activity logging. i18n EN + ES. [worker-3]
+- [x] **Add combo/meal deal builder** — Fixed-price combo deals. Admin builder UI. One-tap add to cart. i18n EN + ES. [worker-2]
+- [x] **Add item visibility toggle** — Active/inactive toggle per item. Hidden items don't appear in POS/kiosk/search. i18n EN + ES. [worker-1]
+- [x] **Add service charge / auto-gratuity** — Configurable auto-gratuity settings. i18n EN + ES. [worker-3]
+- [x] **Add course/meal prep timing** — Appetizer/main/dessert course badges. [worker-3]
+- [x] **Add recent-order quick-access on POS tab** — Last 5 orders for the waiter on POS tab. [worker-1]
+- [x] **Add item images to grid cards** — Image URLs on items, thumbnails on grid/kitchen/kiosk. [worker-2]
+- [x] **Add customer profile management (CRM)** — Extended customer data, endpoints, admin CRM tab. [worker-3]
+- [x] **Add quick-change cash calculator** — Cash payment amount tendered + auto-change calculation. [worker-1]
+- [x] **Add item modifier support** — Variants, modifiers, customizations with modifier editor. [worker-2]
+- [x] **Multi-language support** — English + Spanish with browser detection, toggle button. [worker-2]
+- [x] **Kitchen display queue system** — Full cook view: claim/complete/cancel, 8s auto-refresh, sound alerts, fullscreen. [worker-3]
+- [x] **Order notes field** — Per-item and per-order notes. [worker-1]
+- [x] **Receipt printing simulation** — Thermal printer CSS. [worker-2]
+- [x] **Discount/coupon code system** — Percentage and flat discounts. [worker-1]
+- [x] **Sales tax calculation support** — Global/per-category/per-item tax rates. [worker-2]
+- [x] **Touch-optimized item grid** — Category tabs, responsive grid. [worker-1]
+- [x] **Most-ordered items analytics** — `/api/analytics/most_ordered`. [worker-3]
+- [x] **Peak hour sales analytics** — `/api/analytics/hourly_sales`. [worker-2]
+- [x] **Daily revenue tracking** — `/api/analytics/daily_revenue`. [worker-1]
+- [x] **PWA manifest + service worker** — Installable app. [worker-3]
+- [x] **Loyalty points system** — Points earning/redeeming per customer. [worker-3]
+- [x] **Admin dashboard with Chart.js analytics** — Charts for daily revenue, payment methods, item trends. [worker-2]
+- [x] **Scheduled pricing (happy hour, daily specials)** — Time-based discount rules. [worker-1]
+- [x] **Fix order history for all users (BUG)** — New `/api/orders/list` endpoint. [worker-3]
+- [x] **Add auto-save draft orders to localStorage** — Cart auto-save with restore prompt on page load. [worker-1]
 
 ## Done (older)
 
 <details>
 <summary>22 completed tasks from earlier development</summary>
 
-- [x] **Add item search/filter in POS item grid** — Real-time search bar that filters menu items by name across all categories. Searches across all categories simultaneously with text highlighting, Escape to clear, auto-focus on tab switch, clears on category tab click. 48px+ touch-friendly input, i18n EN + ES. [worker-2]
-- [x] **Add WebSocket support for real-time updates** — Replace polling (kitchen 8s, customer-display 2s, drive-through 2s) with Flask-SocketIO WebSockets for instant updates. Emits `kitchen_update`, `customer_update`, `drivethrough_update` events from order/display endpoints. Frontend falls back to polling if WebSocket fails. [worker-1]
-- [x] **Add delivery address management** — Delivery address form (street, city, state, zip, instructions) toggleable in cart. Address stored per-order, shown on receipt and in order history. Saved addresses API for future reuse. i18n EN + ES. Touch-friendly 44px+ targets. [worker-3]
-- [x] **Add customer-facing display mode (second screen showing order summary)** — New `/customer-display` page with large-print order summary view. Live 2s polling from `/api/customer-display/status`. Toggle button in POS cart area pushes cart items, subtotal, tax, tip, and total to display state. Shows idle/welcome screen when no order, building screen with item list during order, and thank-you screen on order submit. Dark theme (#1a1a2e bg, #e94560 accent, #16213e cards). Backend endpoints: update/status/complete/reset. Auto-resets on cart clear. [worker-1]
-- [x] **Add dark/light theme toggle with persistence** — CSS variables for theming (light theme overrides `.light-theme` class on `<html>`), localStorage persistence (`pos_theme` key), theme toggle button in top bar, meta theme-color update, dark/light switch for all major UI elements with `--border`, `--hover`, `--card-alt` variables. Touch-friendly. [worker-2]
-- [x] **Fix verify_admin blocking owners from tax/discount endpoints** — Replaced `verify_admin()` (which only checks role=='admin') with `check_perm(admin_pin, "manage_items")` in both `update_tax_config()` and `manage_discount()` endpoints. Owners with wildcard permissions can now manage tax config and discounts. [worker-2]
-- [x] **Fix menu history frontend parsing** — Changed frontend from `data.history` to `data.backups` to match API response. Fixes TypeError when owner opens Menu History tab. [worker-3]
-- [x] **Add quick-order favorites per user (save frequently ordered combos)** — New `favorites.json` data store. `POST /api/favorites/save`, `/api/favorites/list`, `/api/favorites/delete` endpoints. Frontend: "Save as Favorite" and "My Favorites" buttons in cart area, favorites overlay with load/delete, cart replace-or-merge on load, 20-favorite limit, duplicate name check, activity logging. i18n EN + ES. [worker-1]
-- [x] **Add item popularity trend chart (which items rising/falling)** — New `/api/analytics/item_trends` endpoint comparing recent 7d vs prior 7d item counts with % change, direction (rising/falling/stable), and sorting. Frontend: horizontal bar chart in Charts section with green/red/gray bars, tooltip showing counts and delta. i18n EN + ES. [worker-3]
-- [x] **Add offline order queuing (sync when connection restores)** — `/api/health` GET for connectivity check, `/api/sync_orders` POST for batch submission of queued orders. Frontend: localStorage queue on network error, auto-sync on reconnect + 30s interval, offline badge indicator with count, receipt shows queued status. i18n EN + ES. [worker-3]
-- [x] **Refund/void order functionality with reason tracking** — POST /api/orders/refund endpoint marks orders as refunded with reason, timestamp, and staff ID. Double-refund prevention. Refund audit trail in refunded_orders.json. Activity log integration. Frontend: refund button (with manage_orders permission) in order history, refund dialog with reason textarea, REFUNDED badge and reason on refunded orders. Stats exclude refunded orders from revenue. i18n English + Spanish. [worker-1]
-- [x] **Table tab management** — Checkout/close tab endpoint (POST /api/tables/tab/<table_number>/checkout) marks all active orders as paid in one action. Tab history endpoint (GET /api/tables/tab/<table_number>/history) shows completed orders per table with total revenue. Frontend: "Close Tab & Checkout" button in tab overlay with payment method/tip/notes dialog, "📋 History" button per table in admin panel, tab history overlay with order details, and "➕ Add Items" quick-add button that auto-selects table in POS. [worker-3]
-- [x] **Add inventory tracking** — Separate inventory.json tracked per item name. Stock decremented on order submission. Low-stock alerts (stock <= threshold) and out-of-stock detection. Admin inventory management UI with per-item stock/threshold editing and bulk init. Stock level badges on POS item cards (colored: green/ok, yellow/low, red/out). Out-of-stock items disabled with visual indicator. Low-stock toast warnings on order submit. Auto-creates inventory entries for new menu items. [worker-1]
-- [x] **Add split-payment support** — Support multiple payment methods per order (Cash/Card/Mobile Pay). Toggle payment method buttons with individual amount inputs. Split Evenly button. Validation ensures splits equal total. Payment breakdown stored in `payment_splits` array. Displayed on receipt, order history, kitchen display, and kiosk mode. Backward-compatible with legacy single-payment orders. [worker-3]
-- [x] **Add tip calculation UI** — Percentage buttons (No tip/15%/18%/20%/Custom) in main POS cart tip row. Tip calculated on subtotal, shown in cart total, submitted with order, displayed on receipt and order history. [worker-2]
-- [x] **Add employee performance dashboard** — New `/api/employee_performance` endpoint with date range filtering, per-employee metrics (orders count, revenue, avg order value, tips, items sold). Frontend: admin sub-tab with summary cards and sortable table, i18n EN/ES, permission-gated (view_stats). [worker-2]
-- [x] **Add waste tracking (items thrown away, reason)** — New `waste_log.json` data store. `POST /api/waste/log` endpoint logs waste entries with item, quantity, reason (spoiled/expired, burned, spilled, damaged, overproduced, other), notes, estimated cost (based on item price). `POST /api/waste` endpoint retrieves log with date filtering. `POST /api/waste/summary` endpoint provides aggregated waste stats (total entries, items, cost, breakdown by reason, top items). Frontend: Admin Waste tab with log form (item dropdown, qty, reason, notes), summary cards, date-filtered log table with reason badges, i18n EN + ES. Activity logging. Permission-gated (manage_items for logging, view_stats for viewing). Dark theme compatible. [worker-2]
-- [x] **Kitchen queue audit & optimize** — Prominent color-coded order age (warning at 5m, critical at 10m+ with pulsing animation), 🚨 PRIORITY badge for orders >10min, quick-claim by tapping entire card body, enhanced 3-note square wave alarm sound, fixed stats endpoint keys (pending/preparing/done_today), 1s clock update, 10s age recheck interval. [worker-1]
-- [x] **Table management system** — Admin assigns tablets to tables by table number. Orders tagged with table number. Running tab tracking per table. Table management in admin panel with tab view modal. Table number selector in cart. [worker-3]
-- [x] **Drive-through order display** — Drive-through tablet/TV view at `/drivethrough`. Shows live cart building with 2s polling, large high-contrast text for outdoor visibility. Cashier toggles "Drive-Through" mode in POS to push cart state live. Shows items, running total, tax. "Please Pull Forward" screen when order submitted. High-contrast dark theme (#0a0a1a bg, #ff3366 accent, #00cc66 success).
-- [x] **Granular role/permission system** — Three-tier roles (owner/admin/user/cook) with 10 granular permissions. Owner has ["*"] wildcard, can grant/revoke specific perms per admin. Ban/unban users with reason tracking. Permission-aware UI hides unauthorized sections.
-- [x] **Menu version history with restore** — Every menu change auto-saves timestamped backup to menu_backups/. Owner browses backup dates, restores any day's menu with safety backup of current state. Keep last 30 backups.
+- [x] **Add item search/filter in POS item grid** — Real-time search bar. i18n EN + ES. [worker-2]
+- [x] **Add WebSocket support for real-time updates** — Flask-SocketIO with polling fallback. [worker-1]
+- [x] **Add delivery address management** — Delivery form, saved addresses API. i18n EN + ES. [worker-3]
+- [x] **Add customer-facing display mode** — `/customer-display` page with large-print order summary. [worker-1]
+- [x] **Add dark/light theme toggle** — CSS variables, localStorage persistence, toggle button. [worker-2]
+- [x] **Fix verify_admin blocking owners from tax/discount endpoints** — Replaced `verify_admin()` with `check_perm()`. [worker-2]
+- [x] **Fix menu history frontend parsing** — Changed `data.history` to `data.backups`. [worker-3]
+- [x] **Add quick-order favorites per user** — `favorites.json` data store with save/list/delete. [worker-1]
+- [x] **Add item popularity trend chart** — `/api/analytics/item_trends` comparing 7d vs prior 7d. [worker-3]
+- [x] **Add offline order queuing** — `/api/health` + `/api/sync_orders`, localStorage queue, auto-sync. [worker-3]
+- [x] **Refund/void order functionality** — POST /api/orders/refund with reason tracking. [worker-1]
+- [x] **Table tab management** — Checkout/close tab, tab history, quick-add. [worker-3]
+- [x] **Add inventory tracking** — Stock levels decremented on order, low-stock alerts. [worker-1]
+- [x] **Add split-payment support** — Multiple payment methods per order. [worker-3]
+- [x] **Add tip calculation UI** — Percentage buttons in POS cart. [worker-2]
+- [x] **Add employee performance dashboard** — Per-employee metrics with date filtering. [worker-2]
+- [x] **Add waste tracking** — Waste log with reason, estimated cost. [worker-2]
+- [x] **Kitchen queue audit & optimize** — Color-coded age, priority badge, quick-claim, alarm sound. [worker-1]
+- [x] **Table management system** — Admin assigns tablets to tables, running tabs. [worker-3]
+- [x] **Drive-through order display** — Drive-through TV view at `/drivethrough`. [worker-1]
+- [x] **Granular role/permission system** — Three-tier roles with 10 granular permissions. [worker-2]
+- [x] **Menu version history with restore** — Auto-backup, owner restores any day's menu. [worker-3]
 
 </details>
