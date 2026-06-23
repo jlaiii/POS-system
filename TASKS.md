@@ -451,7 +451,7 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 
 - [x] worker-2 **Orientation handling (portrait + landscape)** — Restaurant tablets get mounted in both orientations (landscape on counter stands, portrait when handheld). Added `@media (orientation: portrait)` and `@media (orientation: landscape)` with view-optimized rules. Landscape: compact kitchen header/stats/cards, 3-column kitchen queue at 1200px+, up to 6-column item grid at 1600px+, cart sidebar. Portrait: cart bottom sheet (35vh), stacked filters/forms, full-width modals, compact kitchen cards. Also added <400px and <640px height breakpoints for very small screens. [worker-2]
 
-- [ ] **Fast tap response (no 300ms delay)** — Mobile browsers add a 300ms delay to distinguish tap from double-tap. This makes the POS feel sluggish. Fix with: `touch-action: manipulation` on all interactive elements, or use a fastclick polyfill. The difference between "instant" and "300ms delay" is the difference between "professional POS" and "janky web app."
+- [~] worker-1 **Fast tap response (no 300ms delay)** — Mobile browsers add a 300ms delay to distinguish tap from double-tap. This makes the POS feel sluggish. Fix with: `touch-action: manipulation` on all interactive elements, or use a fastclick polyfill. The difference between "instant" and "300ms delay" is the difference between "professional POS" and "janky web app."
 
 ### Priority: HIGH — Real-World Workflow Gaps
 
