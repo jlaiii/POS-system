@@ -208,7 +208,7 @@ Use Python `pyotp` (pure Python, no C extensions, `pip install pyotp qrcode`):
 
 - [x] worker-3 **Login session management** — Track active sessions per user. Show "Active Sessions" in Security settings: list of devices/locations logged in, with "Log Out Everywhere" button. Sessions stored in memory with a session token + expiry (default 8h active, 24h idle). On PIN change: optionally "Log out all other sessions." [worker-3 — Added active_user_sessions in-memory store with session tokens. All 4 login paths (PIN, password, temp PIN, 2FA) now generate tokens. New endpoints: POST /api/sessions (list), POST /api/sessions/logout, POST /api/sessions/logout_all. Session expiry: 8h active since login, 24h idle since last_active. Periodic session touch via frontend (every 5min). Security dashboard now uses real session data. PIN change modal has "Log out all other sessions" checkbox. i18n EN+ES.]
 
-- [ ] **User account history timeline** — Per-user timeline in User Management: PIN changes, 2FA setup/disable, login successes/failures, lockouts, temp PIN usage, permission changes. Chronological, filterable. Gives owner full visibility into account activity. "Carlos's PIN was reset 3 times this month — is someone messing with him or does he keep forgetting?"
+- [~] worker-2 **User account history timeline** — Per-user timeline in User Management: PIN changes, 2FA setup/disable, login successes/failures, lockouts, temp PIN usage, permission changes. Chronological, filterable. Gives owner full visibility into account activity. "Carlos's PIN was reset 3 times this month — is someone messing with him or does he keep forgetting?"
 
 ### Priority: LOW
 
