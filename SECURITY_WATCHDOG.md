@@ -1,20 +1,21 @@
 # POS Security Watchdog
 
-|> Last run: 2026-06-23T12:52:03 UTC
-|> Total events tracked: 3 (2 unresolved)
-|> Active blocks: 0 IPs
-|> Unresolved alerts: 2
+>| Last run: 2026-06-23T13:36:14 UTC
+>| Total events tracked: 4 (2 unresolved, 1 new LOW)
+>| Active blocks: 0 IPs
+>| Unresolved alerts: 2 (SEC-001, SEC-003), 1 new LOW (SEC-004)
 
 ## Current Run Findings
-- [INFO] **Clean window (12:15-12:52 UTC)** — 0 failed logins, 0 brute force patterns, 0 unusual logins.
+- [INFO] **Window 13:09-13:36 UTC** — 4 new activity log entries (155 total). login_attempts.json still empty.
+- [LOW] **SEC-004: Order submitted with null user_id** — Order 9 placed at 13:28:53 with `user_id: null` (item: "Test Burger" $9.99, cash). Immediately refunded (13:29:02) by Owner (1111) with reason "No reason provided". Either a code bug (unauthenticated order submission) or Owner test. Flagging as LOW — no harm done but the null user path should be reviewed.
+- [LOW] **Shift data loss** — Owner clock-in (13:29:18) and clock-out (13:29:22) recorded in activity_log but NOT captured in shift_log.json. All previous 0-duration test shifts ARE present in shift_log. This mirrors SEC-003 pattern (save_json_data race condition). Shift appears lost.
 - [INFO] **login_attempts.json still empty** — Endpoints not populating this file. Known issue, unchanged.
-- [INFO] **4 new activity log entries** — Owner logins at 12:22 (admin_login x2, PIN login), failed add_user at 12:48.
-- [INFO] **Flask app is UP** — Running (PID 68345, port 5000). Restarted since last run.
-- [INFO] **Failed add_user attempt at 12:48:37** — Unauthorized attempt to create user 8888 rejected with "Insufficient permissions". Initiating user not tracked in activity log (logging gap — no `initiated_by` field). Permissions system correctly blocked it. LOW — no action needed.
+- [INFO] **Flask app is UP** — Running (PID 68345, port 5000). Held steady.
+- [INFO] **Login security** — 0 failed logins detected. No IP data available (known_ips.json still empty). No brute force patterns possible to detect.
+- [INFO] **Config files** — security_config.json unchanged. timesheet_config.json mtime updated at 12:50 (content unchanged — likely touch by worker). Blocked_ips empty.
 - [INFO] **File integrity clean** — All JSON files parseable. No unexpected .php/.sh/.exe files.
-- [INFO] **timesheet_config.json reverted** — `use_database: false` key reappeared after being removed earlier. Minor config change by another worker/Owner. Not suspicious.
-- [INFO] **inventory.json updated** — All items at stock=0. Routine data change. Not suspicious.
 - [INFO] **SEC-001/SEC-003 unchanged** — Owner 2FA still not persisted. Activity log gap still present.
+- [INFO] **Reliability Bot** ran at 13:28 UTC — all systems healthy (55 checks passed). Git: 07aad8b.
 
 ## Active Blocks
 None.
@@ -33,17 +34,18 @@ None.
 - SEC-002: [LOW] Employee One (1234) 2FA lockout resolved — 2FA re-setup successfully by Owner at 07:59:32.
 
 ## System State
-- **Current time**: 2026-06-23T12:52:03 UTC — daytime, outside off-hours window (anomaly hours: 22:00-06:00)
-- **Activity log**: 151 entries (1710 lines), entries up to 12:48:37. Gap persists from 08:06:33 to 10:48:23 (entries 09:07-09:45 still missing).
-- **Failed logins in window (37min)**: 0 failed logins, 0 clock_in_failed. No rate limiting active.
-- **Flask app**: UP — running (PID 68345, port 5000). Restarted since last run.
-- **Orders**: orders.json empty (all cleared). No new orders this window.
-- **Users**: 6 users (1111 Owner, 1234 Employee One, 5678 Employee Two, 2222 Manager, 123456 Carlos, 9999 Test2FA). None banned. Employee One 2FA working. Owner 2FA broken (SEC-001). Test2FA has 2FA enabled.
-- **Known IPs**: Still empty — no remote_addr logging in activity log (only "ip" field for localhost)
-- **Blocked IPs**: 0 (empty blocklist in security_config.json)
-- **Config changes**: `timesheet_config.json` — `use_database: false` reappeared (was removed earlier). `security_config.json` unchanged.
-- **File integrity**: All JSON files parseable. No unexpected files. No new .php/.sh/.exe files.
+- **Current time**: 2026-06-23T13:36:14 UTC — daytime, outside off-hours window (anomaly hours: 22:00-06:00)
+- **Activity log**: 155 entries (1764 lines), entries up to 13:29:22. Gap persists from 08:06:33 to 10:48:23 (entries 09:07-09:45 still missing — SEC-003).
+- **New entries this window**: submit_order(user_id=null, order 9, $10.79) → refund_order(Owner, order 9) → clock_in(Owner)→ clock_out(Owner, 4 sec). Order 9 refunded immediately with "No reason provided".
+- **Failed logins in window (27min)**: 0 failed logins detected. login_attempts.json still empty. No brute force monitoring possible.
+- **Flask app**: UP — running (PID 68345, port 5000). Held steady.
+- **Orders**: orders.json empty (all cleared). refunded_orders.json has 2 entries (orders 6, 9).
+- **Users**: 6 users. Owner 2FA still broken (SEC-001). Employee One 2FA OK. Test2FA 2FA OK.
+- **Known IPs**: Still empty — no remote_addr logging in activity log
+- **Blocked IPs**: 0 (empty blocklist)
+- **Config changes**: security_config.json unchanged. timesheet_config.json touched at 12:50 (content same).
+- **File integrity**: All JSON files parseable. No unexpected .php/.sh/.exe files.
 - **login_attempts.json**: Still empty — not being populated by login endpoints
-- **Shift log**: No new shifts this window. Last shift: Owner clock in/out at 11:42 (test).
-- **Notable**: Failed add_user for PIN 8888 at 12:48:37 — blocked by permissions. Initiation source not logged.
-- **Security events**: SEC-001 (MEDIUM, unresolved - Owner 2FA), SEC-002 (LOW, resolved - Employee One lockout), SEC-003 (MEDIUM, unresolved - activity log gap)
+- **Shift log**: 8 entries. Newest: Owner at 11:42. The 13:29 Owner shift LOST (not in file).
+- **Notable**: Owner appears to be testing (Test Burger order, immediate refund, rapid clock in/out). Reliability Bot ran at 13:28 — all healthy.
+- **Security events**: SEC-001 (MEDIUM, unresolved - Owner 2FA), SEC-002 (LOW, resolved - Employee One lockout), SEC-003 (MEDIUM, unresolved - activity log gap), SEC-004 (LOW, new - null user_id order)
