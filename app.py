@@ -2662,6 +2662,7 @@ def sync_orders():
             'payment_splits': payment_splits if payment_splits else None,
             'items': items,
             'subtotal': round(subtotal, 2),
+            'customer_email': order_data.get('customer_email', ''),
             'tax_amount': round(tax_amount, 2),
             'tip_amount': round(tip_amount, 2),
             'service_charge_amount': round(service_charge_amount, 2),
@@ -2690,13 +2691,62 @@ def sync_orders():
             'item_count': len(items)
         })
 
-        # Decrement inventory
+        # Decrement inventory (with combo child_items support)
         for item in items:
+            if item.get('is_combo') and item.get('child_items'):
+                for ci in item['child_items']:
+                    ci_name = ci.get('name', '')
+                    ci_qty = int(ci.get('qty', 1)) * int(item.get('qty', 1))
+                    if ci_name in inventory:
+                        current_stock = inventory[ci_name].get('stock', 0)
+                        inventory[ci_name]['stock'] = max(0, current_stock - ci_qty)
+                continue
             item_name = item.get('name', '')
             qty = int(item.get('qty', 1))
             if item_name in inventory:
                 current_stock = inventory[item_name].get('stock', 0)
                 inventory[item_name]['stock'] = max(0, current_stock - qty)
+
+        # Award loyalty points if customer phone provided
+        customer_phone = order_data.get('customer_phone', '').strip()
+        if customer_phone:
+            loyalty_data = load_json_data(LOYALTY_FILE)
+            if customer_phone not in loyalty_data:
+                loyalty_data[customer_phone] = {
+                    'phone': customer_phone,
+                    'name': customer_phone,
+                    'email': '',
+                    'notes': '',
+                    'address': '',
+                    'points': 0,
+                    'total_earned': 0,
+                    'total_redeemed': 0,
+                    'total_spent': 0.0,
+                    'total_orders': 0,
+                    'last_visit': '',
+                    'created_at': datetime.now().isoformat(),
+                    'history': []
+                }
+            earned = max(1, int(subtotal * LOYALTY_POINTS_PER_DOLLAR))
+            loyalty_data[customer_phone]['points'] += earned
+            loyalty_data[customer_phone]['total_earned'] += earned
+            loyalty_data[customer_phone]['history'].append({
+                'type': 'earned',
+                'points': earned,
+                'order_id': order_id,
+                'subtotal': round(subtotal, 2),
+                'date': datetime.now().isoformat()
+            })
+            loyalty_data[customer_phone]['total_spent'] = round(loyalty_data[customer_phone].get('total_spent', 0) + subtotal, 2)
+            loyalty_data[customer_phone]['total_orders'] = loyalty_data[customer_phone].get('total_orders', 0) + 1
+            loyalty_data[customer_phone]['last_visit'] = datetime.now().isoformat()
+            save_json_data(LOYALTY_FILE, loyalty_data)
+            log_activity('loyalty_earn', order_data.get('user', 'unknown'), 'user', {
+                'customer_phone': customer_phone,
+                'points_earned': earned,
+                'order_id': order_id,
+                'source': 'sync_orders'
+            })
 
         results.append({
             'local_id': local_id,

@@ -469,7 +469,7 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 
 |- [x] worker-3 **Concurrent use testing** — Implemented stale-cart detection for table orders: backend `submit_order()` checks `composed_since` timestamp against existing orders for same table, returns 409 with conflict details if newer orders exist. Frontend shows modal with "Submit Anyway" (bypass with resubmit without composed_since) and "Refresh Cart" (clears cart for re-compose). Threading lock (`clock_lock`) added for atomic check-and-set on clock-in/out to prevent double clock-in race conditions. Rate-limit clearing preserved. Item editing concurrency noted as needing version-tracking (too complex for single tick). [worker-3]
 
-- [~] worker-2 **Offline → online recovery flow** — Turn off WiFi → ring up orders (offline queue) → turn WiFi back on. Verify: queued orders appear in correct order, payment splits preserved, tips preserved, table numbers preserved. Verify the offline badge showed during offline, synced badge showed during sync, clear badge after sync. Test with 10+ queued orders (not just 1-2).
+|- [x] worker-2 **Offline → online recovery flow** — Tested and fixed `/api/sync_orders`: added missing `customer_email` field, combo child_items inventory decrement, and loyalty points awarding. Frontend: added `customer_phone` to offline queued receiptData for loyalty on sync. Verified 10+ orders, payment splits, tips, table numbers, dedup, and error handling all work. [worker-2 — Added customer_email to order_details, combo child_items inventory handling, loyalty points in sync_orders; frontend saves customer_phone in offline queue]
 
 ### Priority: MEDIUM — Missing Production Features
 

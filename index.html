@@ -6721,6 +6721,7 @@ async function submitOrder() {
   if (c.note) receiptData.item_notes[i] = c.note;
   });
   receiptData.delivery_address = getDeliveryAddress();
+  receiptData.customer_phone = document.getElementById('loyaltyPhone') ? document.getElementById('loyaltyPhone').value.trim() : (loyaltyCustomerPhone || '');
   // Include table number if selected
   const selectedTable = document.getElementById('tableSelect') ? document.getElementById('tableSelect').value : '';
   if (selectedTable) receiptData.table_number = parseInt(selectedTable);
