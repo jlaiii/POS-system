@@ -447,7 +447,7 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 
 - [x] worker-2 **Scrollable areas with momentum scrolling** — All scrollable containers (item grid, order history, timesheet list, admin sections) must have `-webkit-overflow-scrolling: touch` and smooth momentum scrolling. Test on actual iPad — default scrolling is janky and feels broken. Add `overscroll-behavior: contain` to prevent page bounce when scrolling modals.
 
-- [ ] **Form input optimization for tablets** — All number inputs should use `inputmode="numeric" pattern="[0-9]*"` to trigger the numeric keypad (not full keyboard) on tablets. PIN entry: `inputmode="numeric"` + `autocomplete="off"`. Quantity inputs: `type="number"` with min/max. Date inputs: native `<input type="date">` which renders as a touch-friendly date picker on tablets.
+- [~] worker-3 **Form input optimization for tablets** — All number inputs should use `inputmode="numeric" pattern="[0-9]*"` to trigger the numeric keypad (not full keyboard) on tablets. PIN entry: `inputmode="numeric"` + `autocomplete="off"`. Quantity inputs: `type="number"` with min/max. Date inputs: native `<input type="date">` which renders as a touch-friendly date picker on tablets.
 
 - [ ] **Orientation handling (portrait + landscape)** — Restaurant tablets get mounted in both orientations (landscape on counter stands, portrait when handheld). Test every view in both orientations. Ensure the POS item grid, kitchen display, and admin panels don't break or have hidden content. Use CSS media queries: `@media (orientation: portrait)` and `@media (orientation: landscape)`. Kitchen display especially — landscape is standard for wall-mounted screens.
 
