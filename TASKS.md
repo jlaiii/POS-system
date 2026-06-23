@@ -345,7 +345,7 @@ New `tickets.json` data store. Each ticket:
 
 - [x] worker-3 **Current pay period live tracker** — Pay rate stat card, auto-refresh every 60s with 🟢 Live badge, rate displayed in stat card. [worker-3]
 
-- [ ] **Downloadable pay stub (PDF)** — "Download Pay Stub" button per pay period. Generates clean PDF with employee name, pay period dates, itemized shift list, total hours, pay rate, gross pay, YTD totals.
+- [~] worker-1 **Downloadable pay stub (PDF)** — "Download Pay Stub" button per pay period. Generates clean PDF with employee name, pay period dates, itemized shift list, total hours, pay rate, gross pay, YTD totals.
 
 - [ ] **Pay history CSV export** — "Export My Pay History" button at bottom of Pay History.
 
