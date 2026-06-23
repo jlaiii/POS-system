@@ -1308,6 +1308,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
               <input type="text" id="addUserId" placeholder="4-digit PIN" maxlength="4" inputmode="numeric" pattern="[0-9]{4}"/>
               <input type="text" id="addUserName" placeholder="User name"/>
               <select id="addUserRole"><option value="user">User</option><option value="admin">Admin</option><option value="cook">Cook</option><option value="owner">Owner</option></select>
+              <input type="number" id="addUserPayRate" placeholder="Pay rate ($/hr)" step="0.25" min="0" style="max-width:140px;"/>
               <button class="accent" onclick="addUser()">Add</button>
             </div>
           </div>
@@ -6273,9 +6274,11 @@ async function loadUsers() {
           banBtn = `<button class="danger" onclick="banUser('${escJs(id)}')" style="font-size:13px;padding:6px 12px;min-height:36px;">${t('ban')}</button>`;
         }
       }
+      const payRate = u.pay_rate ? '$' + parseFloat(u.pay_rate).toFixed(2) + '/hr' : '<span style="color:var(--text2);font-style:italic;">No rate set</span>';
       return `<div class="user-entry">
-        <div class="ue-info"><strong>${escHtml(u.name)}</strong> — ID: ${escHtml(id)} <span class="ue-role">(${u.role})</span>${u.banned ? ' <span style="color:#e74c3c;font-weight:700;">🚫 Banned</span>' : ''}</div>
+        <div class="ue-info"><strong>${escHtml(u.name)}</strong> — ID: ${escHtml(id)} <span class="ue-role">(${u.role})</span>${u.banned ? ' <span style="color:#e74c3c;font-weight:700;">🚫 Banned</span>' : ''}<br><span style="font-size:13px;color:var(--text2);">💰 Pay rate: <span id="prDisplay_${escJs(id)}">${payRate}</span></span></div>
         <div style="display:flex;gap:6px;align-items:center;">
+          <button class="outline" onclick="editPayRate('${escJs(id)}')" style="font-size:12px;padding:4px 10px;min-height:36px;" title="Edit pay rate">💰 Edit Rate</button>
           ${banBtn}
           <button class="danger" onclick="deleteUser('${escJs(id)}')" style="font-size:13px;padding:6px 12px;min-height:36px;">🗑️ Delete</button>
         </div>
@@ -6312,22 +6315,56 @@ async function unbanUser(userId) {
   } catch(e) { showToast('Network error', 'danger'); }
 }
 
+async function editPayRate(userId) {
+  const currentRate = document.getElementById('prDisplay_' + userId);
+  const currentText = currentRate ? currentRate.textContent.trim() : '';
+  const currentVal = currentText.includes('$') ? parseFloat(currentText.replace('$/hr', '').replace('$', '').trim()) : 0;
+  const newRate = prompt('Enter new pay rate ($/hr) for user ' + userId + ':', currentVal > 0 ? currentVal.toFixed(2) : '');
+  if (newRate === null) return; // cancelled
+  if (newRate.trim() === '') {
+    // Clear the rate
+    if (!confirm('Clear pay rate for this user?')) return;
+  }
+  try {
+    const body = { adminPin: currentUser.id, userId };
+    if (newRate.trim() !== '') {
+      const val = parseFloat(newRate);
+      if (isNaN(val) || val < 0) { showToast('Invalid pay rate. Must be a positive number.', 'danger'); return; }
+      body.payRate = val;
+    } else {
+      body.payRate = null;
+    }
+    const r = await fetch(BACKEND_URL + '/api/users/update_pay_rate', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const d = await r.json();
+    if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
+    showToast('Pay rate updated!', 'success');
+    loadUsers();
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
+}
+
 async function addUser() {
   const userId = document.getElementById('addUserId').value.trim();
   const userName = document.getElementById('addUserName').value.trim();
   const userRole = document.getElementById('addUserRole').value;
+  const payRate = document.getElementById('addUserPayRate').value.trim();
   if (!userId || !userName) { showToast('Fill all fields', 'danger'); return; }
   if (userId.length !== 4 || !/^\d{4}$/.test(userId)) { showToast('PIN must be 4 digits', 'danger'); return; }
   try {
+    const body = { adminPin: currentUser.id, userId, userName, userRole };
+    if (payRate) body.payRate = parseFloat(payRate);
     const r = await fetch(BACKEND_URL + '/api/add_user', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adminPin: currentUser.id, userId, userName, userRole })
+      body: JSON.stringify(body)
     });
     const d = await r.json();
     if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
     showToast('User added!', 'success');
     document.getElementById('addUserId').value = '';
     document.getElementById('addUserName').value = '';
+    document.getElementById('addUserPayRate').value = '';
     loadUsers();
   } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }

@@ -61,8 +61,6 @@
 
 - [x] worker-2 **Break tracking (unpaid meal breaks)** — New "Start Break" / "End Break" option on clock button. Break time subtracted from total paid hours. Stored as `breaks: [{start, end, duration_minutes}]` array on shift record. Break duration visible in timesheet view. Total paid hours = `duration_hours - break_hours`. [worker-2 — New `/api/clock/break` endpoint, break button in header, break info in timesheet/pay-period views, paid hours in CSV exports]
 
-- [~] worker-1 **Per-user pay rate field** — Add `pay_rate` (hourly, float) to user profile in `users.json`. Shown in user management. Timesheet summary multiplies `total_hours × pay_rate` for estimated gross pay per period. Displayed in pay period summary. CSV export includes `Pay Rate`, `Estimated Pay` columns. Rate changes don't retroactively apply — use rate at time of export.
-
 ### Scheduled Shifts & Lateness Tracking (NEW — June 2026)
 
 > Currently there is no concept of when an employee is *supposed* to start. Clock-in just records the actual time. The owner/admin needs to see who's late, how late, and be able to flag/excuse lateness. They also need to fix clock-in/out times when employees forget (system error, forgot to clock out, clocked in under wrong PIN, etc.).
@@ -296,6 +294,7 @@ New `tickets.json` data store. Each ticket:
 - [x] **Scheduled pricing (happy hour, daily specials)** — Time-based discount rules. [worker-1]
 - [x] **Fix order history for all users (BUG)** — New `/api/orders/list` endpoint. [worker-3]
 - [x] **Add auto-save draft orders to localStorage** — Cart auto-save with restore prompt on page load. [worker-1]
+- [x] **Per-user pay rate field** — Add `pay_rate` (hourly, float) to user profile. Shown in user management, timesheet/pay-period summary, and CSV/PDF exports. [worker-1]
 
 ## Done (older)
 

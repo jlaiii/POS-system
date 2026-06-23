@@ -76,6 +76,9 @@ def upgrade_user(user_data):
         user_data['permissions'] = list(DEFAULT_USER_PERMISSIONS)
     elif role == 'cook' and 'permissions' not in user_data:
         user_data['permissions'] = list(DEFAULT_COOK_PERMISSIONS)
+    # Ensure pay_rate field exists
+    if 'pay_rate' not in user_data:
+        user_data['pay_rate'] = None
     return user_data
 
 
@@ -420,7 +423,8 @@ def get_users():
             'role': user_data['role'],
             'permissions': user_data.get('permissions', []),
             'banned': user_data.get('banned', False),
-            'banned_reason': user_data.get('banned_reason', '')
+            'banned_reason': user_data.get('banned_reason', ''),
+            'pay_rate': user_data.get('pay_rate', None)
         }
     return jsonify(display_users)
 
@@ -591,6 +595,16 @@ def add_user():
     else:  # user
         new_user_data['permissions'] = list(DEFAULT_USER_PERMISSIONS)
 
+    # Store pay_rate if provided
+    pay_rate = data.get('payRate')
+    if pay_rate is not None:
+        try:
+            new_user_data['pay_rate'] = float(pay_rate)
+        except (ValueError, TypeError):
+            new_user_data['pay_rate'] = None
+    else:
+        new_user_data['pay_rate'] = None
+
     users[new_user_id] = new_user_data
     save_json_data(USERS_FILE, users)
     log_activity('add_user', admin_pin, admin_user['role'] if admin_user else 'unknown',
@@ -632,6 +646,54 @@ def delete_user():
     log_activity('delete_user', admin_pin, admin_user['role'] if admin_user else 'unknown',
                  {'status': 'success', 'deleted_user_id': user_id_to_delete, 'deleted_user_name': deleted_user_info['name'], 'deleted_user_role': deleted_user_info['role']})
     return jsonify({'message': 'User deleted successfully', 'userId': user_id_to_delete})
+
+
+@app.route('/api/users/update_pay_rate', methods=['POST'])
+def update_user_pay_rate():
+    """Update pay_rate for an existing user."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+    user_id = data.get('userId')
+    pay_rate = data.get('payRate')
+
+    # Verify caller has manage_users permission
+    if not check_perm(admin_pin, "manage_users"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    if not user_id:
+        return jsonify({'message': 'User ID is required.'}), 400
+
+    users = load_json_data(USERS_FILE)
+
+    if user_id not in users:
+        return jsonify({'message': 'User not found.'}), 404
+
+    admin_user = users.get(admin_pin, {})
+
+    # Store the old value for audit
+    old_pay_rate = users[user_id].get('pay_rate', None)
+
+    # Update pay_rate
+    if pay_rate is not None:
+        try:
+            users[user_id]['pay_rate'] = float(pay_rate)
+        except (ValueError, TypeError):
+            return jsonify({'message': 'Pay rate must be a number.'}), 400
+    else:
+        users[user_id]['pay_rate'] = None
+
+    save_json_data(USERS_FILE, users)
+
+    log_activity('update_pay_rate', admin_pin, admin_user.get('role', 'unknown'),
+                 {'status': 'success', 'target_user_id': user_id,
+                  'old_pay_rate': old_pay_rate, 'new_pay_rate': users[user_id]['pay_rate'],
+                  'user_name': users[user_id].get('name', 'Unknown')})
+
+    return jsonify({
+        'message': 'Pay rate updated successfully.',
+        'user_id': user_id,
+        'pay_rate': users[user_id]['pay_rate']
+    })
 
 
 # --- Item Management Endpoints ---
