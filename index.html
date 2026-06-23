@@ -1526,7 +1526,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
         <!-- Timesheet -->
         <div id="secTimesheet" class="admin-section">
           <h3 style="margin:0 0 12px 0;">⏱️ Timesheet</h3>
-          <!-- Timesheet Config Card -->
+          <!-- Timesheet Config Card (collapsible) -->
           <div class="card" style="margin-bottom:12px;padding:12px 14px;" id="timesheetConfigCard">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
               <h4 style="margin:0;font-size:14px;color:var(--accent);">⚙️ Timesheet Config</h4>
@@ -1552,107 +1552,79 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
               </div>
             </div>
           </div>
-          <!-- Sub-tab navigation -->
-          <div class="timesheet-subtabs" style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;border-bottom:2px solid var(--border);padding-bottom:8px;">
-            <button class="timesheet-subtab active" data-subtab="timesheet-logins" onclick="switchTimesheetSubTab('timesheet-logins')">📋 Admin Logins</button>
-            <button class="timesheet-subtab" data-subtab="timesheet-shifts" onclick="switchTimesheetSubTab('timesheet-shifts')">👤 Employee Shifts</button>
-            <button class="timesheet-subtab" data-subtab="timesheet-payperiod" onclick="switchTimesheetSubTab('timesheet-payperiod')">💰 Pay Period</button>
+          <!-- Unified period selector -->
+          <div class="card" style="margin-bottom:12px;padding:10px 14px;">
+            <div class="form-row" style="gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px;">
+              <button class="pp-preset" onclick="setTsPeriodPreset('this-week', this)" data-i18n="timesheet.this_week">📅 This Week</button>
+              <button class="pp-preset" onclick="setTsPeriodPreset('last-week', this)" data-i18n="timesheet.last_week">⬅️ Last Week</button>
+              <button class="pp-preset" onclick="setTsPeriodPreset('this-month', this)" data-i18n="timesheet.this_month">📅 This Month</button>
+              <button class="pp-preset" onclick="setTsPeriodPreset('last-month', this)" data-i18n="timesheet.last_month">⬅️ Last Month</button>
+              <button class="pp-preset" onclick="setTsPeriodPreset('biweekly', this)" data-i18n="timesheet.biweekly">🔄 Bi-weekly</button>
+              <button class="pp-preset" onclick="setTsPeriodPreset('custom', this)" data-i18n="timesheet.custom">✏️ Custom</button>
+            </div>
+            <div class="form-row" style="gap:8px;flex-wrap:wrap;align-items:center;">
+              <label style="font-size:13px;color:var(--text2);">📅 From:</label>
+              <input type="date" id="tsPeriodDateFrom" style="max-width:160px;min-height:40px;font-size:14px;">
+              <label style="font-size:13px;color:var(--text2);">To:</label>
+              <input type="date" id="tsPeriodDateTo" style="max-width:160px;min-height:40px;font-size:14px;">
+              <button class="accent" onclick="loadTimesheetDashboard()" style="min-height:40px;padding:8px 18px;font-size:14px;">🔍 Filter</button>
+              <button class="outline" onclick="document.getElementById('tsPeriodDateFrom').value='';document.getElementById('tsPeriodDateTo').value='';loadTimesheetDashboard()" style="min-height:40px;padding:8px 16px;font-size:13px;">✕ Clear</button>
+            </div>
+            <!-- Bi-weekly config (hidden by default) -->
+            <div id="tsBiweeklyConfig" style="display:none;margin-top:10px;padding:10px;background:var(--card-alt);border-radius:6px;">
+              <div class="form-row" style="gap:8px;align-items:center;flex-wrap:wrap;">
+                <label style="font-size:13px;color:var(--text2);font-weight:600;">📅 Pay period start date:</label>
+                <input type="date" id="tsBiweeklyStartDate" style="max-width:180px;min-height:40px;font-size:14px;">
+                <button class="accent" onclick="saveTsBiweeklyStart()" style="min-height:40px;padding:8px 16px;font-size:13px;">💾 Save</button>
+                <span id="tsBiweeklySavedBadge" style="display:none;font-size:13px;color:#4caf50;">✅ Saved</span>
+              </div>
+              <div style="font-size:12px;color:var(--text2);margin-top:6px;">Set the pay period start date. Periods advance every 14 days from this date.</div>
+            </div>
           </div>
-          <!-- Admin Logins sub-tab -->
-          <div id="subTimesheetLogins" class="timesheet-subsection">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
-              <h4 style="margin:0;font-size:15px;color:var(--accent);">📋 Admin Login/Logout Times</h4>
-              <button class="accent" onclick="exportTimesheetCSV()" style="font-size:14px;padding:12px 20px;min-height:48px;">📥 Export Timesheet (CSV)</button>
-            </div>
-            <div class="card" style="margin-bottom:12px;padding:10px 14px;">
-              <div class="form-row" style="gap:8px;flex-wrap:wrap;align-items:center;">
-                <label style="font-size:13px;color:var(--text2);">📅 From:</label>
-                <input type="date" id="timesheetDateFrom" style="max-width:160px;min-height:40px;font-size:14px;">
-                <label style="font-size:13px;color:var(--text2);">To:</label>
-                <input type="date" id="timesheetDateTo" style="max-width:160px;min-height:40px;font-size:14px;">
-                <button class="accent" onclick="loadTimesheet()" style="min-height:40px;padding:8px 16px;font-size:13px;">🔍 Filter</button>
-                <button class="outline" onclick="document.getElementById('timesheetDateFrom').value='';document.getElementById('timesheetDateTo').value='';loadTimesheet()" style="min-height:40px;padding:8px 16px;font-size:13px;">✕ Clear</button>
-              </div>
-            </div>
-            <div id="timesheetList"><div class="empty-state">Loading...</div></div>
+          <!-- Dashboard body -->
+          <div id="tsDashboardBody">
+            <div class="empty-state">Select a period and click Filter to load the timesheet dashboard.</div>
           </div>
-          <!-- Employee Shifts sub-tab -->
-          <div id="subTimesheetShifts" class="timesheet-subsection" style="display:none;">
-            <h4 style="margin-top:0;margin-bottom:8px;font-size:15px;color:var(--accent);">👤 Employee Shifts (Clock In/Out)</h4>
-            <div class="card" style="margin-bottom:12px;padding:10px 14px;">
-              <div class="form-row" style="gap:8px;flex-wrap:wrap;align-items:center;">
-                <label style="font-size:13px;color:var(--text2);">📅 From:</label>
-                <input type="date" id="shiftsDateFrom" style="max-width:160px;min-height:40px;font-size:14px;">
-                <label style="font-size:13px;color:var(--text2);">To:</label>
-                <input type="date" id="shiftsDateTo" style="max-width:160px;min-height:40px;font-size:14px;">
-                <button class="accent" onclick="loadShifts()" style="min-height:40px;padding:8px 16px;font-size:13px;">🔍 Filter</button>
-                <button class="outline" onclick="document.getElementById('shiftsDateFrom').value='';document.getElementById('shiftsDateTo').value='';loadShifts()" style="min-height:40px;padding:8px 16px;font-size:13px;">✕ Clear</button>
-              </div>
-            </div>
-            <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
-              <button class="accent" onclick="exportShiftsCSV()" style="font-size:13px;padding:10px 16px;min-height:40px;">📥 Export Shifts (CSV)</button>
-              <button class="outline" onclick="exportTimesheetPDF()" style="font-size:13px;padding:10px 16px;min-height:40px;">📄 Export Timesheet (PDF)</button>
-            </div>
-            <div id="shiftList"><div class="empty-state" id="shiftListStatus">Loading shifts...</div></div>
+          <!-- Export + Admin Logins toggles -->
+          <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+            <button class="accent" onclick="exportTsDashboardCSV()" style="font-size:14px;padding:12px 20px;min-height:48px;">📥 Export Dashboard (CSV)</button>
+            <button class="outline" onclick="exportTsDashboardPDF()" style="font-size:14px;padding:12px 20px;min-height:48px;">📄 Export Dashboard (PDF)</button>
           </div>
-          <!-- Pay Period sub-tab -->
-          <div id="subTimesheetPayperiod" class="timesheet-subsection" style="display:none;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
-              <h4 style="margin:0;font-size:15px;color:var(--accent);">💰 Pay Period Summary</h4>
-              <button class="accent" onclick="loadPayPeriod()" style="font-size:14px;padding:12px 20px;min-height:48px;">🔄 Refresh</button>
-            </div>
-            <!-- Quick preset date selector -->
-            <div class="card" style="margin-bottom:12px;padding:10px 14px;">
-              <div class="form-row" style="gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px;">
-                <button class="pp-preset" onclick="setPayPeriodPreset('this-week', this)" data-i18n="timesheet.this_week">📅 This Week</button>
-                <button class="pp-preset" onclick="setPayPeriodPreset('last-week', this)" data-i18n="timesheet.last_week">⬅️ Last Week</button>
-                <button class="pp-preset" onclick="setPayPeriodPreset('this-month', this)" data-i18n="timesheet.this_month">📅 This Month</button>
-                <button class="pp-preset" onclick="setPayPeriodPreset('last-month', this)" data-i18n="timesheet.last_month">⬅️ Last Month</button>
-                <button class="pp-preset" onclick="setPayPeriodPreset('biweekly', this)" data-i18n="timesheet.biweekly">🔄 Bi-weekly</button>
-                <button class="pp-preset" onclick="setPayPeriodPreset('custom', this)" data-i18n="timesheet.custom">✏️ Custom</button>
-              </div>
-              <div class="form-row" style="gap:8px;flex-wrap:wrap;align-items:center;">
-                <label style="font-size:13px;color:var(--text2);">📅 From:</label>
-                <input type="date" id="payPeriodDateFrom" style="max-width:160px;min-height:40px;font-size:14px;">
-                <label style="font-size:13px;color:var(--text2);">To:</label>
-                <input type="date" id="payPeriodDateTo" style="max-width:160px;min-height:40px;font-size:14px;">
-                <button class="accent" onclick="loadPayPeriod()" style="min-height:40px;padding:8px 16px;font-size:13px;">🔍 Filter</button>
-                <button class="outline" onclick="document.getElementById('payPeriodDateFrom').value='';document.getElementById('payPeriodDateTo').value='';loadPayPeriod()" style="min-height:40px;padding:8px 16px;font-size:13px;">✕ Clear</button>
-              </div>
-              <!-- Bi-weekly config (hidden by default) -->
-              <div id="biweeklyConfig" style="display:none;margin-top:10px;padding:10px;background:var(--card-alt);border-radius:6px;">
-                <div class="form-row" style="gap:8px;align-items:center;flex-wrap:wrap;">
-                  <label style="font-size:13px;color:var(--text2);font-weight:600;">📅 Pay period start date:</label>
-                  <input type="date" id="biweeklyStartDate" style="max-width:180px;min-height:40px;font-size:14px;">
-                  <button class="accent" onclick="saveBiweeklyStart()" style="min-height:40px;padding:8px 16px;font-size:13px;">💾 Save</button>
-                  <span id="biweeklySavedBadge" style="display:none;font-size:13px;color:#4caf50;">✅ Saved</span>
+          <!-- Approval Workflow -->
+          <div id="tsApprovalSection" style="display:none;margin-top:12px;">
+            <div class="card" style="padding:14px 18px;border-left:4px solid var(--accent);">
+              <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+                <div>
+                  <h4 style="margin:0 0 4px 0;font-size:15px;">🔒 Timesheet Approval</h4>
+                  <div id="tsApprovalStatusBadge" style="font-size:13px;color:var(--text2);margin-bottom:8px;">Checking approval status...</div>
                 </div>
-                <div style="font-size:12px;color:var(--text2);margin-top:6px;">Set the pay period start date. Periods advance every 14 days from this date.</div>
-              </div>
-            </div>
-            <div id="payPeriodSummary"><div class="empty-state">Select a preset or date range and click Filter to view pay period summary.</div></div>
-            <!-- Approval Workflow -->
-            <div id="payPeriodApprovalSection" style="display:none;margin-top:12px;">
-              <div class="card" style="padding:14px 18px;border-left:4px solid var(--accent);">
-                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-                  <div>
-                    <h4 style="margin:0 0 4px 0;font-size:15px;">🔒 Timesheet Approval</h4>
-                    <div id="approvalStatusBadge" style="font-size:13px;color:var(--text2);margin-bottom:8px;">Checking approval status...</div>
-                  </div>
-                  <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                    <button id="btnApprovalSubmit" class="accent" onclick="submitPayPeriodApproval()" style="display:none;font-size:13px;padding:8px 16px;min-height:40px;">📋 Submit for Approval</button>
-                    <button id="btnApprovalApprove" class="outline" onclick="approveMyShifts()" style="display:none;font-size:13px;padding:8px 16px;min-height:40px;">✅ Approve My Shifts</button>
-                    <button id="btnApprovalFinalize" class="accent" onclick="finalizePayPeriodApproval()" style="display:none;font-size:13px;padding:8px 16px;min-height:40px;">✅ Finalize Approval</button>
-                    <button id="btnApprovalUnlock" class="danger" onclick="unlockPayPeriod()" style="display:none;font-size:13px;padding:8px 16px;min-height:40px;">🔓 Unlock (Owner Only)</button>
-                  </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                  <button id="tsBtnApprovalSubmit" class="accent" onclick="submitTsPeriodApproval()" style="display:none;font-size:13px;padding:8px 16px;min-height:40px;">📋 Submit for Approval</button>
+                  <button id="tsBtnApprovalApprove" class="outline" onclick="approveTsMyShifts()" style="display:none;font-size:13px;padding:8px 16px;min-height:40px;">✅ Approve My Shifts</button>
+                  <button id="tsBtnApprovalFinalize" class="accent" onclick="finalizeTsPeriodApproval()" style="display:none;font-size:13px;padding:8px 16px;min-height:40px;">✅ Finalize Approval</button>
+                  <button id="tsBtnApprovalUnlock" class="danger" onclick="unlockTsPeriod()" style="display:none;font-size:13px;padding:8px 16px;min-height:40px;">🔓 Unlock (Owner Only)</button>
                 </div>
-                <div id="approvalEmployeeList" style="margin-top:8px;font-size:13px;color:var(--text2);"></div>
               </div>
+              <div id="tsApprovalEmployeeList" style="margin-top:8px;font-size:13px;color:var(--text2);"></div>
             </div>
-            <!-- Export buttons -->
-            <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
-              <button class="accent" onclick="exportPayPeriodCSV()" style="font-size:14px;padding:12px 20px;min-height:48px;">📥 Export Pay Period (CSV)</button>
-              <button class="outline" onclick="exportPayPeriodPDF()" style="font-size:14px;padding:12px 20px;min-height:48px;">📄 Export Pay Period (PDF)</button>
+          </div>
+          <!-- Admin Login Log (collapsible secondary section) -->
+          <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:12px;">
+            <button onclick="toggleTsAdminLogins()" style="font-size:14px;padding:10px 16px;min-height:44px;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;width:100%;text-align:left;font-weight:600;">
+              📋 Admin Login Log ▼
+            </button>
+            <div id="tsAdminLoginsContent" style="display:none;margin-top:8px;">
+              <div class="card" style="margin-bottom:8px;padding:8px 12px;">
+                <div class="form-row" style="gap:6px;flex-wrap:wrap;align-items:center;">
+                  <label style="font-size:12px;color:var(--text2);">From:</label>
+                  <input type="date" id="tsAdminDateFrom" style="max-width:140px;min-height:36px;font-size:13px;">
+                  <label style="font-size:12px;color:var(--text2);">To:</label>
+                  <input type="date" id="tsAdminDateTo" style="max-width:140px;min-height:36px;font-size:13px;">
+                  <button class="accent" onclick="loadTsAdminLogins()" style="min-height:36px;padding:6px 12px;font-size:12px;">🔍 Filter</button>
+                  <button class="outline" onclick="document.getElementById('tsAdminDateFrom').value='';document.getElementById('tsAdminDateTo').value='';loadTsAdminLogins()" style="min-height:36px;padding:6px 12px;font-size:12px;">✕ Clear</button>
+                </div>
+              </div>
+              <div id="tsAdminLoginsList"><div class="empty-state" style="padding:20px;">Click Filter to view admin login times.</div></div>
             </div>
           </div>
         </div>
@@ -4256,7 +4228,7 @@ function adminAddNote(shiftIndex) {
   .then(r => r.json())
   .then(data => {
     if (data.message) showToast(data.message, 'success');
-    loadShifts();
+    loadTimesheetDashboard();
   })
   .catch(e => showToast('Error saving notes', 'error'));
 }
@@ -4357,7 +4329,7 @@ async function submitExcuseLate() {
     const data = await r.json();
     if (r.ok) {
       showToast(data.message || 'Shift excused!', 'success');
-      loadShifts();
+      loadTimesheetDashboard();
     } else {
       showToast(data.message || 'Error excusing late', 'error');
     }
@@ -4386,7 +4358,7 @@ async function submitLateFlag() {
     const data = await r.json();
     if (r.ok) {
       showToast(data.message || 'Shift flagged as late!', 'success');
-      loadShifts();
+      loadTimesheetDashboard();
     } else {
       showToast(data.message || 'Error flagging late', 'error');
     }
@@ -4510,102 +4482,8 @@ async function loadShifts() {
 }
 
 async function loadPayPeriod() {
-  const container = document.getElementById('payPeriodSummary');
-  if (!container) return;
-  container.innerHTML = '<div class="empty-state">' + t('loading') + '</div>';
-  try {
-    const params = { adminPin: currentUser.id };
-    const dateFrom = document.getElementById('payPeriodDateFrom')?.value || '';
-    const dateTo = document.getElementById('payPeriodDateTo')?.value || '';
-    if (dateFrom) params.date_from = dateFrom;
-    if (dateTo) params.date_to = dateTo;
-    const r = await fetch(BACKEND_URL + '/api/timesheet/pay_period', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(params)
-    });
-    if (!r.ok) { container.innerHTML = '<div class="empty-state">Unauthorized</div>'; return; }
-    const data = await r.json();
-    const employees = data.employees || [];
-    if (employees.length === 0) {
-      container.innerHTML = '<div class="empty-state">No shift data found for this period.</div>';
-      loadApprovalStatus();
-      return;
-    }
-    // Summary bar
-    const totalHoursAll = employees.reduce((s, e) => s + e.total_hours, 0);
-    const totalPayAll = employees.reduce((s, e) => s + (e.estimated_pay || 0), 0);
-    const totalOTAll = employees.reduce((s, e) => s + e.overtime_hours, 0);
-    let html = '<div class="card" style="margin-bottom:16px;padding:14px 18px;display:flex;gap:24px;flex-wrap:wrap;">';
-    html += '<div class="pp-stat"><div class="pp-stat-value green">' + employees.length + '</div><div class="pp-stat-label">Employees</div></div>';
-    html += '<div class="pp-stat"><div class="pp-stat-value">' + totalHoursAll.toFixed(1) + '</div><div class="pp-stat-label">Total Hours</div></div>';
-    html += '<div class="pp-stat"><div class="pp-stat-value ' + (totalOTAll > 0 ? 'orange' : 'green') + '">' + totalOTAll.toFixed(1) + '</div><div class="pp-stat-label">Total Overtime</div></div>';
-    html += '<div class="pp-stat"><div class="pp-stat-value gold">$' + totalPayAll.toFixed(2) + '</div><div class="pp-stat-label">Est. Total Pay</div></div>';
-    html += '</div>';
-    // Employee cards
-    employees.forEach(emp => {
-      const hasOT = emp.overtime_hours > 0;
-      const dailyOTShifts = emp.shifts.filter(s => s.exceeds_daily_ot).length;
-      const lateShifts = emp.shifts ? emp.shifts.filter(s => s.late_minutes && s.late_minutes > 0 && !s.late_excused).length : 0;
-      const payDisplay = emp.estimated_pay !== null ? '$' + emp.estimated_pay.toFixed(2) : '<span style="color:var(--text2);font-size:13px;">No rate set</span>';
-      html += '<div class="pp-card">';
-      html += '<div class="pp-card-header">';
-      html += '<span class="pp-card-name">' + escHtml(emp.user_name) + ' <span style="font-size:13px;color:var(--text2);font-weight:400;">(' + escHtml(emp.user_id) + ')</span></span>';
-      html += '<button class="pp-details-btn" onclick="togglePayPeriodDetails(\'' + emp.user_id + '\')">📋 ' + emp.shift_count + ' shifts</button>';
-      html += '</div>';
-      html += '<div class="pp-card-meta">';
-      html += '<div class="pp-stat"><div class="pp-stat-value">' + emp.total_hours.toFixed(1) + '</div><div class="pp-stat-label">Hours</div></div>';
-      html += '<div class="pp-stat"><div class="pp-stat-value ' + (hasOT ? 'orange' : 'green') + '">' + emp.overtime_hours.toFixed(1) + '</div><div class="pp-stat-label">Overtime</div></div>';
-      html += '<div class="pp-stat"><div class="pp-stat-value">' + (emp.pay_rate > 0 ? '$' + emp.pay_rate.toFixed(2) : '—') + '</div><div class="pp-stat-label">Rate/hr</div></div>';
-      html += '<div class="pp-stat"><div class="pp-stat-value gold">' + payDisplay + '</div><div class="pp-stat-label">Est. Gross Pay</div></div>';
-      if (lateShifts > 0) {
-        html += '<div class="pp-stat"><div class="pp-stat-value" style="color:#e74c3c;">' + lateShifts + '</div><div class="pp-stat-label">Late Shifts</div></div>';
-      }
-      html += '</div>';
-      // Show daily OT shift count if any
-      if (dailyOTShifts > 0) {
-        html += '<div style="margin-top:6px;font-size:12px;color:#ff9800;">⚠️ ' + dailyOTShifts + ' shift(s) exceeded daily OT threshold</div>';
-      }
-      // Shift details (initially hidden)
-      html += '<div id="ppDetails_' + emp.user_id + '" class="pp-shift-details" style="display:none;margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">';
-      html += '<div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:6px;">📅 Shift Breakdown:</div>';
-      emp.shifts.forEach(s => {
-        const clockIn = s.clock_in_time ? new Date(s.clock_in_time).toLocaleString() : '—';
-        const clockOut = s.clock_out_time ? new Date(s.clock_out_time).toLocaleString() : (s.active ? '<span class="pp-active-badge">🟢 Active</span>' : '—');
-        // OT badges — orange for daily OT, red for weekly OT
-        let otBadges = '';
-        if (s.exceeds_daily_ot) otBadges += ' <span class="badge-ot-daily" style="background:#ff9800;color:#fff;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:600;">⬆ Daily OT</span>';
-        if (s.exceeds_weekly_ot) otBadges += ' <span class="badge-ot-weekly" style="background:#e94560;color:#fff;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:600;">📈 Weekly OT</span>';
-        // Late badge
-        if (s.late_minutes && s.late_minutes > 0) {
-          if (s.late_excused) {
-            otBadges += ' <span style="background:#95a5a6;color:#fff;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:600;">🔕 ' + s.late_minutes + ' min</span>';
-          } else {
-            otBadges += ' <span style="background:#e74c3c;color:#fff;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:600;">🕐 ' + s.late_minutes + ' min</span>';
-          }
-        }
-        // Show day total if more than one shift on this day
-        const dayTotalNote = s.day_total_hours > s.duration_hours ? ' <span style="font-size:11px;color:var(--text2);">(' + s.day_total_hours.toFixed(1) + 'h this day)</span>' : '';
-        const sBreak = s.break_hours ? ' <span style="font-size:11px;color:var(--text2);">☕ ' + s.break_hours.toFixed(2) + 'h break</span>' : '';
-        const sPaid = ' <span style="font-size:11px;color:var(--accent);">Paid: ' + (s.paid_hours || s.duration_hours).toFixed(2) + 'h</span>';
-        const sNotes = s.notes || '';
-        const sNotesHtml = sNotes ? '<div style="font-size:12px;color:var(--text2);margin-top:2px;padding-left:6px;border-left:2px solid #e94560;">📝 ' + escHtml(sNotes) + '</div>' : '';
-        const sLateNote = s.late_note ? '<div style="font-size:12px;color:var(--text2);margin-top:2px;padding-left:6px;border-left:2px solid #e74c3c;">📌 ' + escHtml(s.late_note) + '</div>' : '';
-        html += '<div class="pp-shift-row">';
-        html += '<span>' + clockIn + ' → ' + clockOut + '</span>';
-        html += '<span><strong>' + s.duration_hours.toFixed(2) + ' hrs</strong>' + otBadges + dayTotalNote + sBreak + sPaid + '</span>';
-        html += sNotesHtml;
-        html += sLateNote;
-        html += '</div>';
-      });
-      html += '</div>';
-      html += '</div>';
-    });
-    container.innerHTML = html;
-  } catch(e) {
-    container.innerHTML = '<div class="empty-state">' + t('network_error') + '</div>';
-  }
-  // Load approval status after pay period data
-  loadApprovalStatus();
+  // Redirect to unified dashboard
+  loadTimesheetDashboard();
 }
 
 function togglePayPeriodDetails(userId) {
@@ -7564,7 +7442,7 @@ function switchAdminSection(sec) {
   else if (sec === 'tax') loadTaxAdmin();
   else if (sec === 'discounts') loadDiscountAdmin();
   else if (sec === 'log') loadActivityLog();
-  else if (sec === 'timesheet') { switchTimesheetSubTab('timesheet-logins'); }
+  else if (sec === 'timesheet') { loadTimesheetDashboard(); }
   else if (sec === 'permissions') loadPermissions();
   else if (sec === 'menuhistory') loadMenuHistory();
   else if (sec === 'credentials') loadCredentialsStatus();
@@ -7632,15 +7510,8 @@ async function saveTimesheetConfig() {
 }
 
 function switchTimesheetSubTab(subtab) {
-  document.querySelectorAll('.timesheet-subtab').forEach(b => b.classList.remove('active'));
-  document.querySelector(`.timesheet-subtab[data-subtab="${subtab}"]`).classList.add('active');
-  document.querySelectorAll('.timesheet-subsection').forEach(s => s.style.display = 'none');
-  const section = document.getElementById('sub' + subtab.charAt(0).toUpperCase() + subtab.slice(1));
-  if (section) section.style.display = '';
-  // Load on first visit
-  if (subtab === 'timesheet-payperiod') loadPayPeriod();
-  if (subtab === 'timesheet-logins') loadTimesheet();
-  if (subtab === 'timesheet-shifts') loadShifts();
+  // Unified dashboard — ignore old sub-tab switching
+  loadTimesheetDashboard();
 }
 
 async function loadAdminStats() {
@@ -8442,30 +8313,8 @@ function resetActivityLogFilters() {
 }
 
 async function loadTimesheet() {
-  const list = document.getElementById('timesheetList');
-  list.innerHTML = '<div class="empty-state">' + t('loading') + '</div>';
-  try {
-    const params = { adminPin: currentUser.id };
-    const dateFrom = document.getElementById('timesheetDateFrom')?.value || '';
-    const dateTo = document.getElementById('timesheetDateTo')?.value || '';
-    if (dateFrom) params.date_from = dateFrom;
-    if (dateTo) params.date_to = dateTo;
-    const r = await fetch(BACKEND_URL + '/api/admin_timesheet', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(params)
-    });
-    if (!r.ok) { list.innerHTML = '<div class="empty-state">Unauthorized</div>'; return; }
-    const data = await r.json();
-    const ts = (data.timesheet || []).slice().reverse();
-    if (ts.length === 0) { list.innerHTML = '<div class="empty-state">No timesheet entries</div>'; return; }
-    list.innerHTML = ts.map(t => `
-      <div class="ts-entry">
-        <span><strong>${escHtml(t.user_id)}</strong></span>
-        <span>${new Date(t.login_time).toLocaleString()} → ${new Date(t.logout_time).toLocaleString()}</span>
-        <span>${t.duration_hours} hrs</span>
-      </div>
-    `).join('');
-  } catch(e) { list.innerHTML = '<div class="empty-state">' + t('network_error') + '</div>'; }
+  // Redirect to unified dashboard
+  loadTimesheetDashboard();
 }
 
 // ═══════════ CSV EXPORT ═══════════
@@ -8498,22 +8347,629 @@ async function exportOrdersCSV() {
 }
 
 async function exportTimesheetCSV() {
+  // Redirect to unified dashboard export
+  exportTsDashboardCSV();
+}
+
+// ═══════════ UNIFIED TIMESHEET DASHBOARD ═══════════
+
+/** Main dashboard loader — fetches pay period + active shifts and renders the unified timekeeper view */
+let _tsDashboardEmployees = [];
+let _tsDashboardSortField = 'hours';
+let _tsDashboardSortDir = -1; // -1 = desc, 1 = asc
+
+async function loadTimesheetDashboard() {
+  const container = document.getElementById('tsDashboardBody');
+  if (!container) return;
+  container.innerHTML = '<div class="empty-state">' + t('loading') + '</div>';
+
   try {
     const params = { adminPin: currentUser.id };
-    const dateFrom = document.getElementById('timesheetDateFrom')?.value || '';
-    const dateTo = document.getElementById('timesheetDateTo')?.value || '';
+    const dateFrom = document.getElementById('tsPeriodDateFrom')?.value || '';
+    const dateTo = document.getElementById('tsPeriodDateTo')?.value || '';
     if (dateFrom) params.date_from = dateFrom;
     if (dateTo) params.date_to = dateTo;
-    const r = await fetch(BACKEND_URL + '/api/export/timesheet_csv', {
+
+    // Fetch pay period and approval data in parallel
+    const [ppRes, appRes] = await Promise.all([
+      fetch(BACKEND_URL + '/api/timesheet/pay_period', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(params)
+      }),
+      fetch(BACKEND_URL + '/api/timesheet/approval/list', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminPin: currentUser.id })
+      })
+    ]);
+
+    if (!ppRes.ok) {
+      container.innerHTML = '<div class="empty-state">Unauthorized — insufficient permissions</div>';
+      return;
+    }
+
+    const ppData = await ppRes.json();
+    let approvalData = {};
+    try {
+      if (appRes.ok) {
+        approvalData = await appRes.json();
+      }
+    } catch(e) {}
+
+    const employees = ppData.employees || [];
+    _tsDashboardEmployees = employees;
+
+    if (employees.length === 0) {
+      container.innerHTML = '<div class="empty-state">No shift data found for this period. Select a date range and click Filter.</div>';
+      // Still try to load approval status
+      renderTsApprovalStatus(approvalData, params);
+      return;
+    }
+
+    // Render the dashboard
+    renderTsDashboard(container, employees, approvalData, params);
+  } catch(e) {
+    container.innerHTML = '<div class="empty-state">' + t('network_error') + '</div>';
+  }
+}
+
+function renderTsDashboard(container, employees, approvalData, params) {
+  // --- Summary Bar ---
+  const totalHoursAll = employees.reduce((s, e) => s + e.total_hours, 0);
+  const totalPayAll = employees.reduce((s, e) => s + (e.estimated_pay || 0), 0);
+  const totalOTAll = employees.reduce((s, e) => s + e.overtime_hours, 0);
+  const totalShifts = employees.reduce((s, e) => s + e.shift_count, 0);
+  const lateAll = employees.reduce((s, e) => s + (e.shifts ? e.shifts.filter(sh => sh.late_minutes && sh.late_minutes > 0 && !sh.late_excused).length : 0), 0);
+
+  let html = '<div class="card" style="margin-bottom:14px;padding:12px 18px;display:flex;gap:20px;flex-wrap:wrap;align-items:center;">';
+  html += '<div class="pp-stat"><div class="pp-stat-value green">' + employees.length + '</div><div class="pp-stat-label">Employees</div></div>';
+  html += '<div class="pp-stat"><div class="pp-stat-value">' + totalShifts + '</div><div class="pp-stat-label">Shifts</div></div>';
+  html += '<div class="pp-stat"><div class="pp-stat-value">' + totalHoursAll.toFixed(1) + '</div><div class="pp-stat-label">Total Hours</div></div>';
+  html += '<div class="pp-stat"><div class="pp-stat-value ' + (totalOTAll > 0 ? 'orange' : 'green') + '">' + totalOTAll.toFixed(1) + '</div><div class="pp-stat-label">Overtime</div></div>';
+  html += '<div class="pp-stat"><div class="pp-stat-value gold">$' + totalPayAll.toFixed(2) + '</div><div class="pp-stat-label">Est. Pay</div></div>';
+  if (lateAll > 0) {
+    html += '<div class="pp-stat"><div class="pp-stat-value" style="color:#e74c3c;">' + lateAll + '</div><div class="pp-stat-label">Late</div></div>';
+  }
+  html += '</div>';
+
+  // --- Sort Controls ---
+  html += '<div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;align-items:center;">';
+  html += '<span style="font-size:13px;color:var(--text2);font-weight:500;margin-right:4px;">Sort:</span>';
+  const sortFields = [
+    { key: 'name', label: 'Name' },
+    { key: 'hours', label: 'Hours' },
+    { key: 'pay', label: 'Pay' },
+    { key: 'ot', label: 'OT' },
+    { key: 'shifts', label: 'Shifts' }
+  ];
+  sortFields.forEach(f => {
+    const active = _tsDashboardSortField === f.key;
+    const dir = active && _tsDashboardSortDir === -1 ? '▼' : '▲';
+    html += `<button class="pp-preset ${active ? 'active' : ''}" onclick="sortTsEmployees('${f.key}')" style="font-size:12px;padding:4px 12px;min-height:36px;">${f.label} ${active ? dir : ''}</button>`;
+  });
+  html += '<span style="font-size:12px;color:var(--text2);margin-left:auto;">' + employees.length + ' employee(s)</span>';
+  html += '</div>';
+
+  // --- Employee Cards ---
+  const sorted = getSortedTsEmployees(employees);
+  sorted.forEach(emp => {
+    const hasOT = emp.overtime_hours > 0;
+    const dailyOTShifts = emp.shifts.filter(s => s.exceeds_daily_ot).length;
+    const weeklyOTShifts = emp.shifts.filter(s => s.exceeds_weekly_ot).length;
+    const lateShifts = emp.shifts.filter(s => s.late_minutes && s.late_minutes > 0 && !s.late_excused).length;
+    const editedShifts = emp.shifts.filter(s => s.edited).length;
+    const activeShifts = emp.shifts.filter(s => s.active).length;
+    const payDisplay = emp.estimated_pay !== null ? '$' + emp.estimated_pay.toFixed(2) : '<span style="color:var(--text2);font-size:12px;">No rate</span>';
+
+    html += '<div class="pp-card" style="margin-bottom:8px;">';
+    // Card header
+    html += '<div class="pp-card-header" onclick="toggleTsEmployeeDetails(\'' + emp.user_id + '\')" style="cursor:pointer;">';
+    html += '<span class="pp-card-name">' + escHtml(emp.user_name) + ' <span style="font-size:13px;color:var(--text2);font-weight:400;">(#' + escHtml(emp.user_id) + ')</span>';
+    // Active badge
+    if (activeShifts > 0) {
+      html += ' <span style="background:#2ecc71;color:#fff;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600;vertical-align:middle;">🟢 ' + activeShifts + ' active</span>';
+    }
+    // Edited badge
+    if (editedShifts > 0) {
+      html += ' <span style="background:#ff9800;color:#fff;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600;vertical-align:middle;">⚠️ ' + editedShifts + ' edited</span>';
+    }
+    html += '</span>';
+    html += '<button class="pp-details-btn" style="font-size:12px;padding:4px 12px;min-height:32px;" onclick="event.stopPropagation();toggleTsEmployeeDetails(\'' + emp.user_id + '\')">📋 ' + emp.shift_count + ' shifts ▼</button>';
+    html += '</div>';
+    // Stats row
+    html += '<div class="pp-card-meta">';
+    html += '<div class="pp-stat"><div class="pp-stat-value" style="font-size:18px;">' + emp.total_hours.toFixed(1) + '</div><div class="pp-stat-label">Hours</div></div>';
+    html += '<div class="pp-stat"><div class="pp-stat-value ' + (hasOT ? 'orange' : 'green') + '" style="font-size:18px;">' + emp.overtime_hours.toFixed(1) + '</div><div class="pp-stat-label">OT</div></div>';
+    html += '<div class="pp-stat"><div class="pp-stat-value" style="font-size:18px;">' + (emp.pay_rate > 0 ? '$' + emp.pay_rate.toFixed(2) : '—') + '</div><div class="pp-stat-label">Rate</div></div>';
+    html += '<div class="pp-stat"><div class="pp-stat-value gold" style="font-size:18px;">' + payDisplay + '</div><div class="pp-stat-label">Gross Pay</div></div>';
+    if (lateShifts > 0) {
+      html += '<div class="pp-stat"><div class="pp-stat-value" style="color:#e74c3c;font-size:18px;">' + lateShifts + '</div><div class="pp-stat-label">Late</div></div>';
+    }
+    html += '</div>';
+    // OT summary
+    if (dailyOTShifts > 0 || weeklyOTShifts > 0) {
+      html += '<div style="margin-top:4px;font-size:12px;color:#ff9800;">';
+      if (dailyOTShifts > 0) html += '⚠️ ' + dailyOTShifts + ' shift(s) exceeded daily OT &nbsp;';
+      if (weeklyOTShifts > 0) html += '📈 Weekly OT threshold exceeded';
+      html += '</div>';
+    }
+
+    // --- Dense Shift Table (hidden by default) ---
+    html += '<div id="tsDetails_' + emp.user_id + '" class="pp-shift-details" style="display:none;margin-top:10px;border-top:1px solid var(--border);padding-top:10px;">';
+    // Table header
+    html += '<div style="overflow-x:auto;">';
+    html += '<table class="ts-dense-table">';
+    html += '<thead><tr>';
+    html += '<th onclick="sortTsShiftTable(\'' + emp.user_id + '\',\'date\')" style="cursor:pointer;">Date ▲▼</th>';
+    html += '<th onclick="sortTsShiftTable(\'' + emp.user_id + '\',\'clock_in\')" style="cursor:pointer;">Clock In</th>';
+    html += '<th onclick="sortTsShiftTable(\'' + emp.user_id + '\',\'clock_out\')" style="cursor:pointer;">Clock Out</th>';
+    html += '<th onclick="sortTsShiftTable(\'' + emp.user_id + '\',\'hours\')" style="cursor:pointer;">Hours ▲▼</th>';
+    html += '<th>Break</th>';
+    html += '<th>Paid</th>';
+    html += '<th>Status</th>';
+    html += '<th>Notes</th>';
+    html += '</tr></thead><tbody>';
+
+    emp.shifts.forEach(s => {
+      const clockIn = s.clock_in_time ? new Date(s.clock_in_time) : null;
+      const clockOut = s.clock_out_time ? new Date(s.clock_out_time) : null;
+      const dateStr = clockIn ? clockIn.toLocaleDateString() : '—';
+      const inStr = clockIn ? clockIn.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '—';
+      const outStr = clockOut ? clockOut.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : (s.active ? '<span class="pp-active-badge" style="font-size:10px;">🟢 Active</span>' : '—');
+
+      // Status badges
+      let badges = '';
+      if (s.active) badges += '<span class="badge-status badge-active" title="Currently clocked in">🟢</span>';
+      if (s.exceeds_daily_ot) badges += '<span class="badge-status badge-daily-ot" title="Daily OT">⬆</span>';
+      if (s.exceeds_weekly_ot) badges += '<span class="badge-status badge-weekly-ot" title="Weekly OT">📈</span>';
+      if (s.late_minutes && s.late_minutes > 0) {
+        badges += s.late_excused
+          ? '<span class="badge-status badge-late-excused" title="Excused late">🔕</span>'
+          : '<span class="badge-status badge-late" title="Late ' + s.late_minutes + 'min">🕐</span>';
+      }
+      if (s.edited) badges += '<span class="badge-status badge-edited" title="Edited shift">⚠️</span>';
+
+      const breakStr = s.break_hours ? (s.break_hours).toFixed(2) + 'h' : '—';
+      const paidStr = (s.paid_hours || s.duration_hours || 0).toFixed(2) + 'h';
+      const noteStr = s.notes || s.late_note || '';
+      const noteHtml = noteStr ? '<span style="font-size:11px;color:var(--text2);" title="' + escHtml(noteStr) + '">📝</span>' : '';
+
+      html += '<tr>';
+      html += '<td data-sort="' + (clockIn ? clockIn.getTime() : 0) + '">' + dateStr + '</td>';
+      html += '<td>' + inStr + '</td>';
+      html += '<td>' + outStr + '</td>';
+      html += '<td data-sort="' + (s.duration_hours || 0) + '">' + (s.duration_hours || 0).toFixed(2) + '</td>';
+      html += '<td>' + breakStr + '</td>';
+      html += '<td style="font-weight:600;">' + paidStr + '</td>';
+      html += '<td style="white-space:nowrap;">' + badges + '</td>';
+      html += '<td>' + noteHtml + '</td>';
+      html += '</tr>';
+    });
+
+    html += '</tbody></table></div>';
+    html += '</div>'; // end details
+    html += '</div>'; // end card
+  });
+
+  container.innerHTML = html;
+
+  // Load approval status
+  renderTsApprovalStatus(approvalData, params);
+}
+
+/** Sort employees and re-render */
+function sortTsEmployees(field) {
+  if (_tsDashboardSortField === field) {
+    _tsDashboardSortDir *= -1; // toggle direction
+  } else {
+    _tsDashboardSortField = field;
+    _tsDashboardSortDir = -1; // default descending for most fields
+    if (field === 'name') _tsDashboardSortDir = 1; // name defaults ascending
+  }
+  loadTimesheetDashboard(); // Re-render with new sort
+}
+
+function getSortedTsEmployees(employees) {
+  const field = _tsDashboardSortField;
+  const dir = _tsDashboardSortDir;
+  const sorted = [...employees];
+  sorted.sort((a, b) => {
+    let cmp = 0;
+    switch (field) {
+      case 'name': cmp = (a.user_name || '').localeCompare(b.user_name || ''); break;
+      case 'hours': cmp = (a.total_hours || 0) - (b.total_hours || 0); break;
+      case 'pay': cmp = (a.estimated_pay || 0) - (b.estimated_pay || 0); break;
+      case 'ot': cmp = (a.overtime_hours || 0) - (b.overtime_hours || 0); break;
+      case 'shifts': cmp = (a.shift_count || 0) - (b.shift_count || 0); break;
+      default: cmp = 0;
+    }
+    return cmp * dir;
+  });
+  return sorted;
+}
+
+/** Toggle employee shift details panel */
+function toggleTsEmployeeDetails(userId) {
+  const el = document.getElementById('tsDetails_' + userId);
+  if (!el) return;
+  const isHidden = el.style.display === 'none';
+  el.style.display = isHidden ? '' : 'none';
+  // Toggle chevron direction
+  const btn = el.closest('.pp-card')?.querySelector('.pp-details-btn');
+  if (btn) {
+    btn.textContent = isHidden ? '📋 ' + (el.querySelectorAll('tbody tr').length || '') + ' shifts ▲' : '📋 ' + (el.querySelectorAll('tbody tr').length || '') + ' shifts ▼';
+  }
+}
+
+/** Sort the shift detail table for a specific employee */
+function sortTsShiftTable(userId, field) {
+  const table = document.querySelector('#tsDetails_' + userId + ' table');
+  if (!table) return;
+  const tbody = table.querySelector('tbody');
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+
+  let colIndex = 0;
+  switch (field) {
+    case 'date': colIndex = 0; break;
+    case 'clock_in': colIndex = 1; break;
+    case 'clock_out': colIndex = 2; break;
+    case 'hours': colIndex = 3; break;
+  }
+
+  rows.sort((a, b) => {
+    const aVal = a.cells[colIndex]?.getAttribute('data-sort') || a.cells[colIndex]?.textContent || '';
+    const bVal = b.cells[colIndex]?.getAttribute('data-sort') || b.cells[colIndex]?.textContent || '';
+    // Numeric sort if both are numbers
+    const aNum = parseFloat(aVal);
+    const bNum = parseFloat(bVal);
+    if (!isNaN(aNum) && !isNaN(bNum)) return aNum - bNum;
+    return aVal.localeCompare(bVal);
+  });
+
+  // Toggle direction for same field click (simple flip)
+  rows.forEach(r => tbody.appendChild(r));
+}
+
+/** Toggle admin login log section */
+function toggleTsAdminLogins() {
+  const content = document.getElementById('tsAdminLoginsContent');
+  if (!content) return;
+  const isHidden = content.style.display === 'none' || content.style.display === '';
+  content.style.display = isHidden ? 'block' : 'none';
+  if (isHidden) loadTsAdminLogins();
+}
+
+/** Load admin login times */
+async function loadTsAdminLogins() {
+  const list = document.getElementById('tsAdminLoginsList');
+  if (!list) return;
+  list.innerHTML = '<div class="empty-state">' + t('loading') + '</div>';
+  try {
+    const params = { adminPin: currentUser.id };
+    const dateFrom = document.getElementById('tsAdminDateFrom')?.value || '';
+    const dateTo = document.getElementById('tsAdminDateTo')?.value || '';
+    if (dateFrom) params.date_from = dateFrom;
+    if (dateTo) params.date_to = dateTo;
+    const r = await fetch(BACKEND_URL + '/api/admin_timesheet', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(params)
     });
+    if (!r.ok) { list.innerHTML = '<div class="empty-state">Unauthorized</div>'; return; }
+    const data = await r.json();
+    const ts = (data.timesheet || []).slice().reverse();
+    if (ts.length === 0) { list.innerHTML = '<div class="empty-state">No admin login records for this period.</div>'; return; }
+    list.innerHTML = '<div style="overflow-x:auto;"><table class="ts-dense-table" style="font-size:13px;"><thead><tr><th>User</th><th>Login</th><th>Logout</th><th>Duration</th></tr></thead><tbody>' +
+      ts.map(t => `<tr>
+        <td><strong>${escHtml(t.user_id)}</strong></td>
+        <td>${new Date(t.login_time).toLocaleString()}</td>
+        <td>${new Date(t.logout_time).toLocaleString()}</td>
+        <td>${t.duration_hours} hrs</td>
+      </tr>`).join('') +
+      '</tbody></table></div>';
+  } catch(e) { list.innerHTML = '<div class="empty-state">' + t('network_error') + '</div>'; }
+}
+
+/** Export dashboard as CSV */
+async function exportTsDashboardCSV() {
+  if (!_tsDashboardEmployees || _tsDashboardEmployees.length === 0) {
+    showToast('No data to export. Load a period first.', 'warning');
+    return;
+  }
+  try {
+    const dateFrom = document.getElementById('tsPeriodDateFrom')?.value || '';
+    const dateTo = document.getElementById('tsPeriodDateTo')?.value || '';
+    // Build CSV from loaded data
+    let csv = 'Employee ID,Employee Name,Date,Clock In,Clock Out,Hours,Break Hours,Paid Hours,Overtime,Late Minutes,Notes\n';
+    _tsDashboardEmployees.forEach(emp => {
+      const shifts = emp.shifts || [];
+      if (shifts.length === 0) {
+        csv += `"${emp.user_id}","${emp.user_name}",,,,,,,,,\n`;
+      } else {
+        shifts.forEach(s => {
+          const date = s.clock_in_time ? new Date(s.clock_in_time).toLocaleDateString() : '';
+          const inTime = s.clock_in_time ? new Date(s.clock_in_time).toLocaleTimeString() : '';
+          const outTime = s.clock_out_time ? new Date(s.clock_out_time).toLocaleTimeString() : '';
+          const notes = (s.notes || s.late_note || '').replace(/"/g, '""');
+          csv += `"${emp.user_id}","${emp.user_name}","${date}","${inTime}","${outTime}",${(s.duration_hours || 0).toFixed(2)},${(s.break_hours || 0).toFixed(2)},${(s.paid_hours || s.duration_hours || 0).toFixed(2)},${s.exceeds_daily_ot ? 'Yes' : 'No'},"${s.late_minutes || 0}","${notes}"\n`;
+        });
+      }
+    });
+    const periodLabel = (dateFrom || dateTo) ? `_${dateFrom || 'start'}_to_${dateTo || 'end'}` : '';
+    downloadCSV(csv, `timesheet_dashboard${periodLabel}.csv`);
+    showToast('✅ Timesheet dashboard exported!', 'success');
+  } catch(e) {
+    showToast('Error generating CSV: ' + e.message, 'danger');
+  }
+}
+
+/** Export dashboard as PDF (print-friendly HTML) */
+async function exportTsDashboardPDF() {
+  if (!_tsDashboardEmployees || _tsDashboardEmployees.length === 0) {
+    showToast('No data to export. Load a period first.', 'warning');
+    return;
+  }
+  try {
+    const dateFrom = document.getElementById('tsPeriodDateFrom')?.value || '';
+    const dateTo = document.getElementById('tsPeriodDateTo')?.value || '';
+    const r = await fetch(BACKEND_URL + '/api/export/timesheet_pdf', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, date_from: dateFrom, date_to: dateTo })
+    });
     if (!r.ok) { const d = await r.json(); showToast(d.message || 'Export failed', 'danger'); return; }
     const data = await r.json();
-    downloadCSV(data.csv, data.filename);
-    showToast('✅ Timesheet exported!', 'success');
-  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
+    if (data.html) {
+      const w = window.open('', '_blank');
+      w.document.write(data.html);
+      w.document.close();
+      w.focus();
+      if (w.print) setTimeout(() => { try { w.print(); } catch(e) {} }, 500);
+    } else {
+      showToast('PDF export unavailable', 'warning');
+    }
+  } catch(e) {
+    showToast('Network error exporting PDF', 'danger');
+  }
 }
+
+/** Period preset handler for unified dashboard */
+function setTsPeriodPreset(preset, btn) {
+  const fromEl = document.getElementById('tsPeriodDateFrom');
+  const toEl = document.getElementById('tsPeriodDateTo');
+  const biweeklyConfig = document.getElementById('tsBiweeklyConfig');
+  const now = new Date();
+  let from, to;
+
+  // Update active state on buttons
+  document.querySelectorAll('.pp-preset').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+
+  switch (preset) {
+    case 'this-week': {
+      from = getMonday(now);
+      to = getSunday(now);
+      biweeklyConfig.style.display = 'none';
+      break;
+    }
+    case 'last-week': {
+      const lastWeek = new Date(now);
+      lastWeek.setDate(lastWeek.getDate() - 7);
+      from = getMonday(lastWeek);
+      to = getSunday(lastWeek);
+      biweeklyConfig.style.display = 'none';
+      break;
+    }
+    case 'this-month': {
+      from = new Date(now.getFullYear(), now.getMonth(), 1);
+      to = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+      biweeklyConfig.style.display = 'none';
+      break;
+    }
+    case 'last-month': {
+      from = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      to = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+      biweeklyConfig.style.display = 'none';
+      break;
+    }
+    case 'biweekly': {
+      biweeklyConfig.style.display = 'block';
+      const saved = localStorage.getItem('pos_biweekly_start');
+      if (saved) {
+        document.getElementById('tsBiweeklyStartDate').value = saved;
+      } else {
+        const defaultStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        document.getElementById('tsBiweeklyStartDate').value = formatDateInput(defaultStart);
+      }
+      const ppStart = new Date(document.getElementById('tsBiweeklyStartDate').value + 'T00:00:00');
+      const diffDays = Math.floor((now - ppStart) / (1000 * 60 * 60 * 24));
+      const periodNum = Math.floor(diffDays / 14);
+      from = new Date(ppStart);
+      from.setDate(from.getDate() + periodNum * 14);
+      to = new Date(from);
+      to.setDate(to.getDate() + 13);
+      to.setHours(23, 59, 59, 0);
+      break;
+    }
+    case 'custom': {
+      biweeklyConfig.style.display = 'none';
+      fromEl.value = '';
+      toEl.value = '';
+      loadTimesheetDashboard();
+      return;
+    }
+    default: {
+      biweeklyConfig.style.display = 'none';
+      return;
+    }
+  }
+  if (from) fromEl.value = formatDateInput(from);
+  if (to) toEl.value = formatDateInput(to);
+  loadTimesheetDashboard();
+}
+
+/** Save biweekly start date */
+function saveTsBiweeklyStart() {
+  const val = document.getElementById('tsBiweeklyStartDate')?.value;
+  if (val) {
+    localStorage.setItem('pos_biweekly_start', val);
+    document.getElementById('tsBiweeklySavedBadge').style.display = 'inline';
+    setTimeout(() => { document.getElementById('tsBiweeklySavedBadge').style.display = 'none'; }, 2000);
+    loadTimesheetDashboard();
+  }
+}
+
+/** Render approval status section */
+let _lastApprovalData = null;
+function renderTsApprovalStatus(approvalData, params) {
+  _lastApprovalData = approvalData;
+  const section = document.getElementById('tsApprovalSection');
+  if (!section) return;
+  const approvals = (approvalData.approvals || []).filter(a => a.status === 'pending' || a.status === 'approved');
+  if (approvals.length === 0) {
+    section.style.display = 'none';
+    return;
+  }
+  section.style.display = 'block';
+  const badge = document.getElementById('tsApprovalStatusBadge');
+  const submitBtn = document.getElementById('tsBtnApprovalSubmit');
+  const approveBtn = document.getElementById('tsBtnApprovalApprove');
+  const finalizeBtn = document.getElementById('tsBtnApprovalFinalize');
+  const unlockBtn = document.getElementById('tsBtnApprovalUnlock');
+  const empList = document.getElementById('tsApprovalEmployeeList');
+
+  // Find the matching approval for the current period
+  const dateFrom = document.getElementById('tsPeriodDateFrom')?.value || '';
+  const dateTo = document.getElementById('tsPeriodDateTo')?.value || '';
+  let currentApproval = null;
+  for (const a of approvals) {
+    if (a.date_from === dateFrom && a.date_to === dateTo) {
+      currentApproval = a;
+      break;
+    }
+  }
+
+  if (!currentApproval) {
+    // Still show if there are any locked periods affecting visible data
+    const hasLockedPeriod = approvals.some(a => {
+      if (!dateFrom || !dateTo) return false;
+      return a.date_from <= dateTo && a.date_to >= dateFrom;
+    });
+    if (hasLockedPeriod) {
+      badge.textContent = '🔒 Some shifts in this period belong to a locked/approved pay period. Editing disabled.';
+      submitBtn.style.display = 'none';
+      approveBtn.style.display = 'none';
+      finalizeBtn.style.display = 'none';
+      unlockBtn.style.display = currentUser.role === 'owner' ? 'inline-block' : 'none';
+    } else {
+      section.style.display = 'none';
+    }
+    return;
+  }
+
+  switch (currentApproval.status) {
+    case 'pending':
+      badge.textContent = '⏳ Period submitted for approval. Awaiting employee review.';
+      submitBtn.style.display = 'none';
+      approveBtn.style.display = 'inline-block';
+      finalizeBtn.style.display = 'none';
+      unlockBtn.style.display = currentUser.role === 'owner' ? 'inline-block' : 'none';
+      // Show which employees have/haven't approved
+      const approvedBy = currentApproval.approved_by || [];
+      const allEmp = _tsDashboardEmployees || [];
+      const total = allEmp.length;
+      const approvedCount = approvedBy.length;
+      empList.textContent = approvedCount + '/' + total + ' employees have approved their shifts.';
+      break;
+    case 'approved':
+      badge.textContent = '✅ Period approved by owner. Shifts are locked.';
+      submitBtn.style.display = 'none';
+      approveBtn.style.display = 'none';
+      finalizeBtn.style.display = 'none';
+      unlockBtn.style.display = currentUser.role === 'owner' ? 'inline-block' : 'none';
+      empList.textContent = 'Approved by: ' + (currentApproval.finalized_by_name || 'Owner') + ' on ' + (currentApproval.finalized_at ? new Date(currentApproval.finalized_at).toLocaleString() : '');
+      break;
+    default:
+      section.style.display = 'none';
+  }
+}
+
+/** Submit current period for approval */
+async function submitTsPeriodApproval() {
+  const dateFrom = document.getElementById('tsPeriodDateFrom')?.value || '';
+  const dateTo = document.getElementById('tsPeriodDateTo')?.value || '';
+  if (!dateFrom || !dateTo) { showToast('Select a date range first', 'warning'); return; }
+  try {
+    const r = await fetch(BACKEND_URL + '/api/timesheet/approval/submit', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, date_from: dateFrom, date_to: dateTo })
+    });
+    const data = await r.json();
+    showToast(data.message || 'Submitted for approval', r.ok ? 'success' : 'danger');
+    if (r.ok) loadTimesheetDashboard();
+  } catch(e) { showToast('Network error', 'danger'); }
+}
+
+/** Approve my shifts for the current period */
+async function approveTsMyShifts() {
+  const dateFrom = document.getElementById('tsPeriodDateFrom')?.value || '';
+  const dateTo = document.getElementById('tsPeriodDateTo')?.value || '';
+  try {
+    const r = await fetch(BACKEND_URL + '/api/timesheet/approval/approve', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, date_from: dateFrom, date_to: dateTo })
+    });
+    const data = await r.json();
+    showToast(data.message || 'Shifts approved', r.ok ? 'success' : 'danger');
+    if (r.ok) loadTimesheetDashboard();
+  } catch(e) { showToast('Network error', 'danger'); }
+}
+
+/** Owner finalizes approval for the period */
+async function finalizeTsPeriodApproval() {
+  const dateFrom = document.getElementById('tsPeriodDateFrom')?.value || '';
+  const dateTo = document.getElementById('tsPeriodDateTo')?.value || '';
+  try {
+    const r = await fetch(BACKEND_URL + '/api/timesheet/approval/finalize', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, date_from: dateFrom, date_to: dateTo })
+    });
+    const data = await r.json();
+    showToast(data.message || 'Period finalized', r.ok ? 'success' : 'danger');
+    if (r.ok) loadTimesheetDashboard();
+  } catch(e) { showToast('Network error', 'danger'); }
+}
+
+/** Owner unlocks a locked period */
+async function unlockTsPeriod() {
+  const dateFrom = document.getElementById('tsPeriodDateFrom')?.value || '';
+  const dateTo = document.getElementById('tsPeriodDateTo')?.value || '';
+  try {
+    const r = await fetch(BACKEND_URL + '/api/timesheet/approval/unlock', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, date_from: dateFrom, date_to: dateTo })
+    });
+    const data = await r.json();
+    showToast(data.message || 'Period unlocked', r.ok ? 'success' : 'danger');
+    if (r.ok) loadTimesheetDashboard();
+  } catch(e) { showToast('Network error', 'danger'); }
+}
+
+/* Add CSS for dense table */
+(function injectTsTableStyles() {
+  const styleId = 'ts-dense-table-style';
+  if (document.getElementById(styleId)) return;
+  const style = document.createElement('style');
+  style.id = styleId;
+  style.textContent = `
+    .ts-dense-table { width:100%; border-collapse:collapse; font-size:13px; }
+    .ts-dense-table th { text-align:left; padding:6px 8px; background:var(--card-alt); color:var(--text2); font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:0.3px; border-bottom:2px solid var(--border); white-space:nowrap; }
+    .ts-dense-table th:hover { color:var(--accent); }
+    .ts-dense-table td { padding:5px 8px; border-bottom:1px solid var(--border); vertical-align:middle; white-space:nowrap; }
+    .ts-dense-table tbody tr:hover { background:var(--card-alt); }
+    .badge-status { display:inline-block; margin-left:2px; font-size:12px; cursor:help; }
+    .ts-dense-table td:last-child { text-align:center; }
+    .ts-dense-table th:last-child { text-align:center; }
+  `;
+  document.head.appendChild(style);
+})();
 
 async function exportActivityLogCSV() {
   try {
@@ -12800,7 +13256,7 @@ async function submitShiftEdit() {
     }
     closeShiftEdit();
     showToast('✅ ' + data.message, 'success');
-    loadShifts(); // Refresh the shift list
+    loadTimesheetDashboard(); // Refresh the timesheet dashboard
   } catch(e) {
     errDiv.textContent = 'Network error: ' + e.message;
     errDiv.style.display = 'block';

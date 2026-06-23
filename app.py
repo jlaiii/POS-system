@@ -8316,7 +8316,10 @@ def timesheet_pay_period():
                 'active': s.get('active', False),
                 'exceeds_daily_ot': s.get('duration_hours', 0) > OT_DAILY,
                 'exceeds_weekly_ot': overtime_hours > 0,
-                'day_total_hours': round(day_total, 2)
+                'day_total_hours': round(day_total, 2),
+                'edited': s.get('edited', False),
+                'notes': s.get('notes', ''),
+                'late_note': s.get('late_note', '')
             })
 
         results.append({

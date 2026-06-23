@@ -115,7 +115,7 @@
 
 - [x] worker-3 **PDF timesheet report export** — Generate a clean, printable timesheet report for the selected pay period. Employee name, shift dates/times, daily totals, period total, overtime, estimated pay, signature line. `POST /api/export/timesheet_pdf` endpoint. Print-friendly CSS with page breaks per employee. More professional than CSV for record-keeping and employee handouts.
 
-- [~] worker-1 **Timesheet UI overhaul for timekeeper usability** — Current admin Timesheet tab shows raw shift list + raw admin login timesheet in two separate sections. Redesign as unified timekeeper dashboard: period selector at top → employee summary cards (name, total hours, overtime, estimated pay) → click employee to expand individual shifts → export button clearly visible (not buried). Dense data table for the shift list. Sortable columns (name, date, hours). Visual indicators for overtime, edited shifts, missing clock-outs.
+- [x] worker-1 **Timesheet UI overhaul for timekeeper usability** — Redesigned admin Timesheet tab as unified timekeeper dashboard with period selector (presets + date range), summary bar, sortable employee cards (name/hours/pay/OT/shifts), expandable dense shift detail tables with visual indicators (active/OT/late/edited), export buttons (CSV/PDF) always visible, collapsible admin login log section. Dark theme, touch-compatible. Backward-compatible redirects from old function calls.
 
 - [ ] **Missing clock-out detection & alert** — Detect employees who clocked in but never clocked out (e.g., 8h+ since clock-in with no clock-out). Show alert banner in admin Timesheet: "⚠️ 2 employees have active shifts over 8 hours — possible forgotten clock-outs." Allow admin to force clock-out with estimated time + note.
 
@@ -775,7 +775,7 @@ Super admin PIN is separate from any business PIN. Super admin can create busine
 
 ## Done (older)
 <details>
-<summary>39 completed tasks from earlier development</summary>
+<summary>40 completed tasks from earlier development</summary>
 
 |- [x] **Multi-language support** — English + Spanish with browser detection, toggle button. [worker-2]
 |- [x] **Kitchen display queue system** — Full cook view: claim/complete/cancel, 8s auto-refresh, sound alerts, fullscreen. [worker-3]
