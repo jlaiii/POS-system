@@ -550,8 +550,9 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
   vertical-align: middle;
   min-height: 22px;
   line-height: 18px;
-  cursor: default;
+  cursor: pointer;
 }
+.shift-late-badge:hover { opacity: 0.85; }
 .shift-late-badge.excused {
   background: rgba(149,165,166,0.15);
   color: #95a5a6;
@@ -3650,6 +3651,140 @@ function adminAddNote(shiftIndex) {
   .catch(e => showToast('Error saving notes', 'error'));
 }
 
+/** Late badge popover — admin can excuse or re-flag a late shift */
+let _latePopoverShiftIndex = null;
+async function showLatePopover(shiftIndex) {
+  _latePopoverShiftIndex = shiftIndex;
+  const overlay = document.getElementById('latePopoverOverlay');
+  const content = document.getElementById('latePopoverContent');
+  content.innerHTML = '<div class="empty-state">Loading...</div>';
+  overlay.classList.add('active');
+
+  try {
+    const r = await fetch(BACKEND_URL + '/api/admin_shifts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id })
+    });
+    const data = await r.json();
+    const shifts = data.shifts || [];
+    const shift = shifts[shiftIndex];
+    if (!shift) {
+      content.innerHTML = '<div class="empty-state">Shift not found.</div>';
+      return;
+    }
+    const lateMin = shift.late_minutes || 0;
+    const isExcused = shift.late_excused || false;
+    const lateNote = shift.late_note || '';
+
+    let html = '';
+    // Employee info
+    html += '<div style="margin-bottom:12px;padding:10px;background:var(--card-alt);border-radius:6px;">';
+    html += '<strong>' + escHtml(shift.user_name || shift.user_id) + '</strong><br>';
+    html += '<span style="font-size:13px;color:var(--text2);">' + new Date(shift.clock_in_time).toLocaleString() + ' → ' +
+      (shift.clock_out_time ? new Date(shift.clock_out_time).toLocaleString() : '—') + '</span>';
+    html += '</div>';
+
+    // Current status
+    const statusColor = isExcused ? '#95a5a6' : '#e74c3c';
+    const statusIcon = isExcused ? '🔕' : '🕐';
+    const statusText = isExcused ? 'Excused late' : 'Late';
+    html += '<div style="text-align:center;margin-bottom:16px;">';
+    html += '<span style="display:inline-block;font-size:24px;margin-bottom:4px;">' + statusIcon + '</span>';
+    html += '<div style="font-size:16px;font-weight:600;color:' + statusColor + ';">' + statusText + ' — ' + lateMin + ' min</div>';
+    if (lateNote) {
+      html += '<div style="font-size:13px;color:var(--text2);margin-top:4px;font-style:italic;">📌 "' + escHtml(lateNote) + '"</div>';
+    }
+    html += '</div>';
+
+    // Toggle section
+    if (isExcused) {
+      // Currently excused — show "Flag as Late" option
+      html += '<div style="margin-bottom:10px;">';
+      html += '<label style="display:block;font-size:13px;color:var(--text2);margin-bottom:4px;">Late minutes:</label>';
+      html += '<input type="number" id="lateFlagMinutes" value="' + lateMin + '" min="1" max="999" style="width:100%;padding:10px 12px;border-radius:8px;background:var(--bg);border:2px solid var(--border);color:var(--text);font-size:16px;">';
+      html += '</div>';
+      html += '<div style="margin-bottom:10px;">';
+      html += '<label style="display:block;font-size:13px;color:var(--text2);margin-bottom:4px;">Note (reason):</label>';
+      html += '<textarea id="latePopoverNote" rows="2" placeholder="Explain why you are re-flagging this as late..." style="width:100%;padding:10px 12px;border-radius:8px;background:var(--bg);border:2px solid var(--border);color:var(--text);font-size:15px;resize:vertical;font-family:inherit;"></textarea>';
+      html += '</div>';
+      html += '<button class="danger" onclick="submitLateFlag()" style="width:100%;margin-top:8px;min-height:48px;font-size:16px;">🚩 Re-flag as Late</button>';
+    } else {
+      // Currently late — show "Excuse" option
+      html += '<div style="margin-bottom:10px;">';
+      html += '<label style="display:block;font-size:13px;color:var(--text2);margin-bottom:4px;">Note (reason for excusing):</label>';
+      html += '<textarea id="latePopoverNote" rows="2" placeholder="Optional reason for excusing this lateness..." style="width:100%;padding:10px 12px;border-radius:8px;background:var(--bg);border:2px solid var(--border);color:var(--text);font-size:15px;resize:vertical;font-family:inherit;"></textarea>';
+      html += '</div>';
+      html += '<button class="outline" onclick="submitExcuseLate()" style="width:100%;margin-top:8px;min-height:48px;font-size:16px;">🔕 Excuse this Late</button>';
+    }
+
+    content.innerHTML = html;
+  } catch(e) {
+    content.innerHTML = '<div class="empty-state">Network error</div>';
+  }
+}
+
+function closeLatePopover() {
+  document.getElementById('latePopoverOverlay').classList.remove('active');
+  _latePopoverShiftIndex = null;
+}
+
+async function submitExcuseLate() {
+  const note = document.getElementById('latePopoverNote')?.value?.trim() || '';
+  const idx = _latePopoverShiftIndex;
+  if (idx === null) return;
+  closeLatePopover();
+  try {
+    const r = await fetch(BACKEND_URL + '/api/clock/excuse_late', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        shift_index: idx,
+        adminPin: currentUser.id,
+        note: note
+      })
+    });
+    const data = await r.json();
+    if (r.ok) {
+      showToast(data.message || 'Shift excused!', 'success');
+      loadShifts();
+    } else {
+      showToast(data.message || 'Error excusing late', 'error');
+    }
+  } catch(e) {
+    showToast('Network error', 'error');
+  }
+}
+
+async function submitLateFlag() {
+  const minutes = parseInt(document.getElementById('lateFlagMinutes')?.value) || 1;
+  const note = document.getElementById('latePopoverNote')?.value?.trim() || '';
+  const idx = _latePopoverShiftIndex;
+  if (idx === null) return;
+  closeLatePopover();
+  try {
+    const r = await fetch(BACKEND_URL + '/api/clock/flag_late', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        shift_index: idx,
+        adminPin: currentUser.id,
+        late_minutes: minutes,
+        note: note
+      })
+    });
+    const data = await r.json();
+    if (r.ok) {
+      showToast(data.message || 'Shift flagged as late!', 'success');
+      loadShifts();
+    } else {
+      showToast(data.message || 'Error flagging late', 'error');
+    }
+  } catch(e) {
+    showToast('Network error', 'error');
+  }
+}
+
 async function loadShifts() {
   const container = document.getElementById('shiftList');
   if (!container) return;
@@ -3704,10 +3839,10 @@ async function loadShifts() {
         let lateBorderColor = 'var(--border)';
         if (s.late_minutes && s.late_minutes > 0) {
           if (s.late_excused) {
-            lateBadge = `<span class="shift-late-badge excused" title="Excused late — ${s.late_minutes} min">🔕 ${s.late_minutes} min</span>`;
+            lateBadge = `<span class="shift-late-badge excused" onclick="showLatePopover(${actualIndex})" title="Excused late — ${s.late_minutes} min">🔕 ${s.late_minutes} min</span>`;
             lateBorderColor = '#95a5a6';
           } else {
-            lateBadge = `<span class="shift-late-badge" title="Late — ${s.late_minutes} min">🕐 ${s.late_minutes} min</span>`;
+            lateBadge = `<span class="shift-late-badge" onclick="showLatePopover(${actualIndex})" title="Late — ${s.late_minutes} min">🕐 ${s.late_minutes} min</span>`;
             lateBorderColor = '#e74c3c';
           }
         }
@@ -10974,6 +11109,18 @@ function formatDateTime(isoStr) {
     <div id="shiftEditHistoryContent"><div class="empty-state">No edit history.</div></div>
     <div class="modal-actions">
       <button class="outline" onclick="closeShiftEditHistory()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ LATE POPOVER OVERLAY ═══════════ -->
+<div id="latePopoverOverlay" class="modal-overlay">
+  <div class="modal-box" style="max-width:480px;">
+    <h3 style="margin-bottom:4px;">🕐 Late Shift</h3>
+    <p style="font-size:13px;color:var(--text2);margin:0 0 12px 0;">Manage late flag for this shift.</p>
+    <div id="latePopoverContent"><div class="empty-state">Loading...</div></div>
+    <div class="modal-actions" style="margin-top:12px;">
+      <button class="outline" onclick="closeLatePopover()">Cancel</button>
     </div>
   </div>
 </div>
