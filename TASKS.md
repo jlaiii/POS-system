@@ -385,7 +385,7 @@ New `tickets.json` data store. Each ticket:
 
 - [x] worker-2 **Combo/meal deal showcase section** — "🔥 Featured Combos" horizontal scrollable row with combo cards, child items listed, combo price with strikethrough savings. [worker-2 — Fixed field names (combo_price, child_items), added strikethrough original price + green savings badge, calculates savings from menu item prices, child items with quantities in card + detail overlay]
 
-- [~] worker-1 **Auto-return to ads after inactivity** — After 30-60 seconds of no touch interaction, auto-transition back to ad rotator with 5-second countdown toast.
+- [x] worker-1 **Auto-return to ads after inactivity** — After 45s of no touch interaction on the menu view, a 5-second countdown toast appears ("Returning to ads in 5..."). User can tap "✕ Stay" or anywhere on the menu to cancel. If countdown reaches 0, auto-transition back to ad rotator. Countdown does not trigger when item detail overlay is open (customer actively browsing). Touch events on menuView, category tabs, item cards, and nav buttons all reset the idle timer. Cancel button + any menu touch cancels countdown and restarts idle timer.
 
 - [ ] **Restaurant info bar** — Persistent footer: restaurant name, hours today, Wi-Fi info, "📞 Call Server" button (SocketIO `tablet_call_server` event), table number from URL param.
 

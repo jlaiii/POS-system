@@ -638,6 +638,73 @@ body {
   font-size: clamp(18px, 2vw, 24px);
 }
 
+/* ---- Auto-return countdown ---- */
+#countdownOverlay {
+  position: fixed;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 150;
+  background: rgba(22,33,62,0.95);
+  border: 1px solid var(--accent);
+  border-radius: 20px;
+  padding: 16px 28px;
+  display: none;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  min-height: 60px;
+}
+
+#countdownOverlay.show {
+  display: flex;
+}
+
+#countdownOverlay .countdown-text {
+  font-size: clamp(15px, 2vw, 20px);
+  color: var(--text2);
+  white-space: nowrap;
+}
+
+#countdownOverlay .countdown-number {
+  font-size: clamp(22px, 3vw, 32px);
+  font-weight: 700;
+  color: var(--accent);
+  min-width: 32px;
+  text-align: center;
+}
+
+#countdownOverlay .countdown-cancel {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 40px;
+  padding: 10px 24px;
+  font-size: clamp(14px, 1.6vw, 18px);
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+  min-height: 44px;
+  transition: transform 0.15s, opacity 0.15s;
+}
+
+#countdownOverlay .countdown-cancel:active {
+  transform: scale(0.94);
+  opacity: 0.8;
+}
+
+@media (max-width: 500px) {
+  #countdownOverlay {
+    bottom: 80px;
+    padding: 12px 18px;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+
 @media (max-width: 600px) {
   .ad-title { font-size: 20px; }
   .ad-slide img { max-height: 60vh; }
@@ -710,6 +777,13 @@ body {
   <p>Your table has an active order.<br/>Please wait while we prepare your items.</p>
 </div>
 
+<!-- Auto-return countdown toast -->
+<div id="countdownOverlay">
+  <span class="countdown-text">↩️ Returning to ads in</span>
+  <span class="countdown-number" id="countdownNumber">5</span>
+  <button class="countdown-cancel" id="countdownCancelBtn">✕ Stay</button>
+</div>
+
 <script>
 const BACKEND = '';
 let adsData = { ads: [], interval: 10 };
@@ -721,7 +795,10 @@ let categories = [];
 let activeCategory = '';
 let combosData = [];
 let idleTimer = null;
-const IDLE_TIMEOUT = 45000; // 45s idle → return to ads
+let countdownTimer = null;
+let countdownValue = 5;
+const IDLE_TIMEOUT = 45000; // 45s idle → show countdown
+const COUNTDOWN_SECONDS = 5; // 5s countdown before auto-return
 let detailCategoryItems = []; // Items in current category for navigation
 let detailCurrentIdx = 0; // Current index in detailCategoryItems
 
@@ -1125,7 +1202,8 @@ function showAdsView() {
   rotateTimer = setInterval(() => {
     nextAd();
   }, interval * 1000);
-  // Cancel idle timer
+  // Cancel any timers
+  cancelCountdown();
   if (idleTimer) {
     clearTimeout(idleTimer);
     idleTimer = null;
@@ -1133,10 +1211,45 @@ function showAdsView() {
 }
 
 function resetIdleTimer() {
+  // Cancel any existing idle or countdown
   if (idleTimer) clearTimeout(idleTimer);
+  cancelCountdown();
+  // Start idle timer that leads to countdown
   idleTimer = setTimeout(() => {
-    showAdsView();
+    startCountdown();
   }, IDLE_TIMEOUT);
+}
+
+function startCountdown() {
+  // Only start countdown if menu view is open and detail overlay is not showing
+  if (!document.getElementById('menuView').classList.contains('show')) return;
+  // Don't start countdown if detail overlay is open — customer is actively browsing
+  if (document.getElementById('itemDetailOverlay').classList.contains('show')) {
+    resetIdleTimer();
+    return;
+  }
+
+  countdownValue = COUNTDOWN_SECONDS;
+  document.getElementById('countdownNumber').textContent = countdownValue;
+  document.getElementById('countdownOverlay').classList.add('show');
+
+  countdownTimer = setInterval(() => {
+    countdownValue--;
+    document.getElementById('countdownNumber').textContent = countdownValue;
+    if (countdownValue <= 0) {
+      // Time's up — return to ads
+      cancelCountdown();
+      showAdsView();
+    }
+  }, 1000);
+}
+
+function cancelCountdown() {
+  if (countdownTimer) {
+    clearInterval(countdownTimer);
+    countdownTimer = null;
+  }
+  document.getElementById('countdownOverlay').classList.remove('show');
 }
 
 // ---- Event listeners ----
@@ -1150,9 +1263,21 @@ document.getElementById('backToAdsBtn').addEventListener('click', () => {
   showAdsView();
 });
 
-// Also intercept any touch on menu view to reset idle timer
-document.getElementById('menuView').addEventListener('touchstart', resetIdleTimer, { passive: true });
-document.getElementById('menuView').addEventListener('click', resetIdleTimer, { passive: true });
+// Cancel auto-return countdown when user taps "Stay" or anywhere on menu
+document.getElementById('countdownCancelBtn').addEventListener('click', () => {
+  cancelCountdown();
+  resetIdleTimer();
+});
+
+// Also intercept any touch on menu view to reset idle timer and cancel countdown
+document.getElementById('menuView').addEventListener('touchstart', () => {
+  cancelCountdown();
+  resetIdleTimer();
+}, { passive: true });
+document.getElementById('menuView').addEventListener('click', () => {
+  cancelCountdown();
+  resetIdleTimer();
+}, { passive: true });
 
 // ---- Init ----
 fetchAds();
