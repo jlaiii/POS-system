@@ -53,6 +53,7 @@ SHIFT_FILE = 'shift_log.json'  # Employee shift clock-in/clock-out records
 TIMESHEET_CONFIG_FILE = 'timesheet_config.json'  # Timesheet configuration (overtime thresholds, late grace period)
 TICKETS_FILE = 'tickets.json'  # Employee self-service tickets/requests
 APPROVALS_FILE = 'timesheet_approvals.json'  # Timesheet pay period approvals
+RESTAURANT_CONFIG_FILE = 'restaurant_config.json'  # Restaurant info for tablet display (name, hours, wifi)
 
 # --- Loyalty Constants ---
 LOYALTY_POINTS_PER_DOLLAR = 1  # 1 point per $1 spent
@@ -147,7 +148,7 @@ def backup_menu():
 
 
 # Ensure JSON files exist and are initialized correctly
-for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE, INVENTORY_FILE, REFUNDED_ORDERS_FILE, FAVORITES_FILE, LOYALTY_FILE, SCHEDULED_PRICING_FILE, WASTE_FILE, DELIVERY_ADDRESSES_FILE, WEBHOOKS_FILE, TABLE_ADS_FILE, CASH_DRAWER_FILE, COMBOS_FILE, SERVICE_CHARGE_FILE, EMAIL_CONFIG_FILE, SHIFT_FILE, TICKETS_FILE, APPROVALS_FILE]:
+for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE, INVENTORY_FILE, REFUNDED_ORDERS_FILE, FAVORITES_FILE, LOYALTY_FILE, SCHEDULED_PRICING_FILE, WASTE_FILE, DELIVERY_ADDRESSES_FILE, WEBHOOKS_FILE, TABLE_ADS_FILE, CASH_DRAWER_FILE, COMBOS_FILE, SERVICE_CHARGE_FILE, EMAIL_CONFIG_FILE, SHIFT_FILE, TICKETS_FILE, APPROVALS_FILE, RESTAURANT_CONFIG_FILE]:
     if not os.path.exists(f):
         with open(f, 'w') as file:
             if f == USERS_FILE:
@@ -211,6 +212,8 @@ for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMES
                 json.dump({"enabled": True, "threshold": 8, "percentage": 18.0, "label": "Auto-Gratuity (18%)"}, file, indent=4)  # Initialize service charge config
             elif f == EMAIL_CONFIG_FILE:
                 json.dump({"server": "", "port": 587, "username": "", "password": "", "from_addr": "", "use_tls": True, "enabled": False}, file, indent=4)  # Initialize email config
+            elif f == RESTAURANT_CONFIG_FILE:
+                json.dump({"name": "Our Restaurant", "hours_today": "Mon-Fri: 11:00 AM - 10:00 PM", "wifi_name": "Guest WiFi", "wifi_password": ""}, file, indent=4)  # Initialize restaurant config
             else:
                 json.dump([], file)  # Initialize orders.json and cleared_orders.json as empty lists
 
@@ -430,6 +433,14 @@ def emit_drivethrough_update():
 def emit_pickup_update():
     """Broadcast to pickup display room that pickup state changed."""
     socketio.emit('pickup_update', {}, room=PICKUP_ROOM)
+
+
+@socketio.on('tablet_call_server')
+def handle_tablet_call_server(data):
+    """Tablet customer pressed 'Call Server' — notify all staff clients."""
+    table_number = data.get('table_number', 'Unknown')
+    timestamp = datetime.now().isoformat()
+    socketio.emit('server_call', {'table_number': table_number, 'timestamp': timestamp})
 
 
 # In-memory storage for active admin sessions (for timesheet calculation)
@@ -9740,6 +9751,25 @@ def serve_pickup_display():
 def serve_tablet():
     """Serve the table-side ad display page for table tablets."""
     return send_from_directory(app.static_folder, 'tablet.html')
+
+
+@app.route('/api/restaurant/info', methods=['GET'])
+def get_restaurant_info():
+    """Return restaurant configuration info (name, hours, wifi) for tablet display."""
+    config = load_json_data(RESTAURANT_CONFIG_FILE)
+    if not isinstance(config, dict):
+        config = {"name": "Our Restaurant", "hours_today": "", "wifi_name": "", "wifi_password": ""}
+    return jsonify(config)
+
+
+@app.route('/api/tablet/call-server', methods=['POST'])
+def tablet_call_server():
+    """REST fallback for tablet call server button. Emits SocketIO notification."""
+    data = request.json or {}
+    table_number = data.get('table_number', 'Unknown')
+    timestamp = datetime.now().isoformat()
+    socketio.emit('server_call', {'table_number': table_number, 'timestamp': timestamp, 'source': 'rest'})
+    return jsonify({'status': 'ok', 'table_number': table_number})
 
 
 # ══════════════════════════════════════════════════

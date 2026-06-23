@@ -4,6 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"/>
 <title>Tablet Ads</title>
+<script src="/socket.io/socket.io.js"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -721,6 +722,132 @@ body {
 @media (orientation: landscape) {
   #menuItemsGrid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
 }
+
+/* ---- Restaurant Info Bar ---- */
+#tabletInfoBar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  background: var(--card);
+  border-top: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  min-height: 48px;
+  gap: 8px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.info-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.resto-name {
+  font-weight: 700;
+  font-size: clamp(14px, 1.6vw, 18px);
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.resto-hours {
+  font-size: clamp(11px, 1.2vw, 14px);
+  color: var(--text2);
+  white-space: nowrap;
+}
+
+.wifi-info {
+  font-size: clamp(11px, 1.2vw, 14px);
+  color: var(--text2);
+  white-space: nowrap;
+}
+
+.wifi-info::before {
+  content: '📶 ';
+}
+
+.info-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.table-num {
+  font-size: clamp(14px, 1.6vw, 18px);
+  font-weight: 700;
+  color: var(--text);
+  background: rgba(255,255,255,0.08);
+  padding: 4px 12px;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+
+#callServerBtn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 40px;
+  padding: 8px 20px;
+  font-size: clamp(14px, 1.6vw, 18px);
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+  min-height: 44px;
+  transition: transform 0.15s, box-shadow 0.15s;
+  white-space: nowrap;
+  box-shadow: 0 2px 12px rgba(233,69,96,0.4);
+}
+
+#callServerBtn:active {
+  transform: scale(0.94);
+  box-shadow: 0 1px 6px rgba(233,69,96,0.3);
+}
+
+#callServerBtn.called {
+  background: #2ecc71;
+  animation: callPulse 1s ease 3;
+}
+
+@keyframes callPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+@media (max-width: 600px) {
+  #tabletInfoBar {
+    flex-direction: column;
+    padding: 6px 12px;
+    gap: 4px;
+  }
+  .info-bar-left {
+    justify-content: center;
+    gap: 6px;
+  }
+  .info-bar-right {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Push content up to not overlap info bar */
+#adContainer, #menuView {
+  padding-bottom: 56px;
+}
+
+@media (max-width: 600px) {
+  #adContainer, #menuView {
+    padding-bottom: 80px;
+  }
+}
 </style>
 </head>
 <body>
@@ -782,6 +909,19 @@ body {
   <span class="countdown-text">↩️ Returning to ads in</span>
   <span class="countdown-number" id="countdownNumber">5</span>
   <button class="countdown-cancel" id="countdownCancelBtn">✕ Stay</button>
+</div>
+
+<!-- Restaurant Info Bar -->
+<div id="tabletInfoBar">
+  <div class="info-bar-left">
+    <span class="resto-name" id="restaurantName">Our Restaurant</span>
+    <span class="resto-hours" id="restaurantHours"></span>
+    <span class="wifi-info" id="wifiInfo"></span>
+  </div>
+  <div class="info-bar-right">
+    <span class="table-num" id="tableNumber">Table: --</span>
+    <button id="callServerBtn">📞 Call Server</button>
+  </div>
 </div>
 
 <script>
@@ -1325,6 +1465,88 @@ document.addEventListener('keydown', e => {
       showAdsView();
     }
   }
+});
+
+// ═══════════ RESTAURANT INFO BAR ═══════════
+
+// Parse table number from URL (?table=5)
+function getTableNumber() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get('table') || null;
+}
+
+// Fetch restaurant info and populate the info bar
+async function loadRestaurantInfo() {
+  try {
+    const r = await fetch(BACKEND + '/api/restaurant/info');
+    if (!r.ok) throw new Error('Fetch failed');
+    const config = await r.json();
+    document.getElementById('restaurantName').textContent = config.name || 'Our Restaurant';
+    if (config.hours_today) {
+      document.getElementById('restaurantHours').textContent = '🕐 ' + config.hours_today;
+    }
+    let wifiStr = '';
+    if (config.wifi_name) {
+      wifiStr = config.wifi_name;
+      if (config.wifi_password) wifiStr += ' 🔑 ' + config.wifi_password;
+    }
+    document.getElementById('wifiInfo').textContent = wifiStr;
+  } catch (e) {
+    // Keep defaults
+  }
+}
+
+// SocketIO connection for call server
+let tabletSocket = null;
+function initTabletSocket() {
+  if (typeof io === 'undefined') return;
+  try {
+    tabletSocket = io(BACKEND, {
+      transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      timeout: 10000
+    });
+  } catch(e) {
+    // Socket not available, call server will use fallback
+  }
+}
+
+// Call server button
+document.addEventListener('DOMContentLoaded', () => {
+  const tableNum = getTableNumber();
+  const tableEl = document.getElementById('tableNumber');
+  if (tableNum) {
+    tableEl.textContent = '🍽️ Table ' + tableNum;
+  }
+  
+  loadRestaurantInfo();
+  initTabletSocket();
+
+  const callBtn = document.getElementById('callServerBtn');
+  callBtn.addEventListener('click', () => {
+    const table = getTableNumber() || 'Unknown';
+    // Emit via SocketIO
+    if (tabletSocket && tabletSocket.connected) {
+      tabletSocket.emit('tablet_call_server', { table_number: table });
+    } else {
+      // Fallback: use REST endpoint
+      fetch(BACKEND + '/api/tablet/call-server', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ table_number: table })
+      }).catch(() => {});
+    }
+    // Visual feedback
+    callBtn.textContent = '✅ Server Called';
+    callBtn.classList.add('called');
+    setTimeout(() => {
+      callBtn.textContent = '📞 Call Server';
+      callBtn.classList.remove('called');
+    }, 4000);
+  });
 });
 </script>
 </body>

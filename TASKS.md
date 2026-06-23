@@ -387,8 +387,6 @@ New `tickets.json` data store. Each ticket:
 
 - [x] worker-1 **Auto-return to ads after inactivity** — After 45s of no touch interaction on the menu view, a 5-second countdown toast appears ("Returning to ads in 5..."). User can tap "✕ Stay" or anywhere on the menu to cancel. If countdown reaches 0, auto-transition back to ad rotator. Countdown does not trigger when item detail overlay is open (customer actively browsing). Touch events on menuView, category tabs, item cards, and nav buttons all reset the idle timer. Cancel button + any menu touch cancels countdown and restarts idle timer.
 
-- [~] worker-3 **Restaurant info bar** — Persistent footer: restaurant name, hours today, Wi-Fi info, "📞 Call Server" button (SocketIO `tablet_call_server` event), table number from URL param.
-
 ### Priority: MEDIUM
 
 - [ ] **Dark/light theme toggle on tablet** — Sun/moon toggle in corner for customers.
@@ -773,6 +771,7 @@ Super admin PIN is separate from any business PIN. Super admin can create busine
 ||- [x] worker-2 **Pay history with period-by-period breakdown** — Enhanced pay history period cards with pay rate display ($X.XX/hr), expandable grid-based shift breakdown showing date/day, clock in/out, paid+break hours, period total summary row. Added i18n keys EN+ES. [worker-2]
 |||- [x] worker-3 **PDF timesheet report export** — New `POST /api/export/timesheet_pdf` endpoint generating print-ready HTML report from employee shift data. Employee name, shift dates/times, daily totals, period total, overtime, estimated pay, signature line. Print-friendly CSS with page breaks per employee. Button in Employee Shifts sub-tab. [worker-3]
 |- [x] worker-3 **Item detail popup** — Enhanced tablet menu item detail overlay with dietary badges (🌿 Vegetarian, 🌶️ Spicy, etc.), modifier options display (groups with type labels and price chips), and prev/next navigation (buttons + swipe + arrow keys) to browse items within same category. Added `dietary_tags` field to item data model. Configurable dietary icon mapping with 15 types. Dark theme, touch-friendly 56px nav buttons. [worker-3]
+|- [x] worker-3 **Restaurant info bar** — Persistent footer on tablet display: restaurant name, hours, Wi-Fi info, "📞 Call Server" button (SocketIO + REST fallback), table number from URL param `?table=N`. Config via `restaurant_config.json`. Staff notified via SocketIO `server_call` toast. [worker-3]
 
 ## Done (older)
 <details>

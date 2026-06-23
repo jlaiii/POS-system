@@ -3666,6 +3666,12 @@ function initSocketIO() {
     socket.on('drivethrough_update', () => {
       // Drive-through update handled separately (drivethrough.html)
     });
+
+    // ── Tablet call server notification ──
+    socket.on('server_call', (data) => {
+      const tableNum = data && data.table_number ? data.table_number : 'Unknown';
+      showToast('📞 Table ' + tableNum + ' is calling for service!', 'warning', 10000);
+    });
   } catch(e) {
     socketEnabled = false;
   }
