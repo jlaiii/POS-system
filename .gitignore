@@ -17,4 +17,5 @@ scheduled_pricing.json
 inventory.json
 webhooks.json
 menu_backups/
+backups/
 pos_orders_backup.json

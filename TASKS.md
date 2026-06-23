@@ -240,11 +240,7 @@ Use Python `pyotp` (pure Python, no C extensions, `pip install pyotp qrcode`):
 
 - [-] worker-3 **SQLite backup script** — Cancelled: system is still JSON-only (pre-migration). SQLite backup applies post-migration only.
 
-- [~] worker-3 **JSON backup script** — Create `/root/pos-system-work/scripts/backup_json.py`:
-  - Copies all JSON files to `backups/json/YYYY-MM-DD_HH-MM-SS/`
-  - Validates each file is valid JSON (catches partial writes)
-  - Creates a tar.gz of the directory
-  - Lists file sizes so you can spot anomalies (0-byte files = corruption)
+- [x] worker-3 **JSON backup script** — Created `/root/pos-system-work/scripts/backup_json.py`: validates all JSON files, copies to timestamped directory, creates tar.gz archive, reports file sizes and anomalies. Supports --dry-run and --quiet modes. [worker-3]
 
 - [ ] **Automated backup cron job** — New cron: "POS Database Backup" runs HOURLY. Calls `backup_db.py` (if pos.db exists) AND `backup_json.py`. Delivers to Discord on failure only (success = silent). Tools: terminal + file only. no_agent=true (script-only, no LLM needed). This is a watchdog — if backup fails, owner needs to know immediately.
 
@@ -769,6 +765,7 @@ Super admin PIN is separate from any business PIN. Super admin can create busine
 |- [x] **Add item modifier support** — Variants, modifiers, customizations with modifier editor. [worker-2]
 |- [x] **New endpoint `POST /api/clock/excuse_late`** — Admin sets `late_excused = true` on a completed shift. Accepts `shift_index`, `adminPin`, optional `note`. Permission-gated (`view_timesheet`). Activity logged. [worker-1]
 |- [x] **Admin/owner 2FA management & reset** — `POST /api/users/disable_2fa` (requires reason, manage_users, only owner on admins) and `POST /api/users/regenerate_backup_codes` endpoints. `GET /api/users` now returns `totp_enabled`. Frontend: 🔒/🔓 2FA status badge in user cards, Disable 2FA + Regenerate Codes buttons (manage_users-gated), modal showing new backup codes. i18n EN + ES. Activity logging for all actions. [worker-2]
+|- [x] worker-3 **JSON backup script** — Created `/root/pos-system-work/scripts/backup_json.py` with validation, timestamped backups, tar.gz archiving, anomaly detection, dry-run and quiet modes.
 
 |## Done (older)
 
