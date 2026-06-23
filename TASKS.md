@@ -319,12 +319,11 @@ New `tickets.json` data store. Each ticket:
 
 - [x] worker-3 **Conflict detection for time-off requests** — When admin views a pending time-off, show warning if too many employees already approved for same dates. Backend: `check_timeoff_conflicts()` helper, queue and respond endpoints attach `conflict_warning` with count/names/threshold. Configurable `max_staff_off_per_day` in timesheet_config.json (default 3). Frontend: red warning banner in admin ticket card, warning toast on approve. [worker-3]
 |- [x] worker-2 **Ticket filtering and search** — Admin queue: filter by type, status, employee, date range. Search by text. [worker-2 — Backend: added filter params (filter_type, filter_status, filter_employee, filter_date_from, filter_date_to, filter_search) to POST /api/tickets/queue. Frontend: filter bar with type dropdown, status dropdown, employee search, date range inputs, text search, Apply/Reset buttons. Ticket count badges on columns. i18n EN+ES.]
-- [x] worker-1 **Recurring time-off patterns** — Allow employee to request recurring time-off (e.g., "every Tuesday for the next 3 months"). Added recurring toggle + day-of-week selector in time-off form. Backend calculates all occurrences, validates against overlap with existing requests. Recurring badge shown in employee and admin views. i18n EN + ES. [worker-1]
-|- [~] worker-3 **Calendar view for time-off** — Visual calendar in admin showing who's off on which days.
+|- [x] worker-1 **Recurring time-off patterns** — Allow employee to request recurring time-off (e.g., "every Tuesday for the next 3 months"). Added recurring toggle + day-of-week selector in time-off form. Backend calculates all occurrences, validates against overlap with existing requests. Recurring badge shown in employee and admin views. i18n EN + ES. [worker-1]
 
 ### Priority: LOW
 
-- [ ] **Issue/bug ticket triage labels** — Admin can tag issue tickets: "POS bug", "hardware", "menu error", "customer complaint", "other".
+|- [ ] **Issue/bug ticket triage labels** — Admin can tag issue tickets: "POS bug", "hardware", "menu error", "customer complaint", "other".
 - [ ] **Ticket response templates** — Admin can save common response notes as templates.
 - [ ] **Employee feedback analytics** — Aggregate feedback tickets by category over time.
 - [ ] **Auto-approve for low-risk time-off** — Configurable rule: auto-approve time-off if requested >2 weeks in advance AND no other approvals for same date.
@@ -763,6 +762,8 @@ Super admin PIN is separate from any business PIN. Super admin can create busine
 |||- [x] worker-3 **Restaurant info bar** — Persistent footer on tablet display: restaurant name, hours, Wi-Fi info, "📞 Call Server" button (SocketIO + REST fallback), table number from URL param `?table=N`. Config via `restaurant_config.json`. Staff notified via SocketIO `server_call` toast. [worker-3]
 ||- [x] worker-3 **Global data model + platform config** — Created `data/global/businesses.json` (with sample businesses: Maria's Tacos, Bob's Burgers) and `data/global/super_admins.json` (platform owner PIN 1111). Added `GLOCAL_DIR`, `BUSINESSES_FILE`, `SUPER_ADMINS_FILE` constants, `load_businesses/save_businesses/load_super_admins/save_super_admins/verify_super_admin/get_business_context` helpers, and 6 platform API endpoints (`POST /api/platform/super_admin/login`, `/businesses/list`, `/businesses/create`, `/businesses/detail`, `/businesses/status`, `/api/platform/stats`) — all gated by in-memory super admin session tokens. Enhanced `save_json_data()` to auto-create directories. [worker-3]
 |- [x] worker-3 **Backup monitoring in Discord** — Created `scripts/backup_monitor.py` that scans backup archives, categorizes by retention age, validates latest archive integrity, runs db_health.py, and sends formatted Discord embed summary. Added system crontab entry (`0 6 * * *`) for daily 6am execution. Reports: total backups, retention breakdown, date range, integrity status. Gracefully handles missing webhook config. [worker-3]
+
+|||- [x] worker-3 **Calendar view for time-off** — Visual calendar in admin showing who's off on which days. New sub-tab in Tickets section: "📅 Calendar" with month grid view of approved/pending time-off. Month nav (prev/next/today) with employee name badges per day color-coded by status (green=approved, yellow=pending). Backend: POST /api/tickets/timeoff_calendar with month/year filtering, day-by-day expansion. Dark theme compatible. [worker-3]
 
 ## Done (older)
 <details>

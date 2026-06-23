@@ -574,6 +574,22 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 .timesheet-subtab:hover { background: var(--card); color: var(--text); }
 @media (hover: hover) { .timesheet-subtab:hover { background: var(--card); color: var(--text); } }
 .timesheet-subtab.active { background: var(--accent); color: #fff; font-weight: 600; }
+/* Ticket sub-tabs */
+.ticket-subtab { background: transparent; border: none; padding: 8px 16px; font-size: 14px; cursor: pointer; border-radius: 6px 6px 0 0; color: var(--text2); min-height: 44px; font-weight: 500; transition: all .15s; border-bottom: 3px solid transparent; }
+.ticket-subtab:hover { background: var(--card); color: var(--text); }
+@media (hover: hover) { .ticket-subtab:hover { background: var(--card); color: var(--text); } }
+.ticket-subtab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+/* Time-off calendar */
+.calendar-day { min-height: 80px; padding: 4px; font-size: 13px; vertical-align: top; border: 1px solid var(--border); }
+.calendar-day:hover { background: var(--card); }
+@media (hover: hover) { .calendar-day:hover { background: var(--card); } }
+.calendar-day.today { border: 2px solid var(--accent); }
+.calendar-day.other-month { opacity: 0.35; }
+.calendar-day .day-num { font-weight: 600; margin-bottom: 2px; }
+.calendar-day .off-name { display: inline-block; font-size: 11px; padding: 1px 5px; border-radius: 3px; margin: 1px 0; white-space: nowrap; }
+.calendar-day .off-name.approved { background: rgba(39,174,96,0.25); color: #2ecc71; }
+.calendar-day .off-name.pending { background: rgba(243,156,18,0.25); color: #f1c40f; }
+.calendar-header th { padding: 6px 4px; font-size: 12px; color: var(--text2); font-weight: 600; text-transform: uppercase; text-align: center; }
 .timesheet-subsection { min-height: 100px; }
 /* Pay period cards */
 .pp-card { background: var(--card); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; border: 1px solid var(--border); }
@@ -2260,75 +2276,113 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
         </div>
         <!-- Tickets / Ticket Queue Admin -->
         <div id="secTickets" class="admin-section">
-          <h3>📋 Ticket Queue</h3>
-          <p style="color:var(--text2);margin-bottom:16px;font-size:14px;" data-i18n="admin.tickets.desc">Review and respond to employee tickets and requests.</p>
+          <!-- Sub-tabs: Queue | Calendar -->
+          <div style="display:flex;gap:4px;margin-bottom:16px;border-bottom:2px solid var(--border);padding-bottom:0;">
+            <button class="ticket-subtab active" onclick="switchTicketsSubTab('queue')" id="ticketSubTabQueue" style="background:transparent;border:none;padding:8px 16px;font-size:14px;cursor:pointer;border-radius:6px 6px 0 0;color:var(--text2);min-height:44px;font-weight:500;transition:all .15s;border-bottom:3px solid transparent;">📋 Queue</button>
+            <button class="ticket-subtab" onclick="switchTicketsSubTab('calendar')" id="ticketSubTabCalendar" style="background:transparent;border:none;padding:8px 16px;font-size:14px;cursor:pointer;border-radius:6px 6px 0 0;color:var(--text2);min-height:44px;font-weight:500;transition:all .15s;border-bottom:3px solid transparent;">📅 Calendar</button>
+          </div>
 
-          <!-- Filter bar -->
-          <div class="card" style="margin-bottom:16px;padding:12px;">
-            <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;">
-              <!-- Type filter -->
-              <div style="min-width:130px;flex:1;">
-                <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;" data-i18n="admin.tickets.filter_type">Filter by type:</label>
-                <select id="ticketFilterType" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:40px;">
-                  <option value="" data-i18n="admin.tickets.filter_all_types">All Types</option>
-                  <option value="time_off">🕐 Time Off</option>
-                  <option value="issue">🐛 Issue</option>
-                  <option value="feedback">💬 Feedback</option>
-                  <option value="pay_review">💰 Pay Review</option>
-                  <option value="other">📝 Other</option>
-                </select>
+          <!-- Queue View -->
+          <div id="ticketSubQueue">
+            <h3>📋 Ticket Queue</h3>
+            <p style="color:var(--text2);margin-bottom:16px;font-size:14px;" data-i18n="admin.tickets.desc">Review and respond to employee tickets and requests.</p>
+
+            <!-- Filter bar -->
+            <div class="card" style="margin-bottom:16px;padding:12px;">
+              <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;">
+                <!-- Type filter -->
+                <div style="min-width:130px;flex:1;">
+                  <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;" data-i18n="admin.tickets.filter_type">Filter by type:</label>
+                  <select id="ticketFilterType" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:40px;">
+                    <option value="" data-i18n="admin.tickets.filter_all_types">All Types</option>
+                    <option value="time_off">🕐 Time Off</option>
+                    <option value="issue">🐛 Issue</option>
+                    <option value="feedback">💬 Feedback</option>
+                    <option value="pay_review">💰 Pay Review</option>
+                    <option value="other">📝 Other</option>
+                  </select>
+                </div>
+                <!-- Status filter -->
+                <div style="min-width:110px;flex:1;">
+                  <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;" data-i18n="admin.tickets.filter_status">Status:</label>
+                  <select id="ticketFilterStatus" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:40px;">
+                    <option value="" data-i18n="admin.tickets.filter_all_status">All Statuses</option>
+                    <option value="pending">⏳ Pending</option>
+                    <option value="approved">✅ Approved</option>
+                    <option value="denied">❌ Denied</option>
+                  </select>
+                </div>
+                <!-- Employee search -->
+                <div style="min-width:120px;flex:1;">
+                  <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;" data-i18n="admin.tickets.filter_employee">Employee:</label>
+                  <input type="text" id="ticketFilterEmployee" placeholder="Name or PIN" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:40px;">
+                </div>
+                <!-- Date from -->
+                <div style="min-width:100px;flex:1;">
+                  <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;" data-i18n="admin.tickets.filter_date_from">From:</label>
+                  <input type="date" id="ticketFilterDateFrom" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:40px;">
+                </div>
+                <!-- Date to -->
+                <div style="min-width:100px;flex:1;">
+                  <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;" data-i18n="admin.tickets.filter_date_to">To:</label>
+                  <input type="date" id="ticketFilterDateTo" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:40px;">
+                </div>
+                <!-- Search text -->
+                <div style="min-width:120px;flex:1;">
+                  <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;" data-i18n="admin.tickets.filter_search">Search...</label>
+                  <input type="text" id="ticketFilterSearch" placeholder="Search subject, description, ID..." style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:40px;">
+                </div>
+                <!-- Buttons -->
+                <div style="display:flex;gap:6px;align-items:flex-end;padding-bottom:2px;">
+                  <button class="accent" onclick="applyTicketFilters()" style="min-height:40px;padding:8px 16px;font-size:13px;white-space:nowrap;" data-i18n="admin.tickets.filter_apply">🔍 Apply</button>
+                  <button onclick="resetTicketFilters()" style="min-height:40px;padding:8px 16px;font-size:13px;white-space:nowrap;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);cursor:pointer;" data-i18n="admin.tickets.filter_reset">✕ Reset</button>
+                </div>
               </div>
-              <!-- Status filter -->
-              <div style="min-width:110px;flex:1;">
-                <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;" data-i18n="admin.tickets.filter_status">Status:</label>
-                <select id="ticketFilterStatus" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:40px;">
-                  <option value="" data-i18n="admin.tickets.filter_all_status">All Statuses</option>
-                  <option value="pending">⏳ Pending</option>
-                  <option value="approved">✅ Approved</option>
-                  <option value="denied">❌ Denied</option>
-                </select>
-              </div>
-              <!-- Employee search -->
-              <div style="min-width:120px;flex:1;">
-                <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;" data-i18n="admin.tickets.filter_employee">Employee:</label>
-                <input type="text" id="ticketFilterEmployee" placeholder="Name or PIN" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:40px;">
-              </div>
-              <!-- Date from -->
-              <div style="min-width:100px;flex:1;">
-                <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;" data-i18n="admin.tickets.filter_date_from">From:</label>
-                <input type="date" id="ticketFilterDateFrom" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:40px;">
-              </div>
-              <!-- Date to -->
-              <div style="min-width:100px;flex:1;">
-                <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;" data-i18n="admin.tickets.filter_date_to">To:</label>
-                <input type="date" id="ticketFilterDateTo" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:40px;">
-              </div>
-              <!-- Search text -->
-              <div style="min-width:120px;flex:1;">
-                <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;" data-i18n="admin.tickets.filter_search">Search...</label>
-                <input type="text" id="ticketFilterSearch" placeholder="Search subject, description, ID..." style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:40px;">
-              </div>
-              <!-- Buttons -->
-              <div style="display:flex;gap:6px;align-items:flex-end;padding-bottom:2px;">
-                <button class="accent" onclick="applyTicketFilters()" style="min-height:40px;padding:8px 16px;font-size:13px;white-space:nowrap;" data-i18n="admin.tickets.filter_apply">🔍 Apply</button>
-                <button onclick="resetTicketFilters()" style="min-height:40px;padding:8px 16px;font-size:13px;white-space:nowrap;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);cursor:pointer;" data-i18n="admin.tickets.filter_reset">✕ Reset</button>
+            </div>
+
+            <div id="ticketQueueLoading"><div class="spinner"></div> Loading tickets...</div>
+            <div id="ticketQueueContent" style="display:none;">
+              <div class="ticket-queue-layout" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                <!-- Pending Column -->
+                <div class="card">
+                  <h4 style="margin-bottom:12px;color:#f39c12;">⏳ Pending <span id="ticketPendingCount" style="font-size:12px;color:var(--text2);"></span></h4>
+                  <div id="ticketQueuePending"><div class="empty-state">No pending tickets.</div></div>
+                </div>
+                <!-- Resolved Column -->
+                <div class="card">
+                  <h4 style="margin-bottom:12px;color:var(--text2);">✅ Resolved <span id="ticketResolvedCount" style="font-size:12px;color:var(--text2);"></span></h4>
+                  <div id="ticketQueueResolved"><div class="empty-state">No resolved tickets yet.</div></div>
+                </div>
               </div>
             </div>
           </div>
 
-          <div id="ticketQueueLoading"><div class="spinner"></div> Loading tickets...</div>
-          <div id="ticketQueueContent" style="display:none;">
-            <div class="ticket-queue-layout" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-              <!-- Pending Column -->
-              <div class="card">
-                <h4 style="margin-bottom:12px;color:#f39c12;">⏳ Pending <span id="ticketPendingCount" style="font-size:12px;color:var(--text2);"></span></h4>
-                <div id="ticketQueuePending"><div class="empty-state">No pending tickets.</div></div>
+          <!-- Calendar View -->
+          <div id="ticketSubCalendar" style="display:none;">
+            <h3>📅 Time-Off Calendar</h3>
+            <p style="color:var(--text2);margin-bottom:16px;font-size:14px;">Visual overview of who's off on which days. Shows approved and pending time-off requests.</p>
+
+            <!-- Month navigation -->
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
+              <button class="accent" onclick="calendarPrevMonth()" style="min-height:44px;padding:8px 16px;font-size:16px;">◀</button>
+              <h4 id="calendarMonthTitle" style="margin:0;font-size:20px;min-width:220px;text-align:center;">June 2026</h4>
+              <button class="accent" onclick="calendarNextMonth()" style="min-height:44px;padding:8px 16px;font-size:16px;">▶</button>
+              <button onclick="calendarGoToday()" style="min-height:44px;padding:8px 16px;font-size:13px;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);cursor:pointer;">📅 Today</button>
+            </div>
+
+            <!-- Calendar grid -->
+            <div class="card" style="padding:16px;overflow-x:auto;-webkit-overflow-scrolling:touch;">
+              <div id="calendarGrid" style="min-width:600px;">
+                <!-- Calendar is rendered by JS -->
+                <div class="empty-state" style="padding:40px;">Loading calendar...</div>
               </div>
-              <!-- Resolved Column -->
-              <div class="card">
-                <h4 style="margin-bottom:12px;color:var(--text2);">✅ Resolved <span id="ticketResolvedCount" style="font-size:12px;color:var(--text2);"></span></h4>
-                <div id="ticketQueueResolved"><div class="empty-state">No resolved tickets yet.</div></div>
-              </div>
+            </div>
+
+            <!-- Legend -->
+            <div style="display:flex;gap:16px;margin-top:12px;font-size:13px;color:var(--text2);flex-wrap:wrap;">
+              <span><span style="display:inline-block;width:14px;height:14px;background:#27ae60;border-radius:3px;vertical-align:middle;"></span> Approved</span>
+              <span><span style="display:inline-block;width:14px;height:14px;background:#f39c12;border-radius:3px;vertical-align:middle;"></span> Pending</span>
+              <span><span style="display:inline-block;width:14px;height:14px;border:2px solid var(--accent);border-radius:3px;vertical-align:middle;"></span> Today</span>
             </div>
           </div>
         </div>
@@ -6323,6 +6377,121 @@ async function respondToTicket(ticketId, action) {
 function showDenyPrompt(ticketId) {
   // Use a small modal/prompt for deny reason
   respondToTicket(ticketId, 'denied');
+}
+
+// ═══════════ TIME-OFF CALENDAR ═══════════
+
+let calendarMonth = new Date().getMonth() + 1; // 1-indexed
+let calendarYear = new Date().getFullYear();
+
+function switchTicketsSubTab(subtab) {
+  document.querySelectorAll('.ticket-subtab').forEach(b => b.classList.remove('active'));
+  document.getElementById('ticketSubTab' + subtab.charAt(0).toUpperCase() + subtab.slice(1)).classList.add('active');
+  document.getElementById('ticketSubQueue').style.display = subtab === 'queue' ? '' : 'none';
+  document.getElementById('ticketSubCalendar').style.display = subtab === 'calendar' ? '' : 'none';
+  if (subtab === 'calendar') {
+    loadTimeOffCalendar();
+  } else if (subtab === 'queue') {
+    loadTicketQueue();
+  }
+}
+
+async function loadTimeOffCalendar() {
+  const grid = document.getElementById('calendarGrid');
+  grid.innerHTML = '<div class="empty-state" style="padding:40px;"><div class="spinner"></div> Loading calendar...</div>';
+  try {
+    const res = await fetch(BACKEND_URL + '/api/tickets/timeoff_calendar', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ month: calendarMonth, year: calendarYear })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      grid.innerHTML = '<div class="empty-state" style="padding:40px;color:#e74c3c;">Failed to load calendar: ' + (data.message || 'error') + '</div>';
+      return;
+    }
+    renderTimeOffCalendar(data);
+  } catch (e) {
+    grid.innerHTML = '<div class="empty-state" style="padding:40px;color:#e74c3c;">Network error loading calendar.</div>';
+  }
+}
+
+function renderTimeOffCalendar(data) {
+  document.getElementById('calendarMonthTitle').textContent = data.month_name + ' ' + data.year;
+
+  const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const today = new Date();
+  const todayStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+
+  let html = '<table style="width:100%;border-collapse:collapse;">';
+  // Header row
+  html += '<thead><tr class="calendar-header">';
+  dayNames.forEach(d => { html += '<th>' + d + '</th>'; });
+  html += '</tr></thead><tbody>';
+
+  let day = 1;
+  const firstWday = data.first_weekday; // 0=Mon
+  const daysInMonth = data.days_in_month;
+  const days = data.days || {};
+  let started = false;
+  let rows = 0;
+
+  // We need to fill up to 6 rows (42 cells)
+  for (let row = 0; row < 6; row++) {
+    if (rows >= 6 && day > daysInMonth) break;
+    html += '<tr>';
+    for (let col = 0; col < 7; col++) {
+      const cellIdx = row * 7 + col;
+      if (!started && cellIdx < firstWday) {
+        html += '<td class="calendar-day other-month"></td>';
+      } else if (day > daysInMonth) {
+        html += '<td class="calendar-day other-month"></td>';
+      } else {
+        started = true;
+        const dateStr = data.year + '-' + String(data.month).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+        const isToday = dateStr === todayStr;
+        const cellClass = isToday ? 'calendar-day today' : 'calendar-day';
+
+        html += '<td class="' + cellClass + '">';
+        html += '<div class="day-num">' + day + '</div>';
+
+        // Show employees off this day
+        const offList = days[dateStr] || [];
+        offList.forEach(entry => {
+          const statusClass = entry.status === 'approved' ? 'approved' : 'pending';
+          html += '<div class="off-name ' + statusClass + '" title="' + entry.subject.replace(/"/g, '&quot;') + '">' + escHtml(entry.user_name) + '</div>';
+        });
+
+        html += '</td>';
+        day++;
+      }
+    }
+    html += '</tr>';
+    rows++;
+    if (day > daysInMonth && row >= Math.ceil((firstWday + daysInMonth) / 7) - 1) break;
+  }
+
+  html += '</tbody></table>';
+  document.getElementById('calendarGrid').innerHTML = html;
+}
+
+function calendarPrevMonth() {
+  calendarMonth--;
+  if (calendarMonth < 1) { calendarMonth = 12; calendarYear--; }
+  loadTimeOffCalendar();
+}
+
+function calendarNextMonth() {
+  calendarMonth++;
+  if (calendarMonth > 12) { calendarMonth = 1; calendarYear++; }
+  loadTimeOffCalendar();
+}
+
+function calendarGoToday() {
+  const now = new Date();
+  calendarMonth = now.getMonth() + 1;
+  calendarYear = now.getFullYear();
+  loadTimeOffCalendar();
 }
 
 // ═══════════ SECURITY DASHBOARD ═══════════

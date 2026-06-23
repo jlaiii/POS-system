@@ -12351,6 +12351,104 @@ def ticket_mark_read():
     })
 
 
+@app.route('/api/tickets/timeoff_calendar', methods=['POST'])
+def ticket_timeoff_calendar():
+    """Return time-off calendar data: approved+pending time-off tickets grouped by month.
+    Accepts optional 'month' (1-12) and 'year' to filter. Defaults to current month.
+    Returns month info + list of tickets with expanded date ranges."""
+    data = request.json or {}
+    now = datetime.now()
+
+    month = data.get('month', now.month)
+    year = data.get('year', now.year)
+
+    if not isinstance(month, int) or month < 1 or month > 12:
+        month = now.month
+    if not isinstance(year, int) or year < 2000 or year > 2100:
+        year = now.year
+
+    try:
+        first_day = datetime(year, month, 1)
+    except ValueError:
+        first_day = datetime(now.year, now.month, 1)
+        month = first_day.month
+        year = first_day.year
+
+    # Last day of month
+    if month == 12:
+        last_day = datetime(year, 12, 31)
+    else:
+        last_day = datetime(year, month + 1, 1) - timedelta(days=1)
+
+    tickets = load_json_data(TICKETS_FILE)
+    if not isinstance(tickets, list):
+        tickets = []
+
+    # Filter: time_off type, approved or pending status, overlaps with requested month
+    calendar_tickets = []
+    for t in tickets:
+        if t.get('type') != 'time_off':
+            continue
+        if t.get('status') not in ('approved', 'pending'):
+            continue
+        t_from = t.get('date_from', '')
+        t_to = t.get('date_to', '')
+        if not t_from or not t_to:
+            continue
+        try:
+            td1 = datetime.strptime(t_from, '%Y-%m-%d')
+            td2 = datetime.strptime(t_to, '%Y-%m-%d')
+        except (ValueError, TypeError):
+            continue
+        # Check overlap with requested month
+        if td1 > last_day or td2 < first_day:
+            continue
+        calendar_tickets.append({
+            'id': t.get('id'),
+            'user_id': t.get('user_id'),
+            'user_name': t.get('user_name'),
+            'status': t.get('status'),
+            'date_from': t_from,
+            'date_to': t_to,
+            'subject': t.get('subject', ''),
+            'created_at': t.get('created_at', ''),
+        })
+
+    # Build day-by-day mapping for the requested month
+    days = {}
+    current = first_day
+    while current <= last_day:
+        date_str = current.strftime('%Y-%m-%d')
+        day_tickets = []
+        for ct in calendar_tickets:
+            if ct['date_from'] <= date_str <= ct['date_to']:
+                day_tickets.append({
+                    'user_name': ct['user_name'],
+                    'user_id': ct['user_id'],
+                    'status': ct['status'],
+                    'ticket_id': ct['id'],
+                    'subject': ct['subject'],
+                })
+        if day_tickets:
+            days[date_str] = day_tickets
+        current += timedelta(days=1)
+
+    # Month metadata for calendar rendering
+    first_weekday = first_day.weekday()  # 0=Mon, 6=Sun
+    days_in_month = (last_day - first_day).days + 1
+
+    return jsonify({
+        'month': month,
+        'year': year,
+        'month_name': first_day.strftime('%B'),
+        'days_in_month': days_in_month,
+        'first_weekday': first_weekday,
+        'days': days,
+        'tickets': calendar_tickets,
+        'total_off_days': len(days),
+    })
+
+
 # ============================================================
 # Platform / Multi-Tenant API Endpoints
 # ============================================================
