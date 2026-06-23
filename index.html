@@ -493,6 +493,8 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 #adminTab.active { display: flex; }
 #requestsTab { display: none; flex-direction: column; gap: 12px; padding: 0; }
 #requestsTab.active { display: flex; }
+#myPayTab { display: none; flex-direction: column; gap: 12px; padding: 0; }
+#myPayTab.active { display: flex; }
 #adminSubTabs {
   display: flex; gap: 4px; overflow-x: auto; flex-wrap: wrap;
   -webkit-overflow-scrolling: touch;
@@ -1170,6 +1172,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
     <button onclick="switchMainTab('admin')" id="mainTabAdmin" style="display:none;" data-i18n="tab.admin">⚙️ Admin</button>
     <button onclick="showKitchenView()" id="mainTabKitchen" style="display:none;" data-i18n="tab.kitchen">🔪 Kitchen</button>
     <button onclick="switchMainTab('requests')" id="mainTabRequests" data-i18n="tab.requests">📋 Requests <span id="requestsBadge" class="badge" style="display:none;background:#e94560;color:#fff;border-radius:10px;padding:2px 8px;font-size:11px;font-weight:700;margin-left:4px;vertical-align:middle;">0</span></button>
+    <button onclick="switchMainTab('mypay')" id="mainTabMypay" data-i18n="tab.mypay">💰 My Pay</button>
   </div>
 
   <div id="tabContent">
@@ -2088,6 +2091,84 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
   </div>
 </div>
 
+<!-- ═══════════ MY PAY TAB ═══════════ -->
+<div id="myPayTab">
+  <div style="padding:12px 16px;max-width:800px;margin:0 auto;">
+    <h2 style="font-size:22px;margin-bottom:4px;" data-i18n="mypay.title">💰 My Pay</h2>
+    <p style="color:var(--text2);font-size:14px;margin-bottom:16px;" data-i18n="mypay.subtitle">Your hours, pay, and earnings at a glance</p>
+
+    <!-- YTD Summary Card -->
+    <div class="card" style="margin-bottom:16px;padding:16px 20px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+        <h4 style="margin:0;font-size:15px;color:var(--accent);" data-i18n="mypay.ytd_title">📅 Year-to-Date</h4>
+        <span id="myPayYtdHours" style="font-size:14px;color:var(--text2);"></span>
+      </div>
+      <div style="display:flex;gap:20px;flex-wrap:wrap;margin-top:12px;">
+        <div style="flex:1;min-width:100px;text-align:center;padding:12px;background:var(--card-alt);border-radius:8px;">
+          <div style="font-size:24px;font-weight:700;color:var(--accent);" id="myPayYtdHoursValue">0</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:4px;" data-i18n="mypay.total_hours">Total Hours</div>
+        </div>
+        <div style="flex:1;min-width:100px;text-align:center;padding:12px;background:var(--card-alt);border-radius:8px;">
+          <div style="font-size:24px;font-weight:700;color:#2ecc71;" id="myPayYtdGross">$0.00</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:4px;" data-i18n="mypay.gross_pay">Gross Pay</div>
+        </div>
+        <div style="flex:1;min-width:100px;text-align:center;padding:12px;background:var(--card-alt);border-radius:8px;">
+          <div style="font-size:24px;font-weight:700;color:var(--text);" id="myPayYtdShifts">0</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:4px;" data-i18n="mypay.total_shifts">Shifts</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Current Period -->
+    <div class="card" style="margin-bottom:16px;padding:16px 20px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+        <h4 style="margin:0;font-size:15px;color:var(--accent);" data-i18n="mypay.current_title">⏱️ Current Period</h4>
+        <span id="myPayCurrentDates" style="font-size:13px;color:var(--text2);"></span>
+      </div>
+      <div id="myPayClockStatus" style="font-size:14px;margin-top:8px;padding:8px 12px;border-radius:6px;"></div>
+      <div style="display:flex;gap:20px;flex-wrap:wrap;margin-top:12px;">
+        <div style="flex:1;min-width:100px;text-align:center;padding:12px;background:var(--card-alt);border-radius:8px;">
+          <div style="font-size:24px;font-weight:700;color:var(--accent);" id="myPayCurrentHours">0</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:4px;" data-i18n="mypay.hours">Hours</div>
+        </div>
+        <div style="flex:1;min-width:100px;text-align:center;padding:12px;background:var(--card-alt);border-radius:8px;">
+          <div style="font-size:24px;font-weight:700;color:#2ecc71;" id="myPayCurrentGross">$0.00</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:4px;" data-i18n="mypay.est_gross">Est. Gross</div>
+        </div>
+        <div style="flex:1;min-width:100px;text-align:center;padding:12px;background:var(--card-alt);border-radius:8px;">
+          <div style="font-size:24px;font-weight:700;color:var(--text);" id="myPayCurrentShifts">0</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:4px;" data-i18n="mypay.shifts_this_period">Shifts</div>
+        </div>
+      </div>
+      <!-- Progress bar for current period -->
+      <div style="margin-top:12px;">
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:4px;">
+          <span id="myPayProgressLabel" data-i18n="mypay.progress">Period progress</span>
+          <span id="myPayProgressPct">0%</span>
+        </div>
+        <div style="width:100%;height:8px;background:var(--bg);border-radius:4px;overflow:hidden;">
+          <div id="myPayProgressBar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--accent),#ff6b6b);border-radius:4px;transition:width 0.5s;"></div>
+        </div>
+        <div style="font-size:11px;color:var(--text2);margin-top:4px;" data-i18n="mypay.pay_rate_hint">Pay rate determines estimated gross</div>
+      </div>
+    </div>
+
+    <!-- Pay History -->
+    <div class="card" style="margin-bottom:16px;padding:16px 20px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+        <h4 style="margin:0;font-size:15px;color:var(--accent);" data-i18n="mypay.history_title">📋 Pay History</h4>
+        <button class="outline" onclick="loadMyPay()" style="font-size:13px;padding:8px 14px;min-height:40px;" data-i18n="mypay.refresh">🔄 Refresh</button>
+      </div>
+      <div id="myPayHistoryList"><div class="empty-state" data-i18n="mypay.no_history">No pay history yet.</div></div>
+    </div>
+
+    <!-- Pay rate notice -->
+    <div id="myPayNoRateNotice" style="display:none;padding:12px 16px;background:rgba(255,193,7,0.15);border:1px solid rgba(255,193,7,0.4);border-radius:var(--radius);margin-bottom:16px;font-size:14px;color:#ffc107;" data-i18n="mypay.no_rate_notice">
+      ⚠️ No pay rate is set for your account. Ask your manager to set your pay rate in User Management.
+    </div>
+  </div>
+</div>
+
 <!-- ═══════════ KITCHEN DISPLAY VIEW ═══════════ -->
 <div id="kitchenView">
   <div id="kitchenHeader">
@@ -2832,6 +2913,23 @@ const L10N = {
     'requests.type_label.issue': 'Issue Report',
     'requests.type_label.feedback': 'Feedback',
     'requests.type_label.other': 'Request',
+    'tab.mypay': '💰 My Pay',
+    'mypay.title': '💰 My Pay',
+    'mypay.subtitle': 'Your hours, pay, and earnings at a glance',
+    'mypay.ytd_title': '📅 Year-to-Date',
+    'mypay.total_hours': 'Total Hours',
+    'mypay.gross_pay': 'Gross Pay',
+    'mypay.total_shifts': 'Shifts',
+    'mypay.current_title': '⏱️ Current Period',
+    'mypay.hours': 'Hours',
+    'mypay.est_gross': 'Est. Gross',
+    'mypay.shifts_this_period': 'Shifts',
+    'mypay.progress': 'Period progress',
+    'mypay.pay_rate_hint': 'Pay rate determines estimated gross',
+    'mypay.history_title': '📋 Pay History',
+    'mypay.refresh': '🔄 Refresh',
+    'mypay.no_history': 'No pay history yet.',
+    'mypay.no_rate_notice': '⚠️ No pay rate is set for your account. Ask your manager to set your pay rate in User Management.',
   },
   es: {
     'app.title': '🍽️ Sistema POS',
@@ -3316,6 +3414,23 @@ const L10N = {
     'requests.type_label.issue': 'Reporte de Problema',
     'requests.type_label.feedback': 'Comentario',
     'requests.type_label.other': 'Solicitud',
+    'tab.mypay': '💰 Mi Pago',
+    'mypay.title': '💰 Mi Pago',
+    'mypay.subtitle': 'Sus horas, pago y ganancias de un vistazo',
+    'mypay.ytd_title': '📅 Año Hasta la Fecha',
+    'mypay.total_hours': 'Horas Totales',
+    'mypay.gross_pay': 'Pago Bruto',
+    'mypay.total_shifts': 'Turnos',
+    'mypay.current_title': '⏱️ Período Actual',
+    'mypay.hours': 'Horas',
+    'mypay.est_gross': 'Bruto Estimado',
+    'mypay.shifts_this_period': 'Turnos',
+    'mypay.progress': 'Progreso del período',
+    'mypay.pay_rate_hint': 'La tarifa de pago determina el bruto estimado',
+    'mypay.history_title': '📋 Historial de Pago',
+    'mypay.refresh': '🔄 Actualizar',
+    'mypay.no_history': 'Aún no hay historial de pago.',
+    'mypay.no_rate_notice': '⚠️ No hay tarifa de pago configurada para su cuenta. Pídale a su gerente que configure su tarifa en Gestión de Usuarios.',
   }
 };
 
@@ -4707,6 +4822,7 @@ function switchMainTab(tab) {
   document.getElementById('historyTab').classList.remove('active');
   document.getElementById('adminTab').classList.remove('active');
   document.getElementById('requestsTab').classList.remove('active');
+  document.getElementById('myPayTab').classList.remove('active');
   if (tab === 'pos') {
     document.getElementById('posTab').classList.add('active');
     loadItems();
@@ -4729,6 +4845,9 @@ function switchMainTab(tab) {
     // Mark all responses as read and show alert banners
     markReadAndShowAlerts();
     loadMyTickets();
+  } else if (tab === 'mypay') {
+    document.getElementById('myPayTab').classList.add('active');
+    loadMyPay();
   }
 }
 
@@ -9412,6 +9531,114 @@ async function loadTableSelector() {
     }
   } catch(e) {
     document.getElementById('tableRow').style.display = 'none';
+  }
+}
+
+// ═══════════ MY PAY / EMPLOYEE PAY PORTAL ═══════════
+
+async function loadMyPay() {
+  /** Load employee pay data from the backend. */
+  if (!currentUser || !currentUser.id) return;
+  const container = document.getElementById('myPayHistoryList');
+  if (!container) return;
+
+  try {
+    const res = await fetch(BACKEND_URL + '/api/employee/my_pay', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: currentUser.id })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      container.innerHTML = '<div class="empty-state">' + escHtml(data.message || 'Failed to load pay data.') + '</div>';
+      return;
+    }
+    renderMyPay(data);
+  } catch (e) {
+    container.innerHTML = '<div class="empty-state">Network error loading pay data.</div>';
+  }
+}
+
+function renderMyPay(data) {
+  /** Render all pay sections from the API response. */
+
+  // --- YTD Summary ---
+  const ytd = data.ytd || {};
+  document.getElementById('myPayYtdHoursValue').textContent = ytd.hours != null ? ytd.hours.toFixed(1) : '0';
+  document.getElementById('myPayYtdGross').textContent = ytd.has_pay_rate && ytd.gross_pay != null ? '$' + ytd.gross_pay.toFixed(2) : '—';
+  document.getElementById('myPayYtdShifts').textContent = ytd.shift_count || 0;
+
+  // --- Current Period ---
+  const cp = data.current_period || {};
+  document.getElementById('myPayCurrentDates').textContent = cp.start_date + ' — ' + cp.end_date;
+  document.getElementById('myPayCurrentHours').textContent = cp.hours != null ? cp.hours.toFixed(1) : '0';
+  document.getElementById('myPayCurrentGross').textContent = cp.has_pay_rate && cp.estimated_gross != null ? '$' + cp.estimated_gross.toFixed(2) : '—';
+  document.getElementById('myPayCurrentShifts').textContent = cp.shift_count || 0;
+
+  // Clock status banner
+  const clockStatusEl = document.getElementById('myPayClockStatus');
+  if (cp.is_clocked_in) {
+    const activeHrs = cp.active_shift_hours || 0;
+    clockStatusEl.innerHTML = '<span style="color:#2ecc71;">🟢 Clocked in — currently working (' + activeHrs.toFixed(1) + ' hours today)</span>';
+    clockStatusEl.style.background = 'rgba(46,204,113,0.1)';
+  } else {
+    clockStatusEl.innerHTML = '<span style="color:var(--text2);">⚪ Not clocked in</span>';
+    clockStatusEl.style.background = 'rgba(255,255,255,0.05)';
+  }
+
+  // Progress bar (hours worked / target hours for the week, assuming 40h target)
+  const targetHours = 40;
+  const pct = cp.hours ? Math.min(100, Math.round((cp.hours / targetHours) * 100)) : 0;
+  document.getElementById('myPayProgressBar').style.width = pct + '%';
+  document.getElementById('myPayProgressPct').textContent = pct + '%';
+
+  // Pay rate notice
+  document.getElementById('myPayNoRateNotice').style.display = data.has_pay_rate ? 'none' : 'block';
+
+  // --- Pay History ---
+  const history = data.pay_history || [];
+  const container = document.getElementById('myPayHistoryList');
+  if (history.length === 0) {
+    container.innerHTML = '<div class="empty-state" data-i18n="mypay.no_history">No pay history yet.</div>';
+    return;
+  }
+
+  let html = '';
+  history.forEach(function(period) {
+    const grossStr = period.has_pay_rate && period.estimated_gross != null
+      ? '$' + period.estimated_gross.toFixed(2)
+      : '—';
+    const hoursStr = period.hours != null ? period.hours.toFixed(1) : '0';
+
+    html += '<div class="card" style="margin-bottom:10px;padding:12px 16px;cursor:pointer;" onclick="togglePayPeriodDetails(\'' + period.start_date + '\')">';
+    html += '  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">';
+    html += '    <div style="font-weight:600;font-size:15px;">' + period.start_date + ' — ' + period.end_date + '</div>';
+    html += '    <div style="display:flex;gap:16px;font-size:13px;color:var(--text2);">';
+    html += '      <span>📅 ' + period.shift_count + ' shifts</span>';
+    html += '      <span>⏱️ ' + hoursStr + 'h</span>';
+    html += '      <span style="color:#2ecc71;font-weight:600;">' + grossStr + '</span>';
+    html += '    </div>';
+    html += '  </div>';
+    html += '  <div id="payPeriodDetails_' + period.start_date + '" style="display:none;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);">';
+    html += '    <div style="font-size:13px;color:var(--text2);margin-bottom:6px;">Shifts:</div>';
+    (period.shifts || []).forEach(function(s) {
+      const outStr = s.clock_out_time ? new Date(s.clock_out_time).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '⌛ Active';
+      const inStr = s.clock_in_time ? new Date(s.clock_in_time).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '--';
+      html += '    <div style="display:flex;justify-content:space-between;font-size:13px;padding:4px 0;color:var(--text2);border-bottom:1px solid rgba(255,255,255,0.05);">';
+      html += '      <span>' + inStr + ' — ' + outStr + '</span>';
+      html += '      <span>' + (s.paid_hours || 0).toFixed(1) + 'h paid</span>';
+      html += '    </div>';
+    });
+    html += '  </div>';
+    html += '</div>';
+  });
+  container.innerHTML = html;
+}
+
+function togglePayPeriodDetails(periodKey) {
+  const el = document.getElementById('payPeriodDetails_' + periodKey);
+  if (el) {
+    el.style.display = el.style.display === 'none' ? 'block' : 'none';
   }
 }
 

@@ -341,7 +341,7 @@ New `tickets.json` data store. Each ticket:
 
 ### Priority: HIGH
 
-|- [~] worker-3 **Employee "My Pay" tab** — New "💰 My Pay" tab visible to all logged-in employees. Shows three sections: **Current Period**, **Pay History**, **Year-to-Date** summary card.
+|- [x] worker-3 **Employee "My Pay" tab** — New "💰 My Pay" tab visible to all logged-in employees. Shows three sections: Current Period, Pay History, Year-to-Date summary card. [worker-3 — Backend: /api/employee/my_pay endpoint. Frontend: myPayTab with YTD card, current period with progress bar, expandable pay history with shift details. i18n EN+ES.]
 
 - [ ] **Current pay period live tracker** — Shows current pay period date range, hours worked so far, pay rate, estimated gross pay so far. Auto-updates every 60 seconds while clocked in. Progress bar.
 

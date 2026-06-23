@@ -4183,6 +4183,209 @@ def admin_shifts():
     })
 
 
+@app.route('/api/employee/my_pay', methods=['POST'])
+def employee_my_pay():
+    """Employee-facing pay info: current period, pay history, YTD totals.
+    No admin permission required — user can only see their own data.
+    """
+    data = request.json
+    user_id = (data.get('userId') or '').strip()
+
+    if not user_id:
+        return jsonify({'message': 'User ID is required.'}), 400
+
+    users = load_json_data(USERS_FILE)
+    if user_id not in users:
+        return jsonify({'message': 'User not found.'}), 404
+
+    user_data = users[user_id]
+    pay_rate = user_data.get('pay_rate')
+    has_pay_rate = pay_rate is not None and pay_rate > 0
+    pay_rate_val = pay_rate or 0
+    user_name = user_data.get('name', 'Unknown')
+
+    shift_log = load_json_data(SHIFT_FILE)
+
+    # Filter shifts for this user only
+    user_shifts = [s for s in shift_log if s.get('user_id') == user_id]
+
+    now = datetime.now()
+    today = now.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    # Calculate current week (Mon-Sun)
+    monday = today - timedelta(days=today.weekday())
+    sunday = monday + timedelta(days=6, hours=23, minutes=59, seconds=59)
+
+    # Helper to get paid hours from a shift
+    def get_paid_hours(s):
+        return s.get('paid_hours', s.get('duration_hours', 0))
+
+    # --- Current Period (this week) ---
+    current_shifts = []
+    current_period_hours = 0.0
+    active_shift_hours = 0.0
+    is_clocked_in = user_id in active_shifts
+
+    for s in user_shifts:
+        ck = s.get('clock_in_time', '')
+        if not ck:
+            continue
+        try:
+            dt = datetime.fromisoformat(ck)
+        except (ValueError, TypeError):
+            continue
+        if monday <= dt <= sunday:
+            paid = get_paid_hours(s)
+            current_shifts.append({
+                'clock_in_time': ck,
+                'clock_out_time': s.get('clock_out_time', ''),
+                'duration_hours': s.get('duration_hours', 0),
+                'paid_hours': paid,
+                'break_hours': s.get('break_hours', 0),
+                'active': False
+            })
+            current_period_hours += paid
+
+    # Include active shift if clocked in
+    if is_clocked_in:
+        active_shift = active_shifts[user_id]
+        active_duration = round((now - active_shift['clock_in_time']).total_seconds() / 3600, 2)
+        breaks = active_shift.get('breaks', [])
+        total_break_minutes = sum(
+            (b.get('duration_minutes') or 0) for b in breaks
+            if b.get('duration_minutes') is not None
+        )
+        if active_shift.get('on_break'):
+            for b in reversed(breaks):
+                if b.get('end') is None and b.get('start'):
+                    try:
+                        sd = datetime.fromisoformat(b['start'])
+                        total_break_minutes += (now - sd).total_seconds() / 60
+                    except (ValueError, TypeError):
+                        pass
+                    break
+        active_break_hours = round(total_break_minutes / 60, 2)
+        active_paid = round(max(0, active_duration - active_break_hours), 2)
+        active_shift_hours = active_paid
+        current_period_hours += active_paid
+        current_shifts.append({
+            'clock_in_time': active_shift['clock_in_time'].isoformat(),
+            'clock_out_time': None,
+            'duration_hours': active_duration,
+            'paid_hours': active_paid,
+            'break_hours': active_break_hours,
+            'active': True
+        })
+
+    current_period_hours = round(current_period_hours, 2)
+    estimated_gross = round(current_period_hours * pay_rate_val, 2) if has_pay_rate else None
+
+    current_period = {
+        'start_date': monday.strftime('%Y-%m-%d'),
+        'end_date': sunday.strftime('%Y-%m-%d'),
+        'hours': current_period_hours,
+        'pay_rate': pay_rate_val if has_pay_rate else None,
+        'has_pay_rate': has_pay_rate,
+        'estimated_gross': estimated_gross,
+        'shift_count': len(current_shifts),
+        'is_clocked_in': is_clocked_in,
+        'active_shift_hours': active_shift_hours,
+        'shifts': current_shifts
+    }
+
+    # --- Pay History (past periods, grouped by week) ---
+    # Collect all week keys from completed shifts
+    week_map = {}
+    for s in user_shifts:
+        ck = s.get('clock_in_time', '')
+        if not ck:
+            continue
+        try:
+            dt = datetime.fromisoformat(ck)
+        except (ValueError, TypeError):
+            continue
+        # Week starting Monday
+        week_start = dt - timedelta(days=dt.weekday())
+        week_key = week_start.strftime('%Y-%m-%d')
+        if week_key not in week_map:
+            week_map[week_key] = {
+                'start_date': week_start.strftime('%Y-%m-%d'),
+                'end_date': (week_start + timedelta(days=6)).strftime('%Y-%m-%d'),
+                'hours': 0.0,
+                'shift_count': 0,
+                'pay_rate': pay_rate_val if has_pay_rate else None,
+                'has_pay_rate': has_pay_rate,
+                'estimated_gross': 0.0,
+                'shifts': []
+            }
+        paid = get_paid_hours(s)
+        week_map[week_key]['hours'] += paid
+        week_map[week_key]['shift_count'] += 1
+        week_map[week_key]['shifts'].append({
+            'clock_in_time': ck,
+            'clock_out_time': s.get('clock_out_time', ''),
+            'duration_hours': s.get('duration_hours', 0),
+            'paid_hours': paid,
+            'break_hours': s.get('break_hours', 0)
+        })
+
+    # Round hours and calculate gross for each period
+    for wk in week_map.values():
+        wk['hours'] = round(wk['hours'], 2)
+        wk['estimated_gross'] = round(wk['hours'] * pay_rate_val, 2) if has_pay_rate else None
+
+    # Sort periods newest first, exclude current week (already in current_period)
+    current_week_key = monday.strftime('%Y-%m-%d')
+    past_periods = sorted(
+        [wk for wk_key, wk in week_map.items() if wk_key != current_week_key],
+        key=lambda p: p['start_date'],
+        reverse=True
+    )
+
+    # --- Year-to-Date ---
+    ytd_start = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+    ytd_hours = 0.0
+    ytd_shift_count = 0
+    for s in user_shifts:
+        ck = s.get('clock_in_time', '')
+        if not ck:
+            continue
+        try:
+            dt = datetime.fromisoformat(ck)
+        except (ValueError, TypeError):
+            continue
+        if dt >= ytd_start:
+            paid = get_paid_hours(s)
+            ytd_hours += paid
+            ytd_shift_count += 1
+
+    # Include active shift in YTD
+    if is_clocked_in:
+        ytd_hours += active_shift_hours
+        ytd_shift_count += 1
+
+    ytd_hours = round(ytd_hours, 2)
+    ytd_gross = round(ytd_hours * pay_rate_val, 2) if has_pay_rate else None
+
+    ytd = {
+        'hours': ytd_hours,
+        'gross_pay': ytd_gross,
+        'has_pay_rate': has_pay_rate,
+        'shift_count': ytd_shift_count,
+        'pay_rate': pay_rate_val if has_pay_rate else None
+    }
+
+    return jsonify({
+        'message': 'Employee pay data retrieved',
+        'user_name': user_name,
+        'pay_rate': pay_rate_val if has_pay_rate else None,
+        'has_pay_rate': has_pay_rate,
+        'current_period': current_period,
+        'pay_history': past_periods,
+        'ytd': ytd
+    })
+
+
 @app.route('/api/export/shifts_csv', methods=['POST'])
 def export_shifts_csv():
     """Export employee shift records as CSV."""
