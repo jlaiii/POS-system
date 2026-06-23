@@ -414,7 +414,7 @@ New `tickets.json` data store. Each ticket:
 
 ## New Tasks (from Audit #9 — 2026-06-23)
 
-- [~] worker-3 **HIGH: Inventory not restored on refund/void** — When `/api/orders/refund` processes a refund, it marks the order as refunded but does NOT re-increment inventory stock levels. Each refunded item should have its quantity added back to inventory. Without this, inventory gradually drifts downward as refunds accumulate. Also check `/api/sync_orders` for double-decrement on already-processed orders.
+- [x] worker-3 **HIGH: Inventory not restored on refund/void** — Added inventory restoration in `/api/orders/refund`: after refunding an order, stock levels are re-incremented for each item (including combo child items). Also added dedup check in `/api/sync_orders` to prevent double-decrement by skipping already-processed `local_id`. Activity log now records `inventory_restored` list. [worker-3]
 
 - [ ] **MEDIUM: No "Use Backup Code" link in 2FA login UI** — The backend endpoint `/api/auth/2fa/backup_login` exists and works, but the 2FA login screen has no "Use backup code instead" link. If an employee enables 2FA and loses their phone, they're locked out with no frontend-reachable fallback. Add a small text link below the 6-digit input that transitions to a backup code entry field.
 

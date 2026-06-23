@@ -2475,6 +2475,21 @@ def sync_orders():
         local_id = order_data.get('local_id', None)
         items = order_data.get('items', [])
 
+        # --- Dedup check: skip if this local_id was already synced ---
+        if local_id:
+            already_processed = any(
+                o.get('local_id') == local_id for o in orders_data
+            )
+            if already_processed:
+                # Find the existing order_id for this synced order
+                existing = next((o for o in orders_data if o.get('local_id') == local_id), None)
+                results.append({
+                    'local_id': local_id,
+                    'order_id': existing['order_id'] if existing else None,
+                    'status': 'already_exists'
+                })
+                continue
+
         # Calculate subtotal from items
         calculated_subtotal = sum(float(item.get('price', 0)) * int(item.get('qty', 1)) for item in items)
         subtotal = float(order_data.get('subtotal', calculated_subtotal))
@@ -2505,6 +2520,7 @@ def sync_orders():
 
         order_details = {
             'order_id': order_id,
+            'local_id': local_id,  # stored for dedup on re-sync
             'status': 'pending',
             'claimed_by': None,
             'claimed_at': None,
@@ -3147,6 +3163,29 @@ def refund_order():
 
     save_json_data(ORDERS_FILE, orders)
 
+    # --- Restore inventory: add stock back for each refunded item ---
+    inventory = load_json_data(INVENTORY_FILE)
+    restored_items = []
+    for item in found_order.get('items', []):
+        # Handle combo items: restore child items instead of the combo itself
+        if item.get('is_combo') and item.get('child_items'):
+            for ci in item['child_items']:
+                ci_name = ci.get('name', '')
+                ci_qty = int(ci.get('qty', 1)) * int(item.get('qty', 1))
+                if ci_name in inventory:
+                    current_stock = inventory[ci_name].get('stock', 0)
+                    inventory[ci_name]['stock'] = current_stock + ci_qty
+                    restored_items.append(f"{ci_name} x{ci_qty}")
+            continue
+        # Regular item
+        item_name = item.get('name', '')
+        qty = int(item.get('qty', 1))
+        if item_name in inventory:
+            current_stock = inventory[item_name].get('stock', 0)
+            inventory[item_name]['stock'] = current_stock + qty
+            restored_items.append(f"{item_name} x{qty}")
+    save_json_data(INVENTORY_FILE, inventory)
+
     # Also log to refunded_orders.json for easy audit trail
     refunded_orders = load_json_data(REFUNDED_ORDERS_FILE)
     refunded_orders.append({
@@ -3166,7 +3205,8 @@ def refund_order():
         'order_id': int(order_id),
         'reason': reason,
         'refunded_by_name': user_name,
-        'order_total': found_order.get('total', 0)
+        'order_total': found_order.get('total', 0),
+        'inventory_restored': restored_items
     })
 
     return jsonify({
