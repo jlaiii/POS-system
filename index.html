@@ -2128,6 +2128,19 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
   </div>
 </div>
 
+<!-- ═══════════ CLOCK-OUT NOTES OVERLAY ═══════════ -->
+<div id="clockOutNotesOverlay" class="modal-overlay">
+  <div class="modal-box" style="max-width:450px;">
+    <h3 style="margin-bottom:8px;">⏰ Clock Out</h3>
+    <p style="color:var(--text2);margin-bottom:12px;font-size:14px;">Add optional notes about your shift (e.g., "covered closing duties", "stayed late for deep clean").</p>
+    <textarea id="clockOutNotesInput" rows="3" style="width:100%;padding:12px;border-radius:8px;background:var(--bg);border:2px solid var(--border);color:var(--text);font-size:15px;resize:vertical;" placeholder="Shift notes (optional)..."></textarea>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;">
+      <button class="ghost" onclick="closeClockOutNotes()" style="font-size:16px;padding:12px 24px;min-height:48px;">Cancel</button>
+      <button class="accent" onclick="confirmClockOut()" style="font-size:16px;padding:12px 24px;min-height:48px;">✅ Clock Out</button>
+    </div>
+  </div>
+</div>
+
 <!-- ═══════════ ITEM MODIFIER OVERLAY ═══════════ -->
 <div id="modifierOverlay" class="modal-overlay">
   <div class="modal-box" style="max-width:500px;max-height:80vh;overflow-y:auto;">
@@ -3456,21 +3469,49 @@ async function toggleClock() {
   if (!currentUser) return;
   const btn = document.getElementById('clockBtn');
   const isClockedIn = btn.classList.contains('clocked-in');
-  const endpoint = isClockedIn ? '/api/clock/out' : '/api/clock/in';
+  if (!isClockedIn) {
+    // Clock in directly — no notes needed
+    try {
+      const r = await fetch(BACKEND_URL + '/api/clock/in', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminPin: currentUser.id })
+      });
+      const data = await r.json();
+      if (r.ok) {
+        showToast('Clocked in!', 'success');
+        checkClockStatus();
+      } else {
+        showToast(data.message || 'Error', 'error');
+      }
+    } catch(e) {
+      showToast('Network error', 'error');
+    }
+  } else {
+    // Clock out — show notes modal
+    document.getElementById('clockOutNotesInput').value = '';
+    document.getElementById('clockOutNotesOverlay').classList.add('active');
+  }
+}
+
+function closeClockOutNotes() {
+  document.getElementById('clockOutNotesOverlay').classList.remove('active');
+}
+
+async function confirmClockOut() {
+  if (!currentUser) return;
+  const notes = document.getElementById('clockOutNotesInput').value.trim();
+  closeClockOutNotes();
   try {
-    const r = await fetch(BACKEND_URL + endpoint, {
+    const r = await fetch(BACKEND_URL + '/api/clock/out', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adminPin: currentUser.id })
+      body: JSON.stringify({ adminPin: currentUser.id, notes: notes })
     });
     const data = await r.json();
     if (r.ok) {
-      if (isClockedIn) {
-        const hrs = data.duration_hours;
-        showToast('Clocked out (' + hrs + ' hrs)', 'success');
-        if (clockTimer) { clearInterval(clockTimer); clockTimer = null; }
-      } else {
-        showToast('Clocked in!', 'success');
-      }
+      const hrs = data.duration_hours;
+      const noteSuffix = data.notes ? ' — ' + data.notes : '';
+      showToast('Clocked out (' + hrs + ' hrs)' + noteSuffix, 'success');
+      if (clockTimer) { clearInterval(clockTimer); clockTimer = null; }
       checkClockStatus();
     } else {
       showToast(data.message || 'Error', 'error');
@@ -3478,6 +3519,27 @@ async function toggleClock() {
   } catch(e) {
     showToast('Network error', 'error');
   }
+}
+
+/** Admin add/edit notes on a completed shift */
+function adminAddNote(shiftIndex) {
+  const notes = prompt('Enter shift notes (or leave empty to clear):');
+  if (notes === null) return; // cancelled
+  fetch(BACKEND_URL + '/api/clock/note', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      adminPin: currentUser.id,
+      shift_index: shiftIndex,
+      notes: notes.trim()
+    })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.message) showToast(data.message, 'success');
+    loadShifts();
+  })
+  .catch(e => showToast('Error saving notes', 'error'));
 }
 
 async function loadShifts() {
@@ -3523,12 +3585,22 @@ async function loadShifts() {
         const editBadge = isEdited
           ? `<span class="shift-edited-badge" onclick="showShiftEditHistory(${actualIndex})" title="Click to view edit history">⚠️ Edited</span>`
           : '';
+        const notes = s.notes || '';
+        const notesHtml = notes
+          ? `<div style="margin-top:4px;font-size:13px;color:var(--text2);border-left:3px solid #e94560;padding-left:10px;">📝 ${escHtml(notes)}</div>`
+          : '';
         return `
         <div class="ts-entry">
-          <span><strong>${escHtml(s.user_name || s.user_id)}</strong> (${escHtml(s.user_id)}) ${editBadge}</span>
-          <span>${new Date(s.clock_in_time).toLocaleString()} → ${new Date(s.clock_out_time).toLocaleString()}</span>
-          <span>${s.duration_hours} hrs</span>
-          <button class="shift-edit-btn" onclick="openShiftEditModal(${actualIndex})" title="Edit shift times" style="font-size:12px;padding:4px 10px;min-height:32px;">✏️ Edit</button>
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+            <span><strong>${escHtml(s.user_name || s.user_id)}</strong> (${escHtml(s.user_id)}) ${editBadge}</span>
+            <span style="color:var(--text2);font-size:13px;">${new Date(s.clock_in_time).toLocaleString()} → ${new Date(s.clock_out_time).toLocaleString()}</span>
+            <span style="font-weight:600;">${s.duration_hours} hrs</span>
+            <div style="margin-left:auto;display:flex;gap:4px;">
+              <button class="shift-edit-btn" onclick="openShiftEditModal(${actualIndex})" title="Edit shift times" style="font-size:12px;padding:4px 10px;min-height:32px;">✏️ Edit</button>
+              <button class="shift-edit-btn" onclick="adminAddNote(${actualIndex})" title="Add/edit shift notes" style="font-size:12px;padding:4px 10px;min-height:32px;">📝 Note</button>
+            </div>
+          </div>
+          ${notesHtml}
         </div>
       `}).join('');
     }
@@ -3601,9 +3673,12 @@ async function loadPayPeriod() {
         if (s.exceeds_weekly_ot) otBadges += ' <span class="badge-ot-weekly" style="background:#e94560;color:#fff;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:600;">📈 Weekly OT</span>';
         // Show day total if more than one shift on this day
         const dayTotalNote = s.day_total_hours > s.duration_hours ? ' <span style="font-size:11px;color:var(--text2);">(' + s.day_total_hours.toFixed(1) + 'h this day)</span>' : '';
+        const sNotes = s.notes || '';
+        const sNotesHtml = sNotes ? '<div style="font-size:12px;color:var(--text2);margin-top:2px;padding-left:6px;border-left:2px solid #e94560;">📝 ' + escHtml(sNotes) + '</div>' : '';
         html += '<div class="pp-shift-row">';
         html += '<span>' + clockIn + ' → ' + clockOut + '</span>';
         html += '<span><strong>' + s.duration_hours.toFixed(2) + ' hrs</strong>' + otBadges + dayTotalNote + '</span>';
+        html += sNotesHtml;
         html += '</div>';
       });
       html += '</div>';

@@ -2342,6 +2342,11 @@ def clock_out():
         'duration_hours': duration_hours
     }
 
+    # Store optional notes from employee
+    notes = (data.get('notes') or '').strip()
+    if notes:
+        shift_record['notes'] = notes
+
     shift_log = load_json_data(SHIFT_FILE)
     shift_log.append(shift_record)
     save_json_data(SHIFT_FILE, shift_log)
@@ -2358,7 +2363,8 @@ def clock_out():
         'message': 'Clocked out successfully.',
         'clock_in_time': clock_in_time.isoformat(),
         'clock_out_time': clock_out_time.isoformat(),
-        'duration_hours': duration_hours
+        'duration_hours': duration_hours,
+        'notes': notes if notes else None
     })
 
 
@@ -2483,6 +2489,52 @@ def clock_edit():
     return jsonify({
         'message': 'Shift updated successfully.',
         'shift': shift
+    })
+
+
+@app.route('/api/clock/note', methods=['POST'])
+def clock_note():
+    """Admin add/edit notes on a completed shift."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+
+    if not check_perm(admin_pin, "view_timesheet"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    shift_index = data.get('shift_index')
+    if shift_index is None or not isinstance(shift_index, int):
+        return jsonify({'message': 'shift_index (integer) is required.'}), 400
+
+    notes = (data.get('notes') or '').strip()
+
+    shift_log = load_json_data(SHIFT_FILE)
+    if shift_index < 0 or shift_index >= len(shift_log):
+        return jsonify({'message': 'Invalid shift_index.'}), 404
+
+    shift = shift_log[shift_index]
+    old_notes = shift.get('notes')
+    if notes:
+        shift['notes'] = notes
+    else:
+        shift.pop('notes', None)
+
+    save_json_data(SHIFT_FILE, shift_log)
+
+    users = load_json_data(USERS_FILE)
+    admin_user = users.get(admin_pin, {})
+    admin_name = admin_user.get('name', admin_pin)
+
+    log_activity('shift_note_edited', admin_pin, admin_user.get('role', 'admin'), {
+        'shift_index': shift_index,
+        'user_id': shift.get('user_id'),
+        'user_name': shift.get('user_name'),
+        'old_notes': old_notes,
+        'new_notes': notes
+    })
+
+    return jsonify({
+        'message': 'Shift notes updated.' if notes else 'Shift notes cleared.',
+        'notes': notes
     })
 
 

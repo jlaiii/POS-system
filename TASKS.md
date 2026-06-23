@@ -59,8 +59,6 @@
 
 - [x] worker-1 **Admin shift edit / correction with audit trail** — Timekeeper can correct clock-in/out times on completed shifts. New `POST /api/clock/edit` endpoint with full audit trail (`edits[]` array on shift records: edited_by, edited_by_name, edited_at, reason, old→new values). Recalculates duration. ⚠️ Edited badge in timesheet UI with click-to-view edit history popup. Activity logging for all edits. Permission-gated (view_timesheet). [worker-1]
 
-- [~] worker-3 **Shift notes on clock-out** — When clocking out, optional textarea for shift notes (e.g., "covered closing duties", "stayed late for deep clean", "short shift — left early with permission"). Stored as `notes` field on shift record. Displayed in timesheet view. Admin can also add notes on individual shifts after the fact.
-
 - [ ] **Break tracking (unpaid meal breaks)** — New "Start Break" / "End Break" option on clock button. Break time subtracted from total paid hours. Stored as `breaks: [{start, end, duration_minutes}]` array on shift record. Break duration visible in timesheet view. Total paid hours = `duration_hours - break_hours`.
 
 - [ ] **Per-user pay rate field** — Add `pay_rate` (hourly, float) to user profile in `users.json`. Shown in user management. Timesheet summary multiplies `total_hours × pay_rate` for estimated gross pay per period. Displayed in pay period summary. CSV export includes `Pay Rate`, `Estimated Pay` columns. Rate changes don't retroactively apply — use rate at time of export.
@@ -291,6 +289,8 @@ New `tickets.json` data store. Each ticket:
 - [ ] **Wake-on-proximity / screensaver mode** — If the device supports it (camera-based), dim screen to 20% when no one is nearby, brighten to full when motion detected. Falls back to the ad rotator as screensaver. Works on tablets with front-facing cameras via a simple motion-detection approach (compare frames every 2 seconds for significant change).
 
 ## Done
+
+- [x] **Shift notes on clock-out** — When clocking out, optional textarea for shift notes (e.g., "covered closing duties", "stayed late for deep clean", "short shift — left early with permission"). Stored as `notes` field on shift record. Displayed in timesheet view. Admin can also add notes on individual shifts after the fact. [worker-3 — Clock-out modal with notes textarea, `/api/clock/note` admin endpoint, notes shown in shift entries and pay period breakdown]
 
 - [x] **Admin shift edit / correction with audit trail** — `POST /api/clock/edit` endpoint with full audit trail (edits[] array: edited_by, edited_by_name, edited_at, reason, old→new values). Recalculates duration. ⚠️ Edited badge in Employee Shifts timesheet with click-to-view edit history popup. Activity logging. Permission-gated (view_timesheet). [worker-1]
 
