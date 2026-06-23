@@ -3085,6 +3085,15 @@ window.addEventListener('DOMContentLoaded', () => {
     var el = document.getElementById(id);
     if (el) el.addEventListener('input', saveCartDraft);
   });
+  // Save last used table per user for auto-table suggestion
+  var tableSelectEl = document.getElementById('tableSelect');
+  if (tableSelectEl) {
+    tableSelectEl.addEventListener('change', function() {
+      if (currentUser && currentUser.id && this.value) {
+        localStorage.setItem('pos_last_table_' + currentUser.id, this.value);
+      }
+    });
+  }
 });
 
 // ═══════════ PIN PAD ═══════════
@@ -7431,6 +7440,13 @@ async function loadTableSelector() {
     });
     if (currentVal && [...sel.options].some(o => o.value === currentVal)) {
       sel.value = currentVal;
+    }
+    // Auto-table suggestion: restore last used table for this user
+    if (!sel.value && currentUser && currentUser.id) {
+      const savedTable = localStorage.getItem('pos_last_table_' + currentUser.id);
+      if (savedTable && [...sel.options].some(o => o.value === savedTable)) {
+        sel.value = savedTable;
+      }
     }
   } catch(e) {
     document.getElementById('tableRow').style.display = 'none';
