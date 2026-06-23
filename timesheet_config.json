@@ -1,13 +1,6 @@
 {
-  "overtime_daily_threshold": 8,
-  "overtime_weekly_threshold": 40,
-  "late_grace_minutes": 5,
-  "use_database": false,
-  "backup": {
-    "enabled": true,
-    "retention_hourly": 24,
-    "retention_daily": 7,
-    "retention_weekly": 4,
-    "retention_monthly": 12
-  }
+    "overtime_daily_threshold": 8,
+    "overtime_weekly_threshold": 40,
+    "late_grace_minutes": 5,
+    "use_database": false
 }
