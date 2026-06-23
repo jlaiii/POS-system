@@ -420,7 +420,7 @@ New `tickets.json` data store. Each ticket:
 
 ## New Tasks (from Audit #7 — 2026-06-23)
 
-- [ ] **HIGH: Kitchen offline degradation** — When WebSocket disconnects, the kitchen display silently stops showing new orders. Implement automatic polling fallback (every 8s) triggered by socket disconnect event, with visible "⚠️ Offline — updating every 8s" banner. Currently the main POS has polling fallback but kitchen view doesn't. This is critical for reliability during network blips.
+- [~] worker-2 **HIGH: Kitchen offline degradation** — When WebSocket disconnects, the kitchen display silently stops showing new orders. Implement automatic polling fallback (every 8s) triggered by socket disconnect event, with visible "⚠️ Offline — updating every 8s" banner. Currently the main POS has polling fallback but kitchen view doesn't. This is critical for reliability during network blips.
 
 - [ ] **MEDIUM: Table status overview dashboard** — Add a color-coded table grid view showing all tables with status (empty/occupied/order-in-progress/ready-to-serve/needs-bussing). Click a table to see its current tab/orders, mark it bussed, or transfer to another waiter. Most modern POS systems have this as the primary floor-plan view. Saves waiters from guessing which tables need attention.
 
