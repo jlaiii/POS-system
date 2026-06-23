@@ -111,7 +111,7 @@
 
 ### Priority: MEDIUM
 
-- [~] worker-2 **Timesheet approval workflow** — After pay period ends, timekeeper clicks "Submit for Approval" which locks that period's shifts from further edits. Employee can review and "Approve" (optional — small shops may skip). Locked shifts grayed out with 🔒 icon. Unlock requires owner permission. Approval status stored in new `timesheet_approvals.json` with period range, approved_by, timestamp.
+- [x] worker-2 **Timesheet approval workflow** — After pay period ends, timekeeper clicks "Submit for Approval" which locks that period's shifts from further edits. Employee can review and "Approve" (optional — small shops may skip). Locked shifts grayed out with 🔒 icon. Unlock requires owner permission. Approval status stored in new `timesheet_approvals.json` with period range, approved_by, timestamp.
 
 - [ ] **PDF timesheet report export** — Generate a clean, printable timesheet report for the selected pay period. Employee name, shift dates/times, daily totals, period total, overtime, estimated pay, signature line. `POST /api/export/timesheet_pdf` endpoint. Print-friendly CSS with page breaks per employee. More professional than CSV for record-keeping and employee handouts.
 
@@ -734,7 +734,8 @@ Super admin PIN is separate from any business PIN. Super admin can create busine
 
 ## Done
 
-|- [x] **2FA setup endpoint + QR code generation** — `POST /api/auth/2fa/setup`: generates TOTP secret via pyotp, stores on user, returns provisioning_uri + QR code data URI. 409 if 2FA already enabled. [worker-3]
+||- [x] worker-2 **Timesheet approval workflow** — New `timesheet_approvals.json` data store. Backend: 7 API endpoints (submit, approve, finalize, unlock, status, list, check_lock, employee_approvals). Lock enforcement on clock/edit, excuse_late, flag_late (returns 423). Frontend: Approval status card in Pay Period view with Submit/Approve/Finalize/Unlock buttons. 🔒 Lock badge on locked shifts in Employee Shifts view (grayed out, edit buttons hidden). i18n compatible. Activity logging for all actions.
+||- [x] **2FA setup endpoint + QR code generation** — `POST /api/auth/2fa/setup`: generates TOTP secret via pyotp, stores on user, returns provisioning_uri + QR code data URI. 409 if 2FA already enabled. [worker-3]
 |- [x] **Add scheduled_start field to users.json** — Backend: `scheduled_start` field in user data model (default null), exposed via `/api/users`, accepted in `/api/add_user`, new `POST /api/users/update_scheduled_start` endpoint with permission-gating and activity logging. Frontend: display in user management list, edit button (prompt for HH:MM), time input in add-user form, clear support. i18n EN + ES. [worker-3]
 |- [x] **Scheduled start admin UI in User Management** — "Scheduled Start" time input per user (type="time") in add user form. Display + edit button in user entry cards. Stored/loaded from users.json. [worker-3]
 |- [x] **Shift notes on clock-out** — When clocking out, optional textarea for shift notes. Stored as `notes` field on shift record. Displayed in timesheet view. Admin can also add notes. [worker-3]

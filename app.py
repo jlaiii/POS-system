@@ -51,6 +51,7 @@ EMAIL_CONFIG_FILE = 'email_config.json'  # Email/SMTP configuration for digital 
 SHIFT_FILE = 'shift_log.json'  # Employee shift clock-in/clock-out records
 TIMESHEET_CONFIG_FILE = 'timesheet_config.json'  # Timesheet configuration (overtime thresholds, late grace period)
 TICKETS_FILE = 'tickets.json'  # Employee self-service tickets/requests
+APPROVALS_FILE = 'timesheet_approvals.json'  # Timesheet pay period approvals
 
 # --- Loyalty Constants ---
 LOYALTY_POINTS_PER_DOLLAR = 1  # 1 point per $1 spent
@@ -145,12 +146,12 @@ def backup_menu():
 
 
 # Ensure JSON files exist and are initialized correctly
-for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE, INVENTORY_FILE, REFUNDED_ORDERS_FILE, FAVORITES_FILE, LOYALTY_FILE, SCHEDULED_PRICING_FILE, WASTE_FILE, DELIVERY_ADDRESSES_FILE, WEBHOOKS_FILE, TABLE_ADS_FILE, CASH_DRAWER_FILE, COMBOS_FILE, SERVICE_CHARGE_FILE, EMAIL_CONFIG_FILE, SHIFT_FILE, TICKETS_FILE]:
+for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE, INVENTORY_FILE, REFUNDED_ORDERS_FILE, FAVORITES_FILE, LOYALTY_FILE, SCHEDULED_PRICING_FILE, WASTE_FILE, DELIVERY_ADDRESSES_FILE, WEBHOOKS_FILE, TABLE_ADS_FILE, CASH_DRAWER_FILE, COMBOS_FILE, SERVICE_CHARGE_FILE, EMAIL_CONFIG_FILE, SHIFT_FILE, TICKETS_FILE, APPROVALS_FILE]:
     if not os.path.exists(f):
         with open(f, 'w') as file:
             if f == USERS_FILE:
                 json.dump({"1111": {"name": "Owner", "role": "owner", "permissions": ["*"]}}, file)
-            elif f == TIMESHEET_FILE or f == ACTIVITY_LOG_FILE or f == SHIFT_FILE:
+            elif f == TIMESHEET_FILE or f == ACTIVITY_LOG_FILE or f == SHIFT_FILE or f == APPROVALS_FILE:
                 json.dump([], file)  # Initialize as empty lists
             elif f == ITEMS_FILE:
                 json.dump({
@@ -3762,6 +3763,16 @@ def clock_edit():
 
     shift = shift_log[shift_index]
 
+    # Check if this shift's period is locked by an approval
+    clock_in_str = shift.get('clock_in_time', '')
+    approvals = load_json_data(APPROVALS_FILE)
+    for app in approvals:
+        if app.get('status') in ('pending', 'approved'):
+            a_from = app.get('date_from', '')
+            a_to = app.get('date_to', '')
+            if shift_in_period(clock_in_str, a_from, a_to):
+                return jsonify({'message': f'Cannot edit: this pay period ({a_from} to {a_to}) is locked for approval. Owner must unlock first.'}), 423
+
     new_clock_in_str = data.get('new_clock_in')
     new_clock_out_str = data.get('new_clock_out')
 
@@ -3939,6 +3950,14 @@ def clock_excuse_late():
 
     shift = shift_log[shift_index]
 
+    # Check if this shift's period is locked
+    lock_check = load_json_data(APPROVALS_FILE)
+    ci = shift.get('clock_in_time', '')
+    for app in lock_check:
+        if app.get('status') in ('pending', 'approved'):
+            if shift_in_period(ci, app.get('date_from', ''), app.get('date_to', '')):
+                return jsonify({'message': f'Cannot excuse: pay period locked for approval. Owner must unlock first.'}), 423
+
     old_late_excused = shift.get('late_excused', False)
     if old_late_excused:
         return jsonify({'message': 'Shift is already excused.'}), 409
@@ -3996,6 +4015,14 @@ def clock_flag_late():
         return jsonify({'message': 'Invalid shift_index.'}), 404
 
     shift = shift_log[shift_index]
+
+    # Check if this shift's period is locked
+    lock_check2 = load_json_data(APPROVALS_FILE)
+    ci2 = shift.get('clock_in_time', '')
+    for app in lock_check2:
+        if app.get('status') in ('pending', 'approved'):
+            if shift_in_period(ci2, app.get('date_from', ''), app.get('date_to', '')):
+                return jsonify({'message': f'Cannot flag: pay period locked for approval. Owner must unlock first.'}), 423
 
     old_late_minutes = shift.get('late_minutes')
     old_late_excused = shift.get('late_excused', False)
@@ -7554,6 +7581,424 @@ def timesheet_pay_period():
         'employees': results,
         'total_employees': len(results)
     })
+
+
+# ═══════════ TIMESHEET APPROVAL WORKFLOW ═══════════
+
+def load_approvals():
+    """Load timesheet_approvals.json (list of approval records)."""
+    return load_json_data(APPROVALS_FILE)
+
+
+def save_approvals(data):
+    """Save timesheet_approvals.json."""
+    save_json_data(APPROVALS_FILE, data)
+
+
+def shift_in_period(shift_clock_in_str, date_from, date_to):
+    """Check if a shift's clock_in falls within a date range (inclusive)."""
+    if not shift_clock_in_str:
+        return False
+    try:
+        dt = datetime.fromisoformat(shift_clock_in_str)
+    except (ValueError, TypeError):
+        return False
+    if date_from:
+        try:
+            df = datetime.fromisoformat(date_from)
+            if dt < df:
+                return False
+        except ValueError:
+            pass
+    if date_to:
+        try:
+            if 'T' not in date_to:
+                dt_to = datetime.fromisoformat(date_to + 'T23:59:59')
+            else:
+                dt_to = datetime.fromisoformat(date_to)
+            if dt > dt_to:
+                return False
+        except ValueError:
+            pass
+    return True
+
+
+def is_period_locked(date_from, date_to):
+    """Check if any shifts in the given date range belong to a locked approval period.
+    Returns None if not locked, or the approval record dict if locked."""
+    approvals = load_approvals()
+    for app in approvals:
+        if app.get('status') in ('pending', 'approved'):
+            # Check if ranges overlap
+            a_from = app.get('date_from', '')
+            a_to = app.get('date_to', '')
+            if not a_from or not a_to:
+                continue
+            # Overlap: app range and queried range intersect
+            try:
+                qf = datetime.fromisoformat(date_from) if date_from else datetime.min
+                qt = datetime.fromisoformat(date_to + 'T23:59:59') if date_to else datetime.max
+                af = datetime.fromisoformat(a_from)
+                at = datetime.fromisoformat(a_to + 'T23:59:59')
+                # Check overlap: qf <= at and qt >= af
+                if qf <= at and qt >= af:
+                    return app
+            except (ValueError, TypeError):
+                continue
+    return None
+
+
+def get_period_lock_status(date_from, date_to):
+    """Get the lock status for a specific date range. Returns status string or None."""
+    approvals = load_approvals()
+    for app in approvals:
+        if app.get('date_from') == date_from and app.get('date_to') == date_to:
+            return app
+    return None
+
+
+@app.route('/api/timesheet/approval/submit', methods=['POST'])
+def timesheet_approval_submit():
+    """Submit a pay period for approval. Locks shifts in the period from editing."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+
+    if not check_perm(admin_pin, "view_timesheet"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    date_from = (data.get('date_from') or '').strip()
+    date_to = (data.get('date_to') or '').strip()
+
+    if not date_from or not date_to:
+        return jsonify({'message': 'date_from and date_to are required.'}), 400
+
+    # Validate dates
+    try:
+        datetime.fromisoformat(date_from)
+        if 'T' not in date_to:
+            datetime.fromisoformat(date_to + 'T23:59:59')
+        else:
+            datetime.fromisoformat(date_to)
+    except (ValueError, TypeError):
+        return jsonify({'message': 'Invalid date format. Use YYYY-MM-DD or ISO.'}), 400
+
+    approvals = load_approvals()
+    users = load_json_data(USERS_FILE)
+    admin_name = users.get(admin_pin, {}).get('name', 'Unknown')
+
+    # Check if already submitted for this exact range
+    for app in approvals:
+        if app.get('date_from') == date_from and app.get('date_to') == date_to:
+            if app.get('status') == 'approved':
+                return jsonify({'message': 'This pay period is already approved.'}), 409
+            if app.get('status') == 'pending':
+                return jsonify({'message': 'This pay period is already submitted for approval. Unlock by owner to resubmit.'}), 409
+
+    # Create approval record
+    approval_record = {
+        'date_from': date_from,
+        'date_to': date_to,
+        'status': 'pending',
+        'submitted_by': admin_pin,
+        'submitted_by_name': admin_name,
+        'submitted_at': datetime.now().isoformat(),
+        'approved_by': None,
+        'approved_at': None,
+        'unlocked_by': None,
+        'unlocked_at': None,
+        'unlock_reason': None,
+        'employee_approvals': []  # list of { user_id, user_name, approved_at }
+    }
+
+    approvals.append(approval_record)
+    save_approvals(approvals)
+
+    log_activity('timesheet_approval_submitted', admin_pin, 'admin', {
+        'date_from': date_from,
+        'date_to': date_to,
+        'status': 'pending'
+    })
+
+    return jsonify({
+        'message': 'Pay period submitted for approval. Shifts in this period are now locked.',
+        'approval': approval_record
+    })
+
+
+@app.route('/api/timesheet/approval/approve', methods=['POST'])
+def timesheet_approval_approve():
+    """Employee approves their own shifts in a submitted pay period."""
+    data = request.json
+    user_id = (data.get('userId') or '').strip()
+
+    if not user_id:
+        return jsonify({'message': 'User ID is required.'}), 400
+
+    users = load_json_data(USERS_FILE)
+    if user_id not in users:
+        return jsonify({'message': 'User not found.'}), 404
+
+    user_name = users[user_id].get('name', 'Unknown')
+    date_from = (data.get('date_from') or '').strip()
+    date_to = (data.get('date_to') or '').strip()
+
+    if not date_from or not date_to:
+        return jsonify({'message': 'date_from and date_to are required.'}), 400
+
+    approvals = load_approvals()
+
+    for app in approvals:
+        if app.get('date_from') == date_from and app.get('date_to') == date_to:
+            if app.get('status') != 'pending':
+                return jsonify({'message': 'This pay period is not pending approval.'}), 400
+
+            # Check if this user already approved
+            for ea in app.get('employee_approvals', []):
+                if ea.get('user_id') == user_id:
+                    return jsonify({'message': 'You have already approved your shifts for this period.'}), 409
+
+            if 'employee_approvals' not in app:
+                app['employee_approvals'] = []
+
+            app['employee_approvals'].append({
+                'user_id': user_id,
+                'user_name': user_name,
+                'approved_at': datetime.now().isoformat()
+            })
+
+            save_approvals(approvals)
+
+            log_activity('timesheet_approval_employee_approved', user_id, user_name, {
+                'date_from': date_from,
+                'date_to': date_to
+            })
+
+            return jsonify({
+                'message': 'Your shifts in this pay period have been approved.',
+                'employee_approvals': app['employee_approvals']
+            })
+
+    return jsonify({'message': 'No pending approval found for this date range.'}), 404
+
+
+@app.route('/api/timesheet/approval/finalize', methods=['POST'])
+def timesheet_approval_finalize():
+    """Admin/owner marks a pending approval as fully approved (finalized)."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+
+    if not check_perm(admin_pin, "view_timesheet"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    date_from = (data.get('date_from') or '').strip()
+    date_to = (data.get('date_to') or '').strip()
+
+    if not date_from or not date_to:
+        return jsonify({'message': 'date_from and date_to are required.'}), 400
+
+    users = load_json_data(USERS_FILE)
+    admin_name = users.get(admin_pin, {}).get('name', 'Unknown')
+    approvals = load_approvals()
+
+    for app in approvals:
+        if app.get('date_from') == date_from and app.get('date_to') == date_to:
+            if app.get('status') != 'pending':
+                return jsonify({'message': 'This pay period is not in pending status.'}), 400
+
+            app['status'] = 'approved'
+            app['approved_by'] = admin_pin
+            app['approved_by_name'] = admin_name
+            app['approved_at'] = datetime.now().isoformat()
+
+            save_approvals(approvals)
+
+            log_activity('timesheet_approval_finalized', admin_pin, 'admin', {
+                'date_from': date_from,
+                'date_to': date_to,
+                'employee_approvals': len(app.get('employee_approvals', []))
+            })
+
+            return jsonify({
+                'message': 'Pay period has been approved and finalized.',
+                'approval': app
+            })
+
+    return jsonify({'message': 'No pending approval found for this date range.'}), 404
+
+
+@app.route('/api/timesheet/approval/unlock', methods=['POST'])
+def timesheet_approval_unlock():
+    """Owner unlocks a locked pay period so shifts can be edited again."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+
+    # Only owner can unlock
+    users = load_json_data(USERS_FILE)
+    user_data = users.get(admin_pin, {})
+    if user_data.get('role') != 'owner':
+        return jsonify({'message': 'Only the owner can unlock a locked pay period.'}), 403
+
+    date_from = (data.get('date_from') or '').strip()
+    date_to = (data.get('date_to') or '').strip()
+    reason = (data.get('reason') or '').strip()
+
+    if not date_from or not date_to:
+        return jsonify({'message': 'date_from and date_to are required.'}), 400
+
+    if not reason:
+        return jsonify({'message': 'Reason for unlocking is required.'}), 400
+
+    owner_name = user_data.get('name', 'Owner')
+    approvals = load_approvals()
+
+    for app in approvals:
+        if app.get('date_from') == date_from and app.get('date_to') == date_to:
+            if app.get('status') not in ('pending', 'approved'):
+                return jsonify({'message': 'This pay period is not locked.'}), 400
+
+            old_status = app.get('status')
+            app['status'] = 'unlocked'
+            app['unlocked_by'] = admin_pin
+            app['unlocked_by_name'] = owner_name
+            app['unlocked_at'] = datetime.now().isoformat()
+            app['unlock_reason'] = reason
+
+            save_approvals(approvals)
+
+            log_activity('timesheet_approval_unlocked', admin_pin, 'owner', {
+                'date_from': date_from,
+                'date_to': date_to,
+                'old_status': old_status,
+                'reason': reason
+            })
+
+            return jsonify({
+                'message': 'Pay period has been unlocked. Shifts can now be edited.',
+                'approval': app
+            })
+
+    return jsonify({'message': 'No locked approval found for this date range.'}), 404
+
+
+@app.route('/api/timesheet/approval/status', methods=['POST'])
+def timesheet_approval_status():
+    """Get the approval status for a specific date range."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+
+    if not check_perm(admin_pin, "view_timesheet"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    date_from = (data.get('date_from') or '').strip()
+    date_to = (data.get('date_to') or '').strip()
+
+    if not date_from or not date_to:
+        return jsonify({'message': 'date_from and date_to are required.'}), 400
+
+    approvals = load_approvals()
+
+    for app in approvals:
+        if app.get('date_from') == date_from and app.get('date_to') == date_to:
+            return jsonify({
+                'message': 'Approval status retrieved.',
+                'approval': app
+            })
+
+    return jsonify({
+        'message': 'No approval record found for this date range.',
+        'approval': None
+    })
+
+
+@app.route('/api/timesheet/approval/list', methods=['POST'])
+def timesheet_approval_list():
+    """List all approval records."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+
+    if not check_perm(admin_pin, "view_timesheet"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    approvals = load_approvals()
+    # Sort by date_from descending (newest first)
+    approvals_sorted = sorted(approvals, key=lambda a: a.get('date_from', ''), reverse=True)
+
+    return jsonify({
+        'message': 'Approval records retrieved.',
+        'approvals': approvals_sorted,
+        'total': len(approvals_sorted)
+    })
+
+
+# Now lock the clock/edit endpoint — check if a shift's period is locked
+# We inject a lock check into the clock_edit function.
+# We also check in the excuse_late, flag_late endpoints.
+
+
+@app.route('/api/timesheet/approval/check_lock', methods=['POST'])
+def timesheet_approval_check_lock():
+    """Check if a shift at a given index is in a locked period.
+    Returns { locked: true/false, approval: {...} or null }
+    """
+    data = request.json
+    admin_pin = data.get('adminPin')
+
+    if not check_perm(admin_pin, "view_timesheet"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    shift_index = data.get('shift_index')
+    if shift_index is None or not isinstance(shift_index, int):
+        return jsonify({'message': 'shift_index (integer) is required.'}), 400
+
+    shift_log = load_json_data(SHIFT_FILE)
+    if shift_index < 0 or shift_index >= len(shift_log):
+        return jsonify({'message': 'Invalid shift_index.'}), 404
+
+    shift = shift_log[shift_index]
+    clock_in_str = shift.get('clock_in_time', '')
+
+    approvals = load_approvals()
+    for app in approvals:
+        if app.get('status') not in ('pending', 'approved'):
+            continue
+        a_from = app.get('date_from', '')
+        a_to = app.get('date_to', '')
+        if shift_in_period(clock_in_str, a_from, a_to):
+            return jsonify({
+                'locked': True,
+                'approval': app
+            })
+
+    return jsonify({
+        'locked': False,
+        'approval': None
+    })
+
+
+@app.route('/api/timesheet/approval/employee_approvals', methods=['POST'])
+def timesheet_approval_employee_approvals():
+    """Get which employees have approved for a specific period."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+
+    if not check_perm(admin_pin, "view_timesheet"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    date_from = (data.get('date_from') or '').strip()
+    date_to = (data.get('date_to') or '').strip()
+
+    if not date_from or not date_to:
+        return jsonify({'message': 'date_from and date_to are required.'}), 400
+
+    approvals = load_approvals()
+    for app in approvals:
+        if app.get('date_from') == date_from and app.get('date_to') == date_to:
+            return jsonify({
+                'employee_approvals': app.get('employee_approvals', []),
+                'total_approved': len(app.get('employee_approvals', []))
+            })
+
+    return jsonify({'employee_approvals': [], 'total_approved': 0})
 
 
 @app.route('/api/export/pay_period_csv', methods=['POST'])

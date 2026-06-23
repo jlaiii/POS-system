@@ -1627,6 +1627,24 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
               </div>
             </div>
             <div id="payPeriodSummary"><div class="empty-state">Select a preset or date range and click Filter to view pay period summary.</div></div>
+            <!-- Approval Workflow -->
+            <div id="payPeriodApprovalSection" style="display:none;margin-top:12px;">
+              <div class="card" style="padding:14px 18px;border-left:4px solid var(--accent);">
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+                  <div>
+                    <h4 style="margin:0 0 4px 0;font-size:15px;">🔒 Timesheet Approval</h4>
+                    <div id="approvalStatusBadge" style="font-size:13px;color:var(--text2);margin-bottom:8px;">Checking approval status...</div>
+                  </div>
+                  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <button id="btnApprovalSubmit" class="accent" onclick="submitPayPeriodApproval()" style="display:none;font-size:13px;padding:8px 16px;min-height:40px;">📋 Submit for Approval</button>
+                    <button id="btnApprovalApprove" class="outline" onclick="approveMyShifts()" style="display:none;font-size:13px;padding:8px 16px;min-height:40px;">✅ Approve My Shifts</button>
+                    <button id="btnApprovalFinalize" class="accent" onclick="finalizePayPeriodApproval()" style="display:none;font-size:13px;padding:8px 16px;min-height:40px;">✅ Finalize Approval</button>
+                    <button id="btnApprovalUnlock" class="danger" onclick="unlockPayPeriod()" style="display:none;font-size:13px;padding:8px 16px;min-height:40px;">🔓 Unlock (Owner Only)</button>
+                  </div>
+                </div>
+                <div id="approvalEmployeeList" style="margin-top:8px;font-size:13px;color:var(--text2);"></div>
+              </div>
+            </div>
             <!-- Export buttons -->
             <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
               <button class="accent" onclick="exportPayPeriodCSV()" style="font-size:14px;padding:12px 20px;min-height:48px;">📥 Export Pay Period (CSV)</button>
@@ -4350,6 +4368,31 @@ async function loadShifts() {
     const data = await r.json();
     const completed = data.shifts || [];
     const active = data.active_shifts || [];
+
+    // Fetch approval records to show lock indicators
+    let lockedPeriods = [];
+    try {
+      const ar = await fetch(BACKEND_URL + '/api/timesheet/approval/list', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminPin: currentUser.id })
+      });
+      if (ar.ok) {
+        const ad = await ar.json();
+        lockedPeriods = (ad.approvals || []).filter(a => a.status === 'pending' || a.status === 'approved');
+      }
+    } catch(e) {}
+
+    function isShiftLocked(clockInStr) {
+      if (!clockInStr) return false;
+      const dt = new Date(clockInStr);
+      for (const lp of lockedPeriods) {
+        const lf = new Date(lp.date_from + 'T00:00:00');
+        const lt = new Date(lp.date_to + 'T23:59:59');
+        if (dt >= lf && dt <= lt) return true;
+      }
+      return false;
+    }
+
     if (completed.length === 0 && active.length === 0) {
       container.innerHTML = '<div class=\"empty-state\">No shift records yet</div>';
       return;
@@ -4375,6 +4418,9 @@ async function loadShifts() {
         const actualIndex = completed.length - 1 - i;
         const isEdited = s.edited;
         const edits = s.edits || [];
+        const shiftLocked = isShiftLocked(s.clock_in_time);
+        const lockBadge = shiftLocked ? '<span style="color:#95a5a6;font-size:13px;" title="Pay period locked for approval">🔒</span>' : '';
+        const lockedClass = shiftLocked ? ' style="opacity:0.65;"' : '';
         const editBadge = isEdited
           ? `<span class="shift-edited-badge" onclick="showShiftEditHistory(${actualIndex})" title="Click to view edit history">⚠️ Edited</span>`
           : '';
@@ -4396,17 +4442,17 @@ async function loadShifts() {
         }
         const lateNote = s.late_note ? `<div style="margin-top:2px;font-size:12px;color:var(--text2);font-style:italic;">📌 ${escHtml(s.late_note)}</div>` : '';
         return `
-        <div class="ts-entry" style="border-left-color:${lateBorderColor};">
+        <div class="ts-entry" style="border-left-color:${lateBorderColor};"${lockedClass}>
           <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-            <span><strong>${escHtml(s.user_name || s.user_id)}</strong> (${escHtml(s.user_id)}) ${editBadge}</span>
+            <span><strong>${escHtml(s.user_name || s.user_id)}</strong> (${escHtml(s.user_id)}) ${lockBadge} ${editBadge}</span>
             <span style="color:var(--text2);font-size:13px;">${new Date(s.clock_in_time).toLocaleString()} → ${new Date(s.clock_out_time).toLocaleString()}</span>
             <span style="font-weight:600;">${s.duration_hours} hrs</span>
             ${s.break_hours ? `<span style="font-size:12px;color:var(--text2);">☕ ${s.break_hours}h break</span>` : ''}
             <span style="font-size:13px;color:var(--accent);font-weight:500;">Paid: ${s.paid_hours || s.duration_hours} hrs</span>
             ${lateBadge}
             <div style="margin-left:auto;display:flex;gap:4px;">
-              <button class="shift-edit-btn" onclick="openShiftEditModal(${actualIndex})" title="Edit shift times" style="font-size:12px;padding:4px 10px;min-height:32px;">✏️ Edit</button>
-              <button class="shift-edit-btn" onclick="adminAddNote(${actualIndex})" title="Add/edit shift notes" style="font-size:12px;padding:4px 10px;min-height:32px;">📝 Note</button>
+              ${shiftLocked ? '' : `<button class="shift-edit-btn" onclick="openShiftEditModal(${actualIndex})" title="Edit shift times" style="font-size:12px;padding:4px 10px;min-height:32px;">✏️ Edit</button>`}
+              ${shiftLocked ? '' : `<button class="shift-edit-btn" onclick="adminAddNote(${actualIndex})" title="Add/edit shift notes" style="font-size:12px;padding:4px 10px;min-height:32px;">📝 Note</button>`}
             </div>
           </div>
           ${notesHtml}${lateNote}
@@ -4438,6 +4484,7 @@ async function loadPayPeriod() {
     const employees = data.employees || [];
     if (employees.length === 0) {
       container.innerHTML = '<div class="empty-state">No shift data found for this period.</div>';
+      loadApprovalStatus();
       return;
     }
     // Summary bar
@@ -4513,6 +4560,8 @@ async function loadPayPeriod() {
   } catch(e) {
     container.innerHTML = '<div class="empty-state">' + t('network_error') + '</div>';
   }
+  // Load approval status after pay period data
+  loadApprovalStatus();
 }
 
 function togglePayPeriodDetails(userId) {
@@ -4633,6 +4682,227 @@ function saveBiweeklyStart() {
     const badge = document.getElementById('biweeklySavedBadge');
     badge.style.display = 'inline';
     setTimeout(() => { badge.style.display = 'none'; }, 3000);
+  }
+}
+
+// ═══════════ TIMESHEET APPROVAL WORKFLOW ═══════════
+
+async function loadApprovalStatus() {
+  const section = document.getElementById('payPeriodApprovalSection');
+  const statusBadge = document.getElementById('approvalStatusBadge');
+  const btnSubmit = document.getElementById('btnApprovalSubmit');
+  const btnApprove = document.getElementById('btnApprovalApprove');
+  const btnFinalize = document.getElementById('btnApprovalFinalize');
+  const btnUnlock = document.getElementById('btnApprovalUnlock');
+  const empList = document.getElementById('approvalEmployeeList');
+
+  // Hide everything by default
+  section.style.display = 'none';
+  btnSubmit.style.display = 'none';
+  btnApprove.style.display = 'none';
+  btnFinalize.style.display = 'none';
+  btnUnlock.style.display = 'none';
+  empList.innerHTML = '';
+
+  const dateFrom = document.getElementById('payPeriodDateFrom')?.value || '';
+  const dateTo = document.getElementById('payPeriodDateTo')?.value || '';
+  if (!dateFrom || !dateTo) return;
+
+  try {
+    const r = await fetch(BACKEND_URL + '/api/timesheet/approval/status', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, date_from: dateFrom, date_to: dateTo })
+    });
+    if (!r.ok) return;
+    const data = await r.json();
+    const approval = data.approval;
+
+    if (!approval) {
+      // No approval yet — show submit button for admin
+      section.style.display = 'block';
+      statusBadge.innerHTML = '📋 <strong>Status:</strong> Not submitted yet';
+      statusBadge.style.color = 'var(--text2)';
+      if (currentUser.role === 'owner' || currentUser.permissions?.includes('view_timesheet')) {
+        btnSubmit.style.display = 'inline-block';
+      }
+      empList.innerHTML = '<span style="color:var(--text2);">Submit this pay period for approval to lock shifts and begin the review process.</span>';
+      return;
+    }
+
+    const status = approval.status;
+    section.style.display = 'block';
+
+    if (status === 'pending') {
+      statusBadge.innerHTML = '⏳ <strong>Status:</strong> Pending Approval <span style="background:#f39c12;color:#fff;font-size:11px;padding:2px 8px;border-radius:10px;margin-left:6px;">LOCKED</span>';
+      statusBadge.style.color = '#f39c12';
+
+      // Show employee approval list
+      const eApprovals = approval.employee_approvals || [];
+      let empHtml = '';
+      if (eApprovals.length > 0) {
+        empHtml = '<div style="margin-top:6px;font-size:12px;"><strong>✅ Employee approvals:</strong> ';
+        empHtml += eApprovals.map(ea => escHtml(ea.user_name)).join(', ');
+        empHtml += '</div>';
+      } else {
+        empHtml = '<div style="margin-top:6px;font-size:12px;color:var(--text2);">No employees have approved yet.</div>';
+      }
+      empList.innerHTML = empHtml;
+
+      // Admin/owner: finalize button
+      if (currentUser.role === 'owner' || currentUser.permissions?.includes('view_timesheet')) {
+        btnFinalize.style.display = 'inline-block';
+      }
+
+      // Employee: approve my shifts
+      if (currentUser.id && approval.submitted_by !== currentUser.id) {
+        // Check if current user already approved
+        const alreadyApproved = eApprovals.some(ea => ea.user_id === currentUser.id);
+        if (!alreadyApproved) {
+          btnApprove.style.display = 'inline-block';
+        }
+      }
+
+      // Owner: unlock button
+      if (currentUser.role === 'owner') {
+        btnUnlock.style.display = 'inline-block';
+      }
+    } else if (status === 'approved') {
+      statusBadge.innerHTML = '✅ <strong>Status:</strong> Approved <span style="background:#2ecc71;color:#fff;font-size:11px;padding:2px 8px;border-radius:10px;margin-left:6px;">LOCKED</span>';
+      statusBadge.style.color = '#2ecc71';
+
+      const eApprovals = approval.employee_approvals || [];
+      let empHtml = '';
+      if (eApprovals.length > 0) {
+        empHtml = '<div style="margin-top:6px;font-size:12px;"><strong>✅ Employee approvals:</strong> ';
+        empHtml += eApprovals.map(ea => escHtml(ea.user_name)).join(', ');
+        empHtml += '</div>';
+      }
+      if (approval.approved_by_name) {
+        empHtml += '<div style="margin-top:4px;font-size:12px;color:var(--text2);">Finalized by: ' + escHtml(approval.approved_by_name) + ' at ' + new Date(approval.approved_at).toLocaleString() + '</div>';
+      }
+      empList.innerHTML = empHtml;
+
+      // Owner: unlock button
+      if (currentUser.role === 'owner') {
+        btnUnlock.style.display = 'inline-block';
+      }
+    } else if (status === 'unlocked') {
+      statusBadge.innerHTML = '🔓 <strong>Status:</strong> Unlocked <span style="background:#95a5a6;color:#fff;font-size:11px;padding:2px 8px;border-radius:10px;margin-left:6px;">EDITABLE</span>';
+      statusBadge.style.color = '#95a5a6';
+      if (approval.unlock_reason) {
+        empList.innerHTML = '<div style="margin-top:6px;font-size:12px;color:var(--text2);">Unlock reason: ' + escHtml(approval.unlock_reason) + ' by ' + escHtml(approval.unlocked_by_name || 'Owner') + '</div>';
+      }
+      // Admin can resubmit
+      if (currentUser.role === 'owner' || currentUser.permissions?.includes('view_timesheet')) {
+        btnSubmit.style.display = 'inline-block';
+        btnSubmit.textContent = '📋 Re-submit for Approval';
+      }
+    }
+  } catch(e) {
+    // Silently fail — approval is optional feature
+    section.style.display = 'none';
+  }
+}
+
+async function submitPayPeriodApproval() {
+  const dateFrom = document.getElementById('payPeriodDateFrom')?.value || '';
+  const dateTo = document.getElementById('payPeriodDateTo')?.value || '';
+  if (!dateFrom || !dateTo) {
+    showToast('❌ Please select a date range first.', 'danger');
+    return;
+  }
+
+  if (!confirm('Submit this pay period for approval? This will LOCK all shifts in this period from editing.')) return;
+
+  try {
+    const r = await fetch(BACKEND_URL + '/api/timesheet/approval/submit', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, date_from: dateFrom, date_to: dateTo })
+    });
+    const data = await r.json();
+    if (!r.ok) { showToast('❌ ' + (data.message || 'Failed to submit'), 'danger'); return; }
+    showToast('✅ ' + data.message, 'success');
+    loadApprovalStatus();
+  } catch(e) {
+    showToast('❌ Network error', 'danger');
+  }
+}
+
+async function approveMyShifts() {
+  const dateFrom = document.getElementById('payPeriodDateFrom')?.value || '';
+  const dateTo = document.getElementById('payPeriodDateTo')?.value || '';
+  if (!dateFrom || !dateTo) {
+    showToast('❌ Please select a date range first.', 'danger');
+    return;
+  }
+
+  if (!confirm('Approve your shifts in this pay period? This confirms the recorded hours are correct.')) return;
+
+  try {
+    const r = await fetch(BACKEND_URL + '/api/timesheet/approval/approve', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: currentUser.id, date_from: dateFrom, date_to: dateTo })
+    });
+    const data = await r.json();
+    if (!r.ok) { showToast('❌ ' + (data.message || 'Failed'), 'danger'); return; }
+    showToast('✅ ' + data.message, 'success');
+    loadApprovalStatus();
+  } catch(e) {
+    showToast('❌ Network error', 'danger');
+  }
+}
+
+async function finalizePayPeriodApproval() {
+  const dateFrom = document.getElementById('payPeriodDateFrom')?.value || '';
+  const dateTo = document.getElementById('payPeriodDateTo')?.value || '';
+  if (!dateFrom || !dateTo) {
+    showToast('❌ Please select a date range first.', 'danger');
+    return;
+  }
+
+  if (!confirm('Finalize this pay period approval? This marks it as fully approved. Only the owner can unlock it after this.')) return;
+
+  try {
+    const r = await fetch(BACKEND_URL + '/api/timesheet/approval/finalize', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, date_from: dateFrom, date_to: dateTo })
+    });
+    const data = await r.json();
+    if (!r.ok) { showToast('❌ ' + (data.message || 'Failed'), 'danger'); return; }
+    showToast('✅ ' + data.message, 'success');
+    loadApprovalStatus();
+  } catch(e) {
+    showToast('❌ Network error', 'danger');
+  }
+}
+
+async function unlockPayPeriod() {
+  const dateFrom = document.getElementById('payPeriodDateFrom')?.value || '';
+  const dateTo = document.getElementById('payPeriodDateTo')?.value || '';
+  if (!dateFrom || !dateTo) {
+    showToast('❌ Please select a date range first.', 'danger');
+    return;
+  }
+
+  const reason = prompt('Reason for unlocking (required):');
+  if (!reason || !reason.trim()) {
+    showToast('❌ Reason is required to unlock.', 'danger');
+    return;
+  }
+
+  if (!confirm('Unlock this pay period? Shifts will become editable again. Any admin with view_timesheet permission can re-submit for approval.')) return;
+
+  try {
+    const r = await fetch(BACKEND_URL + '/api/timesheet/approval/unlock', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, date_from: dateFrom, date_to: dateTo, reason: reason.trim() })
+    });
+    const data = await r.json();
+    if (!r.ok) { showToast('❌ ' + (data.message || 'Failed'), 'danger'); return; }
+    showToast('✅ ' + data.message, 'success');
+    loadApprovalStatus();
+  } catch(e) {
+    showToast('❌ Network error', 'danger');
   }
 }
 
