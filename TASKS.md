@@ -515,6 +515,104 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 
 - [ ] **App icon + splash screen for PWA** — When installed to home screen (Add to Home Screen on iPad), the app should show a proper icon and splash screen. Verify manifest.json has all icon sizes (192px, 512px). Add `apple-touch-icon` and `apple-mobile-web-app-capable` meta tags for iOS.
 
+## Security Operations Center — Owner Security Dashboard & Monitoring (NEW — June 2026)
+
+> The owner needs a single pane of glass to see what's happening security-wise: who's logging in from where, what's being blocked, what looks suspicious. This is a security operations dashboard — not vulnerability scanning (that's the Security Sentinel's job), but live monitoring, threat response, and safety rails.
+
+### Data Model
+
+New `security_config.json`:
+```json
+{
+  "ip_blocklist": ["192.168.1.100", "10.0.0.5"],
+  "ip_allowlist": [],                    // if non-empty, ONLY these IPs can access
+  "auto_block_threshold": 10,            // auto-block IP after N failed logins in 5 min
+  "auto_block_duration_minutes": 60,     // how long auto-blocks last (0 = permanent)
+  "geo_alert_countries": [],             // alert on logins from these countries
+  "anomaly_hours_start": "23:00",        // flag logins between these hours
+  "anomaly_hours_end": "05:00",
+  "anomaly_rapid_orders_threshold": 10,  // flag if >N orders in 5 min from same user
+  "anomaly_large_order_threshold": 500,  // flag orders over $N
+  "require_2fa_for_external_ip": false   // force 2FA when logging in from non-local IP
+}
+```
+
+New `security_events.json` (append-only log of flagged events):
+```json
+[{
+  "id": "SEC-001",
+  "timestamp": "2026-06-23T14:30:00",
+  "event_type": "ip_blocked | failed_login_spike | anomalous_login | suspicious_order | geo_alert | rate_limit_triggered",
+  "severity": "critical | high | medium | low",
+  "user_id": "1234",
+  "ip": "203.0.113.42",
+  "details": "10 failed logins in 3 minutes from 203.0.113.42 — auto-blocked for 60 min",
+  "resolved": false,
+  "resolved_by": null,
+  "resolution_note": null
+}]
+```
+
+### Priority: HIGH
+
+- [ ] **IP tracking on all requests** — Capture `request.remote_addr` on every Flask request. Add `ip_address` field to activity_log entries for login, clock-in, order submit, and any admin action. Store in `login_attempts.json`: `{user_id, ip, timestamp, success, user_agent}`. This is the foundation — without IP tracking, none of the below works. Handle `X-Forwarded-For` header for proxied requests (VPS behind nginx/Cloudflare).
+
+- [ ] **Owner security dashboard — "🛡️ Security" admin tab** — New admin tab with real-time security overview:
+  - **Live feed**: scrollable list of recent security events (logins, blocks, flags) — newest first, auto-refresh every 30s
+  - **Summary cards**: "23 logins today (2 failed)", "3 IPs blocked", "1 active anomaly", "0 critical alerts"
+  - **Login map** (optional, if GeoIP set up): world map with dots for login locations
+  - **Active sessions**: who's logged in right now, from which IP, for how long
+  - **Blocked IPs list**: table with IP, reason, blocked date, expires, "Unblock" button
+  - Permission-gated: `view_stats` + owner-only for block/unblock actions
+
+- [ ] **IP blocklist management** — `POST /api/security/blocklist/add` and `/remove` endpoints. Owner adds IP to blocklist → all requests from that IP get 403 Forbidden. Auto-block: after `auto_block_threshold` failed logins from same IP in 5 minutes, auto-add to blocklist for `auto_block_duration_minutes`. Auto-block events logged as security_events. Owner can set permanent block ("until manually removed"). IP allowlist mode: if `ip_allowlist` is non-empty, ONLY those IPs can access — everything else gets 403. This is the nuclear option for "only allow the restaurant's static IP."
+
+- [ ] **Anomaly detection engine** — Background thread (or per-request check) that flags unusual patterns:
+  - **Off-hours login**: login between `anomaly_hours_start` and `anomaly_hours_end` → flag as MEDIUM, log to security_events, show yellow banner on dashboard: "⚠️ Carlos logged in at 3:14 AM"
+  - **Failed login spike**: >5 failed logins from same IP in 5 minutes → flag as HIGH, auto-block if enabled
+  - **Rapid orders**: >10 orders in 5 minutes from same user → flag as MEDIUM (possible fraud or "fat finger" auto-submit)
+  - **Large order**: single order over $500 → flag as LOW (just a heads-up — "Large order: $847.50 by Waiter John — review?")
+  - **New IP for user**: user logs in from IP they've never used before → flag as MEDIUM ("Carlos logging in from new IP: 45.67.89.10 — account compromised?")
+  - **Simultaneous logins**: same user logged in from 2 different IPs → flag as HIGH ("Carlos logged in from 192.168.1.5 AND 45.67.89.10 simultaneously")
+  - All flags go to `security_events.json` with severity. Owner sees count badge on Security tab.
+
+- [ ] **Account blocking & force logout** — In User Management, owner can click "🔒 Block Account" on any user. This sets `banned: true` (already exists), logs reason, and immediately invalidates all their sessions. Also: "Force Logout" button that ends all active sessions for a user without banning them (useful for "your session is acting weird, log out and back in"). `POST /api/security/block_user` and `/unblock_user` endpoints. Blocked users get "Account blocked — contact owner" on login attempt. Show block reason to the user.
+
+### Priority: MEDIUM
+
+- [ ] **Security event investigation workflow** — Owner clicks any flagged event in the dashboard → detail view with: full event data, related events (same IP, same user, same time window), timeline of that user's actions leading up to the event, and action buttons: "✅ Dismiss" (mark resolved, add note), "🔒 Block IP" (add to blocklist), "🔒 Block User" (ban account), "📋 Escalate" (mark as critical, notify Discord). This turns the dashboard from "here's a list of scary things" to "here's what to do about them."
+
+- [ ] **Discord security alerts** — Critical/HIGH severity events fire a Discord notification immediately: "🚨 SECURITY: 10 failed logins from 203.0.113.42 — IP auto-blocked for 60 min." MEDIUM events batch into a digest every hour. Configurable per severity in security_config. The owner should know about a brute-force attack within seconds, not hours.
+
+- [ ] **GeoIP lookup for login locations** — Optional: install `geoip2` Python library + free MaxMind GeoLite2 database. Resolve IP → country/city on login. Show in login feed: "Carlos logged in from Brownsville, TX, US 🇺🇸". Alert on logins from unexpected countries (configurable `geo_alert_countries`). Adds context to the login map on the dashboard. This is what makes the owner go "wait, why is someone logging in from Russia?"
+
+- [ ] **Rate limiting middleware** — Flask before_request hook that enforces:
+  - Global: max 60 requests/minute per IP (prevents basic DoS)
+  - Login: max 10 attempts/minute per IP (already covered by anomaly detection)
+  - API: max 30 requests/minute per IP for order-heavy endpoints
+  - Returns 429 with `Retry-After` header
+  - Configurable in security_config
+  - Whitelist localhost/192.168.x.x so internal traffic isn't rate-limited
+
+- [ ] **Security event retention & cleanup** — security_events.json will grow forever. Auto-purge: LOW severity >30 days, MEDIUM >90 days, HIGH/CRITICAL kept forever. Configurable retention in security_config. Export: "Download Security Log" button exports filtered events as CSV for external audit.
+
+- [ ] **Suspicious order pattern detection** — Beyond the anomaly engine basics, add order-specific heuristics:
+  - Same item ordered 50+ times in one order (possible testing/abuse)
+  - Order total is negative (discount abuse)
+  - Refund rate per employee is >20% (possible theft — "ring up, take cash, refund later")
+  - Multiple high-value refunds in short window
+  - These flag as MEDIUM security events for owner review
+
+### Priority: LOW
+
+- [ ] **Security health score** — Dashboard shows a computed score (0-100) based on: 2FA adoption rate, failed login rate, blocked IP count, unresolved security events, rate limit triggers. "Security Score: 87/100 — Good. Enable 2FA for 3 remaining admins to reach 95+." Gamifies security for the owner — gives them a clear number to improve.
+
+- [ ] **Audit export for compliance** — One-click "Export Security Report" that generates a PDF/CSV with: all security events in date range, blocked IPs, active user sessions, failed login summary, anomaly detection summary. Useful if the owner needs to prove to an insurer or franchisor that they have security controls.
+
+- [ ] **Honeypot endpoints** — Add fake admin endpoints (/admin, /wp-admin, /.env) that log and auto-block any IP that hits them. Real users never hit these — only bots and attackers. Instant permanent block. This is a low-effort, high-signal security measure.
+
+- [ ] **Two-person rule for sensitive actions** — Require a second admin/owner approval for: deleting all orders, wiping the database, changing bank/payment config, disabling all 2FA. Shows "⚠️ This action requires a second admin to approve." Second admin enters their PIN to confirm. Prevents a single compromised admin account from nuking the system.
+
 ## Done
 
 |- [x] **Add scheduled_start field to users.json** — Backend: `scheduled_start` field in user data model (default null), exposed via `/api/users`, accepted in `/api/add_user`, new `POST /api/users/update_scheduled_start` endpoint with permission-gating and activity logging. Frontend: display in user management list, edit button (prompt for HH:MM), time input in add-user form, clear support. i18n EN + ES. [worker-3]
