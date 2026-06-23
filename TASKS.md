@@ -611,6 +611,149 @@ New `security_events.json` (append-only log of flagged events):
 
 - [ ] **Two-person rule for sensitive actions** — Require a second admin/owner approval for: deleting all orders, wiping the database, changing bank/payment config, disabling all 2FA. Shows "⚠️ This action requires a second admin to approve." Second admin enters their PIN to confirm. Prevents a single compromised admin account from nuking the system.
 
+## Multi-Tenant Platform — Business Groups, Developer Account & White-Label Hosting (NEW — June 2026)
+
+> This system is going from "one restaurant's POS" to "a platform that hosts multiple independent businesses." Each business gets its own isolated tenant with its own owner, employees, menu, orders, shifts — completely separate from other businesses. Jay (the developer/platform owner) has a **super admin** account to create, manage, and monitor all businesses. This is the foundation for selling POS as a service.
+
+### Architecture Overview
+
+```
+SUPER ADMIN (Jay — developer account)
+├── Business: "Maria's Tacos" (business_id: marias-tacos)
+│   ├── Location: "Main Street" (location_id: main)
+│   │   ├── Owner: Maria (PIN 2222)
+│   │   ├── Admin: Carlos
+│   │   └── Employees: Juan, Rosa, Luis
+│   └── Location: "2nd Ave" (location_id: second-ave)
+│       ├── Owner: Maria (same owner, cross-location)
+│       └── Employees: Pedro, Ana
+├── Business: "Bob's Burgers" (business_id: bobs-burgers)
+│   └── Location: "Downtown" (single location)
+│       ├── Owner: Bob (PIN 3333)
+│       └── Employees: Tina, Gene, Louise
+└── Business: "Sakura Sushi" (business_id: sakura-sushi)
+    └── Location: "Uptown"
+        ├── Owner: Kenji (PIN 4444)
+        └── Employees: Yuki, Haru
+```
+
+### Data Isolation Strategy
+
+**Phase 1 (JSON — current):** Directory-per-tenant
+```
+/data/tenants/<business_id>/<location_id>/
+  users.json         # scoped to this location
+  items.json         # shared across business locations? or per-location?
+  orders.json
+  shift_log.json
+  inventory.json
+  ...all other JSON files...
+/data/global/
+  businesses.json    # all registered businesses
+  super_admins.json  # platform-level admin accounts
+  platform_config.json
+```
+
+**Phase 2 (SQLite — future):** `business_id` + `location_id` columns on every table, or separate `.db` per business for stronger isolation.
+
+### Key design decisions
+- **business_id**: URL-safe slug (e.g., `marias-tacos`), used in login URL
+- **location_id**: within a business, for multi-location chains (e.g., `main`, `downtown`)
+- **Single business = single owner minimum**, can have multiple admins
+- **Locations share menu items by default** (set once, appears everywhere), but can override per-location
+- **Employees scoped to location** (Juan works at Main Street, can't accidentally clock in at 2nd Ave)
+- **Super admin sees everything** — all businesses, all data, can impersonate any owner for support
+
+### Priority: HIGH — Multi-Tenant Foundation
+
+- [ ] **Global data model + platform config** — Create `/data/global/businesses.json`:
+```json
+{
+  "marias-tacos": {
+    "business_name": "Maria's Tacos",
+    "business_id": "marias-tacos",
+    "status": "active | suspended | pending_approval",
+    "owner_user_id": "2222",           // the business owner's PIN (scoped to this business)
+    "owner_name": "Maria Garcia",
+    "owner_email": "maria@email.com",
+    "owner_phone": "956-555-0100",
+    "created_at": "2026-06-23",
+    "plan": "free | basic | pro",     // for future billing
+    "max_locations": 3,
+    "max_users": 15,
+    "features_enabled": ["pos", "kitchen", "timesheet", "inventory"],
+    "locations": {
+      "main": {"name": "Main Street", "address": "123 Main St", "timezone": "America/Chicago"},
+      "second-ave": {"name": "2nd Ave", "address": "456 2nd Ave", "timezone": "America/Chicago"}
+    }
+  }
+}
+```
+Create `/data/global/super_admins.json`: `{ "1111": {"name": "Jay", "role": "super_admin", "permissions": ["*"]} }`
+Super admin PIN is separate from any business PIN. Super admin can create businesses, approve registrations, manage platform settings.
+
+- [ ] **Tenant-aware Flask middleware** — `before_request` hook that resolves the current business/location context:
+  - Subdomain routing: `marias-tacos.posapp.com` → business_id = `marias-tacos`
+  - URL param fallback: `posapp.com/login?business=marias-tacos` → business_id = `marias-tacos`
+  - Login form: user enters business_id + PIN (or selects business from dropdown if multiple)
+  - After login: all API calls are scoped to `business_id` + `location_id` from session
+  - All `load_json_data()` and `save_json_data()` calls route to `/data/tenants/<business_id>/<location_id>/` instead of root
+  - Super admin bypass: if session is super_admin, routes to `/data/global/` or can switch into any business
+
+- [ ] **Super admin dashboard — "🏢 Platform" view** — New admin section visible ONLY to super admins:
+  - **Business list**: table of all businesses with status (active 🟢, suspended 🔴, pending 🟡), plan, user count, last active date
+  - **Create business**: form with business_id (slug), business name, owner name, owner email, plan tier, max locations/users
+  - **Approve/deny registration**: if self-registration is enabled, new businesses go to `pending_approval` status. Super admin reviews and approves/denies with reason note. Approved → business gets created, owner gets notified.
+  - **Suspend/unsuspend**: suspend a business (owner can't log in, employees can't clock in, customers see "temporarily unavailable"). Unsuspend restores. Reason required, logged.
+  - **Impersonate**: "Login as Owner" button → super admin is dropped into that business's POS as if they were the owner. Activity logged as `super_admin_impersonate`. Essential for support ("I can't figure out how to set up my menu" — Jay logs in as them and shows them).
+  - **Platform analytics**: total businesses, total users, total orders across all businesses, MRR (if billing added later), active businesses in last 7 days
+
+- [ ] **Business registration flow (self-serve)** — Public registration page at `/register`:
+  - Form: business name, desired business_id (slug, auto-suggested from name, validated for uniqueness), owner name, email, phone, password/PIN
+  - CAPTCHA or email verification to prevent bot registrations
+  - Submit → status = `pending_approval` → notification to super admin (Discord + dashboard badge)
+  - Super admin approves → business directory created, owner account created, email sent: "Your POS system is ready! Log in at marias-tacos.posapp.com"
+  - Super admin denies → reason stored, email sent: "Your registration was not approved. Reason: [custom message]"
+  - Configurable in platform_config: `"allow_self_registration": true/false` — super admin can toggle off if getting spam
+
+- [ ] **Per-business isolation enforcement** — This is CRITICAL for production:
+  - Every API endpoint MUST verify business context from session before reading/writing ANY data
+  - Business A can NEVER access Business B's users, orders, shifts, items, etc.
+  - `check_perm()` now also checks business scope — user's PIN is only valid within their business
+  - PINs can be reused across businesses (Maria's employee 1234 is different from Bob's employee 1234) because they're scoped to business_id
+  - Super admin bypass for support (logged and rate-limited)
+  - Test: create two businesses → log in as Business A → try to curl Business B's endpoint → must get 403
+
+### Priority: HIGH — Multi-Location Support
+
+- [ ] **Location selector in POS header** — After login, if business has multiple locations, show a location dropdown/picker. "You're at: Main Street ▼". Switching locations reloads POS with that location's data. Defaults to last-used location (stored per user in localStorage). Employees are typically assigned to one location — if they try to access another, require manager override.
+
+- [ ] **Cross-location menu sharing with overrides** — Default: menu items (items.json) are shared at the business level (all locations see the same menu). Admin can toggle per-item: "Available at: All locations / Main Street only / 2nd Ave only." Per-location price override: "Burger: $10.99 at Main, $12.99 at 2nd Ave (higher rent area)." This gives flexibility without duplicating the entire menu per location.
+
+- [ ] **Cross-location reporting for owners** — If owner has multiple locations, Timesheet and Stats tabs get a "Location: All / Main Street / 2nd Ave" filter. Owner can see combined revenue, combined labor hours, or per-location breakdown. "Maria wants to know: did Main Street or 2nd Ave do better this week?" One-click comparison.
+
+- [ ] **Location-specific settings** — Per-location overrides in config: tax rate (different cities), operating hours, timezone, printer IP, kitchen display URL. Business-level defaults with per-location overrides. Stored in business-level config, keyed by location_id.
+
+### Priority: MEDIUM — Platform Management
+
+- [ ] **Super admin business config templates** — When creating a new business, select a template: "Full-Service Restaurant" (POS + kitchen + tables + timesheet), "Quick-Service" (POS + kitchen only, no tables), "Coffee Shop" (POS + loyalty + inventory, simplified). Templates pre-configure which features are enabled, default categories, and roles. Speeds up onboarding from 30min to 2min.
+
+- [ ] **Usage analytics & limits** — Track per-business: monthly order count, storage used, API requests, active users. If a business exceeds plan limits, show warning banner to owner: "You've reached your plan limit of 15 users. Upgrade to add more." Super admin sees usage across all businesses. Foundation for future billing.
+
+- [ ] **Business migration/export** — If a business wants to leave the platform, super admin can export ALL their data as a zip: all JSON/SQLite files, uploaded images, config. `POST /api/platform/export_business` with business_id. Also: "Clone Business" to create a test copy for development/troubleshooting without touching live data.
+
+- [ ] **Platform-wide announcements** — Super admin can post an announcement that appears as a banner on ALL business dashboards: "🚧 Scheduled maintenance: Sunday 2am-4am CT. System will be unavailable." or "🎉 New feature: 2FA now available! Enable in Security settings." Dismissible per user. Stored in platform_config with start/end dates.
+
+### Priority: LOW — White-Label & Branding
+
+- [ ] **Per-business branding** — Each business can customize: logo (shown in POS header), primary color (replaces accent color in CSS), business name in browser tab title. Loaded from business config. This makes each POS feel like the restaurant's own system, not a generic platform. "Maria's Tacos wants their green brand color, not our default red."
+
+- [ ] **Custom domain support** — Business can point their own domain: `pos.mariastacos.com` → CNAME to platform. Platform handles SSL via Let's Encrypt. Configurable in business settings. Super admin approves custom domains to prevent abuse.
+
+- [ ] **Business-facing status page** — `status.posapp.com` showing platform uptime, incident history, scheduled maintenance. Automatic — if the Reliability Bot detects an outage, it updates the status page. Gives business owners confidence that "it's not just me, the platform is down."
+
+- [ ] **Multi-language per business** — While the platform supports EN+ES, some businesses may want additional languages (French, Chinese, Arabic). Per-business language config: enabled languages, default language. Menu items support translations per language. This is for international deployment.
+
 ## Done
 
 |- [x] **2FA setup endpoint + QR code generation** — `POST /api/auth/2fa/setup`: generates TOTP secret via pyotp, stores on user, returns provisioning_uri + QR code data URI. 409 if 2FA already enabled. [worker-3]
