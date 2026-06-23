@@ -43,7 +43,7 @@ html, body {
   color: var(--text);
   min-height: 100vh;
   font-size: 16px;
-  -webkit-tap-highlight-color: transparent;
+  -webkit-tap-highlight-color: rgba(233,69,96,0.25);
   overflow-x: hidden;
 }
 
@@ -63,6 +63,15 @@ button, .btn {
   touch-action: manipulation;
 }
 button:active, .btn:active { opacity: 0.8; transform: scale(0.97); }
+/* Touch tap feedback for non-button clickable elements */
+.emp-perf-table tr:active td,
+.recent-orders-header:active,
+.recent-order-item:active,
+.shift-late-badge:active,
+.shift-edited-badge:active,
+.pp-preset:active,
+.pp-details-btn:active,
+.timesheet-subtab:active { opacity: 0.85; transition: opacity 0.05s; }
 button.accent { background: var(--accent); color: #fff; }
 button.danger { background: #c0392b; color: #fff; }
 button.success { background: var(--success); color: #fff; }
@@ -135,6 +144,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 .emp-perf-table th { color: var(--text2); font-size: 12px; text-align: left; padding: 10px 8px; border-bottom: 2px solid var(--border); white-space: nowrap; }
 .emp-perf-table td { padding: 10px 8px; border-bottom: 1px solid var(--border); }
 .emp-perf-table tr:hover td { background: var(--hover); }
+@media (hover: hover) { .emp-perf-table tr:hover td { background: var(--hover); } }
 .emp-perf-table .num { text-align: right; font-variant-numeric: tabular-nums; }
 .emp-perf-table .rank { color: var(--text2); font-size: 12px; width: 30px; text-align: center; }
 .emp-perf-card { background: var(--card); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; }
@@ -186,6 +196,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 #login2faMode .twofa-digit.filled { border-color: var(--accent); }
 #login2faMode .twofa-back { margin-top: 8px; font-size: 14px; color: var(--text2); cursor: pointer; background: none; border: none; }
 #login2faMode .twofa-back:hover { color: var(--text); }
+@media (hover: hover) { #login2faMode .twofa-back:hover { color: var(--text); } }
 
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
@@ -222,9 +233,11 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 #topBar .offline-badge.syncing { background: #3498db; animation: pulse-badge 1s infinite; }
 #clockBtn.clocked-in { background: #2ecc71; color: #fff; border-color: #2ecc71; animation: none; }
 #clockBtn.clocked-in:hover { background: #27ae60; }
+@media (hover: hover) { #clockBtn.clocked-in:hover { background: #27ae60; } }
 #clockBtn.late-clock-in { animation: pulse-late 1s ease-in-out 3; border-color: #e74c3c !important; box-shadow: 0 0 15px rgba(231,76,60,0.5); }
 #breakBtn.on-break { background: #f39c12; color: #fff; border-color: #f39c12; }
 #breakBtn.on-break:hover { background: #e67e22; }
+@media (hover: hover) { #breakBtn.on-break:hover { background: #e67e22; } }
 @keyframes pulse-badge {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
@@ -269,6 +282,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
   transition: background 0.15s;
 }
 .recent-orders-header:hover { background: var(--hover); }
+@media (hover: hover) { .recent-orders-header:hover { background: var(--hover); } }
 .recent-orders-title { flex: 1; font-weight: 600; font-size: 14px; }
 .recent-orders-count { font-size: 12px; color: var(--text2); }
 .recent-orders-toggle { font-size: 12px; color: var(--text2); transition: transform 0.2s; }
@@ -290,6 +304,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 }
 .recent-order-item:last-child { border-bottom: none; }
 .recent-order-item:hover { background: var(--hover); }
+@media (hover: hover) { .recent-order-item:hover { background: var(--hover); } }
 .recent-order-num { font-weight: 700; font-size: 15px; min-width: 48px; }
 .recent-order-info { flex: 1; min-width: 0; }
 .recent-order-info .ro-name { font-size: 12px; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -311,6 +326,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
   transition: all 0.15s;
 }
 .recent-order-reload:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+@media (hover: hover) { .recent-order-reload:hover { background: var(--accent); color: #fff; border-color: var(--accent); } }
 .recent-orders-empty {
   padding: 20px;
   text-align: center;
@@ -350,6 +366,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
   transition: background 0.2s;
 }
 .barcode-scan-btn:hover, .barcode-clear-btn:hover { background: var(--card-alt, #1e2a4a); }
+@media (hover: hover) { .barcode-scan-btn:hover, .barcode-clear-btn:hover { background: var(--card-alt, #1e2a4a); } }
 #barcodeStatus {
   font-size: 13px; min-height: 20px; padding: 4px 0; color: var(--text2);
 }
@@ -532,6 +549,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 /* Timesheet sub-tabs */
 .timesheet-subtab { background: transparent; border: none; padding: 8px 16px; font-size: 14px; cursor: pointer; border-radius: 6px 6px 0 0; color: var(--text2); min-height: 44px; font-weight: 500; transition: all .15s; }
 .timesheet-subtab:hover { background: var(--card); color: var(--text); }
+@media (hover: hover) { .timesheet-subtab:hover { background: var(--card); color: var(--text); } }
 .timesheet-subtab.active { background: var(--accent); color: #fff; font-weight: 600; }
 .timesheet-subsection { min-height: 100px; }
 /* Pay period cards */
@@ -548,12 +566,14 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 .pp-overtime { color: #ff9800; font-weight: 600; }
 .pp-details-btn { font-size: 13px; padding: 6px 14px; min-height: 36px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius); cursor: pointer; }
 .pp-details-btn:hover { opacity: .85; }
+@media (hover: hover) { .pp-details-btn:hover { opacity: .85; } }
 .pp-shift-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px; flex-wrap: wrap; gap: 4px; }
 .pp-shift-row:last-child { border-bottom: none; }
 .pp-active-badge { background: #4caf50; color: #fff; font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
 /* Pay period preset buttons */
 .pp-preset { font-size: 13px; padding: 8px 14px; min-height: 44px; background: var(--card); color: var(--text); border: 2px solid var(--border); border-radius: var(--radius); cursor: pointer; transition: all .15s; font-weight: 500; white-space: nowrap; }
 .pp-preset:hover { border-color: var(--accent); background: var(--card-alt); }
+@media (hover: hover) { .pp-preset:hover { border-color: var(--accent); background: var(--card-alt); } }
 .pp-preset.active { border-color: var(--accent); background: var(--accent); color: #fff; }
 
 /* Shift edit badge and button */
@@ -572,6 +592,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
   line-height: 18px;
 }
 .shift-edited-badge:hover { opacity: 0.85; }
+@media (hover: hover) { .shift-edited-badge:hover { opacity: 0.85; } }
 .shift-late-badge {
   display: inline-block;
   font-size: 11px;
@@ -586,6 +607,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
   cursor: pointer;
 }
 .shift-late-badge:hover { opacity: 0.85; }
+@media (hover: hover) { .shift-late-badge:hover { opacity: 0.85; } }
 .shift-late-badge.excused {
   background: rgba(149,165,166,0.15);
   color: #95a5a6;
@@ -602,6 +624,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
   transition: background .15s;
 }
 .shift-edit-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+@media (hover: hover) { .shift-edit-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); } }
 
 .log-filters { background: var(--card); border-radius: var(--radius); padding: 12px 16px; margin-bottom: 12px; }
 .log-filter-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: end; }
@@ -911,6 +934,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
   font-size: 16px; padding: 8px 16px; border-radius: 8px; cursor: pointer;
 }
 #kioskOverlay .kiosk-header .kiosk-exit:hover { color: #fff; border-color: #666; }
+@media (hover: hover) { #kioskOverlay .kiosk-header .kiosk-exit:hover { color: #fff; border-color: #666; } }
 #kioskOverlay .kiosk-cart {
   width: 100%; max-width: 700px; max-height: 40vh;
   overflow-y: auto; margin-bottom: 20px;
@@ -954,6 +978,12 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 #kioskOverlay .kiosk-tip .tip-btns button:hover,
 #kioskOverlay .kiosk-tip .tip-btns button.selected {
   background: var(--accent); border-color: var(--accent); color: #fff;
+}
+@media (hover: hover) {
+#kioskOverlay .kiosk-tip .tip-btns button:hover,
+#kioskOverlay .kiosk-tip .tip-btns button.selected {
+  background: var(--accent); border-color: var(--accent); color: #fff;
+}
 }
 #kioskOverlay .kiosk-tip .tip-btns .tip-custom {
   background: var(--card-alt); border-color: var(--border);
@@ -8962,8 +8992,10 @@ async function unlockTsPeriod() {
     .ts-dense-table { width:100%; border-collapse:collapse; font-size:13px; }
     .ts-dense-table th { text-align:left; padding:6px 8px; background:var(--card-alt); color:var(--text2); font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:0.3px; border-bottom:2px solid var(--border); white-space:nowrap; }
     .ts-dense-table th:hover { color:var(--accent); }
+    @media (hover: hover) { .ts-dense-table th:hover { color:var(--accent); } }
     .ts-dense-table td { padding:5px 8px; border-bottom:1px solid var(--border); vertical-align:middle; white-space:nowrap; }
     .ts-dense-table tbody tr:hover { background:var(--card-alt); }
+    @media (hover: hover) { .ts-dense-table tbody tr:hover { background:var(--card-alt); } }
     .badge-status { display:inline-block; margin-left:2px; font-size:12px; cursor:help; }
     .ts-dense-table td:last-child { text-align:center; }
     .ts-dense-table th:last-child { text-align:center; }

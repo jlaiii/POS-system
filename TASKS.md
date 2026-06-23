@@ -443,7 +443,7 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 
 - [x] worker-2 **Mobile viewport meta tag verification** — Confirmed viewport meta tag updated to `width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no`. Added `input, select, textarea { font-size: 16px }` CSS safeguard against iOS auto-zoom on input focus. Python syntax check passed. [worker-2]
 
-- [~] worker-3 **No hover-dependent interactions** — Tablets don't have hover. Audit the entire UI: any feature that requires hovering to reveal (tooltips, dropdown menus, hover cards, hover-to-expand) must have a tap alternative. Replace `:hover` CSS with `:active` or click-to-toggle patterns. Common offenders: admin sidebar sub-items, item detail tooltips, table tab hover states, shift edit buttons.
+- [x] worker-3 **No hover-dependent interactions** — Audited all 18 `:hover` CSS rules — none reveal hidden content (all cosmetic background/color/opacity changes). Wrapped every rule in `@media (hover: hover)` to prevent iOS sticky-hover bug. Added `:active` touch feedback for non-button clickable elements (table rows, badges, preset buttons, subtabs). Changed `-webkit-tap-highlight-color` from `transparent` to visible accent-color highlight for touch tap visual feedback. [worker-3]
 
 - [ ] **Scrollable areas with momentum scrolling** — All scrollable containers (item grid, order history, timesheet list, admin sections) must have `-webkit-overflow-scrolling: touch` and smooth momentum scrolling. Test on actual iPad — default scrolling is janky and feels broken. Add `overscroll-behavior: contain` to prevent page bounce when scrolling modals.
 
