@@ -1433,10 +1433,10 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
           <div class="card" style="margin-bottom:12px;">
             <h4 style="margin-bottom:8px;">➕ Add User</h4>
             <div class="form-row">
-              <input type="text" id="addUserId" placeholder="4-digit PIN" maxlength="4" inputmode="numeric" pattern="[0-9]{4}"/>
+              <input type="text" id="addUserId" placeholder="4-digit PIN" maxlength="4" inputmode="numeric" pattern="[0-9]{4}" autocomplete="off" />
               <input type="text" id="addUserName" placeholder="User name"/>
               <select id="addUserRole"><option value="user">User</option><option value="admin">Admin</option><option value="cook">Cook</option><option value="owner">Owner</option></select>
-              <input type="number" id="addUserPayRate" placeholder="Pay rate ($/hr)" step="0.25" min="0" style="max-width:140px;"/>
+              <input type="number" id="addUserPayRate" placeholder="Pay rate ($/hr)" step="0.25" min="0" style="max-width:140px;" inputmode="decimal" pattern="[0-9]*" />
               <input type="time" id="addUserSchedStart" style="max-width:150px;" title="Scheduled start time (optional)"/>
               <button class="accent" onclick="addUser()">Add</button>
             </div>
@@ -1450,7 +1450,7 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
           <div class="form-row">
             <input type="text" id="addItemCategory" placeholder="Category"/>
             <input type="text" id="addItemName" placeholder="Item name"/>
-            <input type="number" id="addItemPrice" placeholder="Price" step="0.01" min="0.01"/>
+            <input type="number" id="addItemPrice" placeholder="Price" step="0.01" min="0.01" inputmode="decimal" pattern="[0-9]*" />
             <input type="text" id="addItemBarcode" placeholder="Barcode (optional)" style="max-width:160px;"/>
             <select id="addItemCourse" style="max-width:130px;min-height:var(--tap);padding:8px 10px;font-size:14px;">
               <option value="main">Main</option>
@@ -1468,7 +1468,7 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
             <div class="form-row">
               <input type="text" id="editNewCat" placeholder="Category"/>
               <input type="text" id="editNewName" placeholder="Name"/>
-              <input type="number" id="editNewPrice" placeholder="Price" step="0.01" min="0.01"/>
+              <input type="number" id="editNewPrice" placeholder="Price" step="0.01" min="0.01" inputmode="decimal" pattern="[0-9]*" />
               <input type="text" id="editNewBarcode" placeholder="Barcode" style="max-width:160px;"/>
               <select id="editNewCourse" style="max-width:130px;min-height:var(--tap);padding:8px 10px;font-size:14px;">
                 <option value="main">Main</option>
@@ -1487,7 +1487,7 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
           <div class="card" style="margin-bottom:12px;">
             <h4 style="margin-bottom:8px;">💰 Global Tax Rate</h4>
             <div class="form-row">
-              <input type="number" id="globalTaxRate" placeholder="e.g., 8" step="0.1" min="0" max="100" style="max-width:120px;"/>
+              <input type="number" id="globalTaxRate" placeholder="e.g., 8" step="0.1" min="0" max="100" style="max-width:120px;" inputmode="decimal" pattern="[0-9]*" />
               <span style="color:var(--text2);font-size:14px;">percent</span>
               <button class="accent" onclick="saveTaxConfig()">Save Global Rate</button>
             </div>
@@ -1498,7 +1498,7 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
             <p style="color:var(--text2);font-size:13px;margin-bottom:10px;">Override the tax rate for specific items. Leave blank to use category/global rate.</p>
             <div class="form-row">
               <select id="taxItemSelect" style="max-width:220px;"></select>
-              <input type="number" id="taxItemRate" placeholder="Tax %" step="0.1" min="0" max="100" style="max-width:100px;"/>
+              <input type="number" id="taxItemRate" placeholder="Tax %" step="0.1" min="0" max="100" style="max-width:100px;" inputmode="decimal" pattern="[0-9]*" />
               <button class="accent" onclick="saveItemTaxOverride()" style="font-size:13px;padding:6px 12px;min-height:36px;">Set</button>
               <button class="ghost" onclick="clearItemTaxOverride()" style="font-size:13px;padding:6px 12px;min-height:36px;">Clear</button>
             </div>
@@ -1515,9 +1515,9 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
                 <option value="percent">Percent (%)</option>
                 <option value="flat">Flat ($)</option>
               </select>
-              <input type="number" id="discountValue" placeholder="Value" step="0.01" min="0.01" style="max-width:90px;"/>
-              <input type="number" id="discountMinOrder" placeholder="Min order $" step="0.01" min="0" style="max-width:110px;"/>
-              <input type="number" id="discountUsageLimit" placeholder="Usage limit" min="1" style="max-width:100px;"/>
+              <input type="number" id="discountValue" placeholder="Value" step="0.01" min="0.01" style="max-width:90px;" inputmode="decimal" pattern="[0-9]*" />
+              <input type="number" id="discountMinOrder" placeholder="Min order $" step="0.01" min="0" style="max-width:110px;" inputmode="decimal" pattern="[0-9]*" />
+              <input type="number" id="discountUsageLimit" placeholder="Usage limit" min="1" style="max-width:100px;" inputmode="numeric" pattern="[0-9]*" />
             </div>
             <div class="form-row">
               <input type="text" id="discountDescription" placeholder="Description (optional)" style="flex:1;"/>
@@ -1574,15 +1574,15 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
               <div class="form-row" style="gap:12px;flex-wrap:wrap;align-items:end;">
                 <div>
                   <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:2px;">Daily OT threshold (hours)</label>
-                  <input type="number" id="tsConfigDailyOT" value="8" min="1" max="24" step="0.5" style="width:100px;min-height:40px;font-size:14px;">
+                  <input type="number" id="tsConfigDailyOT" value="8" min="1" max="24" step="0.5" style="width:100px;min-height:40px;font-size:14px;" inputmode="numeric" pattern="[0-9]*" >
                 </div>
                 <div>
                   <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:2px;">Weekly OT threshold (hours)</label>
-                  <input type="number" id="tsConfigWeeklyOT" value="40" min="1" max="168" step="1" style="width:100px;min-height:40px;font-size:14px;">
+                  <input type="number" id="tsConfigWeeklyOT" value="40" min="1" max="168" step="1" style="width:100px;min-height:40px;font-size:14px;" inputmode="numeric" pattern="[0-9]*" >
                 </div>
                 <div>
                   <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:2px;">Late grace period (min)</label>
-                  <input type="number" id="tsConfigLateGrace" value="5" min="0" max="60" step="1" style="width:80px;min-height:40px;font-size:14px;">
+                  <input type="number" id="tsConfigLateGrace" value="5" min="0" max="60" step="1" style="width:80px;min-height:40px;font-size:14px;" inputmode="numeric" pattern="[0-9]*" >
                 </div>
                 <button class="accent" onclick="saveTimesheetConfig()" style="min-height:40px;padding:8px 16px;font-size:13px;">💾 Save Config</button>
                 <span id="tsConfigStatus" style="font-size:12px;color:#4caf50;display:none;">✅ Saved</span>
@@ -1698,7 +1698,7 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
           <div class="card" style="margin-bottom:12px;">
             <h4 style="margin-bottom:8px;">➕ Assign / Add Table</h4>
             <div class="form-row">
-              <input type="number" id="tableNumInput" placeholder="Table number" min="1" max="999" style="max-width:130px;"/>
+              <input type="number" id="tableNumInput" placeholder="Table number" min="1" max="999" style="max-width:130px;" inputmode="numeric" pattern="[0-9]*" />
               <input type="text" id="tableNameInput" placeholder="Table name (e.g. Table 5)" style="max-width:180px;"/>
               <input type="text" id="tabletIdInput" placeholder="Tablet ID" style="max-width:160px;"/>
               <button class="accent" onclick="assignTable()">💾 Assign</button>
@@ -1761,7 +1761,7 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
                 <option value="percent" data-i18n="admin.pricing.percent">Percent (%)</option>
                 <option value="flat" data-i18n="admin.pricing.flat">Flat ($)</option>
               </select>
-              <input type="number" id="pricingDiscountValue" placeholder="Value" step="0.01" min="0.01" style="max-width:90px;"/>
+              <input type="number" id="pricingDiscountValue" placeholder="Value" step="0.01" min="0.01" style="max-width:90px;" inputmode="decimal" pattern="[0-9]*" />
               <select id="pricingCategory" style="max-width:160px;">
                 <option value="all" data-i18n="admin.pricing.all_cats">All Categories</option>
               </select>
@@ -1803,7 +1803,7 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
               <select id="wasteItemSelect" style="max-width:220px;">
                 <option value="" data-i18n="admin.waste.select_item">— Select Item —</option>
               </select>
-              <input type="number" id="wasteQuantity" placeholder="Qty" min="1" step="1" value="1" style="max-width:70px;"/>
+              <input type="number" id="wasteQuantity" placeholder="Qty" min="1" step="1" value="1" style="max-width:70px;" inputmode="numeric" pattern="[0-9]*" />
               <select id="wasteReason" style="max-width:160px;">
                 <option value="spoiled_expired" data-i18n="admin.waste.reason.spoiled">Spoiled / Expired</option>
                 <option value="burned" data-i18n="admin.waste.reason.burned">Burned</option>
@@ -1856,7 +1856,7 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
               </div>
               <div style="flex:0 0 90px;">
                 <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:2px;" data-i18n="admin.email.port">Port</label>
-                <input type="number" id="emailPort" value="587" min="1" max="65535" style="width:100%;"/>
+                <input type="number" id="emailPort" value="587" min="1" max="65535" style="width:100%;" inputmode="numeric" pattern="[0-9]*" />
               </div>
               <div style="flex:0 0 80px;align-self:flex-end;padding-bottom:2px;">
                 <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:2px;">TLS</label>
@@ -1908,7 +1908,7 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
               <input type="text" id="adTitle" placeholder="Ad title" style="flex:1;min-width:140px;" data-i18n-placeholder="admin.ads.title_placeholder"/>
               <input type="url" id="adImageUrl" placeholder="https://example.com/ad-image.jpg" style="flex:2;min-width:200px;" data-i18n-placeholder="admin.ads.image_url_placeholder"/>
               <input type="url" id="adLinkUrl" placeholder="Link URL (optional)" style="flex:1;min-width:140px;" data-i18n-placeholder="admin.ads.link_url_placeholder"/>
-              <input type="number" id="adDuration" placeholder="Duration (sec)" value="10" min="5" max="60" style="width:120px;flex:none;"/>
+              <input type="number" id="adDuration" placeholder="Duration (sec)" value="10" min="5" max="60" style="width:120px;flex:none;" inputmode="numeric" pattern="[0-9]*" />
               <button class="accent" onclick="addAd()" style="min-height:44px;" data-i18n="admin.ads.add_btn">➕ Add Ad</button>
             </div>
           </div>
@@ -1917,7 +1917,7 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
             <h4 style="margin-bottom:8px;" data-i18n="admin.ads.rotation">🔄 Rotation Settings</h4>
             <div class="form-row" style="flex-wrap:wrap;gap:6px;align-items:center;">
               <span data-i18n="admin.ads.rotate_every">Rotate every</span>
-              <input type="number" id="adRotationInterval" value="10" min="5" max="120" style="width:80px;flex:none;"/>
+              <input type="number" id="adRotationInterval" value="10" min="5" max="120" style="width:80px;flex:none;" inputmode="numeric" pattern="[0-9]*" />
               <span data-i18n="admin.ads.seconds">seconds</span>
               <button class="outline" onclick="setAdRotationInterval()" style="min-height:44px;" data-i18n="admin.ads.set_interval">Set Interval</button>
               <a href="/tablet" target="_blank" class="btn outline" style="text-decoration:none;margin-left:auto;min-height:44px;" data-i18n="admin.ads.open_tablet">📱 Open Tablet View</a>
@@ -1953,7 +1953,7 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
           <div id="cashDrawerOpenForm" class="card" style="margin-bottom:12px;display:none;">
             <h4 style="margin-bottom:8px;">🔓 Open Cash Drawer</h4>
             <div class="form-row" style="flex-wrap:wrap;gap:6px;">
-              <input type="number" id="cashDrawerOpeningBalance" placeholder="Opening balance ($)" step="0.01" min="0" style="max-width:180px;"/>
+              <input type="number" id="cashDrawerOpeningBalance" placeholder="Opening balance ($)" step="0.01" min="0" style="max-width:180px;" inputmode="decimal" pattern="[0-9]*" />
               <input type="text" id="cashDrawerOpenNotes" placeholder="Notes (optional)" style="flex:1;min-width:140px;"/>
               <button class="accent" onclick="openCashDrawer()" style="min-height:44px;">🔓 Open Drawer</button>
             </div>
@@ -1962,7 +1962,7 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
           <div id="cashDrawerInForm" class="card" style="margin-bottom:12px;display:none;">
             <h4 style="margin-bottom:8px;">💰 Cash In (Paid-In / Cash Drop)</h4>
             <div class="form-row" style="flex-wrap:wrap;gap:6px;">
-              <input type="number" id="cashInAmount" placeholder="Amount ($)" step="0.01" min="0.01" style="max-width:140px;"/>
+              <input type="number" id="cashInAmount" placeholder="Amount ($)" step="0.01" min="0.01" style="max-width:140px;" inputmode="decimal" pattern="[0-9]*" />
               <input type="text" id="cashInReason" placeholder="Reason (e.g., Cash drop to safe)" style="flex:2;min-width:180px;"/>
               <button class="accent" onclick="cashDrawerTransaction('cash_in')" style="min-height:44px;">💰 Record Cash In</button>
             </div>
@@ -1971,7 +1971,7 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
           <div id="cashDrawerOutForm" class="card" style="margin-bottom:12px;display:none;">
             <h4 style="margin-bottom:8px;">💸 Cash Out (Paid-Out / Expense)</h4>
             <div class="form-row" style="flex-wrap:wrap;gap:6px;">
-              <input type="number" id="cashOutAmount" placeholder="Amount ($)" step="0.01" min="0.01" style="max-width:140px;"/>
+              <input type="number" id="cashOutAmount" placeholder="Amount ($)" step="0.01" min="0.01" style="max-width:140px;" inputmode="decimal" pattern="[0-9]*" />
               <input type="text" id="cashOutReason" placeholder="Reason (e.g., Change for register)" style="flex:2;min-width:180px;"/>
               <button class="accent" onclick="cashDrawerTransaction('cash_out')" style="min-height:44px;">💸 Record Cash Out</button>
             </div>
@@ -1981,7 +1981,7 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
             <h4 style="margin-bottom:8px;">🔒 Close & Reconcile Drawer</h4>
             <p style="color:var(--text2);font-size:13px;margin-bottom:8px;">Enter the actual cash counted in the drawer. The system will compare it to the expected balance.</p>
             <div class="form-row" style="flex-wrap:wrap;gap:6px;">
-              <input type="number" id="cashDrawerClosingBalance" placeholder="Actual cash counted ($)" step="0.01" min="0" style="max-width:180px;"/>
+              <input type="number" id="cashDrawerClosingBalance" placeholder="Actual cash counted ($)" step="0.01" min="0" style="max-width:180px;" inputmode="decimal" pattern="[0-9]*" />
               <input type="text" id="cashDrawerCloseNotes" placeholder="Close notes (optional)" style="flex:1;min-width:140px;"/>
               <button class="accent" onclick="closeCashDrawer()" style="min-height:44px;">🔒 Close Drawer & Reconcile</button>
             </div>
@@ -2007,11 +2007,11 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
               </label>
               <div style="display:flex;align-items:center;gap:6px;">
                 <span style="font-size:14px;color:var(--text2);white-space:nowrap;">👥 Party Size Threshold:</span>
-                <input type="number" id="scThreshold" min="1" max="100" value="8" style="max-width:80px;min-height:44px;font-size:16px;padding:8px;text-align:center;" onchange="saveServiceChargeConfig()">
+                <input type="number" id="scThreshold" min="1" max="100" value="8" style="max-width:80px;min-height:44px;font-size:16px;padding:8px;text-align:center;" onchange="saveServiceChargeConfig()" inputmode="numeric" pattern="[0-9]*" >
               </div>
               <div style="display:flex;align-items:center;gap:6px;">
                 <span style="font-size:14px;color:var(--text2);white-space:nowrap;">💯 Percentage (%):</span>
-                <input type="number" id="scPercentage" min="0" max="100" step="0.5" value="18" style="max-width:80px;min-height:44px;font-size:16px;padding:8px;text-align:center;" onchange="saveServiceChargeConfig()">
+                <input type="number" id="scPercentage" min="0" max="100" step="0.5" value="18" style="max-width:80px;min-height:44px;font-size:16px;padding:8px;text-align:center;" onchange="saveServiceChargeConfig()" inputmode="decimal" pattern="[0-9]*" >
               </div>
               <div style="display:flex;align-items:center;gap:6px;flex:1;">
                 <span style="font-size:14px;color:var(--text2);white-space:nowrap;">🏷️ Label:</span>
@@ -2040,7 +2040,7 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
             <input type="hidden" id="editComboId" value=""/>
             <div class="form-row" style="flex-wrap:wrap;gap:6px;">
               <input type="text" id="comboName" placeholder="Combo name (e.g. Lunch Special)" style="flex:1;min-width:160px;"/>
-              <input type="number" id="comboPrice" placeholder="Combo price $" step="0.01" min="0.01" style="max-width:130px;"/>
+              <input type="number" id="comboPrice" placeholder="Combo price $" step="0.01" min="0.01" style="max-width:130px;" inputmode="decimal" pattern="[0-9]*" />
               <input type="text" id="comboDescription" placeholder="Description (optional)" style="flex:1;min-width:160px;"/>
               <button class="accent" onclick="saveCombo()" id="comboSaveBtn" style="min-height:44px;">💾 Save Combo</button>
               <button class="ghost" onclick="cancelEditCombo()" id="comboCancelBtn" style="min-height:44px;display:none;">Cancel</button>
@@ -2055,7 +2055,7 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
                 <select id="comboChildItemSelect" style="flex:2;min-width:160px;">
                   <option value="">— Select Item —</option>
                 </select>
-                <input type="number" id="comboChildQty" placeholder="Qty" min="1" value="1" style="max-width:70px;"/>
+                <input type="number" id="comboChildQty" placeholder="Qty" min="1" value="1" style="max-width:70px;" inputmode="numeric" pattern="[0-9]*" />
                 <button class="outline" onclick="addComboChildItem()" style="min-height:44px;">➕ Add Item</button>
               </div>
             </div>
@@ -4332,7 +4332,7 @@ async function showLatePopover(shiftIndex) {
       // Currently excused — show "Flag as Late" option
       html += '<div style="margin-bottom:10px;">';
       html += '<label style="display:block;font-size:13px;color:var(--text2);margin-bottom:4px;">Late minutes:</label>';
-      html += '<input type="number" id="lateFlagMinutes" value="' + lateMin + '" min="1" max="999" style="width:100%;padding:10px 12px;border-radius:8px;background:var(--bg);border:2px solid var(--border);color:var(--text);font-size:16px;">';
+      html += '<input type="number" id="lateFlagMinutes" value="' + lateMin + '" min="1" max="999" style="width:100%;padding:10px 12px;border-radius:8px;background:var(--bg);border:2px solid var(--border);color:var(--text);font-size:16px;" inputmode="numeric" pattern="[0-9]*" >';
       html += '</div>';
       html += '<div style="margin-bottom:10px;">';
       html += '<label style="display:block;font-size:13px;color:var(--text2);margin-bottom:4px;">Note (reason):</label>';
@@ -8212,7 +8212,7 @@ function renderModifierEditor() {
       html += `<div style="display:flex;gap:6px;align-items:center;margin-bottom:4px;">
         <input type="text" value="${escJs(opt.name)}" placeholder="${t('modifier.option_name')}" style="flex:1;min-height:32px;font-size:13px;padding:4px 8px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);" onchange="modifierEditorState.groups[${gi}].options[${oi}].name = this.value"/>
         <span style="color:var(--text2);font-size:13px;">$</span>
-        <input type="number" value="${opt.price_mod}" step="0.25" min="0" style="width:80px;min-height:32px;font-size:13px;padding:4px 8px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);" onchange="modifierEditorState.groups[${gi}].options[${oi}].price_mod = parseFloat(this.value) || 0"/>
+        <input type="number" value="${opt.price_mod}" step="0.25" min="0" style="width:80px;min-height:32px;font-size:13px;padding:4px 8px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);" onchange="modifierEditorState.groups[${gi}].options[${oi}].price_mod = parseFloat(this.value) || 0" inputmode="decimal" pattern="[0-9]*" />
         <button class="ghost" onclick="removeModifierOption(${gi}, ${oi})" style="font-size:12px;padding:4px 8px;min-height:32px;color:var(--accent);" data-i18n="modifier.remove_option">✕</button>
       </div>`;
     });
@@ -9444,7 +9444,7 @@ async function checkoutTableTab(tableNumber) {
   });
   paymentHtml += `</div>
     <label style="display:block;margin-bottom:4px;font-weight:600;">💬 Tip Amount ($):</label>
-    <input type="number" id="checkoutTipAmount" value="0" min="0" step="0.5" style="width:100%;padding:12px;font-size:16px;margin-bottom:12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);" />
+    <input type="number" id="checkoutTipAmount" value="0" min="0" step="0.5" style="width:100%;padding:12px;font-size:16px;margin-bottom:12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);"  inputmode="decimal" pattern="[0-9]*" />
     <label style="display:block;margin-bottom:4px;font-weight:600;">📝 Notes (optional):</label>
     <input type="text" id="checkoutNotes" placeholder="Tab checkout notes" style="width:100%;padding:12px;font-size:14px;margin-bottom:12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);" />
     <div style="display:flex;gap:8px;margin-top:8px;">
@@ -9600,10 +9600,10 @@ async function loadInventoryAdmin() {
         '</div>' +
         '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">' +
           '<label style="color:var(--text2);font-size:13px;">Stock: ' +
-            '<input type="number" id="invStock_' + escJs(itemName) + '" value="' + stock + '" min="0" style="width:70px;min-height:36px;padding:4px 8px;font-size:14px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);"/>' +
+            '<input type="number" id="invStock_' + escJs(itemName) + '" value="' + stock + '" min="0" style="width:70px;min-height:36px;padding:4px 8px;font-size:14px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);" inputmode="numeric" pattern="[0-9]*" />' +
           '</label>' +
           '<label style="color:var(--text2);font-size:13px;">Alert at: ' +
-            '<input type="number" id="invThresh_' + escJs(itemName) + '" value="' + threshold + '" min="0" style="width:60px;min-height:36px;padding:4px 8px;font-size:14px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);"/>' +
+            '<input type="number" id="invThresh_' + escJs(itemName) + '" value="' + threshold + '" min="0" style="width:60px;min-height:36px;padding:4px 8px;font-size:14px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);" inputmode="numeric" pattern="[0-9]*" />' +
           '</label>' +
           '<button class="accent" onclick="updateInventoryItem(\'' + escJs(itemName) + '\')" style="font-size:13px;padding:6px 12px;min-height:36px;">Save</button>' +
         '</div>' +
@@ -10255,7 +10255,7 @@ function showLoyaltyAdjust(phone, name, currentPoints) {
     '<h4 style="margin-bottom:8px;">Adjust Points — ' + escHtml(name) + ' (' + escHtml(phone) + ')</h4>' +
     '<p style="font-size:14px;color:var(--text2);margin-bottom:8px;">Current balance: <strong style="color:#f39c12;">' + currentPoints + ' pts</strong></p>' +
     '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">' +
-    '<input type="number" id="loyaltyAdjPoints" placeholder="Points (+/-)" style="flex:1;min-width:120px;min-height:44px;font-size:14px;padding:8px 12px;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);"/>' +
+    '<input type="number" id="loyaltyAdjPoints" placeholder="Points (+/-)" style="flex:1;min-width:120px;min-height:44px;font-size:14px;padding:8px 12px;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);" inputmode="numeric" pattern="[0-9]*" />' +
     '<input type="text" id="loyaltyAdjReason" placeholder="Reason" style="flex:2;min-width:200px;min-height:44px;font-size:14px;padding:8px 12px;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);" maxlength="100"/>' +
     '<button class="accent" onclick="doLoyaltyAdjust(\'' + escJs(phone) + '\')" style="padding:10px 18px;min-height:44px;">✅ Apply</button>' +
     '<button class="ghost" onclick="loadLoyaltyAdmin()" style="padding:10px 18px;min-height:44px;">✕ Cancel</button>' +
@@ -11816,7 +11816,7 @@ function renderCategoryTaxRates() {
     const displayVal = (catRate !== null && catRate !== undefined) ? (catRate * 100).toFixed(1) : '';
     html += `<div class="form-row" style="margin-top:8px;">
       <span style="min-width:120px;font-weight:600;">${escHtml(cat)}</span>
-      <input type="number" id="catRate_${escJs(cat)}" value="${displayVal}" placeholder="Global (${(taxConfig.global_tax_rate * 100).toFixed(1)}%)" step="0.1" min="0" max="100" style="max-width:100px;"/>
+      <input type="number" id="catRate_${escJs(cat)}" value="${displayVal}" placeholder="Global (${(taxConfig.global_tax_rate * 100).toFixed(1)}%)" step="0.1" min="0" max="100" style="max-width:100px;" inputmode="numeric" pattern="[0-9]*" />
       <button class="outline" onclick="saveCategoryTaxRate('${escJs(cat)}')" style="font-size:13px;padding:6px 12px;min-height:36px;">Save</button>
       <button class="ghost" onclick="clearCategoryTaxRate('${escJs(cat)}')" style="font-size:13px;padding:6px 12px;min-height:36px;">Clear</button>
     </div>`;
