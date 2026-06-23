@@ -2054,6 +2054,12 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
   </div>
 </div>
 
+<!-- ═══════════ GENERIC MODAL OVERLAY ═══════════ -->
+<div id="genericModalOverlay" class="modal-overlay">
+  <div class="modal-box" id="genericModalBox" style="max-width:500px;max-height:80vh;overflow-y:auto;">
+  </div>
+</div>
+
 <!-- ═══════════ KIOSK MODE OVERLAY ═══════════ -->
 <div id="kioskOverlay">
   <!-- Mode switch tabs -->
@@ -2684,6 +2690,14 @@ const L10N = {
     'twofa.locked': 'Too many failed attempts. Account locked for 15 minutes.',
     'twofa.success': 'Login successful!',
     'twofa.code_required': 'Please enter the 6-digit verification code.',
+    'twofa.enabled': '🔒 2FA Enabled',
+    'twofa.not_setup': '🔓 2FA Not Set Up',
+    'twofa.disable_btn': '🔒 Disable 2FA',
+    'twofa.regenerate_btn': '🔄 Regenerate Codes',
+    'twofa.disable_reason_prompt': 'Enter the reason for disabling 2FA for user {userId}:',
+    'twofa.disabled_toast': '2FA disabled for {name}.',
+    'twofa.regenerated_toast': 'Backup codes regenerated for {name}. Save the new codes.',
+    'twofa.status_label': '🔐 2FA:',
   },
   es: {
     'app.title': '🍽️ Sistema POS',
@@ -3117,6 +3131,14 @@ const L10N = {
     'twofa.locked': 'Demasiados intentos fallidos. Cuenta bloqueada por 15 minutos.',
     'twofa.success': '¡Inicio de sesión exitoso!',
     'twofa.code_required': 'Por favor ingrese el código de verificación de 6 dígitos.',
+    'twofa.enabled': '🔒 2FA Activada',
+    'twofa.not_setup': '🔓 2FA No Configurada',
+    'twofa.disable_btn': '🔒 Desactivar 2FA',
+    'twofa.regenerate_btn': '🔄 Regenerar Códigos',
+    'twofa.disable_reason_prompt': 'Ingrese la razón para desactivar 2FA del usuario {userId}:',
+    'twofa.disabled_toast': '2FA desactivada para {name}.',
+    'twofa.regenerated_toast': 'Códigos de respaldo regenerados para {name}. Guarde los nuevos códigos.',
+    'twofa.status_label': '🔐 2FA:',
   }
 };
 
@@ -6697,11 +6719,20 @@ async function loadUsers() {
       }
       const payRate = u.pay_rate ? '$' + parseFloat(u.pay_rate).toFixed(2) + '/hr' : '<span style="color:var(--text2);font-style:italic;">' + t('user.no_rate') + '</span>';
       const schedStart = u.scheduled_start ? u.scheduled_start : '<span style="color:var(--text2);font-style:italic;">' + t('user.scheduled_start_not_set') + '</span>';
+      const twofaBadge = u.totp_enabled
+        ? '<span style="color:#2ecc71;font-weight:600;">' + t('twofa.enabled') + '</span>'
+        : '<span style="color:var(--text2);font-style:italic;">' + t('twofa.not_setup') + '</span>';
+      let twofaBtns = '';
+      if (perms.includes('manage_users') && u.totp_enabled) {
+        twofaBtns = `<button class="outline" onclick="disable2fa('${escJs(id)}')" style="font-size:12px;padding:4px 10px;min-height:36px;" title="${t('twofa.disable_btn')}">${t('twofa.disable_btn')}</button>
+          <button class="outline" onclick="regenerateBackupCodes('${escJs(id)}')" style="font-size:12px;padding:4px 10px;min-height:36px;" title="${t('twofa.regenerate_btn')}">${t('twofa.regenerate_btn')}</button>`;
+      }
       return `<div class="user-entry">
-        <div class="ue-info"><strong>${escHtml(u.name)}</strong> — ID: ${escHtml(id)} <span class="ue-role">(${u.role})</span>${u.banned ? ' <span style="color:#e74c3c;font-weight:700;">🚫 Banned</span>' : ''}<br><span style="font-size:13px;color:var(--text2);">💰 Pay rate: <span id="prDisplay_${escJs(id)}">${payRate}</span></span><br><span style="font-size:13px;color:var(--text2);">${t('user.scheduled_start')} <span id="ssDisplay_${escJs(id)}">${schedStart}</span></span></div>
+        <div class="ue-info"><strong>${escHtml(u.name)}</strong> — ID: ${escHtml(id)} <span class="ue-role">(${u.role})</span>${u.banned ? ' <span style="color:#e74c3c;font-weight:700;">🚫 Banned</span>' : ''}<br><span style="font-size:13px;color:var(--text2);">💰 Pay rate: <span id="prDisplay_${escJs(id)}">${payRate}</span></span><br><span style="font-size:13px;color:var(--text2);">${t('user.scheduled_start')} <span id="ssDisplay_${escJs(id)}">${schedStart}</span></span><br><span style="font-size:13px;color:var(--text2);">${t('twofa.status_label')} ${twofaBadge}</span></div>
         <div style="display:flex;gap:6px;align-items:center;">
           <button class="outline" onclick="editPayRate('${escJs(id)}')" style="font-size:12px;padding:4px 10px;min-height:36px;" title="${t('user.pay_rate_edit_title')}">💰 Edit Rate</button>
           <button class="outline" onclick="editScheduledStart('${escJs(id)}')" style="font-size:12px;padding:4px 10px;min-height:36px;" title="${t('user.scheduled_start_edit_title')}">${t('user.scheduled_start_btn')}</button>
+          ${twofaBtns}
           ${banBtn}
           <button class="danger" onclick="deleteUser('${escJs(id)}')" style="font-size:13px;padding:6px 12px;min-height:36px;">🗑️ Delete</button>
         </div>
@@ -6734,6 +6765,50 @@ async function unbanUser(userId) {
     const d = await r.json();
     if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
     showToast('User unbanned', 'success');
+    loadUsers();
+  } catch(e) { showToast('Network error', 'danger'); }
+}
+
+async function disable2fa(userId) {
+  const name = document.querySelector(`#userList .user-entry:has(button[onclick*="'${escJs(userId)}'"]) .ue-info strong`)?.textContent || userId;
+  const reason = prompt(t('twofa.disable_reason_prompt').replace('{userId}', userId));
+  if (reason === null) return;
+  if (!reason.trim()) { showToast('Reason is required.', 'danger'); return; }
+  try {
+    const r = await fetch(BACKEND_URL + '/api/users/disable_2fa', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, userId, reason: reason.trim() })
+    });
+    const d = await r.json();
+    if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
+    showToast(t('twofa.disabled_toast').replace('{name}', name), 'success');
+    loadUsers();
+  } catch(e) { showToast('Network error', 'danger'); }
+}
+
+async function regenerateBackupCodes(userId) {
+  const name = document.querySelector(`#userList .user-entry:has(button[onclick*="'${escJs(userId)}'"]) .ue-info strong`)?.textContent || userId;
+  if (!confirm(`Regenerate backup codes for ${name}? This will invalidate all existing codes.`)) return;
+  try {
+    const r = await fetch(BACKEND_URL + '/api/users/regenerate_backup_codes', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, userId })
+    });
+    const d = await r.json();
+    if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
+    // Show the new backup codes in a modal
+    const codesHtml = d.backup_codes.map(c => `<code style="display:block;font-size:16px;padding:6px 12px;margin:4px 0;background:var(--card);border-radius:6px;font-family:monospace;letter-spacing:2px;">${c}</code>`).join('');
+    showModal(`
+      <div style="padding:24px;">
+        <h3 style="margin-bottom:12px;">🔄 New Backup Codes for ${escHtml(name)}</h3>
+        <div style="background:#2d2d44;border-radius:8px;padding:16px;margin-bottom:12px;">
+          ${codesHtml}
+        </div>
+        <p style="color:#e74c3c;font-weight:600;margin-bottom:12px;">⚠️ ${t('twofa.regenerated_toast').replace('{name}', name)}</p>
+        <p style="color:var(--text2);font-size:13px;">These codes will not be shown again. Store them somewhere safe.</p>
+        <button onclick="closeModal()" style="margin-top:12px;padding:10px 24px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;min-height:44px;font-weight:600;">OK</button>
+      </div>
+    `);
     loadUsers();
   } catch(e) { showToast('Network error', 'danger'); }
 }
@@ -9497,6 +9572,20 @@ async function scanBarcodeCamera() {
     status.textContent = '📷 ' + t('barcode.camera_denied');
     status.className = 'error';
   }
+}
+
+function showModal(html) {
+  const overlay = document.getElementById('genericModalOverlay');
+  const box = document.getElementById('genericModalBox');
+  if (!overlay || !box) return;
+  box.innerHTML = html;
+  overlay.classList.add('active');
+}
+
+function closeModal() {
+  const overlay = document.getElementById('genericModalOverlay');
+  if (!overlay) return;
+  overlay.classList.remove('active');
 }
 
 function showToast(msg, type) {

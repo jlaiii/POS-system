@@ -164,7 +164,7 @@ Use Python `pyotp` (pure Python, no C extensions, `pip install pyotp qrcode`):
 
 - [~] worker-3 **Backup code login** — `POST /api/auth/2fa/backup_login`: if user lost their phone, they can use a backup code instead of TOTP. Accepts `user_id`, `backup_code` (plaintext). Hashes the code and checks against stored `totp_backup_codes`. If match: login succeeds, REMOVE that code from the list (one-time use). Return remaining backup code count in response: "Logged in. 6 backup codes remaining." If no match: 401. After last backup code used: 2FA is still enabled but no recovery — user should regenerate. Admin should be notified when backup codes run low.
 
-- [~] worker-2 **Admin/owner 2FA management & reset** — In User Management: show 2FA status badge per user (🔒 Enabled, 🔓 Not Set Up). **Owner can reset/disable 2FA for ANY user** (employee lost phone, left the company, can't log in). Requires `manage_users` permission. This resets `totp_enabled = false`, clears `totp_secret`, clears `totp_backup_codes`. Reason required (logged in activity_log: `2fa_disabled_by_admin`, who did it, why). Only owner can disable 2FA on other admins. Also: "Regenerate Backup Codes" button that generates new codes (invalidating old ones) — useful when employee says "I used my last backup code."
+- [x] worker-2 **Admin/owner 2FA management & reset** — In User Management: show 2FA status badge per user (🔒 Enabled, 🔓 Not Set Up). **Owner can reset/disable 2FA for ANY user** (employee lost phone, left the company, can't log in). Requires `manage_users` permission. This resets `totp_enabled = false`, clears `totp_secret`, clears `totp_backup_codes`. Reason required (logged in activity_log: `2fa_disabled_by_admin`, who did it, why). Only owner can disable 2FA on other admins. Also: "Regenerate Backup Codes" button that generates new codes (invalidating old ones) — useful when employee says "I used my last backup code."
 
 ### Priority: MEDIUM
 
@@ -772,10 +772,11 @@ Super admin PIN is separate from any business PIN. Super admin can create busine
 - [x] **Add customer profile management (CRM)** — Extended customer data, endpoints, admin CRM tab. [worker-3]
 - [x] **Add quick-change cash calculator** — Cash payment amount tendered + auto-change calculation. [worker-1]
 - [x] **New endpoint `POST /api/clock/flag_late`** — Admin manually flags a shift as late with `late_minutes`, resets `late_excused` to false. Accepts `shift_index`, `late_minutes`, optional `note`. Logs `late_flagged` activity with old→new values and admin PIN. Permission-gated `view_timesheet`. [worker-3]
-- [x] **Add item modifier support** — Variants, modifiers, customizations with modifier editor. [worker-2]
-- [x] **New endpoint `POST /api/clock/excuse_late`** — Admin sets `late_excused = true` on a completed shift. Accepts `shift_index`, `adminPin`, optional `note`. Permission-gated (`view_timesheet`). Activity logged. [worker-1]
+|- [x] **Add item modifier support** — Variants, modifiers, customizations with modifier editor. [worker-2]
+|- [x] **New endpoint `POST /api/clock/excuse_late`** — Admin sets `late_excused = true` on a completed shift. Accepts `shift_index`, `adminPin`, optional `note`. Permission-gated (`view_timesheet`). Activity logged. [worker-1]
+|- [x] **Admin/owner 2FA management & reset** — `POST /api/users/disable_2fa` (requires reason, manage_users, only owner on admins) and `POST /api/users/regenerate_backup_codes` endpoints. `GET /api/users` now returns `totp_enabled`. Frontend: 🔒/🔓 2FA status badge in user cards, Disable 2FA + Regenerate Codes buttons (manage_users-gated), modal showing new backup codes. i18n EN + ES. Activity logging for all actions. [worker-2]
 
-## Done (older)
+|## Done (older)
 
 <details>
 <summary>39 completed tasks from earlier development</summary>

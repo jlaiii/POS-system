@@ -443,7 +443,8 @@ def get_users():
             'banned': user_data.get('banned', False),
             'banned_reason': user_data.get('banned_reason', ''),
             'pay_rate': user_data.get('pay_rate', None),
-            'scheduled_start': user_data.get('scheduled_start', None)
+            'scheduled_start': user_data.get('scheduled_start', None),
+            'totp_enabled': user_data.get('totp_enabled', False)
         }
     return jsonify(display_users)
 
@@ -796,6 +797,127 @@ def twofa_verify_login():
     })
 
 
+@app.route('/api/auth/2fa/backup_login', methods=['POST'])
+def twofa_backup_login():
+    """Login using a backup code instead of TOTP (when user lost their phone).
+    One-time use: the used backup code is removed from the list.
+    Rate-limited via the same twofa_failed_attempts tracker."""
+    data = request.json
+    user_id = str(data.get('userId', ''))
+    backup_code = data.get('backup_code', '')
+
+    if not user_id or not backup_code:
+        return jsonify({'message': 'User ID and backup code are required.'}), 400
+
+    backup_code = backup_code.strip()
+    now = datetime.now()
+
+    # --- Rate limit check (shared with TOTP login) ---
+    if user_id in twofa_failed_attempts:
+        attempt = twofa_failed_attempts[user_id]
+        if attempt.get('lock_until') and now < attempt['lock_until']:
+            remaining_seconds = int((attempt['lock_until'] - now).total_seconds())
+            log_activity('2fa_login_rate_limited', user_id, 'unknown', {'reason': 'backup_code_locked', 'remaining_seconds': remaining_seconds})
+            return jsonify({
+                'message': f'Too many failed attempts. Account locked for {remaining_seconds} more seconds.',
+                'locked': True,
+                'retry_after': remaining_seconds
+            }), 429
+        if attempt.get('window_start') and (now - attempt['window_start']).total_seconds() > 60:
+            attempt['count'] = 0
+            attempt['window_start'] = now
+
+    users = load_json_data(USERS_FILE)
+
+    if user_id not in users:
+        return jsonify({'message': 'User not found.'}), 404
+
+    user_data = upgrade_user(users[user_id])
+
+    # Check that 2FA is enabled
+    if not user_data.get('totp_enabled', False):
+        return jsonify({'message': '2FA is not enabled for this user.'}), 400
+
+    hashed_codes = user_data.get('totp_backup_codes', [])
+    if not hashed_codes:
+        return jsonify({
+            'message': 'No backup codes remaining. Contact admin to regenerate backup codes or disable 2FA.',
+            'no_codes_remaining': True
+        }), 401
+
+    # Hash the provided backup code and look for a match
+    provided_hash = hashlib.sha256(backup_code.encode()).hexdigest()
+
+    match_index = None
+    for i, stored_hash in enumerate(hashed_codes):
+        if stored_hash == provided_hash:
+            match_index = i
+            break
+
+    if match_index is None:
+        # Increment failed attempts
+        if user_id not in twofa_failed_attempts:
+            twofa_failed_attempts[user_id] = {'count': 0, 'lock_until': None, 'window_start': now}
+        attempt = twofa_failed_attempts[user_id]
+        attempt['count'] += 1
+        if attempt['window_start'] is None:
+            attempt['window_start'] = now
+
+        log_activity('2fa_login_failed', user_id, user_data.get('role', 'unknown'),
+                     {'status': 'invalid_backup_code', 'attempt': attempt['count']})
+
+        # Lock after 5 failed attempts
+        if attempt['count'] >= 5:
+            attempt['lock_until'] = now + timedelta(minutes=15)
+            log_activity('2fa_login_locked', user_id, user_data.get('role', 'unknown'),
+                         {'status': 'account_locked_15min_backup', 'attempts': attempt['count']})
+            return jsonify({
+                'message': 'Too many failed attempts. Account locked for 15 minutes.',
+                'locked': True,
+                'retry_after': 900
+            }), 429
+
+        remaining = 5 - attempt['count']
+        return jsonify({
+            'message': f'Invalid backup code. {remaining} attempt(s) remaining.',
+            'remaining_attempts': remaining
+        }), 401
+
+    # --- Backup code matched — one-time use, remove it ---
+    removed_code = hashed_codes.pop(match_index)
+    remaining_codes = len(hashed_codes)
+    user_data['totp_backup_codes'] = hashed_codes
+    users[user_id] = user_data
+    save_json_data(USERS_FILE, users)
+
+    # Clear rate limit on success
+    if user_id in twofa_failed_attempts:
+        del twofa_failed_attempts[user_id]
+
+    log_activity('2fa_backup_code_used', user_id, user_data.get('role', 'unknown'),
+                 {'status': 'login_success', 'remaining_codes': remaining_codes,
+                  'user_name': user_data['name']})
+
+    # Issue session (same as normal login)
+    if user_data['role'] in ('admin', 'owner'):
+        active_admin_sessions[user_id] = datetime.now()
+
+    response_msg = f'Logged in. {remaining_codes} backup code(s) remaining.'
+    if remaining_codes <= 2:
+        response_msg += ' ⚠️ Backup codes running low — consider regenerating them in Security settings.'
+        log_activity('2fa_backup_codes_low', user_id, user_data.get('role', 'unknown'),
+                     {'remaining_codes': remaining_codes, 'user_name': user_data['name']})
+
+    return jsonify({
+        'message': response_msg,
+        'user': user_data['name'],
+        'role': user_data['role'],
+        'permissions': user_data.get('permissions', []),
+        'backup_codes_remaining': remaining_codes,
+        'logged_in_via_backup_code': True
+    })
+
+
 @app.route('/api/add_user', methods=['POST'])
 def add_user():
     data = request.json
@@ -1000,6 +1122,125 @@ def update_user_scheduled_start():
         'message': 'Scheduled start time updated successfully.',
         'user_id': user_id,
         'scheduled_start': users[user_id]['scheduled_start']
+    })
+
+
+@app.route('/api/users/disable_2fa', methods=['POST'])
+def disable_user_2fa():
+    """Admin/owner disables 2FA for a user. Resets totp fields, requires reason.
+    Only owner can disable 2FA on other admins. Requires manage_users permission."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+    user_id = data.get('userId')
+    reason = data.get('reason', '')
+
+    if not check_perm(admin_pin, "manage_users"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    if not user_id:
+        return jsonify({'message': 'User ID is required.'}), 400
+
+    if not reason or not reason.strip():
+        return jsonify({'message': 'Reason is required to disable 2FA.'}), 400
+
+    users = load_json_data(USERS_FILE)
+
+    if user_id not in users:
+        return jsonify({'message': 'User not found.'}), 404
+
+    admin_user = users.get(admin_pin, {})
+    target_user = users[user_id]
+
+    # Only owner can disable 2FA on other admins
+    if target_user.get('role') == 'admin' and admin_user.get('role') != 'owner':
+        return jsonify({'message': 'Only the owner can disable 2FA on admin accounts.'}), 403
+
+    # Check if 2FA is actually enabled
+    if not target_user.get('totp_enabled', False):
+        return jsonify({'message': '2FA is not enabled for this user.'}), 400
+
+    old_values = {
+        'totp_enabled': target_user.get('totp_enabled'),
+        'totp_secret_set': target_user.get('totp_secret') is not None,
+        'totp_backup_codes_count': len(target_user.get('totp_backup_codes', [])),
+        'totp_setup_at': target_user.get('totp_setup_at')
+    }
+
+    # Reset all 2FA fields
+    users[user_id]['totp_enabled'] = False
+    users[user_id]['totp_secret'] = None
+    users[user_id]['totp_backup_codes'] = []
+    users[user_id]['totp_setup_at'] = None
+
+    save_json_data(USERS_FILE, users)
+
+    log_activity('2fa_disabled_by_admin', admin_pin, admin_user.get('role', 'unknown'),
+                 {'status': 'success', 'target_user_id': user_id,
+                  'target_user_name': target_user.get('name', 'Unknown'),
+                  'target_user_role': target_user.get('role', 'unknown'),
+                  'reason': reason.strip(),
+                  'old_values': old_values})
+
+    return jsonify({
+        'message': f'2FA disabled for user {target_user.get("name", user_id)}.',
+        'user_id': user_id
+    })
+
+
+@app.route('/api/users/regenerate_backup_codes', methods=['POST'])
+def regenerate_backup_codes():
+    """Admin regenerates backup codes for a user. Invalidates old codes.
+    Requires manage_users permission."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+    user_id = data.get('userId')
+
+    if not check_perm(admin_pin, "manage_users"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    if not user_id:
+        return jsonify({'message': 'User ID is required.'}), 400
+
+    users = load_json_data(USERS_FILE)
+
+    if user_id not in users:
+        return jsonify({'message': 'User not found.'}), 404
+
+    admin_user = users.get(admin_pin, {})
+    target_user = users[user_id]
+
+    # Only owner can regenerate codes for admins
+    if target_user.get('role') == 'admin' and admin_user.get('role') != 'owner':
+        return jsonify({'message': 'Only the owner can regenerate backup codes for admin accounts.'}), 403
+
+    # Check that 2FA is enabled (backup codes only make sense with 2FA)
+    if not target_user.get('totp_enabled', False):
+        return jsonify({'message': '2FA is not enabled for this user. Enable 2FA first.'}), 400
+
+    # Generate 8 new backup codes (same logic as 2fa/verify)
+    backup_codes = []
+    hashed_codes = []
+    for _ in range(8):
+        plain_code = secrets.token_hex(5).upper()
+        backup_codes.append(plain_code)
+        hashed_codes.append(hashlib.sha256(plain_code.encode()).hexdigest())
+
+    old_count = len(target_user.get('totp_backup_codes', []))
+
+    users[user_id]['totp_backup_codes'] = hashed_codes
+    save_json_data(USERS_FILE, users)
+
+    log_activity('2fa_backup_regenerated', admin_pin, admin_user.get('role', 'unknown'),
+                 {'status': 'success', 'target_user_id': user_id,
+                  'target_user_name': target_user.get('name', 'Unknown'),
+                  'old_codes_count': old_count, 'new_codes_count': len(backup_codes)})
+
+    return jsonify({
+        'message': f'Backup codes regenerated for {target_user.get("name", user_id)}.',
+        'backup_codes': backup_codes,
+        'backup_codes_count': len(backup_codes),
+        'user_id': user_id,
+        'warn': 'Save these backup codes now. The old codes have been invalidated.'
     })
 
 
