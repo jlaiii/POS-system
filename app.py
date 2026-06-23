@@ -4966,6 +4966,39 @@ def admin_stats():
     total_traffic = len(processed_orders)
     avg_sale = total_sales / total_traffic if total_traffic > 0 else 0
 
+    # --- Payment method breakdown ---
+    cash_total = 0.0
+    card_total = 0.0
+    other_total = 0.0
+    cash_count = 0
+    card_count = 0
+    other_count = 0
+    for order in processed_orders:
+        payment = str(order.get('payment', '')).strip().lower()
+        total = order['total']
+        if payment == 'cash' or payment.startswith('split') and 'cash' in payment:
+            # For split payments, attribute the cash portion if available
+            splits = order.get('payment_splits')
+            if splits and isinstance(splits, list):
+                cash_portion = sum(float(s.get('amount', 0)) for s in splits if s.get('method', '').lower() == 'cash')
+                card_portion = sum(float(s.get('amount', 0)) for s in splits if s.get('method', '').lower() in ('card', 'credit card', 'debit'))
+                if cash_portion > 0 or card_portion > 0:
+                    cash_total += cash_portion
+                    card_total += card_portion
+                    if cash_portion > 0: cash_count += 1
+                    if card_portion > 0: card_count += 1
+                    other_portion = total - cash_portion - card_portion
+                    if other_portion > 0: other_total += other_portion; other_count += 1
+                    continue
+            cash_total += total
+            cash_count += 1
+        elif payment in ('card', 'credit card', 'debit', 'credit'):
+            card_total += total
+            card_count += 1
+        else:
+            other_total += total
+            other_count += 1
+
     now = datetime.now()
     week_ago = now - timedelta(days=7)
     month_ago = now - timedelta(days=30)  # Approx month
@@ -4976,9 +5009,16 @@ def admin_stats():
     stats = {
         'total_sales': round(total_sales, 2),
         'total_traffic': total_traffic,
+        'total_orders': total_traffic,
         'average_sale': round(avg_sale, 2),
         'weekly_sales': round(weekly_sales, 2),
         'monthly_sales': round(monthly_sales, 2),
+        'cash_sales': round(cash_total, 2),
+        'card_sales': round(card_total, 2),
+        'other_sales': round(other_total, 2),
+        'cash_count': cash_count,
+        'card_count': card_count,
+        'other_count': other_count,
         'raw_orders': orders,
         'raw_cleared_orders': cleared_orders
     }
