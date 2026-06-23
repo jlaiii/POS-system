@@ -703,6 +703,22 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 #kitchenStats .ks-preparing { color: #5bc0de; }
 #kitchenStats .ks-done { color: #2ecc71; }
 
+#kitchenOfflineBanner {
+  display: none;
+  padding: 8px 16px;
+  background: #e94560;
+  color: #fff;
+  font-weight: 600;
+  text-align: center;
+  font-size: 15px;
+  animation: pulse-warning 1.5s ease-in-out infinite;
+}
+#kitchenOfflineBanner.active { display: block; }
+@keyframes pulse-warning {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
 #kitchenQueue {
   flex: 1; padding: 12px; overflow-y: auto;
   display: grid; grid-template-columns: 1fr; gap: 12px; align-content: start;
@@ -2016,6 +2032,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
     <span>🟠 ${t('kitchen.preparing')} <span class="ks-preparing" id="ksPreparing">0</span></span>
     <span>✅ ${t('kitchen.done_today')} <span class="ks-done" id="ksDone">0</span></span>
   </div>
+  <div id="kitchenOfflineBanner"></div>
   <div id="kitchenPrepGuide" style="padding:6px 16px;background:var(--card);font-size:13px;color:var(--text2);border-top:1px solid var(--border);text-align:center;">🥗 ${t('course.appetizer')} → ${t('course.main')} → 🍰 ${t('course.dessert')}</div>
   <div id="kitchenLoading"><div class="spinner"></div> ${t('kitchen.refreshing')}</div>
   <div id="kitchenQueue"><div class="kitchen-empty" data-i18n="kitchen.empty">No orders — stand by 🍳</div></div>
@@ -2437,6 +2454,7 @@ const L10N = {
     'kitchen.empty': 'No orders — stand by 🍳',
     'kitchen.refreshing': 'Refreshing...',
     'kitchen.back': '← Back to POS',
+    'kitchen.offline_banner': '⚠️ Offline — updating every 8s',
     'kitchen.claim': '🔪 Claim Order',
     'kitchen.done': '✅ Done',
     'kitchen.cancel': 'Cancel',
@@ -2884,6 +2902,7 @@ const L10N = {
     'kitchen.empty': 'Sin pedidos — en espera 🍳',
     'kitchen.refreshing': 'Actualizando...',
     'kitchen.back': '← Volver a POS',
+    'kitchen.offline_banner': '⚠️ Sin conexión — actualizando cada 8s',
     'kitchen.claim': '🔪 Tomar pedido',
     'kitchen.done': '✅ Listo',
     'kitchen.cancel': 'Cancelar',
@@ -3318,17 +3337,22 @@ function initSocketIO() {
     socket.on('connect', () => {
       socketConnected = true;
       socketEnabled = true;
+      // Stop polling fallback and rely on real-time events
+      stopKitchenPolling();
       // Join relevant rooms
       if (kitchenViewActive) socket.emit('join_kitchen');
     });
 
     socket.on('disconnect', () => {
       socketConnected = false;
+      // Start kitchen polling fallback if kitchen view is active
+      if (kitchenViewActive) startKitchenPolling();
     });
 
     socket.on('connect_error', () => {
       socketConnected = false;
       socketEnabled = false; // fall back to polling
+      if (kitchenViewActive) startKitchenPolling();
     });
 
     // ── Real-time event listeners ──
@@ -8805,10 +8829,15 @@ function showKitchenView() {
   if (socket && socket.connected) {
     socket.emit('join_kitchen');
   }
-  // Initial load + start polling fallback (8s interval as before)
+  // Initial load
   loadKitchenQueue();
-  if (kitchenPollTimer) clearInterval(kitchenPollTimer);
-  kitchenPollTimer = setInterval(loadKitchenQueue, 8000);
+  // Start polling only if socket is disconnected (fallback)
+  if (!socketConnected) {
+    startKitchenPolling();
+  } else {
+    // Ensure any stale polling is stopped and banner hidden
+    stopKitchenPolling();
+  }
 }
 
 function hideKitchenView() {
@@ -8828,9 +8857,23 @@ function hideKitchenView() {
   }
 }
 
+function startKitchenPolling() {
+  // Start 8s polling interval and show offline banner
+  if (kitchenPollTimer) clearInterval(kitchenPollTimer);
+  kitchenPollTimer = setInterval(loadKitchenQueue, 8000);
+  const banner = document.getElementById('kitchenOfflineBanner');
+  if (banner) {
+    banner.textContent = t('kitchen.offline_banner');
+    banner.classList.add('active');
+  }
+}
+
 function stopKitchenPolling() {
   if (kitchenPollTimer) { clearInterval(kitchenPollTimer); kitchenPollTimer = null; }
   if (kitchenClockTimer) { clearInterval(kitchenClockTimer); kitchenClockTimer = null; }
+  // Hide offline banner
+  const banner = document.getElementById('kitchenOfflineBanner');
+  if (banner) banner.classList.remove('active');
 }
 
 function updateKitchenClock() {
