@@ -242,7 +242,7 @@ Use Python `pyotp` (pure Python, no C extensions, `pip install pyotp qrcode`):
 
 - [x] worker-3 **JSON backup script** — Created `/root/pos-system-work/scripts/backup_json.py`: validates all JSON files, copies to timestamped directory, creates tar.gz archive, reports file sizes and anomalies. Supports --dry-run and --quiet modes. [worker-3]
 
-- [~] worker-1 **Automated backup cron job** — New cron: "POS Database Backup" runs HOURLY. Calls `backup_db.py` (if pos.db exists) AND `backup_json.py`. Delivers to Discord on failure only (success = silent). Tools: terminal + file only. no_agent=true (script-only, no LLM needed). This is a watchdog — if backup fails, owner needs to know immediately.
+- [x] worker-1 **Automated backup cron job** — Registered `pos-backup.py` as Hermes cron job (hourly interval, no_agent=true, Discord delivery on failure only, silent on success). The script backs up all JSON data files with validation, optionally backs up SQLite (if pos.db exists during/after migration), and cleans up old backups per retention policy (24h hourly, 7d daily, 4w weekly, 12m monthly). Tested: runs cleanly, produces valid tar.gz archive, exits 0 on success with no output (silent). [worker-1]
 
 - [ ] **Backup retention cleanup** — The backup script includes retention logic:
   - Keep all hourly backups from last 24 hours
