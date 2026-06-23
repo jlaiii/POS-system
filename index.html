@@ -1785,6 +1785,17 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
               </div>
             </div>
           </div>
+          <!-- Lockout alert banner -->
+          <div id="lockoutAlertBanner" style="display:none;margin-bottom:12px;">
+            <div class="card" style="padding:12px 16px;border-left:4px solid #e74c3c;background:rgba(231,76,60,0.08);">
+              <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                <span style="font-size:15px;font-weight:700;color:#e74c3c;">🔒</span>
+                <span id="lockoutAlertText" style="font-size:14px;flex:1;">Loading...</span>
+                <button class="accent" onclick="switchAdminSection('users');loadUsers();" style="font-size:13px;padding:8px 16px;min-height:40px;">👥 User Management</button>
+                <button class="ghost" onclick="dismissLockoutBanner()" style="font-size:12px;min-height:36px;padding:4px 10px;">✕ Dismiss</button>
+              </div>
+            </div>
+          </div>
           <!-- Unified period selector -->
           <div class="card" style="margin-bottom:12px;padding:10px 14px;">
             <div class="form-row" style="gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px;">
@@ -2336,6 +2347,29 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
             <h4 style="margin:0 0 8px 0;font-size:14px;">⚠️ Security Events</h4>
             <div id="secEventsList" style="max-height:300px;overflow-y:auto;-webkit-overflow-scrolling:touch;">
               <div class="empty-state">No events.</div>
+            </div>
+          </div>
+          <!-- Lockout alert banner (in Security section) -->
+          <div id="secLockoutAlertBanner" style="display:none;margin-top:12px;">
+            <div class="card" style="padding:12px 16px;border-left:4px solid #e74c3c;background:rgba(231,76,60,0.08);">
+              <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                <span style="font-size:15px;font-weight:700;color:#e74c3c;">🔒</span>
+                <span id="secLockoutAlertText" style="font-size:14px;flex:1;">Loading...</span>
+                <button class="accent" onclick="switchAdminSection('users');loadUsers();" style="font-size:13px;padding:8px 16px;min-height:40px;">👥 User Management</button>
+                <button class="ghost" onclick="dismissLockoutBanner()" style="font-size:12px;min-height:36px;padding:4px 10px;">✕ Dismiss</button>
+              </div>
+            </div>
+          </div>
+          <!-- Discord Webhook Config -->
+          <div class="card" style="padding:12px;margin-top:12px;">
+            <h4 style="margin:0 0 8px 0;font-size:14px;">🔔 Discord Alert Webhook</h4>
+            <p style="font-size:12px;color:var(--text2);margin:0 0 8px 0;">When a user gets locked out (5 failed PIN attempts), send a notification to a Discord channel via webhook.</p>
+            <div class="form-row" style="gap:8px;flex-wrap:wrap;align-items:center;">
+              <input type="url" id="secDiscordWebhookUrl" placeholder="https://discord.com/api/webhooks/..." style="flex:3;min-width:200px;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:40px;">
+              <span id="secDiscordStatus" style="font-size:13px;color:#4caf50;display:none;"></span>
+              <button class="accent" onclick="saveDiscordWebhook()" style="min-height:40px;padding:8px 20px;font-size:13px;">💾 Save</button>
+              <button class="ghost" onclick="testDiscordWebhook()" style="min-height:40px;padding:8px 16px;font-size:13px;">📨 Test</button>
+              <button class="danger" onclick="clearDiscordWebhook()" style="min-height:40px;padding:8px 16px;font-size:13px;" title="Remove webhook URL">✕ Remove</button>
             </div>
           </div>
         </div>
@@ -6007,6 +6041,9 @@ async function loadSecurityDashboard() {
       return;
     }
     renderSecurityDashboard(data);
+    // Load lockout state and Discord webhook config
+    loadLockoutState();
+    loadDiscordWebhookConfig();
   } catch (e) {
     showToast('Network error loading security dashboard.', 'danger');
   }
@@ -9235,6 +9272,8 @@ async function loadTimesheetDashboard() {
       renderTsApprovalStatus(approvalData, params);
       // Check for missing clockouts even when no period data
       loadMissingClockouts();
+      // Check for locked-out users
+      loadLockoutState();
       return;
     }
 
@@ -9243,6 +9282,8 @@ async function loadTimesheetDashboard() {
 
     // After dashboard render, check for missing clock-outs
     loadMissingClockouts();
+    // Check for locked-out users
+    loadLockoutState();
   } catch(e) {
     container.innerHTML = '<div class="empty-state">' + t('network_error') + '</div>';
   }
@@ -9285,6 +9326,150 @@ async function loadMissingClockouts() {
 function dismissMissingClockoutBanner() {
   _missingClockoutDismissed = true;
   document.getElementById('missingClockoutBanner').style.display = 'none';
+}
+
+/* ─── Lockout Alert Banner ──────────────────────────────────────── */
+
+let _lockoutBannerDismissed = false;
+
+/** Fetch lockout state and show/hide banners in Timesheet and Security sections */
+async function loadLockoutState() {
+  if (_lockoutBannerDismissed) return;
+  const adminPin = localStorage.getItem('adminPin');
+  if (!adminPin) return;
+  try {
+    const r = await fetch(BACKEND_URL + '/api/security/lockout_state', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({adminPin})
+    });
+    if (!r.ok) return;
+    const data = await r.json();
+    updateLockoutBanners(data);
+  } catch(e) { /* silently fail */ }
+}
+
+/** Update lockout banners with data from server */
+function updateLockoutBanners(data) {
+  const count = data.locked_count || 0;
+  const tsBanner = document.getElementById('lockoutAlertBanner');
+  const secBanner = document.getElementById('secLockoutAlertBanner');
+  if (count === 0) {
+    if (tsBanner) tsBanner.style.display = 'none';
+    if (secBanner) secBanner.style.display = 'none';
+    return;
+  }
+  const names = data.locked_users.map(u => `${u.user_name} (${u.user_id})`).join(', ');
+  const text = `🔒 ${count} user${count > 1 ? 's are' : ' is'} currently locked out: ${names}. Clear lockouts in User Management.`;
+  const tsText = document.getElementById('lockoutAlertText');
+  const secText = document.getElementById('secLockoutAlertText');
+  if (tsText) tsText.textContent = text;
+  if (secText) secText.textContent = text;
+  if (tsBanner) tsBanner.style.display = 'block';
+  if (secBanner) secBanner.style.display = 'block';
+}
+
+/** Dismiss lockout banners for this session */
+function dismissLockoutBanner() {
+  _lockoutBannerDismissed = true;
+  const tsBanner = document.getElementById('lockoutAlertBanner');
+  const secBanner = document.getElementById('secLockoutAlertBanner');
+  if (tsBanner) tsBanner.style.display = 'none';
+  if (secBanner) secBanner.style.display = 'none';
+}
+
+/* ─── Discord Webhook Config ────────────────────────────────────── */
+
+/** Load the current Discord webhook URL and populate the input field */
+async function loadDiscordWebhookConfig() {
+  const adminPin = localStorage.getItem('adminPin');
+  if (!adminPin) return;
+  try {
+    const r = await fetch(BACKEND_URL + '/api/security/discord_webhook', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({adminPin})
+    });
+    if (!r.ok) return;
+    const data = await r.json();
+    const input = document.getElementById('secDiscordWebhookUrl');
+    if (input) {
+      input.value = data.discord_webhook_url || '';
+      input.placeholder = data.is_set ? data.display : 'https://discord.com/api/webhooks/...';
+    }
+  } catch(e) { /* silently fail */ }
+}
+
+/** Save the Discord webhook URL */
+async function saveDiscordWebhook() {
+  const adminPin = localStorage.getItem('adminPin');
+  const url = document.getElementById('secDiscordWebhookUrl').value.trim();
+  if (!adminPin) return showToast('Authentication required.', 'danger');
+  try {
+    const r = await fetch(BACKEND_URL + '/api/security/discord_webhook', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({adminPin, url})
+    });
+    const data = await r.json();
+    if (r.ok) {
+      showToast(data.message || 'Webhook URL saved.', 'success');
+      const status = document.getElementById('secDiscordStatus');
+      if (status) { status.textContent = '✅ Saved'; status.style.display = 'inline'; setTimeout(() => status.style.display = 'none', 3000); }
+    } else {
+      showToast(data.message || 'Failed to save.', 'danger');
+    }
+  } catch(e) {
+    showToast('Network error saving webhook URL.', 'danger');
+  }
+}
+
+/** Test the Discord webhook by sending a test alert */
+async function testDiscordWebhook() {
+  const adminPin = localStorage.getItem('adminPin');
+  if (!adminPin) return showToast('Authentication required.', 'danger');
+  try {
+    const url = document.getElementById('secDiscordWebhookUrl').value.trim();
+    if (!url) return showToast('Enter a webhook URL first.', 'warning');
+    // Save first
+    const saveR = await fetch(BACKEND_URL + '/api/security/discord_webhook', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({adminPin, url})
+    });
+    if (!saveR.ok) return showToast('Save the URL first.', 'warning');
+    // Send test
+    const r = await fetch(BACKEND_URL + '/api/security/test_discord_webhook', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({adminPin})
+    });
+    const data = await r.json();
+    if (r.ok) {
+      showToast('📨 ' + data.message, 'success');
+    } else {
+      showToast(data.message || 'Test failed.', 'danger');
+    }
+  } catch(e) {
+    showToast('Network error testing webhook.', 'danger');
+  }
+}
+
+/** Clear the Discord webhook URL */
+async function clearDiscordWebhook() {
+  const adminPin = localStorage.getItem('adminPin');
+  if (!adminPin) return showToast('Authentication required.', 'danger');
+  if (!confirm('Remove the Discord webhook URL? Lockout notifications will stop.')) return;
+  try {
+    const r = await fetch(BACKEND_URL + '/api/security/discord_webhook', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({adminPin, url: ''})
+    });
+    if (r.ok) {
+      document.getElementById('secDiscordWebhookUrl').value = '';
+      showToast('Webhook URL removed.', 'success');
+    } else {
+      const data = await r.json();
+      showToast(data.message || 'Failed to remove.', 'danger');
+    }
+  } catch(e) {
+    showToast('Network error clearing webhook.', 'danger');
+  }
 }
 
 /** Show the force clock-out modal */

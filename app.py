@@ -780,6 +780,63 @@ login_failed_attempts = {}
 # Structure: {ip_or_user_id: {'count': int, 'lock_until': datetime or None, 'window_start': datetime}}
 clock_failed_attempts = {}
 
+# ─── Discord Alert Support ─────────────────────────────────────────
+# Sends formatted alert messages to a Discord webhook (if configured).
+# Used for security events like account lockouts.
+DISCORD_ALERT_COOLDOWN = {}  # {key: last_sent} — prevent spam
+
+def send_discord_alert(message, level='warning'):
+    """Send a message to the configured Discord webhook.
+    Returns True if sent, False if no webhook configured or on failure.
+    Level is used for embed color: warning=orange, danger=red, info=green.
+    """
+    config = load_json_data(SECURITY_CONFIG_FILE)
+    if not isinstance(config, dict):
+        return False
+    webhook_url = config.get('discord_webhook_url', '').strip()
+    if not webhook_url:
+        return False
+    embed_color = {
+        'danger': 0xe74c3c,
+        'warning': 0xf39c12,
+        'info': 0x2ecc71,
+    }.get(level, 0xf39c12)
+    payload = {
+        'embeds': [{
+            'title': '🔒 POS Security Alert',
+            'description': message,
+            'color': embed_color,
+            'footer': {'text': f'POS System · {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}'}
+        }]
+    }
+    try:
+        data = json.dumps(payload).encode('utf-8')
+        req = urllib.request.Request(webhook_url, data=data,
+            headers={'Content-Type': 'application/json'},
+            method='POST')
+        urllib.request.urlopen(req, timeout=10)
+        return True
+    except Exception:
+        return False
+
+def send_discord_alert_async(message, level='warning'):
+    """Fire Discord alert in a background thread (non-blocking)."""
+    t = threading.Thread(target=send_discord_alert, args=(message, level), daemon=True)
+    t.start()
+
+def maybe_notify_lockout(user_id, user_name, user_role):
+    """Send a one-time Discord notification about a user lockout.
+    Uses a cooldown per user_id to avoid spamming on rapid retries.
+    """
+    now = datetime.now()
+    last = DISCORD_ALERT_COOLDOWN.get(user_id)
+    if last and (now - last).total_seconds() < 300:  # 5 min cooldown
+        return
+    DISCORD_ALERT_COOLDOWN[user_id] = now
+    role_display = user_role or 'unknown'
+    msg = f"🔒 **{user_name}** (`{user_id}`) locked out after 5 failed PIN attempts. Role: {role_display}. [Unlock in User Management]"
+    send_discord_alert_async(msg, level='danger')
+
 def _record_clock_failure(key):
     """Record a failed clock in/out attempt. Locks after 10 failures per 60s window for 15min."""
     now = datetime.now()
@@ -939,7 +996,7 @@ def login():
     client_ip = get_client_ip()
     now = datetime.now()
 
-    def record_failed_login(uid):
+    def record_failed_login(uid, user_name=None, user_role=None):
         """Track failed login attempt, lock after 5. Returns (count, locked, retry_after)."""
         if uid not in login_failed_attempts:
             login_failed_attempts[uid] = {'count': 0, 'lock_until': None, 'window_start': now}
@@ -956,6 +1013,15 @@ def login():
             attempt['lock_until'] = now + timedelta(minutes=10)
             locked = True
             retry_after = 600
+            # Fire Discord notification on lockout (non-blocking)
+            # Try to enrich user info from the users dict (available via closure)
+            if user_name is None or user_role is None:
+                if uid in users:
+                    u_info = users[uid]
+                    user_name = user_name or u_info.get('name', uid)
+                    user_role = user_role or u_info.get('role', 'unknown')
+            display_name = user_name or uid
+            maybe_notify_lockout(uid, display_name, user_role)
         return attempt['count'], locked, retry_after
 
     def check_lockout(uid):
@@ -1657,6 +1723,111 @@ def security_force_logout():
         'userId': user_id,
         'had_active_session': had_session
     })
+
+
+# ─── Discord Webhook Config ────────────────────────────────────────
+
+@app.route('/api/security/discord_webhook', methods=['POST'])
+def security_discord_webhook():
+    """Get or set the Discord webhook URL for alert notifications.
+    POST with { adminPin, url } to set. POST with { adminPin } to read.
+    Requires manage_users permission.
+    """
+    data = request.json or {}
+    admin_pin = data.get('adminPin', '')
+
+    if not admin_pin:
+        return jsonify({'message': 'Authentication required.'}), 401
+    if not check_perm(admin_pin, 'manage_users'):
+        return jsonify({'message': 'Permission denied.'}), 403
+
+    config = load_json_data(SECURITY_CONFIG_FILE)
+    if not isinstance(config, dict):
+        config = {}
+
+    url = data.get('url')
+    if url is not None:
+        # Set mode
+        config['discord_webhook_url'] = str(url).strip()
+        save_json_data(SECURITY_CONFIG_FILE, config)
+        admin_data = load_json_data(USERS_FILE).get(admin_pin, {})
+        log_activity('discord_webhook_set', admin_pin, admin_data.get('role', 'unknown'), {
+            'has_url': bool(config['discord_webhook_url'])
+        })
+        return jsonify({'message': 'Discord webhook URL updated.', 'set': True})
+
+    # Get mode — return the URL (masked)
+    stored = config.get('discord_webhook_url', '')
+    display = stored[:20] + '••••' if len(stored) > 24 else ('(not set)' if not stored else stored)
+    return jsonify({
+        'discord_webhook_url': stored,
+        'display': display,
+        'is_set': bool(stored)
+    })
+
+
+@app.route('/api/security/lockout_state', methods=['POST'])
+def security_lockout_state():
+    """Return current lockout state for the frontend banner.
+    POST with { adminPin }. Returns list of currently locked-out users.
+    """
+    data = request.json or {}
+    admin_pin = data.get('adminPin', '')
+
+    if not admin_pin:
+        return jsonify({'message': 'Authentication required.'}), 401
+    if not check_perm(admin_pin, 'manage_users'):
+        return jsonify({'message': 'Permission denied.'}), 403
+
+    now = datetime.now()
+    users = load_json_data(USERS_FILE)
+    if not isinstance(users, dict):
+        users = {}
+
+    locked_users = []
+    for uid, attempt in login_failed_attempts.items():
+        lock_until = attempt.get('lock_until')
+        if lock_until and now < lock_until:
+            user_data = users.get(uid, {})
+            locked_users.append({
+                'user_id': uid,
+                'user_name': user_data.get('name', uid),
+                'role': user_data.get('role', 'unknown'),
+                'locked_until': lock_until.isoformat(),
+                'retry_after': int((lock_until - now).total_seconds())
+            })
+
+    return jsonify({
+        'locked_count': len(locked_users),
+        'locked_users': locked_users
+    })
+
+
+@app.route('/api/security/test_discord_webhook', methods=['POST'])
+def security_test_discord_webhook():
+    """Send a test message to the configured Discord webhook.
+    POST with { adminPin }. Requires manage_users permission.
+    """
+    data = request.json or {}
+    admin_pin = data.get('adminPin', '')
+
+    if not admin_pin:
+        return jsonify({'message': 'Authentication required.'}), 401
+    if not check_perm(admin_pin, 'manage_users'):
+        return jsonify({'message': 'Permission denied.'}), 403
+
+    config = load_json_data(SECURITY_CONFIG_FILE)
+    if not isinstance(config, dict) or not config.get('discord_webhook_url', '').strip():
+        return jsonify({'message': 'No Discord webhook URL configured.'}), 400
+
+    sent = send_discord_alert(
+        "🧪 **Test Alert** — This is a test message from your POS system security alert system.\nIf you see this, the webhook is configured correctly.",
+        level='info'
+    )
+    if sent:
+        return jsonify({'message': 'Test message sent to Discord successfully.'})
+    else:
+        return jsonify({'message': 'Failed to send test message. Check the webhook URL.'}), 500
 
 
 # Owner credentials management
