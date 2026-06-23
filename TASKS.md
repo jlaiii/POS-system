@@ -644,7 +644,7 @@ SUPER ADMIN (Jay — developer account)
 
 ### Priority: HIGH — Multi-Tenant Foundation
 
-- [ ] **Global data model + platform config** — Create `/data/global/businesses.json`:
+- [~] worker-3 **Global data model + platform config** — Create `/data/global/businesses.json`:
 ```json
 {
   "marias-tacos": {
