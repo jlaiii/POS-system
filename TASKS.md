@@ -140,6 +140,49 @@ New `tickets.json` data store. Each ticket:
 
 - [ ] **Auto-approve for low-risk time-off** — Configurable rule: auto-approve time-off if requested >2 weeks in advance AND no other approvals for same date. Reduces admin overhead. Can be toggled off.
 
+## Employee Pay Portal — Pay Stubs, History & Downloads (NEW — June 2026)
+
+> Employees should be able to log in and see their own pay: hours worked, pay rate, gross/net, per-period and YTD totals, downloadable pay stubs, and a way to flag discrepancies. This is the employee-facing side — the admin/timekeeper sees the full timesheet dashboard (from the Timekeeper section above). Employee only sees their own data.
+
+### Key design decisions
+
+- **Data source**: shift_log.json (clocked hours) × user pay_rate from users.json
+- **No actual payroll processing** — this is informational/reporting, not ACH/bank integration
+- **"Request Review"** feeds into the existing ticket system (type: `pay_review`) so admin can investigate
+- **Pay stubs are generated on the fly** from shift data — no separate pay_stubs.json data store needed. Each "stub" is a computed view of a pay period's shifts + rates.
+
+### Priority: HIGH
+
+- [ ] **Employee "My Pay" tab** — New "💰 My Pay" tab visible to all logged-in employees (not admin-only). Shows three sections: **Current Period** (in-progress pay period with live hours so far), **Pay History** (list of past periods with totals), **Year-to-Date** summary card. Employee sees ONLY their own data — scoped by their `adminPin`/user_id. No permission needed beyond basic login.
+
+- [ ] **Current pay period live tracker** — Shows the current pay period date range, hours worked so far (from completed shifts + currently clocked-in live duration), pay rate, estimated gross pay so far. Auto-updates every 60 seconds while clocked in. Progress bar showing what % of a standard 40h week is done. "You've worked 24.5 of 40 hours this week — estimated gross: $367.50." This is motivational and lets employees self-monitor.
+
+- [ ] **Pay history with period-by-period breakdown** — List of past pay periods with: date range, total hours, pay rate at that time, gross pay, shift count. Click any period to expand into a detailed shift list (date, clock in/out, hours, breaks, notes). This is the employee's personal ledger — they should be able to trace every dollar back to specific shifts. Data pulled from `/api/timesheet/pay_period` filtered to the employee's user_id.
+
+- [ ] **Downloadable pay stub (PDF)** — "Download Pay Stub" button per pay period in history. Generates a clean PDF with: employee name, pay period dates, itemized shift list with hours, total hours, pay rate, gross pay, YTD totals, employer info (configurable in admin settings), and a "This is not an official tax document" disclaimer. Uses the PDF export pipeline from the Timesheet system task. Stored in activity_log as `pay_stub_download` event.
+
+- [ ] **Pay history CSV export** — "Export My Pay History" button at bottom of Pay History. Downloads a CSV with all past periods: period_start, period_end, hours, rate, gross, shift_count. Simple, clean, spreadsheet-ready. Employee can do their own math or share with accountant.
+
+- [ ] **"Request Pay Review" action** — If employee thinks hours or pay are wrong, a "⚠️ Request Review" button on any pay period or shift. Opens a pre-filled ticket form (type: `pay_review`, subject auto-populated with period/suspected issue, description field for employee to explain). Feeds directly into the ticket system — admin sees it in the Ticket Queue. Links the pay period data so admin can cross-reference. This is the "something looks wrong, look into it" flow.
+
+### Priority: MEDIUM
+
+- [ ] **Year-to-date (YTD) earnings card** — Summary card at top of My Pay showing: YTD gross pay, YTD hours worked, average hours/week, average hourly effective rate (total gross ÷ total hours). Updates in real time as shifts are completed. Gives employees a quick financial snapshot without digging through periods.
+
+- [ ] **Multi-rate support (different rates for different shifts)** — Some employees work multiple roles (e.g., server at $8/hr, cook at $15/hr). Allow per-shift or per-role pay rate override. If an employee clocks in as "cook" for half their shift and "server" for the other half, the pay period calculates a weighted average. Stored as optional `pay_rate_override` on shift record (null = use user default).
+
+- [ ] **Pay stub email delivery** — Auto-email pay stub PDF to employee when admin marks a pay period as "paid" (from the timesheet approval workflow). Uses existing email config (SMTP from digital receipts feature). Employee gets a clean email: "Your pay stub for June 16-30 is ready. Gross: $1,247.50. Download attached PDF." Reduces "hey boss, can I get my stub?" conversations.
+
+- [ ] **Tip tracking in My Pay** — Since tips are already tracked per order and employee, aggregate tip data per pay period in My Pay: total credit card tips, total cash tips (employee-entered). Separate line from hourly pay. "This period: Hours $380.00 + Tips $412.50 = $792.50." Helps tipped employees understand their true take-home.
+
+### Priority: LOW
+
+- [ ] **Direct deposit info display** — Read-only display of employee's direct deposit details (bank name, last 4 of account) stored in user profile. "Payments go to: Chase ****1234." Employee can verify but not edit — must request admin change. Reduces "which account is my deposit going to?" questions.
+
+- [ ] **Pay comparison charts** — Simple bar chart in My Pay showing period-by-period gross pay for last 6 periods. Line overlay showing hours trend. Employee can see if their hours are trending up or down. Helps them plan finances.
+
+- [ ] **Tax withholding estimator** — Optional: if employee fills in W-4 info (filing status, allowances), show estimated federal/state tax withholding per period. Gross → estimated net. Big disclaimer: "Estimate only — consult a tax professional." Gives employees a rough idea of take-home without running separate calculators.
+
 ## Done
 
 - [x] **Add auto-table suggestion for waiters** — When a waiter returns to the POS tab, auto-select the table they were last working on (stored per-user in localStorage). Saves 1-2 taps per order cycle, adds up over a shift. [worker-1]
