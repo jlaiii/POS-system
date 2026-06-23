@@ -20,3 +20,5 @@ menu_backups/
 backups/
 pos_orders_backup.json
 pos.db
+timesheet_approvals.json
+tickets.json
