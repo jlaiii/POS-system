@@ -2838,6 +2838,8 @@ def clock_excuse_late():
     admin_name = admin_user.get('name', admin_pin)
 
     log_activity('late_excused', admin_pin, admin_user.get('role', 'admin'), {
+        'admin_pin': admin_pin,
+        'admin_name': admin_name,
         'shift_index': shift_index,
         'user_id': shift.get('user_id'),
         'user_name': shift.get('user_name'),
@@ -2893,6 +2895,8 @@ def clock_flag_late():
     admin_name = admin_user.get('name', admin_pin)
 
     log_activity('late_flagged', admin_pin, admin_user.get('role', 'admin'), {
+        'admin_pin': admin_pin,
+        'admin_name': admin_name,
         'shift_index': shift_index,
         'user_id': shift.get('user_id'),
         'user_name': shift.get('user_name'),
