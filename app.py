@@ -42,6 +42,7 @@ WEBHOOKS_FILE = 'webhooks.json'  # Webhook integration URLs for third-party deli
 TABLE_ADS_FILE = 'table_ads.json'  # Table-side promotional ads
 MENU_BACKUPS_DIR = 'menu_backups'
 CASH_DRAWER_FILE = 'cash_drawer.json'  # Cash register management
+COMBOS_FILE = 'combos.json'  # Combo/meal deal bundles
 SERVICE_CHARGE_FILE = 'service_charge_config.json'  # Auto-gratuity / service charge settings
 EMAIL_CONFIG_FILE = 'email_config.json'  # Email/SMTP configuration for digital receipts
 
@@ -112,7 +113,7 @@ def backup_menu():
 
 
 # Ensure JSON files exist and are initialized correctly
-for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE, INVENTORY_FILE, REFUNDED_ORDERS_FILE, FAVORITES_FILE, LOYALTY_FILE, SCHEDULED_PRICING_FILE, WASTE_FILE, DELIVERY_ADDRESSES_FILE, WEBHOOKS_FILE, TABLE_ADS_FILE, CASH_DRAWER_FILE, SERVICE_CHARGE_FILE, EMAIL_CONFIG_FILE]:
+for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE, INVENTORY_FILE, REFUNDED_ORDERS_FILE, FAVORITES_FILE, LOYALTY_FILE, SCHEDULED_PRICING_FILE, WASTE_FILE, DELIVERY_ADDRESSES_FILE, WEBHOOKS_FILE, TABLE_ADS_FILE, CASH_DRAWER_FILE, COMBOS_FILE, SERVICE_CHARGE_FILE, EMAIL_CONFIG_FILE]:
     if not os.path.exists(f):
         with open(f, 'w') as file:
             if f == USERS_FILE:
@@ -170,6 +171,8 @@ for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMES
                 json.dump({"ads": [], "rotation_interval": 10}, file, indent=4)  # Initialize empty table ads
             elif f == CASH_DRAWER_FILE:
                 json.dump({"sessions": [], "transactions": []}, file, indent=4)  # Initialize cash drawer
+            elif f == COMBOS_FILE:
+                json.dump({"combos": []}, file, indent=4)  # Initialize combos
             elif f == SERVICE_CHARGE_FILE:
                 json.dump({"enabled": True, "threshold": 8, "percentage": 18.0, "label": "Auto-Gratuity (18%)"}, file, indent=4)  # Initialize service charge config
             elif f == EMAIL_CONFIG_FILE:
@@ -1126,6 +1129,21 @@ def submit_order():
     inventory = load_json_data(INVENTORY_FILE)
     low_stock_warnings = []
     for item in items:
+        # If item is a combo, decrement child items instead
+        if item.get('is_combo') and item.get('child_items'):
+            for ci in item['child_items']:
+                ci_name = ci.get('name', '')
+                ci_qty = int(ci.get('qty', 1)) * int(item.get('qty', 1))
+                if ci_name in inventory:
+                    current_stock = inventory[ci_name].get('stock', 0)
+                    new_stock = max(0, current_stock - ci_qty)
+                    inventory[ci_name]['stock'] = new_stock
+                    threshold = inventory[ci_name].get('low_stock_threshold', 10)
+                    if new_stock <= 0:
+                        low_stock_warnings.append({'item_name': ci_name, 'stock': new_stock, 'status': 'out_of_stock'})
+                    elif new_stock <= threshold:
+                        low_stock_warnings.append({'item_name': ci_name, 'stock': new_stock, 'status': 'low_stock', 'threshold': threshold})
+            continue
         item_name = item.get('name', '')
         qty = int(item.get('qty', 1))
         if item_name in inventory:
@@ -5870,6 +5888,163 @@ def categories_reorder():
     log_activity('category_reorder', admin_pin, admin_role, {'order': order})
 
     return jsonify({'message': 'Categories reordered successfully.'})
+
+
+# ═══════════════════════════════════════════
+# COMBO / MEAL DEAL BUILDER
+# ═══════════════════════════════════════════
+
+def load_combos():
+    data = load_json_data(COMBOS_FILE)
+    if isinstance(data, dict) and 'combos' in data:
+        return data['combos']
+    return []
+
+def save_combos(combos_list):
+    save_json_data(COMBOS_FILE, {'combos': combos_list})
+
+
+@app.route('/api/combos/list', methods=['GET'])
+def combos_list():
+    """Return all combos."""
+    return jsonify({'combos': load_combos()})
+
+
+@app.route('/api/combos/save', methods=['POST'])
+def combos_save():
+    """Create or update a combo. If id is provided, update existing; else create new.
+    Permission: manage_items."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+
+    if not check_perm(admin_pin, "manage_items"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    combo_id = data.get('id', '').strip()
+    name = (data.get('name') or '').strip()
+    combo_price = data.get('combo_price')
+    description = (data.get('description') or '').strip()
+    child_items = data.get('child_items', [])
+
+    if not name:
+        return jsonify({'message': 'Combo name is required.'}), 400
+    if combo_price is None:
+        return jsonify({'message': 'Combo price is required.'}), 400
+    try:
+        combo_price = float(combo_price)
+        if combo_price <= 0:
+            raise ValueError
+    except (ValueError, TypeError):
+        return jsonify({'message': 'Combo price must be a positive number.'}), 400
+    if not child_items or not isinstance(child_items, list):
+        return jsonify({'message': 'At least one child item is required.'}), 400
+    for ci in child_items:
+        if not ci.get('name') or not ci.get('category'):
+            return jsonify({'message': 'Each child item must have a name and category.'}), 400
+
+    combos = load_combos()
+    admin_user = load_json_data(USERS_FILE).get(admin_pin, None)
+    admin_role = admin_user['role'] if admin_user else 'unknown'
+
+    if combo_id:
+        # Update existing
+        found = False
+        for i, c in enumerate(combos):
+            if c.get('id') == combo_id:
+                combos[i] = {
+                    'id': combo_id,
+                    'name': name,
+                    'combo_price': combo_price,
+                    'description': description,
+                    'child_items': child_items,
+                    'active': data.get('active', c.get('active', True)),
+                    'created_at': c.get('created_at', datetime.now().isoformat()),
+                    'updated_at': datetime.now().isoformat()
+                }
+                found = True
+                log_activity('combo_update', admin_pin, admin_role, {'combo_id': combo_id, 'name': name, 'price': combo_price})
+                break
+        if not found:
+            return jsonify({'message': f'Combo with id \"{combo_id}\" not found.'}), 404
+    else:
+        # Create new
+        combo_id = f'combo_{int(datetime.now().timestamp())}'
+        combo_entry = {
+            'id': combo_id,
+            'name': name,
+            'combo_price': combo_price,
+            'description': description,
+            'child_items': child_items,
+            'active': True,
+            'created_at': datetime.now().isoformat(),
+            'updated_at': datetime.now().isoformat()
+        }
+        combos.append(combo_entry)
+        log_activity('combo_create', admin_pin, admin_role, {'combo_id': combo_id, 'name': name, 'price': combo_price})
+
+    save_combos(combos)
+    return jsonify({'message': 'Combo saved successfully!', 'combos': combos})
+
+
+@app.route('/api/combos/delete', methods=['POST'])
+def combos_delete():
+    """Delete a combo by id. Permission: manage_items."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+
+    if not check_perm(admin_pin, "manage_items"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    combo_id = data.get('id', '').strip()
+    if not combo_id:
+        return jsonify({'message': 'Combo id is required.'}), 400
+
+    combos = load_combos()
+    new_combos = [c for c in combos if c.get('id') != combo_id]
+    if len(new_combos) == len(combos):
+        return jsonify({'message': f'Combo \"{combo_id}\" not found.'}), 404
+
+    save_combos(new_combos)
+
+    admin_user = load_json_data(USERS_FILE).get(admin_pin, None)
+    admin_role = admin_user['role'] if admin_user else 'unknown'
+    log_activity('combo_delete', admin_pin, admin_role, {'combo_id': combo_id})
+
+    return jsonify({'message': 'Combo deleted successfully!', 'combos': new_combos})
+
+
+@app.route('/api/combos/toggle', methods=['POST'])
+def combos_toggle():
+    """Toggle a combo's active status. Permission: manage_items."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+
+    if not check_perm(admin_pin, "manage_items"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    combo_id = data.get('id', '').strip()
+    if not combo_id:
+        return jsonify({'message': 'Combo id is required.'}), 400
+
+    combos = load_combos()
+    found = False
+    for c in combos:
+        if c.get('id') == combo_id:
+            c['active'] = not c.get('active', True)
+            c['updated_at'] = datetime.now().isoformat()
+            found = True
+            break
+
+    if not found:
+        return jsonify({'message': f'Combo \"{combo_id}\" not found.'}), 404
+
+    save_combos(combos)
+
+    admin_user = load_json_data(USERS_FILE).get(admin_pin, None)
+    admin_role = admin_user['role'] if admin_user else 'unknown'
+    log_activity('combo_toggle', admin_pin, admin_role, {'combo_id': combo_id})
+
+    return jsonify({'message': 'Combo toggled successfully!', 'combos': combos})
 
 
 if __name__ == '__main__':

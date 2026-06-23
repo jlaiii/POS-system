@@ -1180,6 +1180,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
         <button onclick="switchAdminSection('categories')" id="asCategories" data-i18n="admin.categories">📁 Categories</button>
         <button onclick="switchAdminSection('cashdrawer')" id="asCashdrawer">💰 Cash Drawer</button>
         <button onclick="switchAdminSection('servicecharge')" id="asServicecharge">🔧 Service Charge</button>
+        <button onclick="switchAdminSection('combos')" id="asCombos">🍱 Combos</button>
       </div>
       <div id="adminContent">
         <!-- Stats -->
@@ -1701,6 +1702,37 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
               It applies per-order when the condition is met.
             </p>
           </div>
+        </div>
+        <!-- Combos / Meal Deals -->
+        <div id="secCombos" class="admin-section">
+          <h3>🍱 Combo / Meal Deal Builder</h3>
+          <p style="color:var(--text2);margin-bottom:16px;font-size:14px;">Create fixed-price combo deals (e.g., "Lunch Special: Burger + Fries + Drink $12.99") as single orderable items. One-tap add to cart expands child items for kitchen display.</p>
+          <div class="card" style="margin-bottom:12px;">
+            <h4 style="margin-bottom:8px;" id="comboFormTitle">➕ Create Combo</h4>
+            <input type="hidden" id="editComboId" value=""/>
+            <div class="form-row" style="flex-wrap:wrap;gap:6px;">
+              <input type="text" id="comboName" placeholder="Combo name (e.g. Lunch Special)" style="flex:1;min-width:160px;"/>
+              <input type="number" id="comboPrice" placeholder="Combo price $" step="0.01" min="0.01" style="max-width:130px;"/>
+              <input type="text" id="comboDescription" placeholder="Description (optional)" style="flex:1;min-width:160px;"/>
+              <button class="accent" onclick="saveCombo()" id="comboSaveBtn" style="min-height:44px;">💾 Save Combo</button>
+              <button class="ghost" onclick="cancelEditCombo()" id="comboCancelBtn" style="min-height:44px;display:none;">Cancel</button>
+            </div>
+            <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">
+              <h4 style="margin-bottom:8px;font-size:14px;">🍽️ Items in this Combo</h4>
+              <div id="comboChildItems">
+                <!-- Child item rows will be rendered here -->
+                <div class="empty-state">Add items below</div>
+              </div>
+              <div class="form-row" style="flex-wrap:wrap;gap:6px;margin-top:8px;">
+                <select id="comboChildItemSelect" style="flex:2;min-width:160px;">
+                  <option value="">— Select Item —</option>
+                </select>
+                <input type="number" id="comboChildQty" placeholder="Qty" min="1" value="1" style="max-width:70px;"/>
+                <button class="outline" onclick="addComboChildItem()" style="min-height:44px;">➕ Add Item</button>
+              </div>
+            </div>
+          </div>
+          <div id="combosList"><div class="empty-state">Loading combos...</div></div>
         </div>
       </div>
     </div>
@@ -2320,6 +2352,34 @@ const L10N = {
     'admin.email.test_fail': '❌ Test failed: {error}',
     'admin.yes': 'Yes',
     'admin.no': 'No',
+    'admin.combos': '🍱 Combos',
+    'admin.combos.title': '🍱 Combo / Meal Deal Builder',
+    'admin.combos.desc': 'Create fixed-price combo deals as single orderable items. One-tap add to cart expands child items for kitchen display.',
+    'admin.combos.add_title': '➕ Create Combo',
+    'admin.combos.name_placeholder': 'Combo name (e.g. Lunch Special)',
+    'admin.combos.price_placeholder': 'Combo price $',
+    'admin.combos.desc_placeholder': 'Description (optional)',
+    'admin.combos.save_btn': '💾 Save Combo',
+    'admin.combos.cancel_btn': 'Cancel',
+    'admin.combos.items_title': '🍽️ Items in this Combo',
+    'admin.combos.select_item': '— Select Item —',
+    'admin.combos.add_item_btn': '➕ Add Item',
+    'admin.combos.no_combos': 'No combos configured yet.',
+    'admin.combos.edit_btn': '✏️',
+    'admin.combos.delete_btn': '🗑️',
+    'admin.combos.toggle': 'Toggle',
+    'admin.combos.edit_title': '✏️ Edit Combo',
+    'admin.combos.added': 'Combo created!',
+    'admin.combos.updated': 'Combo updated!',
+    'admin.combos.deleted': 'Combo deleted!',
+    'admin.combos.toggled': 'Combo toggled!',
+    'combo.add_to_cart': '➕ Add Combo',
+    'combo.contains': 'Includes:',
+    'combo.badge': '🧩 Combo',
+    'combo.view_items': '📦 View items',
+    'combo.confirm_title': '🍱 Add Combo to Cart',
+    'combo.confirm_desc': 'This combo includes the following items at ${price}:',
+    'combo.confirm_add': '✅ Add to Cart',
   },
   es: {
     'app.title': '🍽️ Sistema POS',
@@ -2693,6 +2753,34 @@ const L10N = {
     'admin.email.test_fail': '❌ Prueba falló: {error}',
     'admin.yes': 'Sí',
     'admin.no': 'No',
+    'admin.combos': '🍱 Combos',
+    'admin.combos.title': '🍱 Constructor de Combos',
+    'admin.combos.desc': 'Cree combos de precio fijo como artículos únicos pedibles. Un toque al carrito expande los artículos hijos para la cocina.',
+    'admin.combos.add_title': '➕ Crear Combo',
+    'admin.combos.name_placeholder': 'Nombre del combo (ej. Combo Almuerzo)',
+    'admin.combos.price_placeholder': 'Precio del combo $',
+    'admin.combos.desc_placeholder': 'Descripción (opcional)',
+    'admin.combos.save_btn': '💾 Guardar Combo',
+    'admin.combos.cancel_btn': 'Cancelar',
+    'admin.combos.items_title': '🍽️ Artículos en este Combo',
+    'admin.combos.select_item': '— Seleccionar Artículo —',
+    'admin.combos.add_item_btn': '➕ Agregar Artículo',
+    'admin.combos.no_combos': 'Aún no hay combos configurados.',
+    'admin.combos.edit_btn': '✏️',
+    'admin.combos.delete_btn': '🗑️',
+    'admin.combos.toggle': 'Cambiar',
+    'admin.combos.edit_title': '✏️ Editar Combo',
+    'admin.combos.added': '¡Combo creado!',
+    'admin.combos.updated': '¡Combo actualizado!',
+    'admin.combos.deleted': '¡Combo eliminado!',
+    'admin.combos.toggled': '¡Combo cambiado!',
+    'combo.add_to_cart': '➕ Añadir Combo',
+    'combo.contains': 'Incluye:',
+    'combo.badge': '🧩 Combo',
+    'combo.view_items': '📦 Ver artículos',
+    'combo.confirm_title': '🍱 Agregar Combo al Carrito',
+    'combo.confirm_desc': 'Este combo incluye los siguientes artículos por ${price}:',
+    'combo.confirm_add': '✅ Agregar al Carrito',
   }
 };
 
@@ -3260,9 +3348,22 @@ async function loadItems() {
     } else {
       scheduledPricing = null;
     }
+    // Load combos in background
+    try {
+      const comboRes = await fetch(BACKEND_URL + '/api/combos/list');
+      if (comboRes.ok) comboData = await comboRes.json();
+    } catch(e) { /* combos are optional */ }
+    // Build combo item options for admin
+    comboItemOptions = buildFullItemList();
+    populateComboItemSelect();
     renderCategories();
     if (!currentCategory || !itemsData[currentCategory]) {
       currentCategory = Object.keys(itemsData)[0] || '';
+    }
+    // If combos exist and no category selected, default to first
+    const activeCombos = getActiveCombos();
+    if (activeCombos.length > 0 && currentCategory === '') {
+      currentCategory = '🍱 Combos';
     }
     renderItems();
   } catch(e) {
@@ -3274,6 +3375,21 @@ async function loadItems() {
 function renderCategories() {
   const container = document.getElementById('catTabs');
   container.innerHTML = '';
+  // Add combos tab first if any active combos exist
+  const activeCombos = getActiveCombos();
+  if (activeCombos.length > 0) {
+    const btn = document.createElement('button');
+    btn.textContent = '🍱 Combos';
+    if ('🍱 Combos' === currentCategory) btn.classList.add('active');
+    btn.onclick = () => { 
+      currentCategory = '🍱 Combos'; 
+      const searchInput = document.getElementById('itemSearchInput');
+      if (searchInput) { searchInput.value = ''; itemSearchTerm = ''; }
+      renderCategories(); 
+      renderItems(); 
+    };
+    container.appendChild(btn);
+  }
   Object.keys(itemsData).forEach(cat => {
     const hasVisible = (itemsData[cat] || []).some(item => item.active !== false);
     if (!hasVisible) return;
@@ -3295,6 +3411,31 @@ function renderCategories() {
 function renderItems() {
   const grid = document.getElementById('itemGrid');
   grid.innerHTML = '';
+  
+  // Handle combos tab
+  const activeCombos = getActiveCombos();
+  if (currentCategory === '🍱 Combos') {
+    if (activeCombos.length === 0) {
+      grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;">No combos available</div>';
+      return;
+    }
+    activeCombos.forEach(combo => {
+      const card = document.createElement('div');
+      card.className = 'item-card';
+      const childrenPreview = combo.child_items.slice(0, 3).map(ci => escHtml(ci.name)).join(', ');
+      const more = combo.child_items.length > 3 ? ' +' + (combo.child_items.length - 3) + ' more' : '';
+      card.innerHTML = `
+        <div class="item-name" style="font-size:17px;">🍱 ${escHtml(combo.name)}</div>
+        <div class="item-price" style="color:var(--accent);font-weight:700;">$${parseFloat(combo.combo_price).toFixed(2)}</div>
+        <div style="font-size:12px;color:var(--text2);padding:4px 0;">${escHtml(childrenPreview)}${more}</div>
+        <button class="item-add" onclick="event.stopPropagation(); addComboToCart(comboData.combos.find(c => c.id === '${escJs(combo.id)}'))" style="background:var(--accent);">${t('combo.add_to_cart')}</button>
+      `;
+      card.onclick = () => addComboToCart(combo);
+      grid.appendChild(card);
+    });
+    return;
+  }
+  
   const term = itemSearchTerm.trim().toLowerCase();
   if (term) {
     // Search mode: gather all matching items across categories
@@ -3612,9 +3753,24 @@ function renderCart() {
     const modHtml = item.modifiers && item.modifiers.length > 0
       ? '<div style="font-size:12px;color:#f39c12;margin-top:2px;">' + item.modifiers.map(m => escHtml(m.option)).join(' · ') + '</div>'
       : '';
+    // Combo badge and expandable children
+    let comboBadge = '';
+    let comboChildrenHtml = '';
+    if (item.is_combo) {
+      const comboId = 'combo_children_' + i;
+      comboBadge = '<span style="display:inline-block;font-size:11px;background:#e9456033;color:#e94560;padding:1px 6px;border-radius:8px;margin-left:4px;font-weight:600;">🧩 ' + t('combo.badge') + '</span>';
+      if (item.child_items && item.child_items.length > 0) {
+        comboChildrenHtml = `<div style="margin-top:6px;padding:6px 8px;background:var(--card-alt);border-radius:6px;font-size:13px;">
+          <div onclick="document.getElementById('${comboId}').style.display = document.getElementById('${comboId}').style.display==='none'?'block':'none'" style="cursor:pointer;color:var(--text2);font-size:12px;user-select:none;">📦 ${t('combo.view_items')} ▾</div>
+          <div id="${comboId}" style="display:none;margin-top:4px;">
+            ${item.child_items.map(ci => `<div style="padding:2px 0;display:flex;justify-content:space-between;"><span>${escHtml(ci.name)}</span><span style="color:var(--accent);">x${ci.qty || 1}</span></div>`).join('')}
+          </div>
+        </div>`;
+      }
+    }
     html += `<div class="cart-item" style="flex-direction:column;align-items:stretch;gap:6px;">
       <div style="display:flex;align-items:center;justify-content:space-between;width:100%;">
-        <div class="ci-info"><div class="ci-name">${escHtml(item.name)}${modHtml ? '' : ''}</div><div class="ci-price">$${item.price.toFixed(2)} ${t('cart.each')}${pct ? ' (tax ' + pct + ')' : ''}</div>${modHtml}</div>
+        <div class="ci-info"><div class="ci-name">${escHtml(item.name)}${comboBadge}${modHtml ? '' : ''}</div><div class="ci-price">$${item.price.toFixed(2)} ${t('cart.each')}${pct ? ' (tax ' + pct + ')' : ''}</div>${modHtml}</div>
         <div class="ci-qty">
           <button onclick="removeFromCart(${i})">−</button>
           <span>${item.qty}</span>
@@ -3622,6 +3778,7 @@ function renderCart() {
           <button class="ci-remove" onclick="cart.splice(${i},1);renderCart();">×</button>
         </div>
       </div>
+      ${comboChildrenHtml}
       <div style="display:flex;gap:6px;align-items:center;">
         <input type="text" id="itemNote_${i}" value="${escJs(itemNote)}" placeholder="${t('cart.item_note')}" maxlength="200" style="flex:1;min-height:32px;padding:6px 10px;font-size:13px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);" onchange="cart[${i}].note = this.value"/>
       </div>
@@ -5096,6 +5253,7 @@ function switchAdminSection(sec) {
   else if (sec === 'categories') loadCategories();
   else if (sec === 'cashdrawer') loadCashDrawer();
   else if (sec === 'servicecharge') loadServiceChargeConfig();
+  else if (sec === 'combos') loadCombos();
 }
 
 async function loadAdminStats() {
@@ -7403,6 +7561,15 @@ function renderKitchenOrderCard(o) {
     const modDisplay = item.modifiers && item.modifiers.length > 0
       ? '<div style="font-size:13px;color:#f39c12;font-weight:400;padding-left:8px;">' + item.modifiers.map(m => escHtml(m.option)).join(', ') + '</div>'
       : '';
+    // Combo children expansion
+    let comboChildrenHtml = '';
+    if (item.is_combo && item.child_items && item.child_items.length > 0) {
+      comboChildrenHtml = '<div style="margin-top:4px;padding-left:8px;border-left:2px solid #e94560;">' +
+        item.child_items.map(ci =>
+          '<div style="font-size:13px;color:var(--text2);padding:1px 0;">🍱 ' + escHtml(ci.name) + ' <span class="koc-qty">x' + (ci.qty || 1) + '</span></div>'
+        ).join('') +
+        '</div>';
+    }
     // Look up image and course from menu data
     let imgHtml = '';
     let courseBadge = '';
@@ -7428,7 +7595,7 @@ function renderKitchenOrderCard(o) {
         if (imgHtml || courseBadge) break;
       }
     }
-    return '<div class="koc-item">' + imgHtml + '<span>' + escHtml(item.name || item.item_name || '?') + qtyDisplay + courseBadge + '</span>' + modDisplay + '</div>';
+    return '<div class="koc-item">' + imgHtml + '<span>' + escHtml(item.name || item.item_name || '?') + qtyDisplay + courseBadge + '</span>' + modDisplay + comboChildrenHtml + '</div>';
   }).join('');
 
   // Per-item notes
@@ -7587,6 +7754,7 @@ function showReceipt(orderData) {
       <span>$${((item.price || 0) * (item.qty || 1)).toFixed(2)}</span>
     </div>
     ${item.modifiers && item.modifiers.length > 0 ? `<div style="font-size:12px;color:#f39c12;padding-left:8px;text-align:left;">${item.modifiers.map(m => escHtml(m.option)).join(' · ')}</div>` : ''}
+    ${item.is_combo && item.child_items && item.child_items.length > 0 ? `<div style="font-size:11px;color:var(--text2);padding-left:12px;text-align:left;margin-bottom:4px;">🍱 ${item.child_items.map(ci => escHtml(ci.name) + ' x' + (ci.qty || 1)).join(', ')}</div>` : ''}
   `).join('');
 
   const dateStr = orderData.date ? new Date(orderData.date).toLocaleString() : new Date().toLocaleString();
@@ -9236,6 +9404,320 @@ function calculateServiceCharge(subtotal) {
   if (totalQty < threshold) return 0;
   const pct = serviceChargeConfig.percentage || 0;
   return subtotal * (pct / 100);
+}
+
+// ═══════════ COMBO / MEAL DEAL BUILDER ═══════════
+let comboData = null; // { combos: [...] }
+let comboChildItems = []; // { name, category, qty } for the form
+let comboItemOptions = []; // Full item list for dropdown
+
+/** Load combos from server */
+async function loadCombos() {
+  try {
+    const resp = await fetch(BACKEND_URL + '/api/combos/list');
+    const data = await resp.json();
+    comboData = data;
+    renderCombosAdmin();
+    if (comboItemOptions.length === 0) {
+      comboItemOptions = buildFullItemList();
+      populateComboItemSelect();
+    }
+  } catch (e) {
+    document.getElementById('combosList').innerHTML = '<div class="empty-state">Error loading combos</div>';
+  }
+}
+
+/** Build flat list of all items {name, category} from itemsData */
+function buildFullItemList() {
+  const list = [];
+  if (!itemsData) return list;
+  for (const [cat, items] of Object.entries(itemsData)) {
+    for (const item of items) {
+      if (item.active !== false) {
+        list.push({ name: item.name, category: cat });
+      }
+    }
+  }
+  return list;
+}
+
+/** Populate the child item select dropdown */
+function populateComboItemSelect() {
+  const sel = document.getElementById('comboChildItemSelect');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">— Select Item —</option>';
+  // Group by category
+  const grouped = {};
+  for (const item of comboItemOptions) {
+    if (!grouped[item.category]) grouped[item.category] = [];
+    grouped[item.category].push(item);
+  }
+  for (const [cat, items] of Object.entries(grouped)) {
+    const optgroup = document.createElement('optgroup');
+    optgroup.label = cat;
+    items.forEach(item => {
+      const opt = document.createElement('option');
+      opt.value = item.name + '|' + item.category;
+      opt.textContent = item.name;
+      optgroup.appendChild(opt);
+    });
+    sel.appendChild(optgroup);
+  }
+}
+
+/** Render combos in admin list */
+function renderCombosAdmin() {
+  const container = document.getElementById('combosList');
+  if (!container) return;
+  const combos = (comboData && comboData.combos) || [];
+  if (combos.length === 0) {
+    container.innerHTML = '<div class="empty-state">' + t('admin.combos.no_combos') + '</div>';
+    return;
+  }
+  let html = '<div style="display:flex;flex-direction:column;gap:8px;">';
+  combos.forEach(c => {
+    const active = c.active !== false;
+    const childrenHtml = c.child_items.map(ci =>
+      escHtml(ci.name) + ' x' + (ci.qty || 1)
+    ).join(', ');
+    html += `<div class="card" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:12px 16px;border-left:4px solid ${active ? '#2ecc71' : '#666'};">
+      <div style="flex:1;min-width:150px;">
+        <strong style="font-size:16px;">🍱 ${escHtml(c.name)}</strong>
+        <span style="color:var(--accent);font-weight:700;margin-left:8px;">$${parseFloat(c.combo_price).toFixed(2)}</span>
+        <span style="display:inline-block;font-size:12px;color:var(--text2);margin-left:8px;background:var(--card-alt);padding:2px 8px;border-radius:10px;">${active ? '🟢 Active' : '🔴 Inactive'}</span>
+        <div style="font-size:13px;color:var(--text2);margin-top:4px;">${childrenHtml}</div>
+      </div>
+      <div style="display:flex;gap:4px;">
+        <button class="outline" onclick="editCombo('${escJs(c.id)}')" style="min-height:40px;padding:6px 12px;font-size:13px;" title="Edit">✏️</button>
+        <button class="outline" onclick="toggleCombo('${escJs(c.id)}')" style="min-height:40px;padding:6px 12px;font-size:13px;" title="Toggle Active/Inactive">${active ? '🔴' : '🟢'}</button>
+        <button class="outline" onclick="deleteCombo('${escJs(c.id)}')" style="min-height:40px;padding:6px 12px;font-size:13px;color:#e74c3c;" title="Delete">🗑️</button>
+      </div>
+    </div>`;
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+/** Add a child item to the combo form */
+function addComboChildItem() {
+  const sel = document.getElementById('comboChildItemSelect');
+  const qtyInput = document.getElementById('comboChildQty');
+  if (!sel || !sel.value) {
+    showToast('Please select an item', 'danger');
+    return;
+  }
+  const [name, category] = sel.value.split('|');
+  const qty = parseInt(qtyInput.value) || 1;
+  comboChildItems.push({ name, category, qty });
+  renderComboChildItems();
+  sel.value = '';
+  qtyInput.value = '1';
+}
+
+/** Remove a child item from the combo form */
+function removeComboChildItem(index) {
+  comboChildItems.splice(index, 1);
+  renderComboChildItems();
+}
+
+/** Render the child items list in the form */
+function renderComboChildItems() {
+  const container = document.getElementById('comboChildItems');
+  if (!container) return;
+  if (comboChildItems.length === 0) {
+    container.innerHTML = '<div class="empty-state">Add items below</div>';
+    return;
+  }
+  let html = '<div style="display:flex;flex-direction:column;gap:4px;">';
+  comboChildItems.forEach((ci, i) => {
+    html += `<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--card-alt);border-radius:6px;font-size:14px;">
+      <span style="flex:1;">${escHtml(ci.name)} <span style="color:var(--text2);font-size:12px;">(${escHtml(ci.category)})</span></span>
+      <span style="color:var(--accent);font-weight:600;">x${ci.qty}</span>
+      <button onclick="removeComboChildItem(${i})" style="background:none;border:none;color:#e74c3c;cursor:pointer;font-size:16px;padding:4px;" title="Remove">✕</button>
+    </div>`;
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+/** Save (create or update) a combo */
+async function saveCombo() {
+  const name = document.getElementById('comboName').value.trim();
+  const price = document.getElementById('comboPrice').value;
+  const description = document.getElementById('comboDescription').value.trim();
+  const editId = document.getElementById('editComboId').value;
+
+  if (!name) { showToast('Combo name is required', 'danger'); return; }
+  if (!price || parseFloat(price) <= 0) { showToast('Valid combo price is required', 'danger'); return; }
+  if (comboChildItems.length === 0) { showToast('Add at least one item to the combo', 'danger'); return; }
+
+  try {
+    const resp = await fetch(BACKEND_URL + '/api/combos/save', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        adminPin: currentUser ? currentUser.id : '',
+        id: editId || undefined,
+        name,
+        combo_price: parseFloat(price),
+        description,
+        child_items: comboChildItems
+      })
+    });
+    const data = await resp.json();
+    if (resp.ok) {
+      showToast(editId ? t('admin.combos.updated') : t('admin.combos.added'), 'success');
+      comboData = data;
+      cancelEditCombo();
+      renderCombosAdmin();
+      // Refresh POS grid to show new combo
+      renderCategories();
+      renderItems();
+    } else {
+      showToast(data.message || 'Error saving combo', 'danger');
+    }
+  } catch (e) {
+    showToast('Network error', 'danger');
+  }
+}
+
+/** Edit a combo - populate form with combo data */
+function editCombo(comboId) {
+  const combos = (comboData && comboData.combos) || [];
+  const combo = combos.find(c => c.id === comboId);
+  if (!combo) return;
+  document.getElementById('editComboId').value = combo.id;
+  document.getElementById('comboName').value = combo.name;
+  document.getElementById('comboPrice').value = combo.combo_price;
+  document.getElementById('comboDescription').value = combo.description || '';
+  document.getElementById('comboFormTitle').textContent = t('admin.combos.edit_title');
+  document.getElementById('comboSaveBtn').textContent = t('admin.combos.save_btn');
+  document.getElementById('comboCancelBtn').style.display = 'inline-block';
+  comboChildItems = (combo.child_items || []).map(ci => ({...ci}));
+  renderComboChildItems();
+}
+
+/** Cancel editing a combo */
+function cancelEditCombo() {
+  document.getElementById('editComboId').value = '';
+  document.getElementById('comboName').value = '';
+  document.getElementById('comboPrice').value = '';
+  document.getElementById('comboDescription').value = '';
+  document.getElementById('comboFormTitle').textContent = t('admin.combos.add_title');
+  document.getElementById('comboSaveBtn').textContent = t('admin.combos.save_btn');
+  document.getElementById('comboCancelBtn').style.display = 'none';
+  comboChildItems = [];
+  renderComboChildItems();
+}
+
+/** Delete a combo */
+async function deleteCombo(comboId) {
+  if (!confirm('Delete this combo?')) return;
+  try {
+    const resp = await fetch(BACKEND_URL + '/api/combos/delete', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ adminPin: currentUser ? currentUser.id : '', id: comboId })
+    });
+    const data = await resp.json();
+    if (resp.ok) {
+      showToast(t('admin.combos.deleted'), 'success');
+      comboData = data;
+      renderCombosAdmin();
+      renderCategories();
+      renderItems();
+    } else {
+      showToast(data.message || 'Error deleting combo', 'danger');
+    }
+  } catch (e) {
+    showToast('Network error', 'danger');
+  }
+}
+
+/** Toggle combo active/inactive */
+async function toggleCombo(comboId) {
+  try {
+    const resp = await fetch(BACKEND_URL + '/api/combos/toggle', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ adminPin: currentUser ? currentUser.id : '', id: comboId })
+    });
+    const data = await resp.json();
+    if (resp.ok) {
+      showToast(t('admin.combos.toggled'), 'success');
+      comboData = data;
+      renderCombosAdmin();
+      renderCategories();
+      renderItems();
+    } else {
+      showToast(data.message || 'Error toggling combo', 'danger');
+    }
+  } catch (e) {
+    showToast('Network error', 'danger');
+  }
+}
+
+/** Add a combo to cart with confirmation overlay */
+function addComboToCart(combo) {
+  // Build confirmation message listing child items
+  const childrenList = combo.child_items.map(ci =>
+    `${escHtml(ci.name)} x${ci.qty || 1}`
+  ).join('\n');
+
+  // Create a simple confirmation overlay
+  const overlay = document.createElement('div');
+  overlay.className = 'overlay active';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:1000;';
+  
+  overlay.innerHTML = `<div style="background:var(--card);border-radius:12px;padding:24px;max-width:420px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.4);">
+    <h3 style="margin-bottom:8px;">🍱 ${escHtml(combo.name)} — $${parseFloat(combo.combo_price).toFixed(2)}</h3>
+    <p style="color:var(--text2);margin-bottom:12px;">${t('combo.contains')}</p>
+    <div style="background:var(--bg);border-radius:8px;padding:12px;margin-bottom:16px;">
+      ${combo.child_items.map(ci => 
+        `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:15px;">
+          <span>${escHtml(ci.name)}</span>
+          <span style="color:var(--accent);">x${ci.qty || 1}</span>
+        </div>`
+      ).join('')}
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button onclick="this.closest('.overlay').remove()" class="outline" style="flex:1;min-height:48px;">${t('cancel')}</button>
+      <button onclick="confirmAddCombo(this)" class="accent" style="flex:2;min-height:48px;font-size:16px;" data-combo-id="${escJs(combo.id)}">${t('combo.confirm_add')}</button>
+    </div>
+  </div>`;
+  
+  document.body.appendChild(overlay);
+}
+
+/** Confirm and execute adding combo to cart */
+function confirmAddCombo(btn) {
+  const overlay = btn.closest('.overlay');
+  const comboId = btn.dataset.comboId;
+  const combos = (comboData && comboData.combos) || [];
+  const combo = combos.find(c => c.id === comboId);
+  if (!combo) return;
+
+  // Add the combo as a single cart item with child_items metadata
+  cart.push({
+    name: '🍱 ' + combo.name,
+    price: parseFloat(combo.combo_price),
+    qty: 1,
+    category: '🍱 Combos',
+    is_combo: true,
+    combo_id: combo.id,
+    child_items: (combo.child_items || []).map(ci => ({...ci})),
+    base_price: parseFloat(combo.combo_price)
+  });
+
+  overlay.remove();
+  renderCart();
+  showToast('🍱 ' + combo.name + ' added!', 'success');
+}
+
+/** Get active combos for POS display */
+function getActiveCombos() {
+  if (!comboData || !comboData.combos) return [];
+  return comboData.combos.filter(c => c.active !== false);
 }
 </script>
 </body>
