@@ -7853,7 +7853,7 @@ def export_timesheet_pdf():
         ot_str = f'<span class="ot">{ot_hours:.2f}</span>' if ot_hours > 0 else '0.00'
         rate_str = f'${pay_rate:.2f}/hr' if pay_rate > 0 else '—'
         pay_str = f'${estimated_pay:.2f}' if pay_rate > 0 else '—'
-        html += f"<tr><td><strong>{esc(ud['user_name'])}</strong> ({uid})</td><td>{total_hours:.2f}</td><td>{total_break:.2f}</td><td>{total_paid:.2f}</td><td>{ot_str}</td><td>{rate_str}</td><td>{pay_str}</td><td>{ud['shift_count']}</td></tr>"
+        html += f"<tr><td><strong>{_html.escape(ud['user_name'])}</strong> ({uid})</td><td>{total_hours:.2f}</td><td>{total_break:.2f}</td><td>{total_paid:.2f}</td><td>{ot_str}</td><td>{rate_str}</td><td>{pay_str}</td><td>{ud['shift_count']}</td></tr>"
 
     html += f"""</tbody>
 <tfoot>
@@ -7881,7 +7881,7 @@ def export_timesheet_pdf():
 
         html += f"""<div class="employee-section">
 <div class="employee-header">
-  <h3>👤 {esc(ud['user_name'])} ({uid})</h3>
+  <h3>👤 {_html.escape(ud['user_name'])} ({uid})</h3>
   <div class="emp-totals">{ud['shift_count']} shift(s) | {total_hours:.2f} hrs total | {total_break:.2f} hrs break | {total_paid:.2f} hrs paid | Est. ${estimated_pay:.2f}</div>
 </div>
 <table class="shift-table">
@@ -7925,7 +7925,7 @@ def export_timesheet_pdf():
                 dur = s.get('duration_hours', 0)
                 brk = s.get('break_hours', 0)
                 paid = s.get('paid_hours', dur)
-                notes = esc(s.get('notes', ''))
+                notes = _html.escape(s.get('notes', ''))
                 late_mins = s.get('late_minutes')
                 late_badge = f' <span class="badge badge-late">🕐 {late_mins}min late</span>' if late_mins else ''
                 # Show date on first row of day only
@@ -7945,7 +7945,7 @@ def export_timesheet_pdf():
                 ot_total += round(wh - OT_WEEKLY, 2)
         emp_ot_cell = '—' if ot_total == 0 else '<span class="badge badge-ot">⬆ {:.2f}h OT</span>'.format(ot_total)
         html += '<tr class="emp-total-row"><td colspan="2"><strong>🏁 {} Total</strong></td><td></td><td><strong>{:.2f}h</strong></td><td><strong>{:.2f}h</strong></td><td><strong>{:.2f}h</strong></td><td>{}</td><td></td></tr>'.format(
-            esc(ud["user_name"]), total_hours, total_break, total_paid, emp_ot_cell)
+            _html.escape(ud["user_name"]), total_hours, total_break, total_paid, emp_ot_cell)
 
         html += '</tbody></table></div>'
 
