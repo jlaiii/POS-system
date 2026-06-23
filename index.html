@@ -1355,6 +1355,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
         <button onclick="switchAdminSection('cashdrawer')" id="asCashdrawer">💰 Cash Drawer</button>
         <button onclick="switchAdminSection('servicecharge')" id="asServicecharge">🔧 Service Charge</button>
         <button onclick="switchAdminSection('combos')" id="asCombos">🍱 Combos</button>
+        <button onclick="switchAdminSection('tickets')" id="asTickets" data-i18n="admin.tickets">📋 Tickets</button>
       </div>
       <div id="adminContent">
         <!-- Stats -->
@@ -2015,6 +2016,26 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
             </div>
           </div>
           <div id="combosList"><div class="empty-state">Loading combos...</div></div>
+        </div>
+        <!-- Tickets / Ticket Queue Admin -->
+        <div id="secTickets" class="admin-section">
+          <h3>📋 Ticket Queue</h3>
+          <p style="color:var(--text2);margin-bottom:16px;font-size:14px;" data-i18n="admin.tickets.desc">Review and respond to employee tickets and requests.</p>
+          <div id="ticketQueueLoading"><div class="spinner"></div> Loading tickets...</div>
+          <div id="ticketQueueContent" style="display:none;">
+            <div class="ticket-queue-layout" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+              <!-- Pending Column -->
+              <div class="card">
+                <h4 style="margin-bottom:12px;color:#f39c12;">⏳ Pending</h4>
+                <div id="ticketQueuePending"><div class="empty-state">No pending tickets.</div></div>
+              </div>
+              <!-- Resolved Column -->
+              <div class="card">
+                <h4 style="margin-bottom:12px;color:var(--text2);">✅ Resolved</h4>
+                <div id="ticketQueueResolved"><div class="empty-state">No resolved tickets yet.</div></div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -2732,6 +2753,8 @@ const L10N = {
     'admin.combos.updated': 'Combo updated!',
     'admin.combos.deleted': 'Combo deleted!',
     'admin.combos.toggled': 'Combo toggled!',
+    'admin.tickets': '📋 Tickets',
+    'admin.tickets.desc': 'Review and respond to employee tickets and requests.',
     'combo.add_to_cart': '➕ Add Combo',
     'combo.contains': 'Includes:',
     'combo.badge': '🧩 Combo',
@@ -3207,6 +3230,8 @@ const L10N = {
     'admin.combos.updated': '¡Combo actualizado!',
     'admin.combos.deleted': '¡Combo eliminado!',
     'admin.combos.toggled': '¡Combo cambiado!',
+    'admin.tickets': '📋 Tickets',
+    'admin.tickets.desc': 'Revise y responda a los tickets y solicitudes de los empleados.',
     'combo.add_to_cart': '➕ Añadir Combo',
     'combo.contains': 'Incluye:',
     'combo.badge': '🧩 Combo',
@@ -4923,6 +4948,159 @@ function renderMyTickets(tickets) {
     </div>`;
   });
   listEl.innerHTML = html;
+}
+
+// ═══════════ ADMIN TICKET QUEUE ═══════════
+
+async function loadTicketQueue() {
+  const loadingEl = document.getElementById('ticketQueueLoading');
+  const contentEl = document.getElementById('ticketQueueContent');
+  if (!loadingEl || !contentEl) return;
+  loadingEl.style.display = '';
+  contentEl.style.display = 'none';
+
+  try {
+    const res = await fetch(BACKEND_URL + '/api/tickets/queue', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ adminPin: currentUser.id })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      loadingEl.innerHTML = '<div class="empty-state">' + escHtml(data.message || 'Failed to load tickets.') + '</div>';
+      return;
+    }
+    loadingEl.style.display = 'none';
+    contentEl.style.display = '';
+    renderTicketQueue(data.pending || [], data.resolved || []);
+  } catch (e) {
+    loadingEl.innerHTML = '<div class="empty-state">Network error loading tickets.</div>';
+  }
+}
+
+function renderTicketQueue(pending, resolved) {
+  const pendingEl = document.getElementById('ticketQueuePending');
+  const resolvedEl = document.getElementById('ticketQueueResolved');
+
+  // Render pending
+  if (!pending || pending.length === 0) {
+    pendingEl.innerHTML = '<div class="empty-state">No pending tickets.</div>';
+  } else {
+    let html = '';
+    pending.forEach(t => {
+      html += renderTicketCard(t, true);
+    });
+    pendingEl.innerHTML = html;
+  }
+
+  // Render resolved
+  if (!resolved || resolved.length === 0) {
+    resolvedEl.innerHTML = '<div class="empty-state">No resolved tickets yet.</div>';
+  } else {
+    let html = '';
+    resolved.forEach(t => {
+      html += renderTicketCard(t, false);
+    });
+    resolvedEl.innerHTML = html;
+  }
+}
+
+function renderTicketCard(t, isPending) {
+  const typeIcon = {time_off: '🕐', issue: '🐛', feedback: '💬', other: '📝'}[t.type] || '📝';
+  const typeLabels = {
+    time_off: 'Time Off',
+    issue: 'Issue',
+    feedback: 'Feedback',
+    other: 'Other'
+  };
+  const priorityBadge = t.priority === 'urgent'
+    ? '<span style="background:#e74c3c;color:#fff;padding:2px 8px;border-radius:8px;font-size:11px;font-weight:700;margin-left:6px;">🔴 Urgent</span>'
+    : t.priority === 'low'
+    ? '<span style="background:#95a5a6;color:#fff;padding:2px 8px;border-radius:8px;font-size:11px;font-weight:700;margin-left:6px;">🟢 Low</span>'
+    : '';
+
+  const statusBadge = t.status === 'approved'
+    ? '<span style="background:#2ecc71;color:#fff;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700;">✅ Approved</span>'
+    : t.status === 'denied'
+    ? '<span style="background:#e74c3c;color:#fff;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700;">❌ Denied</span>'
+    : '<span style="background:#f39c12;color:#000;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700;">⏳ Pending</span>';
+
+  const date = t.created_at ? new Date(t.created_at).toLocaleDateString() + ' ' + new Date(t.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
+  const timeInfo = t.date_from && t.date_to
+    ? `<div style="font-size:12px;color:var(--text2);margin-top:4px;">📅 ${t.date_from} → ${t.date_to}${t.total_days ? ' (' + t.total_days + ' day' + (t.total_days !== 1 ? 's' : '') + ')' : ''}</div>`
+    : '';
+
+  const respondBy = t.responded_by ? ` by ${escHtml(t.responded_by)}` : '';
+  const respondedAt = t.responded_at ? ' on ' + new Date(t.responded_at).toLocaleDateString() : '';
+
+  let actionsHtml = '';
+  if (isPending) {
+    actionsHtml = `<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="success" onclick="respondToTicket('${t.id}','approved')" style="min-height:40px;padding:8px 16px;font-size:13px;">✅ Approve</button>
+      <button class="danger" onclick="showDenyPrompt('${t.id}')" style="min-height:40px;padding:8px 16px;font-size:13px;">❌ Deny</button>
+    </div>`;
+  }
+
+  return `<div class="card" style="margin-bottom:10px;padding:12px 14px;${t.status === 'denied' ? 'opacity:0.8;' : ''}">
+    <div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:4px;">
+      <div>
+        <strong>${typeIcon} ${escHtml(t.subject)}</strong>
+        ${priorityBadge}
+        ${!isPending ? '<span style="margin-left:4px;">' + statusBadge + '</span>' : ''}
+      </div>
+      <span style="color:var(--text2);font-size:11px;">${date}</span>
+    </div>
+    <div style="font-size:12px;color:var(--text2);margin-top:2px;">
+      👤 ${escHtml(t.user_name || 'Unknown')} · ${typeLabels[t.type] || t.type}
+      ${t.priority ? ' · Priority: ' + t.priority : ''}
+    </div>
+    ${timeInfo}
+    ${t.description ? '<div style="color:var(--text);font-size:13px;margin-top:6px;padding:6px 8px;background:var(--bg);border-radius:var(--radius);">' + escHtml(t.description) + '</div>' : ''}
+    ${t.response_note ? '<div style="border-top:1px solid var(--border);margin-top:8px;padding-top:6px;font-size:12px;color:var(--text2);"><em>Response: ' + escHtml(t.response_note) + '</em></div>' : ''}
+    ${t.responded_at ? '<div style="font-size:11px;color:var(--text2);margin-top:4px;">🕐 ' + (t.status === 'approved' ? 'Approved' : 'Denied') + respondBy + respondedAt + '</div>' : ''}
+    <div style="font-size:10px;color:var(--text2);margin-top:4px;">ID: ${escHtml(t.id)}</div>
+    ${actionsHtml}
+  </div>`;
+}
+
+async function respondToTicket(ticketId, action) {
+  let reason = '';
+  if (action === 'denied') {
+    reason = prompt('Reason for denial (required):');
+    if (reason === null) return; // cancelled
+    reason = reason.trim();
+    if (!reason) {
+      showToast('Reason is required when denying a ticket.', 'error');
+      return;
+    }
+  }
+
+  try {
+    const res = await fetch(BACKEND_URL + '/api/tickets/respond', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        adminPin: currentUser.id,
+        ticket_id: ticketId,
+        action: action,
+        reason: reason
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(data.message || 'Failed to respond.', 'error');
+      return;
+    }
+    showToast(data.message || 'Ticket ' + action + ' successfully!', 'success');
+    loadTicketQueue();
+  } catch (e) {
+    showToast('Network error responding to ticket.', 'error');
+  }
+}
+
+function showDenyPrompt(ticketId) {
+  // Use a small modal/prompt for deny reason
+  respondToTicket(ticketId, 'denied');
 }
 
 // ═══════════ POS TAB ═══════════
@@ -6850,6 +7028,7 @@ function switchAdminSection(sec) {
   else if (sec === 'cashdrawer') loadCashDrawer();
   else if (sec === 'servicecharge') loadServiceChargeConfig();
   else if (sec === 'combos') loadCombos();
+  else if (sec === 'tickets') loadTicketQueue();
 }
 
 // ═══════════ TIMESHEET CONFIG ═══════════
