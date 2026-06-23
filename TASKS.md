@@ -349,7 +349,7 @@ New `tickets.json` data store. Each ticket:
 
 - [x] worker-2 **Pay history CSV export** — "Export My Pay History" button at bottom of Pay History. Added `POST /api/employee/pay_history_csv` endpoint returning CSV. 📥 Export CSV button in pay history card header triggers download via `downloadCSV()`. i18n EN + ES. [worker-2]
 
-- [~] worker-1 **"Request Pay Review" action** — "⚠️ Request Review" button on any pay period or shift. Opens pre-filled ticket form (type: `pay_review`).
+- [x] worker-1 **"Request Pay Review" action** — "⚠️ Request Review" button on any pay period or shift. Opens pre-filled ticket form (type: `pay_review`). [worker-1 — Added ⚠️ button to current period card and each pay history period card. `openPayReviewTicket()` switches to Requests tab and pre-fills type=pay_review, subject "Pay Review — [period]", and description template. Added 'pay_review' as valid ticket type in backend. i18n EN+ES.]
 
 ### Priority: MEDIUM
 

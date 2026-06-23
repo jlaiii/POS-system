@@ -10044,8 +10044,8 @@ def ticket_submit():
     if not user_id or not ticket_type or not subject:
         return jsonify({'message': 'userId, type, and subject are required.'}), 400
 
-    if ticket_type not in ('time_off', 'issue', 'feedback', 'other'):
-        return jsonify({'message': 'Invalid type. Must be: time_off, issue, feedback, or other.'}), 400
+    if ticket_type not in ('time_off', 'issue', 'feedback', 'other', 'pay_review'):
+        return jsonify({'message': 'Invalid type. Must be: time_off, issue, feedback, pay_review, or other.'}), 400
 
     # Build ticket
     users = load_json_data(USERS_FILE)

@@ -2078,6 +2078,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
           <option value="time_off" data-i18n="requests.type.time_off">🕐 Time Off Request</option>
           <option value="issue" data-i18n="requests.type.issue">🐛 Report Issue</option>
           <option value="feedback" data-i18n="requests.type.feedback">💬 Feedback / Suggestion</option>
+          <option value="pay_review" style="display:none;" data-i18n="requests.type.pay_review">💰 Pay Review</option>
           <option value="other" data-i18n="requests.type.other">📝 Other</option>
         </select>
         <select id="requestPriority" style="flex:1;min-width:120px;display:none;">
@@ -2174,6 +2175,9 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
           <div id="myPayProgressBar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--accent),#ff6b6b);border-radius:4px;transition:width 0.5s;"></div>
         </div>
         <div style="font-size:11px;color:var(--text2);margin-top:4px;" data-i18n="mypay.pay_rate_hint">Pay rate determines estimated gross</div>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="outline" onclick="openPayReviewTicket('current')" style="font-size:13px;padding:8px 14px;min-height:44px;" data-i18n="mypay.request_review_cur">⚠️ Request Review of Current Period</button>
       </div>
     </div>
 
@@ -2921,6 +2925,7 @@ const L10N = {
     'requests.type.time_off': '🕐 Time Off Request',
     'requests.type.issue': '🐛 Report Issue',
     'requests.type.feedback': '💬 Feedback / Suggestion',
+    'requests.type.pay_review': '💰 Pay Review',
     'requests.type.other': '📝 Other',
     'requests.priority.normal': '🔵 Normal',
     'requests.priority.urgent': '🔴 Urgent',
@@ -2939,6 +2944,7 @@ const L10N = {
     'requests.type_label.time_off': 'Time Off Request',
     'requests.type_label.issue': 'Issue Report',
     'requests.type_label.feedback': 'Feedback',
+    'requests.type_label.pay_review': 'Pay Review',
     'requests.type_label.other': 'Request',
     'tab.mypay': '💰 My Pay',
     'mypay.title': '💰 My Pay',
@@ -2962,6 +2968,10 @@ const L10N = {
     'mypay.history_subtitle': 'Past pay periods — tap to expand for shift breakdown',
     'mypay.period_total': 'Period Total',
     'mypay.export_csv': '📥 Export CSV',
+    'mypay.request_review': '⚠️ Request Review',
+    'mypay.request_review_cur': '⚠️ Request Review of Current Period',
+    'mypay.pay_review_title': 'Pay Review — {period}',
+    'mypay.pay_review_desc': 'I would like a review of my pay for this period. Details:',
   },
   es: {
     'app.title': '🍽️ Sistema POS',
@@ -3427,6 +3437,7 @@ const L10N = {
     'requests.type.time_off': '🕐 Solicitar Tiempo Libre',
     'requests.type.issue': '🐛 Reportar Problema',
     'requests.type.feedback': '💬 Comentario / Sugerencia',
+    'requests.type.pay_review': '💰 Revisión de Pago',
     'requests.type.other': '📝 Otro',
     'requests.priority.normal': '🔵 Normal',
     'requests.priority.urgent': '🔴 Urgente',
@@ -3445,6 +3456,7 @@ const L10N = {
     'requests.type_label.time_off': 'Solicitud de Tiempo Libre',
     'requests.type_label.issue': 'Reporte de Problema',
     'requests.type_label.feedback': 'Comentario',
+    'requests.type_label.pay_review': 'Revisión de Pago',
     'requests.type_label.other': 'Solicitud',
     'tab.mypay': '💰 Mi Pago',
     'mypay.title': '💰 Mi Pago',
@@ -3468,6 +3480,10 @@ const L10N = {
     'mypay.history_subtitle': 'Períodos de pago anteriores — toque para expandir',
     'mypay.period_total': 'Total del Período',
     'mypay.export_csv': '📥 Exportar CSV',
+    'mypay.request_review': '⚠️ Solicitar Revisión',
+    'mypay.request_review_cur': '⚠️ Solicitar Revisión del Período Actual',
+    'mypay.pay_review_title': 'Revisión de Pago — {period}',
+    'mypay.pay_review_desc': 'Me gustaría una revisión de mi pago para este período. Detalles:',
   }
 };
 
@@ -5382,7 +5398,7 @@ function renderMyTickets(tickets) {
 
   let html = '';
   tickets.forEach(t => {
-    const typeIcon = {time_off: '🕐', issue: '🐛', feedback: '💬', other: '📝'}[t.type] || '📝';
+    const typeIcon = {time_off: '🕐', issue: '🐛', feedback: '💬', pay_review: '💰', other: '📝'}[t.type] || '📝';
     const statusBadge = t.status === 'approved' ? '<span style="background:#2ecc71;color:#fff;padding:3px 10px;border-radius:10px;font-size:12px;font-weight:700;">✅ Approved</span>'
       : t.status === 'denied' ? '<span style="background:#e74c3c;color:#fff;padding:3px 10px;border-radius:10px;font-size:12px;font-weight:700;">❌ Denied</span>'
       : '<span style="background:#f39c12;color:#000;padding:3px 10px;border-radius:10px;font-size:12px;font-weight:700;">⏳ Pending</span>';
@@ -5533,11 +5549,12 @@ function renderTicketQueue(pending, resolved) {
 }
 
 function renderTicketCard(t, isPending) {
-  const typeIcon = {time_off: '🕐', issue: '🐛', feedback: '💬', other: '📝'}[t.type] || '📝';
+  const typeIcon = {time_off: '🕐', issue: '🐛', feedback: '💬', pay_review: '💰', other: '📝'}[t.type] || '📝';
   const typeLabels = {
     time_off: 'Time Off',
     issue: 'Issue',
     feedback: 'Feedback',
+    pay_review: 'Pay Review',
     other: 'Other'
   };
   const priorityBadge = t.priority === 'urgent'
@@ -9971,6 +9988,7 @@ function renderMyPay(data) {
     html += '      <span style="color:var(--accent);font-weight:500;">' + rateStr + '</span>';
     html += '      <span style="color:#2ecc71;font-weight:600;">' + grossStr + '</span>';
     html += '      <button class="ghost" onclick="event.stopPropagation();downloadPayStub(\'' + period.start_date + '\')" data-stub="' + period.start_date + '" style="font-size:16px;padding:6px 10px;min-width:48px;min-height:40px;" title="Download Pay Stub (PDF)">📄</button>';
+    html += '      <button class="ghost" onclick="event.stopPropagation();openPayReviewTicket(\'' + period.start_date + '\',\'' + period.end_date + '\')" style="font-size:13px;padding:6px 10px;min-width:48px;min-height:40px;color:#ffc107;" title="Request Pay Review">⚠️</button>';
     html += '    </div>';
     html += '  </div>';
     html += '  <div id="payPeriodDetails_' + period.start_date + '" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">';
@@ -10057,6 +10075,48 @@ async function downloadPayStub(startDate) {
       btn.textContent = '📄';
     }
   }
+}
+
+function openPayReviewTicket(periodStart, periodEnd) {
+  /** Switch to Requests tab and pre-fill the ticket form for a pay review. */
+  if (!currentUser || !currentUser.id) return;
+
+  // Build the period label for the subject
+  let periodLabel = '';
+  if (periodStart === 'current') {
+    const cp = document.getElementById('myPayCurrentDates');
+    periodLabel = cp ? cp.textContent.trim() : 'Current Period';
+  } else if (periodStart && periodEnd) {
+    periodLabel = periodStart + ' — ' + periodEnd;
+  } else {
+    periodLabel = periodStart || 'Unknown';
+  }
+
+  // Switch to Requests tab
+  switchTab('requests');
+
+  // Set the type to pay_review (hidden option, select it programmatically)
+  const typeSelect = document.getElementById('requestType');
+  if (typeSelect) {
+    typeSelect.value = 'pay_review';
+    onRequestTypeChange();
+  }
+
+  // Pre-fill subject and description
+  const subjectEl = document.getElementById('requestSubject');
+  const descEl = document.getElementById('requestDescription');
+  if (subjectEl) {
+    subjectEl.value = (t('mypay.pay_review_title') || 'Pay Review — {period}').replace('{period}', periodLabel);
+  }
+  if (descEl) {
+    descEl.value = (t('mypay.pay_review_desc') || 'I would like a review of my pay for this period. Details:');
+  }
+
+  // Scroll to top of the form
+  const formCard = document.querySelector('#requestsTab .card');
+  if (formCard) formCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  showToast('📝 Pre-filled pay review ticket — add details and submit.', 'info');
 }
 
 async function exportPayHistoryCSV() {
