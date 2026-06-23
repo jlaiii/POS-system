@@ -1588,6 +1588,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
             </div>
             <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
               <button class="accent" onclick="exportShiftsCSV()" style="font-size:13px;padding:10px 16px;min-height:40px;">📥 Export Shifts (CSV)</button>
+              <button class="outline" onclick="exportTimesheetPDF()" style="font-size:13px;padding:10px 16px;min-height:40px;">📄 Export Timesheet (PDF)</button>
             </div>
             <div id="shiftList"><div class="empty-state" id="shiftListStatus">Loading shifts...</div></div>
           </div>
@@ -4978,6 +4979,29 @@ async function exportShiftsCSV() {
   } catch(e) {
     showToast('Network error', 'error');
   }
+}
+
+async function exportTimesheetPDF() {
+  try {
+    const params = { adminPin: currentUser.id };
+    const dateFrom = document.getElementById('shiftsDateFrom')?.value || '';
+    const dateTo = document.getElementById('shiftsDateTo')?.value || '';
+    if (dateFrom) params.date_from = dateFrom;
+    if (dateTo) params.date_to = dateTo;
+    const r = await fetch(BACKEND_URL + '/api/export/timesheet_pdf', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params)
+    });
+    if (!r.ok) { const d = await r.json(); showToast(d.message || 'Export failed', 'danger'); return; }
+    const data = await r.json();
+    // Open in new window for printing
+    const w = window.open('', '_blank');
+    w.document.write(data.html);
+    w.document.close();
+    w.focus();
+    setTimeout(() => { w.print(); }, 500);
+    showToast('✅ Timesheet PDF report opened!', 'success');
+  } catch(e) { showToast('Network error', 'error'); }
 }
 
 // ═══════════ LOGOUT ═══════════

@@ -7653,6 +7653,316 @@ def export_timesheet_csv():
     return jsonify({'csv': csv_content, 'filename': 'timesheet_export.csv'})
 
 
+@app.route('/api/export/timesheet_pdf', methods=['POST'])
+def export_timesheet_pdf():
+    """Generate a printable HTML timesheet report (browser Print → PDF) from employee shift data.
+    Shows employee name, shift dates/times, daily totals, period total, overtime, estimated pay,
+    and signature line. Page breaks per employee."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+
+    if not check_perm(admin_pin, "view_timesheet"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    shift_log = load_json_data(SHIFT_FILE)
+    users = load_json_data(USERS_FILE)
+    ts_config = get_timesheet_config()
+    OT_DAILY = ts_config.get('overtime_daily_threshold', 8)
+    OT_WEEKLY = ts_config.get('overtime_weekly_threshold', 40)
+
+    date_from = (data.get('date_from') or '').strip()
+    date_to = (data.get('date_to') or '').strip()
+
+    def shift_in_range(entry):
+        clock_in_str = entry.get('clock_in_time', '')
+        if not clock_in_str:
+            return False
+        try:
+            clock_in_dt = datetime.fromisoformat(clock_in_str)
+        except (ValueError, TypeError):
+            return False
+        if date_from:
+            try:
+                dt_from = datetime.fromisoformat(date_from)
+                if clock_in_dt < dt_from:
+                    return False
+            except ValueError:
+                pass
+        if date_to:
+            try:
+                if 'T' not in date_to:
+                    dt_to = datetime.fromisoformat(date_to + 'T23:59:59')
+                else:
+                    dt_to = datetime.fromisoformat(date_to)
+                if clock_in_dt > dt_to:
+                    return False
+            except ValueError:
+                pass
+        return True
+
+    filtered_shifts = [entry for entry in shift_log if shift_in_range(entry)]
+
+    if not filtered_shifts:
+        now_str = datetime.now().strftime('%Y-%m-%d %H:%M')
+        period_label = f"{date_from or 'Earliest'} to {date_to or 'Latest'}"
+        html = f"""<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>Timesheet Report</title>
+<style>
+  @page {{ margin: 20mm 15mm; }}
+  body {{ font-family: 'Segoe UI', Arial, sans-serif; font-size: 11pt; color: #222; line-height: 1.4; }}
+  .empty {{ text-align: center; padding: 60px 20px; color: #999; }}
+</style></head>
+<body>
+<div class="empty">
+  <h2>📄 Timesheet Report</h2>
+  <p>No shifts found for the selected period.</p>
+  <p><strong>Period:</strong> {period_label}</p>
+  <p><strong>Generated:</strong> {now_str}</p>
+</div>
+</body>
+</html>"""
+        return jsonify({'html': html, 'filename': f'timesheet_report_{date_from or "all"}_{date_to or "all"}.html'})
+
+    # Group shifts by user
+    user_data_map = {}
+    for entry in filtered_shifts:
+        uid = entry.get('user_id', 'unknown')
+        if uid not in users:
+            continue
+        if uid not in user_data_map:
+            user_data_map[uid] = {
+                'user_name': entry.get('user_name', users[uid].get('name', 'Unknown')),
+                'total_hours': 0.0,
+                'total_break_hours': 0.0,
+                'total_paid_hours': 0.0,
+                'shift_count': 0,
+                'shifts': []
+            }
+        ud = user_data_map[uid]
+        dur = entry.get('duration_hours', 0)
+        break_hrs = entry.get('break_hours', 0)
+        paid_hrs = entry.get('paid_hours', dur)
+        ud['total_hours'] += dur
+        ud['total_break_hours'] += break_hrs
+        ud['total_paid_hours'] += paid_hrs
+        ud['shift_count'] += 1
+        ud['shifts'].append(entry)
+
+    # Weekly OT by user
+    weekly_hours_by_user = defaultdict(lambda: defaultdict(float))
+    for entry in filtered_shifts:
+        uid = entry.get('user_id', '')
+        ck = entry.get('clock_in_time', '')
+        if not ck:
+            continue
+        try:
+            dt = datetime.fromisoformat(ck)
+            week_key = f"{dt.isocalendar()[0]}-W{dt.isocalendar()[1]:02d}"
+            weekly_hours_by_user[uid][week_key] += entry.get('duration_hours', 0)
+        except (ValueError, TypeError):
+            pass
+
+    now_str = datetime.now().strftime('%Y-%m-%d %H:%M')
+    period_label = f"{date_from or 'Earliest'} to {date_to or 'Latest'}"
+
+    # Build HTML
+    html = """<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>Timesheet Report</title>
+<style>
+  @page { margin: 20mm 15mm; }
+  @media print {
+    .employee-section { page-break-before: always; }
+    .employee-section:first-of-type { page-break-before: avoid; }
+    .page-break { page-break-before: always; }
+  }
+  body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 10pt; color: #222; line-height: 1.4; margin: 0; padding: 0; }
+  .report-header { text-align: center; margin-bottom: 20px; border-bottom: 3px solid #1a1a2e; padding-bottom: 10px; }
+  .report-header h1 { font-size: 20pt; margin: 0 0 4px 0; color: #1a1a2e; letter-spacing: 0.5px; }
+  .report-header .meta { font-size: 9pt; color: #666; margin: 2px 0; }
+  .summary-table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
+  .summary-table th { background: #1a1a2e; color: #fff; padding: 8px 10px; text-align: left; font-size: 9pt; }
+  .summary-table td { padding: 6px 10px; border-bottom: 1px solid #ddd; font-size: 9pt; }
+  .summary-table tr:nth-child(even) { background: #f8f8fc; }
+  .total-row { font-weight: bold; background: #eef0f7 !important; }
+  .ot { color: #e94560; font-weight: 600; }
+  .section-title { font-size: 14pt; font-weight: 700; margin: 0 0 8px 0; color: #1a1a2e; border-bottom: 2px solid #1a1a2e; padding-bottom: 4px; }
+  .employee-section { margin-bottom: 30px; padding-top: 10px; }
+  .employee-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+  .employee-header h3 { margin: 0; font-size: 13pt; color: #16213e; }
+  .employee-header .emp-totals { font-size: 10pt; color: #555; }
+  .shift-table { width: 100%; border-collapse: collapse; margin-bottom: 6px; }
+  .shift-table th { background: #16213e; color: #fff; padding: 6px 8px; text-align: left; font-size: 8.5pt; }
+  .shift-table td { padding: 5px 8px; border-bottom: 1px solid #ddd; font-size: 8.5pt; }
+  .shift-table tr:nth-child(even) { background: #f8f8fc; }
+  .daily-total-row { font-weight: 600; background: #e8ecf4 !important; }
+  .daily-total-row td { border-top: 2px solid #16213e; }
+  .emp-total-row { font-weight: bold; background: #dde0ed !important; }
+  .sig-line { margin-top: 40px; padding-top: 10px; border-top: 1px solid #999; }
+  .sig-line .sig-label { display: inline-block; width: 180px; margin-right: 40px; }
+  .sig-line .sig-x { display: inline-block; width: 250px; border-bottom: 1px solid #222; height: 1.2em; margin-right: 40px; }
+  .footer { margin-top: 30px; font-size: 7.5pt; color: #999; text-align: center; border-top: 1px solid #ddd; padding-top: 8px; }
+  .badge { display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 8pt; font-weight: 600; }
+  .badge-ot { background: #ffe0e0; color: #e94560; }
+  .badge-late { background: #fff3cd; color: #856404; }
+</style></head>
+<body>
+
+<div class="report-header">
+  <h1>📊 Timesheet Report</h1>
+  <div class="meta"><strong>Period:</strong> """ + period_label + """</div>
+  <div class="meta"><strong>Generated:</strong> """ + now_str + """</div>
+  <div class="meta"><strong>Total Employees:</strong> """ + str(len(user_data_map)) + """ | <strong>Total Shifts:</strong> """ + str(len(filtered_shifts)) + """</div>
+</div>"""
+
+    # Summary table
+    html += '<h2 class="section-title" style="font-size:13pt;">Employee Summary</h2>'
+    html += """<table class="summary-table">
+<thead><tr>
+  <th>Employee</th>
+  <th>Total Hours</th>
+  <th>Break (hrs)</th>
+  <th>Paid Hours</th>
+  <th>Overtime</th>
+  <th>Pay Rate</th>
+  <th>Est. Gross Pay</th>
+  <th>Shifts</th>
+</tr></thead>
+<tbody>"""
+    grand_total_hours = 0
+    grand_total_paid = 0
+    grand_total_pay = 0
+    grand_total_ot = 0
+
+    for uid, ud in sorted(user_data_map.items(), key=lambda x: x[1]['user_name']):
+        total_hours = round(ud['total_hours'], 2)
+        total_paid = round(ud['total_paid_hours'], 2)
+        total_break = round(ud['total_break_hours'], 2)
+        week_ots = []
+        for wk, wh in weekly_hours_by_user.get(uid, {}).items():
+            if wh > OT_WEEKLY:
+                week_ots.append(round(wh - OT_WEEKLY, 2))
+        ot_hours = round(sum(week_ots), 2)
+        pay_rate = users.get(uid, {}).get('pay_rate', 0) or 0
+        estimated_pay = round(total_paid * pay_rate, 2) if pay_rate > 0 else 0
+        grand_total_hours += total_hours
+        grand_total_paid += total_paid
+        grand_total_pay += estimated_pay
+        grand_total_ot += ot_hours
+        ot_str = f'<span class="ot">{ot_hours:.2f}</span>' if ot_hours > 0 else '0.00'
+        rate_str = f'${pay_rate:.2f}/hr' if pay_rate > 0 else '—'
+        pay_str = f'${estimated_pay:.2f}' if pay_rate > 0 else '—'
+        html += f"<tr><td><strong>{esc(ud['user_name'])}</strong> ({uid})</td><td>{total_hours:.2f}</td><td>{total_break:.2f}</td><td>{total_paid:.2f}</td><td>{ot_str}</td><td>{rate_str}</td><td>{pay_str}</td><td>{ud['shift_count']}</td></tr>"
+
+    html += f"""</tbody>
+<tfoot>
+<tr class="total-row">
+  <td><strong>TOTAL</strong> ({len(user_data_map)} employees)</td>
+  <td>{grand_total_hours:.2f}</td>
+  <td>{round(grand_total_paid-grand_total_hours, 2):.2f}</td>
+  <td>{grand_total_paid:.2f}</td>
+  <td>{grand_total_ot:.2f}</td>
+  <td>—</td>
+  <td>${grand_total_pay:.2f}</td>
+  <td>{len(filtered_shifts)}</td>
+</tr>
+</tfoot>
+</table>"""
+
+    # Detailed shift logs per employee with daily grouping
+    html += '<h2 class="section-title" style="font-size:13pt;margin-top:30px;">Shift Details by Employee</h2>'
+    for uid, ud in sorted(user_data_map.items(), key=lambda x: x[1]['user_name']):
+        total_hours = round(ud['total_hours'], 2)
+        total_paid = round(ud['total_paid_hours'], 2)
+        total_break = round(ud['total_break_hours'], 2)
+        pay_rate = users.get(uid, {}).get('pay_rate', 0) or 0
+        estimated_pay = round(total_paid * pay_rate, 2) if pay_rate > 0 else 0
+
+        html += f"""<div class="employee-section">
+<div class="employee-header">
+  <h3>👤 {esc(ud['user_name'])} ({uid})</h3>
+  <div class="emp-totals">{ud['shift_count']} shift(s) | {total_hours:.2f} hrs total | {total_break:.2f} hrs break | {total_paid:.2f} hrs paid | Est. ${estimated_pay:.2f}</div>
+</div>
+<table class="shift-table">
+<thead><tr>
+  <th>Date</th>
+  <th>Clock In</th>
+  <th>Clock Out</th>
+  <th>Duration</th>
+  <th>Break</th>
+  <th>Paid</th>
+  <th>Daily OT</th>
+  <th>Notes</th>
+</tr></thead>
+<tbody>"""
+
+        # Group shifts by date
+        shift_rows = sorted(ud['shifts'], key=lambda x: x.get('clock_in_time', ''))
+        daily_groups = defaultdict(list)
+        for s in shift_rows:
+            ck = s.get('clock_in_time', '')
+            day_key = ck[:10] if ck else 'unknown'
+            daily_groups[day_key].append(s)
+
+        for day_key in sorted(daily_groups.keys()):
+            day_shifts = daily_groups[day_key]
+            day_total = 0
+            day_break = 0
+            day_paid = 0
+            for s in day_shifts:
+                dur = s.get('duration_hours', 0)
+                brk = s.get('break_hours', 0)
+                paid = s.get('paid_hours', dur)
+                day_total += dur
+                day_break += brk
+                day_paid += paid
+            day_ot = max(0, round(day_total - OT_DAILY, 2))
+            # Show individual shifts in day
+            for s_idx, s in enumerate(day_shifts):
+                ci = s.get('clock_in_time', '—')
+                co = s.get('clock_out_time', '—')
+                dur = s.get('duration_hours', 0)
+                brk = s.get('break_hours', 0)
+                paid = s.get('paid_hours', dur)
+                notes = esc(s.get('notes', ''))
+                late_mins = s.get('late_minutes')
+                late_badge = f' <span class="badge badge-late">🕐 {late_mins}min late</span>' if late_mins else ''
+                # Show date on first row of day only
+                date_display = _html.escape(day_key) if s_idx == 0 else ''
+                ot_cell = '—' if day_ot == 0 else '<span class="badge badge-ot">⬆ {:.2f}h OT</span>'.format(day_ot)
+                html += '<tr><td>{}</td><td>{}</td><td>{}</td><td>{:.2f}h</td><td>{:.2f}h</td><td>{:.2f}h</td><td>{}</td><td>{}{}</td></tr>'.format(
+                    date_display, _html.escape(ci), _html.escape(co), dur, brk, paid, ot_cell, notes, late_badge)
+            # Daily total row
+            ot_cell2 = '—' if day_ot == 0 else '<span class="badge badge-ot">⬆ {:.2f}h OT</span>'.format(day_ot)
+            html += '<tr class="daily-total-row"><td colspan="2"><strong>📅 {} Total</strong></td><td></td><td><strong>{:.2f}h</strong></td><td><strong>{:.2f}h</strong></td><td><strong>{:.2f}h</strong></td><td>{}</td><td></td></tr>'.format(
+                _html.escape(day_key), day_total, day_break, day_paid, ot_cell2)
+
+        # Employee total row
+        ot_total = 0
+        for wk, wh in weekly_hours_by_user.get(uid, {}).items():
+            if wh > OT_WEEKLY:
+                ot_total += round(wh - OT_WEEKLY, 2)
+        emp_ot_cell = '—' if ot_total == 0 else '<span class="badge badge-ot">⬆ {:.2f}h OT</span>'.format(ot_total)
+        html += '<tr class="emp-total-row"><td colspan="2"><strong>🏁 {} Total</strong></td><td></td><td><strong>{:.2f}h</strong></td><td><strong>{:.2f}h</strong></td><td><strong>{:.2f}h</strong></td><td>{}</td><td></td></tr>'.format(
+            esc(ud["user_name"]), total_hours, total_break, total_paid, emp_ot_cell)
+
+        html += '</tbody></table></div>'
+
+    # Signature line
+    html += f"""<div class="sig-line">
+  <div><span class="sig-label">Employee Signature:</span><span class="sig-x"></span><span class="sig-label">Date:</span><span class="sig-x"></span></div>
+  <div style="margin-top:12px;"><span class="sig-label">Manager Signature:</span><span class="sig-x"></span><span class="sig-label">Date:</span><span class="sig-x"></span></div>
+  <div style="margin-top:8px;font-size:9pt;color:#888;">By signing, I confirm the hours listed above accurately reflect the time I worked during this period.</div>
+</div>"""
+
+    html += f"""<div class="footer">Timesheet Report — Generated by POS System on {now_str} | This is not an official tax document</div>
+</body>
+</html>"""
+
+    return jsonify({'html': html, 'filename': f'timesheet_report_{date_from or "all"}_{date_to or "all"}.html'})
+
+
 @app.route('/api/timesheet/config', methods=['GET', 'POST'])
 def timesheet_config_endpoint():
     """Get or save timesheet configuration (overtime thresholds, grace period, etc.)."""

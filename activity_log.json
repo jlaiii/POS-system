@@ -1404,5 +1404,308 @@
             "reason": "ip_locked",
             "remaining_seconds": 899
         }
+    },
+    {
+        "timestamp": "2026-06-23T10:54:25.817895",
+        "type": "login_failed",
+        "user_id": null,
+        "user_role": "unknown",
+        "details": {
+            "status": "failed",
+            "method": "pin",
+            "ip": "127.0.0.1",
+            "attempt": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-23T10:54:26.894788",
+        "type": "admin_login",
+        "user_id": null,
+        "user_role": "unauthorized",
+        "details": {
+            "status": "failed"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T10:55:03.917220",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T10:55:04.982678",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T10:55:12.139777",
+        "type": "timesheet_config_updated",
+        "user_id": "1111",
+        "user_role": "admin",
+        "details": {
+            "config": {
+                "overtime_daily_threshold": 8,
+                "overtime_weekly_threshold": 40,
+                "late_grace_minutes": 5
+            }
+        }
+    },
+    {
+        "timestamp": "2026-06-23T10:59:20.356504",
+        "type": "ticket_submitted",
+        "user_id": "1234",
+        "user_role": "user",
+        "details": {
+            "ticket_id": "TKT-001",
+            "type": "issue",
+            "subject": "Test issue - printer broken"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T10:59:20.363670",
+        "type": "ticket_responded",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "ticket_id": "TKT-001",
+            "action": "approved",
+            "reason": "Will send maintenance."
+        }
+    },
+    {
+        "timestamp": "2026-06-23T11:17:22.511737",
+        "type": "login_failed",
+        "user_id": null,
+        "user_role": "unknown",
+        "details": {
+            "status": "failed",
+            "method": "pin",
+            "ip": "127.0.0.1",
+            "attempt": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-23T11:17:23.579059",
+        "type": "admin_login",
+        "user_id": null,
+        "user_role": "unauthorized",
+        "details": {
+            "status": "failed"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T11:17:36.561102",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T11:17:44.872622",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T11:40:15.689895",
+        "type": "timesheet_approval_submitted",
+        "user_id": "1111",
+        "user_role": "admin",
+        "details": {
+            "date_from": "2026-06-01",
+            "date_to": "2026-06-15",
+            "status": "pending"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T11:40:20.157806",
+        "type": "timesheet_approval_employee_approved",
+        "user_id": "1234",
+        "user_role": "Employee One",
+        "details": {
+            "date_from": "2026-06-01",
+            "date_to": "2026-06-15"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T11:40:20.174401",
+        "type": "timesheet_approval_finalized",
+        "user_id": "1111",
+        "user_role": "admin",
+        "details": {
+            "date_from": "2026-06-01",
+            "date_to": "2026-06-15",
+            "employee_approvals": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-23T11:40:20.190305",
+        "type": "timesheet_approval_unlocked",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "date_from": "2026-06-01",
+            "date_to": "2026-06-15",
+            "old_status": "approved",
+            "reason": "Testing purpose"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T11:40:27.175881",
+        "type": "timesheet_approval_submitted",
+        "user_id": "1111",
+        "user_role": "admin",
+        "details": {
+            "date_from": "2026-06-23",
+            "date_to": "2026-06-23",
+            "status": "pending"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T11:40:32.715872",
+        "type": "timesheet_approval_unlocked",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "date_from": "2026-06-23",
+            "date_to": "2026-06-23",
+            "old_status": "pending",
+            "reason": "Test cleanup"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T11:40:32.730956",
+        "type": "shift_edited",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "shift_index": 0,
+            "user_id": "1111",
+            "user_name": "Owner",
+            "changes": {
+                "clock_in_time": {
+                    "old": "2026-06-23T01:06:13.005250",
+                    "new": "2026-06-23T01:00:00"
+                }
+            },
+            "reason": "test after unlock"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T11:41:49.749234",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T11:41:50.853117",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T11:42:01.016946",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T11:42:09.471711",
+        "type": "clock_in",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "status": "success",
+            "user_name": "Owner",
+            "clock_in_time": "2026-06-23T11:42:09.471571",
+            "late_minutes": null,
+            "scheduled_start": null
+        }
+    },
+    {
+        "timestamp": "2026-06-23T11:42:11.447344",
+        "type": "clock_out",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "status": "success",
+            "user_name": "Owner",
+            "clock_in_time": "2026-06-23T11:42:09.471571",
+            "clock_out_time": "2026-06-23T11:42:11.446954",
+            "duration_hours": 0.0
+        }
+    },
+    {
+        "timestamp": "2026-06-23T12:22:30.502862",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T12:22:45.346928",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T12:22:47.521813",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T12:48:37.893131",
+        "type": "add_user",
+        "user_id": "8888",
+        "user_role": "unauthorized",
+        "details": {
+            "status": "failed",
+            "reason": "Insufficient permissions"
+        }
     }
 ]

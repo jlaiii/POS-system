@@ -2,5 +2,61 @@
     "TestItem": {
         "stock": 0,
         "low_stock_threshold": 10
+    },
+    "Hotdog - Loaded": {
+        "stock": 0,
+        "low_stock_threshold": 10
+    },
+    "Hamburger - All the Fixings": {
+        "stock": 0,
+        "low_stock_threshold": 10
+    },
+    "Taco - Beef & Cheese": {
+        "stock": 0,
+        "low_stock_threshold": 10
+    },
+    "Coke": {
+        "stock": 0,
+        "low_stock_threshold": 10
+    },
+    "Raspia (Fruit Slush)": {
+        "stock": 0,
+        "low_stock_threshold": 10
+    },
+    "Hotdog - Plain": {
+        "stock": 0,
+        "low_stock_threshold": 10
+    },
+    "Lemonade": {
+        "stock": 0,
+        "low_stock_threshold": 10
+    },
+    "Chocolate Bar": {
+        "stock": 0,
+        "low_stock_threshold": 10
+    },
+    "Mixed Nuts (Small Pack)": {
+        "stock": 0,
+        "low_stock_threshold": 10
+    },
+    "Taco - Chicken with Salsa": {
+        "stock": 0,
+        "low_stock_threshold": 10
+    },
+    "Granola Bar": {
+        "stock": 0,
+        "low_stock_threshold": 10
+    },
+    "Chips (Large Bag)": {
+        "stock": 0,
+        "low_stock_threshold": 10
+    },
+    "Hamburger - Normal": {
+        "stock": 0,
+        "low_stock_threshold": 10
+    },
+    "Water Bottle": {
+        "stock": 0,
+        "low_stock_threshold": 10
     }
 }

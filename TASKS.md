@@ -113,7 +113,7 @@
 
 - [x] worker-2 **Timesheet approval workflow** — After pay period ends, timekeeper clicks "Submit for Approval" which locks that period's shifts from further edits. Employee can review and "Approve" (optional — small shops may skip). Locked shifts grayed out with 🔒 icon. Unlock requires owner permission. Approval status stored in new `timesheet_approvals.json` with period range, approved_by, timestamp.
 
-- [~] worker-3 **PDF timesheet report export** — Generate a clean, printable timesheet report for the selected pay period. Employee name, shift dates/times, daily totals, period total, overtime, estimated pay, signature line. `POST /api/export/timesheet_pdf` endpoint. Print-friendly CSS with page breaks per employee. More professional than CSV for record-keeping and employee handouts.
+- [x] worker-3 **PDF timesheet report export** — Generate a clean, printable timesheet report for the selected pay period. Employee name, shift dates/times, daily totals, period total, overtime, estimated pay, signature line. `POST /api/export/timesheet_pdf` endpoint. Print-friendly CSS with page breaks per employee. More professional than CSV for record-keeping and employee handouts.
 
 - [ ] **Timesheet UI overhaul for timekeeper usability** — Current admin Timesheet tab shows raw shift list + raw admin login timesheet in two separate sections. Redesign as unified timekeeper dashboard: period selector at top → employee summary cards (name, total hours, overtime, estimated pay) → click employee to expand individual shifts → export button clearly visible (not buried). Dense data table for the shift list. Sortable columns (name, date, hours). Visual indicators for overtime, edited shifts, missing clock-outs.
 
@@ -763,11 +763,11 @@ Super admin PIN is separate from any business PIN. Super admin can create busine
 |- [x] worker-3 **JSON backup script** — Created `/root/pos-system-work/scripts/backup_json.py` with validation, timestamped backups, tar.gz archiving, anomaly detection, dry-run and quiet modes.
 |- [x] worker-1 **Employee ticket submission UI** — New "📋 Requests" tab with ticket submission form (time-off, issue, feedback, other), adaptive fields, "My Tickets" list with status badges. Backend: tickets.json data store, 4 API endpoints (submit, my, queue, respond), activity logging, validation. Full i18n EN + ES.
 |||- [x] worker-3 **Smart date picker for time-off requests** — Business day calculation (Mon-Fri), past-date validation, 30-day limit with override checkbox, overlap detection against existing pending/approved requests. Server-side and client-side validation. Backend: `business_days` field, overlap check, date validation. Frontend: validation messages, override checkbox, business day display in tickets. i18n EN + ES.
-- [x] worker-3 **Current pay period live tracker** — Added pay rate display stat card, auto-refresh every 60 seconds with 🟢 Live badge indicator, rate formatted as $X.XX/hr. Auto-refresh stops when navigating away. i18n EN + ES. [worker-3]
-|- [x] worker-2 **Pay history with period-by-period breakdown** — Enhanced pay history period cards with pay rate display ($X.XX/hr), expandable grid-based shift breakdown showing date/day, clock in/out, paid+break hours, period total summary row. Added i18n keys EN+ES. [worker-2]
+|- [x] worker-3 **Current pay period live tracker** — Added pay rate display stat card, auto-refresh every 60 seconds with 🟢 Live badge indicator, rate formatted as $X.XX/hr. Auto-refresh stops when navigating away. i18n EN + ES. [worker-3]
+||- [x] worker-2 **Pay history with period-by-period breakdown** — Enhanced pay history period cards with pay rate display ($X.XX/hr), expandable grid-based shift breakdown showing date/day, clock in/out, paid+break hours, period total summary row. Added i18n keys EN+ES. [worker-2]
+||- [x] worker-3 **PDF timesheet report export** — New `POST /api/export/timesheet_pdf` endpoint generating print-ready HTML report from employee shift data. Employee name, shift dates/times, daily totals, period total, overtime, estimated pay, signature line. Print-friendly CSS with page breaks per employee. Button in Employee Shifts sub-tab. [worker-3]
 
-|## Done (older)
-
+## Done (older)
 <details>
 <summary>39 completed tasks from earlier development</summary>
 
