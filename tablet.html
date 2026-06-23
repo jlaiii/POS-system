@@ -572,6 +572,26 @@ body {
   color: var(--accent);
 }
 
+.combo-card .combo-original-price {
+  font-size: clamp(14px, 1.4vw, 18px);
+  color: var(--text2);
+  text-decoration: line-through;
+  margin-left: 8px;
+  opacity: 0.7;
+}
+
+.combo-card .combo-savings {
+  display: inline-block;
+  background: #2ecc71;
+  color: #fff;
+  font-size: clamp(11px, 1.2vw, 14px);
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 20px;
+  margin-left: 8px;
+  white-space: nowrap;
+}
+
 .combo-card .combo-items {
   font-size: clamp(12px, 1.2vw, 14px);
   color: var(--text2);
@@ -880,13 +900,36 @@ function renderCombos() {
     return;
   }
   row.classList.add('show');
-  cards.innerHTML = combosData.map(combo => `
-    <div class="combo-card" onclick="showComboDetail('${escHtml(combo.name)}')">
+  cards.innerHTML = combosData.map(combo => {
+    // Calculate original total of child items
+    let originalTotal = 0;
+    const childItems = combo.child_items || [];
+    childItems.forEach(ci => {
+      const qty = ci.qty || 1;
+      // Look up item price from menu data
+      let itemPrice = 0;
+      const catItems = menuItemsData[ci.category] || [];
+      const found = catItems.find(it => it.name === ci.name);
+      if (found) {
+        itemPrice = parseFloat(found.price) || 0;
+      }
+      originalTotal += itemPrice * qty;
+    });
+    const comboPrice = parseFloat(combo.combo_price) || 0;
+    const savings = originalTotal > comboPrice ? originalTotal - comboPrice : 0;
+
+    // Build child items display string
+    const itemsStr = childItems.map(ci => escHtml(ci.name) + (ci.qty > 1 ? ' x' + ci.qty : '')).join(' + ');
+
+    return `<div class="combo-card" onclick="showComboDetail('${escHtml(combo.name)}')">
       <div class="combo-name">${escHtml(combo.name)}</div>
-      <div class="combo-price">$${parseFloat(combo.price).toFixed(2)}</div>
-      <div class="combo-items">${escHtml((combo.items || []).join(' + '))}</div>
-    </div>
-  `).join('');
+      <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;">
+        <span class="combo-price">$${comboPrice.toFixed(2)}</span>
+        ${savings > 0 ? `<span class="combo-original-price">$${originalTotal.toFixed(2)}</span><span class="combo-savings">Save $${savings.toFixed(2)}</span>` : ''}
+      </div>
+      <div class="combo-items">${itemsStr}</div>
+    </div>`;
+  }).join('');
 }
 
 // ---- Item Detail ----
@@ -1012,10 +1055,44 @@ function showComboDetail(name) {
   detailCurrentIdx = combosData.findIndex(c => c.name === name);
   if (detailCurrentIdx === -1) detailCurrentIdx = 0;
 
+  const comboPrice = parseFloat(combo.combo_price) || 0;
+  const childItems = combo.child_items || [];
+
+  // Calculate savings
+  let originalTotal = 0;
+  childItems.forEach(ci => {
+    const qty = ci.qty || 1;
+    let itemPrice = 0;
+    const catItems = menuItemsData[ci.category] || [];
+    const found = catItems.find(it => it.name === ci.name);
+    if (found) {
+      itemPrice = parseFloat(found.price) || 0;
+    }
+    originalTotal += itemPrice * qty;
+  });
+  const savings = originalTotal > comboPrice ? originalTotal - comboPrice : 0;
+
+  // Build child items HTML
+  const childrenHtml = childItems.map(ci =>
+    `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+      <span>🍱 ${escHtml(ci.name)}</span>
+      <span style="color:var(--accent);font-weight:600;">x${ci.qty || 1}</span>
+    </div>`
+  ).join('');
+
   document.getElementById('detailImg').style.display = 'none';
   document.getElementById('detailName').textContent = combo.name + ' (Combo)';
-  document.getElementById('detailPrice').textContent = '$' + parseFloat(combo.price).toFixed(2);
-  document.getElementById('detailDesc').textContent = 'Includes: ' + (combo.items || []).join(' + ');
+  document.getElementById('detailPrice').innerHTML = `
+    <span style="color:var(--accent);font-weight:700;">$${comboPrice.toFixed(2)}</span>
+    ${savings > 0 ? `<span style="text-decoration:line-through;color:var(--text2);opacity:0.7;margin-left:10px;font-size:clamp(18px,2vw,24px);">$${originalTotal.toFixed(2)}</span>
+    <span style="background:#2ecc71;color:#fff;padding:2px 12px;border-radius:20px;font-size:clamp(12px,1.2vw,14px);margin-left:8px;font-weight:700;">Save $${savings.toFixed(2)}</span>` : ''}
+  `;
+  document.getElementById('detailDesc').innerHTML = childrenHtml
+    ? `<div style="margin-top:8px;background:var(--card);border-radius:12px;padding:10px 14px;max-width:400px;text-align:left;">
+      <div style="font-size:clamp(13px,1.3vw,16px);font-weight:600;margin-bottom:6px;color:var(--text2);">🍽️ Includes:</div>
+      ${childrenHtml}
+    </div>`
+    : 'Includes: ' + childItems.map(ci => escHtml(ci.name)).join(' + ');
   document.getElementById('detailDietary').style.display = 'none';
   document.getElementById('detailModifiers').style.display = 'none';
   document.getElementById('detailMeta').innerHTML = '<span class="detail-badge">🔥 Combo Deal</span>';
