@@ -49,7 +49,7 @@
 
 ### Priority: HIGH
 
-- [ ] **Add date range filtering to all timesheet/shift endpoints** — `/api/admin_shifts`, `/api/admin_timesheet`, `/api/export/shifts_csv`, `/api/export/timesheet_csv` all need `date_from`/`date_to` params. Currently they dump every record ever. Timekeeper needs to pull "this week" or "June 1-15" without scrolling through months of data. Server-side filter on `clock_in_time` / `login_time` fields. Backward-compatible (omit params = all records, same as today).
+- [~] worker-2 **Add date range filtering to all timesheet/shift endpoints** — `/api/admin_shifts`, `/api/admin_timesheet`, `/api/export/shifts_csv`, `/api/export/timesheet_csv` all need `date_from`/`date_to` params. Currently they dump every record ever. Timekeeper needs to pull "this week" or "June 1-15" without scrolling through months of data. Server-side filter on `clock_in_time` / `login_time` fields. Backward-compatible (omit params = all records, same as today).
 
 - [ ] **Add pay period summary endpoint + UI** — New `POST /api/timesheet/pay_period` endpoint. Accepts `date_from`, `date_to`, optional `user_id`. Returns per-employee totals: total_hours, shift_count, overtime_hours (over 40h/week threshold), total estimated pay (if pay rate set). Frontend: new "Pay Period" sub-tab in Timesheet showing summary cards per employee with drill-down to individual shifts. Timekeeper can see at a glance who to pay and how much.
 
