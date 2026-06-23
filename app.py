@@ -12000,33 +12000,99 @@ def ticket_submit():
                 ticket['total_days'] = total_calendar_days
                 ticket['business_days'] = business_days
 
-                # Prevent overlapping requests (pending or approved)
-                existing_tickets = load_json_data(TICKETS_FILE)
-                for existing in existing_tickets:
-                    if existing.get('user_id') != user_id:
-                        continue
-                    if existing.get('id') == ticket.get('id'):
-                        continue
-                    if existing.get('type') != 'time_off':
-                        continue
-                    if existing.get('status') not in ('pending', 'approved'):
-                        continue
-                    ed_from = existing.get('date_from')
-                    ed_to = existing.get('date_to')
-                    if not ed_from or not ed_to:
-                        continue
+                # --- Recurring time-off pattern ---
+                is_recurring = data.get('is_recurring', False)
+                if is_recurring:
+                    recurring_day = data.get('recurring_day')
+                    recurring_until = data.get('recurring_until')
+                    if recurring_day is None or not recurring_until:
+                        return jsonify({'message': 'Recurring day and end date are required for recurring time-off.'}), 400
                     try:
-                        ed1 = datetime.strptime(ed_from, '%Y-%m-%d')
-                        ed2 = datetime.strptime(ed_to, '%Y-%m-%d')
-                        # Check overlap: existing period overlaps with requested period
-                        if d1 <= ed2 and d2 >= ed1:
-                            return jsonify({
-                                'message': f'This request overlaps with an existing {existing["status"]} time-off request: '
-                                           f'{existing.get("id", "?")} ({ed_from} → {ed_to}). '
-                                           f'Please adjust dates or cancel the existing request.'
-                            }), 400
+                        recurring_day = int(recurring_day)
+                        if recurring_day < 0 or recurring_day > 6:
+                            raise ValueError()
                     except (ValueError, TypeError):
-                        continue
+                        return jsonify({'message': 'Recurring day must be 0-6 (Monday=0, Sunday=6).'}), 400
+
+                    # Calculate all recurring dates from date_from up to recurring_until
+                    recurring_dates = []
+                    cur = d1
+                    while cur.weekday() != recurring_day:
+                        cur += timedelta(days=1)
+                    ru = datetime.strptime(recurring_until, '%Y-%m-%d')
+                    while cur <= ru:
+                        if cur >= d1:
+                            recurring_dates.append(cur.strftime('%Y-%m-%d'))
+                        cur += timedelta(days=7)
+
+                    if not recurring_dates:
+                        return jsonify({'message': 'No recurring dates found in the specified range.'}), 400
+
+                    ticket['recurring'] = True
+                    ticket['recurring_day'] = recurring_day
+                    ticket['recurring_until'] = recurring_until
+                    ticket['recurring_dates'] = recurring_dates
+                    ticket['total_days'] = len(recurring_dates)
+                    ticket['date_to'] = recurring_until
+
+                    # Business days: only count if the recurring day is Mon-Fri
+                    is_weekday = recurring_day < 5  # 0-4 = Mon-Fri
+                    ticket['business_days'] = len(recurring_dates) if is_weekday else 0
+
+                    # Overlap check: check each recurring date against existing pending/approved time-off
+                    existing_tickets = load_json_data(TICKETS_FILE)
+                    for dt_str in recurring_dates:
+                        dt = datetime.strptime(dt_str, '%Y-%m-%d')
+                        for existing in existing_tickets:
+                            if existing.get('user_id') != user_id:
+                                continue
+                            if existing.get('type') != 'time_off':
+                                continue
+                            if existing.get('status') not in ('pending', 'approved'):
+                                continue
+                            ed_from = existing.get('date_from')
+                            ed_to = existing.get('date_to')
+                            if not ed_from or not ed_to:
+                                continue
+                            try:
+                                ed1 = datetime.strptime(ed_from, '%Y-%m-%d')
+                                ed2 = datetime.strptime(ed_to, '%Y-%m-%d')
+                                if ed1 <= dt <= ed2:
+                                    return jsonify({
+                                        'message': f'Recurring date {dt_str} overlaps with existing {existing["status"]} time-off: '
+                                                   f'{existing.get("id", "?")} ({ed_from} \u2192 {ed_to}). '
+                                                   f'Please adjust dates or cancel the conflicting request.'
+                                    }), 400
+                            except (ValueError, TypeError):
+                                continue
+                else:
+                    # Prevent overlapping requests (pending or approved) — standard non-recurring
+                    existing_tickets = load_json_data(TICKETS_FILE)
+                    for existing in existing_tickets:
+                        if existing.get('user_id') != user_id:
+                            continue
+                        if existing.get('id') == ticket.get('id'):
+                            continue
+                        if existing.get('type') != 'time_off':
+                            continue
+                        if existing.get('status') not in ('pending', 'approved'):
+                            continue
+                        ed_from = existing.get('date_from')
+                        ed_to = existing.get('date_to')
+                        if not ed_from or not ed_to:
+                            continue
+                        try:
+                            ed1 = datetime.strptime(ed_from, '%Y-%m-%d')
+                            ed2 = datetime.strptime(ed_to, '%Y-%m-%d')
+                            # Check overlap: existing period overlaps with requested period
+                            if d1 <= ed2 and d2 >= ed1:
+                                return jsonify({
+                                    'message': f'This request overlaps with an existing {existing["status"]} time-off request: '
+                                               f'{existing.get("id", "?")} ({ed_from} \u2192 {ed_to}). '
+                                               f'Please adjust dates or cancel the existing request.'
+                                }), 400
+                        except (ValueError, TypeError):
+                            continue
 
             except (ValueError, TypeError):
                 pass  # Keep defaults if dates are invalid

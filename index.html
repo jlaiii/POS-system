@@ -2469,6 +2469,28 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
         <input type="checkbox" id="requestOverride30day" style="width:20px;height:20px;accent-color:var(--accent);"/>
         <label for="requestOverride30day" style="font-size:13px;color:var(--text2);cursor:pointer;" data-i18n="requests.override_30day">☑️ Override 30-day limit</label>
       </div>
+      <!-- Recurring time-off -->
+      <div id="requestRecurringRow" style="display:none;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap;padding:10px 12px;background:var(--card);border-radius:var(--radius);">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:14px;">
+          <input type="checkbox" id="requestRecurring" style="width:20px;height:20px;accent-color:var(--accent);" onchange="onRequestRecurringToggle()"/>
+          <span data-i18n="requests.recurring">🔄 Recurring (same day each week)</span>
+        </label>
+        <div id="requestRecurringOptions" style="display:none;align-items:center;gap:8px;flex-wrap:wrap;">
+          <span style="color:var(--text2);font-size:13px;" data-i18n="requests.recurring_day_label">Repeat every</span>
+          <select id="requestRecurringDay" style="min-width:120px;font-size:14px;padding:6px 10px;">
+            <option value="0" data-i18n="requests.recurring_monday">Monday</option>
+            <option value="1" data-i18n="requests.recurring_tuesday">Tuesday</option>
+            <option value="2" data-i18n="requests.recurring_wednesday">Wednesday</option>
+            <option value="3" data-i18n="requests.recurring_thursday">Thursday</option>
+            <option value="4" data-i18n="requests.recurring_friday">Friday</option>
+            <option value="5" data-i18n="requests.recurring_saturday">Saturday</option>
+            <option value="6" data-i18n="requests.recurring_sunday">Sunday</option>
+          </select>
+          <span style="color:var(--text2);font-size:13px;" data-i18n="requests.recurring_until">Repeat until</span>
+          <input type="date" id="requestRecurringUntil" style="flex:1;min-width:130px;" onchange="onRequestRecurringChange()"/>
+          <span id="requestRecurringCount" style="display:none;background:var(--accent);color:#fff;padding:6px 12px;border-radius:var(--radius);font-size:13px;font-weight:600;white-space:nowrap;"></span>
+        </div>
+      </div>
       <input type="text" id="requestSubject" placeholder="Subject" style="margin-bottom:8px;"/>
       <textarea id="requestDescription" placeholder="Description..." style="width:100%;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:14px;padding:10px 12px;min-height:80px;resize:vertical;font-family:inherit;margin-bottom:8px;" rows="3" maxlength="2000"></textarea>
       <button class="accent" onclick="submitTicket()" style="width:100%;min-height:48px;" data-i18n="requests.submit">✅ Submit Request</button>
@@ -3376,6 +3398,18 @@ const L10N = {
     'requests.my_tickets': '📋 My Tickets',
     'requests.no_tickets': 'No tickets yet — submit one above.',
     'requests.override_30day': '☑️ Override 30-day limit',
+    'requests.recurring': '🔄 Recurring (same day each week)',
+    'requests.recurring_day_label': 'Repeat every',
+    'requests.recurring_monday': 'Monday',
+    'requests.recurring_tuesday': 'Tuesday',
+    'requests.recurring_wednesday': 'Wednesday',
+    'requests.recurring_thursday': 'Thursday',
+    'requests.recurring_friday': 'Friday',
+    'requests.recurring_saturday': 'Saturday',
+    'requests.recurring_sunday': 'Sunday',
+    'requests.recurring_occurrences': '{count} occurrences',
+    'requests.recurring_badge': '🔄 Recurring',
+    'requests.recurring_until': 'Repeat until',
     'requests.alert_approved': '✅ Your {type} was approved',
     'requests.alert_denied': '❌ Your {type} was denied',
     'requests.alert_response': 'Response: {note}',
@@ -3911,6 +3945,18 @@ const L10N = {
     'requests.my_tickets': '📋 Mis Tickets',
     'requests.no_tickets': 'Aún no hay tickets — envíe uno arriba.',
     'requests.override_30day': '☑️ Anular límite de 30 días',
+    'requests.recurring': '🔄 Repetir (mismo día cada semana)',
+    'requests.recurring_day_label': 'Repetir cada',
+    'requests.recurring_monday': 'Lunes',
+    'requests.recurring_tuesday': 'Martes',
+    'requests.recurring_wednesday': 'Miércoles',
+    'requests.recurring_thursday': 'Jueves',
+    'requests.recurring_friday': 'Viernes',
+    'requests.recurring_saturday': 'Sábado',
+    'requests.recurring_sunday': 'Domingo',
+    'requests.recurring_occurrences': '{count} ocurrencias',
+    'requests.recurring_badge': '🔄 Repetitivo',
+    'requests.recurring_until': 'Repetir hasta',
     'requests.alert_approved': '✅ Su {type} fue aprobado',
     'requests.alert_denied': '❌ Su {type} fue denegado',
     'requests.alert_response': 'Respuesta: {note}',
@@ -5662,11 +5708,82 @@ function onRequestTypeChange() {
   const type = document.getElementById('requestType').value;
   const prioritySelect = document.getElementById('requestPriority');
   const dateRow = document.getElementById('requestDateRow');
+  const recurringRow = document.getElementById('requestRecurringRow');
   prioritySelect.style.display = (type === 'issue' || type === 'feedback') ? '' : 'none';
   dateRow.style.display = (type === 'time_off') ? 'flex' : 'none';
+  recurringRow.style.display = (type === 'time_off') ? 'flex' : 'none';
+  // Hide recurring options if not time_off
+  if (type !== 'time_off') {
+    document.getElementById('requestRecurring').checked = false;
+    document.getElementById('requestRecurringOptions').style.display = 'none';
+    document.getElementById('requestRecurringCount').style.display = 'none';
+  }
   // Clear days badge when hiding
   if (type !== 'time_off') {
     document.getElementById('requestDaysBadge').style.display = 'none';
+  }
+}
+
+// Recurring time-off toggle
+function onRequestRecurringToggle() {
+  const checked = document.getElementById('requestRecurring').checked;
+  document.getElementById('requestRecurringOptions').style.display = checked ? 'flex' : 'none';
+  if (checked) {
+    // Set default day to the day of the week of date_from
+    const dateFrom = document.getElementById('requestDateFrom').value;
+    if (dateFrom) {
+      const d = new Date(dateFrom + 'T00:00:00');
+      const day = d.getDay(); // 0=Sun, 6=Sat
+      // Convert to our format: 0=Mon, 6=Sun
+      const ourDay = day === 0 ? 6 : day - 1;
+      document.getElementById('requestRecurringDay').value = ourDay;
+    }
+    onRequestRecurringChange();
+  } else {
+    document.getElementById('requestRecurringCount').style.display = 'none';
+  }
+}
+
+// Calculate occurrences for recurring time-off
+function onRequestRecurringChange() {
+  const dateFrom = document.getElementById('requestDateFrom').value;
+  const recurringUntil = document.getElementById('requestRecurringUntil').value;
+  const countEl = document.getElementById('requestRecurringCount');
+  if (!dateFrom || !recurringUntil) {
+    countEl.style.display = 'none';
+    return;
+  }
+  const d1 = new Date(dateFrom + 'T00:00:00');
+  const ru = new Date(recurringUntil + 'T00:00:00');
+  if (ru < d1) {
+    countEl.textContent = '⚠️ End date before start';
+    countEl.style.display = 'flex';
+    countEl.style.background = '#e74c3c';
+    return;
+  }
+  const dayVal = parseInt(document.getElementById('requestRecurringDay').value);
+  // dayVal: 0=Mon, 6=Sun. JS getDay(): 0=Sun, 6=Sat
+  const jsDay = dayVal === 6 ? 0 : dayVal + 1; // Convert to JS day
+  let count = 0;
+  const cur = new Date(d1);
+  // Move to first occurrence of the target day
+  while (cur.getDay() !== jsDay) {
+    cur.setDate(cur.getDate() + 1);
+    if (cur > ru) break;
+  }
+  while (cur <= ru) {
+    if (cur >= d1) count++;
+    cur.setDate(cur.getDate() + 7);
+  }
+  if (count > 0) {
+    const dayNames = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+    countEl.textContent = `${count} × ${dayNames[dayVal]}`;
+    countEl.style.background = 'var(--accent)';
+    countEl.style.display = 'flex';
+  } else {
+    countEl.textContent = '⚠️ No occurrences found';
+    countEl.style.background = '#e74c3c';
+    countEl.style.display = 'flex';
   }
 }
 
@@ -5805,6 +5922,15 @@ async function submitTicket() {
     if (overrideCheck && overrideCheck.checked) {
       payload.override_30day = true;
     }
+    // Check recurring
+    const recurringCheck = document.getElementById('requestRecurring');
+    if (recurringCheck && recurringCheck.checked) {
+      payload.is_recurring = true;
+      payload.recurring_day = parseInt(document.getElementById('requestRecurringDay').value);
+      payload.recurring_until = document.getElementById('requestRecurringUntil').value;
+      // Use recurring_until as date_to on the backend, so send it
+      payload.date_to = payload.recurring_until;
+    }
   }
 
   if (type === 'issue' || type === 'feedback') {
@@ -5830,6 +5956,11 @@ async function submitTicket() {
     document.getElementById('requestDaysBadge').style.display = 'none';
     document.getElementById('requestOverride30day').checked = false;
     document.getElementById('requestOverrideRow').style.display = 'none';
+    // Clear recurring fields
+    document.getElementById('requestRecurring').checked = false;
+    document.getElementById('requestRecurringOptions').style.display = 'none';
+    document.getElementById('requestRecurringCount').style.display = 'none';
+    document.getElementById('requestRecurringUntil').value = '';
     const clearMsg = document.getElementById('requestValidationMsg');
     if (clearMsg) { clearMsg.textContent = ''; clearMsg.className = ''; }
     showToast(data.message || 'Ticket submitted successfully!', 'success');
@@ -5876,13 +6007,23 @@ function renderMyTickets(tickets) {
       : '<span style="background:#f39c12;color:#000;padding:3px 10px;border-radius:10px;font-size:12px;font-weight:700;">⏳ Pending</span>';
 
     const date = t.created_at ? new Date(t.created_at).toLocaleDateString() : '';
-    const timeInfo = t.date_from && t.date_to ? `<span style="color:var(--text2);font-size:13px;">📅 ${t.date_from} → ${t.date_to}${t.total_days ? ' (' + t.total_days + ' day' + (t.total_days !== 1 ? 's' : '') : ''}${t.business_days ? ', ' + t.business_days + ' business day' + (t.business_days !== 1 ? 's' : '') : ''}${t.total_days ? ')' : ''}</span>` : '';
+    const dayNames = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+    const recurringBadge = t.recurring ? `<span style="background:#8e44ad;color:#fff;padding:2px 10px;border-radius:10px;font-size:11px;font-weight:700;margin-left:4px;">🔄 Recurring</span>` : '';
+    let timeInfo = '';
+    if (t.recurring && t.recurring_dates && t.recurring_dates.length > 0) {
+      const dayName = dayNames[t.recurring_day] || '';
+      timeInfo = `<span style="color:var(--text2);font-size:13px;">📅 ${t.date_from} → ${t.recurring_until}</span>
+      <span style="color:#8e44ad;font-size:12px;font-weight:600;">🔄 Every ${dayName} (${t.recurring_dates.length} ×)</span>`;
+    } else if (t.date_from && t.date_to) {
+      timeInfo = `<span style="color:var(--text2);font-size:13px;">📅 ${t.date_from} → ${t.date_to}${t.total_days ? ' (' + t.total_days + ' day' + (t.total_days !== 1 ? 's' : '') : ''}${t.business_days ? ', ' + t.business_days + ' business day' + (t.business_days !== 1 ? 's' : '') : ''}${t.total_days ? ')' : ''}</span>`;
+    }
 
     html += `<div class="card" style="margin-bottom:8px;padding:12px 16px;">
       <div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:4px;">
         <div>
           <strong>${typeIcon} ${escHtml(t.subject)}</strong>
           <span style="margin-left:6px;">${statusBadge}</span>
+          ${recurringBadge}
         </div>
         <span style="color:var(--text2);font-size:12px;">${date}</span>
       </div>
@@ -6086,9 +6227,15 @@ function renderTicketCard(t, isPending) {
     : '<span style="background:#f39c12;color:#000;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700;">⏳ Pending</span>';
 
   const date = t.created_at ? new Date(t.created_at).toLocaleDateString() + ' ' + new Date(t.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
-  const timeInfo = t.date_from && t.date_to
-    ? `<div style="font-size:12px;color:var(--text2);margin-top:4px;">📅 ${t.date_from} → ${t.date_to}${t.total_days ? ' (' + t.total_days + ' day' + (t.total_days !== 1 ? 's' : '') + ')' : ''}</div>`
-    : '';
+  const dayNames = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  let timeInfo = '';
+  if (t.recurring && t.recurring_dates && t.recurring_dates.length > 0) {
+    const dayName = dayNames[t.recurring_day] || '';
+    timeInfo = `<div style="font-size:12px;color:var(--text2);margin-top:4px;">📅 ${t.date_from} → ${t.recurring_until}</div>
+      <span style="background:#8e44ad;color:#fff;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:700;display:inline-block;margin-top:2px;">🔄 Every ${dayName} (${t.recurring_dates.length} ×)</span>`;
+  } else if (t.date_from && t.date_to) {
+    timeInfo = `<div style="font-size:12px;color:var(--text2);margin-top:4px;">📅 ${t.date_from} → ${t.date_to}${t.total_days ? ' (' + t.total_days + ' day' + (t.total_days !== 1 ? 's' : '') + ')' : ''}</div>`;
+  }
 
   const respondBy = t.responded_by ? ` by ${escHtml(t.responded_by)}` : '';
   const respondedAt = t.responded_at ? ' on ' + new Date(t.responded_at).toLocaleDateString() : '';
