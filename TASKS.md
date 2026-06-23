@@ -312,7 +312,7 @@ New `tickets.json` data store. Each ticket:
 
 - [x] worker-1 **Ticket status notifications** — When admin approves/denies a ticket, employee sees a notification badge on their "📋 Requests" tab. In-tab alert banner: "Your time-off request was ✅ approved" or "❌ denied". Unread count badge on tab button. [worker-1 — Added `response_read` field to ticket model, `/api/tickets/mark_read` endpoint returns alerts for newly seen responses, `/api/tickets/my` returns `unread_count`, frontend badge on tab button with 30s polling, alert banners with i18n EN+ES, auto-mark-read on tab visit]
 
-- [ ] **API endpoints for ticket CRUD** — `POST /api/tickets/submit`, `POST /api/tickets/my`, `POST /api/tickets/queue`, `POST /api/tickets/respond`. Permission-gated.
+- [~] worker-1 **API endpoints for ticket CRUD** — `POST /api/tickets/submit`, `POST /api/tickets/my`, `POST /api/tickets/queue`, `POST /api/tickets/respond`. Permission-gated.
 
 ### Priority: MEDIUM
 
