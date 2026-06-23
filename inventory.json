@@ -1,1 +1,6 @@
-{}
+{
+    "TestItem": {
+        "stock": 0,
+        "low_stock_threshold": 10
+    }
+}

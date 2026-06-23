@@ -6,3 +6,15 @@ __pycache__/
 node_modules/
 package-lock.json
 package.json
+email_config.json
+shift_log.json
+clock_data.json
+waste_log.json
+refunded_orders.json
+loyalty_points.json
+favorites.json
+scheduled_pricing.json
+inventory.json
+webhooks.json
+menu_backups/
+pos_orders_backup.json

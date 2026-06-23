@@ -696,6 +696,34 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
   color: #5bc0de; font-size: 1em; font-weight: 600; font-style: italic;
 }
 
+/* ── Kitchen Table Grouping ── */
+
+.kitchen-table-group {
+  background: var(--card); border-radius: var(--radius); overflow: hidden;
+  border: 1px solid var(--border);
+}
+.kitchen-table-group .ktg-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; background: var(--accent); color: #fff;
+  font-weight: 700; font-size: 1.3em;
+  cursor: pointer; user-select: none;
+}
+.kitchen-table-group .ktg-table-icon { margin-right: 8px; }
+.kitchen-table-group .ktg-order-count { font-size: 0.7em; opacity: 0.85; font-weight: 400; }
+.kitchen-table-group .ktg-body {
+  display: flex; flex-direction: column; gap: 8px; padding: 10px;
+}
+/* Nested order cards inside a table group — slightly compressed */
+.kitchen-table-group .kitchen-order-card {
+  margin: 0; padding: 14px 16px; border-left-width: 4px;
+}
+.kitchen-table-group .kitchen-order-card .koc-id { font-size: 1.6em; }
+.kitchen-table-group .kitchen-order-card .koc-item { font-size: 1.05em; }
+.kitchen-table-group .kitchen-order-card .koc-btn-claim,
+.kitchen-table-group .kitchen-order-card .koc-btn-done {
+  padding: 10px 20px; min-height: 42px; font-size: 0.95em;
+}
+
 #kitchenLoading {
   display: none; align-items: center; gap: 8px; padding: 8px 16px;
   color: var(--text2); font-size: 13px;
@@ -2164,6 +2192,7 @@ const L10N = {
     'kitchen.claim': '🔪 Claim Order',
     'kitchen.done': '✅ Done',
     'kitchen.cancel': 'Cancel',
+    'kitchen.table_group': 'Table {num} — {count} order(s)',
     'lang.switch': 'Español',
     'users.add_title': '➕ Add User',
     'items.add_title': '➕ Add Item',
@@ -2561,6 +2590,7 @@ const L10N = {
     'kitchen.claim': '🔪 Tomar pedido',
     'kitchen.done': '✅ Listo',
     'kitchen.cancel': 'Cancelar',
+    'kitchen.table_group': 'Mesa {num} — {count} pedido(s)',
     'lang.switch': 'English',
     'users.add_title': '➕ Agregar usuario',
     'items.add_title': '➕ Agregar artículo',
@@ -7634,20 +7664,66 @@ function renderKitchenQueue(orders) {
   const container = document.getElementById('kitchenQueue');
   if (!orders || orders.length === 0) {
     container.innerHTML = '<div class="kitchen-empty">' + t('kitchen.empty') + '</div>';
+    startKitchenTimeUpdater();
     return;
   }
-  // Sort oldest-first
+  // Sort oldest-first (server already sorts by table then time, but ensure within-group ordering)
   const sorted = [...orders].sort((a, b) => {
     const da = a.created_at || a.date || '';
     const db = b.created_at || b.date || '';
     return da.localeCompare(db);
   });
-  container.innerHTML = sorted.map(o => renderKitchenOrderCard(o)).join('');
+
+  // Group by table_number
+  const groups = {};
+  const noTable = [];
+  sorted.forEach(o => {
+    const tbl = o.table_number;
+    if (tbl !== null && tbl !== undefined && tbl !== '') {
+      const key = String(tbl).trim();
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(o);
+    } else {
+      noTable.push(o);
+    }
+  });
+
+  let html = '';
+
+  // Render table groups
+  const tableKeys = Object.keys(groups).sort((a, b) => parseInt(a) - parseInt(b) || a.localeCompare(b));
+  tableKeys.forEach(tbl => {
+    const groupOrders = groups[tbl];
+    html += '<div class="kitchen-table-group">' +
+      '<div class="ktg-header" onclick="toggleKitchenTableGroup(this)">' +
+        '<span><span class="ktg-table-icon">🍽️</span>' + t('kitchen.table_group', { num: tbl, count: groupOrders.length }) + '</span>' +
+        '<span class="ktg-order-count">' + groupOrders.length + '</span>' +
+      '</div>' +
+      '<div class="ktg-body">' +
+        groupOrders.map(o => renderKitchenOrderCard(o, true)).join('') +
+      '</div>' +
+    '</div>';
+  });
+
+  // Render orders without a table
+  noTable.forEach(o => {
+    html += renderKitchenOrderCard(o, false);
+  });
+
+  container.innerHTML = html;
   // Start live-updating time displays
   startKitchenTimeUpdater();
 }
 
-function renderKitchenOrderCard(o) {
+/** Toggle collapsible table group body */
+function toggleKitchenTableGroup(headerEl) {
+  const body = headerEl.parentElement.querySelector('.ktg-body');
+  if (body) {
+    body.style.display = body.style.display === 'none' ? '' : 'none';
+  }
+}
+
+function renderKitchenOrderCard(o, inGroup) {
   const oid = o.id || o.order_id || '?';
   const status = (o.status || 'pending').toLowerCase();
   const items = o.items || [];
@@ -7766,9 +7842,14 @@ function renderKitchenOrderCard(o) {
     ? ' onclick="claimKitchenOrder(' + escJs(String(oid)) + ')"'
     : '';
 
+  // Table number badge (shown on standalone cards, redundant inside group)
+  const tableBadge = (!inGroup && o.table_number)
+    ? '<span style="font-size:0.7em;background:var(--accent);color:#fff;padding:2px 10px;border-radius:12px;margin-left:8px;vertical-align:middle;">🍽️ ' + escHtml(String(o.table_number)) + '</span>'
+    : '';
+
   return '<div class="kitchen-order-card ' + statusClass + ' ' + cardAgeClass + ' ' + pendingTapClass + '"' + cardClick + '>' +
     '<div class="koc-header">' +
-      '<span class="koc-id">#' + escHtml(String(oid)) + '</span>' +
+      '<span class="koc-id">#' + escHtml(String(oid)) + tableBadge + '</span>' +
       timeHtml +
     '</div>' +
     statusBadge +

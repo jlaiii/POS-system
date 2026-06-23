@@ -682,5 +682,132 @@
         "details": {
             "name": "Specialties"
         }
+    },
+    {
+        "timestamp": "2026-06-22T23:52:23.402044",
+        "type": "save_email_config",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {}
+    },
+    {
+        "timestamp": "2026-06-22T23:56:01.922026",
+        "type": "add_item",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "status": "success",
+            "category": "TestCat",
+            "name": "TestItem",
+            "price": 9.99
+        }
+    },
+    {
+        "timestamp": "2026-06-22T23:56:01.926823",
+        "type": "toggle_item_visibility",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "category": "TestCat",
+            "name": "TestItem",
+            "new_active": false
+        }
+    },
+    {
+        "timestamp": "2026-06-22T23:56:01.931972",
+        "type": "toggle_item_visibility",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "category": "TestCat",
+            "name": "TestItem",
+            "new_active": true
+        }
+    },
+    {
+        "timestamp": "2026-06-22T23:56:01.935693",
+        "type": "delete_item",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "status": "success",
+            "category": "TestCat",
+            "name": "TestItem"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T00:35:53.295131",
+        "type": "combo_create",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "combo_id": "combo_1782174953",
+            "name": "Lunch Special",
+            "price": 12.99
+        }
+    },
+    {
+        "timestamp": "2026-06-23T00:35:56.307583",
+        "type": "combo_toggle",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "combo_id": "combo_1782174953"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T00:35:59.314668",
+        "type": "combo_toggle",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "combo_id": "combo_1782174953"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T00:41:59.456610",
+        "type": "combo_create",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "combo_id": "combo_1782175319",
+            "name": "Test Combo",
+            "price": 9.99
+        }
+    },
+    {
+        "timestamp": "2026-06-23T01:06:06.445576",
+        "type": "clock_in",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "status": "success",
+            "user_name": "Owner",
+            "clock_in_time": "2026-06-23T01:06:06.445562"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T01:06:13.005263",
+        "type": "clock_in",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "status": "success",
+            "user_name": "Owner",
+            "clock_in_time": "2026-06-23T01:06:13.005250"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T01:06:15.702278",
+        "type": "clock_out",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "status": "success",
+            "user_name": "Owner",
+            "clock_in_time": "2026-06-23T01:06:13.005250",
+            "clock_out_time": "2026-06-23T01:06:15.701921",
+            "duration_hours": 0.0
+        }
     }
 ]

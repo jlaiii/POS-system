@@ -3529,12 +3529,19 @@ def menu_restore():
 
 @app.route('/api/kitchen/queue', methods=['GET'])
 def kitchen_queue():
-    """Returns all orders where status is 'pending' or 'preparing', sorted oldest first."""
+    """Returns all orders where status is 'pending' or 'preparing', sorted oldest first.
+    Orders are grouped by table_number so same-table orders appear together."""
     try:
         orders = load_json_data(ORDERS_FILE)
         active_orders = [o for o in orders if o.get('status') in ('pending', 'preparing')]
-        # Sort by date ascending (oldest first)
-        active_orders.sort(key=lambda o: o.get('date', ''))
+        # Sort by table_number first (null/None last), then by date ascending
+        def sort_key(o):
+            tbl = o.get('table_number')
+            # Orders with a table number sort before those without
+            tbl_sort = str(tbl).zfill(10) if tbl else 'zzzzzzzzzz'
+            date_val = o.get('date', '') or ''
+            return (tbl_sort, date_val)
+        active_orders.sort(key=sort_key)
         return jsonify({'queue': active_orders, 'count': len(active_orders)})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
