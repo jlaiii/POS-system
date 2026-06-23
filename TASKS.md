@@ -379,7 +379,7 @@ New `tickets.json` data store. Each ticket:
 
 - [x] worker-2 **"View Menu" button overlay on ad screen** — Persistent floating button on the ad rotator: "🍽️ View Menu". When tapped, transitions to menu view. "← Back" returns to ad rotator. [worker-2 — Added floating button, menu overlay with category tabs + item grid, item detail popup, combo showcase row, auto-return after 45s idle. Dark theme, touch-optimized 48px+ targets, orientation-responsive grid.]
 
-- [~] worker-1 **Customer-facing menu display** — Full menu view with category tabs, item cards with images/descriptions/prices. Display-only, no ordering. Large touch targets (min 150px cards).
+- [x] **Customer-facing menu display** — Full menu view with category tabs, item cards with images/descriptions/prices. Display-only, no ordering. Large touch targets (min 150px cards). [worker-1 — Verified: already implemented as part of worker-2's "View Menu" button overlay task. Category tabs, item grid with images/descriptions/prices, 150px min-height cards, no ordering, display-only. All requirements confirmed in code.]
 
 - [ ] **Item detail popup** — Tap item card → fullscreen overlay with large image, description, price, dietary badges, modifier options. Swipe left/right to browse category.
 
