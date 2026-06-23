@@ -166,7 +166,7 @@ Use Python `pyotp` (pure Python, no C extensions, `pip install pyotp qrcode`):
 
 - [ ] **Backup code login** — `POST /api/auth/2fa/backup_login`: if user lost their phone, they can use a backup code instead of TOTP. Accepts `user_id`, `backup_code` (plaintext). Hashes the code and checks against stored `totp_backup_codes`. If match: login succeeds, REMOVE that code from the list (one-time use). Return remaining backup code count in response: "Logged in. 6 backup codes remaining." If no match: 401. After last backup code used: 2FA is still enabled but no recovery — user should regenerate. Admin should be notified when backup codes run low.
 
-- [ ] **Admin 2FA management** — In User Management: show 2FA status badge per user (🔒 Enabled, 🔓 Not Set Up). Admin/owner can click "Disable 2FA" on any user (requires `manage_users` permission). This resets `totp_enabled = false`, clears `totp_secret`, clears `totp_backup_codes`. Reason required (logged in activity_log: `2fa_disabled_by_admin`, who did it, why). Only owner can disable 2FA on other admins. Also: "Regenerate Backup Codes" button that generates new codes (invalidating old ones) — useful when employee says "I used my last backup code."
+- [ ] **Admin/owner 2FA management & reset** — In User Management: show 2FA status badge per user (🔒 Enabled, 🔓 Not Set Up). **Owner can reset/disable 2FA for ANY user** (employee lost phone, left the company, can't log in). Requires `manage_users` permission. This resets `totp_enabled = false`, clears `totp_secret`, clears `totp_backup_codes`. Reason required (logged in activity_log: `2fa_disabled_by_admin`, who did it, why). Only owner can disable 2FA on other admins. Also: "Regenerate Backup Codes" button that generates new codes (invalidating old ones) — useful when employee says "I used my last backup code."
 
 ### Priority: MEDIUM
 
@@ -443,6 +443,77 @@ New `tickets.json` data store. Each ticket:
 |- [ ] **MEDIUM: System-wide data backup & restore** — Currently only menu backups exist. Add full system backup endpoint (`POST /api/system/backup`) that creates a downloadable zip of all JSON data files (users, orders, items, configs, shifts, etc.). Add restore endpoint (`POST /api/system/restore`) to load from a backup zip. Admin UI in Settings panel with one-click backup download and file-upload restore. Auto-scheduled daily backup with configurable retention (keep last N backups). Critical for disaster recovery — without this, a disk failure or corruption means total data loss.
 
 |- [ ] **MEDIUM: Customer online ordering portal** — Mobile-friendly standalone page (e.g. `/order`) for customers to browse menu, view item details + images, add to cart with modifiers/notes, and place pickup or delivery orders. Reuses existing backend (orders, items, combos, delivery addresses, payment processing). Integrates with existing pickup-display, kitchen queue, and order notification system. No staff intervention needed for order placement. Essential for any restaurant wanting to accept direct online orders without third-party delivery apps.
+
+## Production Readiness & Mobile Optimization (NEW — June 2026)
+
+> This system will be used in real restaurants on touch tablets and phones — not just on a developer's desktop. Every feature, every button, every form must work with fat fingers on a 10" screen in a busy kitchen. This section covers everything needed to go from "works on my laptop" to "deployed in a restaurant."
+
+### How the Production Readiness Auditor Works
+
+A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike the existing System Auditor (which checks JSON validity and app startup), this worker thinks like a restaurant manager deploying to production:
+
+1. **Walk through full real-world workflows** — clock in, take orders, split payments, clock out, run payroll
+2. **Test on mobile viewport** — resize to tablet/phone dimensions, check touch targets, check overflow
+3. **Identify what's broken or missing** — edge cases, missing validation, UX friction points
+4. **Add findings to TASKS.md** under this section with clear priority
+5. **Fix one HIGH priority item per run** if possible (small fixes: CSS touch targets, aria labels, viewport tweaks)
+6. **Report to Discord** with audit summary
+
+### Priority: HIGH — Touch & Mobile Readiness
+
+- [ ] **Touch target audit (all interactive elements ≥ 48px)** — Systematically check every button, input, select, and clickable element in index.html. Any element smaller than 48×48px on a tablet viewport is a fail. Common offenders: category tabs, quantity ± buttons, table selector dropdown, modifier checkboxes, timesheet sub-tabs. Fix by increasing min-height/min-width, adding padding, or wrapping in larger touch zones. This is the #1 real-world complaint: "I can't tap the right button."
+
+- [ ] **Mobile viewport meta tag verification** — Confirm `<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">` is present and correct. Test that the app doesn't zoom unexpectedly on input focus (iOS Safari notorious for this). Test on actual tablet dimensions: 768×1024 (iPad portrait), 1024×768 (iPad landscape), 800×1280 (Samsung tablet).
+
+- [ ] **No hover-dependent interactions** — Tablets don't have hover. Audit the entire UI: any feature that requires hovering to reveal (tooltips, dropdown menus, hover cards, hover-to-expand) must have a tap alternative. Replace `:hover` CSS with `:active` or click-to-toggle patterns. Common offenders: admin sidebar sub-items, item detail tooltips, table tab hover states, shift edit buttons.
+
+- [ ] **Scrollable areas with momentum scrolling** — All scrollable containers (item grid, order history, timesheet list, admin sections) must have `-webkit-overflow-scrolling: touch` and smooth momentum scrolling. Test on actual iPad — default scrolling is janky and feels broken. Add `overscroll-behavior: contain` to prevent page bounce when scrolling modals.
+
+- [ ] **Form input optimization for tablets** — All number inputs should use `inputmode="numeric" pattern="[0-9]*"` to trigger the numeric keypad (not full keyboard) on tablets. PIN entry: `inputmode="numeric"` + `autocomplete="off"`. Quantity inputs: `type="number"` with min/max. Date inputs: native `<input type="date">` which renders as a touch-friendly date picker on tablets.
+
+- [ ] **Orientation handling (portrait + landscape)** — Restaurant tablets get mounted in both orientations (landscape on counter stands, portrait when handheld). Test every view in both orientations. Ensure the POS item grid, kitchen display, and admin panels don't break or have hidden content. Use CSS media queries: `@media (orientation: portrait)` and `@media (orientation: landscape)`. Kitchen display especially — landscape is standard for wall-mounted screens.
+
+- [ ] **Fast tap response (no 300ms delay)** — Mobile browsers add a 300ms delay to distinguish tap from double-tap. This makes the POS feel sluggish. Fix with: `touch-action: manipulation` on all interactive elements, or use a fastclick polyfill. The difference between "instant" and "300ms delay" is the difference between "professional POS" and "janky web app."
+
+### Priority: HIGH — Real-World Workflow Gaps
+
+- [ ] **Walkthrough: full shift lifecycle** — Clock in → take 10 orders across 5 tables → split payment on 2 → apply discount → add tips → clock out. Time the whole flow. Identify every place where the user has to stop and think, tap extra times, or work around the UI. Report friction points. Common issues: too many taps to switch tables between orders, can't easily split a check after items are rung up, tip entry should be at payment screen not cart.
+
+- [ ] **Walkthrough: closing shift reconciliation** — Run the cash register closing flow: count drawer → enter expected cash → system compares to actual → variance report → clock out. Test with mismatches: $20 over, $5 short. Does the system flag these clearly? Does it force a reason for variance? Is there a paper trail?
+
+- [ ] **Walkthrough: refund/void flow** — Ring up an order → submit → customer changes mind → void entire order. Ring up → submit → customer says "no onions" → refund single item. Test both. Does the refund button appear quickly? Is the reason required? Are refunded items removed from inventory? Is the refund visible in stats/reports?
+
+- [ ] **Error state testing** — Test every endpoint with bad data: missing fields, wrong types, oversized values, SQL injection attempts. The app should return clear error messages, not 500 errors or blank screens. Common gaps: no try/catch on JSON.parse in frontend, no 404 handling for deleted items, no fallback when a JSON file is corrupted, no loading states during API calls.
+
+- [ ] **Concurrent use testing** — Two waiters on separate tablets, same table. Both add items simultaneously. One submits → other's cart is now stale. Does the system handle this gracefully? Show "Table 5 has a new order since you started — refresh?" Also: two waiters clocking in/out simultaneously, two admins editing the same item. JSON file writes are atomic on Linux but race conditions still exist.
+
+- [ ] **Offline → online recovery flow** — Turn off WiFi → ring up orders (offline queue) → turn WiFi back on. Verify: queued orders appear in correct order, payment splits preserved, tips preserved, table numbers preserved. Verify the offline badge showed during offline, synced badge showed during sync, clear badge after sync. Test with 10+ queued orders (not just 1-2).
+
+### Priority: MEDIUM — Missing Production Features
+
+- [ ] **Printer integration (ESC/POS thermal printers)** — Most restaurants use Epson TM-T88 or similar thermal receipt printers. Add optional printer support via `/api/print/receipt` endpoint that formats a receipt as ESC/POS commands and sends to a printer IP. Configurable printer IP in admin. Fallback: generate a clean HTML receipt for browser printing. Without printer support, the system can't print physical receipts — a dealbreaker for most restaurants.
+
+- [ ] **Sound alerts for kitchen display** — Kitchen display already has a 3-note alarm. Verify it works on tablets (requires user gesture to unlock audio on iOS/Safari). Add a "first interaction" screen that enables audio: "Tap anywhere to enable kitchen alerts." Check volume levels — should be audible in a noisy kitchen but not deafening. Configurable sound on/off and volume in admin.
+
+- [ ] **Idle timeout + auto-lock** — After 5 minutes of inactivity on the POS screen, auto-lock and require PIN re-entry. This prevents unauthorized use when a waiter walks away from the tablet. Configurable timeout (1-30 minutes). Show a countdown warning: "Locking in 30 seconds... tap to stay." Also: clock-out auto-lock — when an employee clocks out, force logout on that device.
+
+- [ ] **Multi-language completeness check** — Audit the i18n keys. Are ALL user-visible strings translated to Spanish? Check toast messages, error messages, button labels, admin section headers, timesheet labels, security settings, backup codes UI. Common gap: error messages from the backend are English-only. Add server-side translation for common error messages.
+
+- [ ] **Performance on low-end tablets** — The single-page index.html is 500KB+. On a $100 Android tablet with 2GB RAM, this might be slow. Profile: page load time, time-to-interactive, memory usage. Optimize: lazy-load Chart.js (only on stats tab), defer non-critical CSS, split kitchen display into separate lightweight page. Target: <3s load on 4G, smooth 60fps scrolling.
+
+- [ ] **Accessibility basics (screen reader, contrast)** — This will be used by real employees, some with disabilities. Minimum: all buttons have aria-labels, form inputs have associated labels, color is never the only indicator (add icons alongside color badges), contrast ratio ≥ 4.5:1 for text. Test with VoiceOver (iPad) or TalkBack (Android). This is often legally required for workplace software.
+
+### Priority: LOW — Polish & Professionalism
+
+- [ ] **Loading skeleton screens** — Replace "Loading..." text with skeleton screens (animated gray placeholders) for: item grid, order history, timesheet, pay period. Makes the app feel 2x faster even if load time is the same. Perceived performance is real performance in a busy restaurant.
+
+- [ ] **Smooth page transitions** — Currently switching between POS / History / Admin tabs is instant (jarring). Add subtle transitions: slide-left for forward navigation, slide-right for back, fade for modals. 150ms duration — fast enough to not feel slow, present enough to feel polished.
+
+- [ ] **Haptic feedback on order submit** — On supported devices (iOS, modern Android), trigger a short vibration when an order is successfully submitted. `navigator.vibrate(50)`. This gives the waiter physical confirmation without looking at the screen — they can keep eyes on the customer.
+
+- [ ] **Dark mode on the tablet menu page** — The `/tablet` customer-facing menu should respect the POS dark theme. Currently it's a separate page — verify it renders correctly in dark mode. Add theme toggle for customers who prefer light.
+
+- [ ] **App icon + splash screen for PWA** — When installed to home screen (Add to Home Screen on iPad), the app should show a proper icon and splash screen. Verify manifest.json has all icon sizes (192px, 512px). Add `apple-touch-icon` and `apple-mobile-web-app-capable` meta tags for iOS.
 
 ## Done
 
