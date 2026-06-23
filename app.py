@@ -18,6 +18,8 @@ from collections import defaultdict, Counter
 import pyotp
 import qrcode
 import html as _html
+import re
+from functools import wraps
 
 app = Flask(__name__, static_folder='.', static_url_path='')
 CORS(app)  # Enable CORS for all origins
@@ -115,6 +117,11 @@ RESTAURANT_CONFIG_FILE = 'restaurant_config.json'  # Restaurant info for tablet 
 LOGIN_ATTEMPTS_FILE = 'login_attempts.json'  # Persistent login attempt records (user_id, ip, timestamp, success, user_agent)
 SECURITY_EVENTS_FILE = 'security_events.json'  # Security events/incidents log
 SECURITY_CONFIG_FILE = 'security_config.json'  # Security config (blocked IPs, thresholds)
+
+# --- Platform / Multi-Tenant Constants ---
+GLOCAL_DIR = 'data/global'  # Global platform data directory
+BUSINESSES_FILE = os.path.join(GLOCAL_DIR, 'businesses.json')  # All registered businesses
+SUPER_ADMINS_FILE = os.path.join(GLOCAL_DIR, 'super_admins.json')  # Super admin accounts
 
 # --- Loyalty Constants ---
 LOYALTY_POINTS_PER_DOLLAR = 1  # 1 point per $1 spent
@@ -313,8 +320,54 @@ def load_json_data(filepath):
 
 
 def save_json_data(filepath, data):
+    dirname = os.path.dirname(filepath)
+    if dirname:
+        os.makedirs(dirname, exist_ok=True)
     with open(filepath, 'w') as f:
         json.dump(data, f, indent=4)
+
+
+# --- Platform / Multi-Tenant Helpers ---
+
+def load_businesses():
+    """Load the businesses registry from data/global/businesses.json."""
+    return load_json_data(BUSINESSES_FILE)
+
+
+def save_businesses(data):
+    """Save the businesses registry."""
+    if not isinstance(data, dict):
+        data = {}
+    save_json_data(BUSINESSES_FILE, data)
+
+
+def load_super_admins():
+    """Load super admin accounts from data/global/super_admins.json."""
+    return load_json_data(SUPER_ADMINS_FILE)
+
+
+def save_super_admins(data):
+    """Save super admin accounts."""
+    if not isinstance(data, dict):
+        data = {}
+    save_json_data(SUPER_ADMINS_FILE, data)
+
+
+def verify_super_admin(pin):
+    """Check if a PIN belongs to a super admin. Returns the user dict or None."""
+    supers = load_super_admins()
+    if pin in supers:
+        return supers[pin]
+    return None
+
+
+def get_business_context():
+    """Get the current business context from session.
+    Returns dict with 'business_id', 'location_id' or None if not in a business context.
+    This is a stub — full tenant-aware middleware will be implemented in the next task."""
+    # For now, return None (no business context = legacy single-tenant mode)
+    # In the future, this will extract business_id from the request/session
+    return None
 
 
 def hash_password(password, salt=None):
@@ -11511,6 +11564,264 @@ def ticket_mark_read():
         'alerts': alerts,
         'read_count': len(alerts),
     })
+
+
+# ============================================================
+# Platform / Multi-Tenant API Endpoints
+# ============================================================
+
+@app.route('/api/platform/super_admin/login', methods=['POST'])
+def platform_super_admin_login():
+    """Super admin login. Separate from business user login.
+    Accepts PIN, returns session token if valid super admin."""
+    data = request.json
+    if not data:
+        return jsonify({'message': 'Request body is required.'}), 400
+
+    pin = str(data.get('pin', ''))
+    super_admin = verify_super_admin(pin)
+    if not super_admin:
+        log_activity('platform_login_failed', pin, 'super_admin',
+                     {'reason': 'Invalid super admin PIN', 'ip': get_client_ip()})
+        return jsonify({'message': 'Invalid super admin credentials.'}), 401
+
+    # Generate session token
+    session_token = secrets.token_hex(32)
+    # Store session in memory (dict)
+    platform_sessions[session_token] = {
+        'pin': pin,
+        'name': super_admin.get('name', 'Super Admin'),
+        'role': 'super_admin',
+        'permissions': super_admin.get('permissions', []),
+        'created_at': datetime.now().isoformat(),
+        'ip': get_client_ip()
+    }
+
+    log_activity('platform_login', pin, 'super_admin',
+                 {'name': super_admin.get('name'), 'ip': get_client_ip()})
+    return jsonify({
+        'message': 'Super admin logged in successfully.',
+        'session_token': session_token,
+        'name': super_admin.get('name'),
+        'role': 'super_admin'
+    })
+
+
+def require_super_admin():
+    """Decorator helper: extract and validate super admin session from request.
+    Returns the session data or (jsonify(error), status_code)."""
+    data = request.json or {}
+    session_token = data.get('session_token') or request.headers.get('X-Super-Token')
+    if not session_token:
+        return None, (jsonify({'message': 'Super admin session token required.'}), 401)
+    session = platform_sessions.get(session_token)
+    if not session:
+        return None, (jsonify({'message': 'Invalid or expired super admin session.'}), 401)
+    return session, None
+
+
+def require_super_admin_decorator(f):
+    """Decorator to require super admin session on an endpoint."""
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        session, error = require_super_admin()
+        if error:
+            return error
+        return f(*args, **kwargs)
+    return wrapper
+
+
+@app.route('/api/platform/businesses/list', methods=['POST'])
+def platform_businesses_list():
+    """List all businesses. Requires super admin session."""
+    session, error = require_super_admin()
+    if error:
+        return error
+
+    businesses = load_businesses()
+    # Return summary list
+    results = []
+    for bid, biz in businesses.items():
+        results.append({
+            'business_id': bid,
+            'business_name': biz.get('business_name'),
+            'status': biz.get('status', 'active'),
+            'plan': biz.get('plan', 'free'),
+            'owner_name': biz.get('owner_name'),
+            'owner_email': biz.get('owner_email'),
+            'created_at': biz.get('created_at'),
+            'location_count': len(biz.get('locations', {})),
+            'user_count': biz.get('max_users', 0),
+            'features': biz.get('features_enabled', [])
+        })
+    results.sort(key=lambda b: b.get('created_at', ''), reverse=True)
+    return jsonify({'businesses': results, 'count': len(results)})
+
+
+@app.route('/api/platform/businesses/create', methods=['POST'])
+def platform_businesses_create():
+    """Create a new business. Requires super admin session."""
+    session, error = require_super_admin()
+    if error:
+        return error
+
+    data = request.json
+    if not data:
+        return jsonify({'message': 'Request body is required.'}), 400
+
+    business_id = str(data.get('business_id', '')).strip().lower()
+    # Sanitize: only lowercase alphanumeric and hyphens
+    business_id = re.sub(r'[^a-z0-9-]', '', business_id)
+    business_name = str(data.get('business_name', '')).strip()
+    owner_name = str(data.get('owner_name', '')).strip()
+    owner_email = str(data.get('owner_email', '')).strip()
+    owner_phone = str(data.get('owner_phone', '')).strip()
+    owner_pin = str(data.get('owner_pin', '')).strip()
+    plan = str(data.get('plan', 'free')).strip().lower()
+    features = data.get('features', ['pos', 'kitchen', 'timesheet'])
+    max_users = int(data.get('max_users', 10))
+    max_locations = int(data.get('max_locations', 1))
+
+    if not business_id or not business_name:
+        return jsonify({'message': 'business_id and business_name are required.'}), 400
+    if len(business_id) < 3:
+        return jsonify({'message': 'business_id must be at least 3 characters.'}), 400
+    if not owner_pin or len(owner_pin) < 4:
+        return jsonify({'message': 'Owner PIN (4+ digits) is required.'}), 400
+
+    businesses = load_businesses()
+    if business_id in businesses:
+        return jsonify({'message': f'Business ID "{business_id}" already exists.'}), 409
+
+    # Create the business entry
+    businesses[business_id] = {
+        'business_name': business_name,
+        'business_id': business_id,
+        'status': 'active',
+        'owner_user_id': owner_pin,
+        'owner_name': owner_name,
+        'owner_email': owner_email,
+        'owner_phone': owner_phone,
+        'created_at': datetime.now().isoformat(),
+        'plan': plan,
+        'max_locations': max_locations,
+        'max_users': max_users,
+        'features_enabled': features,
+        'locations': {
+            'main': {
+                'name': 'Main Location',
+                'address': '',
+                'timezone': 'America/Chicago'
+            }
+        }
+    }
+    save_businesses(businesses)
+
+    # Also create the owner user in the business users file
+    # For now, we store a reference in the global config
+    # The actual user data will be scoped per-business in later tasks
+
+    log_activity('platform_business_created', session.get('pin'), 'super_admin',
+                 {'business_id': business_id, 'business_name': business_name,
+                  'owner_name': owner_name, 'owner_email': owner_email})
+
+    return jsonify({
+        'message': f'Business "{business_name}" created successfully!',
+        'business_id': business_id,
+        'status': 'active'
+    }), 201
+
+
+@app.route('/api/platform/businesses/status', methods=['POST'])
+def platform_businesses_status():
+    """Update business status (active/suspended/pending_approval). Requires super admin."""
+    session, error = require_super_admin()
+    if error:
+        return error
+
+    data = request.json
+    if not data:
+        return jsonify({'message': 'Request body is required.'}), 400
+
+    business_id = str(data.get('business_id', '')).strip()
+    new_status = str(data.get('status', '')).strip().lower()
+    reason = str(data.get('reason', '')).strip()
+
+    if new_status not in ('active', 'suspended', 'pending_approval'):
+        return jsonify({'message': 'Status must be active, suspended, or pending_approval.'}), 400
+    if new_status == 'suspended' and not reason:
+        return jsonify({'message': 'Reason is required when suspending a business.'}), 400
+
+    businesses = load_businesses()
+    if business_id not in businesses:
+        return jsonify({'message': f'Business "{business_id}" not found.'}), 404
+
+    old_status = businesses[business_id].get('status', 'unknown')
+    businesses[business_id]['status'] = new_status
+    if reason:
+        businesses[business_id]['status_reason'] = reason
+    save_businesses(businesses)
+
+    log_activity('platform_business_status_change', session.get('pin'), 'super_admin',
+                 {'business_id': business_id, 'old_status': old_status,
+                  'new_status': new_status, 'reason': reason})
+
+    status_emoji = {'active': '🟢', 'suspended': '🔴', 'pending_approval': '🟡'}
+    return jsonify({
+        'message': f'{status_emoji.get(new_status, "❓")} Business "{business_id}" status changed to {new_status}.',
+        'business_id': business_id,
+        'old_status': old_status,
+        'new_status': new_status
+    })
+
+
+@app.route('/api/platform/businesses/detail', methods=['POST'])
+def platform_businesses_detail():
+    """Get full detail for a single business. Requires super admin."""
+    session, error = require_super_admin()
+    if error:
+        return error
+
+    data = request.json
+    if not data:
+        return jsonify({'message': 'Request body is required.'}), 400
+
+    business_id = str(data.get('business_id', '')).strip()
+    businesses = load_businesses()
+    if business_id not in businesses:
+        return jsonify({'message': f'Business "{business_id}" not found.'}), 404
+
+    return jsonify({'business': businesses[business_id]})
+
+
+@app.route('/api/platform/stats', methods=['POST'])
+def platform_stats():
+    """Return platform-wide analytics. Requires super admin."""
+    session, error = require_super_admin()
+    if error:
+        return error
+
+    businesses = load_businesses()
+    total_businesses = len(businesses)
+    active_businesses = sum(1 for b in businesses.values() if b.get('status') == 'active')
+    suspended_businesses = sum(1 for b in businesses.values() if b.get('status') == 'suspended')
+    pending_businesses = sum(1 for b in businesses.values() if b.get('status') == 'pending_approval')
+    total_users = sum(b.get('max_users', 0) for b in businesses.values())
+    total_locations = sum(len(b.get('locations', {})) for b in businesses.values())
+
+    return jsonify({
+        'total_businesses': total_businesses,
+        'active_businesses': active_businesses,
+        'suspended_businesses': suspended_businesses,
+        'pending_businesses': pending_businesses,
+        'total_users_capacity': total_users,
+        'total_locations': total_locations,
+        'timestamp': datetime.now().isoformat()
+    })
+
+
+# In-memory platform super admin sessions
+platform_sessions = {}
 
 
 if __name__ == '__main__':

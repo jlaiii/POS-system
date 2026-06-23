@@ -1,0 +1,9 @@
+{
+  "1111": {
+    "name": "Jay (Platform Owner)",
+    "pin": "1111",
+    "role": "super_admin",
+    "permissions": ["*"],
+    "created_at": "2026-06-23"
+  }
+}

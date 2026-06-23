@@ -644,7 +644,7 @@ SUPER ADMIN (Jay — developer account)
 
 ### Priority: HIGH — Multi-Tenant Foundation
 
-- [~] worker-3 **Global data model + platform config** — Create `/data/global/businesses.json`:
+- [x] worker-3 **Global data model + platform config** — Created `/data/global/businesses.json` (with sample businesses: Maria's Tacos, Bob's Burgers) and `/data/global/super_admins.json` (with platform owner account PIN 1111). Added `GLOCAL_DIR`, `BUSINESSES_FILE`, `SUPER_ADMINS_FILE` constants and helper functions (`load_businesses`, `save_businesses`, `load_super_admins`, `save_super_admins`, `verify_super_admin`, `get_business_context`). Implemented 6 platform API endpoints: `POST /api/platform/super_admin/login`, `/businesses/list`, `/businesses/create`, `/businesses/detail`, `/businesses/status`, `/api/platform/stats` — all gated by in-memory super admin session tokens. Enhanced `save_json_data()` to auto-create directories. Added `import re` and `from functools import wraps`. [worker-3]
 ```json
 {
   "marias-tacos": {
@@ -759,8 +759,9 @@ Super admin PIN is separate from any business PIN. Super admin can create busine
 |||- [x] worker-2 **Pay history with period-by-period breakdown** — Enhanced pay history period cards with pay rate display ($X.XX/hr), expandable grid-based shift breakdown showing date/day, clock in/out, paid+break hours, period total summary row. Added i18n keys EN+ES. [worker-2]
 |||- [x] worker-3 **PDF timesheet report export** — New `POST /api/export/timesheet_pdf` endpoint generating print-ready HTML report from employee shift data. Employee name, shift dates/times, daily totals, period total, overtime, estimated pay, signature line. Print-friendly CSS with page breaks per employee. Button in Employee Shifts sub-tab. [worker-3]
 ||- [x] worker-3 **Item detail popup** — Enhanced tablet menu item detail overlay with dietary badges (🌿 Vegetarian, 🌶️ Spicy, etc.), modifier options display (groups with type labels and price chips), and prev/next navigation (buttons + swipe + arrow keys) to browse items within same category. Added `dietary_tags` field to item data model. Configurable dietary icon mapping with 15 types. Dark theme, touch-friendly 56px nav buttons. [worker-3]
-||- [x] worker-3 **Restaurant info bar** — Persistent footer on tablet display: restaurant name, hours, Wi-Fi info, "📞 Call Server" button (SocketIO + REST fallback), table number from URL param `?table=N`. Config via `restaurant_config.json`. Staff notified via SocketIO `server_call` toast. [worker-3]
-
+|||- [x] worker-3 **Restaurant info bar** — Persistent footer on tablet display: restaurant name, hours, Wi-Fi info, "📞 Call Server" button (SocketIO + REST fallback), table number from URL param `?table=N`. Config via `restaurant_config.json`. Staff notified via SocketIO `server_call` toast. [worker-3]
+||- [x] worker-3 **Global data model + platform config** — Created `data/global/businesses.json` (with sample businesses: Maria's Tacos, Bob's Burgers) and `data/global/super_admins.json` (platform owner PIN 1111). Added `GLOCAL_DIR`, `BUSINESSES_FILE`, `SUPER_ADMINS_FILE` constants, `load_businesses/save_businesses/load_super_admins/save_super_admins/verify_super_admin/get_business_context` helpers, and 6 platform API endpoints (`POST /api/platform/super_admin/login`, `/businesses/list`, `/businesses/create`, `/businesses/detail`, `/businesses/status`, `/api/platform/stats`) — all gated by in-memory super admin session tokens. Enhanced `save_json_data()` to auto-create directories. [worker-3]
+|
 ## Done (older)
 <details>
 <summary>54 completed tasks from earlier development</summary>
