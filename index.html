@@ -421,6 +421,9 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 .cd-indicator { font-size: 12px; color: var(--text2); text-align: center; margin-top: 4px; display: none; }
 .cd-indicator.active { display: block; }
 .cd-indicator .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #4fc3f7; margin-right: 4px; animation: blink 1s infinite; }
+.pb-indicator { font-size: 12px; color: var(--text2); text-align: center; margin-top: 4px; display: none; }
+.pb-indicator.active { display: block; }
+.pb-indicator .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #f39c12; margin-right: 4px; animation: blink 1s infinite; }
 @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
 /* ── ORDER HISTORY ── */
@@ -1129,9 +1132,11 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
             <button class="outline" id="dtModeBtn" onclick="toggleDriveThrough()">🛵 Drive-Through</button>
             <button class="outline" id="kioskModeBtn" onclick="enterKioskMode()" style="border-color:#2ecc71;color:#2ecc71;">🪟 Kiosk Mode</button>
             <button class="outline" id="customerDisplayBtn" onclick="toggleCustomerDisplay()" style="border-color:#4fc3f7;color:#4fc3f7;">🖥️ Customer Display</button>
+            <button class="outline" id="pickupBoardBtn" onclick="togglePickupBoard()" style="border-color:#f39c12;color:#f39c12;">📋 Pickup Board</button>
           </div>
           <div class="dt-indicator" id="dtIndicator"><span class="dot"></span> Drive-through display is live</div>
           <div class="cd-indicator" id="cdIndicator"><span class="dot"></span> Customer display is live — open <a href="/customer-display" target="_blank" style="color:#4fc3f7;">/customer-display</a></div>
+          <div class="pb-indicator" id="pbIndicator"><span class="dot"></span> Pickup board is live — open <a href="/pickup-display" target="_blank" style="color:#f39c12;">/pickup-display</a></div>
         </div>
       </div>
     </div>
@@ -2062,6 +2067,11 @@ const L10N = {
     'history.status_completed': 'Completed',
     'history.status_refunded': 'Refunded',
     'history.status_voided': 'Voided',
+    'pickup.toggle': '📋 Pickup Board',
+    'pickup.toggle_on': '📋 Pickup Board ON',
+    'pickup.indicator': 'Pickup board is live — open',
+    'pickup.marked_ready': '📋 Order #${id} marked ready for pickup!',
+    'pickup.mark_ready': '📋 Ready',
     'receipt.print': '🖨️ Print',
     'receipt.close': 'Close',
     'receipt.thank_you': 'Thank you for your business!',
@@ -2430,6 +2440,11 @@ const L10N = {
     'history.status_completed': 'Completado',
     'history.status_refunded': 'Reembolsado',
     'history.status_voided': 'Anulado',
+    'pickup.toggle': '📋 Tablero de Recogida',
+    'pickup.toggle_on': '📋 Tablero de Recogida ON',
+    'pickup.indicator': 'Tablero de recogida activo — abrir',
+    'pickup.marked_ready': '📋 ¡Pedido #${id} listo para recoger!',
+    'pickup.mark_ready': '📋 Listo',
     'receipt.print': '🖨️ Imprimir',
     'receipt.close': 'Cerrar',
     'receipt.thank_you': '¡Gracias por su negocio!',
@@ -4027,6 +4042,15 @@ async function submitOrder() {
         });
       } catch(e) { /* silent */ }
     }
+    // If pickup board mode is active, mark order as ready for pickup
+    if (pickupBoardMode) {
+      try {
+        await fetch(BACKEND_URL + '/api/pickup-display/mark-ready', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ order_id: result.order_id, user: currentUser.id })
+        });
+      } catch(e) { /* silent */ }
+    }
     cart = [];
     appliedDiscount = null;
     resetTip();
@@ -4589,6 +4613,42 @@ async function pushToCustomerDisplay() {
   } catch(e) { /* silent */ }
 }
 
+// ═══════════ PICKUP BOARD ═══════════
+let pickupBoardMode = false;
+
+function togglePickupBoard() {
+  pickupBoardMode = !pickupBoardMode;
+  const btn = document.getElementById('pickupBoardBtn');
+  const indicator = document.getElementById('pbIndicator');
+  if (pickupBoardMode) {
+    btn.classList.add('active');
+    btn.innerHTML = '📋 Pickup Board ON';
+    indicator.classList.add('active');
+    showToast('Pickup board activated', 'success');
+  } else {
+    btn.classList.remove('active');
+    btn.innerHTML = '📋 Pickup Board';
+    indicator.classList.remove('active');
+  }
+}
+
+async function markOrderReadyForPickup(orderId) {
+  try {
+    const r = await fetch(BACKEND_URL + '/api/pickup-display/mark-ready', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ order_id: orderId, user: currentUser ? currentUser.id : '' })
+    });
+    const data = await r.json();
+    if (r.ok) {
+      showToast('📋 Order #' + orderId + ' marked ready for pickup!', 'success');
+    } else {
+      showToast(data.message || 'Failed to mark ready', 'danger');
+    }
+  } catch(e) {
+    showToast('Network error marking order ready', 'danger');
+  }
+}
+
 // ═══════════ DISCOUNT / COUPON ═══════════
 function updateDiscountStatus() {
   const status = document.getElementById('discountStatus');
@@ -4786,6 +4846,9 @@ async function loadOrderHistory() {
     const status = o.status || 'pending';
     const canRefund = currentUser && (currentUser.permissions || []).some(p => p === '*' || p === 'manage_orders');
     const isRefunded = status === 'refunded' || status === 'voided';
+    const isCompleted = status === 'completed';
+    const isReadyForPickup = o.ready_for_pickup === true;
+    const isCollected = o.collected_at ? true : false;
     const statusLabel = t('history.status_' + status) || status;
     const statusBadge = `<span class="ho-status-badge ${status}">${statusLabel}</span>`;
     const refundReasonStr = isRefunded && o.refund_reason ? `<br/><span style="color:var(--text2);font-size:12px;">${t('history.refund_reason', {reason: escHtml(o.refund_reason)})}</span>\` : '';
@@ -4794,7 +4857,7 @@ async function loadOrderHistory() {
           <span><strong>#${orderNum}</strong> — ${dt}${statusBadge}</span>
           <span class="ho-total">$${total}</span>
         </div>
-        <div class="ho-meta">${t('history.payment')} ${escHtml(paymentDisplay)} | ${t('history.user')} ${escHtml(o.user || 'N/A')}${hasTax ? ' | ' + t('history.tax') + ': $' + parseFloat(o.tax_amount).toFixed(2) : ''}${hasServiceCharge ? ' | 🔧 +$' + parseFloat(o.service_charge_amount).toFixed(2) : ''}${hasTip ? ' | 💬 ' + t('receipt.tip') + ': $' + parseFloat(o.tip_amount).toFixed(2) : ''}${o.table_number ? ' | 🪪 Table #' + o.table_number : ''}${hasDelivery ? ' | 📮 ' + escHtml(formatDeliveryAddress(deliveryAddr)) : ''}${orderNotes ? ' | 📝 ' + t('history.notes') : ''}${refundReasonStr} <button class="ghost" onclick="event.stopPropagation();reorderFromHistory(${JSON.stringify(items).replace(/"/g, '&quot;')})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#2ecc71;" title="${t('history.reorder')}">🔄</button> <button class="ghost" onclick="event.stopPropagation();printHistoryReceipt(${JSON.stringify(o).replace(/"/g, '&quot;')}, ${orderNum})" style="font-size:12px;padding:4px 8px;min-height:28px;color:var(--accent);">🖨️</button> <button class="ghost" onclick="event.stopPropagation();emailHistoryReceipt(${o.order_id})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#4fc3f7;" title="${t('history.email_receipt')}">📧</button>${canRefund && !isRefunded ? \`<button class="ghost" onclick="event.stopPropagation();showRefundOverlay({order_id: ${o.order_id}, total: '${total}', date: '${(o.date || '').replace(/'/g, "\\'")}', payment: '${(o.payment || '').replace(/'/g, "\\'")}', user: '${(o.user || '').replace(/'/g, "\\'")}', orderNum: ${orderNum}})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#e74c3c;">↩️</button>\` : ''}</div>
+        <div class="ho-meta">${t('history.payment')} ${escHtml(paymentDisplay)} | ${t('history.user')} ${escHtml(o.user || 'N/A')}${hasTax ? ' | ' + t('history.tax') + ': $' + parseFloat(o.tax_amount).toFixed(2) : ''}${hasServiceCharge ? ' | 🔧 +$' + parseFloat(o.service_charge_amount).toFixed(2) : ''}${hasTip ? ' | 💬 ' + t('receipt.tip') + ': $' + parseFloat(o.tip_amount).toFixed(2) : ''}${o.table_number ? ' | 🪪 Table #' + o.table_number : ''}${hasDelivery ? ' | 📮 ' + escHtml(formatDeliveryAddress(deliveryAddr)) : ''}${orderNotes ? ' | 📝 ' + t('history.notes') : ''}${refundReasonStr} <button class="ghost" onclick="event.stopPropagation();reorderFromHistory(${JSON.stringify(items).replace(/"/g, '&quot;')})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#2ecc71;" title="${t('history.reorder')}">🔄</button> <button class="ghost" onclick="event.stopPropagation();printHistoryReceipt(${JSON.stringify(o).replace(/"/g, '&quot;')}, ${orderNum})" style="font-size:12px;padding:4px 8px;min-height:28px;color:var(--accent);">🖨️</button> <button class="ghost" onclick="event.stopPropagation();emailHistoryReceipt(${o.order_id})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#4fc3f7;" title="${t('history.email_receipt')}">📧</button>${canRefund && !isRefunded ? \`<button class="ghost" onclick="event.stopPropagation();showRefundOverlay({order_id: ${o.order_id}, total: '${total}', date: '${(o.date || '').replace(/'/g, "\\'")}', payment: '${(o.payment || '').replace(/'/g, "\\'")}', user: '${(o.user || '').replace(/'/g, "\\'")}', orderNum: ${orderNum}})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#e74c3c;">↩️</button>\` : ''}${isCompleted && !isReadyForPickup && !isCollected ? \`<button class="ghost" onclick="event.stopPropagation();markOrderReadyForPickup(${o.order_id})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#f39c12;">📋 Ready</button>\` : ''}</div>
         <div class="ho-details">
           ${items.map((it, idx) => \`<div class="ho-item"><span>${escHtml(it.name)} x${it.qty||1}${it.note ? '<br/><span style="color:var(--text2);font-size:12px;padding-left:12px;">📝 ' + escHtml(it.note) + '</span>' : ''}${it.modifiers && it.modifiers.length > 0 ? '<br/><span style="color:#f39c12;font-size:12px;padding-left:12px;">⚙️ ' + it.modifiers.map(m => escHtml(m.option)).join(' · ') + '</span>' : ''}</span><span>$${((it.price||0)*(it.qty||1)).toFixed(2)}</span></div>\`).join('')}
           ${hasTax ? \`

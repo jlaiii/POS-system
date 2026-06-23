@@ -27,7 +27,7 @@
 - [x] **Add order status badges in history view** — Show current order status (pending, preparing, completed, refunded/voided) as color-coded badges in order history list. Currently only refunded status is shown. Helps staff quickly identify order state at a glance without expanding details. Consistent with kitchen display status colors. [worker-3]
 - [x] **Add reorder button in order history** — One-click to reload all items from a past order into the cart. Major waiter speed improvement: eliminates need to manually re-add frequent orders. 🔄 button per order in history list loads items into cart with notes/modifiers, switches to POS tab. [worker-1]
 
-- [~] worker-3 **Add order-ready customer pickup display board** — New standalone page (`/pickup-display`) or overlay showing completed orders awaiting collection. Large-format order numbers with visual indicators (new, waiting, collected). Auto-refresh via WebSocket or polling. Independent from kitchen and customer display. Toggle in POS cart to mark order ready for pickup. i18n EN + ES.
+- [x] **Add order-ready customer pickup display board** — New standalone page (`/pickup-display`) showing completed orders ready for collection. Large-format order numbers with visual indicators (new, waiting, collected). Auto-refresh via polling + SocketIO. Emits `pickup_update` event. Toggle in POS cart to auto-mark orders ready. "Mark Ready" button in order history for completed orders. Backend API endpoints: `GET /api/pickup-display/queue`, `POST /api/pickup-display/mark-ready`, `POST /api/pickup-display/collected`. i18n EN + ES. [worker-3]
 
 ## Priority: LOW
 

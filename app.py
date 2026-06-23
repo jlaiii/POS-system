@@ -278,6 +278,7 @@ def fire_webhooks_async(order_data):
 KITCHEN_ROOM = 'kitchen'
 CUSTOMER_ROOM = 'customer_display'
 DRIVETHROUGH_ROOM = 'drivethrough'
+PICKUP_ROOM = 'pickup'
 
 
 @socketio.on('connect')
@@ -328,6 +329,18 @@ def handle_leave_drivethrough():
     leave_room(DRIVETHROUGH_ROOM)
 
 
+@socketio.on('join_pickup')
+def handle_join_pickup():
+    """Pickup display page joins the pickup room."""
+    join_room(PICKUP_ROOM)
+
+
+@socketio.on('leave_pickup')
+def handle_leave_pickup():
+    """Pickup display page leaves the pickup room."""
+    leave_room(PICKUP_ROOM)
+
+
 def emit_kitchen_update():
     """Broadcast to kitchen room that order state changed."""
     socketio.emit('kitchen_update', {}, room=KITCHEN_ROOM)
@@ -341,6 +354,11 @@ def emit_customer_update():
 def emit_drivethrough_update():
     """Broadcast to drive-through room that display state changed."""
     socketio.emit('drivethrough_update', {}, room=DRIVETHROUGH_ROOM)
+
+
+def emit_pickup_update():
+    """Broadcast to pickup display room that pickup state changed."""
+    socketio.emit('pickup_update', {}, room=PICKUP_ROOM)
 
 
 # In-memory storage for active admin sessions (for timesheet calculation)
@@ -3637,6 +3655,108 @@ def customer_display_reset():
 
 
 # ============================================================
+# Pickup Display Board System
+# ============================================================
+
+PICKUP_DISPLAY_FILE = 'pickup_display.json'  # Tracks orders on the pickup board
+
+
+def load_pickup_display():
+    """Load the pickup display state from disk."""
+    default = {'orders': []}
+    data = load_json_data(PICKUP_DISPLAY_FILE)
+    if isinstance(data, dict) and 'orders' in data:
+        return data
+    return default
+
+
+def save_pickup_display(data):
+    """Save pickup display state to disk."""
+    with open(PICKUP_DISPLAY_FILE, 'w') as f:
+        json.dump(data, f, indent=2)
+
+
+@app.route('/api/pickup-display/queue', methods=['GET'])
+def pickup_display_queue():
+    """Return orders on the pickup board (ready for pickup, not yet collected)."""
+    orders = load_json_data(ORDERS_FILE)
+    pickup_orders = []
+    for o in orders:
+        if o.get('ready_for_pickup') is True and o.get('collected_at') is None:
+            ready_at = o.get('ready_for_pickup_at', o.get('completed_at', o.get('date', '')))
+            pickup_orders.append({
+                'order_id': o.get('order_id'),
+                'order_number': o.get('order_id'),
+                'customer_name': o.get('customer_name', ''),
+                'items': o.get('items', []),
+                'item_count': len(o.get('items', [])),
+                'total': float(o.get('total', 0)),
+                'ready_at': ready_at,
+                'status': 'ready'
+            })
+    # Sort: newest first (most recently ready at top)
+    pickup_orders.sort(key=lambda o: o.get('ready_at', ''), reverse=True)
+    # Mark first N as "new" if they arrived within last 60 seconds
+    now = datetime.now()
+    for po in pickup_orders:
+        try:
+            ready_dt = datetime.fromisoformat(po['ready_at'])
+            diff = (now - ready_dt).total_seconds()
+            if diff < 60:
+                po['status'] = 'new'
+        except (ValueError, TypeError):
+            pass
+    return jsonify({'queue': pickup_orders, 'count': len(pickup_orders)})
+
+
+@app.route('/api/pickup-display/mark-ready', methods=['POST'])
+def pickup_display_mark_ready():
+    """Mark an order as ready for pickup. Sets ready_for_pickup flag on the order."""
+    data = request.json
+    order_id = data.get('order_id')
+    if order_id is None:
+        return jsonify({'error': 'order_id is required'}), 400
+
+    orders = load_json_data(ORDERS_FILE)
+    for order in orders:
+        if order.get('order_id') == order_id:
+            if order.get('ready_for_pickup'):
+                return jsonify({'message': f'Order #{order_id} is already marked ready for pickup'}), 200
+            order['ready_for_pickup'] = True
+            order['ready_for_pickup_at'] = datetime.now().isoformat()
+            save_json_data(ORDERS_FILE, orders)
+            log_activity('pickup_mark_ready', data.get('user', 'unknown'), 'user', {
+                'order_id': order_id, 'action': 'marked ready for pickup'
+            })
+            emit_pickup_update()
+            return jsonify({'message': f'Order #{order_id} marked ready for pickup'})
+    return jsonify({'error': f'Order #{order_id} not found'}), 404
+
+
+@app.route('/api/pickup-display/collected', methods=['POST'])
+def pickup_display_collected():
+    """Mark an order as collected by the customer."""
+    data = request.json
+    order_id = data.get('order_id')
+    if order_id is None:
+        return jsonify({'error': 'order_id is required'}), 400
+
+    orders = load_json_data(ORDERS_FILE)
+    for order in orders:
+        if order.get('order_id') == order_id:
+            if order.get('collected_at'):
+                return jsonify({'message': f'Order #{order_id} was already collected'}), 200
+            order['collected_at'] = datetime.now().isoformat()
+            save_json_data(ORDERS_FILE, orders)
+            log_activity('pickup_collected', data.get('user', 'unknown'), 'user', {
+                'order_id': order_id, 'action': 'collected by customer'
+            })
+            emit_pickup_update()
+            return jsonify({'message': f'Order #{order_id} marked as collected'})
+    return jsonify({'error': f'Order #{order_id} not found'}), 404
+
+
+# ============================================================
 # Table Management System
 # ============================================================
 
@@ -5580,6 +5700,12 @@ def serve_drivethrough():
 @app.route('/customer-display')
 def serve_customer_display():
     return send_from_directory(app.static_folder, 'customer-display.html')
+
+
+@app.route('/pickup-display')
+def serve_pickup_display():
+    """Serve the pickup display board page."""
+    return send_from_directory(app.static_folder, 'pickup-display.html')
 
 
 @app.route('/tablet')
