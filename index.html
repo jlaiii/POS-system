@@ -1282,6 +1282,8 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
   .kiosk-lookup-totals { padding: 14px 16px; }
   .kiosk-lookup-totals .klt-row { font-size: 18px; }
   .kiosk-lookup-totals .klt-row.total { font-size: 26px; }
+  /* Security dashboard — stack columns in portrait */
+  #secSecurity > div[style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
 }
 
 /* Very small screens (<400px width) in any orientation */
@@ -1581,6 +1583,7 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
         <button onclick="switchAdminSection('servicecharge')" id="asServicecharge">🔧 Service Charge</button>
         <button onclick="switchAdminSection('combos')" id="asCombos">🍱 Combos</button>
         <button onclick="switchAdminSection('tickets')" id="asTickets" data-i18n="admin.tickets">📋 Tickets</button>
+        <button onclick="switchAdminSection('security')" id="asSecurity">🛡️ Security</button>
       </div>
       <div id="adminContent">
         <!-- Stats -->
@@ -2261,6 +2264,57 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
                 <h4 style="margin-bottom:12px;color:var(--text2);">✅ Resolved</h4>
                 <div id="ticketQueueResolved"><div class="empty-state">No resolved tickets yet.</div></div>
               </div>
+            </div>
+          </div>
+        </div>
+        <!-- Security Dashboard -->
+        <div id="secSecurity" class="admin-section">
+          <h3>🛡️ Security Dashboard</h3>
+          <p style="color:var(--text2);margin-bottom:16px;font-size:14px;">Real-time security overview — login activity, events, and controls.</p>
+
+          <!-- Summary Cards -->
+          <div class="stats-grid" style="margin-bottom:16px;" id="secSummaryCards">
+            <div class="stat-card"><div class="stat-val" id="secTotalLogins">-</div><div style="font-size:12px;color:var(--text2);">Logins Today</div></div>
+            <div class="stat-card"><div class="stat-val" id="secFailedLogins" style="color:#e74c3c;">-</div><div style="font-size:12px;color:var(--text2);">Failed</div></div>
+            <div class="stat-card"><div class="stat-val" id="secBlockedIps" style="color:#f39c12;">-</div><div style="font-size:12px;color:var(--text2);">Blocked IPs</div></div>
+            <div class="stat-card"><div class="stat-val" id="secOpenEvents" style="color:#e74c3c;">-</div><div style="font-size:12px;color:var(--text2);">Open Events</div></div>
+            <div class="stat-card"><div class="stat-val" id="secCriticalEvents" style="color:#c0392b;">-</div><div style="font-size:12px;color:var(--text2);">Critical</div></div>
+            <div class="stat-card"><div class="stat-val" id="secActiveSessions" style="color:#2ecc71;">-</div><div style="font-size:12px;color:var(--text2);">Active Sessions</div></div>
+          </div>
+
+          <!-- Layout: Live Feed + Blocked IPs -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <!-- Left: Live Feed -->
+            <div class="card" style="padding:12px;">
+              <h4 style="margin:0 0 8px 0;font-size:14px;">📡 Live Login Feed</h4>
+              <div id="secLiveFeed" style="max-height:400px;overflow-y:auto;-webkit-overflow-scrolling:touch;">
+                <div class="empty-state">Loading...</div>
+              </div>
+            </div>
+            <!-- Right: Blocked IPs + Active Sessions -->
+            <div>
+              <!-- Blocked IPs -->
+              <div class="card" style="padding:12px;margin-bottom:12px;">
+                <h4 style="margin:0 0 8px 0;font-size:14px;">🚫 Blocked IPs</h4>
+                <div id="secBlockedIpsList" style="max-height:200px;overflow-y:auto;-webkit-overflow-scrolling:touch;">
+                  <div class="empty-state">No blocked IPs.</div>
+                </div>
+              </div>
+              <!-- Active Sessions -->
+              <div class="card" style="padding:12px;">
+                <h4 style="margin:0 0 8px 0;font-size:14px;">🟢 Active Sessions (24h)</h4>
+                <div id="secActiveSessionsList" style="max-height:200px;overflow-y:auto;-webkit-overflow-scrolling:touch;">
+                  <div class="empty-state">No active sessions.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Security Events -->
+          <div class="card" style="padding:12px;margin-top:16px;">
+            <h4 style="margin:0 0 8px 0;font-size:14px;">⚠️ Security Events</h4>
+            <div id="secEventsList" style="max-height:300px;overflow-y:auto;-webkit-overflow-scrolling:touch;">
+              <div class="empty-state">No events.</div>
             </div>
           </div>
         </div>
@@ -5916,6 +5970,157 @@ function showDenyPrompt(ticketId) {
   respondToTicket(ticketId, 'denied');
 }
 
+// ═══════════ SECURITY DASHBOARD ═══════════
+
+async function loadSecurityDashboard() {
+  try {
+    const res = await fetch(BACKEND_URL + '/api/security/dashboard', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ adminPin: currentUser.id })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      document.getElementById('secTotalLogins').textContent = '!';
+      showToast(data.message || 'Failed to load security data', 'danger');
+      return;
+    }
+    renderSecurityDashboard(data);
+  } catch (e) {
+    showToast('Network error loading security dashboard.', 'danger');
+  }
+}
+
+function renderSecurityDashboard(data) {
+  const s = data.summary || {};
+
+  // Update summary cards
+  document.getElementById('secTotalLogins').textContent = s.total_logins_today || 0;
+  document.getElementById('secFailedLogins').textContent = s.failed_logins_today || 0;
+  document.getElementById('secBlockedIps').textContent = s.blocked_ips_count || 0;
+  document.getElementById('secOpenEvents').textContent = s.open_events_count || 0;
+  document.getElementById('secCriticalEvents').textContent = s.critical_events_count || 0;
+  document.getElementById('secActiveSessions').textContent = s.active_sessions_count || 0;
+
+  // Live feed — recent login attempts
+  const feedEl = document.getElementById('secLiveFeed');
+  const attempts = data.recent_attempts || [];
+  if (attempts.length === 0) {
+    feedEl.innerHTML = '<div class="empty-state">No login attempts recorded.</div>';
+  } else {
+    let html = '<table style="width:100%;border-collapse:collapse;font-size:12px;">';
+    html += '<tr style="color:var(--text2);border-bottom:1px solid var(--border);"><th style="padding:4px 6px;text-align:left;">Time</th><th style="padding:4px 6px;text-align:left;">User</th><th style="padding:4px 6px;text-align:left;">IP</th><th style="padding:4px 6px;text-align:left;">Status</th><th style="padding:4px 6px;text-align:left;">Method</th></tr>';
+    attempts.forEach(a => {
+      const ts = a.timestamp ? new Date(a.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
+      const ok = a.success ? '<span style="color:#2ecc71;">✅</span>' : '<span style="color:#e74c3c;">❌</span>';
+      const user = escHtml(a.user_id || '');
+      const ip = escHtml(a.ip || '-');
+      const method = escHtml(a.method || '-');
+      html += `<tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:4px 6px;white-space:nowrap;">${ts}</td>
+        <td style="padding:4px 6px;">${user}</td>
+        <td style="padding:4px 6px;">${ip}</td>
+        <td style="padding:4px 6px;">${ok}</td>
+        <td style="padding:4px 6px;">${method}</td>
+      </tr>`;
+    });
+    html += '</table>';
+    feedEl.innerHTML = html;
+  }
+
+  // Blocked IPs
+  const blockedEl = document.getElementById('secBlockedIpsList');
+  const blockedIps = data.blocked_ips || [];
+  if (blockedIps.length === 0) {
+    blockedEl.innerHTML = '<div class="empty-state">No blocked IPs.</div>';
+  } else {
+    let html = '<table style="width:100%;border-collapse:collapse;font-size:12px;">';
+    html += '<tr style="color:var(--text2);border-bottom:1px solid var(--border);"><th style="padding:4px 6px;text-align:left;">IP</th><th style="padding:4px 6px;text-align:left;">Reason</th><th style="padding:4px 6px;text-align:left;">Action</th></tr>';
+    blockedIps.forEach(b => {
+      const ip = escHtml(b.ip || '-');
+      const reason = escHtml(b.reason || '-');
+      html += `<tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:4px 6px;">${ip}</td>
+        <td style="padding:4px 6px;">${reason}</td>
+        <td style="padding:4px 6px;"><button class="ghost" onclick="unblockIp('${b.ip}')" style="font-size:11px;padding:2px 8px;min-height:28px;" title="Unblock this IP">✕</button></td>
+      </tr>`;
+    });
+    html += '</table>';
+    blockedEl.innerHTML = html;
+  }
+
+  // Active sessions
+  const sessionsEl = document.getElementById('secActiveSessionsList');
+  const sessions = data.active_sessions || [];
+  if (sessions.length === 0) {
+    sessionsEl.innerHTML = '<div class="empty-state">No active sessions in last 24h.</div>';
+  } else {
+    let html = '<table style="width:100%;border-collapse:collapse;font-size:12px;">';
+    html += '<tr style="color:var(--text2);border-bottom:1px solid var(--border);"><th style="padding:4px 6px;text-align:left;">User</th><th style="padding:4px 6px;text-align:left;">IP</th><th style="padding:4px 6px;text-align:left;">Last Active</th></tr>';
+    sessions.forEach(s => {
+      const name = escHtml(s.user_name || s.user_id || '');
+      const ip = escHtml(s.ip || '-');
+      const last = s.last_active ? new Date(s.last_active).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
+      html += `<tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:4px 6px;">${name}</td>
+        <td style="padding:4px 6px;">${ip}</td>
+        <td style="padding:4px 6px;">${last}</td>
+      </tr>`;
+    });
+    html += '</table>';
+    sessionsEl.innerHTML = html;
+  }
+
+  // Security events
+  const eventsEl = document.getElementById('secEventsList');
+  const events = data.recent_events || [];
+  if (events.length === 0) {
+    eventsEl.innerHTML = '<div class="empty-state">No security events recorded.</div>';
+  } else {
+    let html = '';
+    events.forEach(e => {
+      const severityColors = {CRITICAL: '#c0392b', HIGH: '#e74c3c', MEDIUM: '#f39c12', LOW: '#95a5a6'};
+      const sevColor = severityColors[e.severity] || '#95a5a6';
+      const statusBadge = e.status === 'resolved'
+        ? '<span style="color:#2ecc71;">✅ Resolved</span>'
+        : '<span style="color:#e74c3c;">🔴 Unresolved</span>';
+      const date = e.created_at ? new Date(e.created_at).toLocaleString() : '';
+      html += `<div class="card" style="padding:10px 12px;margin-bottom:8px;border-left:4px solid ${sevColor};">
+        <div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:4px;">
+          <strong style="font-size:13px;">${escHtml(e.summary || '')}</strong>
+          <span style="font-size:11px;white-space:nowrap;">${date}</span>
+        </div>
+        <div style="font-size:11px;color:var(--text2);margin-top:4px;">
+          ID: ${escHtml(e.id || '')} · Severity: <span style="color:${sevColor};font-weight:600;">${escHtml(e.severity || '')}</span> · ${statusBadge}
+          ${e.affected_user_name ? ' · 👤 ' + escHtml(e.affected_user_name) : ''}
+        </div>
+        ${e.detail ? '<div style="font-size:12px;color:var(--text);margin-top:6px;padding:6px 8px;background:var(--bg);border-radius:var(--radius);">' + escHtml(e.detail.substring(0, 200)) + (e.detail.length > 200 ? '...' : '') + '</div>' : ''}
+      </div>`;
+    });
+    eventsEl.innerHTML = html;
+  }
+}
+
+async function unblockIp(ip) {
+  if (!confirm('Unblock IP ' + ip + '?')) return;
+  try {
+    const res = await fetch(BACKEND_URL + '/api/security/unblock_ip', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ adminPin: currentUser.id, ip: ip })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(data.message || 'Failed to unblock IP.', 'danger');
+      return;
+    }
+    showToast('IP unblocked: ' + ip, 'success');
+    loadSecurityDashboard();
+  } catch (e) {
+    showToast('Network error unblocking IP.', 'danger');
+  }
+}
+
 // ═══════════ POS TAB ═══════════
 async function loadItems() {
   showContentLoading('itemGrid');
@@ -7895,6 +8100,7 @@ function switchAdminSection(sec) {
   else if (sec === 'servicecharge') loadServiceChargeConfig();
   else if (sec === 'combos') loadCombos();
   else if (sec === 'tickets') loadTicketQueue();
+  else if (sec === 'security') loadSecurityDashboard();
 }
 
 // ═══════════ TIMESHEET CONFIG ═══════════

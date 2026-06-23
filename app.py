@@ -55,6 +55,8 @@ TICKETS_FILE = 'tickets.json'  # Employee self-service tickets/requests
 APPROVALS_FILE = 'timesheet_approvals.json'  # Timesheet pay period approvals
 RESTAURANT_CONFIG_FILE = 'restaurant_config.json'  # Restaurant info for tablet display (name, hours, wifi)
 LOGIN_ATTEMPTS_FILE = 'login_attempts.json'  # Persistent login attempt records (user_id, ip, timestamp, success, user_agent)
+SECURITY_EVENTS_FILE = 'security_events.json'  # Security events/incidents log
+SECURITY_CONFIG_FILE = 'security_config.json'  # Security config (blocked IPs, thresholds)
 
 # --- Loyalty Constants ---
 LOYALTY_POINTS_PER_DOLLAR = 1  # 1 point per $1 spent
@@ -865,6 +867,138 @@ def get_login_attempts():
         'count': len(attempts),
         'attempts': attempts
     })
+
+
+@app.route('/api/security/dashboard', methods=['POST'])
+def security_dashboard():
+    """Return security dashboard data: summary, recent events, blocked IPs, active sessions.
+    Requires view_stats permission."""
+    data = request.json or {}
+    admin_pin = data.get('adminPin', '')
+    if not admin_pin:
+        return jsonify({'message': 'Authentication required.'}), 401
+    if not check_perm(admin_pin, "view_stats"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    # --- Load data ---
+    attempts = load_json_data(LOGIN_ATTEMPTS_FILE)
+    if not isinstance(attempts, list):
+        attempts = []
+    events = load_json_data(SECURITY_EVENTS_FILE)
+    if not isinstance(events, list):
+        events = []
+    config = load_json_data(SECURITY_CONFIG_FILE)
+    if not isinstance(config, dict):
+        config = {}
+
+    now = datetime.now()
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    # --- Summary stats ---
+    total_today = 0
+    failed_today = 0
+    for a in attempts:
+        try:
+            ts = datetime.fromisoformat(a.get('timestamp', ''))
+            if ts >= today_start:
+                total_today += 1
+                if not a.get('success'):
+                    failed_today += 1
+        except (ValueError, TypeError):
+            pass
+
+    blocked_ips = config.get('blocked_ips', [])
+    open_events = [e for e in events if e.get('status') == 'unresolved']
+    critical_events = [e for e in open_events if e.get('severity') in ('CRITICAL', 'HIGH')]
+
+    # --- Recent login stream (newest 50) ---
+    recent_attempts = list(reversed(attempts[-50:]))
+
+    # --- Recent security events (newest 20) ---
+    recent_events = list(reversed(events[-20:]))
+
+    # --- Anonymized user map for active sessions ---
+    users = load_json_data(USERS_FILE)
+    if not isinstance(users, dict):
+        users = {}
+
+    # Build active sessions from login_attempts (users who logged in within last 24h)
+    active_sessions = {}
+    seen_user_ips = set()
+    for a in reversed(attempts):
+        if a.get('success'):
+            uid = str(a.get('user_id', ''))
+            ip = a.get('ip', '')
+            key = f"{uid}:{ip}"
+            if key not in seen_user_ips:
+                seen_user_ips.add(key)
+                try:
+                    ts = datetime.fromisoformat(a.get('timestamp', ''))
+                    if now - ts < timedelta(hours=24):
+                        name = ''
+                        if uid in users:
+                            name = users[uid].get('name', '')
+                        active_sessions[uid] = {
+                            'user_id': uid,
+                            'user_name': name,
+                            'ip': ip,
+                            'last_active': a.get('timestamp', ''),
+                            'user_agent': a.get('user_agent', '')
+                        }
+                except (ValueError, TypeError):
+                    pass
+
+    return jsonify({
+        'summary': {
+            'total_logins_today': total_today,
+            'failed_logins_today': failed_today,
+            'blocked_ips_count': len(blocked_ips),
+            'open_events_count': len(open_events),
+            'critical_events_count': len(critical_events),
+            'active_sessions_count': len(active_sessions)
+        },
+        'recent_attempts': recent_attempts,
+        'recent_events': recent_events,
+        'blocked_ips': blocked_ips,
+        'active_sessions': list(active_sessions.values()),
+        'config': config
+    })
+
+
+@app.route('/api/security/unblock_ip', methods=['POST'])
+def security_unblock_ip():
+    """Remove an IP from the blocklist. Requires manage_users permission."""
+    data = request.json or {}
+    admin_pin = data.get('adminPin', '')
+    ip_to_unblock = data.get('ip', '').strip()
+    if not admin_pin:
+        return jsonify({'message': 'Authentication required.'}), 401
+    if not check_perm(admin_pin, "manage_users"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+    if not ip_to_unblock:
+        return jsonify({'message': 'IP address is required.'}), 400
+
+    config = load_json_data(SECURITY_CONFIG_FILE)
+    if not isinstance(config, dict):
+        config = {}
+    blocked = config.get('blocked_ips', [])
+    found = False
+    for b in list(blocked):
+        if b.get('ip') == ip_to_unblock:
+            blocked.remove(b)
+            found = True
+    if not found:
+        return jsonify({'message': 'IP was not in blocklist.'}), 404
+
+    config['blocked_ips'] = blocked
+    save_json_data(SECURITY_CONFIG_FILE, config)
+
+    # Log the activity
+    users = load_json_data(USERS_FILE)
+    admin_name = users.get(admin_pin, {}).get('name', admin_pin) if isinstance(users, dict) else admin_pin
+    log_activity('ip_unblocked', admin_pin, admin_name, {'ip': ip_to_unblock, 'action': 'unblocked'})
+
+    return jsonify({'message': 'IP unblocked successfully.', 'blocked_ips': blocked})
 
 
 # Owner credentials management
