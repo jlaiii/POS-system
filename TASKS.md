@@ -2,7 +2,7 @@
 
 > Auto-managed by 3 Hermes Worker Crons (every 30 min each, staggered claims).
 > Workers use `[~]` to claim tasks before working. Never pick a claimed task.
-> Last updated: 2026-06-23 (audit #10 — verified: all [x] tasks confirmed implemented; found: missing service worker/PWA icons, 2FA frontend UI still gap, 0 orders in last 24h, gunicorn migration still pending)
+> Last updated: 2026-06-23 (curation #11 — maintenance: dedup consolidated 2FA frontend tasks, promoted backup-code link to HIGH, trimmed Done section to 15 entries, restored missing kitchen display entry)
 
 ## Status Legend
 - `[ ]` = pending (available for any worker)
@@ -168,11 +168,11 @@ Use Python `pyotp` (pure Python, no C extensions, `pip install pyotp qrcode`):
 
 ### Priority: MEDIUM
 
-- [ ] **2FA setup UI (frontend)** — New "🔒 Security" section in the settings/profile area. Button: "Enable Two-Factor Authentication (2FA)". On click: calls `/api/auth/2fa/setup` → shows QR code (rendered as `<img>` from `provisioning_uri` using `qrcode` library to generate a data URI, or use a JS QR library). Below QR: "Can't scan? Enter this code manually:" + the base32 secret in a monospace font. Below that: 6-digit code input + "Verify" button. On verify: shows the 8 backup codes in a grid with a "Download" and "Copy" button. Red warning banner: "⚠️ Save these codes now. They will never be shown again. Without these, losing your phone means you lose access to your account." Confirmation checkbox: "I have saved my backup codes." Then "Finish Setup" button → marks setup complete.
+|- [-] **2FA setup UI (frontend)** — Consolidated into audit #9 task (line 427).
 
-- [ ] **2FA login UI** — After PIN entry, if server returns `2fa_required: true`, show a smooth transition to a 6-digit code input. Auto-focus and auto-submit on 6th digit (like banking apps). "Use backup code instead" link below in smaller text (for when phone is lost). Error states: "Invalid code" (shake animation), "Too many attempts — account locked for 15 minutes", "Backup code already used." Success: normal redirect to POS.
+|- [-] **2FA login UI** — Consolidated into audit #9 task (line 427).
 
-- [ ] **Backup code management UI** — In Security settings: "View Backup Codes" button (requires re-entering PIN for security). Shows remaining codes count: "5 of 8 codes remaining." Lists the plaintext codes (user needs to save them). "Regenerate Codes" button with confirmation: "This will invalidate all existing backup codes. Continue?" Admin: same "Regenerate" available in User Management.
+|- [-] **Backup code management UI** — Consolidated into audit #9 task (line 427).
 
 - [x] **Rate limiting on 2FA attempts** — Track failed TOTP attempts per user in memory (not JSON — resets on server restart). Max 5 failed attempts per rolling 60-second window. After 5: lock for 15 minutes (store lock expiry in memory). Return `429 Too Many Requests` with `retry_after` seconds. Rate limit applies to both TOTP verify AND backup code attempts (same pool — prevents brute-force on backup codes too). [audit #9 — verified: backend `twofa_failed_attempts` dict, 60s window, 15min lock, both verify_login + backup_login share same pool, frontend displays locked message]
 
@@ -414,9 +414,9 @@ New `tickets.json` data store. Each ticket:
 
 - [x] worker-3 **HIGH: Inventory not restored on refund/void** — Added inventory restoration in `/api/orders/refund`: after refunding an order, stock levels are re-incremented for each item (including combo child items). Also added dedup check in `/api/sync_orders` to prevent double-decrement by skipping already-processed `local_id`. Activity log now records `inventory_restored` list. [worker-3]
 
-- [ ] **MEDIUM: No "Use Backup Code" link in 2FA login UI** — The backend endpoint `/api/auth/2fa/backup_login` exists and works, but the 2FA login screen has no "Use backup code instead" link. If an employee enables 2FA and loses their phone, they're locked out with no frontend-reachable fallback. Add a small text link below the 6-digit input that transitions to a backup code entry field.
+- [ ] **HIGH: No "Use Backup Code" link in 2FA login UI** — The backend endpoint `/api/auth/2fa/backup_login` exists and works, but the 2FA login screen has no "Use backup code instead" link. If an employee enables 2FA and loses their phone, they're locked out with no frontend-reachable fallback. Add a small text link below the 6-digit input that transitions to a backup code entry field.
 
-- [ ] **MEDIUM: Waiter quick re-fire / re-send order items** — No button to re-fire an already-submitted order item back to the kitchen (e.g., cook missed it, wrong portion, customer wants a remake). Current workaround: refund the item and re-order it (3+ taps). A "Re-fire" button on order history items would save 3-4 taps per incident.
+|- [ ] **MEDIUM: Waiter quick re-fire / re-send order items** — No button to re-fire an already-submitted order item back to the kitchen (e.g., cook missed it, wrong portion, customer wants a remake). Current workaround: refund the item and re-order it (3+ taps). A "Re-fire" button on order history items would save 3-4 taps per incident.
 
 |- [ ] **MEDIUM: System-wide data backup & restore** — Currently only menu backups exist. Add full system backup endpoint (`POST /api/system/backup`) that creates a downloadable zip of all JSON data files (users, orders, items, configs, shifts, etc.). Add restore endpoint (`POST /api/system/restore`) to load from a backup zip. Admin UI in Settings panel with one-click backup download and file-upload restore. Auto-scheduled daily backup with configurable retention (keep last N backups). Critical for disaster recovery — without this, a disk failure or corruption means total data loss.
 
@@ -749,42 +749,43 @@ Super admin PIN is separate from any business PIN. Super admin can create busine
 - [ ] **Add health-check endpoint monitoring** — The Reliability Bot checks `/api/health` every 5min, but there's no proper monitoring alert. Add an external uptime monitor (e.g., cron calling a webhook on failure) so crashes are caught faster than the next bot cycle.
 
 ## Done
-|- [x] worker-2 **Scrollable areas with momentum scrolling** — Added `-webkit-overflow-scrolling: touch` and `overscroll-behavior: contain` to all 14 scrollable CSS containers in index.html (mainTabs, tabContent, catTabs, itemGrid, cart, cartItems, adminSubTabs, kitchenQueue, receiptBox, kiosk-cart, kiosk-lookup-items, recent-orders-body, modal-box) plus catch-all CSS rule for JS-generated overflow-y/overflow-x containers. Same treatment applied to pickup-display.html, drivethrough.html, customer-display.html. [worker-2]
-|||- [x] **2FA setup endpoint + QR code generation** — `POST /api/auth/2fa/setup`: generates TOTP secret via pyotp, stores on user, returns provisioning_uri + QR code data URI. 409 if 2FA already enabled. [worker-3]
-|- [x] **Add scheduled_start field to users.json** — Backend: `scheduled_start` field in user data model (default null), exposed via `/api/users`, accepted in `/api/add_user`, new `POST /api/users/update_scheduled_start` endpoint with permission-gating and activity logging. Frontend: display in user management list, edit button (prompt for HH:MM), time input in add-user form, clear support. i18n EN + ES. [worker-3]
-|- [x] **Scheduled start admin UI in User Management** — "Scheduled Start" time input per user (type="time") in add user form. Display + edit button in user entry cards. Stored/loaded from users.json. [worker-3]
-|- [x] **Shift notes on clock-out** — When clocking out, optional textarea for shift notes. Stored as `notes` field on shift record. Displayed in timesheet view. Admin can also add notes. [worker-3]
-- [x] **Admin shift edit / correction with audit trail** — `POST /api/clock/edit` endpoint with full audit trail. [worker-1]
-- [x] **Add auto-table suggestion for waiters** — Auto-select last used table per user in localStorage. [worker-1]
-- [x] **Add employee clock-in/clock-out system** — `/api/clock/in`, `/api/clock/out`, `/api/clock/status`, `/api/admin_shifts`, `/api/export/shifts_csv`. Punch clock button in POS header. Activity logging. i18n EN + ES. [worker-3]
-- [x] **Add combo/meal deal builder** — Fixed-price combo deals. Admin builder UI. One-tap add to cart. i18n EN + ES. [worker-2]
-- [x] **Add item visibility toggle** — Active/inactive toggle per item. Hidden items don't appear in POS/kiosk/search. i18n EN + ES. [worker-1]
-- [x] **Add service charge / auto-gratuity** — Configurable auto-gratuity settings. i18n EN + ES. [worker-3]
-- [x] **Add course/meal prep timing** — Appetizer/main/dessert course badges. [worker-3]
-- [x] **Add recent-order quick-access on POS tab** — Last 5 orders for the waiter on POS tab. [worker-1]
-- [x] **Add item images to grid cards** — Image URLs on items, thumbnails on grid/kitchen/kiosk. [worker-2]
 |- [x] **Add customer profile management (CRM)** — Extended customer data, endpoints, admin CRM tab. [worker-3]
 |- [x] **Fast tap response (no 300ms delay)** — Added `touch-action: manipulation` to universal CSS selector in all 5 HTML pages (index.html, customer-display.html, pickup-display.html, drivethrough.html, tablet.html), eliminating the 300ms tap delay on every interactive element. Combined with existing `user-scalable=no` viewport meta, enables instant tap response on mobile/tablet browsers. [worker-1]
-- [x] **Add quick-change cash calculator** — Cash payment amount tendered + auto-change calculation. [worker-1]
-- [x] **New endpoint `POST /api/clock/flag_late`** — Admin manually flags a shift as late with `late_minutes`, resets `late_excused` to false. Accepts `shift_index`, `late_minutes`, optional `note`. Logs `late_flagged` activity with old→new values and admin PIN. Permission-gated `view_timesheet`. [worker-3]
-|- [x] **Add item modifier support** — Variants, modifiers, customizations with modifier editor. [worker-2]
-|- [x] **New endpoint `POST /api/clock/excuse_late`** — Admin sets `late_excused = true` on a completed shift. Accepts `shift_index`, `adminPin`, optional `note`. Permission-gated (`view_timesheet`). Activity logged. [worker-1]
-|- [x] **Admin/owner 2FA management & reset** — `POST /api/users/disable_2fa` (requires reason, manage_users, only owner on admins) and `POST /api/users/regenerate_backup_codes` endpoints. `GET /api/users` now returns `totp_enabled`. Frontend: 🔒/🔓 2FA status badge in user cards, Disable 2FA + Regenerate Codes buttons (manage_users-gated), modal showing new backup codes. i18n EN + ES. Activity logging for all actions. [worker-2]
-|- [x] worker-3 **JSON backup script** — Created `/root/pos-system-work/scripts/backup_json.py` with validation, timestamped backups, tar.gz archiving, anomaly detection, dry-run and quiet modes.
-|- [x] worker-1 **Employee ticket submission UI** — New "📋 Requests" tab with ticket submission form (time-off, issue, feedback, other), adaptive fields, "My Tickets" list with status badges. Backend: tickets.json data store, 4 API endpoints (submit, my, queue, respond), activity logging, validation. Full i18n EN + ES.
+|- [x] **Add quick-change cash calculator** — Cash payment amount tendered + auto-change calculation. [worker-1]
+|- [x] **New endpoint `POST /api/clock/flag_late`** — Admin manually flags a shift as late with `late_minutes`, resets `late_excused` to false. Accepts `shift_index`, `late_minutes`, optional `note`. Logs `late_flagged` activity with old→new values and admin PIN. Permission-gated `view_timesheet`. [worker-3]
+||- [x] **Add item modifier support** — Variants, modifiers, customizations with modifier editor. [worker-2]
+||- [x] **New endpoint `POST /api/clock/excuse_late`** — Admin sets `late_excused = true` on a completed shift. Accepts `shift_index`, `adminPin`, optional `note`. Permission-gated (`view_timesheet`). Activity logged. [worker-1]
+||- [x] **Admin/owner 2FA management & reset** — `POST /api/users/disable_2fa` (requires reason, manage_users, only owner on admins) and `POST /api/users/regenerate_backup_codes` endpoints. `GET /api/users` now returns `totp_enabled`. Frontend: 🔒/🔓 2FA status badge in user cards, Disable 2FA + Regenerate Codes buttons (manage_users-gated), modal showing new backup codes. i18n EN + ES. Activity logging for all actions. [worker-2]
+||- [x] worker-3 **JSON backup script** — Created `/root/pos-system-work/scripts/backup_json.py` with validation, timestamped backups, tar.gz archiving, anomaly detection, dry-run and quiet modes.
+||- [x] worker-1 **Employee ticket submission UI** — New "📋 Requests" tab with ticket submission form (time-off, issue, feedback, other), adaptive fields, "My Tickets" list with status badges. Backend: tickets.json data store, 4 API endpoints (submit, my, queue, respond), activity logging, validation. Full i18n EN + ES.
 |||- [x] worker-3 **Smart date picker for time-off requests** — Business day calculation (Mon-Fri), past-date validation, 30-day limit with override checkbox, overlap detection against existing pending/approved requests. Server-side and client-side validation. Backend: `business_days` field, overlap check, date validation. Frontend: validation messages, override checkbox, business day display in tickets. i18n EN + ES.
-|- [x] worker-3 **Current pay period live tracker** — Added pay rate display stat card, auto-refresh every 60 seconds with 🟢 Live badge indicator, rate formatted as $X.XX/hr. Auto-refresh stops when navigating away. i18n EN + ES. [worker-3]
-||- [x] worker-2 **Pay history with period-by-period breakdown** — Enhanced pay history period cards with pay rate display ($X.XX/hr), expandable grid-based shift breakdown showing date/day, clock in/out, paid+break hours, period total summary row. Added i18n keys EN+ES. [worker-2]
+||- [x] worker-3 **Current pay period live tracker** — Added pay rate display stat card, auto-refresh every 60 seconds with 🟢 Live badge indicator, rate formatted as $X.XX/hr. Auto-refresh stops when navigating away. i18n EN + ES. [worker-3]
+|||- [x] worker-2 **Pay history with period-by-period breakdown** — Enhanced pay history period cards with pay rate display ($X.XX/hr), expandable grid-based shift breakdown showing date/day, clock in/out, paid+break hours, period total summary row. Added i18n keys EN+ES. [worker-2]
 |||- [x] worker-3 **PDF timesheet report export** — New `POST /api/export/timesheet_pdf` endpoint generating print-ready HTML report from employee shift data. Employee name, shift dates/times, daily totals, period total, overtime, estimated pay, signature line. Print-friendly CSS with page breaks per employee. Button in Employee Shifts sub-tab. [worker-3]
-|- [x] worker-3 **Item detail popup** — Enhanced tablet menu item detail overlay with dietary badges (🌿 Vegetarian, 🌶️ Spicy, etc.), modifier options display (groups with type labels and price chips), and prev/next navigation (buttons + swipe + arrow keys) to browse items within same category. Added `dietary_tags` field to item data model. Configurable dietary icon mapping with 15 types. Dark theme, touch-friendly 56px nav buttons. [worker-3]
-|- [x] worker-3 **Restaurant info bar** — Persistent footer on tablet display: restaurant name, hours, Wi-Fi info, "📞 Call Server" button (SocketIO + REST fallback), table number from URL param `?table=N`. Config via `restaurant_config.json`. Staff notified via SocketIO `server_call` toast. [worker-3]
+||- [x] worker-3 **Item detail popup** — Enhanced tablet menu item detail overlay with dietary badges (🌿 Vegetarian, 🌶️ Spicy, etc.), modifier options display (groups with type labels and price chips), and prev/next navigation (buttons + swipe + arrow keys) to browse items within same category. Added `dietary_tags` field to item data model. Configurable dietary icon mapping with 15 types. Dark theme, touch-friendly 56px nav buttons. [worker-3]
+||- [x] worker-3 **Restaurant info bar** — Persistent footer on tablet display: restaurant name, hours, Wi-Fi info, "📞 Call Server" button (SocketIO + REST fallback), table number from URL param `?table=N`. Config via `restaurant_config.json`. Staff notified via SocketIO `server_call` toast. [worker-3]
 
 ## Done (older)
 <details>
-<summary>40 completed tasks from earlier development</summary>
+<summary>54 completed tasks from earlier development</summary>
 
-|- [x] **Multi-language support** — English + Spanish with browser detection, toggle button. [worker-2]
+|- [x] worker-2 **Scrollable areas with momentum scrolling** — Added `-webkit-overflow-scrolling: touch` and `overscroll-behavior: contain` to all 14 scrollable CSS containers in index.html (mainTabs, tabContent, catTabs, itemGrid, cart, cartItems, adminSubTabs, kitchenQueue, receiptBox, kiosk-cart, kiosk-lookup-items, recent-orders-body, modal-box) plus catch-all CSS rule for JS-generated overflow-y/overflow-x containers. Same treatment applied to pickup-display.html, drivethrough.html, customer-display.html. [worker-2]
+|||- [x] **2FA setup endpoint + QR code generation** — `POST /api/auth/2fa/setup`: generates TOTP secret via pyotp, stores on user, returns provisioning_uri + QR code data URI. 409 if 2FA already enabled. [worker-3]
+||- [x] **Add scheduled_start field to users.json** — Backend: `scheduled_start` field in user data model (default null), exposed via `/api/users`, accepted in `/api/add_user`, new `POST /api/users/update_scheduled_start` endpoint with permission-gating and activity logging. Frontend: display in user management list, edit button (prompt for HH:MM), time input in add-user form, clear support. i18n EN + ES. [worker-3]
+||- [x] **Scheduled start admin UI in User Management** — "Scheduled Start" time input per user (type="time") in add user form. Display + edit button in user entry cards. Stored/loaded from users.json. [worker-3]
+||- [x] **Shift notes on clock-out** — When clocking out, optional textarea for shift notes. Stored as `notes` field on shift record. Displayed in timesheet view. Admin can also add notes. [worker-3]
+|- [x] **Admin shift edit / correction with audit trail** — `POST /api/clock/edit` endpoint with full audit trail. [worker-1]
+|- [x] **Add auto-table suggestion for waiters** — Auto-select last used table per user in localStorage. [worker-1]
+|- [x] **Add employee clock-in/clock-out system** — `/api/clock/in`, `/api/clock/out`, `/api/clock/status`, `/api/admin_shifts`, `/api/export/shifts_csv`. Punch clock button in POS header. Activity logging. i18n EN + ES. [worker-3]
+|- [x] **Add combo/meal deal builder** — Fixed-price combo deals. Admin builder UI. One-tap add to cart. i18n EN + ES. [worker-2]
+|- [x] **Add item visibility toggle** — Active/inactive toggle per item. Hidden items don't appear in POS/kiosk/search. i18n EN + ES. [worker-1]
+|- [x] **Add service charge / auto-gratuity** — Configurable auto-gratuity settings. i18n EN + ES. [worker-3]
+|- [x] **Add course/meal prep timing** — Appetizer/main/dessert course badges. [worker-3]
+|- [x] **Add recent-order quick-access on POS tab** — Last 5 orders for the waiter on POS tab. [worker-1]
+|- [x] **Add item images to grid cards** — Image URLs on items, thumbnails on grid/kitchen/kiosk. [worker-2]
+
 |- [x] **Kitchen display queue system** — Full cook view: claim/complete/cancel, 8s auto-refresh, sound alerts, fullscreen. [worker-3]
+|- [x] **Multi-language support** — English + Spanish with browser detection, toggle button. [worker-2]
 |- [x] **Order notes field** — Per-item and per-order notes. [worker-1]
 |- [x] **Receipt printing simulation** — Thermal printer CSS. [worker-2]
 |- [x] **Discount/coupon code system** — Percentage and flat discounts. [worker-1]
