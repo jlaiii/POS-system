@@ -732,9 +732,17 @@ Super admin PIN is separate from any business PIN. Super admin can create busine
 
 - [ ] **Multi-language per business** — While the platform supports EN+ES, some businesses may want additional languages (French, Chinese, Arabic). Per-business language config: enabled languages, default language. Menu items support translations per language. This is for international deployment.
 
-## Done
+## Reliability — Auto-Discovered Issues (NEW — June 2026)
 
-||- [x] worker-2 **Timesheet approval workflow** — New `timesheet_approvals.json` data store. Backend: 7 API endpoints (submit, approve, finalize, unlock, status, list, check_lock, employee_approvals). Lock enforcement on clock/edit, excuse_late, flag_late (returns 423). Frontend: Approval status card in Pay Period view with Submit/Approve/Finalize/Unlock buttons. 🔒 Lock badge on locked shifts in Employee Shifts view (grayed out, edit buttons hidden). i18n compatible. Activity logging for all actions.
+> The Reliability Bot has identified that Flask crashes repeatedly (3 times in 75min on 2026-06-23). Uses Flask's built-in Werkzeug dev server (`socketio.run(app, debug=False, port=5000, allow_unsafe_werkzeug=False)` at line 9581) which is known to silently stop serving under load or extended uptime. Production deployment requires a real WSGI server.
+
+### Priority: HIGH
+- [ ] **Migrate Flask to gunicorn + eventlet for production stability** — Replace `socketio.run()` with production-grade WSGI server. Use `gunicorn -k eventlet -w 1 app:app` for SocketIO compatibility. The `allow_unsafe_werkzeug=False` flag is a dev-only parameter. Need to: install gunicorn+eventlet, create a startup script, update cron jobs to use the new launcher. The auto-restart wrapper at `scripts/run_flask.sh` is a stopgap. Without this, the POS will continue to silently die unpredictably.
+
+### Priority: MEDIUM
+- [ ] **Add health-check endpoint monitoring** — The Reliability Bot checks `/api/health` every 5min, but there's no proper monitoring alert. Add an external uptime monitor (e.g., cron calling a webhook on failure) so crashes are caught faster than the next bot cycle.
+
+## Done
 ||- [x] **2FA setup endpoint + QR code generation** — `POST /api/auth/2fa/setup`: generates TOTP secret via pyotp, stores on user, returns provisioning_uri + QR code data URI. 409 if 2FA already enabled. [worker-3]
 |- [x] **Add scheduled_start field to users.json** — Backend: `scheduled_start` field in user data model (default null), exposed via `/api/users`, accepted in `/api/add_user`, new `POST /api/users/update_scheduled_start` endpoint with permission-gating and activity logging. Frontend: display in user management list, edit button (prompt for HH:MM), time input in add-user form, clear support. i18n EN + ES. [worker-3]
 |- [x] **Scheduled start admin UI in User Management** — "Scheduled Start" time input per user (type="time") in add user form. Display + edit button in user entry cards. Stored/loaded from users.json. [worker-3]
