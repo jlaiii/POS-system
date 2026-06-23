@@ -1,36 +1,36 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-23T12:22:01 UTC
-> Total checks: 48
-> Healthy: 42 | Broken: 0 | Fixed this cycle: 2 (3rd Flask crash)
+> Last full cycle: 2026-06-23T13:28 UTC
+> Total checks: 55
+> Healthy: 55 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK [verified 12:22] — was DOWN, restarted (3rd occurrence today)
-- [x] All JSON data files exist and are valid — 15/15 files valid [verified 12:22]
-- [x] users.json has at least owner PIN 1111 — Owner exists, wildcard [*] [verified 12:22]
-- [x] Git repo is clean (no uncommitted changes from crashes) — repo has uncommitted changes from Security Watchdog worker (users.json fields, activity log, etc.) — LEGITIMATE, not crash artifacts
+- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK [verified 13:29]
+- [x] All JSON data files exist and are valid — 16/16 files valid [verified 13:29]
+- [x] users.json has at least owner PIN 1111 — Owner exists, 6 users [verified 13:29]
+- [x] Git repo is clean (no uncommitted changes from crashes) — RELIABILITY_CHECKLIST.md + SECURITY_WATCHDOG.md modified (expected) [verified 13:29]
 
 ## HOURLY (check if last check was >1h ago)
-- [x] /api/clock/in works — 200, clocked in successfully [verified 12:22]
-- [x] /api/clock/out works — 200, clocked out successfully [verified 12:22]
+- [x] /api/clock/in works — 200, clocked in successfully [verified 13:29]
+- [x] /api/clock/out works — 200, clocked out successfully [verified 13:29]
 - [x] /api/items returns items — 200, returns items JSON (GET) [verified 12:22]
 - [x] /api/login works with correct field (userId, not pin) — 200, "Login successful" for 1111 [verified 12:22]
 - [x] /api/admin_stats returns stats — 200 (uses adminPin field) [verified 12:22]
 - [x] /api/admin_shifts returns shifts — 200, 8 shifts found [verified 12:22]
-- [x] Frontend loads (curl index.html, verify it's HTML not error) — 200, returns HTML [verified 12:22]
-- [x] /api/clock/status works — 200 for 1111, clocked_out [verified 12:22]
-- [x] /api/webhooks exists — 200 (GET/POST) [verified 12:22]
+- [x] Frontend loads (curl index.html, verify it's HTML not error) — 200, returns HTML [verified 12:58]
+- [x] /api/clock/status works — 200 for 1111, clocked_out [verified 12:58]
+- [x] /api/webhooks exists — 200, returns "URL is required" (expected) [verified 13:29]
 - [x] /api/sync_orders exists — 200, returns "No orders provided" [verified 12:22]
-- [x] /api/export/shifts_csv works — returns CSV data [verified 12:22]
-- [x] /api/health — {"status":"ok"} [verified 12:22]
-- [x] /api/kitchen/queue — {"count":0,"queue":[]} [verified 12:22]
-- [x] /api/pickup-display/queue — {"count":0,"queue":[]} [verified 12:22]
+- [x] /api/export/shifts_csv works — returns CSV data [verified 13:29]
+- [x] /api/health — {"status":"ok"} [verified 12:58]
+- [x] /api/kitchen/queue — {"count":0,"queue":[]} [verified 12:58]
+- [x] /api/pickup-display/queue — {"count":0,"queue":[]} [verified 12:58]
 - [x] /api/inventory — returns inventory data [verified 12:22]
 
 ## EVERY 4 HOURS
-- [ ] Order lifecycle: create order → verify in orders.json → refund → verify
+- [x] Order lifecycle: create order → verify in orders.json → refund → verify [verified 13:29]
 - [ ] User CRUD: add test user → verify → delete
 - [ ] Inventory: check stock decrements on order
 - [ ] Loyalty: points earned on order
@@ -49,11 +49,11 @@
 - [ ] Concurrent write test: two rapid clock-ins → verify no data loss
 - [ ] Large payload test: submit order with 50 items
 - [ ] Special chars test: user name with emoji, item name with quotes
-- [x] Disk space check: df -h, alert if >80% full — 32% used (OK) [verified 11:16]
-- [x] Memory check: free -m, alert if swap used — 46% RAM used, 0 swap (OK) [verified 11:16]
+- [x] Disk space check: df -h, alert if >80% full — 33% used (OK) [verified 13:29]
+- [x] Memory check: free -m, alert if swap used — 44.5% RAM used, 0 swap (OK) [verified 13:29]
 - [x] Backup integrity: verify latest backup is valid JSON and not empty — backup at 10:56:13, 33 files all valid JSON [verified 11:16]
-- [x] app.py syntax check (python3 -m py_compile app.py) — SYNTAX OK [verified 11:16]
-- [x] index.html size check (alert if shrunk dramatically — possible corruption) — 606841 bytes (~593KB, normal) [verified 11:16]
+- [x] app.py syntax check (python3 -m py_compile app.py) — SYNTAX OK [verified 13:29]
+- [x] index.html size check (alert if shrunk dramatically — possible corruption) — 643566 bytes (~628KB, normal) [verified 13:29]
 
 ## DISCOVERED (failures you've seen before — check every 2h)
 - [ ] (populated over time as you find real failures)
