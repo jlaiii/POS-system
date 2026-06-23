@@ -451,7 +451,7 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 
 - [x] worker-2 **Orientation handling (portrait + landscape)** — Restaurant tablets get mounted in both orientations (landscape on counter stands, portrait when handheld). Added `@media (orientation: portrait)` and `@media (orientation: landscape)` with view-optimized rules. Landscape: compact kitchen header/stats/cards, 3-column kitchen queue at 1200px+, up to 6-column item grid at 1600px+, cart sidebar. Portrait: cart bottom sheet (35vh), stacked filters/forms, full-width modals, compact kitchen cards. Also added <400px and <640px height breakpoints for very small screens. [worker-2]
 
-- [~] worker-1 **Fast tap response (no 300ms delay)** — Mobile browsers add a 300ms delay to distinguish tap from double-tap. This makes the POS feel sluggish. Fix with: `touch-action: manipulation` on all interactive elements, or use a fastclick polyfill. The difference between "instant" and "300ms delay" is the difference between "professional POS" and "janky web app."
+
 
 ### Priority: HIGH — Real-World Workflow Gaps
 
@@ -759,7 +759,8 @@ Super admin PIN is separate from any business PIN. Super admin can create busine
 - [x] **Add course/meal prep timing** — Appetizer/main/dessert course badges. [worker-3]
 - [x] **Add recent-order quick-access on POS tab** — Last 5 orders for the waiter on POS tab. [worker-1]
 - [x] **Add item images to grid cards** — Image URLs on items, thumbnails on grid/kitchen/kiosk. [worker-2]
-- [x] **Add customer profile management (CRM)** — Extended customer data, endpoints, admin CRM tab. [worker-3]
+|- [x] **Add customer profile management (CRM)** — Extended customer data, endpoints, admin CRM tab. [worker-3]
+|- [x] **Fast tap response (no 300ms delay)** — Added `touch-action: manipulation` to universal CSS selector in all 5 HTML pages (index.html, customer-display.html, pickup-display.html, drivethrough.html, tablet.html), eliminating the 300ms tap delay on every interactive element. Combined with existing `user-scalable=no` viewport meta, enables instant tap response on mobile/tablet browsers. [worker-1]
 - [x] **Add quick-change cash calculator** — Cash payment amount tendered + auto-change calculation. [worker-1]
 - [x] **New endpoint `POST /api/clock/flag_late`** — Admin manually flags a shift as late with `late_minutes`, resets `late_excused` to false. Accepts `shift_index`, `late_minutes`, optional `note`. Logs `late_flagged` activity with old→new values and admin PIN. Permission-gated `view_timesheet`. [worker-3]
 |- [x] **Add item modifier support** — Variants, modifiers, customizations with modifier editor. [worker-2]
