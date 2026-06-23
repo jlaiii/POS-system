@@ -1188,5 +1188,221 @@
             "method": "pin",
             "user_name": "Owner"
         }
+    },
+    {
+        "timestamp": "2026-06-23T10:48:23.259267",
+        "type": "clock_in",
+        "user_id": "9999",
+        "user_role": "user",
+        "details": {
+            "status": "success",
+            "user_name": "Test2FA",
+            "clock_in_time": "2026-06-23T10:48:23.259093",
+            "late_minutes": 108,
+            "scheduled_start": "09:00"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T10:48:23.326582",
+        "type": "clock_in",
+        "user_id": "1234",
+        "user_role": "user",
+        "details": {
+            "status": "success",
+            "user_name": "Employee One",
+            "clock_in_time": "2026-06-23T10:48:23.326414",
+            "late_minutes": null,
+            "scheduled_start": null
+        }
+    },
+    {
+        "timestamp": "2026-06-23T10:48:23.372438",
+        "type": "clock_out",
+        "user_id": "1234",
+        "user_role": "user",
+        "details": {
+            "status": "success",
+            "user_name": "Employee One",
+            "clock_in_time": "2026-06-23T10:48:23.326414",
+            "clock_out_time": "2026-06-23T10:48:23.371853",
+            "duration_hours": 0.0
+        }
+    },
+    {
+        "timestamp": "2026-06-23T10:48:29.270440",
+        "type": "clock_in_failed",
+        "user_id": "0000",
+        "user_role": "unknown",
+        "details": {
+            "status": "failed",
+            "reason": "invalid_pin",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T10:48:29.316047",
+        "type": "clock_in_failed",
+        "user_id": "7777",
+        "user_role": "unknown",
+        "details": {
+            "status": "failed",
+            "reason": "invalid_pin",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T10:48:29.360134",
+        "type": "clock_out",
+        "user_id": "9999",
+        "user_role": "user",
+        "details": {
+            "status": "success",
+            "user_name": "Test2FA",
+            "clock_in_time": "2026-06-23T10:48:23.259093",
+            "clock_out_time": "2026-06-23T10:48:29.359773",
+            "duration_hours": 0.0
+        }
+    },
+    {
+        "timestamp": "2026-06-23T10:48:36.978876",
+        "type": "login",
+        "user_id": "1234",
+        "user_role": "user",
+        "details": {
+            "status": "2fa_required",
+            "method": "pin",
+            "user_name": "Employee One",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T10:48:37.023982",
+        "type": "login_failed",
+        "user_id": "0000",
+        "user_role": "unknown",
+        "details": {
+            "status": "failed",
+            "method": "pin",
+            "ip": "127.0.0.1",
+            "attempt": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-23T10:48:37.066050",
+        "type": "clock_in_failed",
+        "user_id": "0000",
+        "user_role": "unknown",
+        "details": {
+            "status": "failed",
+            "reason": "invalid_pin",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T10:48:37.079111",
+        "type": "clock_in_failed",
+        "user_id": "0000",
+        "user_role": "unknown",
+        "details": {
+            "status": "failed",
+            "reason": "invalid_pin",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T10:48:37.094265",
+        "type": "clock_in_failed",
+        "user_id": "0000",
+        "user_role": "unknown",
+        "details": {
+            "status": "failed",
+            "reason": "invalid_pin",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T10:48:37.106323",
+        "type": "clock_in_failed",
+        "user_id": "0000",
+        "user_role": "unknown",
+        "details": {
+            "status": "failed",
+            "reason": "invalid_pin",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T10:48:37.118399",
+        "type": "clock_in_failed",
+        "user_id": "0000",
+        "user_role": "unknown",
+        "details": {
+            "status": "failed",
+            "reason": "invalid_pin",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T10:48:37.131557",
+        "type": "clock_in_failed",
+        "user_id": "0000",
+        "user_role": "unknown",
+        "details": {
+            "status": "failed",
+            "reason": "invalid_pin",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T10:48:37.144953",
+        "type": "clock_in_failed",
+        "user_id": "0000",
+        "user_role": "unknown",
+        "details": {
+            "status": "failed",
+            "reason": "invalid_pin",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T10:48:37.157993",
+        "type": "clock_in_failed",
+        "user_id": "0000",
+        "user_role": "unknown",
+        "details": {
+            "status": "failed",
+            "reason": "invalid_pin",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T10:48:37.168999",
+        "type": "clock_in_rate_limited",
+        "user_id": "ip:127.0.0.1",
+        "user_role": "unknown",
+        "details": {
+            "reason": "ip_locked",
+            "remaining_seconds": 899
+        }
+    },
+    {
+        "timestamp": "2026-06-23T10:48:37.182120",
+        "type": "clock_in_rate_limited",
+        "user_id": "ip:127.0.0.1",
+        "user_role": "unknown",
+        "details": {
+            "reason": "ip_locked",
+            "remaining_seconds": 899
+        }
+    },
+    {
+        "timestamp": "2026-06-23T10:48:37.194887",
+        "type": "clock_in_rate_limited",
+        "user_id": "ip:127.0.0.1",
+        "user_role": "unknown",
+        "details": {
+            "reason": "ip_locked",
+            "remaining_seconds": 899
+        }
     }
 ]

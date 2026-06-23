@@ -307,8 +307,6 @@ New `tickets.json` data store. Each ticket:
 
 - [x] worker-1 **Employee ticket submission UI** — New "📋 Requests" tab visible to all logged-in employees. Clean form with dropdown to select type: "🕐 Time Off Request", "🐛 Report Issue", "💬 Feedback / Suggestion", "📝 Other". Form adapts to type: time-off shows date range picker (with auto-calculated days badge), issue/feedback shows priority selector. Subject + description fields. Submit button stores to `tickets.json` via `POST /api/tickets/submit`. Toast confirmation. "My Tickets" list below form showing user's own submissions with status badges (Pending/Approved/Denied). Also added: `POST /api/tickets/my`, `POST /api/tickets/queue` (admin), `POST /api/tickets/respond` (admin approve/deny) endpoints. Full i18n EN + ES. [worker-1]
 
-- [~] worker-3 **Smart date picker for time-off requests** — Two date inputs (from → to) with native date picker. Auto-calculates total business days requested. Validates: can't request past dates, can't request >30 days without override. Shows total days prominently. Prevents overlapping requests.
-
 - [ ] **Admin/owner ticket management dashboard** — New admin sub-tab "📋 Ticket Queue" (permission-gated: `manage_users` or new `manage_tickets` perm). Two-column layout: **Pending** (left) and **Resolved** (right). Each ticket card shows type icon, employee name, subject, date submitted, priority badge. Approve ✅ and Deny ❌ buttons on pending tickets. Deny prompts for reason note (required). Approve auto-sets status and timestamp. Activity logging for all actions.
 
 - [ ] **Ticket status notifications** — When admin approves/denies a ticket, employee sees a notification badge on their "📋 Requests" tab. In-tab alert banner: "Your time-off request was ✅ approved" or "❌ denied". Unread count badge on tab button.
@@ -756,6 +754,7 @@ Super admin PIN is separate from any business PIN. Super admin can create busine
 |- [x] **Admin/owner 2FA management & reset** — `POST /api/users/disable_2fa` (requires reason, manage_users, only owner on admins) and `POST /api/users/regenerate_backup_codes` endpoints. `GET /api/users` now returns `totp_enabled`. Frontend: 🔒/🔓 2FA status badge in user cards, Disable 2FA + Regenerate Codes buttons (manage_users-gated), modal showing new backup codes. i18n EN + ES. Activity logging for all actions. [worker-2]
 |- [x] worker-3 **JSON backup script** — Created `/root/pos-system-work/scripts/backup_json.py` with validation, timestamped backups, tar.gz archiving, anomaly detection, dry-run and quiet modes.
 |- [x] worker-1 **Employee ticket submission UI** — New "📋 Requests" tab with ticket submission form (time-off, issue, feedback, other), adaptive fields, "My Tickets" list with status badges. Backend: tickets.json data store, 4 API endpoints (submit, my, queue, respond), activity logging, validation. Full i18n EN + ES.
+||- [x] worker-3 **Smart date picker for time-off requests** — Business day calculation (Mon-Fri), past-date validation, 30-day limit with override checkbox, overlap detection against existing pending/approved requests. Server-side and client-side validation. Backend: `business_days` field, overlap check, date validation. Frontend: validation messages, override checkbox, business day display in tickets. i18n EN + ES.
 
 |## Done (older)
 

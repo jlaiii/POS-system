@@ -39,7 +39,11 @@
             "7eefbcacce9dfa212b0b07078419b01aa81cbb296780a08835fc035bb0390b68",
             "0f16aeb4fca32694f9246b3d8c28b51f44c8060f623ed8c59169d48504214c72"
         ],
-        "totp_setup_at": "2026-06-23T07:59:32.165011"
+        "totp_setup_at": "2026-06-23T07:59:32.165011",
+        "pin_reset_notification": null,
+        "force_pin_change": false,
+        "temp_pin": null,
+        "temp_pin_expiry": null
     },
     "5678": {
         "name": "Employee Two",

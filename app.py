@@ -8724,21 +8724,72 @@ def ticket_submit():
     if ticket_type == 'time_off':
         date_from = data.get('date_from')
         date_to = data.get('date_to')
+        ticket['date_from'] = date_from
+        ticket['date_to'] = date_to
+        ticket['total_days'] = 1
+        ticket['business_days'] = 1
+
         if date_from and date_to:
             try:
-                d1 = datetime.fromisoformat(date_from)
-                d2 = datetime.fromisoformat(date_to)
-                ticket['date_from'] = date_from
-                ticket['date_to'] = date_to
-                ticket['total_days'] = max((d2 - d1).days + 1, 1)
+                d1 = datetime.strptime(date_from, '%Y-%m-%d')
+                d2 = datetime.strptime(date_to, '%Y-%m-%d')
+                today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+
+                # Validate: can't request past dates
+                if d1 < today:
+                    return jsonify({'message': 'Cannot request time off starting in the past. Please correct the From date.'}), 400
+
+                if d2 < d1:
+                    return jsonify({'message': 'To date must be on or after From date.'}), 400
+
+                total_calendar_days = (d2 - d1).days + 1
+
+                # Validate: max 30 days unless override
+                override_30day = data.get('override_30day', False)
+                if total_calendar_days > 30 and not override_30day:
+                    return jsonify({'message': 'Time-off request exceeds 30 days. If this is correct, please confirm to override.'}), 400
+
+                # Calculate business days (Mon-Fri)
+                business_days = 0
+                current = d1
+                while current <= d2:
+                    if current.weekday() < 5:  # Mon=0, Fri=4
+                        business_days += 1
+                    current += timedelta(days=1)
+
+                ticket['total_days'] = total_calendar_days
+                ticket['business_days'] = business_days
+
+                # Prevent overlapping requests (pending or approved)
+                existing_tickets = load_json_data(TICKETS_FILE)
+                for existing in existing_tickets:
+                    if existing.get('user_id') != user_id:
+                        continue
+                    if existing.get('id') == ticket.get('id'):
+                        continue
+                    if existing.get('type') != 'time_off':
+                        continue
+                    if existing.get('status') not in ('pending', 'approved'):
+                        continue
+                    ed_from = existing.get('date_from')
+                    ed_to = existing.get('date_to')
+                    if not ed_from or not ed_to:
+                        continue
+                    try:
+                        ed1 = datetime.strptime(ed_from, '%Y-%m-%d')
+                        ed2 = datetime.strptime(ed_to, '%Y-%m-%d')
+                        # Check overlap: existing period overlaps with requested period
+                        if d1 <= ed2 and d2 >= ed1:
+                            return jsonify({
+                                'message': f'This request overlaps with an existing {existing["status"]} time-off request: '
+                                           f'{existing.get("id", "?")} ({ed_from} → {ed_to}). '
+                                           f'Please adjust dates or cancel the existing request.'
+                            }), 400
+                    except (ValueError, TypeError):
+                        continue
+
             except (ValueError, TypeError):
-                ticket['date_from'] = date_from
-                ticket['date_to'] = date_to
-                ticket['total_days'] = 1
-        else:
-            ticket['date_from'] = date_from
-            ticket['date_to'] = date_to
-            ticket['total_days'] = 1
+                pass  # Keep defaults if dates are invalid
 
     if ticket_type in ('issue', 'feedback'):
         ticket['priority'] = data.get('priority', 'normal')

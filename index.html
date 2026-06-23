@@ -67,6 +67,9 @@ button.success { background: var(--success); color: #fff; }
 button.outline { background: transparent; border: 2px solid var(--accent); color: var(--accent); }
 button.ghost { background: transparent; color: var(--text2); }
 
+.val-err { color: #ff6b6b; background: rgba(255,107,107,0.1); border: 1px solid rgba(255,107,107,0.3); }
+.val-warn { color: #ffd93d; background: rgba(255,217,61,0.1); border: 1px solid rgba(255,217,61,0.3); }
+
 .card {
   background: var(--card);
   border-radius: var(--radius);
@@ -2046,6 +2049,11 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
         <input type="date" id="requestDateTo" style="flex:1;min-width:130px;" onchange="onRequestDateChange()"/>
         <span id="requestDaysBadge" style="display:none;background:var(--accent);color:#fff;padding:8px 14px;border-radius:var(--radius);font-size:14px;font-weight:600;white-space:nowrap;align-items:center;"></span>
       </div>
+      <div id="requestValidationMsg" style="font-size:13px;margin-bottom:8px;padding:6px 10px;border-radius:var(--radius);display:block;"></div>
+      <div id="requestOverrideRow" style="display:none;align-items:center;gap:8px;margin-bottom:8px;padding:8px 10px;background:var(--card);border-radius:var(--radius);">
+        <input type="checkbox" id="requestOverride30day" style="width:20px;height:20px;accent-color:var(--accent);"/>
+        <label for="requestOverride30day" style="font-size:13px;color:var(--text2);cursor:pointer;" data-i18n="requests.override_30day">☑️ Override 30-day limit</label>
+      </div>
       <input type="text" id="requestSubject" placeholder="Subject" style="margin-bottom:8px;"/>
       <textarea id="requestDescription" placeholder="Description..." style="width:100%;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:14px;padding:10px 12px;min-height:80px;resize:vertical;font-family:inherit;margin-bottom:8px;" rows="3" maxlength="2000"></textarea>
       <button class="accent" onclick="submitTicket()" style="width:100%;min-height:48px;" data-i18n="requests.submit">✅ Submit Request</button>
@@ -2793,6 +2801,7 @@ const L10N = {
     'requests.submit': '✅ Submit Request',
     'requests.my_tickets': '📋 My Tickets',
     'requests.no_tickets': 'No tickets yet — submit one above.',
+    'requests.override_30day': '☑️ Override 30-day limit',
   },
   es: {
     'app.title': '🍽️ Sistema POS',
@@ -3267,6 +3276,7 @@ const L10N = {
     'requests.submit': '✅ Enviar Solicitud',
     'requests.my_tickets': '📋 Mis Tickets',
     'requests.no_tickets': 'Aún no hay tickets — envíe uno arriba.',
+    'requests.override_30day': '☑️ Anular límite de 30 días',
   }
 };
 
@@ -4690,22 +4700,65 @@ function onRequestTypeChange() {
   }
 }
 
+// Calculate business days (Mon-Fri) between two dates inclusive
+function countBusinessDays(d1, d2) {
+  let count = 0;
+  const cur = new Date(d1);
+  while (cur <= d2) {
+    const day = cur.getDay(); // 0=Sun, 6=Sat
+    if (day !== 0 && day !== 6) count++;
+    cur.setDate(cur.getDate() + 1);
+  }
+  return count;
+}
+
 // Auto-calculate days when date range changes for time-off
 function onRequestDateChange() {
   const from = document.getElementById('requestDateFrom').value;
   const to = document.getElementById('requestDateTo').value;
   const badge = document.getElementById('requestDaysBadge');
+  const msg = document.getElementById('requestValidationMsg');
+  if (!msg) return;
+  msg.textContent = '';
+  msg.className = '';
+
   if (from && to) {
-    const d1 = new Date(from);
-    const d2 = new Date(to);
+    const d1 = new Date(from + 'T00:00:00');
+    const d2 = new Date(to + 'T00:00:00');
+    const today = new Date();
+    today.setHours(0,0,0,0);
+
     if (d2 >= d1) {
       const days = Math.floor((d2 - d1) / (1000 * 60 * 60 * 24)) + 1;
-      badge.textContent = `📅 ${days} day${days !== 1 ? 's' : ''}`;
+      const bizDays = countBusinessDays(d1, d2);
+
+      // Past date check
+      if (d1 < today) {
+        msg.textContent = '⚠️ Start date cannot be in the past.';
+        msg.className = 'val-err';
+        badge.style.display = 'none';
+        return;
+      }
+
+      // 30-day limit check
+      if (days > 30) {
+        msg.textContent = `⚠️ This request is ${days} days — exceeds the 30-day limit. Check "Override 30-day limit" below to submit anyway.`;
+        msg.className = 'val-warn';
+        document.getElementById('requestOverrideRow').style.display = 'flex';
+      } else {
+        document.getElementById('requestOverrideRow').style.display = 'none';
+      }
+
+      badge.textContent = `📅 ${days} day${days !== 1 ? 's' : ''} (${bizDays} business day${bizDays !== 1 ? 's' : ''})`;
       badge.style.display = 'flex';
       return;
+    } else {
+      msg.textContent = '⚠️ To date must be on or after From date.';
+      msg.className = 'val-err';
     }
   }
   badge.style.display = 'none';
+  document.getElementById('requestOverrideRow').style.display = 'none';
 }
 
 async function submitTicket() {
@@ -4718,6 +4771,55 @@ async function submitTicket() {
     return;
   }
 
+  // Check validation message — if there's a past-date error, block submission
+  const msg = document.getElementById('requestValidationMsg');
+  if (msg && msg.className === 'val-err') {
+    showToast(msg.textContent || 'Please fix the date errors before submitting.', 'error');
+    return;
+  }
+
+  // For time_off, validate dates are present
+  if (type === 'time_off') {
+    const dateFrom = document.getElementById('requestDateFrom').value;
+    const dateTo = document.getElementById('requestDateTo').value;
+    if (!dateFrom || !dateTo) {
+      showToast('Please select both From and To dates.', 'error');
+      return;
+    }
+  }
+
+  // Overlap check: scan existing tickets for date conflicts before sending
+  if (type === 'time_off') {
+    const dateFrom = document.getElementById('requestDateFrom').value;
+    const dateTo = document.getElementById('requestDateTo').value;
+    try {
+      const overlapRes = await fetch(BACKEND_URL + '/api/tickets/my', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({userId: currentUser.id})
+      });
+      if (overlapRes.ok) {
+        const overlapData = await overlapRes.json();
+        const existing = overlapData.tickets || [];
+        const d1 = new Date(dateFrom + 'T00:00:00');
+        const d2 = new Date(dateTo + 'T00:00:00');
+        for (const t of existing) {
+          if (t.type !== 'time_off') continue;
+          if (t.status !== 'pending' && t.status !== 'approved') continue;
+          if (!t.date_from || !t.date_to) continue;
+          const ed1 = new Date(t.date_from + 'T00:00:00');
+          const ed2 = new Date(t.date_to + 'T00:00:00');
+          if (d1 <= ed2 && d2 >= ed1) {
+            if (!confirm(`⚠️ This overlaps with existing ${t.status} time-off: ${t.id} (${t.date_from} → ${t.date_to}). Submit anyway?`)) {
+              return;
+            }
+            break;
+          }
+        }
+      }
+    } catch (e) { /* overlap check is non-blocking for network errors */ }
+  }
+
   const payload = {
     userId: currentUser.id,
     type: type,
@@ -4728,6 +4830,11 @@ async function submitTicket() {
   if (type === 'time_off') {
     payload.date_from = document.getElementById('requestDateFrom').value;
     payload.date_to = document.getElementById('requestDateTo').value;
+    // Check if override checkbox is checked
+    const overrideCheck = document.getElementById('requestOverride30day');
+    if (overrideCheck && overrideCheck.checked) {
+      payload.override_30day = true;
+    }
   }
 
   if (type === 'issue' || type === 'feedback') {
@@ -4751,6 +4858,10 @@ async function submitTicket() {
     document.getElementById('requestDateFrom').value = '';
     document.getElementById('requestDateTo').value = '';
     document.getElementById('requestDaysBadge').style.display = 'none';
+    document.getElementById('requestOverride30day').checked = false;
+    document.getElementById('requestOverrideRow').style.display = 'none';
+    const clearMsg = document.getElementById('requestValidationMsg');
+    if (clearMsg) { clearMsg.textContent = ''; clearMsg.className = ''; }
     showToast(data.message || 'Ticket submitted successfully!', 'success');
     loadMyTickets();
   } catch (e) {
@@ -4795,7 +4906,7 @@ function renderMyTickets(tickets) {
       : '<span style="background:#f39c12;color:#000;padding:3px 10px;border-radius:10px;font-size:12px;font-weight:700;">⏳ Pending</span>';
 
     const date = t.created_at ? new Date(t.created_at).toLocaleDateString() : '';
-    const timeInfo = t.date_from && t.date_to ? `<span style="color:var(--text2);font-size:13px;">📅 ${t.date_from} → ${t.date_to}${t.total_days ? ' (' + t.total_days + ' days)' : ''}</span>` : '';
+    const timeInfo = t.date_from && t.date_to ? `<span style="color:var(--text2);font-size:13px;">📅 ${t.date_from} → ${t.date_to}${t.total_days ? ' (' + t.total_days + ' day' + (t.total_days !== 1 ? 's' : '') : ''}${t.business_days ? ', ' + t.business_days + ' business day' + (t.business_days !== 1 ? 's' : '') : ''}${t.total_days ? ')' : ''}</span>` : '';
 
     html += `<div class="card" style="margin-bottom:8px;padding:12px 16px;">
       <div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:4px;">
