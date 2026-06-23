@@ -1169,7 +1169,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
     <button onclick="switchMainTab('history')" id="mainTabHistory" data-i18n="tab.history">📋 History</button>
     <button onclick="switchMainTab('admin')" id="mainTabAdmin" style="display:none;" data-i18n="tab.admin">⚙️ Admin</button>
     <button onclick="showKitchenView()" id="mainTabKitchen" style="display:none;" data-i18n="tab.kitchen">🔪 Kitchen</button>
-    <button onclick="switchMainTab('requests')" id="mainTabRequests" data-i18n="tab.requests">📋 Requests</button>
+    <button onclick="switchMainTab('requests')" id="mainTabRequests" data-i18n="tab.requests">📋 Requests <span id="requestsBadge" class="badge" style="display:none;background:#e94560;color:#fff;border-radius:10px;padding:2px 8px;font-size:11px;font-weight:700;margin-left:4px;vertical-align:middle;">0</span></button>
   </div>
 
   <div id="tabContent">
@@ -2825,6 +2825,13 @@ const L10N = {
     'requests.my_tickets': '📋 My Tickets',
     'requests.no_tickets': 'No tickets yet — submit one above.',
     'requests.override_30day': '☑️ Override 30-day limit',
+    'requests.alert_approved': '✅ Your {type} was approved',
+    'requests.alert_denied': '❌ Your {type} was denied',
+    'requests.alert_response': 'Response: {note}',
+    'requests.type_label.time_off': 'Time Off Request',
+    'requests.type_label.issue': 'Issue Report',
+    'requests.type_label.feedback': 'Feedback',
+    'requests.type_label.other': 'Request',
   },
   es: {
     'app.title': '🍽️ Sistema POS',
@@ -3302,6 +3309,13 @@ const L10N = {
     'requests.my_tickets': '📋 Mis Tickets',
     'requests.no_tickets': 'Aún no hay tickets — envíe uno arriba.',
     'requests.override_30day': '☑️ Anular límite de 30 días',
+    'requests.alert_approved': '✅ Su {type} fue aprobado',
+    'requests.alert_denied': '❌ Su {type} fue denegado',
+    'requests.alert_response': 'Respuesta: {note}',
+    'requests.type_label.time_off': 'Solicitud de Tiempo Libre',
+    'requests.type_label.issue': 'Reporte de Problema',
+    'requests.type_label.feedback': 'Comentario',
+    'requests.type_label.other': 'Solicitud',
   }
 };
 
@@ -4678,6 +4692,11 @@ function showApp() {
   checkClockStatus();
   // Initialize request type form state
   if (document.getElementById('requestType')) onRequestTypeChange();
+  // Check for unread ticket responses and update badge
+  updateRequestsBadge();
+  // Periodically check for new ticket responses
+  if (window._requestsBadgeTimer) clearInterval(window._requestsBadgeTimer);
+  window._requestsBadgeTimer = setInterval(() => updateRequestsBadge(), 30000);
 }
 
 // ═══════════ MAIN TABS ═══════════
@@ -4707,6 +4726,8 @@ function switchMainTab(tab) {
     switchAdminSection('stats');
   } else if (tab === 'requests') {
     document.getElementById('requestsTab').classList.add('active');
+    // Mark all responses as read and show alert banners
+    markReadAndShowAlerts();
     loadMyTickets();
   }
 }
@@ -4948,6 +4969,76 @@ function renderMyTickets(tickets) {
     </div>`;
   });
   listEl.innerHTML = html;
+}
+
+// ═══════════ TICKET NOTIFICATIONS ═══════════
+
+async function markReadAndShowAlerts() {
+  /** Mark all responded tickets as read and show alert banners for new ones. */
+  if (!currentUser || !currentUser.id) return;
+  try {
+    const res = await fetch(BACKEND_URL + '/api/tickets/mark_read', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({userId: currentUser.id})
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    // Update badge to 0 (we just read everything)
+    const badge = document.getElementById('requestsBadge');
+    if (badge) { badge.style.display = 'none'; badge.textContent = '0'; }
+    // Show alert banners for newly responded tickets
+    if (data.alerts && data.alerts.length > 0) {
+      // Remove any existing alert banners
+      document.querySelectorAll('.ticket-alert-banner').forEach(el => el.remove());
+      data.alerts.forEach((alert, idx) => {
+        const typeLabelKey = 'requests.type_label.' + (alert.type || 'other');
+        const typeLabel = t(typeLabelKey) || 'Ticket';
+        const statusKey = alert.status === 'approved' ? 'requests.alert_approved' : 'requests.alert_denied';
+        const msg = t(statusKey).replace('{type}', typeLabel);
+        const banner = document.createElement('div');
+        banner.className = 'ticket-alert-banner';
+        banner.style.cssText = 'background:var(--card);border-left:4px solid ' + (alert.status === 'approved' ? '#2ecc71' : '#e74c3c') + ';border-radius:var(--radius);padding:10px 14px;margin-bottom:8px;animation:fadeIn 0.3s ease;';
+        banner.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:start;gap:8px;">' +
+          '<div><strong>' + msg + '</strong>' +
+          (alert.response_note ? '<div style="font-size:13px;color:var(--text2);margin-top:4px;">' + t('requests.alert_response').replace('{note}', escHtml(alert.response_note)) + '</div>' : '') +
+          '</div><button onclick="this.parentElement.parentElement.remove()" style="background:none;border:none;color:var(--text2);font-size:18px;cursor:pointer;padding:0;line-height:1;">✕</button></div>';
+        // Insert at top of My Tickets card
+        const myTicketsCard = document.querySelector('#requestsTab .card:last-child');
+        if (myTicketsCard && myTicketsCard.parentNode) {
+          myTicketsCard.parentNode.insertBefore(banner, myTicketsCard);
+        }
+      });
+    }
+  } catch (e) {
+    // Silent fail — non-critical
+  }
+}
+
+async function updateRequestsBadge() {
+  /** Fetch unread count and update the badge on the Requests tab button. */
+  if (!currentUser || !currentUser.id) return;
+  try {
+    const res = await fetch(BACKEND_URL + '/api/tickets/my', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({userId: currentUser.id})
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    const count = data.unread_count || 0;
+    const badge = document.getElementById('requestsBadge');
+    if (badge) {
+      if (count > 0) {
+        badge.textContent = count > 99 ? '99+' : count;
+        badge.style.display = '';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+  } catch (e) {
+    // Silent fail
+  }
 }
 
 // ═══════════ ADMIN TICKET QUEUE ═══════════

@@ -8717,6 +8717,7 @@ def ticket_submit():
         'responded_by': None,
         'responded_at': None,
         'response_note': None,
+        'response_read': None,
         'priority': 'normal',
     }
 
@@ -8808,7 +8809,7 @@ def ticket_submit():
 
 @app.route('/api/tickets/my', methods=['POST'])
 def ticket_my():
-    """Get all tickets for the current user."""
+    """Get all tickets for the current user, with unread response count."""
     data = request.json
     user_id = data.get('userId') if data else None
     if not user_id:
@@ -8818,7 +8819,14 @@ def ticket_my():
     user_tickets = [t for t in tickets if t.get('user_id') == user_id]
     # Sort newest first
     user_tickets.sort(key=lambda t: t.get('created_at', ''), reverse=True)
-    return jsonify({'tickets': user_tickets})
+
+    # Count unread responses (status != pending and not yet read)
+    unread_count = sum(
+        1 for t in user_tickets
+        if t.get('status') in ('approved', 'denied') and t.get('response_read') != True
+    )
+
+    return jsonify({'tickets': user_tickets, 'unread_count': unread_count})
 
 
 @app.route('/api/tickets/queue', methods=['POST'])
@@ -8869,6 +8877,7 @@ def ticket_respond():
             t['responded_by'] = admin_pin
             t['responded_at'] = datetime.now().isoformat()
             t['response_note'] = reason if reason else None
+            t['response_read'] = False
             found = True
             break
 
@@ -8881,6 +8890,44 @@ def ticket_respond():
                  {'ticket_id': ticket_id, 'action': action, 'reason': reason})
 
     return jsonify({'message': f'Ticket {action} successfully!', 'ticket_id': ticket_id, 'status': action})
+
+
+@app.route('/api/tickets/mark_read', methods=['POST'])
+def ticket_mark_read():
+    """Mark all responded tickets as read for a user. Returns alerts for newly seen responses."""
+    data = request.json
+    user_id = data.get('userId') if data else None
+    if not user_id:
+        return jsonify({'message': 'userId is required.'}), 400
+
+    tickets = load_json_data(TICKETS_FILE)
+    alerts = []
+    unread_before = 0
+
+    for t in tickets:
+        if t.get('user_id') != user_id:
+            continue
+        status = t.get('status')
+        if status in ('approved', 'denied') and t.get('response_read') != True:
+            unread_before += 1
+            t['response_read'] = True
+            alerts.append({
+                'id': t.get('id'),
+                'subject': t.get('subject'),
+                'type': t.get('type'),
+                'status': status,
+                'response_note': t.get('response_note'),
+                'responded_at': t.get('responded_at'),
+            })
+
+    save_json_data(TICKETS_FILE, tickets)
+
+    return jsonify({
+        'message': f'{len(alerts)} ticket(s) marked as read.',
+        'unread_before': unread_before,
+        'alerts': alerts,
+        'read_count': len(alerts),
+    })
 
 
 if __name__ == '__main__':
