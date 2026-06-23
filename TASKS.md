@@ -81,6 +81,65 @@
 
 - [ ] **Shift schedule builder** — Weekly schedule grid where manager assigns shifts (Mon 9-5: John, Tue 9-5: Maria, etc.). Compare scheduled vs actual hours. Visual schedule calendar in admin. Helps catch no-shows.
 
+## Employee Self-Service Portal — Tickets, Requests & Issues (NEW — June 2026)
+
+> Currently there's no way for employees to submit time-off requests, report issues, or give feedback without texting the manager. This is a lightweight internal ticketing/request system where employees log in, submit, and admin/owner approves or denies.
+
+### Data Model
+
+New `tickets.json` data store. Each ticket:
+```
+{
+  "id": "TKT-001",
+  "user_id": "1234",
+  "user_name": "John",
+  "type": "time_off | issue | feedback | other",
+  "status": "pending | approved | denied",
+  "subject": "Request June 28-30 off",
+  "description": "Family wedding out of town...",
+  "date_from": "2026-06-28",          // for time_off type
+  "date_to": "2026-06-30",            // for time_off type
+  "total_days": 3,                     // auto-calculated
+  "created_at": "2026-06-23T14:00:00",
+  "responded_by": null,                // admin PIN who acted
+  "responded_at": null,
+  "response_note": null,               // admin's reason if denied
+  "priority": "normal | low | urgent"   // for issue/feedback types
+}
+```
+
+### Priority: HIGH
+
+- [ ] **Employee ticket submission UI** — New "📋 Requests" tab visible to all logged-in employees (not just admins). Clean form with dropdown to select type: "🕐 Time Off Request", "🐛 Report Issue", "💬 Feedback / Suggestion", "📝 Other". Form adapts to type: time-off shows date range picker (calendar-style start/end date with total days auto-calc), issue/feedback shows priority selector. Subject + description fields. Submit button stores to `tickets.json`. Toast confirmation. "My Tickets" list below form showing user's own submissions with status badges (🟡 pending, 🟢 approved, 🔴 denied).
+
+- [ ] **Smart date picker for time-off requests** — Two date inputs (from → to) with a mini calendar or native date picker. Auto-calculates total business days requested (excludes weekends? toggle per config). Validates: can't request past dates, can't request >30 days without override. Shows total days prominently so employee sees "Requesting 3 days off" before submitting. Prevents overlapping requests (checks against existing approved time-off for same user in date range).
+
+- [ ] **Admin/owner ticket management dashboard** — New admin sub-tab "📋 Ticket Queue" (permission-gated: `manage_users` or new `manage_tickets` perm). Two-column layout: **Pending** (left) and **Resolved** (right). Each ticket card shows: type icon, employee name, subject, date submitted, priority badge (for issues), date range (for time-off). Approve ✅ and Deny ❌ buttons on pending tickets. Deny prompts for reason note (required). Approve auto-sets status and timestamp. Resolved column shows all approved/denied with responder info, filterable by type and date. Activity logging for all approve/deny actions.
+
+- [ ] **Ticket status notifications** — When admin approves/denies a ticket, employee sees a notification badge on their "📋 Requests" tab. In-tab alert banner: "Your time-off request for June 28-30 was ✅ approved" or "❌ denied — reason: short staffed that weekend". No email/push needed — in-app notification is sufficient for POS terminal context. Notification persists until employee views the ticket. Unread count badge on tab button.
+
+- [ ] **API endpoints for ticket CRUD** — `POST /api/tickets/submit` (employee creates), `POST /api/tickets/my` (employee fetches their own), `POST /api/tickets/queue` (admin fetches all, filterable by status/type/user), `POST /api/tickets/respond` (admin approve/deny with note). All endpoints use existing `adminPin` auth pattern. Permission-gated: submit requires basic auth (any logged-in user), queue/respond requires `manage_users` or new `manage_tickets` permission.
+
+### Priority: MEDIUM
+
+- [ ] **Conflict detection for time-off requests** — When admin views a pending time-off, show warning if too many employees already approved for same dates ("⚠️ 3 of 5 servers already off June 28 — approving this leaves only 2"). Configurable per-role staffing minimums. Helps manager avoid accidentally approving everyone for the same weekend.
+
+- [ ] **Ticket filtering and search** — Admin queue: filter by type (time_off/issue/feedback), status (pending/approved/denied), employee, date range. Search by subject/description text. Sort by date submitted, priority. Essential once there are 20+ tickets.
+
+- [ ] **Recurring time-off patterns** — Allow employee to request recurring time-off (e.g., "every Tuesday for the next 3 months" for school/childcare). Auto-generates individual ticket entries or a parent ticket with child date instances. Admin approves the pattern once instead of weekly.
+
+- [ ] **Calendar view for time-off** — Visual calendar in admin showing who's off on which days. Color-coded by employee. Month/week toggle. Click a day to see who's off. Makes staffing gaps obvious. Uses the same ticket data — just rendered as a calendar grid instead of a list.
+
+### Priority: LOW
+
+- [ ] **Issue/bug ticket triage labels** — Admin can tag issue tickets: "POS bug", "hardware", "menu error", "customer complaint", "other". Filter by label. Helps prioritize fixes.
+
+- [ ] **Ticket response templates** — Admin can save common response notes as templates: "Approved — enjoy your time off", "Denied — peak season, please reschedule for after [date]", "Issue acknowledged — will investigate". Quick-select dropdown when responding.
+
+- [ ] **Employee feedback analytics** — Aggregate feedback tickets by category over time. "Top 3 issues employees are reporting this month." Dashboard card in admin showing feedback trends. Helps owner spot systemic problems (e.g., "3 complaints about the same broken printer").
+
+- [ ] **Auto-approve for low-risk time-off** — Configurable rule: auto-approve time-off if requested >2 weeks in advance AND no other approvals for same date. Reduces admin overhead. Can be toggled off.
+
 ## Done
 
 - [x] **Add auto-table suggestion for waiters** — When a waiter returns to the POS tab, auto-select the table they were last working on (stored per-user in localStorage). Saves 1-2 taps per order cycle, adds up over a shift. [worker-1]
