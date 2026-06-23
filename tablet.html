@@ -31,6 +31,7 @@ body {
   justify-content: center;
 }
 
+/* ---- Ad Rotator ---- */
 #adContainer {
   width: 100vw;
   height: 100vh;
@@ -85,7 +86,7 @@ body {
 
 #adDots {
   position: fixed;
-  bottom: 30px;
+  bottom: 100px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -123,6 +124,339 @@ body {
   z-index: 20;
 }
 
+/* ---- View Menu Button (floating over ads) ---- */
+#viewMenuBtn {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 60px;
+  padding: 16px 36px;
+  font-size: clamp(18px, 2.5vw, 28px);
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(233,69,96,0.5);
+  touch-action: manipulation;
+  transition: transform 0.2s, box-shadow 0.2s;
+  min-height: 60px;
+  min-width: 200px;
+}
+
+#viewMenuBtn:active {
+  transform: translateX(-50%) scale(0.95);
+  box-shadow: 0 2px 10px rgba(233,69,96,0.3);
+}
+
+/* ---- Menu View (overlay) ---- */
+#menuView {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: var(--bg);
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#menuView.show {
+  display: flex;
+}
+
+#menuHeader {
+  display: flex;
+  align-items: center;
+  padding: 16px 20px;
+  background: var(--card);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  flex-shrink: 0;
+  gap: 12px;
+}
+
+#backToAdsBtn {
+  background: none;
+  border: none;
+  color: var(--text);
+  font-size: clamp(20px, 3vw, 32px);
+  cursor: pointer;
+  padding: 12px 16px;
+  min-height: 48px;
+  min-width: 48px;
+  touch-action: manipulation;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 12px;
+}
+
+#backToAdsBtn:active {
+  background: rgba(255,255,255,0.1);
+}
+
+#menuHeader h2 {
+  font-size: clamp(18px, 2.5vw, 28px);
+  font-weight: 700;
+  flex: 1;
+}
+
+/* Category tabs */
+#catTabs {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  flex-shrink: 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent) transparent;
+}
+
+#catTabs::-webkit-scrollbar {
+  height: 4px;
+}
+
+#catTabs::-webkit-scrollbar-thumb {
+  background: var(--accent);
+  border-radius: 4px;
+}
+
+.cat-tab {
+  background: var(--card);
+  color: var(--text2);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 40px;
+  padding: 10px 24px;
+  font-size: clamp(14px, 1.8vw, 20px);
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  touch-action: manipulation;
+  min-height: 48px;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.cat-tab.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.cat-tab:active {
+  opacity: 0.8;
+}
+
+/* Item grid */
+#menuItemsGrid {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding: 12px 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+  align-content: start;
+}
+
+.menu-item-card {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform 0.15s, box-shadow 0.15s;
+  border: 1px solid rgba(255,255,255,0.06);
+  min-height: 150px;
+}
+
+.menu-item-card:active {
+  transform: scale(0.96);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.menu-item-card img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.05);
+}
+
+.menu-item-card .item-name {
+  font-size: clamp(14px, 1.6vw, 18px);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.menu-item-card .item-price {
+  font-size: clamp(16px, 1.8vw, 22px);
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.menu-item-card .item-desc {
+  font-size: clamp(11px, 1.2vw, 14px);
+  color: var(--text2);
+  line-height: 1.4;
+}
+
+/* Item detail overlay */
+#itemDetailOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(26,26,46,0.97);
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+#itemDetailOverlay.show {
+  display: flex;
+}
+
+#itemDetailOverlay .detail-close {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: none;
+  border: none;
+  color: var(--text);
+  font-size: 28px;
+  cursor: pointer;
+  padding: 12px 16px;
+  min-height: 48px;
+  min-width: 48px;
+  touch-action: manipulation;
+  border-radius: 12px;
+}
+
+#itemDetailOverlay .detail-close:active {
+  background: rgba(255,255,255,0.1);
+}
+
+#itemDetailOverlay .detail-img {
+  width: min(80vw, 400px);
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+
+#itemDetailOverlay .detail-name {
+  font-size: clamp(28px, 4vw, 42px);
+  font-weight: 700;
+  text-align: center;
+}
+
+#itemDetailOverlay .detail-price {
+  font-size: clamp(24px, 3vw, 36px);
+  font-weight: 700;
+  color: var(--accent);
+  margin-top: 8px;
+}
+
+#itemDetailOverlay .detail-desc {
+  font-size: clamp(16px, 2vw, 22px);
+  color: var(--text2);
+  text-align: center;
+  max-width: 500px;
+  margin-top: 12px;
+  line-height: 1.5;
+}
+
+#itemDetailOverlay .detail-meta {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.detail-badge {
+  background: var(--card);
+  color: var(--text2);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: clamp(13px, 1.4vw, 16px);
+  font-weight: 500;
+}
+
+/* Combo showcase row */
+#comboRow {
+  flex-shrink: 0;
+  padding: 8px 16px 16px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  display: none;
+}
+
+#comboRow.show {
+  display: block;
+}
+
+#comboRow h3 {
+  font-size: clamp(16px, 2vw, 22px);
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 10px;
+  padding-left: 4px;
+}
+
+#comboCards {
+  display: flex;
+  gap: 12px;
+}
+
+.combo-card {
+  background: linear-gradient(135deg, var(--card), #1e2a4a);
+  border: 1px solid rgba(233,69,96,0.3);
+  border-radius: 16px;
+  padding: 16px;
+  min-width: 200px;
+  max-width: 280px;
+  flex-shrink: 0;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform 0.15s;
+}
+
+.combo-card:active {
+  transform: scale(0.96);
+}
+
+.combo-card .combo-name {
+  font-size: clamp(16px, 1.8vw, 22px);
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.combo-card .combo-price {
+  font-size: clamp(18px, 2vw, 26px);
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.combo-card .combo-items {
+  font-size: clamp(12px, 1.2vw, 14px);
+  color: var(--text2);
+  margin-top: 6px;
+  line-height: 1.4;
+}
+
 /* Order active overlay */
 #orderActiveOverlay {
   position: fixed;
@@ -153,20 +487,70 @@ body {
   line-height: 1.6;
 }
 
+/* No items message */
+#noItemsMsg {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text2);
+  font-size: clamp(18px, 2vw, 24px);
+}
+
 @media (max-width: 600px) {
   .ad-title { font-size: 20px; }
   .ad-slide img { max-height: 60vh; }
-  #adDots { bottom: 16px; gap: 8px; }
+  #adDots { bottom: 80px; gap: 8px; }
   .dot { width: 10px; height: 10px; }
+  #viewMenuBtn { padding: 14px 28px; min-width: 160px; }
+  #menuItemsGrid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+}
+
+@media (orientation: portrait) {
+  #menuItemsGrid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+}
+
+@media (orientation: landscape) {
+  #menuItemsGrid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
 }
 </style>
 </head>
 <body>
+
+<!-- Ad Rotator -->
 <div id="adContainer">
   <div id="adSlides"></div>
   <div id="adDots"></div>
   <div id="noAdsMessage">No ads available<br/><span style="font-size:18px;color:var(--text2);">Waiting for content...</span></div>
   <div id="connectionStatus">● Connected</div>
+</div>
+
+<!-- View Menu Floating Button -->
+<button id="viewMenuBtn">🍽️ View Menu</button>
+
+<!-- Menu View Overlay -->
+<div id="menuView">
+  <div id="menuHeader">
+    <button id="backToAdsBtn">← <span>Back</span></button>
+    <h2>📋 Our Menu</h2>
+  </div>
+  <div id="catTabs"></div>
+  <div id="comboRow">
+    <h3>🔥 Featured Combos</h3>
+    <div id="comboCards"></div>
+  </div>
+  <div id="menuItemsGrid">
+    <div id="noItemsMsg">Loading menu...</div>
+  </div>
+</div>
+
+<!-- Item Detail Overlay -->
+<div id="itemDetailOverlay" onclick="closeItemDetail(event)">
+  <button class="detail-close" onclick="closeItemDetail()">← Back</button>
+  <img class="detail-img" id="detailImg" src="" alt=""/>
+  <div class="detail-name" id="detailName"></div>
+  <div class="detail-price" id="detailPrice"></div>
+  <div class="detail-desc" id="detailDesc"></div>
+  <div class="detail-meta" id="detailMeta"></div>
 </div>
 
 <div id="orderActiveOverlay">
@@ -180,7 +564,14 @@ let adsData = { ads: [], interval: 10 };
 let currentIndex = 0;
 let rotateTimer = null;
 let pollTimer = null;
+let menuItemsData = {};
+let categories = [];
+let activeCategory = '';
+let combosData = [];
+let idleTimer = null;
+const IDLE_TIMEOUT = 45000; // 45s idle → return to ads
 
+// ---- Ad functions ----
 async function fetchAds() {
   try {
     const r = await fetch(BACKEND + '/api/ads/current');
@@ -213,7 +604,6 @@ function renderAds() {
 
   noAdsEl.style.display = 'none';
 
-  // Build slides
   slidesEl.innerHTML = ads.map((ad, i) => `
     <div class="ad-slide ${i === 0 ? 'active' : ''}" data-index="${i}" onclick="handleAdClick('${escHtml(ad.link_url || '')}')">
       <img src="${escHtml(ad.image_url)}" alt="${escHtml(ad.title)}" loading="${i === 0 ? 'eager' : 'lazy'}"/>
@@ -222,14 +612,12 @@ function renderAds() {
     </div>
   `).join('');
 
-  // Build dots
   dotsEl.innerHTML = ads.map((_, i) => `
     <div class="dot ${i === 0 ? 'active' : ''}" onclick="goToAd(${i})"></div>
   `).join('');
 
   currentIndex = 0;
 
-  // Clear old timer
   if (rotateTimer) clearInterval(rotateTimer);
   rotateTimer = setInterval(() => {
     nextAd();
@@ -265,15 +653,208 @@ function escHtml(str) {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
+    .replace(/\"/g, '&quot;')
     .replace(/'/g, '&#39;');
 }
 
-// Poll every 30s for new ads
+// ---- Menu functions ----
+async function fetchMenuItems() {
+  try {
+    const r = await fetch(BACKEND + '/api/items');
+    if (!r.ok) throw new Error('Fetch failed');
+    menuItemsData = await r.json();
+    // Build category list (exclude empty categories)
+    categories = Object.keys(menuItemsData).filter(cat => {
+      return Array.isArray(menuItemsData[cat]) && menuItemsData[cat].length > 0;
+    });
+    if (categories.length > 0) {
+      activeCategory = categories[0];
+    }
+    renderCategoryTabs();
+    renderItems();
+  } catch (e) {
+    document.getElementById('noItemsMsg').textContent = 'Could not load menu.';
+  }
+}
+
+async function fetchCombos() {
+  try {
+    const r = await fetch(BACKEND + '/api/combos/list');
+    if (!r.ok) throw new Error('Fetch failed');
+    const data = await r.json();
+    combosData = (data.combos || []).filter(c => c.active !== false);
+    renderCombos();
+  } catch (e) {
+    // combos are optional
+  }
+}
+
+function renderCategoryTabs() {
+  const el = document.getElementById('catTabs');
+  if (categories.length === 0) {
+    el.innerHTML = '';
+    return;
+  }
+  el.innerHTML = categories.map(cat => `
+    <button class="cat-tab ${cat === activeCategory ? 'active' : ''}" data-cat="${escHtml(cat)}" onclick="switchCategory('${escHtml(cat)}')">${escHtml(cat)}</button>
+  `).join('');
+}
+
+function switchCategory(cat) {
+  activeCategory = cat;
+  // Update tab UI
+  document.querySelectorAll('.cat-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.cat === cat);
+  });
+  renderItems();
+  resetIdleTimer();
+}
+
+function renderItems() {
+  const grid = document.getElementById('menuItemsGrid');
+  const items = (menuItemsData[activeCategory] || []).filter(it => it.active !== false);
+
+  if (items.length === 0) {
+    grid.innerHTML = '<div id="noItemsMsg">No items in this category.</div>';
+    return;
+  }
+
+  grid.innerHTML = items.map(item => `
+    <div class="menu-item-card" onclick="showItemDetail('${escHtml(item.name)}')">
+      ${item.image_url ? `<img src="${escHtml(item.image_url)}" alt="${escHtml(item.name)}" loading="lazy"/>` : ''}
+      <div class="item-name">${escHtml(item.name)}</div>
+      <div class="item-price">$${parseFloat(item.price).toFixed(2)}</div>
+      ${item.description ? `<div class="item-desc">${escHtml(item.description)}</div>` : ''}
+    </div>
+  `).join('');
+}
+
+function renderCombos() {
+  const row = document.getElementById('comboRow');
+  const cards = document.getElementById('comboCards');
+  if (!combosData.length) {
+    row.classList.remove('show');
+    return;
+  }
+  row.classList.add('show');
+  cards.innerHTML = combosData.map(combo => `
+    <div class="combo-card" onclick="showComboDetail('${escHtml(combo.name)}')">
+      <div class="combo-name">${escHtml(combo.name)}</div>
+      <div class="combo-price">$${parseFloat(combo.price).toFixed(2)}</div>
+      <div class="combo-items">${escHtml((combo.items || []).join(' + '))}</div>
+    </div>
+  `).join('');
+}
+
+// ---- Item Detail ----
+// Find item by name across all categories
+function findItemByName(name) {
+  for (const cat of Object.keys(menuItemsData)) {
+    const items = menuItemsData[cat] || [];
+    for (const item of items) {
+      if (item.name === name) return item;
+    }
+  }
+  return null;
+}
+
+function showItemDetail(name) {
+  const item = findItemByName(name);
+  if (!item) return;
+
+  document.getElementById('detailImg').src = item.image_url || '';
+  document.getElementById('detailImg').style.display = item.image_url ? 'block' : 'none';
+  document.getElementById('detailName').textContent = item.name;
+  document.getElementById('detailPrice').textContent = '$' + parseFloat(item.price).toFixed(2);
+  document.getElementById('detailDesc').textContent = item.description || '';
+
+  const metaEl = document.getElementById('detailMeta');
+  let badges = [];
+  if (item.course) badges.push('🍽️ ' + item.course.charAt(0).toUpperCase() + item.course.slice(1));
+  if (item.barcode) badges.push('📦 ' + item.barcode);
+  metaEl.innerHTML = badges.map(b => `<span class="detail-badge">${b}</span>`).join('');
+
+  document.getElementById('itemDetailOverlay').classList.add('show');
+  resetIdleTimer();
+}
+
+function closeItemDetail(e) {
+  if (e && e.target !== e.currentTarget) return; // Only close when clicking backdrop
+  document.getElementById('itemDetailOverlay').classList.remove('show');
+  resetIdleTimer();
+}
+
+function showComboDetail(name) {
+  const combo = combosData.find(c => c.name === name);
+  if (!combo) return;
+
+  document.getElementById('detailImg').style.display = 'none';
+  document.getElementById('detailName').textContent = combo.name + ' (Combo)';
+  document.getElementById('detailPrice').textContent = '$' + parseFloat(combo.price).toFixed(2);
+  document.getElementById('detailDesc').textContent = 'Includes: ' + (combo.items || []).join(' + ');
+  document.getElementById('detailMeta').innerHTML = '<span class="detail-badge">🔥 Combo Deal</span>';
+
+  document.getElementById('itemDetailOverlay').classList.add('show');
+  resetIdleTimer();
+}
+
+// ---- View toggle ----
+function showMenuView() {
+  document.getElementById('adContainer').style.display = 'none';
+  document.getElementById('viewMenuBtn').style.display = 'none';
+  document.getElementById('menuView').classList.add('show');
+  // Pause ad rotation while in menu
+  if (rotateTimer) {
+    clearInterval(rotateTimer);
+    rotateTimer = null;
+  }
+  resetIdleTimer();
+}
+
+function showAdsView() {
+  document.getElementById('menuView').classList.remove('show');
+  document.getElementById('adContainer').style.display = 'flex';
+  document.getElementById('viewMenuBtn').style.display = 'block';
+  // Resume ad rotation
+  const interval = adsData.interval || 10;
+  if (rotateTimer) clearInterval(rotateTimer);
+  rotateTimer = setInterval(() => {
+    nextAd();
+  }, interval * 1000);
+  // Cancel idle timer
+  if (idleTimer) {
+    clearTimeout(idleTimer);
+    idleTimer = null;
+  }
+}
+
+function resetIdleTimer() {
+  if (idleTimer) clearTimeout(idleTimer);
+  idleTimer = setTimeout(() => {
+    showAdsView();
+  }, IDLE_TIMEOUT);
+}
+
+// ---- Event listeners ----
+document.getElementById('viewMenuBtn').addEventListener('click', () => {
+  showMenuView();
+  fetchMenuItems();
+  fetchCombos();
+});
+
+document.getElementById('backToAdsBtn').addEventListener('click', () => {
+  showAdsView();
+});
+
+// Also intercept any touch on menu view to reset idle timer
+document.getElementById('menuView').addEventListener('touchstart', resetIdleTimer, { passive: true });
+document.getElementById('menuView').addEventListener('click', resetIdleTimer, { passive: true });
+
+// ---- Init ----
 fetchAds();
 pollTimer = setInterval(fetchAds, 30000);
 
-// Touch swipe support for tablets
+// Touch swipe support for ads
 let touchStartX = 0;
 let touchEndX = 0;
 document.addEventListener('touchstart', e => {
@@ -294,6 +875,13 @@ document.addEventListener('keydown', e => {
   const ads = adsData.ads || [];
   if (e.key === 'ArrowRight') nextAd();
   else if (e.key === 'ArrowLeft') goToAd((currentIndex - 1 + ads.length) % ads.length);
+  else if (e.key === 'Escape') {
+    if (document.getElementById('itemDetailOverlay').classList.contains('show')) {
+      closeItemDetail();
+    } else if (document.getElementById('menuView').classList.contains('show')) {
+      showAdsView();
+    }
+  }
 });
 </script>
 </body>
