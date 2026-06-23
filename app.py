@@ -17,6 +17,7 @@ import urllib.error
 from collections import defaultdict, Counter
 import pyotp
 import qrcode
+import html as _html
 
 app = Flask(__name__, static_folder='.', static_url_path='')
 CORS(app)  # Enable CORS for all origins
@@ -4410,6 +4411,299 @@ def employee_my_pay():
         'current_period': current_period,
         'pay_history': past_periods,
         'ytd': ytd
+    })
+
+
+@app.route('/api/employee/pay_stub_pdf', methods=['POST'])
+def employee_pay_stub_pdf():
+    """Generate a printable HTML pay stub for an employee for a specific pay period.
+    Returns printer-friendly HTML for use with browser Print → Save as PDF.
+    """
+    data = request.json
+    user_id = (data.get('userId') or '').strip()
+    start_date = (data.get('start_date') or '').strip()
+
+    if not user_id or not start_date:
+        return jsonify({'message': 'userId and start_date are required.'}), 400
+
+    users = load_json_data(USERS_FILE)
+    if user_id not in users:
+        return jsonify({'message': 'User not found.'}), 404
+
+    user_data = users[user_id]
+    user_name = user_data.get('name', 'Unknown')
+    pay_rate = user_data.get('pay_rate') or 0
+    has_pay_rate = pay_rate > 0
+
+    # Calculate the week range (Mon-Sun) from the start_date
+    try:
+        week_start = datetime.fromisoformat(start_date)
+    except (ValueError, TypeError):
+        return jsonify({'message': 'Invalid start_date format. Use YYYY-MM-DD.'}), 400
+
+    week_end = week_start + timedelta(days=6, hours=23, minutes=59, seconds=59)
+
+    shift_log = load_json_data(SHIFT_FILE)
+
+    # Filter shifts for this user within this week
+    user_shifts = []
+    for s in shift_log:
+        if s.get('user_id') != user_id:
+            continue
+        ck = s.get('clock_in_time', '')
+        if not ck:
+            continue
+        try:
+            dt = datetime.fromisoformat(ck)
+        except (ValueError, TypeError):
+            continue
+        if week_start <= dt <= week_end:
+            user_shifts.append(s)
+
+    # Sort by clock_in_time
+    user_shifts.sort(key=lambda x: x.get('clock_in_time', ''))
+
+    # Calculate totals
+    total_paid_hours = 0.0
+    total_duration_hours = 0.0
+    total_break_hours = 0.0
+    for s in user_shifts:
+        dur = s.get('duration_hours', 0)
+        paid = s.get('paid_hours', dur)
+        total_duration_hours += dur
+        total_paid_hours += paid
+        total_break_hours += s.get('break_hours', 0)
+
+    total_paid_hours = round(total_paid_hours, 2)
+    gross_pay = round(total_paid_hours * pay_rate, 2) if has_pay_rate else 0
+
+    # YTD calculations
+    now = datetime.now()
+    ytd_start = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+    ytd_hours = 0.0
+    ytd_shift_count = 0
+    for s in shift_log:
+        if s.get('user_id') != user_id:
+            continue
+        ck = s.get('clock_in_time', '')
+        if not ck:
+            continue
+        try:
+            dt = datetime.fromisoformat(ck)
+        except (ValueError, TypeError):
+            continue
+        if dt >= ytd_start:
+            dur = s.get('duration_hours', 0)
+            paid = s.get('paid_hours', dur)
+            ytd_hours += paid
+            ytd_shift_count += 1
+    ytd_hours = round(ytd_hours, 2)
+    ytd_gross = round(ytd_hours * pay_rate, 2) if has_pay_rate else 0
+
+    # Include active shift in YTD if applicable
+    if user_id in active_shifts:
+        active_shift = active_shifts[user_id]
+        active_duration = round((now - active_shift['clock_in_time']).total_seconds() / 3600, 2)
+        breaks = active_shift.get('breaks', [])
+        total_break_minutes = sum(
+            (b.get('duration_minutes') or 0) for b in breaks
+            if b.get('duration_minutes') is not None
+        )
+        if active_shift.get('on_break'):
+            for b in reversed(breaks):
+                if b.get('end') is None and b.get('start'):
+                    try:
+                        sd = datetime.fromisoformat(b['start'])
+                        total_break_minutes += (now - sd).total_seconds() / 60
+                    except (ValueError, TypeError):
+                        pass
+                    break
+        active_break_hours = round(total_break_minutes / 60, 2)
+        active_paid = round(max(0, active_duration - active_break_hours), 2)
+        ytd_hours += active_paid
+        ytd_shift_count += 1
+        ytd_hours = round(ytd_hours, 2)
+        ytd_gross = round(ytd_hours * pay_rate, 2) if has_pay_rate else 0
+
+    period_label = f"{week_start.strftime('%Y-%m-%d')} to {week_end.strftime('%Y-%m-%d')}"
+    now_str = datetime.now().strftime('%Y-%m-%d %H:%M')
+
+    # Build shift detail rows
+    shift_rows = ''
+    for s in user_shifts:
+        ci = s.get('clock_in_time', '—')
+        co = s.get('clock_out_time', '—')
+        dur = s.get('duration_hours', 0)
+        paid = s.get('paid_hours', dur)
+        bk = s.get('break_hours', 0)
+        # Parse date nicely
+        try:
+            d = datetime.fromisoformat(ci)
+            date_str = d.strftime('%a %b %d')
+            in_str = d.strftime('%I:%M %p').lstrip('0')
+        except (ValueError, TypeError):
+            date_str = ci
+            in_str = ci
+        try:
+            if co:
+                d_out = datetime.fromisoformat(co)
+                out_str = d_out.strftime('%I:%M %p').lstrip('0')
+            else:
+                out_str = '—'
+        except (ValueError, TypeError):
+            out_str = co or '—'
+        shift_rows += f'''<tr>
+            <td>{date_str}</td>
+            <td>{in_str}</td>
+            <td>{out_str}</td>
+            <td>{dur:.2f}</td>
+            <td>{paid:.2f}</td>
+            <td>{bk:.2f}</td>
+        </tr>'''
+
+    if not shift_rows:
+        shift_rows = '<tr><td colspan="6" style="text-align:center;color:#999;">No shifts in this period.</td></tr>'
+
+    # Pre-compute strings to avoid f-string expression limitations
+    pay_rate_row = ''
+    if has_pay_rate:
+        pay_rate_row = f'<tr><td class="total-label">Pay Rate</td><td class="right total-value pay-rate">${pay_rate:.2f}/hr</td></tr>'
+    gross_pay_str = f'${gross_pay:,.2f}' if has_pay_rate else '$0.00'
+    ytd_gross_str = f'${ytd_gross:,.2f}' if has_pay_rate else '$0.00'
+    rate_display = f'${pay_rate:.2f}/hr' if has_pay_rate else 'Not set'
+    safe_name = _html.escape(user_name)
+    safe_id = _html.escape(user_id)
+
+    html = f'''<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Pay Stub — {safe_name}</title>
+<style>
+  @page {{ margin: 15mm 12mm; size: letter; }}
+  * {{ box-sizing: border-box; }}
+  body {{ font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; font-size: 10pt; color: #222; line-height: 1.5; margin: 0; padding: 0; }}
+  .header {{ text-align: center; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 3px solid #1a1a2e; }}
+  .header h1 {{ font-size: 20pt; margin: 0 0 4px; color: #1a1a2e; }}
+  .header .business {{ font-size: 11pt; color: #666; }}
+  .header .period {{ font-size: 10pt; color: #888; }}
+  .employee-info {{ display: flex; justify-content: space-between; margin-bottom: 16px; padding: 12px 14px; background: #f5f5fa; border-radius: 6px; }}
+  .employee-info div {{ font-size: 10pt; }}
+  .employee-info .label {{ color: #888; font-size: 8pt; text-transform: uppercase; letter-spacing: 0.5px; }}
+  .employee-info .value {{ font-weight: 600; font-size: 11pt; color: #1a1a2e; }}
+  table {{ width: 100%; border-collapse: collapse; margin-bottom: 16px; }}
+  th {{ background: #1a1a2e; color: #fff; padding: 7px 8px; text-align: left; font-size: 8pt; text-transform: uppercase; letter-spacing: 0.3px; }}
+  td {{ padding: 6px 8px; border-bottom: 1px solid #ddd; font-size: 9pt; }}
+  tr:nth-child(even) {{ background: #f8f8fc; }}
+  .right {{ text-align: right; }}
+  .center {{ text-align: center; }}
+  .summary {{ margin-top: 6px; }}
+  .summary table {{ margin-bottom: 0; }}
+  .summary td {{ border: none; padding: 4px 8px; font-size: 9pt; }}
+  .summary .total-label {{ font-weight: 600; color: #1a1a2e; }}
+  .summary .total-value {{ font-weight: 700; font-size: 10pt; color: #1a1a2e; }}
+  .grand-total td {{ font-weight: 700; font-size: 10pt; border-top: 2px solid #1a1a2e; padding-top: 8px; color: #1a1a2e; }}
+  .pay-rate {{ color: #666; }}
+  .footer {{ margin-top: 30px; font-size: 8pt; color: #aaa; text-align: center; border-top: 1px solid #ddd; padding-top: 8px; }}
+  .footer strong {{ color: #666; }}
+  .print-btn {{ display: block; margin: 20px auto; padding: 12px 30px; background: #1a1a2e; color: #fff; border: none; border-radius: 6px; font-size: 12pt; cursor: pointer; }}
+  @media print {{ .print-btn {{ display: none; }} }}
+</style>
+</head>
+<body>
+<button class="print-btn" onclick="window.print()">🖨️ Print / Save PDF</button>
+
+<div class="header">
+  <h1>Pay Stub</h1>
+  <div class="business">POS System</div>
+  <div class="period">Pay Period: {period_label}</div>
+</div>
+
+<div class="employee-info">
+  <div>
+    <div class="label">Employee</div>
+    <div class="value">{safe_name}</div>
+  </div>
+  <div>
+    <div class="label">Employee ID</div>
+    <div class="value">{safe_id}</div>
+  </div>
+  <div>
+    <div class="label">Pay Rate</div>
+    <div class="value">{rate_display}</div>
+  </div>
+  <div>
+    <div class="label">Generated</div>
+    <div class="value">{now_str}</div>
+  </div>
+</div>
+
+<h3 style="font-size:11pt;color:#1a1a2e;margin:16px 0 8px;">Shift Details</h3>
+<table>
+<thead>
+<tr>
+  <th>Date</th>
+  <th>Clock In</th>
+  <th>Clock Out</th>
+  <th class="right">Duration (h)</th>
+  <th class="right">Paid (h)</th>
+  <th class="right">Break (h)</th>
+</tr>
+</thead>
+<tbody>
+{shift_rows}
+</tbody>
+</table>
+
+<div class="summary">
+<table>
+  <tr>
+    <td class="total-label">Total Duration Hours</td>
+    <td class="right total-value">{total_duration_hours:.2f}</td>
+  </tr>
+  <tr>
+    <td class="total-label">Total Break Hours</td>
+    <td class="right total-value">{total_break_hours:.2f}</td>
+  </tr>
+  <tr>
+    <td class="total-label">Total Paid Hours</td>
+    <td class="right total-value">{total_paid_hours:.2f}</td>
+  </tr>
+  {pay_rate_row}
+  <tr class="grand-total">
+    <td>Gross Pay (This Period)</td>
+    <td class="right">{gross_pay_str}</td>
+  </tr>
+</table>
+</div>
+
+<div style="margin-top:20px;padding-top:14px;border-top:1px solid #ddd;">
+  <h3 style="font-size:11pt;color:#1a1a2e;margin:0 0 8px;">Year-to-Date Summary</h3>
+  <table>
+    <tr><td>Total Hours</td><td class="right">{ytd_hours:.2f}</td></tr>
+    <tr><td>Total Shifts</td><td class="right">{ytd_shift_count}</td></tr>
+    <tr style="font-weight:700;color:#1a1a2e;"><td>YTD Gross Pay</td><td class="right">{ytd_gross_str}</td></tr>
+  </table>
+</div>
+
+<div class="footer">
+  <strong>POS System</strong> — Pay Stub generated on {now_str}<br>
+  This is not an official tax document. For informational purposes only.
+</div>
+
+<script>
+  // Auto-print for "Open in new tab" workflow
+  if (window.location.search.includes('autoPrint=true')) {{
+    window.onload = function() {{ setTimeout(function() {{ window.print(); }}, 500); }};
+  }}
+</script>
+</body>
+</html>'''
+
+    period_slug = week_start.strftime('%Y-%m-%d')
+    return jsonify({
+        'html': html,
+        'filename': f'pay_stub_{user_id}_{period_slug}.html'
     })
 
 

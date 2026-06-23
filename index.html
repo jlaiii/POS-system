@@ -9941,6 +9941,7 @@ function renderMyPay(data) {
     html += '      <span>⏱️ ' + hoursStr + 'h</span>';
     html += '      <span style="color:var(--accent);font-weight:500;">' + rateStr + '</span>';
     html += '      <span style="color:#2ecc71;font-weight:600;">' + grossStr + '</span>';
+    html += '      <button class="ghost" onclick="event.stopPropagation();downloadPayStub(\'' + period.start_date + '\')" data-stub="' + period.start_date + '" style="font-size:16px;padding:6px 10px;min-width:48px;min-height:40px;" title="Download Pay Stub (PDF)">📄</button>';
     html += '    </div>';
     html += '  </div>';
     html += '  <div id="payPeriodDetails_' + period.start_date + '" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">';
@@ -9987,6 +9988,45 @@ function togglePayPeriodDetails(periodKey) {
   const el = document.getElementById('payPeriodDetails_' + periodKey);
   if (el) {
     el.style.display = el.style.display === 'none' ? 'block' : 'none';
+  }
+}
+
+async function downloadPayStub(startDate) {
+  /** Fetch pay stub HTML for a pay period and open in new tab for print/save as PDF. */
+  if (!currentUser || !currentUser.id) return;
+  const btn = document.querySelector(`button[data-stub="${startDate}"]`);
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '⏳';
+  }
+  try {
+    const res = await fetch(BACKEND_URL + '/api/employee/pay_stub_pdf', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: currentUser.id, start_date: startDate })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(data.message || 'Failed to generate pay stub.', 'error');
+      return;
+    }
+    // Open the HTML in a new tab — auto-print with query param
+    const win = window.open('', '_blank');
+    if (win) {
+      win.document.write(data.html);
+      win.document.close();
+      win.focus();
+    } else {
+      // Fallback if popup blocked: show toast with instructions
+      showToast('Pay stub generated. Enable pop-ups or use Print (Ctrl+P).', 'info');
+    }
+  } catch (e) {
+    showToast('Network error generating pay stub.', 'error');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '📄';
+    }
   }
 }
 
