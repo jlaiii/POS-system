@@ -2,7 +2,7 @@
 
 > Auto-managed by 3 Hermes Worker Crons (every 30 min each, staggered claims).
 > Workers use `[~]` to claim tasks before working. Never pick a claimed task.
-> Last updated: 2026-06-23 (audit #6 — system audit + lateness tracking section)
+> Last updated: 2026-06-23 (audit #9 — 2FA rate limit marked done + 3 new tasks: refund inventory, backup code UI, re-fire items)
 
 ## Status Legend
 - `[ ]` = pending (available for any worker)
@@ -174,7 +174,7 @@ Use Python `pyotp` (pure Python, no C extensions, `pip install pyotp qrcode`):
 
 - [ ] **Backup code management UI** — In Security settings: "View Backup Codes" button (requires re-entering PIN for security). Shows remaining codes count: "5 of 8 codes remaining." Lists the plaintext codes (user needs to save them). "Regenerate Codes" button with confirmation: "This will invalidate all existing backup codes. Continue?" Admin: same "Regenerate" available in User Management.
 
-- [ ] **Rate limiting on 2FA attempts** — Track failed TOTP attempts per user in memory (not JSON — resets on server restart). Max 5 failed attempts per rolling 60-second window. After 5: lock for 15 minutes (store lock expiry in memory). Return `429 Too Many Requests` with `retry_after` seconds. Rate limit applies to both TOTP verify AND backup code attempts (same pool — prevents brute-force on backup codes too).
+- [x] **Rate limiting on 2FA attempts** — Track failed TOTP attempts per user in memory (not JSON — resets on server restart). Max 5 failed attempts per rolling 60-second window. After 5: lock for 15 minutes (store lock expiry in memory). Return `429 Too Many Requests` with `retry_after` seconds. Rate limit applies to both TOTP verify AND backup code attempts (same pool — prevents brute-force on backup codes too). [audit #9 — verified: backend `twofa_failed_attempts` dict, 60s window, 15min lock, both verify_login + backup_login share same pool, frontend displays locked message]
 
 ### Priority: LOW
 
@@ -412,7 +412,13 @@ New `tickets.json` data store. Each ticket:
 
 |- [ ] **MEDIUM: Order transfer between waiters** — Add ability to transfer a table's active orders from one waiter to another via admin panel. Essential for shift changes, meal breaks, and when a waiter gets overwhelmed. Store `transferred_from` / `transferred_at` on order records for audit. Activity logging. Simple UI in admin tables section.
 
-## New Tasks (from Audit #8 — 2026-06-23 Curation)
+## New Tasks (from Audit #9 — 2026-06-23)
+
+- [ ] **HIGH: Inventory not restored on refund/void** — When `/api/orders/refund` processes a refund, it marks the order as refunded but does NOT re-increment inventory stock levels. Each refunded item should have its quantity added back to inventory. Without this, inventory gradually drifts downward as refunds accumulate. Also check `/api/sync_orders` for double-decrement on already-processed orders.
+
+- [ ] **MEDIUM: No "Use Backup Code" link in 2FA login UI** — The backend endpoint `/api/auth/2fa/backup_login` exists and works, but the 2FA login screen has no "Use backup code instead" link. If an employee enables 2FA and loses their phone, they're locked out with no frontend-reachable fallback. Add a small text link below the 6-digit input that transitions to a backup code entry field.
+
+- [ ] **MEDIUM: Waiter quick re-fire / re-send order items** — No button to re-fire an already-submitted order item back to the kitchen (e.g., cook missed it, wrong portion, customer wants a remake). Current workaround: refund the item and re-order it (3+ taps). A "Re-fire" button on order history items would save 3-4 taps per incident.
 
 |- [ ] **MEDIUM: System-wide data backup & restore** — Currently only menu backups exist. Add full system backup endpoint (`POST /api/system/backup`) that creates a downloadable zip of all JSON data files (users, orders, items, configs, shifts, etc.). Add restore endpoint (`POST /api/system/restore`) to load from a backup zip. Admin UI in Settings panel with one-click backup download and file-upload restore. Auto-scheduled daily backup with configurable retention (keep last N backups). Critical for disaster recovery — without this, a disk failure or corruption means total data loss.
 
