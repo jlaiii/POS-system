@@ -269,8 +269,6 @@ Use Python `pyotp` (pure Python, no C extensions, `pip install pyotp qrcode`):
 
 |- [x] worker-1 **Database migration rollback** — Created `scripts/sync_json_from_db.py`: reads all 24 SQLite tables and writes to corresponding JSON files. Handles special formats: users (dict keyed by pin), items (grouped by category), combos (dict with combos key), cash_drawer (sessions+transactions), table_ads (ads list + rotation_interval), known_ips (grouped by user_id), and more. Boolean/int conversion, JSON field parsing, idempotent, --dry-run and --quiet modes. Python syntax verified, tested with real data. [worker-1]
 
-- [~] worker-3 **Backup monitoring in Discord** — Extend the backup cron to send a daily summary at 6am: "📦 DB Backup Report: 24 hourly backups (all OK), 7 daily retained, oldest: June 16. Total backup size: 84MB (compressed). Last integrity check: PASSED." This gives the owner confidence that backups are working without having to check.
-
 ### Priority: LOW
 
 - [ ] **Point-in-time recovery (WAL archive)** — SQLite WAL (Write-Ahead Log) mode enables point-in-time recovery. Configure `PRAGMA journal_mode=WAL` and periodically archive WAL files. Combined with full backups, this allows restoring to any point in time, not just hourly snapshots. More complex but essential for financial data (orders, payments).
@@ -764,7 +762,8 @@ Super admin PIN is separate from any business PIN. Super admin can create busine
 ||- [x] worker-3 **Item detail popup** — Enhanced tablet menu item detail overlay with dietary badges (🌿 Vegetarian, 🌶️ Spicy, etc.), modifier options display (groups with type labels and price chips), and prev/next navigation (buttons + swipe + arrow keys) to browse items within same category. Added `dietary_tags` field to item data model. Configurable dietary icon mapping with 15 types. Dark theme, touch-friendly 56px nav buttons. [worker-3]
 |||- [x] worker-3 **Restaurant info bar** — Persistent footer on tablet display: restaurant name, hours, Wi-Fi info, "📞 Call Server" button (SocketIO + REST fallback), table number from URL param `?table=N`. Config via `restaurant_config.json`. Staff notified via SocketIO `server_call` toast. [worker-3]
 ||- [x] worker-3 **Global data model + platform config** — Created `data/global/businesses.json` (with sample businesses: Maria's Tacos, Bob's Burgers) and `data/global/super_admins.json` (platform owner PIN 1111). Added `GLOCAL_DIR`, `BUSINESSES_FILE`, `SUPER_ADMINS_FILE` constants, `load_businesses/save_businesses/load_super_admins/save_super_admins/verify_super_admin/get_business_context` helpers, and 6 platform API endpoints (`POST /api/platform/super_admin/login`, `/businesses/list`, `/businesses/create`, `/businesses/detail`, `/businesses/status`, `/api/platform/stats`) — all gated by in-memory super admin session tokens. Enhanced `save_json_data()` to auto-create directories. [worker-3]
-|
+|- [x] worker-3 **Backup monitoring in Discord** — Created `scripts/backup_monitor.py` that scans backup archives, categorizes by retention age, validates latest archive integrity, runs db_health.py, and sends formatted Discord embed summary. Added system crontab entry (`0 6 * * *`) for daily 6am execution. Reports: total backups, retention breakdown, date range, integrity status. Gracefully handles missing webhook config. [worker-3]
+
 ## Done (older)
 <details>
 <summary>54 completed tasks from earlier development</summary>
