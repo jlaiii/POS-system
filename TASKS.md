@@ -158,7 +158,7 @@ Use Python `pyotp` (pure Python, no C extensions, `pip install pyotp qrcode`):
 
 ### Priority: HIGH
 
-- [~] worker-2 **2FA verify endpoint** — `POST /api/auth/2fa/verify`: user submits a 6-digit code from their authenticator app to confirm setup. Validates against `totp_secret`. If valid: sets `totp_enabled = true`, generates 8 backup codes (random 10-char alphanumeric strings, sha256 hashed before storing), sets `totp_setup_at`. Returns the 8 backup codes (plaintext — ONLY time they're shown. Display with big warning: "Save these now. They will never be shown again. Store them somewhere safe."). If invalid code: returns 400 "Invalid code. Try again."
+- [x] worker-2 **2FA verify endpoint** — `POST /api/auth/2fa/verify` endpoint implemented. Accepts userId + 6-digit TOTP code, validates against stored `totp_secret`, enables 2FA on success, generates 8 SHA-256-hashed backup codes. Returns plaintext backup codes with warning message. Error cases: already enabled (409), invalid code (400), no setup initiated (400). [worker-2 — Reuses existing pyotp/qrcode imports and upgrade_user TOTP fields. Endpoint added after setup endpoint at line 622.]
 
 - [ ] **Login flow with 2FA challenge** — Modify `POST /api/login` to check `totp_enabled`. If 2FA is disabled: login proceeds as normal (PIN only). If 2FA is enabled: after PIN validation, do NOT issue a session yet. Instead, return `{"2fa_required": true, "user_id": "1234"}`. Frontend shows a 6-digit code input. User enters code → `POST /api/auth/2fa/verify_login` validates the TOTP code + session token. If valid: issue the normal session. If invalid: increment a rate-limit counter (max 5 attempts per minute). After 5 failures: temporarily lock account for 15 minutes.
 

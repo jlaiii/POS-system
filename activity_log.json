@@ -809,5 +809,64 @@
             "clock_out_time": "2026-06-23T01:06:15.701921",
             "duration_hours": 0.0
         }
+    },
+    {
+        "timestamp": "2026-06-23T06:59:26.439602",
+        "type": "2fa_setup_initiated",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "status": "secret_generated",
+            "totp_secret_length": 32
+        }
+    },
+    {
+        "timestamp": "2026-06-23T06:59:34.148486",
+        "type": "2fa_setup_initiated",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "status": "secret_generated",
+            "totp_secret_length": 32
+        }
+    },
+    {
+        "timestamp": "2026-06-23T07:13:30.244573",
+        "type": "2fa_setup_initiated",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "status": "secret_generated",
+            "totp_secret_length": 32
+        }
+    },
+    {
+        "timestamp": "2026-06-23T07:13:35.117234",
+        "type": "2fa_verify_success",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "status": "enabled",
+            "backup_codes_count": 8
+        }
+    },
+    {
+        "timestamp": "2026-06-23T07:13:39.552647",
+        "type": "2fa_setup_initiated",
+        "user_id": "1234",
+        "user_role": "user",
+        "details": {
+            "status": "secret_generated",
+            "totp_secret_length": 32
+        }
+    },
+    {
+        "timestamp": "2026-06-23T07:13:39.650421",
+        "type": "2fa_verify_failed",
+        "user_id": "1234",
+        "user_role": "user",
+        "details": {
+            "status": "invalid_code"
+        }
     }
 ]

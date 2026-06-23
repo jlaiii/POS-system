@@ -9,7 +9,13 @@
         "banned_reason": "",
         "username": "jayadmin",
         "password_hash": "c5376a74c76bb8870e6e81c8a6ba60d56c72493b9fd440e3e4ddb6e2cc024680",
-        "password_salt": "888243d1672d63dc9134ab43b6531a7b"
+        "password_salt": "888243d1672d63dc9134ab43b6531a7b",
+        "pay_rate": null,
+        "scheduled_start": null,
+        "totp_secret": null,
+        "totp_enabled": false,
+        "totp_backup_codes": [],
+        "totp_setup_at": null
     },
     "1234": {
         "name": "Employee One",
@@ -18,7 +24,13 @@
             "pos_access"
         ],
         "banned": false,
-        "banned_reason": ""
+        "banned_reason": "",
+        "pay_rate": null,
+        "scheduled_start": null,
+        "totp_secret": null,
+        "totp_enabled": false,
+        "totp_backup_codes": [],
+        "totp_setup_at": null
     },
     "5678": {
         "name": "Employee Two",

@@ -1,0 +1,27 @@
+{
+  "1111": {
+    "ips": [],
+    "last_seen": "2026-06-23T06:51:47",
+    "note": "Owner — no IP data available in activity log; tracking starts now"
+  },
+  "1234": {
+    "ips": [],
+    "last_seen": null,
+    "note": "Employee One — no IP data available in activity log"
+  },
+  "5678": {
+    "ips": [],
+    "last_seen": null,
+    "note": "Employee Two — no IP data available in activity log"
+  },
+  "2222": {
+    "ips": [],
+    "last_seen": null,
+    "note": "Manager — no IP data available in activity log"
+  },
+  "123456": {
+    "ips": [],
+    "last_seen": null,
+    "note": "Carlos — no IP data available in activity log"
+  }
+}

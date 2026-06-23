@@ -619,6 +619,69 @@ def twofa_setup():
     })
 
 
+@app.route('/api/auth/2fa/verify', methods=['POST'])
+def twofa_verify():
+    """User submits a 6-digit TOTP code to confirm 2FA setup.
+    If valid: enables 2FA, generates 8 backup codes, returns them."""
+    data = request.json
+    user_id = str(data.get('userId', ''))
+    code = data.get('code', '')
+
+    if not user_id or not code:
+        return jsonify({'message': 'User ID and verification code are required.'}), 400
+
+    code = code.strip()
+    if not code.isdigit() or len(code) != 6:
+        return jsonify({'message': 'Invalid code format. Must be 6 digits.'}), 400
+
+    users = load_json_data(USERS_FILE)
+
+    if user_id not in users:
+        return jsonify({'message': 'User not found.'}), 404
+
+    user_data = upgrade_user(users[user_id])
+
+    # Check if 2FA is already enabled
+    if user_data.get('totp_enabled', False):
+        return jsonify({'message': '2FA is already enabled.'}), 409
+
+    secret = user_data.get('totp_secret')
+    if not secret:
+        return jsonify({'message': '2FA not initialized. Call /api/auth/2fa/setup first.'}), 400
+
+    # Validate the TOTP code
+    totp = pyotp.TOTP(secret)
+    if not totp.verify(code, valid_window=1):
+        log_activity('2fa_verify_failed', user_id, user_data.get('role', 'unknown'),
+                     {'status': 'invalid_code'})
+        return jsonify({'message': 'Invalid code. Try again.'}), 400
+
+    # Code is valid — generate 8 backup codes
+    backup_codes = []
+    hashed_codes = []
+    for _ in range(8):
+        plain_code = secrets.token_hex(5).upper()  # 10-char alphanumeric
+        backup_codes.append(plain_code)
+        hashed_codes.append(hashlib.sha256(plain_code.encode()).hexdigest())
+
+    # Enable 2FA
+    user_data['totp_enabled'] = True
+    user_data['totp_backup_codes'] = hashed_codes
+    user_data['totp_setup_at'] = datetime.now().isoformat()
+    users[user_id] = user_data
+    save_json_data(USERS_FILE, users)
+
+    log_activity('2fa_verify_success', user_id, user_data.get('role', 'unknown'),
+                 {'status': 'enabled', 'backup_codes_count': len(backup_codes)})
+
+    return jsonify({
+        'message': '2FA enabled successfully.',
+        'backup_codes': backup_codes,
+        'backup_codes_count': len(backup_codes),
+        'warn': 'Save these backup codes now. They will never be shown again. Store them somewhere safe.'
+    })
+
+
 @app.route('/api/add_user', methods=['POST'])
 def add_user():
     data = request.json
