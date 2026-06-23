@@ -424,6 +424,9 @@ active_admin_sessions = {}  # {admin_id: login_time}
 # In-memory storage for employee clock-in/clock-out shifts
 active_shifts = {}  # {user_id: {clock_in_time: datetime, user_name: str}}
 
+# In-memory 2FA rate limiting — resets on server restart
+twofa_failed_attempts = {}  # {user_id: {'count': int, 'lock_until': datetime or None, 'window_start': datetime}}
+
 # --- User Management Endpoints ---
 
 @app.route('/api/users', methods=['GET'])
@@ -464,6 +467,10 @@ def login():
                         reason = u_data.get('banned_reason', 'No reason provided')
                         return jsonify({'message': f'User is banned. Reason: {reason}', 'banned': True}), 403
                     u_data = upgrade_user(u_data)
+                    # Check if 2FA is enabled — require 2FA challenge before issuing session
+                    if u_data.get('totp_enabled', False):
+                        log_activity('login', uid, u_data['role'], {'status': '2fa_required', 'method': 'password', 'user_name': u_data['name']})
+                        return jsonify({'2fa_required': True, 'user_id': uid, 'user_name': u_data['name']}), 200
                     users[uid] = u_data
                     save_json_data(USERS_FILE, users)
                     log_activity('login', uid, u_data['role'], {'status': 'success', 'method': 'password', 'user_name': u_data['name']})
@@ -487,6 +494,10 @@ def login():
             return jsonify({'message': f'User is banned. Reason: {reason}', 'banned': True}), 403
 
         if user_info.get('role') in ['user', 'admin', 'owner', 'cook']:
+            # Check if 2FA is enabled — require 2FA challenge before issuing session
+            if user_info.get('totp_enabled', False):
+                log_activity('login', user_id, user_info['role'], {'status': '2fa_required', 'method': 'pin', 'user_name': user_info['name']})
+                return jsonify({'2fa_required': True, 'user_id': user_id, 'user_name': user_info['name']}), 200
             log_activity('login', user_id, user_info['role'], {'status': 'success', 'method': 'pin', 'user_name': user_info['name']})
             if user_info['role'] in ('admin', 'owner'):
                 active_admin_sessions[user_id] = datetime.now()
@@ -679,6 +690,109 @@ def twofa_verify():
         'backup_codes': backup_codes,
         'backup_codes_count': len(backup_codes),
         'warn': 'Save these backup codes now. They will never be shown again. Store them somewhere safe.'
+    })
+
+
+@app.route('/api/auth/2fa/verify_login', methods=['POST'])
+def twofa_verify_login():
+    """Validate TOTP code during login when 2FA is enabled.
+    If valid: issues the session (same as normal login response).
+    Rate-limited: max 5 attempts per rolling 60-second window, then locked for 15 minutes."""
+    data = request.json
+    user_id = str(data.get('userId', ''))
+    code = data.get('code', '')
+
+    if not user_id or not code:
+        return jsonify({'message': 'User ID and verification code are required.'}), 400
+
+    code = code.strip()
+    if not code.isdigit() or len(code) != 6:
+        return jsonify({'message': 'Invalid code format. Must be 6 digits.'}), 400
+
+    now = datetime.now()
+
+    # --- Rate limit check ---
+    if user_id in twofa_failed_attempts:
+        attempt = twofa_failed_attempts[user_id]
+        # Check if currently locked
+        if attempt.get('lock_until') and now < attempt['lock_until']:
+            remaining_seconds = int((attempt['lock_until'] - now).total_seconds())
+            log_activity('2fa_login_rate_limited', user_id, 'unknown', {'reason': 'account_locked', 'remaining_seconds': remaining_seconds})
+            return jsonify({
+                'message': f'Too many failed attempts. Account locked for {remaining_seconds} more seconds.',
+                'locked': True,
+                'retry_after': remaining_seconds
+            }), 429
+        # Reset window if more than 60 seconds have passed since window_start
+        if attempt.get('window_start') and (now - attempt['window_start']).total_seconds() > 60:
+            attempt['count'] = 0
+            attempt['window_start'] = now
+
+    users = load_json_data(USERS_FILE)
+
+    if user_id not in users:
+        return jsonify({'message': 'User not found.'}), 404
+
+    user_data = upgrade_user(users[user_id])
+
+    # Check that 2FA is actually enabled
+    if not user_data.get('totp_enabled', False):
+        return jsonify({'message': '2FA is not enabled for this user.'}), 400
+
+    secret = user_data.get('totp_secret')
+    if not secret:
+        return jsonify({'message': '2FA not properly configured. Contact admin.'}), 400
+
+    # Validate the TOTP code
+    totp = pyotp.TOTP(secret)
+    if not totp.verify(code, valid_window=1):
+        # Increment failed attempts
+        if user_id not in twofa_failed_attempts:
+            twofa_failed_attempts[user_id] = {'count': 0, 'lock_until': None, 'window_start': now}
+        attempt = twofa_failed_attempts[user_id]
+        attempt['count'] += 1
+        if attempt['window_start'] is None:
+            attempt['window_start'] = now
+
+        log_activity('2fa_login_failed', user_id, user_data.get('role', 'unknown'),
+                     {'status': 'invalid_code', 'attempt': attempt['count']})
+
+        # Lock after 5 failed attempts
+        if attempt['count'] >= 5:
+            attempt['lock_until'] = now + timedelta(minutes=15)
+            log_activity('2fa_login_locked', user_id, user_data.get('role', 'unknown'),
+                         {'status': 'account_locked_15min', 'attempts': attempt['count']})
+            return jsonify({
+                'message': 'Too many failed attempts. Account locked for 15 minutes.',
+                'locked': True,
+                'retry_after': 900
+            }), 429
+
+        remaining = 5 - attempt['count']
+        return jsonify({
+            'message': f'Invalid code. {remaining} attempt(s) remaining.',
+            'remaining_attempts': remaining
+        }), 401
+
+    # Code is valid — clear rate limit and issue session
+    if user_id in twofa_failed_attempts:
+        del twofa_failed_attempts[user_id]
+
+    # Save user data in case upgrade_user made changes
+    users[user_id] = user_data
+    save_json_data(USERS_FILE, users)
+
+    log_activity('2fa_login_success', user_id, user_data.get('role', 'unknown'),
+                 {'status': 'success', 'user_name': user_data['name']})
+
+    if user_data['role'] in ('admin', 'owner'):
+        active_admin_sessions[user_id] = datetime.now()
+
+    return jsonify({
+        'message': 'Login successful',
+        'user': user_data['name'],
+        'role': user_data['role'],
+        'permissions': user_data.get('permissions', [])
     })
 
 

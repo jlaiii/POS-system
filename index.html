@@ -164,6 +164,29 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 #pinPad .pin-enter { background: var(--accent); color: #fff; border-color: var(--accent); grid-column: span 2; }
 #loginError { color: #e74c3c; min-height: 24px; margin-top: 8px; font-size: 14px; }
 
+/* ── 2FA VERIFICATION MODE ── */
+#login2faMode {
+  display: none; flex-direction: column; align-items: center; gap: 16px;
+}
+#login2faMode .twofa-header { font-size: 18px; color: var(--text); font-weight: 600; }
+#login2faMode .twofa-sub { font-size: 14px; color: var(--text2); }
+#login2faMode .twofa-code-row { display: flex; gap: 8px; justify-content: center; }
+#login2faMode .twofa-digit {
+  width: 48px; height: 64px; font-size: 28px; font-weight: 700; text-align: center;
+  background: var(--card); color: var(--text); border: 2px solid var(--border);
+  border-radius: var(--radius); caret-color: var(--accent);
+}
+#login2faMode .twofa-digit:focus { border-color: var(--accent); outline: none; }
+#login2faMode .twofa-digit.filled { border-color: var(--accent); }
+#login2faMode .twofa-back { margin-top: 8px; font-size: 14px; color: var(--text2); cursor: pointer; background: none; border: none; }
+#login2faMode .twofa-back:hover { color: var(--text); }
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-6px); }
+  20%, 40%, 60%, 80% { transform: translateX(6px); }
+}
+
 /* ── MAIN APP ── */
 #appScreen { display: none; flex-direction: column; min-height: 100vh; }
 #appScreen.active { display: flex; }
@@ -1083,6 +1106,21 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
     <input type="text" id="ownerUsername" placeholder="Username" autocomplete="username" style="font-size:18px;padding:12px;width:260px;border-radius:var(--radius);background:var(--card);color:var(--text);border:2px solid var(--border);text-align:center;">
     <input type="password" id="ownerPassword" placeholder="Password" autocomplete="current-password" style="font-size:18px;padding:12px;width:260px;border-radius:var(--radius);background:var(--card);color:var(--text);border:2px solid var(--border);text-align:center;">
     <button onclick="ownerLogin()" style="font-size:20px;padding:14px 48px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);cursor:pointer;font-weight:700;min-height:56px;">Sign In</button>
+  </div>
+
+  <!-- 2FA verification mode -->
+  <div id="login2faMode">
+    <div class="twofa-header">🔐 Two-Factor Authentication</div>
+    <div class="twofa-sub" id="twofaSub">Enter the 6-digit code from your authenticator app</div>
+    <div class="twofa-code-row" id="twofaCodeRow">
+      <input type="text" class="twofa-digit" id="twofaD0" maxlength="1" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code">
+      <input type="text" class="twofa-digit" id="twofaD1" maxlength="1" inputmode="numeric" pattern="[0-9]*">
+      <input type="text" class="twofa-digit" id="twofaD2" maxlength="1" inputmode="numeric" pattern="[0-9]*">
+      <input type="text" class="twofa-digit" id="twofaD3" maxlength="1" inputmode="numeric" pattern="[0-9]*">
+      <input type="text" class="twofa-digit" id="twofaD4" maxlength="1" inputmode="numeric" pattern="[0-9]*">
+      <input type="text" class="twofa-digit" id="twofaD5" maxlength="1" inputmode="numeric" pattern="[0-9]*">
+    </div>
+    <button class="twofa-back" onclick="cancel2FA()">← Back to Login</button>
   </div>
 
   <div id="loginError"></div>
@@ -2639,6 +2677,13 @@ const L10N = {
     'user.scheduled_start_invalid_format': 'Invalid time format. Use HH:MM (e.g., 09:00).',
     'user.no_rate': 'No rate set',
     'user.pay_rate_edit_title': 'Edit pay rate',
+    'twofa.header': '🔐 Two-Factor Authentication',
+    'twofa.sub': 'Enter the 6-digit code from your authenticator app',
+    'twofa.back': '← Back to Login',
+    'twofa.invalid_code': 'Invalid code. {remaining} attempt(s) remaining.',
+    'twofa.locked': 'Too many failed attempts. Account locked for 15 minutes.',
+    'twofa.success': 'Login successful!',
+    'twofa.code_required': 'Please enter the 6-digit verification code.',
   },
   es: {
     'app.title': '🍽️ Sistema POS',
@@ -3065,6 +3110,13 @@ const L10N = {
     'user.scheduled_start_invalid_format': 'Formato de hora inválido. Use HH:MM (ej. 09:00).',
     'user.no_rate': 'Sin tarifa',
     'user.pay_rate_edit_title': 'Editar tarifa de pago',
+    'twofa.header': '🔐 Autenticación de Dos Factores',
+    'twofa.sub': 'Ingrese el código de 6 dígitos de su app de autenticación',
+    'twofa.back': '← Volver al Inicio de Sesión',
+    'twofa.invalid_code': 'Código inválido. {remaining} intento(s) restante(s).',
+    'twofa.locked': 'Demasiados intentos fallidos. Cuenta bloqueada por 15 minutos.',
+    'twofa.success': '¡Inicio de sesión exitoso!',
+    'twofa.code_required': 'Por favor ingrese el código de verificación de 6 dígitos.',
   }
 };
 
@@ -3379,6 +3431,11 @@ async function doLogin(userId) {
       document.getElementById('loginError').textContent = 'Your account has been banned. Reason: ' + (data.reason || 'No reason given') + '. Contact the owner.';
       pinValue = ''; renderPinDisplay(); return;
     }
+    // If 2FA is required, show the 2FA code input
+    if (data['2fa_required']) {
+      show2FAInput(userId, data.user_name || 'User');
+      return;
+    }
     if (!r.ok) { document.getElementById('loginError').textContent = data.message || t('login.error'); pinValue = ''; renderPinDisplay(); return; }
     currentUser = { id: userId, name: data.user, role: data.role, permissions: data.permissions || [] };
     sessionStorage.setItem('pos_userId', userId);
@@ -3393,6 +3450,148 @@ async function doLogin(userId) {
     pinValue = ''; renderPinDisplay();
   }
 }
+
+// ═══════════ 2FA VERIFICATION ═══════════
+let twofaUserId = null;
+let twofaUserName = null;
+
+function show2FAInput(userId, userName) {
+  twofaUserId = userId;
+  twofaUserName = userName || 'User';
+  // Hide PIN and owner modes, show 2FA mode
+  document.getElementById('loginPinMode').style.display = 'none';
+  document.getElementById('loginOwnerMode').style.display = 'none';
+  document.getElementById('loginModeToggle').style.display = 'none';
+  document.getElementById('login2faMode').style.display = 'flex';
+  document.getElementById('loginSubtitle').textContent = t('twofa.header');
+  document.getElementById('twofaSub').textContent = t('twofa.sub') + ' (' + twofaUserName + ')';
+  document.getElementById('loginError').textContent = '';
+  // Clear and focus first digit
+  for (let i = 0; i < 6; i++) {
+    document.getElementById('twofaD' + i).value = '';
+  }
+  setTimeout(() => document.getElementById('twofaD0').focus(), 100);
+}
+
+function cancel2FA() {
+  twofaUserId = null;
+  twofaUserName = null;
+  document.getElementById('login2faMode').style.display = 'none';
+  document.getElementById('loginModeToggle').style.display = '';
+  document.getElementById('loginSubtitle').textContent = t('login.subtitle');
+  // Return to PIN or owner mode
+  if (loginMode === 'pin') {
+    document.getElementById('loginPinMode').style.display = 'block';
+  } else {
+    document.getElementById('loginOwnerMode').style.display = 'flex';
+  }
+  document.getElementById('loginError').textContent = '';
+  pinValue = '';
+  renderPinDisplay();
+}
+
+function get2FACode() {
+  let code = '';
+  for (let i = 0; i < 6; i++) {
+    const digit = document.getElementById('twofaD' + i).value;
+    if (!digit) return null;
+    code += digit;
+  }
+  return code;
+}
+
+async function verify2FA() {
+  const code = get2FACode();
+  if (!code || code.length !== 6) {
+    document.getElementById('loginError').textContent = t('twofa.code_required');
+    return;
+  }
+
+  document.getElementById('loginError').textContent = '';
+
+  try {
+    const r = await fetch(BACKEND_URL + '/api/auth/2fa/verify_login', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: twofaUserId, code })
+    });
+    const data = await r.json();
+
+    if (r.ok) {
+      // Login successful
+      document.getElementById('login2faMode').style.display = 'none';
+      document.getElementById('loginModeToggle').style.display = '';
+      currentUser = { id: twofaUserId, name: data.user, role: data.role, permissions: data.permissions || [] };
+      sessionStorage.setItem('pos_userId', twofaUserId);
+      sessionStorage.setItem('pos_userRole', data.role);
+      sessionStorage.setItem('pos_userName', data.user);
+      sessionStorage.setItem('pos_permissions', JSON.stringify(data.permissions || []));
+      twofaUserId = null;
+      twofaUserName = null;
+      showApp();
+    } else if (data.locked) {
+      document.getElementById('loginError').textContent = t('twofa.locked');
+      // Shake animation
+      document.getElementById('twofaCodeRow').style.animation = 'shake 0.5s';
+      setTimeout(() => {
+        document.getElementById('twofaCodeRow').style.animation = '';
+      }, 500);
+    } else {
+      document.getElementById('loginError').textContent = data.message || t('twofa.invalid_code', { remaining: data.remaining_attempts || '?' });
+      // Clear digits and focus first
+      for (let i = 0; i < 6; i++) {
+        document.getElementById('twofaD' + i).value = '';
+      }
+      document.getElementById('twofaD0').focus();
+    }
+  } catch(e) {
+    document.getElementById('loginError').textContent = t('login.error');
+  }
+}
+
+// Set up 2FA digit input auto-advance
+document.addEventListener('DOMContentLoaded', function() {
+  for (let i = 0; i < 6; i++) {
+    const digit = document.getElementById('twofaD' + i);
+    if (!digit) continue;
+    digit.addEventListener('input', function() {
+      // Auto-advance to next digit
+      this.value = this.value.replace(/[^0-9]/g, '').slice(0, 1);
+      if (this.value) {
+        this.classList.add('filled');
+        if (i < 5) {
+          document.getElementById('twofaD' + (i + 1)).focus();
+        } else {
+          // Last digit entered — auto-submit
+          verify2FA();
+        }
+      } else {
+        this.classList.remove('filled');
+      }
+    });
+    digit.addEventListener('keydown', function(e) {
+      if (e.key === 'Backspace' && !this.value && i > 0) {
+        document.getElementById('twofaD' + (i - 1)).focus();
+      }
+      if (e.key === 'Enter') {
+        verify2FA();
+      }
+    });
+    digit.addEventListener('paste', function(e) {
+      e.preventDefault();
+      const paste = (e.clipboardData || window.clipboardData).getData('text');
+      const digits = paste.replace(/[^0-9]/g, '').slice(0, 6);
+      for (let j = 0; j < digits.length && j < 6; j++) {
+        document.getElementById('twofaD' + j).value = digits[j];
+        document.getElementById('twofaD' + j).classList.add('filled');
+      }
+      const nextIdx = Math.min(digits.length, 5);
+      document.getElementById('twofaD' + nextIdx).focus();
+      if (digits.length === 6) {
+        verify2FA();
+      }
+    });
+  }
+});
 
 // ═══════════ LOGIN MODE TOGGLE ═══════════
 let loginMode = 'pin'; // 'pin' | 'owner'
@@ -3436,6 +3635,11 @@ async function ownerLogin() {
     const data = await r.json();
     if (r.status === 403 && data.banned) {
       document.getElementById('loginError').textContent = 'Account banned: ' + (data.reason || 'No reason');
+      return;
+    }
+    // If 2FA is required, show the 2FA code input
+    if (data['2fa_required']) {
+      show2FAInput(data.user_id, data.user_name || 'User');
       return;
     }
     if (!r.ok) { document.getElementById('loginError').textContent = data.message || 'Login failed'; return; }
