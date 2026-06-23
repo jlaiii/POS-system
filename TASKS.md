@@ -2,7 +2,7 @@
 
 > Auto-managed by 3 Hermes Worker Crons (every 30 min each, staggered claims).
 > Workers use `[~]` to claim tasks before working. Never pick a claimed task.
-> Last updated: 2026-06-23 (audit #7 — system audit)
+> Last updated: 2026-06-23 (audit #8 — task curation)
 
 ## Status Legend
 - `[ ]` = pending (available for any worker)
@@ -261,7 +261,13 @@ New `tickets.json` data store. Each ticket:
 
 - [ ] **MEDIUM: Table status overview dashboard** — Add a color-coded table grid view showing all tables with status (empty/occupied/order-in-progress/ready-to-serve/needs-bussing). Click a table to see its current tab/orders, mark it bussed, or transfer to another waiter. Most modern POS systems have this as the primary floor-plan view. Saves waiters from guessing which tables need attention.
 
-- [ ] **MEDIUM: Order transfer between waiters** — Add ability to transfer a table's active orders from one waiter to another via admin panel. Essential for shift changes, meal breaks, and when a waiter gets overwhelmed. Store `transferred_from` / `transferred_at` on order records for audit. Activity logging. Simple UI in admin tables section.
+|- [ ] **MEDIUM: Order transfer between waiters** — Add ability to transfer a table's active orders from one waiter to another via admin panel. Essential for shift changes, meal breaks, and when a waiter gets overwhelmed. Store `transferred_from` / `transferred_at` on order records for audit. Activity logging. Simple UI in admin tables section.
+
+## New Tasks (from Audit #8 — 2026-06-23 Curation)
+
+|- [ ] **MEDIUM: System-wide data backup & restore** — Currently only menu backups exist. Add full system backup endpoint (`POST /api/system/backup`) that creates a downloadable zip of all JSON data files (users, orders, items, configs, shifts, etc.). Add restore endpoint (`POST /api/system/restore`) to load from a backup zip. Admin UI in Settings panel with one-click backup download and file-upload restore. Auto-scheduled daily backup with configurable retention (keep last N backups). Critical for disaster recovery — without this, a disk failure or corruption means total data loss.
+
+|- [ ] **MEDIUM: Customer online ordering portal** — Mobile-friendly standalone page (e.g. `/order`) for customers to browse menu, view item details + images, add to cart with modifiers/notes, and place pickup or delivery orders. Reuses existing backend (orders, items, combos, delivery addresses, payment processing). Integrates with existing pickup-display, kitchen queue, and order notification system. No staff intervention needed for order placement. Essential for any restaurant wanting to accept direct online orders without third-party delivery apps.
 
 ## Done
 
@@ -279,51 +285,51 @@ New `tickets.json` data store. Each ticket:
 - [x] **Add item images to grid cards** — Image URLs on items, thumbnails on grid/kitchen/kiosk. [worker-2]
 - [x] **Add customer profile management (CRM)** — Extended customer data, endpoints, admin CRM tab. [worker-3]
 - [x] **Add quick-change cash calculator** — Cash payment amount tendered + auto-change calculation. [worker-1]
-- [x] **Add item modifier support** — Variants, modifiers, customizations with modifier editor. [worker-2]
-- [x] **Multi-language support** — English + Spanish with browser detection, toggle button. [worker-2]
-- [x] **Kitchen display queue system** — Full cook view: claim/complete/cancel, 8s auto-refresh, sound alerts, fullscreen. [worker-3]
-- [x] **Order notes field** — Per-item and per-order notes. [worker-1]
-- [x] **Receipt printing simulation** — Thermal printer CSS. [worker-2]
-- [x] **Discount/coupon code system** — Percentage and flat discounts. [worker-1]
-- [x] **Sales tax calculation support** — Global/per-category/per-item tax rates. [worker-2]
-- [x] **Touch-optimized item grid** — Category tabs, responsive grid. [worker-1]
-- [x] **Most-ordered items analytics** — `/api/analytics/most_ordered`. [worker-3]
-- [x] **Peak hour sales analytics** — `/api/analytics/hourly_sales`. [worker-2]
-- [x] **Daily revenue tracking** — `/api/analytics/daily_revenue`. [worker-1]
-- [x] **PWA manifest + service worker** — Installable app. [worker-3]
-- [x] **Loyalty points system** — Points earning/redeeming per customer. [worker-3]
-- [x] **Admin dashboard with Chart.js analytics** — Charts for daily revenue, payment methods, item trends. [worker-2]
-- [x] **Scheduled pricing (happy hour, daily specials)** — Time-based discount rules. [worker-1]
-- [x] **Fix order history for all users (BUG)** — New `/api/orders/list` endpoint. [worker-3]
-- [x] **Add auto-save draft orders to localStorage** — Cart auto-save with restore prompt on page load. [worker-1]
-- [x] **Per-user pay rate field** — Add `pay_rate` (hourly, float) to user profile. Shown in user management, timesheet/pay-period summary, and CSV/PDF exports. [worker-1]
+|- [x] **Add item modifier support** — Variants, modifiers, customizations with modifier editor. [worker-2]
 
 ## Done (older)
 
 <details>
-<summary>22 completed tasks from earlier development</summary>
+<summary>39 completed tasks from earlier development</summary>
 
-- [x] **Add item search/filter in POS item grid** — Real-time search bar. i18n EN + ES. [worker-2]
-- [x] **Add WebSocket support for real-time updates** — Flask-SocketIO with polling fallback. [worker-1]
-- [x] **Add delivery address management** — Delivery form, saved addresses API. i18n EN + ES. [worker-3]
-- [x] **Add customer-facing display mode** — `/customer-display` page with large-print order summary. [worker-1]
-- [x] **Add dark/light theme toggle** — CSS variables, localStorage persistence, toggle button. [worker-2]
-- [x] **Fix verify_admin blocking owners from tax/discount endpoints** — Replaced `verify_admin()` with `check_perm()`. [worker-2]
-- [x] **Fix menu history frontend parsing** — Changed `data.history` to `data.backups`. [worker-3]
-- [x] **Add quick-order favorites per user** — `favorites.json` data store with save/list/delete. [worker-1]
-- [x] **Add item popularity trend chart** — `/api/analytics/item_trends` comparing 7d vs prior 7d. [worker-3]
-- [x] **Add offline order queuing** — `/api/health` + `/api/sync_orders`, localStorage queue, auto-sync. [worker-3]
-- [x] **Refund/void order functionality** — POST /api/orders/refund with reason tracking. [worker-1]
-- [x] **Table tab management** — Checkout/close tab, tab history, quick-add. [worker-3]
-- [x] **Add inventory tracking** — Stock levels decremented on order, low-stock alerts. [worker-1]
-- [x] **Add split-payment support** — Multiple payment methods per order. [worker-3]
-- [x] **Add tip calculation UI** — Percentage buttons in POS cart. [worker-2]
-- [x] **Add employee performance dashboard** — Per-employee metrics with date filtering. [worker-2]
-- [x] **Add waste tracking** — Waste log with reason, estimated cost. [worker-2]
-- [x] **Kitchen queue audit & optimize** — Color-coded age, priority badge, quick-claim, alarm sound. [worker-1]
-- [x] **Table management system** — Admin assigns tablets to tables, running tabs. [worker-3]
-- [x] **Drive-through order display** — Drive-through TV view at `/drivethrough`. [worker-1]
-- [x] **Granular role/permission system** — Three-tier roles with 10 granular permissions. [worker-2]
-- [x] **Menu version history with restore** — Auto-backup, owner restores any day's menu. [worker-3]
+|- [x] **Multi-language support** — English + Spanish with browser detection, toggle button. [worker-2]
+|- [x] **Kitchen display queue system** — Full cook view: claim/complete/cancel, 8s auto-refresh, sound alerts, fullscreen. [worker-3]
+|- [x] **Order notes field** — Per-item and per-order notes. [worker-1]
+|- [x] **Receipt printing simulation** — Thermal printer CSS. [worker-2]
+|- [x] **Discount/coupon code system** — Percentage and flat discounts. [worker-1]
+|- [x] **Sales tax calculation support** — Global/per-category/per-item tax rates. [worker-2]
+|- [x] **Touch-optimized item grid** — Category tabs, responsive grid. [worker-1]
+|- [x] **Most-ordered items analytics** — `/api/analytics/most_ordered`. [worker-3]
+|- [x] **Peak hour sales analytics** — `/api/analytics/hourly_sales`. [worker-2]
+|- [x] **Daily revenue tracking** — `/api/analytics/daily_revenue`. [worker-1]
+|- [x] **PWA manifest + service worker** — Installable app. [worker-3]
+|- [x] **Loyalty points system** — Points earning/redeeming per customer. [worker-3]
+|- [x] **Admin dashboard with Chart.js analytics** — Charts for daily revenue, payment methods, item trends. [worker-2]
+|- [x] **Scheduled pricing (happy hour, daily specials)** — Time-based discount rules. [worker-1]
+|- [x] **Fix order history for all users (BUG)** — New `/api/orders/list` endpoint. [worker-3]
+|- [x] **Add auto-save draft orders to localStorage** — Cart auto-save with restore prompt on page load. [worker-1]
+|- [x] **Per-user pay rate field** — Add `pay_rate` (hourly, float) to user profile. Shown in user management, timesheet/pay-period summary, and CSV/PDF exports. [worker-1]
+|- [x] **Add item search/filter in POS item grid** — Real-time search bar. i18n EN + ES. [worker-2]
+|- [x] **Add WebSocket support for real-time updates** — Flask-SocketIO with polling fallback. [worker-1]
+|- [x] **Add delivery address management** — Delivery form, saved addresses API. i18n EN + ES. [worker-3]
+|- [x] **Add customer-facing display mode** — `/customer-display` page with large-print order summary. [worker-1]
+|- [x] **Add dark/light theme toggle** — CSS variables, localStorage persistence, toggle button. [worker-2]
+|- [x] **Fix verify_admin blocking owners from tax/discount endpoints** — Replaced `verify_admin()` with `check_perm()`. [worker-2]
+|- [x] **Fix menu history frontend parsing** — Changed `data.history` to `data.backups`. [worker-3]
+|- [x] **Add quick-order favorites per user** — `favorites.json` data store with save/list/delete. [worker-1]
+|- [x] **Add item popularity trend chart** — `/api/analytics/item_trends` comparing 7d vs prior 7d. [worker-3]
+|- [x] **Add offline order queuing** — `/api/health` + `/api/sync_orders`, localStorage queue, auto-sync. [worker-3]
+|- [x] **Refund/void order functionality** — POST /api/orders/refund with reason tracking. [worker-1]
+|- [x] **Table tab management** — Checkout/close tab, tab history, quick-add. [worker-3]
+|- [x] **Add inventory tracking** — Stock levels decremented on order, low-stock alerts. [worker-1]
+|- [x] **Add split-payment support** — Multiple payment methods per order. [worker-3]
+|- [x] **Add tip calculation UI** — Percentage buttons in POS cart. [worker-2]
+|- [x] **Add employee performance dashboard** — Per-employee metrics with date filtering. [worker-2]
+|- [x] **Add waste tracking** — Waste log with reason, estimated cost. [worker-2]
+|- [x] **Kitchen queue audit & optimize** — Color-coded age, priority badge, quick-claim, alarm sound. [worker-1]
+|- [x] **Table management system** — Admin assigns tablets to tables, running tabs. [worker-3]
+|- [x] **Drive-through order display** — Drive-through TV view at `/drivethrough`. [worker-1]
+|- [x] **Granular role/permission system** — Three-tier roles with 10 granular permissions. [worker-2]
+|- [x] **Menu version history with restore** — Auto-backup, owner restores any day's menu. [worker-3]
 
 </details>
