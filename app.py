@@ -451,6 +451,7 @@ active_admin_sessions = {}  # {admin_id: login_time}
 
 # In-memory storage for employee clock-in/clock-out shifts
 active_shifts = {}  # {user_id: {clock_in_time: datetime, user_name: str}}
+clock_lock = threading.Lock()  # Prevents race conditions on clock-in/out operations
 
 # In-memory 2FA rate limiting — resets on server restart
 twofa_failed_attempts = {}  # {user_id: {'count': int, 'lock_until': datetime or None, 'window_start': datetime}}
@@ -2412,6 +2413,29 @@ def submit_order():
         'customer_email': data.get('customer_email', '')  # Email for digital receipt delivery
     }
     orders = load_json_data(ORDERS_FILE)
+
+    # --- Concurrent use staleness check ---
+    # If composed_since is provided, check if any new orders exist for this table
+    # since the waiter started composing. Prevents blind overwrite when two
+    # waiters work the same table simultaneously.
+    composed_since = data.get('composed_since')
+    if composed_since and order_details.get('table_number') is not None:
+        conflicting = []
+        for o in orders:
+            if o.get('table_number') == order_details['table_number'] and o.get('date', '') > composed_since:
+                conflicting.append({
+                    'order_id': o.get('order_id'),
+                    'date': o.get('date'),
+                    'user': o.get('user')
+                })
+        if conflicting:
+            return jsonify({
+                'message': 'This table has new orders since you started composing. Refresh cart or submit anyway.',
+                'conflict': True,
+                'conflicting_orders': conflicting,
+                'table_number': order_details['table_number']
+            }), 409
+
     orders.append(order_details)
     save_json_data(ORDERS_FILE, orders)
 
@@ -3644,56 +3668,60 @@ def clock_in():
             _record_clock_failure(f'uid:{user_id}')
         return jsonify({'message': 'Invalid PIN.'}), 401
 
-    if user_id in active_shifts:
-        return jsonify({'message': 'Already clocked in.'}), 409
+    # Atomic check-and-set to prevent concurrent double clock-in
+    with clock_lock:
+        if user_id in active_shifts:
+            return jsonify({'message': 'Already clocked in.'}), 409
 
-    # --- Late detection ---
-    scheduled_start = user_data.get('scheduled_start')
-    late_minutes = None
-    late_excused = False
-    late_note = (data.get('late_note') or '').strip() or None
+        # --- Late detection ---
+        scheduled_start = user_data.get('scheduled_start')
+        late_minutes = None
+        late_excused = False
+        late_note = (data.get('late_note') or '').strip() or None
 
-    if scheduled_start:
-        try:
-            parts = scheduled_start.split(':')
-            scheduled_hour = int(parts[0])
-            scheduled_min = int(parts[1])
+        if scheduled_start:
+            try:
+                parts = scheduled_start.split(':')
+                scheduled_hour = int(parts[0])
+                scheduled_min = int(parts[1])
 
-            # Build today's scheduled datetime
-            scheduled_dt = now.replace(hour=scheduled_hour, minute=scheduled_min, second=0, microsecond=0)
+                # Build today's scheduled datetime
+                scheduled_dt = now.replace(hour=scheduled_hour, minute=scheduled_min, second=0, microsecond=0)
 
-            # Get grace period from timesheet config
-            ts_config = get_timesheet_config()
-            grace_minutes = ts_config.get('late_grace_minutes', 5)
+                # Get grace period from timesheet config
+                ts_config = get_timesheet_config()
+                grace_minutes = ts_config.get('late_grace_minutes', 5)
 
-            # Threshold = scheduled time + grace period
-            threshold_dt = scheduled_dt + timedelta(minutes=grace_minutes)
+                # Threshold = scheduled time + grace period
+                threshold_dt = scheduled_dt + timedelta(minutes=grace_minutes)
 
-            # Compare clock-in time against threshold
-            if now > threshold_dt:
-                late_minutes = round((now - scheduled_dt).total_seconds() / 60)
-                if late_minutes < 0:
-                    late_minutes = 0
-        except (ValueError, TypeError, IndexError):
-            pass  # Invalid scheduled_start format, skip late detection
-    # --- End late detection ---
+                # Compare clock-in time against threshold
+                if now > threshold_dt:
+                    late_minutes = round((now - scheduled_dt).total_seconds() / 60)
+                    if late_minutes < 0:
+                        late_minutes = 0
+            except (ValueError, TypeError, IndexError):
+                pass  # Invalid scheduled_start format, skip late detection
+        # --- End late detection ---
+
+        active_shifts[user_id] = {
+            'clock_in_time': now,
+            'user_name': user_data.get('name', 'Unknown'),
+            'breaks': [],
+            'on_break': False,
+            'scheduled_start': scheduled_start,
+            'late_minutes': late_minutes,
+            'late_excused': late_excused,
+            'late_note': late_note
+        }
+
+    # Lock released — proceed with non-critical I/O
 
     # Clear rate limit on success
     if f'ip:{client_ip}' in clock_failed_attempts:
         del clock_failed_attempts[f'ip:{client_ip}']
     if f'uid:{user_id}' in clock_failed_attempts:
         del clock_failed_attempts[f'uid:{user_id}']
-
-    active_shifts[user_id] = {
-        'clock_in_time': now,
-        'user_name': user_data.get('name', 'Unknown'),
-        'breaks': [],
-        'on_break': False,
-        'scheduled_start': scheduled_start,
-        'late_minutes': late_minutes,
-        'late_excused': late_excused,
-        'late_note': late_note
-    }
 
     log_activity('clock_in', user_id, user_data.get('role', 'user'), {
         'status': 'success',
@@ -3748,17 +3776,20 @@ def clock_out():
         if uid_locked:
             return jsonify({'message': 'Too many attempts. Try again later.'}), 429
 
-    if user_id not in active_shifts:
-        _record_clock_failure(f'clock_out_ip:{client_ip}')
-        if user_id and user_id.isdigit():
-            _record_clock_failure(f'clock_out_uid:{user_id}')
-        return jsonify({'message': 'Not clocked in.'}), 409
+    # Atomic check-and-pop to prevent concurrent double clock-out
+    with clock_lock:
+        if user_id not in active_shifts:
+            _record_clock_failure(f'clock_out_ip:{client_ip}')
+            if user_id and user_id.isdigit():
+                _record_clock_failure(f'clock_out_uid:{user_id}')
+            return jsonify({'message': 'Not clocked in.'}), 409
 
-    users = load_json_data(USERS_FILE)
-    user_data = users.get(user_id, {})
-    user_name = user_data.get('name', active_shifts[user_id].get('user_name', 'Unknown'))
+        users = load_json_data(USERS_FILE)
+        user_data = users.get(user_id, {})
+        user_name = user_data.get('name', active_shifts[user_id].get('user_name', 'Unknown'))
 
-    shift = active_shifts.pop(user_id)
+        shift = active_shifts.pop(user_id)
+    # Lock released
     clock_in_time = shift['clock_in_time']
     clock_out_time = datetime.now()
     duration_hours = round((clock_out_time - clock_in_time).total_seconds() / 3600, 2)

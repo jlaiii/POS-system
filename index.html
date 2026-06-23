@@ -3869,6 +3869,7 @@ let loyaltyCustomerPhone = ''; // Currently tracked loyalty customer phone
 let loyaltyCustomerData = null; // { phone, name, points, total_earned, ... }
 let chartPayment = null;
 let chartTrends = null;
+let composedSince = null; // ISO timestamp when waiter started composing current cart (for staleness check)
 
 // ═══════════ INVENTORY STATE ═══════════
 let inventoryData = {}; // { item_name: { stock, low_stock_threshold } }
@@ -5419,6 +5420,7 @@ function switchMainTab(tab) {
   document.getElementById('requestsTab').classList.remove('active');
   document.getElementById('myPayTab').classList.remove('active');
   if (tab === 'pos') {
+    composedSince = null; // Reset composition timer for new POS session
     stopMyPayAutoRefresh();
     document.getElementById('posTab').classList.add('active');
     loadItems();
@@ -6132,6 +6134,8 @@ function renderItems() {
 }
 
 function addToCart(name, price, category) {
+  // Mark when composition started (for concurrent use staleness check)
+  if (!composedSince) composedSince = new Date().toISOString();
   // Check if item has modifiers
   const modifiers = getItemModifiers(name, category);
   if (modifiers && modifiers.length > 0) {
@@ -6740,10 +6744,20 @@ async function submitOrder() {
       table_number: selectedTable ? parseInt(selectedTable) : null,
       customer_phone: loyaltyCustomerPhone || '',
       delivery_address: getDeliveryAddress(),
-      customer_email: document.getElementById('customerEmail').value.trim()
+      customer_email: document.getElementById('customerEmail').value.trim(),
+      composed_since: composedSince || null
     })
     });
-    if (!r.ok) { const d = await r.json(); showToast(d.message || 'Failed', 'danger'); return; }
+    if (!r.ok) {
+      const d = await r.json();
+      // Handle concurrent use conflict (409) with modal
+      if (r.status === 409 && d.conflict) {
+        showConflictModal(d);
+        return;
+      }
+      showToast(d.message || 'Failed', 'danger');
+      return;
+    }
     const result = await r.json();
     showToast(t('toast.order_submitted'), 'success');
     // Show low stock warnings if any
@@ -6848,6 +6862,41 @@ async function clearCart() {
       fetch(BACKEND_URL + '/api/customer-display/reset', { method: 'POST', headers: { 'Content-Type': 'application/json' } }).catch(() => {});
     }
   } catch(e) { showToast(t('toast.network_error'), 'danger'); }
+}
+
+// ═══════════ CONCURRENT USE CONFLICT HANDLING ═══════════
+
+/** Show the concurrent-use conflict modal with details about newer orders */
+function showConflictModal(d) {
+  const tableNum = d.table_number || '?';
+  const count = d.conflicting_orders ? d.conflicting_orders.length : 0;
+  document.getElementById('conflictMessage').textContent =
+    '⚠️ Table ' + tableNum + ' has ' + count + ' new order(s) since you started composing.';
+  const detailsEl = document.getElementById('conflictDetails');
+  if (d.conflicting_orders && d.conflicting_orders.length > 0) {
+    detailsEl.innerHTML = 'New order IDs: ' + d.conflicting_orders.map(o => '#' + o.order_id).join(', ');
+  } else {
+    detailsEl.innerHTML = '';
+  }
+  document.getElementById('conflictOverlay').style.display = 'flex';
+}
+
+/** Submit order anyway — bypass the staleness check by not sending composed_since */
+async function submitOrderForce() {
+  document.getElementById('conflictOverlay').style.display = 'none';
+  // Re-submit without composed_since so it goes through
+  composedSince = null;
+  await submitOrder();
+}
+
+/** Close conflict modal and clear the cart so waiter can re-compose */
+function closeConflictModalAndRefresh() {
+  document.getElementById('conflictOverlay').style.display = 'none';
+  cart = [];
+  appliedDiscount = null;
+  resetTip();
+  renderCart();
+  showToast('🔄 Cart cleared — please re-compose your order', 'warning');
 }
 
 // ═══════════ OFFLINE ORDER QUEUING ═══════════
@@ -14162,6 +14211,19 @@ async function submitChangePin() {
     <div class="modal-actions" style="gap:8px;">
       <button class="danger" onclick="forceClockoutSubmit()" id="forceClockoutBtn" style="min-height:48px;font-size:15px;padding:10px 24px;">🔧 Force Clock Out</button>
       <button class="outline" onclick="closeForceClockoutModal()" style="min-height:48px;font-size:15px;padding:10px 24px;">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ CONCURRENT USE CONFLICT MODAL ═══════════ -->
+<div id="conflictOverlay" class="modal-overlay" style="display:none;">
+  <div class="modal-box" style="max-width:440px;">
+    <h3 style="margin-bottom:4px;">⚠️ Cart Conflict Detected</h3>
+    <p style="font-size:14px;color:var(--text2);margin:8px 0 12px 0;" id="conflictMessage">This table has new orders since you started composing.</p>
+    <div id="conflictDetails" style="font-size:13px;color:var(--accent);margin-bottom:12px;padding:8px 12px;background:rgba(233,69,96,0.1);border-radius:8px;"></div>
+    <div class="modal-actions" style="gap:8px;flex-wrap:wrap;">
+      <button class="accent" onclick="submitOrderForce()" id="conflictSubmitAnyway" style="min-height:48px;font-size:15px;padding:10px 20px;flex:1;">✅ Submit Anyway</button>
+      <button class="outline" onclick="closeConflictModalAndRefresh()" id="conflictRefresh" style="min-height:48px;font-size:15px;padding:10px 20px;flex:1;">🔄 Refresh Cart</button>
     </div>
   </div>
 </div>
