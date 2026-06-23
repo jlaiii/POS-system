@@ -43,6 +43,44 @@
 
 - [x] **Add auto-table suggestion for waiters** — When a waiter returns to the POS tab, auto-select the table they were last working on (stored per-user in localStorage). Saves 1-2 taps per order cycle, adds up over a shift.
 
+## Timekeeper / Payroll System (NEW — June 2026)
+
+> The clock-in/out system works but needs to be usable by a real timekeeper/payroll person. Currently: raw shift dump, no date filtering, no pay period concept, no overtime, no corrections, no break tracking. Below is what's needed to make it payroll-ready.
+
+### Priority: HIGH
+
+- [ ] **Add date range filtering to all timesheet/shift endpoints** — `/api/admin_shifts`, `/api/admin_timesheet`, `/api/export/shifts_csv`, `/api/export/timesheet_csv` all need `date_from`/`date_to` params. Currently they dump every record ever. Timekeeper needs to pull "this week" or "June 1-15" without scrolling through months of data. Server-side filter on `clock_in_time` / `login_time` fields. Backward-compatible (omit params = all records, same as today).
+
+- [ ] **Add pay period summary endpoint + UI** — New `POST /api/timesheet/pay_period` endpoint. Accepts `date_from`, `date_to`, optional `user_id`. Returns per-employee totals: total_hours, shift_count, overtime_hours (over 40h/week threshold), total estimated pay (if pay rate set). Frontend: new "Pay Period" sub-tab in Timesheet showing summary cards per employee with drill-down to individual shifts. Timekeeper can see at a glance who to pay and how much.
+
+- [ ] **Pay period selector with Weekly / Bi-weekly / Monthly presets** — Date range picker in Timesheet view with quick-select buttons: "This Week", "Last Week", "This Month", "Last Month", "Custom". "This Week" and "Last Week" auto-calculate Mon-Sun. "Bi-weekly" option with pay period start date config. CSV/PDF export button that exports only the selected period. Replace the current bare "Export CSV" that dumps everything.
+
+- [ ] **Overtime detection and flagging** — Configurable thresholds in admin (default: 8h/day, 40h/week). `POST /api/timesheet/pay_period` already flags overtime_hours per employee. Frontend: orange/red badges on shifts that push employee over daily/weekly limits. Pay period summary shows overtime breakdown. CSV export includes `Overtime Hours` column.
+
+- [ ] **Admin shift edit / correction with audit trail** — Timekeeper needs ability to correct clock-in/out times (employee forgot to clock out, clocked in wrong, system error). New `POST /api/clock/edit` endpoint: accepts `shift_index` (from shift_log array), new `clock_in_time` / `clock_out_time` (or null to keep original). Logs edit in activity_log with old→new values and `edited_by` (admin PIN). Edited shifts flagged with ⚠️ icon in UI. Edit history viewable per shift. `edited` boolean stored on shift record. Permission-gated (manage_items or new `edit_timesheet` perm?).
+
+- [ ] **Shift notes on clock-out** — When clocking out, optional textarea for shift notes (e.g., "covered closing duties", "stayed late for deep clean", "short shift — left early with permission"). Stored as `notes` field on shift record. Displayed in timesheet view. Admin can also add notes on individual shifts after the fact.
+
+- [ ] **Break tracking (unpaid meal breaks)** — New "Start Break" / "End Break" option on clock button. Break time subtracted from total paid hours. Stored as `breaks: [{start, end, duration_minutes}]` array on shift record. Break duration visible in timesheet view. Total paid hours = `duration_hours - break_hours`.
+
+- [ ] **Per-user pay rate field** — Add `pay_rate` (hourly, float) to user profile in `users.json`. Shown in user management. Timesheet summary multiplies `total_hours × pay_rate` for estimated gross pay per period. Displayed in pay period summary. CSV export includes `Pay Rate`, `Estimated Pay` columns. Rate changes don't retroactively apply — use rate at time of export.
+
+### Priority: MEDIUM
+
+- [ ] **Timesheet approval workflow** — After pay period ends, timekeeper clicks "Submit for Approval" which locks that period's shifts from further edits. Employee can review and "Approve" (optional — small shops may skip). Locked shifts grayed out with 🔒 icon. Unlock requires owner permission. Approval status stored in new `timesheet_approvals.json` with period range, approved_by, timestamp.
+
+- [ ] **PDF timesheet report export** — Generate a clean, printable timesheet report for the selected pay period. Employee name, shift dates/times, daily totals, period total, overtime, estimated pay, signature line. `POST /api/export/timesheet_pdf` endpoint. Print-friendly CSS with page breaks per employee. More professional than CSV for record-keeping and employee handouts.
+
+- [ ] **Timesheet UI overhaul for timekeeper usability** — Current admin Timesheet tab shows raw shift list + raw admin login timesheet in two separate sections. Redesign as unified timekeeper dashboard: period selector at top → employee summary cards (name, total hours, overtime, estimated pay) → click employee to expand individual shifts → export button clearly visible (not buried). Dense data table for the shift list. Sortable columns (name, date, hours). Visual indicators for overtime, edited shifts, missing clock-outs.
+
+- [ ] **Missing clock-out detection & alert** — Detect employees who clocked in but never clocked out (e.g., 8h+ since clock-in with no clock-out). Show alert banner in admin Timesheet: "⚠️ 2 employees have active shifts over 8 hours — possible forgotten clock-outs." Allow admin to force clock-out with estimated time + note.
+
+### Priority: LOW
+
+- [ ] **PTO / sick day tracking** — Optional accrual-based or manual tracking. `pto_balance` field per user. Admin can log PTO/sick days with date range and type. Excluded from "missing clock-out" alerts for those days.
+
+- [ ] **Shift schedule builder** — Weekly schedule grid where manager assigns shifts (Mon 9-5: John, Tue 9-5: Maria, etc.). Compare scheduled vs actual hours. Visual schedule calendar in admin. Helps catch no-shows.
+
 ## Done
 
 - [x] **Add auto-table suggestion for waiters** — When a waiter returns to the POS tab, auto-select the table they were last working on (stored per-user in localStorage). Saves 1-2 taps per order cycle, adds up over a shift. [worker-1]
