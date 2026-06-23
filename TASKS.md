@@ -39,14 +39,13 @@
 
 ## New Tasks (from Audit #6)
 
-- [~] worker-3 **Add employee clock-in/clock-out system** — Real restaurant staff need to clock in/out for shifts. Current timesheet only tracks admin login/logout. New "clock_in" endpoint, punch clock UI in POS header, shift tracking separate from login. Essential for payroll and shift management.
-
 - [ ] **Add kitchen display table grouping** — Kitchen orders should be groupable by table number so cooks can see all items for a table together. Currently each order submission creates a separate card. When same table gets multiple orders (appetizers then mains), they should be visually grouped or merged in the kitchen queue.
 
 - [ ] **Add auto-table suggestion for waiters** — When a waiter returns to the POS tab, auto-select the table they were last working on (stored per-user in localStorage). Saves 1-2 taps per order cycle, adds up over a shift.
 
 ## Done
 
+- [x] **Add employee clock-in/clock-out system** — New `/api/clock/in`, `/api/clock/out`, `/api/clock/status`, `/api/admin_shifts`, `/api/export/shifts_csv` endpoints. Punch clock button in POS header (⏰) showing Clock In/Out status with live duration. Shift records in admin Timesheet view with active/completed shift display. Activity logging for all clock events. i18n EN + ES. [worker-3]
 - [x] **Add combo/meal deal builder for fixed-price bundled items** — Create fixed-price combo deals (e.g., "Lunch Special: Burger + Fries + Drink $12.99") as a single orderable item. Admin builder UI to select child items, set combo price, and manage active combos. One-tap add to cart expands child items for kitchen display. Increases average order value. i18n EN + ES. [worker-2]
 - [x] **Add item visibility toggle (hide/show menu items without deleting)** — Active/inactive toggle per item in admin item management. Hidden items remain in database but do not appear in POS item grid, kiosk, or search. Useful for seasonal items, out-of-season ingredients, temporary supplier outages. Visual indicator (eye icon) in management list. i18n EN + ES. [worker-1]
 - [x] **Add service charge / auto-gratuity for large parties** — Configurable auto-gratuity settings (party size threshold, default percentage) in admin. When cart item count reaches threshold, service charge line auto-appears with label and amount. Display on receipt, kiosk, and order history. Permission-gated (manage_items). i18n EN + ES. [worker-3]

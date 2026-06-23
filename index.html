@@ -191,6 +191,8 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 }
 #topBar .offline-badge.visible { display: inline-flex; }
 #topBar .offline-badge.syncing { background: #3498db; animation: pulse-badge 1s infinite; }
+#clockBtn.clocked-in { background: #2ecc71; color: #fff; border-color: #2ecc71; animation: none; }
+#clockBtn.clocked-in:hover { background: #27ae60; }
 @keyframes pulse-badge {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
@@ -987,6 +989,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
       <span class="offline-badge" id="offlineBadge" onclick="syncQueuedOrders()" title="Click to sync now"></span>
       <button class="ghost logout-btn" id="themeToggle" onclick="toggleTheme()" style="font-size:18px;padding:8px 12px;min-height:40px;" title="Toggle theme">🌙</button>
       <button class="ghost logout-btn" id="langToggle" onclick="switchLanguage(currentLang === 'en' ? 'es' : 'en')" style="font-size:18px;padding:8px 12px;min-height:40px;" title="Switch language">🇪🇸</button>
+      <button class="ghost logout-btn" id="clockBtn" onclick="toggleClock()" style="font-size:14px;padding:8px 14px;min-height:40px;display:none;" title="Clock in/out">⏰ Clock In</button>
       <button class="ghost logout-btn" onclick="doLogout()" data-i18n="logout">🚪 Logout</button>
     </div>
   </div>
@@ -1347,6 +1350,11 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
             <button class="accent" onclick="exportTimesheetCSV()" style="font-size:14px;padding:12px 20px;min-height:48px;">📥 Export Timesheet (CSV)</button>
           </div>
           <div id="timesheetList"><div class="empty-state">Loading...</div></div>
+          <h4 style="margin-top:20px;margin-bottom:8px;font-size:16px;color:var(--accent);">👤 Employee Shifts (Clock In/Out)</h4>
+          <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+            <button class="accent" onclick="exportShiftsCSV()" style="font-size:13px;padding:10px 16px;min-height:40px;">📥 Export Shifts (CSV)</button>
+          </div>
+          <div id="shiftList"><div class="empty-state" id="shiftListStatus">Loading shifts...</div></div>
         </div>
         <!-- Permissions (owner only) -->
         <div id="secPermissions" class="admin-section">
@@ -2048,6 +2056,10 @@ const L10N = {
     'admin.discounts': '🏷️ Discounts',
     'admin.log': '📜 Activity Log',
     'admin.timesheet': '⏱️ Timesheet',
+    'clock.in': '⏰ Clock In',
+    'clock.out': '⏰ Clock Out',
+    'clock.clocked_in': 'Clocked in!',
+    'clock.clocked_out': 'Clocked out',
     'admin.permissions': '🔑 Permissions',
     'admin.menu_history': '📋 Menu History',
     'admin.tables': '🪑 Tables',
@@ -2449,6 +2461,10 @@ const L10N = {
     'admin.discounts': '🏷️ Descuentos',
     'admin.log': '📜 Registro de actividad',
     'admin.timesheet': '⏱️ Horario',
+    'clock.in': '⏰ Entrada',
+    'clock.out': '⏰ Salida',
+    'clock.clocked_in': '¡Registrado!',
+    'clock.clocked_out': 'Registrado salida',
     'admin.permissions': '🔑 Permisos',
     'admin.menu_history': '📋 Historial de Menú',
     'admin.tables': '🪑 Mesas',
@@ -3196,6 +3212,127 @@ async function loadCredentialsStatus() {
   }
 }
 
+// ═══════════ EMPLOYEE CLOCK-IN/CLOCK-OUT ═══════════
+
+let clockTimer = null;
+
+async function checkClockStatus() {
+  const btn = document.getElementById('clockBtn');
+  if (!currentUser) { btn.style.display = 'none'; return; }
+  btn.style.display = '';
+  try {
+    const r = await fetch(BACKEND_URL + '/api/clock/status', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id })
+    });
+    if (!r.ok) { btn.textContent = '⏰ ?'; return; }
+    const data = await r.json();
+    if (data.clocked_in) {
+      btn.textContent = '⏰ Clock Out';
+      btn.classList.add('clocked-in');
+      btn.title = 'Clocked in since ' + new Date(data.clock_in_time).toLocaleTimeString();
+      if (clockTimer) clearInterval(clockTimer);
+      clockTimer = setInterval(() => checkClockStatus(), 30000);
+    } else {
+      btn.textContent = '⏰ Clock In';
+      btn.classList.remove('clocked-in');
+      btn.title = 'Click to clock in';
+      if (clockTimer) { clearInterval(clockTimer); clockTimer = null; }
+    }
+  } catch(e) {
+    btn.textContent = '⏰ ?';
+  }
+}
+
+async function toggleClock() {
+  if (!currentUser) return;
+  const btn = document.getElementById('clockBtn');
+  const isClockedIn = btn.classList.contains('clocked-in');
+  const endpoint = isClockedIn ? '/api/clock/out' : '/api/clock/in';
+  try {
+    const r = await fetch(BACKEND_URL + endpoint, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id })
+    });
+    const data = await r.json();
+    if (r.ok) {
+      if (isClockedIn) {
+        const hrs = data.duration_hours;
+        showToast('Clocked out (' + hrs + ' hrs)', 'success');
+        if (clockTimer) { clearInterval(clockTimer); clockTimer = null; }
+      } else {
+        showToast('Clocked in!', 'success');
+      }
+      checkClockStatus();
+    } else {
+      showToast(data.message || 'Error', 'error');
+    }
+  } catch(e) {
+    showToast('Network error', 'error');
+  }
+}
+
+async function loadShifts() {
+  const container = document.getElementById('shiftList');
+  if (!container) return;
+  try {
+    const r = await fetch(BACKEND_URL + '/api/admin_shifts', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id })
+    });
+    if (!r.ok) { container.innerHTML = '<div class=\"empty-state\">Unauthorized</div>'; return; }
+    const data = await r.json();
+    const completed = data.shifts || [];
+    const active = data.active_shifts || [];
+    if (completed.length === 0 && active.length === 0) {
+      container.innerHTML = '<div class=\"empty-state\">No shift records yet</div>';
+      return;
+    }
+    let html = '';
+    if (active.length > 0) {
+      html += '<div style=\"margin-bottom:8px;font-weight:600;color:#2ecc71;\">🟢 Currently Clocked In:</div>';
+      html += active.map(s => `
+        <div class=\"ts-entry\" style=\"border-left:3px solid #2ecc71;\">
+          <span><strong>${escHtml(s.user_name)}</strong> (${escHtml(s.user_id)})</span>
+          <span>Since ${new Date(s.clock_in_time).toLocaleString()}</span>
+          <span>${s.duration_hours} hrs</span>
+        </div>
+      `).join('');
+    }
+    if (completed.length > 0) {
+      const reversed = completed.slice().reverse();
+      if (html) html += '<div style=\"margin-top:12px;margin-bottom:8px;font-weight:600;\">✅ Completed Shifts:</div>';
+      html += reversed.slice(0, 100).map(s => `
+        <div class=\"ts-entry\">
+          <span><strong>${escHtml(s.user_name || s.user_id)}</strong> (${escHtml(s.user_id)})</span>
+          <span>${new Date(s.clock_in_time).toLocaleString()} → ${new Date(s.clock_out_time).toLocaleString()}</span>
+          <span>${s.duration_hours} hrs</span>
+        </div>
+      `).join('');
+    }
+    container.innerHTML = html;
+  } catch(e) {
+    container.innerHTML = '<div class=\"empty-state\">Network error</div>';
+  }
+}
+
+async function exportShiftsCSV() {
+  try {
+    const r = await fetch(BACKEND_URL + '/api/export/shifts_csv', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id })
+    });
+    if (!r.ok) { showToast('Unauthorized', 'error'); return; }
+    const data = await r.json();
+    downloadCSV(data.csv, data.filename);
+    showToast('Shifts CSV exported', 'success');
+  } catch(e) {
+    showToast('Network error', 'error');
+  }
+}
+
+// ═══════════ LOGOUT ═══════════
+
 async function doLogout() {
   if (currentUser) {
     try {
@@ -3300,6 +3437,8 @@ function showApp() {
   switchLanguage(currentLang);
   // Check for saved cart draft
   checkCartDraft();
+  // Check employee clock status
+  checkClockStatus();
 }
 
 // ═══════════ MAIN TABS ═══════════
@@ -5237,7 +5376,7 @@ function switchAdminSection(sec) {
   else if (sec === 'tax') loadTaxAdmin();
   else if (sec === 'discounts') loadDiscountAdmin();
   else if (sec === 'log') loadActivityLog();
-  else if (sec === 'timesheet') loadTimesheet();
+  else if (sec === 'timesheet') { loadTimesheet(); loadShifts(); }
   else if (sec === 'permissions') loadPermissions();
   else if (sec === 'menuhistory') loadMenuHistory();
   else if (sec === 'credentials') loadCredentialsStatus();

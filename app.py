@@ -45,6 +45,7 @@ CASH_DRAWER_FILE = 'cash_drawer.json'  # Cash register management
 COMBOS_FILE = 'combos.json'  # Combo/meal deal bundles
 SERVICE_CHARGE_FILE = 'service_charge_config.json'  # Auto-gratuity / service charge settings
 EMAIL_CONFIG_FILE = 'email_config.json'  # Email/SMTP configuration for digital receipts
+SHIFT_FILE = 'shift_log.json'  # Employee shift clock-in/clock-out records
 
 # --- Loyalty Constants ---
 LOYALTY_POINTS_PER_DOLLAR = 1  # 1 point per $1 spent
@@ -113,12 +114,12 @@ def backup_menu():
 
 
 # Ensure JSON files exist and are initialized correctly
-for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE, INVENTORY_FILE, REFUNDED_ORDERS_FILE, FAVORITES_FILE, LOYALTY_FILE, SCHEDULED_PRICING_FILE, WASTE_FILE, DELIVERY_ADDRESSES_FILE, WEBHOOKS_FILE, TABLE_ADS_FILE, CASH_DRAWER_FILE, COMBOS_FILE, SERVICE_CHARGE_FILE, EMAIL_CONFIG_FILE]:
+for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE, INVENTORY_FILE, REFUNDED_ORDERS_FILE, FAVORITES_FILE, LOYALTY_FILE, SCHEDULED_PRICING_FILE, WASTE_FILE, DELIVERY_ADDRESSES_FILE, WEBHOOKS_FILE, TABLE_ADS_FILE, CASH_DRAWER_FILE, COMBOS_FILE, SERVICE_CHARGE_FILE, EMAIL_CONFIG_FILE, SHIFT_FILE]:
     if not os.path.exists(f):
         with open(f, 'w') as file:
             if f == USERS_FILE:
                 json.dump({"1111": {"name": "Owner", "role": "owner", "permissions": ["*"]}}, file)
-            elif f == TIMESHEET_FILE or f == ACTIVITY_LOG_FILE:
+            elif f == TIMESHEET_FILE or f == ACTIVITY_LOG_FILE or f == SHIFT_FILE:
                 json.dump([], file)  # Initialize as empty lists
             elif f == ITEMS_FILE:
                 json.dump({
@@ -366,6 +367,9 @@ def emit_pickup_update():
 
 # In-memory storage for active admin sessions (for timesheet calculation)
 active_admin_sessions = {}  # {admin_id: login_time}
+
+# In-memory storage for employee clock-in/clock-out shifts
+active_shifts = {}  # {user_id: {clock_in_time: datetime, user_name: str}}
 
 # --- User Management Endpoints ---
 
@@ -2197,6 +2201,186 @@ def admin_timesheet():
 
     timesheet_data = load_json_data(TIMESHEET_FILE)
     return jsonify({'message': 'Timesheet data retrieved', 'timesheet': timesheet_data})
+
+
+# --- Employee Clock-In / Clock-Out System ---
+
+@app.route('/api/clock/in', methods=['POST'])
+def clock_in():
+    """Clock in an employee for their shift. Records start time."""
+    data = request.json
+    user_id = data.get('adminPin')  # Uses adminPin field for user identification
+
+    if not user_id:
+        return jsonify({'message': 'User ID required.'}), 400
+
+    users = load_json_data(USERS_FILE)
+    if user_id not in users:
+        return jsonify({'message': 'User not found.'}), 404
+
+    user_data = users[user_id]
+    if user_data.get('banned', False):
+        return jsonify({'message': 'User is banned.'}), 403
+
+    if user_id in active_shifts:
+        return jsonify({'message': 'Already clocked in.'}), 409
+
+    now = datetime.now()
+    active_shifts[user_id] = {
+        'clock_in_time': now,
+        'user_name': user_data.get('name', 'Unknown')
+    }
+
+    log_activity('clock_in', user_id, user_data.get('role', 'user'), {
+        'status': 'success',
+        'user_name': user_data.get('name', 'Unknown'),
+        'clock_in_time': now.isoformat()
+    })
+
+    return jsonify({
+        'message': 'Clocked in successfully.',
+        'clock_in_time': now.isoformat(),
+        'user_name': user_data.get('name', 'Unknown')
+    })
+
+
+@app.route('/api/clock/out', methods=['POST'])
+def clock_out():
+    """Clock out an employee. Records end time and duration."""
+    data = request.json
+    user_id = data.get('adminPin')
+
+    if not user_id:
+        return jsonify({'message': 'User ID required.'}), 400
+
+    if user_id not in active_shifts:
+        return jsonify({'message': 'Not clocked in.'}), 409
+
+    users = load_json_data(USERS_FILE)
+    user_data = users.get(user_id, {})
+    user_name = user_data.get('name', active_shifts[user_id].get('user_name', 'Unknown'))
+
+    shift = active_shifts.pop(user_id)
+    clock_in_time = shift['clock_in_time']
+    clock_out_time = datetime.now()
+    duration_hours = round((clock_out_time - clock_in_time).total_seconds() / 3600, 2)
+
+    shift_record = {
+        'user_id': user_id,
+        'user_name': user_name,
+        'clock_in_time': clock_in_time.isoformat(),
+        'clock_out_time': clock_out_time.isoformat(),
+        'duration_hours': duration_hours
+    }
+
+    shift_log = load_json_data(SHIFT_FILE)
+    shift_log.append(shift_record)
+    save_json_data(SHIFT_FILE, shift_log)
+
+    log_activity('clock_out', user_id, user_data.get('role', 'user'), {
+        'status': 'success',
+        'user_name': user_name,
+        'clock_in_time': clock_in_time.isoformat(),
+        'clock_out_time': clock_out_time.isoformat(),
+        'duration_hours': duration_hours
+    })
+
+    return jsonify({
+        'message': 'Clocked out successfully.',
+        'clock_in_time': clock_in_time.isoformat(),
+        'clock_out_time': clock_out_time.isoformat(),
+        'duration_hours': duration_hours
+    })
+
+
+@app.route('/api/clock/status', methods=['POST'])
+def clock_status():
+    """Check if the current user is clocked in and get their shift info."""
+    data = request.json
+    user_id = data.get('adminPin')
+
+    if not user_id:
+        return jsonify({'message': 'User ID required.'}), 400
+
+    users = load_json_data(USERS_FILE)
+    user_data = users.get(user_id, {})
+    user_name = user_data.get('name', 'Unknown')
+
+    if user_id in active_shifts:
+        shift = active_shifts[user_id]
+        clock_in_time = shift['clock_in_time']
+        now = datetime.now()
+        duration_hours = round((now - clock_in_time).total_seconds() / 3600, 2)
+        return jsonify({
+            'clocked_in': True,
+            'clock_in_time': clock_in_time.isoformat(),
+            'duration_hours': duration_hours,
+            'user_name': user_name
+        })
+    else:
+        return jsonify({
+            'clocked_in': False,
+            'user_name': user_name
+        })
+
+
+@app.route('/api/admin_shifts', methods=['POST'])
+def admin_shifts():
+    """Get all shift records (completed) for admin timesheet view."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+
+    if not check_perm(admin_pin, "view_timesheet"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    shift_log = load_json_data(SHIFT_FILE)
+    # Also include active (currently clocked-in) shifts
+    active_shift_list = []
+    for uid, shift in active_shifts.items():
+        users = load_json_data(USERS_FILE)
+        user_data = users.get(uid, {})
+        now = datetime.now()
+        duration_hours = round((now - shift['clock_in_time']).total_seconds() / 3600, 2)
+        active_shift_list.append({
+            'user_id': uid,
+            'user_name': shift.get('user_name', user_data.get('name', 'Unknown')),
+            'clock_in_time': shift['clock_in_time'].isoformat(),
+            'clock_out_time': None,
+            'duration_hours': duration_hours,
+            'active': True
+        })
+
+    return jsonify({
+        'message': 'Shift data retrieved',
+        'shifts': shift_log,
+        'active_shifts': active_shift_list
+    })
+
+
+@app.route('/api/export/shifts_csv', methods=['POST'])
+def export_shifts_csv():
+    """Export employee shift records as CSV."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+
+    if not check_perm(admin_pin, "view_timesheet"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    shift_log = load_json_data(SHIFT_FILE)
+    headers = ['User ID', 'User Name', 'Clock In Time', 'Clock Out Time', 'Duration (Hours)']
+
+    rows = []
+    for entry in shift_log:
+        rows.append({
+            'User ID': entry.get('user_id', ''),
+            'User Name': entry.get('user_name', ''),
+            'Clock In Time': entry.get('clock_in_time', ''),
+            'Clock Out Time': entry.get('clock_out_time', ''),
+            'Duration (Hours)': entry.get('duration_hours', 0)
+        })
+
+    csv_content = generate_csv(rows, headers)
+    return jsonify({'csv': csv_content, 'filename': 'shifts_export.csv'})
 
 
 @app.route('/api/activity_log', methods=['POST'])
