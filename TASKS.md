@@ -256,13 +256,16 @@ Use Python `pyotp` (pure Python, no C extensions, `pip install pyotp qrcode`):
   - Falls back gracefully if remote is unreachable (logs warning, doesn't fail)
   - Keeps same retention policy on remote
 
-|- [~] worker-2 **Restore procedure documentation + script** — Create `/root/pos-system-work/scripts/restore_db.py`:
-  - Lists available backups with timestamps and sizes: `python3 restore_db.py --list`
-  - Restore: `python3 restore_db.py backups/pos_2026-06-23_14-00-00.db.gz`
-  - Steps: decompress → verify integrity → stop Flask → replace pos.db → restart Flask → verify app responds
+|- [x] worker-2 **Restore procedure documentation + script** — Created `/root/pos-system-work/scripts/restore_db.py` with full restore workflow:
+  - `--list` flag lists all available JSON (.tar.gz) and SQLite (.db.gz) backups with timestamps and sizes
+  - `restore_db.py <backup_file>` restores from any backup (auto-detects type by extension)
+  - `--json` flag for JSON tar.gz restore with optional SQLite sync after restore
+  - `--dry-run` previews steps without making changes
+  - Steps: decompress → verify integrity → stop Flask → replace data files → restart Flask → verify app responds
   - Confirmation prompt: "⚠️ This will replace the current database. All changes since the backup will be lost. Continue? (yes/no)"
-  - Creates a backup of the CURRENT database before restoring (safety net)
-  - Also supports `--json` flag to restore from JSON backup (populates SQLite from JSON files)
+  - Creates a safety backup of CURRENT data before restoring (stored in backups/pre_restore_safety/)
+  - Safety net: undo instructions printed after successful restore
+  - Python syntax verified, --list tested showing 23 JSON + 13 DB backups, --dry-run tested for both modes
 
 - [ ] **Database migration rollback** — If SQLite migration goes wrong, the Database Architect worker can flip `use_database: false` to revert to JSON mode. But we also need a script that re-populates JSON files from SQLite (reverse migration), so the JSON files stay in sync during the transition period. `scripts/sync_json_from_db.py` — reads all tables, writes JSON files. Run by the Database Architect after each migration step.
 
