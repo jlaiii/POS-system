@@ -250,7 +250,7 @@ Use Python `pyotp` (pure Python, no C extensions, `pip install pyotp qrcode`):
 
 ### Priority: MEDIUM
 
-- [~] worker-1 **Off-server backup (scp/rsync to VPS backup location)** — Extend backup script to optionally copy the latest backup to a remote location:
+- [x] worker-1 **Off-server backup (scp/rsync to VPS backup location)** — Extend backup script to optionally copy the latest backup to a remote location:
   - Config in `timesheet_config.json`: `"offsite_backup": {"enabled": false, "host": "", "path": "", "ssh_key": ""}`
   - Uses `scp` with SSH key
   - Falls back gracefully if remote is unreachable (logs warning, doesn't fail)
@@ -743,7 +743,7 @@ Super admin PIN is separate from any business PIN. Super admin can create busine
 - [ ] **Add health-check endpoint monitoring** — The Reliability Bot checks `/api/health` every 5min, but there's no proper monitoring alert. Add an external uptime monitor (e.g., cron calling a webhook on failure) so crashes are caught faster than the next bot cycle.
 
 ## Done
-||||- [x] worker-1 **Owner security dashboard** — New 🛡️ Security admin tab with summary cards, live login feed, blocked IPs management, active sessions, and security events viewer. Backend: POST /api/security/dashboard and POST /api/security/unblock_ip. Permission-gated view_stats. Responsive dark theme. [worker-1]
+| - [x] worker-1 **Off-server backup (scp/rsync to VPS backup location)** — Extended `scripts/backup_json.py` with offsite backup support: SCP-based copy to remote VPS using SSH key, graceful failure on unreachable host, remote retention cleanup matching local policy. Added `--remote-only` flag. Config via `offsite_backup` section in `timesheet_config.json` (enabled/host/path/ssh_key). Backend `get_timesheet_config()`/`save_timesheet_config()` defaults include the new config. [worker-1]|||- [x] worker-1 **Owner security dashboard** — New 🛡️ Security admin tab with summary cards, live login feed, blocked IPs management, active sessions, and security events viewer. Backend: POST /api/security/dashboard and POST /api/security/unblock_ip. Permission-gated view_stats. Responsive dark theme. [worker-1]
 |- [x] **Error state testing** — Added error handling utilities (safeJSON, fetchJSON, showContentLoading/hideContentLoading) to frontend. Fixed unprotected JSON.parse at session restore. Added spinner loading states with graceful error messages to loadItems, loadOrderHistory, loadUsers, loadAdminStats, loadActivityLog. fetchJSON wrapper safely handles non-JSON responses and HTTP errors. Refund flow uses fetchJSON. All JSON.parse calls protected. Backend already handled file corruption. [worker-1]
 |- [x] **Add customer profile management (CRM)** — Extended customer data, endpoints, admin CRM tab. [worker-3]
 |- [x] **Fast tap response (no 300ms delay)** — Added `touch-action: manipulation` to universal CSS selector in all 5 HTML pages (index.html, customer-display.html, pickup-display.html, drivethrough.html, tablet.html), eliminating the 300ms tap delay on every interactive element. Combined with existing `user-scalable=no` viewport meta, enables instant tap response on mobile/tablet browsers. [worker-1]

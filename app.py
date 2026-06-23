@@ -726,7 +726,13 @@ def get_timesheet_config():
     defaults = {
         'overtime_daily_threshold': 8,   # hours per day before OT kicks in
         'overtime_weekly_threshold': 40, # hours per week before OT kicks in
-        'late_grace_minutes': 5
+        'late_grace_minutes': 5,
+        'offsite_backup': {
+            'enabled': False,
+            'host': '',
+            'path': '',
+            'ssh_key': ''
+        }
     }
     try:
         config = load_json_data(TIMESHEET_CONFIG_FILE)
@@ -746,7 +752,13 @@ def save_timesheet_config(config):
     defaults = {
         'overtime_daily_threshold': 8,
         'overtime_weekly_threshold': 40,
-        'late_grace_minutes': 5
+        'late_grace_minutes': 5,
+        'offsite_backup': {
+            'enabled': False,
+            'host': '',
+            'path': '',
+            'ssh_key': ''
+        }
     }
     for k, v in defaults.items():
         if k not in config:

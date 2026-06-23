@@ -9,12 +9,16 @@ then applies retention cleanup to keep only:
   - One per week for last 4 weeks
   - One per month for last 12 months
 
+Optionally copies the latest backup to a remote VPS via SCP if offsite
+backup is configured in timesheet_config.json.
+
 Usage:
   python3 scripts/backup_json.py                      # normal run (backup + cleanup)
   python3 scripts/backup_json.py --dry-run            # show what would be done
   python3 scripts/backup_json.py --quiet              # only output errors
   python3 scripts/backup_json.py --cleanup-only       # only run retention cleanup
   python3 scripts/backup_json.py --dry-run --cleanup-only  # preview cleanup only
+  python3 scripts/backup_json.py --remote-only        # only sync to remote (no local backup)
 
 Returns exit code 0 on success, non-zero on failure.
 """
@@ -26,6 +30,7 @@ import sys
 import tarfile
 import glob
 import shutil
+import subprocess
 from datetime import datetime, timedelta
 from collections import defaultdict
 
@@ -43,6 +48,12 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Backup directory inside project: backups/json/
 BACKUP_BASE = os.path.join(PROJECT_ROOT, 'backups', 'json')
+
+# Timesheet config file (holds offsite backup settings)
+TIMESHEET_CONFIG_PATH = os.path.join(PROJECT_ROOT, 'timesheet_config.json')
+
+# Remote backup directory name pattern (mirrors local BACKUP_BASE on remote)
+REMOTE_BACKUP_DIR = 'backups/json'
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────
@@ -110,6 +121,255 @@ def get_all_backups():
             is_archive = entry.endswith('.tar.gz')
             backups.append((ts, path, is_archive, entry))
     return sorted(backups, key=lambda x: x[0])
+
+
+def get_latest_archive_path():
+    """Return the path of the most recent .tar.gz archive in BACKUP_BASE,
+    or None if no archives exist."""
+    backups = get_all_backups()
+    archives = [(ts, path) for ts, path, is_archive, name in backups if is_archive]
+    if not archives:
+        return None
+    # Return the most recent archive (last in sorted order)
+    return archives[-1][1]
+
+
+# ── Offsite Backup Config ──────────────────────────────────────────────────
+
+def load_offsite_config():
+    """Load offsite backup config from timesheet_config.json.
+    Returns None if not configured or disabled."""
+    try:
+        with open(TIMESHEET_CONFIG_PATH, 'r', encoding='utf-8') as f:
+            config = json.load(f)
+        offsite = config.get('offsite_backup', {})
+        if not offsite.get('enabled', False):
+            return None
+        host = (offsite.get('host') or '').strip()
+        path = (offsite.get('path') or '').strip()
+        ssh_key = (offsite.get('ssh_key') or '').strip()
+        if not host or not path:
+            log("  ⚠️  Offsite backup enabled but host or path is empty. Skipping remote backup.", quiet)
+            return None
+        return {
+            'host': host,
+            'path': path,
+            'ssh_key': ssh_key if ssh_key else None
+        }
+    except (FileNotFoundError, json.JSONDecodeError, KeyError) as e:
+        log(f"  ⚠️  Cannot load offsite backup config: {e}. Skipping remote backup.", quiet)
+        return None
+
+
+# ── Remote Backup (SCP) ────────────────────────────────────────────────────
+
+def copy_to_remote(local_archive_path, offsite_config):
+    """Copy the latest backup archive to the remote VPS via SCP with SSH key.
+    Returns True on success, False on failure (gracefully logs warning, doesn't crash)."""
+    if not local_archive_path or not os.path.isfile(local_archive_path):
+        log("  ⚠️  No local archive found to copy to remote. Skipping offsite backup.", quiet)
+        return False
+
+    host = offsite_config['host']
+    remote_path = offsite_config['path'].rstrip('/')
+    ssh_key = offsite_config['ssh_key']
+    archive_name = os.path.basename(local_archive_path)
+
+    # Ensure remote directory exists
+    ensure_cmd = ['ssh']
+    if ssh_key:
+        ensure_cmd.extend(['-i', ssh_key, '-o', 'StrictHostKeyChecking=accept-new'])
+    else:
+        ensure_cmd.extend(['-o', 'StrictHostKeyChecking=accept-new'])
+    ensure_cmd.extend([host, f'mkdir -p {remote_path}/{REMOTE_BACKUP_DIR}'])
+
+    log(f"  🔄 Syncing to remote: {host}:{remote_path}/{REMOTE_BACKUP_DIR}/{archive_name}", quiet)
+
+    try:
+        # Create remote directory
+        result = subprocess.run(
+            ensure_cmd,
+            capture_output=True, text=True, timeout=30
+        )
+        if result.returncode != 0:
+            log(f"  ⚠️  Failed to create remote directory: {result.stderr.strip()}", quiet)
+            return False
+    except subprocess.TimeoutExpired:
+        log("  ⚠️  SSH connection timed out while creating remote directory.", quiet)
+        return False
+    except FileNotFoundError:
+        log("  ⚠️  ssh not found on this system. Cannot perform offsite backup.", quiet)
+        return False
+    except Exception as e:
+        log(f"  ⚠️  SSH error: {e}. Skipping offsite backup.", quiet)
+        return False
+
+    # SCP the file
+    scp_cmd = ['scp']
+    if ssh_key:
+        scp_cmd.extend(['-i', ssh_key, '-o', 'StrictHostKeyChecking=accept-new'])
+    else:
+        scp_cmd.extend(['-o', 'StrictHostKeyChecking=accept-new'])
+    scp_cmd.extend([
+        local_archive_path,
+        f'{host}:{remote_path}/{REMOTE_BACKUP_DIR}/{archive_name}'
+    ])
+
+    try:
+        result = subprocess.run(
+            scp_cmd,
+            capture_output=True, text=True, timeout=120
+        )
+        if result.returncode == 0:
+            archive_size = os.path.getsize(local_archive_path)
+            log(f"  ✅ Remote copy complete: {readable_size(archive_size)} transferred", quiet)
+            return True
+        else:
+            log(f"  ⚠️  Remote copy failed: {result.stderr.strip()}", quiet)
+            return False
+    except subprocess.TimeoutExpired:
+        log("  ⚠️  SCP transfer timed out (120s). Remote backup skipped.", quiet)
+        return False
+    except FileNotFoundError:
+        log("  ⚠️  scp not found on this system. Cannot perform offsite backup.", quiet)
+        return False
+    except Exception as e:
+        log(f"  ⚠️  Remote copy error: {e}. Skipping offsite backup.", quiet)
+        return False
+
+
+# ── Remote Retention Cleanup ────────────────────────────────────────────────
+
+def remote_retention_cleanup(offsite_config, dry_run=False, quiet=False):
+    """Apply the same retention policy to remote backups via SSH.
+    Lists remote backup archives, applies retention rules, deletes old ones.
+    Returns True on success, False on failure (gracefully)."""
+    host = offsite_config['host']
+    remote_path = offsite_config['path'].rstrip('/')
+    ssh_key = offsite_config['ssh_key']
+    remote_dir = f"{remote_path}/{REMOTE_BACKUP_DIR}"
+
+    # Build SSH base command
+    ssh_base = ['ssh']
+    if ssh_key:
+        ssh_base.extend(['-i', ssh_key, '-o', 'StrictHostKeyChecking=accept-new'])
+    else:
+        ssh_base.extend(['-o', 'StrictHostKeyChecking=accept-new'])
+    ssh_base.append(host)
+
+    # List remote backup files (only .tar.gz files with timestamps)
+    list_cmd = ssh_base + [f'ls -1 {remote_dir}/*.tar.gz 2>/dev/null || true']
+
+    try:
+        result = subprocess.run(list_cmd, capture_output=True, text=True, timeout=30)
+        if result.returncode != 0:
+            log(f"  ⚠️  Cannot list remote backups: {result.stderr.strip()}", quiet)
+            return False
+
+        remote_files = [f.strip() for f in result.stdout.strip().split('\n') if f.strip()]
+        if not remote_files:
+            log("  📭 No remote backups found for cleanup.", quiet)
+            return True
+
+        # Parse remote backups: extract just the filename
+        remote_backups = []
+        for fpath in remote_files:
+            fname = os.path.basename(fpath)
+            ts = parse_backup_timestamp(fname)
+            if ts:
+                remote_backups.append((ts, fname, fpath))
+
+        if not remote_backups:
+            return True
+
+        # Apply same retention rules (reuse the logic from retention_cleanup)
+        now = datetime.now()
+        cutoff_24h = now - timedelta(hours=24)
+        cutoff_7d = now - timedelta(days=7)
+        cutoff_4w = now - timedelta(weeks=4)
+        cutoff_12m = now - timedelta(days=365)
+
+        keep = set()
+        for ts, fname, fpath in remote_backups:
+            if ts >= cutoff_24h:
+                keep.add(fname)
+
+        # Daily: keep 1 per day for days 1-7 ago
+        daily_candidates = [
+            (ts, fname) for ts, fname, _ in remote_backups
+            if ts < cutoff_24h and ts >= cutoff_7d and fname not in keep
+        ]
+        by_day = {}
+        for ts, fname in daily_candidates:
+            day_key = ts.strftime('%Y-%m-%d')
+            if day_key not in by_day or ts > by_day[day_key][0]:
+                by_day[day_key] = (ts, fname)
+        for ts, fname in by_day.values():
+            keep.add(fname)
+
+        # Weekly: keep 1 per week for weeks 1-4 ago
+        weekly_candidates = [
+            (ts, fname) for ts, fname, _ in remote_backups
+            if ts < cutoff_7d and ts >= cutoff_4w and fname not in keep
+        ]
+        by_week = {}
+        for ts, fname in weekly_candidates:
+            week_key = ts.strftime('%Y-W%W')
+            if week_key not in by_week or ts > by_week[week_key][0]:
+                by_week[week_key] = (ts, fname)
+        for ts, fname in by_week.values():
+            keep.add(fname)
+
+        # Monthly: keep 1 per month for months 1-12 ago
+        monthly_candidates = [
+            (ts, fname) for ts, fname, _ in remote_backups
+            if ts < cutoff_4w and ts >= cutoff_12m and fname not in keep
+        ]
+        by_month = {}
+        for ts, fname in monthly_candidates:
+            month_key = ts.strftime('%Y-%m')
+            if month_key not in by_month or ts > by_month[month_key][0]:
+                by_month[month_key] = (ts, fname)
+        for ts, fname in by_month.values():
+            keep.add(fname)
+
+        # Files to delete
+        to_delete = [
+            fpath for ts, fname, fpath in remote_backups
+            if fname not in keep
+        ]
+
+        if not to_delete:
+            log(f"  🧹 Remote retention: nothing to delete ({len(keep)} kept).", quiet)
+            return True
+
+        if not quiet:
+            log(f"  Remote retention cleanup: {len(to_delete)} file(s) to delete.", quiet)
+
+        if dry_run:
+            log(f"  🏁 Dry-run — remote files would be deleted:", quiet)
+            for fp in to_delete:
+                log(f"     - {os.path.basename(fp)}", quiet)
+            return True
+
+        # Delete files via SSH
+        for fpath in to_delete:
+            rm_cmd = ssh_base + [f'rm -f {fpath}']
+            try:
+                subprocess.run(rm_cmd, capture_output=True, text=True, timeout=30)
+                log(f"  🗑️  Remote deleted: {os.path.basename(fpath)}", quiet)
+            except Exception as e:
+                log(f"  ⚠️  Failed to delete remote {os.path.basename(fpath)}: {e}", quiet)
+
+        log(f"  🧹 Remote retention cleanup complete ({len(to_delete)} deleted).", quiet)
+        return True
+
+    except subprocess.TimeoutExpired:
+        log("  ⚠️  SSH connection timed out during remote retention cleanup.", quiet)
+        return False
+    except Exception as e:
+        log(f"  ⚠️  Remote retention error: {e}", quiet)
+        return False
 
 
 # ── Retention Cleanup ──────────────────────────────────────────────────────
@@ -252,6 +512,42 @@ def retention_cleanup(dry_run=False, quiet=False):
     return 1 if failed_count > 0 else 0
 
 
+# ── Offsite Backup Orchestration ──────────────────────────────────────────
+
+def run_offsite_backup(dry_run=False, quiet=False):
+    """Run the offsite backup step: copy latest archive to remote and clean up old remote backups.
+    Returns True if offsite was attempted (success or graceful failure), False if not configured."""
+    offsite_config = load_offsite_config()
+    if offsite_config is None:
+        return False
+
+    # Find the latest archive
+    latest = get_latest_archive_path()
+    if latest is None:
+        log("  ⚠️  No local backup archives found to copy remotely.", quiet)
+        return True  # Not a failure — just nothing to copy
+
+    log(f"", quiet)
+    log(f"  {'─'*60}", quiet)
+    log(f"  Offsite Backup", quiet)
+    log(f"  {'─'*60}", quiet)
+
+    if dry_run:
+        log(f"  🏁 Dry-run: would copy {os.path.basename(latest)} to {offsite_config['host']}", quiet)
+        return True
+
+    # Copy to remote
+    copy_ok = copy_to_remote(latest, offsite_config)
+
+    # Remote retention cleanup (only if copy succeeded)
+    if copy_ok:
+        remote_retention_cleanup(offsite_config, dry_run=False, quiet=quiet)
+    else:
+        log("  ⚠️  Remote backup copy failed. Skipping remote retention cleanup.", quiet)
+
+    return True
+
+
 # ── Backup Logic ───────────────────────────────────────────────────────────
 
 def main():
@@ -259,17 +555,34 @@ def main():
     dry_run = '--dry-run' in args
     quiet = '--quiet' in args
     cleanup_only = '--cleanup-only' in args
+    remote_only = '--remote-only' in args
+
+    # ── Remote-only mode ──
+    if remote_only:
+        attempted = run_offsite_backup(dry_run=dry_run, quiet=quiet)
+        if not attempted:
+            log("Offsite backup is not configured or disabled.", quiet)
+            return 0
+        return 0
 
     # ── Cleanup-only mode ──
     if cleanup_only:
-        return retention_cleanup(dry_run=dry_run, quiet=quiet)
+        local_ret = retention_cleanup(dry_run=dry_run, quiet=quiet)
+        # Also run remote cleanup if configured
+        if not dry_run:
+            run_offsite_backup(dry_run=False, quiet=quiet)
+        return local_ret
 
     files = get_data_json_files()
 
     if not files:
         log("No JSON data files found to back up.", quiet)
         # Still run cleanup even if no new files to back up
-        return retention_cleanup(dry_run=dry_run, quiet=quiet)
+        local_ret = retention_cleanup(dry_run=dry_run, quiet=quiet)
+        # Also run offsite if configured
+        if not dry_run:
+            run_offsite_backup(dry_run=False, quiet=quiet)
+        return local_ret
 
     timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
     backup_dir = os.path.join(BACKUP_BASE, timestamp)
@@ -388,6 +701,9 @@ def main():
     log(f"  📄 Files     : {copied_count}", quiet)
     log(f"  📦 Data size : {readable_size(total_size)} (uncompressed)", quiet)
     log(f"{'='*60}", quiet)
+
+    # ── Offsite backup (copy to remote if configured) ──
+    run_offsite_backup(dry_run=False, quiet=quiet)
 
     # ── Retention cleanup ──
     ret = retention_cleanup(dry_run=False, quiet=quiet)
