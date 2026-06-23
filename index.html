@@ -2706,6 +2706,10 @@ const L10N = {
     'user.reset_pin_invalid': 'PIN must be 4-8 digits.',
     'user.reset_pin_success': 'PIN reset for {name}. User will be notified on next login.',
     'user.pin_reset_notification': '⚠️ Your PIN was reset by {name}. Please use your new PIN.',
+    'user.temp_pin_btn': '🔑 Temp PIN',
+    'user.temp_pin_reason': 'Enter reason for generating a temporary PIN:',
+    'user.temp_pin_success': 'Temporary PIN {tempPin} generated for {name}. Valid for 1 hour.',
+    'user.temp_pin_share': 'Temporary PIN: {tempPin}\n\nShare this with the employee. It expires in 1 hour and can only be used once.\n\nAfter login, the employee should set a new PIN.',
   },
   es: {
     'app.title': '🍽️ Sistema POS',
@@ -3155,6 +3159,10 @@ const L10N = {
     'user.reset_pin_invalid': 'El PIN debe tener 4-8 dígitos.',
     'user.reset_pin_success': 'PIN restablecido para {name}. El usuario será notificado en el próximo inicio de sesión.',
     'user.pin_reset_notification': '⚠️ Su PIN fue restablecido por {name}. Use su nuevo PIN.',
+    'user.temp_pin_btn': '🔑 PIN Temp',
+    'user.temp_pin_reason': 'Ingrese la razón para generar un PIN temporal:',
+    'user.temp_pin_success': 'PIN temporal {tempPin} generado para {name}. Válido por 1 hora.',
+    'user.temp_pin_share': 'PIN temporal: {tempPin}\n\nCompártalo con el empleado. Expira en 1 hora y solo se puede usar una vez.\n\nDespués de iniciar sesión, el empleado debe establecer un nuevo PIN.',
   }
 };
 
@@ -6760,6 +6768,7 @@ async function loadUsers() {
         <div style="display:flex;gap:6px;align-items:center;">
           <button class="outline" onclick="editPayRate('${escJs(id)}')" style="font-size:12px;padding:4px 10px;min-height:36px;" title="${t('user.pay_rate_edit_title')}">💰 Edit Rate</button>
           ${perms.includes('manage_users') ? `<button class="outline" onclick="resetPin('${escJs(id)}')" style="font-size:12px;padding:4px 10px;min-height:36px;" title="${t('user.reset_pin_btn')}">${t('user.reset_pin_btn')}</button>` : ''}
+          ${perms.includes('manage_users') ? `<button class="outline" onclick="generateTempPin('${escJs(id)}')" style="font-size:12px;padding:4px 10px;min-height:36px;" title="${t('user.temp_pin_btn')}">${t('user.temp_pin_btn')}</button>` : ''}
           <button class="outline" onclick="editScheduledStart('${escJs(id)}')" style="font-size:12px;padding:4px 10px;min-height:36px;" title="${t('user.scheduled_start_edit_title')}">${t('user.scheduled_start_btn')}</button>
           ${twofaBtns}
           ${banBtn}
@@ -6931,6 +6940,28 @@ async function resetPin(userId) {
     const d = await r.json();
     if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
     showToast(t('user.reset_pin_success', { name }), 'success');
+    loadUsers();
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
+}
+
+async function generateTempPin(userId) {
+  const name = document.querySelector(`#userList .user-entry:has(button[onclick*="'${escJs(userId)}'"]) .ue-info strong`)?.textContent || userId;
+  const reason = prompt(t('user.temp_pin_reason'));
+  if (reason === null) return;
+  try {
+    const r = await fetch(BACKEND_URL + '/api/users/generate_temp_pin', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        adminPin: currentUser.id,
+        userId,
+        reason: reason.trim()
+      })
+    });
+    const d = await r.json();
+    if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
+    // Show the temp PIN in an alert so the admin can share it
+    alert(t('user.temp_pin_share', { tempPin: d.temp_pin }));
+    showToast(t('user.temp_pin_success', { name, tempPin: d.temp_pin }), 'success');
     loadUsers();
   } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }

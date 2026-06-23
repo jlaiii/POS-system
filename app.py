@@ -100,6 +100,11 @@ def upgrade_user(user_data):
     # Ensure force_pin_change field exists
     if 'force_pin_change' not in user_data:
         user_data['force_pin_change'] = False
+    # Ensure temp_pin and temp_pin_expiry fields exist
+    if 'temp_pin' not in user_data:
+        user_data['temp_pin'] = None
+    if 'temp_pin_expiry' not in user_data:
+        user_data['temp_pin_expiry'] = None
     return user_data
 
 
@@ -521,6 +526,67 @@ def login():
         return jsonify({'message': 'Invalid username or password'}), 401
 
     # PIN login (existing)
+    # First, check if user_id matches a temp_pin (temporary access code)
+    temp_pin_user_id = None
+    temp_pin_user_data = None
+    if user_id not in users:
+        # Scan for a user whose temp_pin matches the entered PIN
+        for uid, u_data in users.items():
+            u_data = upgrade_user(u_data)
+            tp = u_data.get('temp_pin')
+            tpe = u_data.get('temp_pin_expiry')
+            if tp and str(tp) == str(user_id) and tpe:
+                try:
+                    expiry_dt = datetime.fromisoformat(tpe)
+                    if datetime.now() < expiry_dt:
+                        temp_pin_user_id = uid
+                        temp_pin_user_data = u_data
+                        break
+                    else:
+                        # Expired — clean up
+                        u_data['temp_pin'] = None
+                        u_data['temp_pin_expiry'] = None
+                        save_json_data(USERS_FILE, users)
+                except (ValueError, TypeError):
+                    pass
+    
+    if temp_pin_user_id:
+        # Log in via temp PIN
+        user_id = temp_pin_user_id
+        user_info = temp_pin_user_data
+        users[user_id] = user_info
+        # Clear the temp PIN (single-use)
+        users[user_id]['temp_pin'] = None
+        users[user_id]['temp_pin_expiry'] = None
+        save_json_data(USERS_FILE, users)
+        
+        if user_info.get('banned', False):
+            reason = user_info.get('banned_reason', 'No reason provided')
+            log_activity('login', user_id, user_info.get('role', 'unknown'),
+                         {'status': 'failed', 'reason': f'User is banned: {reason}'})
+            return jsonify({'message': f'User is banned. Reason: {reason}', 'banned': True}), 403
+        
+        if user_info.get('role') in ['user', 'admin', 'owner', 'cook']:
+            # Check if 2FA is enabled
+            if user_info.get('totp_enabled', False):
+                log_activity('login', user_id, user_info['role'], {'status': '2fa_required', 'method': 'temp_pin', 'user_name': user_info['name']})
+                return jsonify({'2fa_required': True, 'user_id': user_id, 'user_name': user_info['name']}), 200
+            
+            log_activity('login', user_id, user_info['role'], {'status': 'success', 'method': 'temp_pin', 'user_name': user_info['name']})
+            if user_info['role'] in ('admin', 'owner'):
+                active_admin_sessions[user_id] = datetime.now()
+            
+            response_data = {
+                'message': 'Login successful (temporary PIN)',
+                'user': user_info['name'],
+                'role': user_info['role'],
+                'permissions': user_info.get('permissions', []),
+                'temp_pin_used': True
+            }
+            return jsonify(response_data)
+        log_activity('login', user_id, 'unknown', {'status': 'failed', 'method': 'temp_pin'})
+        return jsonify({'message': 'Invalid User ID or role'}), 401
+
     if user_id in users:
         user_info = users[user_id]
         user_info = upgrade_user(user_info)
@@ -1443,6 +1509,76 @@ def reset_user_pin():
         'user_id': new_pin,
         'old_user_id': user_id,
         'force_pin_change': force_change
+    })
+
+
+@app.route('/api/users/generate_temp_pin', methods=['POST'])
+def generate_temp_pin():
+    """Owner/admin generates a one-time temporary PIN for a locked-out employee.
+    Valid for 1 hour, single-use (expires after login or expiry).
+    Requires manage_users permission. Only owner can generate for admin accounts.
+    Logs to activity_log."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+    user_id = data.get('userId')
+    reason = data.get('reason', '')
+
+    # Verify caller has manage_users permission
+    if not check_perm(admin_pin, "manage_users"):
+        log_activity('generate_temp_pin', admin_pin, 'unauthorized',
+                     {'status': 'failed', 'reason': 'Insufficient permissions',
+                      'target_user_id': user_id})
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    if not user_id:
+        return jsonify({'message': 'User ID is required.'}), 400
+
+    users = load_json_data(USERS_FILE)
+
+    if user_id not in users:
+        return jsonify({'message': 'User not found.'}), 404
+
+    admin_user = users.get(admin_pin, {})
+    target_user = users[user_id]
+    target_user = upgrade_user(target_user)
+
+    # Only owner can generate temp PIN for admins
+    if target_user.get('role') == 'admin' and admin_user.get('role') != 'owner':
+        return jsonify({'message': 'Only the owner can generate temp PINs for admin accounts.'}), 403
+
+    # Only owner can generate temp PIN for owner
+    if target_user.get('role') == 'owner' and admin_user.get('role') != 'owner':
+        return jsonify({'message': 'Only the owner can generate temp PINs for the owner.'}), 403
+
+    # Don't allow self-generation
+    if admin_pin == user_id:
+        return jsonify({'message': 'Use the Change PIN feature to change your own PIN.'}), 400
+
+    # Generate a random 6-digit temp PIN
+    temp_pin = str(secrets.randbelow(900000) + 100000)  # 100000-999999
+
+    # Set expiry to 1 hour from now
+    expiry = (datetime.now() + timedelta(hours=1)).isoformat()
+
+    # Store on user record
+    users[user_id]['temp_pin'] = temp_pin
+    users[user_id]['temp_pin_expiry'] = expiry
+
+    save_json_data(USERS_FILE, users)
+
+    log_activity('generate_temp_pin', admin_pin, admin_user.get('role', 'unknown'),
+                 {'status': 'success', 'target_user_id': user_id,
+                  'target_user_name': target_user.get('name', 'Unknown'),
+                  'temp_pin': temp_pin, 'expiry': expiry,
+                  'reason': reason.strip() if reason else ''})
+
+    return jsonify({
+        'message': f'Temporary PIN generated for {target_user.get("name", user_id)}. Valid for 1 hour.',
+        'temp_pin': temp_pin,
+        'expiry': expiry,
+        'user_id': user_id,
+        'user_name': target_user.get('name', 'Unknown'),
+        'warn': 'This code can only be used once. Share it securely with the employee.'
     })
 
 
