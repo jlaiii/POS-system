@@ -2477,7 +2477,7 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
         </label>
         <div id="requestRecurringOptions" style="display:none;align-items:center;gap:8px;flex-wrap:wrap;">
           <span style="color:var(--text2);font-size:13px;" data-i18n="requests.recurring_day_label">Repeat every</span>
-          <select id="requestRecurringDay" style="min-width:120px;font-size:14px;padding:6px 10px;">
+          <select id="requestRecurringDay" style="min-width:120px;font-size:14px;padding:6px 10px;" onchange="onRequestRecurringChange()">
             <option value="0" data-i18n="requests.recurring_monday">Monday</option>
             <option value="1" data-i18n="requests.recurring_tuesday">Tuesday</option>
             <option value="2" data-i18n="requests.recurring_wednesday">Wednesday</option>
@@ -5846,6 +5846,10 @@ function onRequestDateChange() {
   }
   badge.style.display = 'none';
   document.getElementById('requestOverrideRow').style.display = 'none';
+  // Also update recurring count if recurring is active
+  if (document.getElementById('requestRecurring') && document.getElementById('requestRecurring').checked) {
+    onRequestRecurringChange();
+  }
 }
 
 async function submitTicket() {
