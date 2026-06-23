@@ -1148,6 +1148,153 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
 }
   @page { margin: 0; size: 80mm auto; }
 }
+
+/* ── ORIENTATION HANDLING ── */
+/* Landscape: wide & short — maximize horizontal space */
+@media (orientation: landscape) {
+  /* Kitchen display: wall-mounted screens — compact header, tighter cards */
+  #kitchenHeader {
+    padding: 8px 16px;
+  }
+  #kitchenHeader .kh-title { font-size: 20px; }
+  #kitchenHeader .kh-clock { font-size: 17px; min-width: 60px; }
+  #kitchenStats { padding: 6px 16px; gap: 16px; font-size: 14px; }
+  #kitchenQueue { padding: 8px; gap: 8px; }
+  .kitchen-order-card { padding: 14px; gap: 8px; }
+  .kitchen-order-card .koc-id { font-size: 1.8em; }
+  .kitchen-order-card .koc-item { font-size: 1.05em; }
+  .koc-btn-claim, .koc-btn-done { padding: 10px 20px; min-height: 44px; font-size: 1em; }
+  /* 3-column kitchen queue on wider landscape screens */
+  @media (min-width: 1200px) {
+    #kitchenQueue { grid-template-columns: repeat(3, 1fr); }
+  }
+  /* Kitchen table groups — tighter cards */
+  .kitchen-table-group .ktg-header { padding: 8px 14px; font-size: 1.1em; }
+  .kitchen-table-group .ktg-body { padding: 6px; gap: 6px; }
+
+  /* POS: maximize item grid columns in landscape */
+  #posMain { flex-direction: row; }
+  #itemGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  @media (min-width: 900px) { #itemGrid { grid-template-columns: repeat(4, 1fr); } }
+  @media (min-width: 1200px) { #itemGrid { grid-template-columns: repeat(5, 1fr); } }
+  @media (min-width: 1600px) { #itemGrid { grid-template-columns: repeat(6, 1fr); } }
+  /* Cart in landscape — fixed width sidebar */
+  #cart { max-width: 360px; max-height: 100%; }
+  /* Category tabs — more compact in landscape */
+  #catTabs button { font-size: 13px; padding: 8px 12px; min-height: 38px; }
+
+  /* Login screen — centered, no overflow */
+  #loginScreen { min-height: 100vh; padding: 16px; }
+  #pinPad { grid-template-columns: repeat(3, 70px); gap: 10px; }
+  #pinPad button { min-height: 64px; min-width: 70px; font-size: 22px; }
+
+  /* Modals — don't overflow viewport height */
+  .modal-box { max-height: 90vh; overflow-y: auto; }
+
+  /* Admin stats grid — more columns in landscape */
+  .stats-grid { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
+
+  /* Item management — inline form in landscape */
+  .form-row input, .form-row select { max-width: 160px; }
+
+  /* Timesheet / Pay period — compact */
+  .pp-card { padding: 12px; }
+  .pp-card-header { font-size: 15px; }
+}
+
+/* Portrait: tall & narrow — maximize vertical space */
+@media (orientation: portrait) {
+  /* Kitchen display: single column (already default), tighter header */
+  #kitchenHeader { padding: 10px 12px; }
+  #kitchenHeader .kh-title { font-size: 20px; }
+  #kitchenHeader .kh-clock { font-size: 16px; min-width: 50px; }
+  #kitchenStats { padding: 8px 12px; gap: 12px; font-size: 13px; }
+  .kitchen-order-card { padding: 16px; }
+  .kitchen-order-card .koc-id { font-size: 1.8em; }
+  .koc-btn-claim, .koc-btn-done { padding: 12px 20px; min-height: 48px; }
+
+  /* POS: cart bottom sheet in portrait */
+  #posMain { flex-direction: column; }
+  #cart { max-width: 100%; max-height: 35vh; min-width: unset; }
+
+  /* Category tabs — scrollable row */
+  #catTabs { gap: 4px; }
+  #catTabs button { font-size: 13px; padding: 8px 10px; min-height: 40px; white-space: nowrap; }
+
+  /* Login screen */
+  #loginScreen { padding: 16px; }
+  #pinPad { grid-template-columns: repeat(3, 72px); gap: 10px; }
+  #pinPad button { min-height: 68px; min-width: 72px; }
+
+  /* Admin: stack charts vertically */
+  .charts-row { grid-template-columns: 1fr; }
+
+  /* History filters — stack in portrait */
+  #historyFilter { flex-direction: column; align-items: stretch; }
+  #historyFilter input { max-width: 100%; }
+
+  /* Admin sub-tabs — scrollable row */
+  #adminSubTabs button { font-size: 12px; padding: 8px 10px; min-height: 38px; }
+
+  /* Form rows — stack in portrait */
+  .form-row { flex-direction: column; align-items: stretch; }
+  .form-row input, .form-row select { max-width: 100%; }
+
+  /* Timesheet — compact */
+  .pp-card { padding: 12px; }
+  .pp-card-meta { gap: 8px; font-size: 13px; }
+
+  /* Modals — full width in portrait */
+  .modal-box { max-width: 95%; width: 95%; }
+
+  /* Item cards — slightly smaller in portrait */
+  .item-card { padding: 10px; gap: 6px; }
+  .item-card .item-name { font-size: 14px; }
+  .item-card .item-price { font-size: 16px; }
+  .item-card .item-thumb { height: 60px; }
+
+  /* Kiosk mode — full width in portrait */
+  .kiosk-lookup-totals { padding: 14px 16px; }
+  .kiosk-lookup-totals .klt-row { font-size: 18px; }
+  .kiosk-lookup-totals .klt-row.total { font-size: 26px; }
+}
+
+/* Very small screens (<400px width) in any orientation */
+@media (max-width: 399px) {
+  #itemGrid { grid-template-columns: 1fr 1fr; gap: 6px; }
+  .item-card { padding: 8px; }
+  .item-card .item-name { font-size: 13px; }
+  .item-card .item-price { font-size: 14px; }
+  .item-card .item-thumb { height: 50px; }
+  .item-card .item-add { font-size: 12px; padding: 6px 10px; min-height: 36px; }
+  #cart { max-height: 30vh; padding: 10px; }
+  #cart h3 { font-size: 15px; }
+  .cart-item { font-size: 13px; padding: 6px 8px; }
+  #adminSubTabs button { font-size: 11px; padding: 6px 8px; min-height: 34px; }
+  .stat-card .stat-val { font-size: 22px; }
+  .payment-methods button { min-width: 60px; font-size: 13px; padding: 8px; }
+}
+
+/* Tall phones (<640px height) — reduce wasted space */
+@media (max-height: 640px) {
+  #kitchenHeader { padding: 6px 12px; }
+  #kitchenHeader .kh-title { font-size: 18px; }
+  #kitchenHeader .kh-clock { font-size: 15px; }
+  #kitchenStats { padding: 4px 12px; font-size: 12px; gap: 10px; }
+  .kitchen-order-card { padding: 10px; gap: 6px; }
+  .kitchen-order-card .koc-id { font-size: 1.5em; }
+  .koc-btn-claim, .koc-btn-done { padding: 8px 16px; min-height: 38px; font-size: 0.9em; }
+  .kitchen-order-card .koc-item { font-size: 0.95em; }
+  #itemGrid { gap: 6px; }
+  .item-card { padding: 8px; gap: 4px; }
+  .item-card .item-thumb { height: 50px; }
+  #cart { padding: 10px; }
+  #cart h3 { font-size: 15px; }
+  .cart-item { font-size: 13px; padding: 6px 8px; }
+  #catTabs button { min-height: 34px; padding: 6px 10px; font-size: 12px; }
+}
 </style>
 <script src="https://cdn.socket.io/4.8.1/socket.io.min.js" integrity="sha384-mkQ3/9F6QIkz1z7jC1Jfn5qO8ANMgS4zX9VX5G5WIQT2Q9F9M0cL0Kj2mF6KnC" crossorigin="anonymous"></script>
 </head>
