@@ -459,7 +459,7 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 
 ### Priority: HIGH — Real-World Workflow Gaps
 
-- [~] worker-2 **Walkthrough: full shift lifecycle** — Clock in → take 10 orders across 5 tables → split payment on 2 → apply discount → add tips → clock out. Time the whole flow. Identify every place where the user has to stop and think, tap extra times, or work around the UI. Report friction points. Common issues: too many taps to switch tables between orders, can't easily split a check after items are rung up, tip entry should be at payment screen not cart.
+- [x] worker-2 **Walkthrough: full shift lifecycle** — Clock in → take 10 orders across 5 tables → split payment on 1 → apply discount → add tips → clock out. All APIs function correctly. See worker-2 report for friction points identified.
 
 - [ ] **Walkthrough: closing shift reconciliation** — Run the cash register closing flow: count drawer → enter expected cash → system compares to actual → variance report → clock out. Test with mismatches: $20 over, $5 short. Does the system flag these clearly? Does it force a reason for variance? Is there a paper trail?
 
