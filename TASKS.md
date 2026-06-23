@@ -65,6 +65,68 @@
 
 - [ ] **Per-user pay rate field** — Add `pay_rate` (hourly, float) to user profile in `users.json`. Shown in user management. Timesheet summary multiplies `total_hours × pay_rate` for estimated gross pay per period. Displayed in pay period summary. CSV export includes `Pay Rate`, `Estimated Pay` columns. Rate changes don't retroactively apply — use rate at time of export.
 
+### Scheduled Shifts & Lateness Tracking (NEW — June 2026)
+
+> Currently there is no concept of when an employee is *supposed* to start. Clock-in just records the actual time. The owner/admin needs to see who's late, how late, and be able to flag/excuse lateness. They also need to fix clock-in/out times when employees forget (system error, forgot to clock out, clocked in under wrong PIN, etc.).
+
+#### Per-user scheduled start time
+- Add `scheduled_start` field to each user in `users.json` — a string like `"09:00"` (24h format, local time). This is the time the employee is expected to clock in each workday. If unset or null, no lateness check for that user.
+- Admin can set this in the User Management panel — add a "Scheduled Start" time input per user (type="time"). Stored and loaded from `users.json`.
+
+#### Auto-late detection on clock-in
+- `POST /api/clock/in`: after recording the clock-in, compare the actual `clock_in_time` against the user's `scheduled_start` for today.
+- If `scheduled_start` is set: parse today's date + scheduled time → `scheduled_dt`. If `clock_in_time > scheduled_dt + grace_period`, flag the shift as late.
+- Grace period: configurable in admin (default 5 minutes). Stored in a new `timesheet_config.json` file: `{ "late_grace_minutes": 5 }`. Admin can change via a new `POST /api/timesheet/config` endpoint (read/write). Anyone within grace period is on-time, not late.
+- Calculate `late_minutes = round((clock_in_time - scheduled_dt).total_seconds() / 60)`. Store on the active shift.
+
+#### Late flag on shift records
+- Add new fields to shift records in `shift_log.json` and `active_shifts`:
+  - `scheduled_start`: string or null (the expected start time that was checked against)
+  - `late_minutes`: int or null (minutes past scheduled + grace. null = on time or no schedule. >0 = late)
+  - `late_excused`: boolean (default false, admin can toggle — see below)
+  - `late_note`: string or null (reason if provided at clock-in, or admin note)
+- `POST /api/clock/in` response includes `late_minutes` and `late_excused` so the clock-in toast can say "⚠️ Clocked in 23 minutes late" when applicable.
+
+#### Admin late shift flagging & excuse
+- New endpoint `POST /api/clock/excuse_late`: admin sets `late_excused = true` on a completed shift. Accepts `shift_index` (position in shift_log array), `adminPin`, optional `note`. Requires `view_timesheet` permission.
+- New endpoint `POST /api/clock/flag_late`: admin manually flags a shift as late (even if auto-detection didn't catch it — e.g., no scheduled time set). Sets `late_minutes` to admin-provided value. Requires `view_timesheet` permission.
+- Both endpoints log to activity_log: `late_excused` or `late_flagged` with old→new values and admin PIN.
+- UI: in the Employee Shifts timesheet view, late shifts get a red 🕐 badge showing minutes late. Excused late shifts get a gray 🔕 badge instead. Admin clicks the badge to toggle excuse/flag via a small popover with note field.
+
+#### Admin shift time edit / correction (completes + expands the existing task)
+- `POST /api/clock/edit`: admin can edit `clock_in_time` and/or `clock_out_time` on any completed shift. Accepts `shift_index` (position in shift_log array), `new_clock_in` (ISO string or null to keep original), `new_clock_out` (ISO string or null), `adminPin`, `reason` (required — text). Requires `view_timesheet` permission.
+- Recalculates `duration_hours` from edited times. Re-runs late detection on the edited `clock_in_time` (so if admin fixes a clock-in that was actually on-time, the late flag auto-clears).
+- Stores edit audit trail on the shift record under a new `edits` array:
+  ```json
+  "edits": [
+    {
+      "edited_by": "1111",
+      "edited_by_name": "Owner",
+      "edited_at": "2026-06-23T14:30:00",
+      "reason": "Employee forgot to clock out — confirmed left at 5pm",
+      "changes": {
+        "clock_in_time": {"old": "...", "new": "..."},
+        "clock_out_time": {"old": null, "new": "2026-06-23T17:00:00"}
+      }
+    }
+  ]
+  ```
+- Edited shifts show an ⚠️ "Edited" badge in the timesheet UI. Clicking the badge shows the full edit history (timestamps, who, reason, old→new values).
+- Activity log records `shift_edited` with full details.
+- **Clock-in for someone else's shift**: if admin needs to clock someone in retroactively (employee called saying they forgot, but they're already working), admin uses `/api/clock/edit` to set the clock_in_time on the shift record after the fact. System does NOT create a new shift — it edits the existing one. This handles the "user friendly fix time" scenario.
+
+#### Late clock-in reason (employee self-report)
+- The clock-in POST body accepts an optional `late_note` field. If an employee knows they're late, they can include a reason: "Traffic on I-69", "Flat tire", etc.
+- This is stored as `late_note` on the shift record (separate from the general `notes` field).
+- Displayed in the timesheet view next to the late badge.
+
+#### Frontend changes summary
+- **Clock button**: if user has a `scheduled_start` and they clock in late, the toast changes from "Clocked in successfully" to "⚠️ Clocked in — 23 min late". The clock button shows a red pulse animation for 30 seconds after a late clock-in.
+- **Employee Shifts timesheet tab**: late shifts get red left-border + 🕐 badge showing minutes. Excused shifts get gray left-border + 🔕 badge. Click badge → popover with "Excuse" / "Flag Late" toggle + note textarea. Edited shifts get ⚠️ badge → click shows edit history.
+- **Pay Period summary**: new column "Late Shifts" showing count of unexcused late shifts per employee. Late shifts with excused=true don't count against the employee in the summary.
+- **User Management**: new "Scheduled Start" time input per user (type="time", empty = no schedule).
+- **Admin Settings > Timesheet Config**: new section with "Late Grace Period (minutes)" number input, reads/writes `timesheet_config.json`.
+
 ### Priority: MEDIUM
 
 - [ ] **Timesheet approval workflow** — After pay period ends, timekeeper clicks "Submit for Approval" which locks that period's shifts from further edits. Employee can review and "Approve" (optional — small shops may skip). Locked shifts grayed out with 🔒 icon. Unlock requires owner permission. Approval status stored in new `timesheet_approvals.json` with period range, approved_by, timestamp.
