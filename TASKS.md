@@ -461,7 +461,7 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 
 - [x] worker-2 **Walkthrough: full shift lifecycle** — Clock in → take 10 orders across 5 tables → split payment on 1 → apply discount → add tips → clock out. All APIs function correctly. See worker-2 report for friction points identified.
 
-- [ ] **Walkthrough: closing shift reconciliation** — Run the cash register closing flow: count drawer → enter expected cash → system compares to actual → variance report → clock out. Test with mismatches: $20 over, $5 short. Does the system flag these clearly? Does it force a reason for variance? Is there a paper trail?
+- [~] worker-1 **Walkthrough: closing shift reconciliation** — Run the cash register closing flow: count drawer → enter expected cash → system compares to actual → variance report → clock out. Test with mismatches: $20 over, $5 short. Does the system flag these clearly? Does it force a reason for variance? Is there a paper trail?
 
 - [ ] **Walkthrough: refund/void flow** — Ring up an order → submit → customer changes mind → void entire order. Ring up → submit → customer says "no onions" → refund single item. Test both. Does the refund button appear quickly? Is the reason required? Are refunded items removed from inventory? Is the refund visible in stats/reports?
 
