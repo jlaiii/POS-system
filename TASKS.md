@@ -158,7 +158,7 @@ Use Python `pyotp` (pure Python, no C extensions, `pip install pyotp qrcode`):
 
 ### Priority: HIGH
 
-- [ ] **2FA setup endpoint + QR code generation** — `POST /api/auth/2fa/setup`: user requests to enable 2FA. Generates a `totp_secret`, stores it as `totp_secret` on user (but `totp_enabled` stays false until verified). Returns `provisioning_uri` (for QR) and `secret` (for manual entry). Requires user to be logged in (their own account — they can only set up 2FA for themselves). If 2FA is already enabled, returns 409 "2FA already enabled — disable first."
+- [~] worker-3 **2FA setup endpoint + QR code generation** — `POST /api/auth/2fa/setup`: user requests to enable 2FA. Generates a `totp_secret`, stores it as `totp_secret` on user (but `totp_enabled` stays false until verified). Returns `provisioning_uri` (for QR) and `secret` (for manual entry). Requires user to be logged in (their own account — they can only set up 2FA for themselves). If 2FA is already enabled, returns 409 "2FA already enabled — disable first."
 
 - [ ] **2FA verify endpoint** — `POST /api/auth/2fa/verify`: user submits a 6-digit code from their authenticator app to confirm setup. Validates against `totp_secret`. If valid: sets `totp_enabled = true`, generates 8 backup codes (random 10-char alphanumeric strings, sha256 hashed before storing), sets `totp_setup_at`. Returns the 8 backup codes (plaintext — ONLY time they're shown. Display with big warning: "Save these now. They will never be shown again. Store them somewhere safe."). If invalid code: returns 400 "Invalid code. Try again."
 
