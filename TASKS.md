@@ -2,7 +2,7 @@
 
 > Auto-managed by 3 Hermes Worker Crons (every 30 min each, staggered claims).
 > Workers use `[~]` to claim tasks before working. Never pick a claimed task.
-> Last updated: 2026-06-23 (curation #11 — maintenance: dedup consolidated 2FA frontend tasks, promoted backup-code link to HIGH, trimmed Done section to 15 entries, restored missing kitchen display entry)
+> Last updated: 2026-06-23 (curation #12 — system audit: corrected PWA task (sw.js exists), corrected 2FA task (login UI exists, setup UI missing), added i18n gap task with specific line references)
 
 ## Status Legend
 - `[ ]` = pending (available for any worker)
@@ -422,9 +422,9 @@ New `tickets.json` data store. Each ticket:
 
 ||- [ ] **MEDIUM: Customer online ordering portal** — Mobile-friendly standalone page (e.g. `/order`) for customers to browse menu, view item details + images, add to cart with modifiers/notes, and place pickup or delivery orders. Reuses existing backend (orders, items, combos, delivery addresses, payment processing). Integrates with existing pickup-display, kitchen queue, and order notification system. No staff intervention needed for order placement. Essential for any restaurant wanting to accept direct online orders without third-party delivery apps.|
 ||
-||- [ ] **MEDIUM: Service worker + proper PWA icons** — No `sw.js` service worker file exists, and `manifest.json` only has an SVG icon (no 192px/512px PNG icons). Without a service worker, the app cannot cache assets for offline use or be properly installed as a PWA on tablets/iPads. Apple-touch-icon and apple-mobile-web-app-capable meta tags missing for iOS home screen. Add `sw.js` with cache-first static asset strategy, register in index.html, add multi-size PNG icons.|
+||- [ ] **MEDIUM: Proper PWA icons + iOS meta tags** — `sw.js` exists and is registered but `manifest.json` only has an SVG icon (no 192px/512px PNG icons). Without proper PNG icons, the app cannot be properly installed as a PWA on tablets/iPads. Apple-touch-icon and apple-mobile-web-app-capable meta tags missing for iOS home screen. Add multi-size PNG icons (192px, 512px), apple-touch-icon, and apple-mobile-web-app-capable meta tags. Also enhance sw.js to cache CSS and more static assets for better offline experience.|
 ||
-||- [ ] **MEDIUM: 2FA frontend login/setup UI — currently no frontend** — All backend 2FA endpoints exist and work (setup, verify, verify_login, backup_login, admin reset/disable), but there is ZERO frontend code for 2FA in index.html. No setup UI, no login challenge screen, no backup code management UI. This means anyone who enables 2FA through the API is effectively LOCKED OUT on the frontend. Implement the 2FA setup flow, login challenge with TOTP input, and backup code fallback. Reuses existing backend endpoints. (Consolidates existing pending 2FA frontend tasks at lines 171, 173, 175.)|
+||- [ ] **MEDIUM: 2FA frontend setup UI — QR scan + enable flow missing** — Backend 2FA endpoints all work (setup, verify, verify_login, backup_login, admin reset/disable). 2FA LOGIN challenge UI with TOTP digit inputs and backup code fallback IS implemented. However, the SELF-SERVICE SETUP flow is missing — users have no way to enable 2FA from the frontend. There's no "Enable 2FA" button in user profile/settings, no QR code to scan with authenticator app, and no verification step to confirm setup. The admin disable/regenerate buttons exist in user management. Implement the setup flow: "Enable 2FA" button for logged-in user → call setup endpoint → display QR code → user enters 6-digit code to confirm → enable 2FA. Show backup codes after setup. (Consolidates existing pending 2FA frontend tasks at lines 171, 173, 175.)|
 
 ## Production Readiness & Mobile Optimization (NEW — June 2026)
 
@@ -479,7 +479,7 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 
 - [ ] **Idle timeout + auto-lock** — After 5 minutes of inactivity on the POS screen, auto-lock and require PIN re-entry. This prevents unauthorized use when a waiter walks away from the tablet. Configurable timeout (1-30 minutes). Show a countdown warning: "Locking in 30 seconds... tap to stay." Also: clock-out auto-lock — when an employee clocks out, force logout on that device.
 
-- [ ] **Multi-language completeness check** — Audit the i18n keys. Are ALL user-visible strings translated to Spanish? Check toast messages, error messages, button labels, admin section headers, timesheet labels, security settings, backup codes UI. Common gap: error messages from the backend are English-only. Add server-side translation for common error messages.
+|- [ ] **MEDIUM: i18n gaps — ~20 hardcoded English toast messages** — Several `showToast()` calls in index.html still use raw English strings instead of `t()` translation keys. Found at lines: 5238, 5250, 5251, 5254, 5262, 5274, 5275, 5278, 5286, 5298, 5299, 5302, 5310, 5316, 5328, 5329, 5332, 5347, 5350, 5365, 5373, 5388, 5391. Common untranslated strings: "Network error", "Please select a date range first.", "Reason is required to unlock.", "Pay period CSV exported!", "Shifts CSV exported", "Export failed". Non-Spanish-speaking employees will see these in English even if the rest of the UI is in Spanish. Add i18n keys for all toast messages. Also: backend error messages from Flask routes are all English-only — add server-side translation or return error codes the frontend can map.
 
 - [ ] **Performance on low-end tablets** — The single-page index.html is 500KB+. On a $100 Android tablet with 2GB RAM, this might be slow. Profile: page load time, time-to-interactive, memory usage. Optimize: lazy-load Chart.js (only on stats tab), defer non-critical CSS, split kitchen display into separate lightweight page. Target: <3s load on 4G, smooth 60fps scrolling.
 
