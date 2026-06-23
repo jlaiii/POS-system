@@ -537,7 +537,7 @@ New `security_events.json` (append-only log of flagged events):
 
 ### Priority: HIGH
 
-- [~] worker-3 **IP tracking on all requests** — Capture `request.remote_addr` on every Flask request. Add `ip_address` field to activity_log entries for login, clock-in, order submit, and any admin action. Store in `login_attempts.json`: `{user_id, ip, timestamp, success, user_agent}`. This is the foundation — without IP tracking, none of the below works. Handle `X-Forwarded-For` header for proxied requests (VPS behind nginx/Cloudflare).
+- [x] worker-3 **IP tracking on all requests** — Capture `request.remote_addr` on every Flask request. Add `ip_address` field to activity_log entries for login, clock-in, order submit, and any admin action. Store in `login_attempts.json`: `{user_id, ip, timestamp, success, user_agent}`. This is the foundation — without IP tracking, none of the below works. Handle `X-Forwarded-For` header for proxied requests (VPS behind nginx/Cloudflare). [worker-3 — Modified log_activity() to auto-inject ip_address and user_agent into EVERY activity_log entry. Created record_login_attempt() helper and LOGIN_ATTEMPTS_FILE. Wired record_login_attempt() into all 16 login paths (PIN, password, temp_pin, 2fa, backup_code — successes, failures, locks, bans). Added GET /api/security/login_attempts endpoint with manage_users permission gating, limit and user_id filter params. Pre-existing get_client_ip() already handled X-Forwarded-For.]
 
 - [ ] **Owner security dashboard — "🛡️ Security" admin tab** — New admin tab with real-time security overview:
   - **Live feed**: scrollable list of recent security events (logins, blocks, flags) — newest first, auto-refresh every 30s
