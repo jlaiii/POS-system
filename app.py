@@ -4707,6 +4707,101 @@ def employee_pay_stub_pdf():
     })
 
 
+@app.route('/api/employee/pay_history_csv', methods=['POST'])
+def employee_pay_history_csv():
+    """Export employee pay history as CSV.
+    Employee-facing: no admin permission required — user can only export their own data.
+    """
+    data = request.json
+    user_id = (data.get('userId') or '').strip()
+
+    if not user_id:
+        return jsonify({'message': 'User ID is required.'}), 400
+
+    users = load_json_data(USERS_FILE)
+    if user_id not in users:
+        return jsonify({'message': 'User not found.'}), 404
+
+    user_data = users[user_id]
+    pay_rate = user_data.get('pay_rate')
+    has_pay_rate = pay_rate is not None and pay_rate > 0
+    pay_rate_val = pay_rate or 0
+    user_name = user_data.get('name', 'Unknown')
+
+    shift_log = load_json_data(SHIFT_FILE)
+
+    # Filter shifts for this user only
+    user_shifts = [s for s in shift_log if s.get('user_id') == user_id]
+
+    now = datetime.now()
+    today = now.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    # Calculate current week (Mon-Sun) to exclude from history
+    monday = today - timedelta(days=today.weekday())
+    current_week_key = monday.strftime('%Y-%m-%d')
+
+    def get_paid_hours(s):
+        return s.get('paid_hours', s.get('duration_hours', 0))
+
+    # Group completed shifts by week
+    week_map = {}
+    for s in user_shifts:
+        ck = s.get('clock_in_time', '')
+        if not ck:
+            continue
+        try:
+            dt = datetime.fromisoformat(ck)
+        except (ValueError, TypeError):
+            continue
+        # Week starting Monday
+        week_start = dt - timedelta(days=dt.weekday())
+        week_key = week_start.strftime('%Y-%m-%d')
+        if week_key == current_week_key:
+            continue  # Skip current period
+        if week_key not in week_map:
+            week_map[week_key] = {
+                'start_date': week_start.strftime('%Y-%m-%d'),
+                'end_date': (week_start + timedelta(days=6)).strftime('%Y-%m-%d'),
+                'hours': 0.0,
+                'shift_count': 0,
+                'pay_rate': pay_rate_val if has_pay_rate else 0,
+                'has_pay_rate': has_pay_rate,
+                'estimated_gross': 0.0
+            }
+        paid = get_paid_hours(s)
+        week_map[week_key]['hours'] += paid
+        week_map[week_key]['shift_count'] += 1
+
+    # Sort periods newest first
+    past_periods = sorted(
+        week_map.values(),
+        key=lambda p: p['start_date'],
+        reverse=True
+    )
+
+    headers = ['Period Start', 'Period End', 'Shifts', 'Total Hours', 'Pay Rate', 'Gross Pay']
+    rows = []
+    for period in past_periods:
+        hours = round(period['hours'], 2)
+        gross = round(hours * pay_rate_val, 2) if has_pay_rate else 0
+        rate_display = f"${pay_rate_val:.2f}/hr" if has_pay_rate else 'N/A'
+        gross_display = f"${gross:.2f}" if has_pay_rate else 'N/A'
+        rows.append({
+            'Period Start': period['start_date'],
+            'Period End': period['end_date'],
+            'Shifts': period['shift_count'],
+            'Total Hours': hours,
+            'Pay Rate': rate_display,
+            'Gross Pay': gross_display
+        })
+
+    csv_content = generate_csv(rows, headers)
+    return jsonify({
+        'csv': csv_content,
+        'filename': f'pay_history_{user_id}.csv'
+    })
+
+
 @app.route('/api/export/shifts_csv', methods=['POST'])
 def export_shifts_csv():
     """Export employee shift records as CSV."""

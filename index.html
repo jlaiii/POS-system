@@ -2181,7 +2181,10 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
     <div class="card" style="margin-bottom:16px;padding:16px 20px;">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
         <h4 style="margin:0;font-size:15px;color:var(--accent);" data-i18n="mypay.history_title">📋 Pay History</h4>
-        <button class="outline" onclick="loadMyPay()" style="font-size:13px;padding:8px 14px;min-height:40px;" data-i18n="mypay.refresh">🔄 Refresh</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="outline" onclick="loadMyPay()" style="font-size:13px;padding:8px 14px;min-height:40px;" data-i18n="mypay.refresh">🔄 Refresh</button>
+          <button class="outline" onclick="exportPayHistoryCSV()" style="font-size:13px;padding:8px 14px;min-height:40px;" data-i18n="mypay.export_csv">📥 Export CSV</button>
+        </div>
       </div>
       <div id="myPayHistoryList"><div class="empty-state" data-i18n="mypay.no_history">No pay history yet.</div></div>
     </div>
@@ -2958,6 +2961,7 @@ const L10N = {
     'mypay.no_rate_notice': '⚠️ No pay rate is set for your account. Ask your manager to set your pay rate in User Management.',
     'mypay.history_subtitle': 'Past pay periods — tap to expand for shift breakdown',
     'mypay.period_total': 'Period Total',
+    'mypay.export_csv': '📥 Export CSV',
   },
   es: {
     'app.title': '🍽️ Sistema POS',
@@ -3463,6 +3467,7 @@ const L10N = {
     'mypay.no_rate_notice': '⚠️ No hay tarifa de pago configurada para su cuenta. Pídale a su gerente que configure su tarifa en Gestión de Usuarios.',
     'mypay.history_subtitle': 'Períodos de pago anteriores — toque para expandir',
     'mypay.period_total': 'Total del Período',
+    'mypay.export_csv': '📥 Exportar CSV',
   }
 };
 
@@ -10051,6 +10056,31 @@ async function downloadPayStub(startDate) {
       btn.disabled = false;
       btn.textContent = '📄';
     }
+  }
+}
+
+async function exportPayHistoryCSV() {
+  /** Export pay history as CSV download. */
+  if (!currentUser || !currentUser.id) return;
+  const btn = document.querySelector('button[onclick="exportPayHistoryCSV()"]');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳'; }
+  try {
+    const res = await fetch(BACKEND_URL + '/api/employee/pay_history_csv', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: currentUser.id })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(data.message || 'Failed to export pay history.', 'error');
+      return;
+    }
+    downloadCSV(data.csv, data.filename);
+    showToast('Pay history exported!', 'success');
+  } catch (e) {
+    showToast('Network error exporting pay history.', 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '📥 Export CSV'; }
   }
 }
 
