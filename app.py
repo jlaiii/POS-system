@@ -45,6 +45,13 @@ user_known_ips = defaultdict(set)
 # Tracks active login sessions per user for simultaneous-login detection
 user_login_sessions = defaultdict(list)
 
+# Session management — tracks active sessions per user with tokens
+# Structure: { user_id: { session_token: { token, ip, user_agent, device_info, login_time, last_active, user_id, user_name, role } } }
+# Session expiry: 8h active (session token valid), 24h idle (last_active cutoff)
+active_user_sessions = defaultdict(dict)
+SESSION_ACTIVE_HOURS = 8  # session token considered active
+SESSION_IDLE_HOURS = 24   # session considered "active" in listing if last_active within this
+
 @app.before_request
 def enforce_ip_blocklist():
     """Check client IP against blocklist/allowlist before every request.
@@ -588,6 +595,116 @@ def get_anomaly_event_counts():
     return counts
 
 
+# ══════════════════════════════════════════════
+# Session Management Helpers
+# ══════════════════════════════════════════════
+
+def create_user_session(user_id, user_name, role, client_ip, user_agent='', device_info=''):
+    """Create a new session token for a user and store it in active_user_sessions.
+    Returns the session token string."""
+    token = secrets.token_hex(32)
+    now = datetime.now()
+    session = {
+        'token': token,
+        'user_id': user_id,
+        'user_name': user_name,
+        'role': role,
+        'ip': client_ip,
+        'user_agent': user_agent,
+        'device_info': device_info,
+        'login_time': now.isoformat(),
+        'last_active': now.isoformat()
+    }
+    active_user_sessions[user_id][token] = session
+    return token
+
+
+def cleanup_user_sessions(user_id, keep_token=None):
+    """Remove expired sessions for a user. If keep_token is provided, that session is preserved.
+    Returns the count of remaining sessions."""
+    now = datetime.now()
+    sessions = active_user_sessions.get(user_id, {})
+    expired_tokens = []
+    for token, session in sessions.items():
+        if keep_token and token == keep_token:
+            continue
+        # Check idle expiry (24h since last_active)
+        last_active = session.get('last_active')
+        if last_active:
+            try:
+                last_active_dt = datetime.fromisoformat(last_active)
+                if now - last_active_dt > timedelta(hours=SESSION_IDLE_HOURS):
+                    expired_tokens.append(token)
+                    continue
+            except (ValueError, TypeError):
+                expired_tokens.append(token)
+                continue
+        # Check active expiry (8h since login)
+        login_time = session.get('login_time')
+        if login_time:
+            try:
+                login_dt = datetime.fromisoformat(login_time)
+                if now - login_dt > timedelta(hours=SESSION_ACTIVE_HOURS):
+                    expired_tokens.append(token)
+            except (ValueError, TypeError):
+                expired_tokens.append(token)
+    for t in expired_tokens:
+        del sessions[t]
+    return len(sessions)
+
+
+def get_active_sessions(user_id=None):
+    """Return all active (non-expired) sessions. If user_id is given, only for that user.
+    Returns list of session dicts sorted by login_time descending."""
+    now = datetime.now()
+    result = []
+    users_to_check = [user_id] if user_id else list(active_user_sessions.keys())
+    for uid in users_to_check:
+        sessions = active_user_sessions.get(uid, {})
+        for token, session in sessions.items():
+            # Skip expired
+            try:
+                last_active = session.get('last_active')
+                if last_active:
+                    last_active_dt = datetime.fromisoformat(last_active)
+                    if now - last_active_dt > timedelta(hours=SESSION_IDLE_HOURS):
+                        continue
+                login_time = session.get('login_time')
+                if login_time:
+                    login_dt = datetime.fromisoformat(login_time)
+                    if now - login_dt > timedelta(hours=SESSION_ACTIVE_HOURS):
+                        continue
+            except (ValueError, TypeError):
+                pass
+            result.append(dict(session))
+    # Sort by login_time descending
+    result.sort(key=lambda s: s.get('login_time', ''), reverse=True)
+    return result
+
+
+def logout_session(user_id, token):
+    """Remove a specific session for a user. Returns True if found and removed."""
+    sessions = active_user_sessions.get(user_id, {})
+    if token in sessions:
+        del sessions[token]
+        return True
+    return False
+
+
+def logout_all_sessions(user_id, except_token=None):
+    """Remove all sessions for a user, optionally keeping one.
+    Returns count of sessions removed."""
+    sessions = active_user_sessions.get(user_id, {})
+    removed = 0
+    tokens_to_remove = list(sessions.keys())
+    for token in tokens_to_remove:
+        if except_token and token == except_token:
+            continue
+        del sessions[token]
+        removed += 1
+    return removed
+
+
 def check_get_auth(admin_pin, permission):
     """Check authentication for GET endpoints that pass adminPin as query param.
     Returns (user_data, None) on success, or (None, (response, status_code)) on failure."""
@@ -1088,12 +1205,17 @@ def login():
                     if pin_reset_info or force_change_required:
                         save_json_data(USERS_FILE, users)
 
+                    # Create session token
+                    user_agent = request.headers.get('User-Agent', '')
+                    session_token = create_user_session(uid, u_data['name'], u_data['role'], client_ip, user_agent)
+
                     response_data = {
                         'message': 'Login successful',
                         'user': u_data['name'],
                         'role': u_data['role'],
                         'permissions': u_data.get('permissions', []),
-                        'totp_enabled': u_data.get('totp_enabled', False)
+                        'totp_enabled': u_data.get('totp_enabled', False),
+                        'session_token': session_token
                     }
                     if pin_reset_info:
                         response_data['pin_reset_info'] = pin_reset_info
@@ -1167,14 +1289,19 @@ def login():
             record_login_attempt(user_id, True, 'temp_pin', client_ip, {'status': 'success'})
             if user_info['role'] in ('admin', 'owner'):
                 active_admin_sessions[user_id] = datetime.now()
-            
+
+            # Create session token
+            user_agent = request.headers.get('User-Agent', '')
+            session_token = create_user_session(user_id, user_info['name'], user_info['role'], client_ip, user_agent)
+
             response_data = {
                 'message': 'Login successful (temporary PIN)',
                 'user': user_info['name'],
                 'role': user_info['role'],
                 'permissions': user_info.get('permissions', []),
                 'temp_pin_used': True,
-                'totp_enabled': user_info.get('totp_enabled', False)
+                'totp_enabled': user_info.get('totp_enabled', False),
+                'session_token': session_token
             }
             try:
                 check_anomalies_after_login(user_id, user_info['name'], client_ip)
@@ -1245,12 +1372,17 @@ def login():
             if pin_reset_info or force_change_required:
                 save_json_data(USERS_FILE, users)
 
+            # Create session token
+            user_agent = request.headers.get('User-Agent', '')
+            session_token = create_user_session(user_id, user_info['name'], user_info['role'], client_ip, user_agent)
+
             response_data = {
                 'message': 'Login successful',
                 'user': user_info['name'],
                 'role': user_info['role'],
                 'permissions': user_info.get('permissions', []),
-                'totp_enabled': user_info.get('totp_enabled', False)
+                'totp_enabled': user_info.get('totp_enabled', False),
+                'session_token': session_token
             }
             if pin_reset_info:
                 response_data['pin_reset_info'] = pin_reset_info
@@ -1366,36 +1498,18 @@ def security_dashboard():
     # --- Recent security events (newest 20) ---
     recent_events = list(reversed(events[-20:]))
 
-    # --- Anonymized user map for active sessions ---
+    # --- Active sessions from in-memory tracking ---
+    active_sessions_list = get_active_sessions()
+    # Enrich with user names from users.json
     users = load_json_data(USERS_FILE)
     if not isinstance(users, dict):
         users = {}
-
-    # Build active sessions from login_attempts (users who logged in within last 24h)
-    active_sessions = {}
-    seen_user_ips = set()
-    for a in reversed(attempts):
-        if a.get('success'):
-            uid = str(a.get('user_id', ''))
-            ip = a.get('ip', '')
-            key = f"{uid}:{ip}"
-            if key not in seen_user_ips:
-                seen_user_ips.add(key)
-                try:
-                    ts = datetime.fromisoformat(a.get('timestamp', ''))
-                    if now - ts < timedelta(hours=24):
-                        name = ''
-                        if uid in users:
-                            name = users[uid].get('name', '')
-                        active_sessions[uid] = {
-                            'user_id': uid,
-                            'user_name': name,
-                            'ip': ip,
-                            'last_active': a.get('timestamp', ''),
-                            'user_agent': a.get('user_agent', '')
-                        }
-                except (ValueError, TypeError):
-                    pass
+    for s in active_sessions_list:
+        uid = s.get('user_id', '')
+        if uid in users:
+            s['user_name'] = users[uid].get('name', s.get('user_name', ''))
+        # Strip token from response for security
+        s.pop('token', None)
 
     return jsonify({
         'summary': {
@@ -1404,12 +1518,12 @@ def security_dashboard():
             'blocked_ips_count': len(blocked_ips),
             'open_events_count': len(open_events),
             'critical_events_count': len(critical_events),
-            'active_sessions_count': len(active_sessions)
+            'active_sessions_count': len(active_sessions_list)
         },
         'recent_attempts': recent_attempts,
         'recent_events': recent_events,
         'blocked_ips': blocked_ips,
-        'active_sessions': list(active_sessions.values()),
+        'active_sessions': active_sessions_list,
         'anomaly_counts': get_anomaly_event_counts(),
         'config': config
     })
@@ -2123,13 +2237,19 @@ def twofa_verify_login():
     if user_data['role'] in ('admin', 'owner'):
         active_admin_sessions[user_id] = datetime.now()
 
+    # Create session token
+    user_agent = request.headers.get('User-Agent', '')
+    client_ip = get_client_ip()
+    session_token = create_user_session(user_id, user_data['name'], user_data['role'], client_ip, user_agent)
+
     # Check for PIN reset notification
     response_data = {
         'message': 'Login successful',
         'user': user_data['name'],
         'role': user_data['role'],
         'permissions': user_data.get('permissions', []),
-        'totp_enabled': user_data.get('totp_enabled', False)
+        'totp_enabled': user_data.get('totp_enabled', False),
+        'session_token': session_token
     }
     if user_data.get('pin_reset_notification'):
         notif = user_data['pin_reset_notification']
@@ -2693,11 +2813,27 @@ def change_pin():
                           '000000', '111111', '222222']
     is_guessable = new_pin in guessable_patterns
 
+    # Optionally log out all other sessions on PIN change
+    logout_other = data.get('logoutOtherSessions', False)
+    if logout_other:
+        session_token = str(data.get('sessionToken', ''))
+        removed = 0
+        if session_token:
+            removed = logout_all_sessions(user_id, except_token=session_token)
+        else:
+            removed = logout_all_sessions(user_id)
+        log_activity('pin_change_logout_sessions', user_id, user_data.get('role', 'unknown'),
+                     {'old_user_id': user_id, 'sessions_removed': removed})
+
     # Move user data from old PIN to new PIN
     user_data_copy = dict(user_data)
     del users[user_id]
     users[new_pin] = user_data_copy
     save_json_data(USERS_FILE, users)
+
+    # Move sessions from old user_id to new user_id
+    if user_id in active_user_sessions:
+        active_user_sessions[new_pin] = active_user_sessions.pop(user_id)
 
     log_activity('pin_changed', new_pin, user_data_copy.get('role', 'unknown'),
                  {'old_user_id': user_id, 'new_user_id': new_pin,
@@ -2878,6 +3014,88 @@ def generate_temp_pin():
         'user_id': user_id,
         'user_name': target_user.get('name', 'Unknown'),
         'warn': 'This code can only be used once. Share it securely with the employee.'
+    })
+
+
+# ══════════════════════════════════════════════
+# Session Management Endpoints
+# ══════════════════════════════════════════════
+
+@app.route('/api/sessions', methods=['GET', 'POST'])
+def sessions_list():
+    """Get active sessions for a user or all users (admin).
+    GET: query params { userId, adminPin } — if adminPin has view_stats, returns sessions for userId or all
+    POST: body { userId, sessionToken } — returns sessions for the user (self-service).
+    Returns list of active sessions sorted by login_time descending."""
+    if request.method == 'POST':
+        data = request.json or {}
+        user_id = str(data.get('userId', ''))
+        session_token = str(data.get('sessionToken', ''))
+        if not user_id or not session_token:
+            return jsonify({'message': 'userId and sessionToken are required.'}), 400
+        # Verify the session token belongs to this user
+        sessions = active_user_sessions.get(user_id, {})
+        if session_token not in sessions:
+            return jsonify({'message': 'Invalid session token.'}), 403
+        # Update last_active
+        sessions[session_token]['last_active'] = datetime.now().isoformat()
+        active_sessions = get_active_sessions(user_id)
+        return jsonify({'sessions': active_sessions, 'count': len(active_sessions)})
+
+    # GET mode — admin view
+    admin_pin = request.args.get('adminPin', '')
+    user_id = request.args.get('userId', '')
+    if not check_perm(admin_pin, 'view_stats'):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+    if user_id:
+        active_sessions = get_active_sessions(user_id)
+    else:
+        active_sessions = get_active_sessions()
+    return jsonify({'sessions': active_sessions, 'count': len(active_sessions)})
+
+
+@app.route('/api/sessions/logout', methods=['POST'])
+def sessions_logout():
+    """Logout a specific session.
+    Body: { userId, sessionToken, targetToken? }
+    If targetToken provided, that specific session is logged out (admin or self).
+    If no targetToken, the sessionToken's session is logged out (self-logout).
+    """
+    data = request.json or {}
+    user_id = str(data.get('userId', ''))
+    session_token = str(data.get('sessionToken', ''))
+    target_token = str(data.get('targetToken', '')) or session_token
+    if not user_id or not session_token:
+        return jsonify({'message': 'userId and sessionToken are required.'}), 400
+    # Verify the requesting session belongs to this user
+    sessions = active_user_sessions.get(user_id, {})
+    if session_token not in sessions:
+        return jsonify({'message': 'Invalid session token.'}), 403
+    if logout_session(user_id, target_token):
+        return jsonify({'message': 'Session logged out successfully.'})
+    return jsonify({'message': 'Session not found.'}), 404
+
+
+@app.route('/api/sessions/logout_all', methods=['POST'])
+def sessions_logout_all():
+    """Logout all sessions for a user (optionally keeping the current one).
+    Body: { userId, sessionToken, keepCurrent (bool, default true) }
+    """
+    data = request.json or {}
+    user_id = str(data.get('userId', ''))
+    session_token = str(data.get('sessionToken', ''))
+    keep_current = data.get('keepCurrent', True)
+    if not user_id or not session_token:
+        return jsonify({'message': 'userId and sessionToken are required.'}), 400
+    # Verify the requesting session belongs to this user
+    sessions = active_user_sessions.get(user_id, {})
+    if session_token not in sessions:
+        return jsonify({'message': 'Invalid session token.'}), 403
+    except_token = session_token if keep_current else None
+    removed = logout_all_sessions(user_id, except_token=except_token)
+    return jsonify({
+        'message': f'Logged out {removed} session(s).' if removed else 'No other sessions to logout.',
+        'removed': removed
     })
 
 

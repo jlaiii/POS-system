@@ -2334,9 +2334,12 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
               </div>
               <!-- Active Sessions -->
               <div class="card" style="padding:12px;">
-                <h4 style="margin:0 0 8px 0;font-size:14px;">🟢 Active Sessions (24h)</h4>
-                <div id="secActiveSessionsList" style="max-height:200px;overflow-y:auto;-webkit-overflow-scrolling:touch;">
-                  <div class="empty-state">No active sessions.</div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                  <h4 style="margin:0;font-size:14px;">🟢 <span data-i18n="security.active_sessions">Active Sessions</span> (24h)</h4>
+                  <button id="secLogoutAllBtn" class="danger" onclick="logoutAllSessions()" style="font-size:11px;padding:4px 10px;min-height:36px;display:none;" data-i18n="security.logout_all">🚪 Log Out Everywhere</button>
+                </div>
+                <div id="secActiveSessionsList" style="max-height:250px;overflow-y:auto;-webkit-overflow-scrolling:touch;">
+                  <div class="empty-state" data-i18n="security.no_sessions">No active sessions.</div>
                 </div>
               </div>
             </div>
@@ -3343,6 +3346,9 @@ const L10N = {
     'mypay.request_review_cur': '⚠️ Request Review of Current Period',
     'mypay.pay_review_title': 'Pay Review — {period}',
     'mypay.pay_review_desc': 'I would like a review of my pay for this period. Details:',
+    'security.active_sessions': 'Active Sessions',
+    'security.logout_all': '🚪 Log Out Everywhere',
+    'security.no_sessions': 'No active sessions.',
   },
   es: {
     'app.title': '🍽️ Sistema POS',
@@ -3865,6 +3871,9 @@ const L10N = {
     'mypay.request_review_cur': '⚠️ Solicitar Revisión del Período Actual',
     'mypay.pay_review_title': 'Revisión de Pago — {period}',
     'mypay.pay_review_desc': 'Me gustaría una revisión de mi pago para este período. Detalles:',
+    'security.active_sessions': 'Sesiones Activas',
+    'security.logout_all': '🚪 Cerrar Todas las Sesiones',
+    'security.no_sessions': 'No hay sesiones activas.',
   }
 };
 
@@ -4068,13 +4077,15 @@ window.addEventListener('DOMContentLoaded', () => {
   const savedPerms = sessionStorage.getItem('pos_permissions');
   const savedBanned = sessionStorage.getItem('pos_banned');
   const savedTotp = sessionStorage.getItem('pos_totp_enabled');
+  const savedSessionToken = sessionStorage.getItem('pos_sessionToken');
   if (savedId && savedRole) {
-    currentUser = { 
-      id: savedId, 
-      name: savedName || 'User', 
+    currentUser = {
+      id: savedId,
+      name: savedName || 'User',
       role: savedRole,
       permissions: savedPerms ? safeJSON(savedPerms, []) : [],
-      totp_enabled: savedTotp === '1'
+      totp_enabled: savedTotp === '1',
+      sessionToken: savedSessionToken || ''
     };
     showApp();
   }
@@ -4204,12 +4215,16 @@ async function doLogin(userId) {
       pinValue = ''; renderPinDisplay(); return;
     }
     if (!r.ok) { document.getElementById('loginError').textContent = data.message || t('login.error'); pinValue = ''; renderPinDisplay(); return; }
-    currentUser = { id: userId, name: data.user, role: data.role, permissions: data.permissions || [], totp_enabled: data.totp_enabled || false };
+    currentUser = { id: userId, name: data.user, role: data.role, permissions: data.permissions || [], totp_enabled: data.totp_enabled || false, sessionToken: data.session_token || '' };
     sessionStorage.setItem('pos_userId', userId);
     sessionStorage.setItem('pos_userRole', data.role);
     sessionStorage.setItem('pos_userName', data.user);
     sessionStorage.setItem('pos_permissions', JSON.stringify(data.permissions || []));
     sessionStorage.setItem('pos_totp_enabled', data.totp_enabled ? '1' : '0');
+    if (data.session_token) {
+      sessionStorage.setItem('pos_sessionToken', data.session_token);
+      currentUser.sessionToken = data.session_token;
+    }
     pinValue = '';
     renderPinDisplay();
     showApp();
@@ -5517,6 +5532,11 @@ function showApp() {
   // Periodically check for new ticket responses
   if (window._requestsBadgeTimer) clearInterval(window._requestsBadgeTimer);
   window._requestsBadgeTimer = setInterval(() => updateRequestsBadge(), 30000);
+  // Periodically touch session to keep last_active updated (every 5 min)
+  if (window._sessionTouchTimer) clearInterval(window._sessionTouchTimer);
+  if (currentUser && currentUser.sessionToken) {
+    window._sessionTouchTimer = setInterval(() => touchSession(), 300000);
+  }
 }
 
 // ═══════════ MAIN TABS ═══════════
@@ -6124,23 +6144,33 @@ function renderSecurityDashboard(data) {
   // Active sessions
   const sessionsEl = document.getElementById('secActiveSessionsList');
   const sessions = data.active_sessions || [];
+  const logoutAllBtn = document.getElementById('secLogoutAllBtn');
   if (sessions.length === 0) {
-    sessionsEl.innerHTML = '<div class="empty-state">No active sessions in last 24h.</div>';
+    sessionsEl.innerHTML = '<div class="empty-state">' + t('security.no_sessions') + '</div>';
+    if (logoutAllBtn) logoutAllBtn.style.display = 'none';
   } else {
     let html = '<table style="width:100%;border-collapse:collapse;font-size:12px;">';
-    html += '<tr style="color:var(--text2);border-bottom:1px solid var(--border);"><th style="padding:4px 6px;text-align:left;">User</th><th style="padding:4px 6px;text-align:left;">IP</th><th style="padding:4px 6px;text-align:left;">Last Active</th></tr>';
+    html += '<tr style="color:var(--text2);border-bottom:1px solid var(--border);"><th style="padding:4px 6px;text-align:left;">User</th><th style="padding:4px 6px;text-align:left;">IP / Device</th><th style="padding:4px 6px;text-align:left;">Login</th><th style="padding:4px 6px;text-align:left;">Action</th></tr>';
     sessions.forEach(s => {
       const name = escHtml(s.user_name || s.user_id || '');
       const ip = escHtml(s.ip || '-');
-      const last = s.last_active ? new Date(s.last_active).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
+      const ua = escHtml((s.user_agent || '').substring(0, 40));
+      const deviceInfo = ua ? '<div style="font-size:10px;color:var(--text2);">' + ua + '</div>' : '';
+      const loginTime = s.login_time ? new Date(s.login_time).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}) : '';
+      const lastActive = s.last_active ? new Date(s.last_active).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
+      const isCurrentSession = s.token ? false : true; // token stripped from dashboard response, so all are "other"
       html += `<tr style="border-bottom:1px solid var(--border);">
-        <td style="padding:4px 6px;">${name}</td>
-        <td style="padding:4px 6px;">${ip}</td>
-        <td style="padding:4px 6px;">${last}</td>
+        <td style="padding:4px 6px;white-space:nowrap;">${name}</td>
+        <td style="padding:4px 6px;">${ip}${deviceInfo}</td>
+        <td style="padding:4px 6px;white-space:nowrap;font-size:11px;" title="Last active: ${lastActive}">${loginTime}</td>
+        <td style="padding:4px 6px;">
+          <button class="ghost" onclick="logoutSessionByUser('${escHtml(s.user_id || '')}')" style="font-size:11px;padding:2px 8px;min-height:28px;" title="Log out this session">🚪</button>
+        </td>
       </tr>`;
     });
     html += '</table>';
     sessionsEl.innerHTML = html;
+    if (logoutAllBtn) logoutAllBtn.style.display = '';
   }
 
   // Security events
@@ -6189,6 +6219,97 @@ function renderSecurityDashboard(data) {
     });
     html += '</table>';
     allowlistEl.innerHTML = html;
+  }
+}
+
+// ═══════════ SESSION MANAGEMENT ═══════════
+
+/** Log out a specific user's session (admin action). */
+async function logoutSessionByUser(userId) {
+  if (!window.currentUser || !window.currentUser.sessionToken) {
+    showToast('Your session is not tracked. Log out and log back in to enable session management.', 'warning', 5000);
+    return;
+  }
+  // For the dashboard view, we don't have per-session tokens; log out all sessions for that user
+  try {
+    const r = await fetch(BACKEND_URL + '/api/sessions/logout_all', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: userId,
+        sessionToken: window.currentUser.sessionToken,
+        keepCurrent: true
+      })
+    });
+    const data = await r.json();
+    if (r.ok) {
+      showToast(data.message || 'Sessions logged out.', 'success');
+      loadSecurityDashboard();
+    } else {
+      showToast(data.message || 'Failed to log out sessions.', 'error');
+    }
+  } catch (e) {
+    showToast('Network error logging out sessions.', 'error');
+  }
+}
+
+/** Log out all sessions for all users (admin — "Log Out Everywhere"). */
+async function logoutAllSessions() {
+  if (!window.currentUser || !window.currentUser.sessionToken) {
+    showToast('Your session is not tracked. Log out and log back in to enable session management.', 'warning', 5000);
+    return;
+  }
+  if (!confirm('Log out all active sessions for all users? This will force everyone to log back in.')) return;
+  let totalRemoved = 0;
+  try {
+    // Get all sessions
+    const r = await fetch(BACKEND_URL + '/api/sessions?adminPin=' + encodeURIComponent(window.currentUser.id), {});
+    const data = await r.json();
+    if (!r.ok) { showToast(data.message || 'Failed to get sessions.', 'error'); return; }
+    const sessions = data.sessions || [];
+    // Group by user
+    const userSessions = {};
+    sessions.forEach(s => {
+      const uid = s.user_id;
+      if (!userSessions[uid]) userSessions[uid] = [];
+      userSessions[uid].push(s);
+    });
+    // Logout all sessions for each user (keeping current)
+    for (const uid of Object.keys(userSessions)) {
+      const lr = await fetch(BACKEND_URL + '/api/sessions/logout_all', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: uid,
+          sessionToken: window.currentUser.sessionToken,
+          keepCurrent: true
+        })
+      });
+      const ld = await lr.json();
+      if (lr.ok) totalRemoved += ld.removed || 0;
+    }
+    showToast('Logged out ' + totalRemoved + ' session(s) across all users.', 'success');
+    loadSecurityDashboard();
+  } catch (e) {
+    showToast('Network error logging out all sessions.', 'error');
+  }
+}
+
+/** Refresh current user's session last_active timestamp */
+async function touchSession() {
+  if (!window.currentUser || !window.currentUser.sessionToken) return;
+  try {
+    // Silent refresh via POST to /api/sessions (updates last_active)
+    await fetch(BACKEND_URL + '/api/sessions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: window.currentUser.id,
+        sessionToken: window.currentUser.sessionToken
+      })
+    });
+  } catch (e) {
+    // Silent fail
   }
 }
 
@@ -14638,7 +14759,9 @@ async function submitChangePin() {
         currentPin: currentPin,
         newPin: newPin,
         newPinConfirm: newPinConfirm,
-        totpCode: totpCode || ''
+        totpCode: totpCode || '',
+        logoutOtherSessions: document.getElementById('changePinLogoutOther').checked,
+        sessionToken: window.currentUser.sessionToken || ''
       })
     });
 
@@ -14751,6 +14874,10 @@ async function submitChangePin() {
         <label for="changePinTotp" style="font-size:13px;color:var(--text2);font-weight:600;">🔐 2FA Code</label>
         <input type="text" id="changePinTotp" inputmode="numeric" pattern="[0-9]*" autocomplete="off" maxlength="6" placeholder="Enter 6-digit code from authenticator app" style="width:100%;min-height:48px;font-size:16px;padding:10px 14px;margin-top:4px;border-radius:8px;border:2px solid var(--border);background:var(--bg);color:var(--text);text-align:center;letter-spacing:4px;" value="">
         <div style="font-size:12px;color:var(--text2);margin-top:4px;">2FA is enabled on your account — enter a code from your authenticator app to authorize the PIN change.</div>
+      </div>
+      <div style="margin-bottom:10px;display:flex;align-items:center;gap:8px;">
+        <input type="checkbox" id="changePinLogoutOther" style="width:20px;height:20px;accent-color:var(--accent);cursor:pointer;">
+        <label for="changePinLogoutOther" style="font-size:13px;color:var(--text2);cursor:pointer;">🚪 Log out all other sessions</label>
       </div>
       <div id="changePinError" style="color:var(--accent);font-size:14px;margin-bottom:10px;display:none;"></div>
       <div id="changePinWarn" style="color:#f39c12;font-size:13px;margin-bottom:10px;display:none;"></div>
