@@ -347,7 +347,7 @@ New `tickets.json` data store. Each ticket:
 
 - [x] worker-1 **Downloadable pay stub (PDF)** — "Download Pay Stub" button per pay period. Generates clean PDF with employee name, pay period dates, itemized shift list, total hours, pay rate, gross pay, YTD totals. [worker-1 — New POST /api/employee/pay_stub_pdf endpoint returning print-friendly HTML. 📄 button in pay history period cards opens in new tab for browser Print→PDF. Full i18n compatible.]
 
-- [ ] **Pay history CSV export** — "Export My Pay History" button at bottom of Pay History.
+- [~] worker-2 **Pay history CSV export** — "Export My Pay History" button at bottom of Pay History.
 
 - [ ] **"Request Pay Review" action** — "⚠️ Request Review" button on any pay period or shift. Opens pre-filled ticket form (type: `pay_review`).
 
