@@ -1,10 +1,10 @@
 # POS Security Tasks
-> Last run: 2026-06-23 19:30 UTC
+> Last run: 2026-06-23 23:30 UTC
 
 ## CRITICAL — LOGIN & AUTH SECURITY (check every run)
 
 ### CRITICAL: Debug mode enabled in production
-- [x] **Disable debug mode** — `socketio.run(app, debug=True)` at line 8730. Exposes Werkzeug debugger with remote code execution. Changed to `debug=False, allow_unsafe_werkzeug=False`.
+- [x] **Disable debug mode** — `socketio.run(app, debug=True)` at line 8730 (original). Exposes Werkzeug debugger with remote code execution. Changed to `debug=False, allow_unsafe_werkzeug=False`.
 
 ### CRITICAL: Clock in/out endpoints lack credential verification
 - [x] **Add PIN verification + rate limiting to clock-in/out** — `/api/clock/in` and `/api/clock/out` accepted any valid user_id without verifying the caller knows the PIN. No rate limiting. Allowed PIN enumeration. Added `clock_failed_attempts` tracking dict, `_record_clock_failure()` helper, IP-based and user-ID-based rate limiting (10 attempts/60s, 15min lock), and generic error messages that don't reveal if user exists.
@@ -21,6 +21,9 @@
 - [x] **Add auth to /api/menu/history** — Leaked menu backup filenames/dates. Added `manage_items` permission check.
 - [x] **Add auth to /api/inventory and /api/inventory/low_stock** — Leaked inventory stock levels. Added `manage_items` permission check.
 - [x] **Add auth to /api/ads GET** — Documentation said "requires manage_items" but no actual check. Fixed: added `manage_items` permission check.
+
+### CRITICAL: /api/tables/tab/<int:table_number>/checkout has zero auth (NEW — this run)
+- [x] **Add POS access auth to tab checkout endpoint** — The `/api/tables/tab/<int:table_number>/checkout` POST endpoint accepted any `userId` without verifying it's a valid employee PIN. Anyone on the network could close out all orders at any table with any value in `userId`. Added `check_perm(user_id, "pos_access")` check. Verified: invalid PIN → 403, valid PIN → proceeds, no PIN → 400. Commit: This run.
 
 ### HIGH: PIN stored as plaintext dict key
 - [ ] **Hash PINs** — User ID IS the PIN, stored as the dict key in users.json in plaintext. Anyone with file-system access (or backup access) sees all PINs. Requires architectural change: separate `user_id` (internal) from `pin_hash`. Postgres/Long-term: store PIN hash, not the PIN itself.
@@ -42,6 +45,12 @@
 ### HIGH: TOTP secrets stored in plaintext in world-readable users.json
 - [ ] **Protect TOTP secrets** — `totp_secret` for user "1234" is stored in plaintext in users.json (now 600, but was 644). If 2FA is compromised, an attacker with TOTP secret can generate valid codes. Either encrypt TOTP secrets at rest or restrict file access further.
 
+### HIGH: /api/orders/lookup GET has no auth (exposes full order details)
+- [ ] **Add kiosk-safe auth to /api/orders/lookup** — This GET endpoint returns full order details (items, prices, totals, payment info) with zero authentication. Used by kiosk payment flow so needs careful design — add session token check for staff, shared-secret API key for kiosk devices, or IP-based restriction.
+
+### HIGH: /api/sync_orders POST has no auth (offline order injection)
+- [ ] **Add employee PIN verification to /api/sync_orders** — This endpoint processes offline-queued orders without any authentication check. An attacker could inject fake orders, manipulate inventory, and earn loyalty points. Add a `user` field check that at minimum verifies the submitting user exists in users.json (already partially present) and has `pos_access` permission.
+
 ## MEDIUM — HARDENING
 
 ### MEDIUM: Error pages may leak stack traces
@@ -59,10 +68,13 @@
 ### MEDIUM: Kitchen/display endpoints still unauthenticated
 - [ ] **Add optional API key auth for kitchen/drivethrough/pickup displays** — `/api/kitchen/queue`, `/api/kitchen/stats`, `/api/kitchen/order/<id>`, `/api/drivethrough/*`, `/api/customer-display/*`, `/api/pickup-display/*` have no auth. These are intentionally public for displays, but should have an optional shared-secret API key mechanism to prevent network snooping in multi-tenant deployments.
 
+### MEDIUM: Unauthenticated table read endpoints expose order data
+- [ ] **Add optional shared-secret auth to table GET endpoints** — `/api/tables`, `/api/tables/tab/<int:table_number>`, `/api/tables/tab/<int:table_number>/history` have no auth and expose table assignments, active orders, and tab history. Need at minimum a session token or shared-secret key.
+
 ## LOW — POLISH
 
 ### LOW: Password complexity minimum is only 6 chars
-- [ ] **Strengthen password policy** — Line 781: `if len(password) < 6` — minimum is 6 characters for owner password. Should be 8+ with mixed case and numbers.
+- [ ] **Strengthen password policy** — Line 781 (original): `if len(password) < 6` — minimum is 6 characters for owner password. Should be 8+ with mixed case and numbers.
 
 ### LOW: SHA-256 used for password hashing (should be bcrypt/argon2)
 - [ ] **Upgrade password hashing** — `hash_password()` uses SHA-256 with random salt. Not GPU-resistant. Should use bcrypt or argon2 for proper password hashing. Not critical since passwords are only for owner login (PINs are the main auth method).
@@ -84,7 +96,12 @@
 - [x] **Add reusable check_get_auth() helper** — Created a centralized `check_get_auth(admin_pin, permission)` function for GET endpoint authentication, reducing code duplication and ensuring consistent auth patterns.
 - [x] **Harden file permissions** — Changed 11 sensitive JSON files from 644 (world-readable) to 600 (owner-only). Includes users.json (PINs), shift_log.json (employee data), activity_log.json (audit trail), orders.json, delivery_addresses.json, and others.
 
+## COMPLETED (this run) — 2026-06-23 23:30
+- [x] **Add POS access auth to tab checkout endpoint** — `/api/tables/tab/<int:table_number>/checkout` had zero auth: anyone could close out all orders at any table. Added `check_perm(user_id, "pos_access")` check. Tested: invalid PIN → 403, valid PIN → proceeds. Logs unauthorized attempts.
+
 ## WATCHLIST (monitor, don't fix yet)
 - Multi-tenant: No business_id scoping on data access — will be a problem when multi-tenant is deployed
 - 2FA backup codes stored as SHA-256 hashes — good, but check that they're properly invalidated after use
 - `X-Forwarded-For` header is trusted without validation — IP spoofing could bypass IP-based rate limiting; requires reverse proxy knowledge
+- `/api/orders/lookup` and `/api/sync_orders` are intentionally public for kiosk/offline use but need shared-secret auth before multi-tenant deployment
+- Session tokens exist but most endpoints still accept raw PIN (`adminPin`) instead of requiring session token — 2FA can be bypassed once PIN is known

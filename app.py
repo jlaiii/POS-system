@@ -8450,6 +8450,13 @@ def checkout_table_tab(table_number):
     if not user_id:
         return jsonify({'error': 'userId is required'}), 400
 
+    # Verify the user has POS access permission
+    if not check_perm(user_id, "pos_access"):
+        log_activity('tab_checkout_unauthorized', user_id, 'unknown',
+                     {'status': 'denied', 'reason': 'Missing pos_access permission',
+                      'table_number': table_number})
+        return jsonify({'error': 'Unauthorized. Valid employee PIN required.'}), 403
+
     orders = load_json_data(ORDERS_FILE)
     
     # Find all active orders for this table
