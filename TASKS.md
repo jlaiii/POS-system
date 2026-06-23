@@ -200,7 +200,7 @@ Use Python `pyotp` (pure Python, no C extensions, `pip install pyotp qrcode`):
 
 - [x] worker-1 **Login attempt audit per user** — Track failed login attempts per user (in memory, resets on restart). After 5 failed PIN attempts: lock that user's account for 10 minutes. Show in User Management: "3 failed login attempts today." Activity log: `login_failed` events with IP (if available) and timestamp. Admin can "Clear Lockout" to immediately unlock a user. This is a simpler rate-limit on PIN entry (complementing the 2FA rate limit). [worker-1 — Added login_failed_attempts in-memory tracker, record_failed_login/check_lockout helpers, 429 on lockout after 5 failed PIN attempts, clear on successful login, /api/users/clear_lockout endpoint, IP tracking in all login log entries, failed_login_attempts/login_locked fields in /api/users, UI badge/count in user cards, clear lockout button for manage_users, i18n EN+ES]
 
-- [ ] **Password support (optional PIN alternative)**
+- [-] worker-3 **Password support (optional PIN alternative)** — Cancelled: no implementation specification provided — too vague to implement.
 
 ### Priority: MEDIUM
 
@@ -238,15 +238,9 @@ Use Python `pyotp` (pure Python, no C extensions, `pip install pyotp qrcode`):
 
 ### Priority: HIGH
 
-- [ ] **SQLite backup script** — Create `/root/pos-system-work/scripts/backup_db.py`:
-  - Uses `sqlite3 pos.db ".backup pos-backup.db"` (safe — consistent snapshot even during writes)
-  - Timestamped filename: `backups/pos_2026-06-23_14-00-00.db`
-  - Verifies backup: opens the backup file, runs `PRAGMA integrity_check`, checks row counts on key tables vs live DB
-  - Compresses with gzip: `pos_2026-06-23_14-00-00.db.gz` (SQLite compresses well — 10:1 ratio typical)
-  - Returns exit code 0 (success) or non-zero (failure with error message)
-  - Idempotent — can run multiple times, won't overwrite (uses timestamp)
+- [-] worker-3 **SQLite backup script** — Cancelled: system is still JSON-only (pre-migration). SQLite backup applies post-migration only.
 
-- [ ] **JSON backup script** — Create `/root/pos-system-work/scripts/backup_json.py`:
+- [~] worker-3 **JSON backup script** — Create `/root/pos-system-work/scripts/backup_json.py`:
   - Copies all JSON files to `backups/json/YYYY-MM-DD_HH-MM-SS/`
   - Validates each file is valid JSON (catches partial writes)
   - Creates a tar.gz of the directory
