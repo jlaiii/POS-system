@@ -2955,6 +2955,8 @@ const L10N = {
     'mypay.refresh': '🔄 Refresh',
     'mypay.no_history': 'No pay history yet.',
     'mypay.no_rate_notice': '⚠️ No pay rate is set for your account. Ask your manager to set your pay rate in User Management.',
+    'mypay.history_subtitle': 'Past pay periods — tap to expand for shift breakdown',
+    'mypay.period_total': 'Period Total',
   },
   es: {
     'app.title': '🍽️ Sistema POS',
@@ -3458,6 +3460,8 @@ const L10N = {
     'mypay.refresh': '🔄 Actualizar',
     'mypay.no_history': 'Aún no hay historial de pago.',
     'mypay.no_rate_notice': '⚠️ No hay tarifa de pago configurada para su cuenta. Pídale a su gerente que configure su tarifa en Gestión de Usuarios.',
+    'mypay.history_subtitle': 'Períodos de pago anteriores — toque para expandir',
+    'mypay.period_total': 'Total del Período',
   }
 };
 
@@ -9919,32 +9923,60 @@ function renderMyPay(data) {
     return;
   }
 
-  let html = '';
+  let html = '<div style="font-size:13px;color:var(--text2);margin-bottom:8px;" data-i18n="mypay.history_subtitle">Past pay periods — tap to expand for shift breakdown</div>';
   history.forEach(function(period) {
     const grossStr = period.has_pay_rate && period.estimated_gross != null
       ? '$' + period.estimated_gross.toFixed(2)
       : '—';
     const hoursStr = period.hours != null ? period.hours.toFixed(1) : '0';
+    const rateStr = period.has_pay_rate && period.pay_rate != null
+      ? '$' + period.pay_rate.toFixed(2) + '/hr'
+      : '—';
 
     html += '<div class="card" style="margin-bottom:10px;padding:12px 16px;cursor:pointer;" onclick="togglePayPeriodDetails(\'' + period.start_date + '\')">';
     html += '  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">';
     html += '    <div style="font-weight:600;font-size:15px;">' + period.start_date + ' — ' + period.end_date + '</div>';
-    html += '    <div style="display:flex;gap:16px;font-size:13px;color:var(--text2);">';
+    html += '    <div style="display:flex;gap:16px;font-size:13px;color:var(--text2);align-items:center;">';
     html += '      <span>📅 ' + period.shift_count + ' shifts</span>';
     html += '      <span>⏱️ ' + hoursStr + 'h</span>';
+    html += '      <span style="color:var(--accent);font-weight:500;">' + rateStr + '</span>';
     html += '      <span style="color:#2ecc71;font-weight:600;">' + grossStr + '</span>';
     html += '    </div>';
     html += '  </div>';
-    html += '  <div id="payPeriodDetails_' + period.start_date + '" style="display:none;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);">';
-    html += '    <div style="font-size:13px;color:var(--text2);margin-bottom:6px;">Shifts:</div>';
+    html += '  <div id="payPeriodDetails_' + period.start_date + '" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">';
+    html += '    <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:6px;font-size:12px;color:var(--text2);padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.08);margin-bottom:4px;font-weight:600;">';
+    html += '      <span>Date</span>';
+    html += '      <span>In — Out</span>';
+    html += '      <span>Hours</span>';
+    html += '      <span>Status</span>';
+    html += '    </div>';
     (period.shifts || []).forEach(function(s) {
-      const outStr = s.clock_out_time ? new Date(s.clock_out_time).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '⌛ Active';
+      const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+      let dateStr = '', dayName = '';
+      if (s.clock_in_time) {
+        const d = new Date(s.clock_in_time);
+        dateStr = d.toLocaleDateString([], {month:'short', day:'numeric'});
+        dayName = dayNames[d.getDay()];
+      }
       const inStr = s.clock_in_time ? new Date(s.clock_in_time).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '--';
-      html += '    <div style="display:flex;justify-content:space-between;font-size:13px;padding:4px 0;color:var(--text2);border-bottom:1px solid rgba(255,255,255,0.05);">';
+      const outStr = s.clock_out_time ? new Date(s.clock_out_time).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '⌛';
+      const paid = (s.paid_hours || 0).toFixed(1);
+      const breaks = s.break_hours > 0 ? ' (' + s.break_hours.toFixed(1) + 'h brk)' : '';
+      const isActive = !s.clock_out_time;
+      html += '    <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:6px;font-size:13px;padding:6px 0;color:var(--text2);border-bottom:1px solid rgba(255,255,255,0.04);align-items:center;">';
+      html += '      <span style="color:var(--text);">' + dayName + ' ' + dateStr + '</span>';
       html += '      <span>' + inStr + ' — ' + outStr + '</span>';
-      html += '      <span>' + (s.paid_hours || 0).toFixed(1) + 'h paid</span>';
+      html += '      <span>' + paid + 'h paid' + breaks + '</span>';
+      html += '      <span>' + (isActive ? '<span style="color:#f39c12;">⬤ Active</span>' : '<span style="color:#2ecc71;">⬤ Done</span>') + '</span>';
       html += '    </div>';
     });
+    // Period summary row
+    html += '    <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:6px;font-size:13px;padding:8px 0 2px 0;color:var(--text);border-top:1px solid rgba(255,255,255,0.08);margin-top:4px;font-weight:600;">';
+    html += '      <span>' + (t('mypay.period_total') || 'Period Total') + '</span>';
+    html += '      <span></span>';
+    html += '      <span>' + hoursStr + 'h</span>';
+    html += '      <span style="color:#2ecc71;">' + grossStr + '</span>';
+    html += '    </div>';
     html += '  </div>';
     html += '</div>';
   });

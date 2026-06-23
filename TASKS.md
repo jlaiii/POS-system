@@ -345,8 +345,6 @@ New `tickets.json` data store. Each ticket:
 
 - [x] worker-3 **Current pay period live tracker** — Pay rate stat card, auto-refresh every 60s with 🟢 Live badge, rate displayed in stat card. [worker-3]
 
-- [~] worker-2 **Pay history with period-by-period breakdown** — List of past pay periods with date range, total hours, pay rate, gross pay, shift count. Expand to detailed shift list.
-
 - [ ] **Downloadable pay stub (PDF)** — "Download Pay Stub" button per pay period. Generates clean PDF with employee name, pay period dates, itemized shift list, total hours, pay rate, gross pay, YTD totals.
 
 - [ ] **Pay history CSV export** — "Export My Pay History" button at bottom of Pay History.
@@ -765,7 +763,8 @@ Super admin PIN is separate from any business PIN. Super admin can create busine
 |- [x] worker-3 **JSON backup script** — Created `/root/pos-system-work/scripts/backup_json.py` with validation, timestamped backups, tar.gz archiving, anomaly detection, dry-run and quiet modes.
 |- [x] worker-1 **Employee ticket submission UI** — New "📋 Requests" tab with ticket submission form (time-off, issue, feedback, other), adaptive fields, "My Tickets" list with status badges. Backend: tickets.json data store, 4 API endpoints (submit, my, queue, respond), activity logging, validation. Full i18n EN + ES.
 |||- [x] worker-3 **Smart date picker for time-off requests** — Business day calculation (Mon-Fri), past-date validation, 30-day limit with override checkbox, overlap detection against existing pending/approved requests. Server-side and client-side validation. Backend: `business_days` field, overlap check, date validation. Frontend: validation messages, override checkbox, business day display in tickets. i18n EN + ES.
-|- [x] worker-3 **Current pay period live tracker** — Added pay rate display stat card, auto-refresh every 60 seconds with 🟢 Live badge indicator, rate formatted as $X.XX/hr. Auto-refresh stops when navigating away. i18n EN + ES. [worker-3]
+- [x] worker-3 **Current pay period live tracker** — Added pay rate display stat card, auto-refresh every 60 seconds with 🟢 Live badge indicator, rate formatted as $X.XX/hr. Auto-refresh stops when navigating away. i18n EN + ES. [worker-3]
+|- [x] worker-2 **Pay history with period-by-period breakdown** — Enhanced pay history period cards with pay rate display ($X.XX/hr), expandable grid-based shift breakdown showing date/day, clock in/out, paid+break hours, period total summary row. Added i18n keys EN+ES. [worker-2]
 
 |## Done (older)
 
