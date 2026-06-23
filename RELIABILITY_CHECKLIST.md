@@ -1,22 +1,22 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-23T08:34:04
-> Total checks: 35
-> Healthy: 34 | Broken: 1 | Fixed this cycle: 1
+> Last full cycle: 2026-06-23T09:05:57
+> Total checks: 36
+> Healthy: 35 | Broken: 1 | Fixed this cycle: 2
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 (curl /api/health or root) — OK (200, verified 2026-06-23T08:34)
-- [x] All JSON data files exist and are valid — OK (31 JSON files, all parseable)
+- [x] Flask app responds on port 5000 (curl /api/health or root) — OK (200, verified 2026-06-23T09:05)
+- [x] All JSON data files exist and are valid — OK (29 JSON files, all parseable, 1 missing restored)
 - [x] users.json has at least owner PIN 1111 — OK (Owner, role: owner, permissions: ["*"])
 - [x] Git repo is clean (no uncommitted changes from crashes) — OK
 
 ## HOURLY (check if last check was >1h ago)
-- [x] /api/clock/in works — OK (verified 2026-06-23T08:06 — clock/status returns valid data)
+- [x] /api/clock/in works — OK (verified 2026-06-23T09:05 — clock/status returns 'clocked_in: false' for Owner)
 - [x] /api/clock/out works — OK (verified via shift_log data)
 - [x] /api/items returns items — OK (GET returns 3 categories: Drinks, Foods, Snacks)
 - [x] /api/login works with valid PIN — OK (userId field, owner role, 'Login successful')
 - [x] /api/admin_stats returns stats — OK (uses adminPin, returns message+stats)
 - [x] /api/admin_shifts returns shifts — OK (verified shift_log has 3 shifts)
-- [x] Frontend loads (curl index.html, verify it's HTML not error) — OK
+- [x] Frontend loads (curl index.html, verify it's HTML not error) — OK (576KB, valid HTML)
 
 ## EVERY 4 HOURS
 - [ ] Order lifecycle: create order → verify in orders.json → refund → verify
@@ -48,9 +48,11 @@
 - (none yet — first run)
 
 ## FIXES APPLIED
+- 2026-06-23 **timesheet_config.json was missing** — File deleted between 08:34 and 09:05. Recreated with defaults (overtime_daily_threshold=8, overtime_weekly_threshold=40, late_grace_minutes=5, use_database=false, backup config). Commit `f4a0cb7`. Fixed this run.
 - 2026-06-23 **Flask process was down** — Flask (app.py) was not responding on port 5000 when checked at 08:34. No crash log found (log file did not exist). Root cause unknown — possible OOM kill or previous worker crash. Restarted `python3 app.py` in background. Verified 200 OK on `/` and `/api/health`, `/api/login`, `/api/items` all functional. Downtime: unknown (last healthy check at 08:06). **[Fixed this run]**
 
 ## DISCOVERED (failures you've seen before — check every 2h)
+- timesheet_config.json can go missing (deleted between runs). App handles gracefully (auto-recreates with defaults) but config state is lost. Check every run as part of CRITICAL JSON validation.
 - Flask process can die silently. Check every run (already in CRITICAL tier). Consider adding a systemd service or supervisor to auto-restart.
 
 ## NOTES
