@@ -267,7 +267,7 @@ Use Python `pyotp` (pure Python, no C extensions, `pip install pyotp qrcode`):
   - Safety net: undo instructions printed after successful restore
   - Python syntax verified, --list tested showing 23 JSON + 13 DB backups, --dry-run tested for both modes
 
-|- [~] worker-1 **Database migration rollback** — If SQLite migration goes wrong, the Database Architect worker can flip `use_database: false` to revert to JSON mode. But we also need a script that re-populates JSON files from SQLite (reverse migration), so the JSON files stay in sync during the transition period. `scripts/sync_json_from_db.py` — reads all tables, writes JSON files. Run by the Database Architect after each migration step.
+|- [x] worker-1 **Database migration rollback** — Created `scripts/sync_json_from_db.py`: reads all 24 SQLite tables and writes to corresponding JSON files. Handles special formats: users (dict keyed by pin), items (grouped by category), combos (dict with combos key), cash_drawer (sessions+transactions), table_ads (ads list + rotation_interval), known_ips (grouped by user_id), and more. Boolean/int conversion, JSON field parsing, idempotent, --dry-run and --quiet modes. Python syntax verified, tested with real data. [worker-1]
 
 - [ ] **Backup monitoring in Discord** — Extend the backup cron to send a daily summary at 6am: "📦 DB Backup Report: 24 hourly backups (all OK), 7 daily retained, oldest: June 16. Total backup size: 84MB (compressed). Last integrity check: PASSED." This gives the owner confidence that backups are working without having to check.
 
