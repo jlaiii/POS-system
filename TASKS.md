@@ -84,7 +84,7 @@
 - [x] worker-2 `POST /api/clock/in` response includes `late_minutes` and `late_excused` so the clock-in toast can say "⚠️ Clocked in 23 minutes late" when applicable.
 
 #### Admin late shift flagging & excuse
-- [ ] New endpoint `POST /api/clock/excuse_late`: admin sets `late_excused = true` on a completed shift. Accepts `shift_index` (position in shift_log array), `adminPin`, optional `note`. Requires `view_timesheet` permission.
+|- [~] worker-1 New endpoint `POST /api/clock/excuse_late`: admin sets `late_excused = true` on a completed shift. Accepts `shift_index` (position in shift_log array), `adminPin`, optional `note`. Requires `view_timesheet` permission.
 - [ ] New endpoint `POST /api/clock/flag_late`: admin manually flags a shift as late (even if auto-detection didn't catch it — e.g., no scheduled time set). Sets `late_minutes` to admin-provided value. Requires `view_timesheet` permission.
 - [ ] Both endpoints log to activity_log: `late_excused` or `late_flagged` with old→new values and admin PIN.
 - [ ] UI: in the Employee Shifts timesheet view, late shifts get a red 🕐 badge showing minutes late. Excused late shifts get a gray 🔕 badge instead. Admin clicks the badge to toggle excuse/flag via a small popover with note field.
@@ -124,6 +124,69 @@
 - [ ] **PTO / sick day tracking** — Optional accrual-based or manual tracking. `pto_balance` field per user. Admin can log PTO/sick days with date range and type. Excluded from "missing clock-out" alerts for those days.
 
 - [ ] **Shift schedule builder** — Weekly schedule grid where manager assigns shifts (Mon 9-5: John, Tue 9-5: Maria, etc.). Compare scheduled vs actual hours. Visual schedule calendar in admin. Helps catch no-shows.
+
+## Security — 2FA & Account Protection (NEW — June 2026)
+
+> Currently login is PIN-only — anyone who knows (or brute-forces) a PIN gets full access. No second factor, no account recovery, no session security. This section adds TOTP-based two-factor authentication (Google Authenticator, Authy, Microsoft Authenticator, etc.) so even if a PIN leaks, the account is still protected.
+
+### How TOTP 2FA Works
+1. User enables 2FA → system generates a unique secret key
+2. QR code shown (user scans with their authenticator app)
+3. User enters a 6-digit code from their app to verify setup
+4. On future logins: enter PIN → prompt for 6-digit TOTP code → if both correct, logged in
+5. Backup recovery codes (8 one-time-use codes) provided at setup — user saves these for when they lose their phone
+6. Admin/owner can disable 2FA for any user (if they lose their phone AND recovery codes)
+
+### Data Model
+
+Add to `users.json` per-user:
+```json
+{
+  "totp_secret": null,              // base32 secret (null = 2FA not set up)
+  "totp_enabled": false,            // true after successful verification
+  "totp_backup_codes": [],          // list of 8 hashed backup codes (sha256)
+  "totp_setup_at": null             // ISO timestamp when 2FA was enabled
+}
+```
+
+### Backend — TOTP Library
+
+Use Python `pyotp` (pure Python, no C extensions, `pip install pyotp qrcode`):
+- `pyotp.random_base32()` → generate secret
+- `pyotp.TOTP(secret).verify(code)` → validate 6-digit code
+- `pyotp.totp.TOTP(secret).provisioning_uri(name, issuer_name)` → generate URI for QR code
+
+### Priority: HIGH
+
+- [ ] **2FA setup endpoint + QR code generation** — `POST /api/auth/2fa/setup`: user requests to enable 2FA. Generates a `totp_secret`, stores it as `totp_secret` on user (but `totp_enabled` stays false until verified). Returns `provisioning_uri` (for QR) and `secret` (for manual entry). Requires user to be logged in (their own account — they can only set up 2FA for themselves). If 2FA is already enabled, returns 409 "2FA already enabled — disable first."
+
+- [ ] **2FA verify endpoint** — `POST /api/auth/2fa/verify`: user submits a 6-digit code from their authenticator app to confirm setup. Validates against `totp_secret`. If valid: sets `totp_enabled = true`, generates 8 backup codes (random 10-char alphanumeric strings, sha256 hashed before storing), sets `totp_setup_at`. Returns the 8 backup codes (plaintext — ONLY time they're shown. Display with big warning: "Save these now. They will never be shown again. Store them somewhere safe."). If invalid code: returns 400 "Invalid code. Try again."
+
+- [ ] **Login flow with 2FA challenge** — Modify `POST /api/login` to check `totp_enabled`. If 2FA is disabled: login proceeds as normal (PIN only). If 2FA is enabled: after PIN validation, do NOT issue a session yet. Instead, return `{"2fa_required": true, "user_id": "1234"}`. Frontend shows a 6-digit code input. User enters code → `POST /api/auth/2fa/verify_login` validates the TOTP code + session token. If valid: issue the normal session. If invalid: increment a rate-limit counter (max 5 attempts per minute). After 5 failures: temporarily lock account for 15 minutes.
+
+- [ ] **Backup code login** — `POST /api/auth/2fa/backup_login`: if user lost their phone, they can use a backup code instead of TOTP. Accepts `user_id`, `backup_code` (plaintext). Hashes the code and checks against stored `totp_backup_codes`. If match: login succeeds, REMOVE that code from the list (one-time use). Return remaining backup code count in response: "Logged in. 6 backup codes remaining." If no match: 401. After last backup code used: 2FA is still enabled but no recovery — user should regenerate. Admin should be notified when backup codes run low.
+
+- [ ] **Admin 2FA management** — In User Management: show 2FA status badge per user (🔒 Enabled, 🔓 Not Set Up). Admin/owner can click "Disable 2FA" on any user (requires `manage_users` permission). This resets `totp_enabled = false`, clears `totp_secret`, clears `totp_backup_codes`. Reason required (logged in activity_log: `2fa_disabled_by_admin`, who did it, why). Only owner can disable 2FA on other admins. Also: "Regenerate Backup Codes" button that generates new codes (invalidating old ones) — useful when employee says "I used my last backup code."
+
+### Priority: MEDIUM
+
+- [ ] **2FA setup UI (frontend)** — New "🔒 Security" section in the settings/profile area. Button: "Enable Two-Factor Authentication (2FA)". On click: calls `/api/auth/2fa/setup` → shows QR code (rendered as `<img>` from `provisioning_uri` using `qrcode` library to generate a data URI, or use a JS QR library). Below QR: "Can't scan? Enter this code manually:" + the base32 secret in a monospace font. Below that: 6-digit code input + "Verify" button. On verify: shows the 8 backup codes in a grid with a "Download" and "Copy" button. Red warning banner: "⚠️ Save these codes now. They will never be shown again. Without these, losing your phone means you lose access to your account." Confirmation checkbox: "I have saved my backup codes." Then "Finish Setup" button → marks setup complete.
+
+- [ ] **2FA login UI** — After PIN entry, if server returns `2fa_required: true`, show a smooth transition to a 6-digit code input. Auto-focus and auto-submit on 6th digit (like banking apps). "Use backup code instead" link below in smaller text (for when phone is lost). Error states: "Invalid code" (shake animation), "Too many attempts — account locked for 15 minutes", "Backup code already used." Success: normal redirect to POS.
+
+- [ ] **Backup code management UI** — In Security settings: "View Backup Codes" button (requires re-entering PIN for security). Shows remaining codes count: "5 of 8 codes remaining." Lists the plaintext codes (user needs to save them). "Regenerate Codes" button with confirmation: "This will invalidate all existing backup codes. Continue?" Admin: same "Regenerate" available in User Management.
+
+- [ ] **Rate limiting on 2FA attempts** — Track failed TOTP attempts per user in memory (not JSON — resets on server restart). Max 5 failed attempts per rolling 60-second window. After 5: lock for 15 minutes (store lock expiry in memory). Return `429 Too Many Requests` with `retry_after` seconds. Rate limit applies to both TOTP verify AND backup code attempts (same pool — prevents brute-force on backup codes too).
+
+### Priority: LOW
+
+- [ ] **Email/SMS recovery option** — If backup codes are all used AND admin isn't available, user can request email recovery (if email is set in profile). Sends a one-time 6-digit code to email, valid for 10 minutes. Email config already exists from receipt delivery feature. This is a "I'm locked out at 2am and the owner isn't awake" safety net.
+
+- [ ] **Mandatory 2FA for admin/owner roles** — Configurable toggle: "Require 2FA for all admin accounts." If enabled, any admin without 2FA gets a persistent banner: "⚠️ Your account requires 2FA — set it up now." Blocks access to admin features until 2FA is enabled. Owner can exempt specific admins. This prevents the "boss's account gets hacked because they never set up 2FA" scenario.
+
+- [ ] **2FA audit log** — All 2FA events go to activity_log: `2fa_setup`, `2fa_disabled`, `2fa_disabled_by_admin`, `2fa_backup_code_used`, `2fa_login_success`, `2fa_login_failed`, `2fa_rate_limited`, `2fa_backup_regenerated`. Filterable in Activity Log. Gives owner a trail: "Who disabled Carlos's 2FA and why?"
+
+- [ ] **WebAuthn / Passkey support (future)** — Optional upgrade path: support for hardware security keys (YubiKey) and platform passkeys (Face ID, Touch ID, Windows Hello) via WebAuthn API. Faster than typing TOTP codes, phishing-resistant. Requires `webauthn` Python library. Phase this in after TOTP is stable.
 
 ## Employee Self-Service Portal — Tickets, Requests & Issues (NEW — June 2026)
 
