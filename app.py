@@ -5335,6 +5335,157 @@ def export_timesheet_csv():
     return jsonify({'csv': csv_content, 'filename': 'timesheet_export.csv'})
 
 
+@app.route('/api/timesheet/pay_period', methods=['POST'])
+def timesheet_pay_period():
+    """Get pay period summary with per-employee totals: hours, overtime, estimated pay."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+
+    if not check_perm(admin_pin, "view_timesheet"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    shift_log = load_json_data(SHIFT_FILE)
+    users = load_json_data(USERS_FILE)
+
+    date_from = (data.get('date_from') or '').strip()
+    date_to = (data.get('date_to') or '').strip()
+    user_id_filter = (data.get('user_id') or '').strip()
+
+    def shift_in_range(entry, clock_in_key='clock_in_time'):
+        """Check if a shift's clock_in_time falls within the date range."""
+        clock_in_str = entry.get(clock_in_key, '')
+        if not clock_in_str:
+            return False
+        try:
+            clock_in_dt = datetime.fromisoformat(clock_in_str)
+        except (ValueError, TypeError):
+            return False
+        if date_from:
+            try:
+                dt_from = datetime.fromisoformat(date_from)
+                if clock_in_dt < dt_from:
+                    return False
+            except ValueError:
+                pass
+        if date_to:
+            try:
+                if 'T' not in date_to:
+                    dt_to = datetime.fromisoformat(date_to + 'T23:59:59')
+                else:
+                    dt_to = datetime.fromisoformat(date_to)
+                if clock_in_dt > dt_to:
+                    return False
+            except ValueError:
+                pass
+        return True
+
+    # Filter completed shifts
+    filtered_shifts = []
+    for entry in shift_log:
+        uid = entry.get('user_id', '')
+        if user_id_filter and uid != user_id_filter:
+            continue
+        if shift_in_range(entry):
+            filtered_shifts.append(entry)
+
+    # Also include currently active shifts in range
+    for uid, shift in list(active_shifts.items()):
+        if user_id_filter and uid != user_id_filter:
+            continue
+        if uid not in users:
+            continue
+        now = datetime.now()
+        shift_entry = {
+            'user_id': uid,
+            'user_name': shift.get('user_name', users.get(uid, {}).get('name', 'Unknown')),
+            'clock_in_time': shift['clock_in_time'].isoformat(),
+            'clock_out_time': None,
+            'duration_hours': round((now - shift['clock_in_time']).total_seconds() / 3600, 2),
+            'active': True
+        }
+        if shift_in_range(shift_entry):
+            filtered_shifts.append(shift_entry)
+
+    # Group by user_id
+    user_data_map = {}
+    for entry in filtered_shifts:
+        uid = entry.get('user_id', 'unknown')
+        if uid not in users:
+            continue
+        if uid not in user_data_map:
+            user_data_map[uid] = {
+                'user_name': entry.get('user_name', users[uid].get('name', 'Unknown')),
+                'total_hours': 0.0,
+                'shift_count': 0,
+                'shifts': []
+            }
+        ud = user_data_map[uid]
+        ud['total_hours'] += entry.get('duration_hours', 0)
+        ud['shift_count'] += 1
+        ud['shifts'].append({
+            'clock_in_time': entry.get('clock_in_time', ''),
+            'clock_out_time': entry.get('clock_out_time', ''),
+            'duration_hours': entry.get('duration_hours', 0),
+            'active': entry.get('active', False)
+        })
+
+    # Calculate weekly overtime: group completed shifts by ISO week
+    weekly_hours_by_user = defaultdict(lambda: defaultdict(float))
+    for entry in filtered_shifts:
+        uid = entry.get('user_id', '')
+        if uid not in users:
+            continue
+        ck = entry.get('clock_in_time', '')
+        if not ck:
+            continue
+        try:
+            dt = datetime.fromisoformat(ck)
+            week_key = f"{dt.isocalendar()[0]}-W{dt.isocalendar()[1]:02d}"
+            weekly_hours_by_user[uid][week_key] += entry.get('duration_hours', 0)
+        except (ValueError, TypeError):
+            pass
+
+    results = []
+    for uid, ud in user_data_map.items():
+        total_hours = round(ud['total_hours'], 2)
+        # Overtime: sum of (week_hours - 40) for each week where week_hours > 40
+        week_ots = []
+        for wk, wh in weekly_hours_by_user.get(uid, {}).items():
+            if wh > 40:
+                week_ots.append(round(wh - 40, 2))
+        overtime_hours = round(sum(week_ots), 2)
+
+        # Pay rate from user profile
+        pay_rate = users.get(uid, {}).get('pay_rate', None)
+        has_pay_rate = pay_rate is not None and pay_rate > 0
+        pay_rate = pay_rate or 0
+        estimated_pay = round(total_hours * pay_rate, 2) if has_pay_rate else None
+
+        # Sort shifts by clock_in_time
+        shifts_sorted = sorted(ud['shifts'], key=lambda s: s.get('clock_in_time', ''))
+
+        results.append({
+            'user_id': uid,
+            'user_name': ud['user_name'],
+            'total_hours': total_hours,
+            'shift_count': ud['shift_count'],
+            'overtime_hours': overtime_hours,
+            'pay_rate': pay_rate,
+            'has_pay_rate': has_pay_rate,
+            'estimated_pay': estimated_pay,
+            'shifts': shifts_sorted
+        })
+
+    # Sort by total_hours descending
+    results.sort(key=lambda r: r['total_hours'], reverse=True)
+
+    return jsonify({
+        'message': 'Pay period summary retrieved',
+        'employees': results,
+        'total_employees': len(results)
+    })
+
+
 @app.route('/api/export/activity_log_csv', methods=['POST'])
 def export_activity_log_csv():
     data = request.json

@@ -489,6 +489,29 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 
 .ts-entry { background: var(--card); border-radius: 8px; padding: 10px 14px; margin-bottom: 4px; font-size: 14px; display: flex; justify-content: space-between; }
 
+/* Timesheet sub-tabs */
+.timesheet-subtab { background: transparent; border: none; padding: 8px 16px; font-size: 14px; cursor: pointer; border-radius: 6px 6px 0 0; color: var(--text2); min-height: 44px; font-weight: 500; transition: all .15s; }
+.timesheet-subtab:hover { background: var(--card); color: var(--text); }
+.timesheet-subtab.active { background: var(--accent); color: #fff; font-weight: 600; }
+.timesheet-subsection { min-height: 100px; }
+/* Pay period cards */
+.pp-card { background: var(--card); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; border: 1px solid var(--border); }
+.pp-card-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.pp-card-name { font-size: 18px; font-weight: 700; color: var(--text); }
+.pp-card-meta { display: flex; gap: 16px; flex-wrap: wrap; font-size: 14px; }
+.pp-stat { display: flex; flex-direction: column; align-items: center; min-width: 70px; }
+.pp-stat-value { font-size: 22px; font-weight: 700; color: var(--accent); }
+.pp-stat-value.green { color: #4caf50; }
+.pp-stat-value.orange { color: #ff9800; }
+.pp-stat-value.gold { color: #ffd700; }
+.pp-stat-label { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: .5px; }
+.pp-overtime { color: #ff9800; font-weight: 600; }
+.pp-details-btn { font-size: 13px; padding: 6px 14px; min-height: 36px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius); cursor: pointer; }
+.pp-details-btn:hover { opacity: .85; }
+.pp-shift-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px; flex-wrap: wrap; gap: 4px; }
+.pp-shift-row:last-child { border-bottom: none; }
+.pp-active-badge { background: #4caf50; color: #fff; font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
+
 .log-filters { background: var(--card); border-radius: var(--radius); padding: 12px 16px; margin-bottom: 12px; }
 .log-filter-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: end; }
 .log-filter-group { display: flex; flex-direction: column; gap: 4px; }
@@ -1373,36 +1396,67 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
         </div>
         <!-- Timesheet -->
         <div id="secTimesheet" class="admin-section">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
-            <h3 style="margin:0;">⏱️ Timesheet</h3>
-            <button class="accent" onclick="exportTimesheetCSV()" style="font-size:14px;padding:12px 20px;min-height:48px;">📥 Export Timesheet (CSV)</button>
+          <h3 style="margin:0 0 12px 0;">⏱️ Timesheet</h3>
+          <!-- Sub-tab navigation -->
+          <div class="timesheet-subtabs" style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;border-bottom:2px solid var(--border);padding-bottom:8px;">
+            <button class="timesheet-subtab active" data-subtab="timesheet-logins" onclick="switchTimesheetSubTab('timesheet-logins')">📋 Admin Logins</button>
+            <button class="timesheet-subtab" data-subtab="timesheet-shifts" onclick="switchTimesheetSubTab('timesheet-shifts')">👤 Employee Shifts</button>
+            <button class="timesheet-subtab" data-subtab="timesheet-payperiod" onclick="switchTimesheetSubTab('timesheet-payperiod')">💰 Pay Period</button>
           </div>
-          <div class="card" style="margin-bottom:12px;padding:10px 14px;">
-            <div class="form-row" style="gap:8px;flex-wrap:wrap;align-items:center;">
-              <label style="font-size:13px;color:var(--text2);">📅 From:</label>
-              <input type="date" id="timesheetDateFrom" style="max-width:160px;min-height:40px;font-size:14px;">
-              <label style="font-size:13px;color:var(--text2);">To:</label>
-              <input type="date" id="timesheetDateTo" style="max-width:160px;min-height:40px;font-size:14px;">
-              <button class="accent" onclick="loadTimesheet()" style="min-height:40px;padding:8px 16px;font-size:13px;">🔍 Filter</button>
-              <button class="outline" onclick="document.getElementById('timesheetDateFrom').value='';document.getElementById('timesheetDateTo').value='';loadTimesheet()" style="min-height:40px;padding:8px 16px;font-size:13px;">✕ Clear</button>
+          <!-- Admin Logins sub-tab -->
+          <div id="subTimesheetLogins" class="timesheet-subsection">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+              <h4 style="margin:0;font-size:15px;color:var(--accent);">📋 Admin Login/Logout Times</h4>
+              <button class="accent" onclick="exportTimesheetCSV()" style="font-size:14px;padding:12px 20px;min-height:48px;">📥 Export Timesheet (CSV)</button>
             </div>
-          </div>
-          <div id="timesheetList"><div class="empty-state">Loading...</div></div>
-          <h4 style="margin-top:20px;margin-bottom:8px;font-size:16px;color:var(--accent);">👤 Employee Shifts (Clock In/Out)</h4>
-          <div class="card" style="margin-bottom:12px;padding:10px 14px;">
-            <div class="form-row" style="gap:8px;flex-wrap:wrap;align-items:center;">
-              <label style="font-size:13px;color:var(--text2);">📅 From:</label>
-              <input type="date" id="shiftsDateFrom" style="max-width:160px;min-height:40px;font-size:14px;">
-              <label style="font-size:13px;color:var(--text2);">To:</label>
-              <input type="date" id="shiftsDateTo" style="max-width:160px;min-height:40px;font-size:14px;">
-              <button class="accent" onclick="loadShifts()" style="min-height:40px;padding:8px 16px;font-size:13px;">🔍 Filter</button>
-              <button class="outline" onclick="document.getElementById('shiftsDateFrom').value='';document.getElementById('shiftsDateTo').value='';loadShifts()" style="min-height:40px;padding:8px 16px;font-size:13px;">✕ Clear</button>
+            <div class="card" style="margin-bottom:12px;padding:10px 14px;">
+              <div class="form-row" style="gap:8px;flex-wrap:wrap;align-items:center;">
+                <label style="font-size:13px;color:var(--text2);">📅 From:</label>
+                <input type="date" id="timesheetDateFrom" style="max-width:160px;min-height:40px;font-size:14px;">
+                <label style="font-size:13px;color:var(--text2);">To:</label>
+                <input type="date" id="timesheetDateTo" style="max-width:160px;min-height:40px;font-size:14px;">
+                <button class="accent" onclick="loadTimesheet()" style="min-height:40px;padding:8px 16px;font-size:13px;">🔍 Filter</button>
+                <button class="outline" onclick="document.getElementById('timesheetDateFrom').value='';document.getElementById('timesheetDateTo').value='';loadTimesheet()" style="min-height:40px;padding:8px 16px;font-size:13px;">✕ Clear</button>
+              </div>
             </div>
+            <div id="timesheetList"><div class="empty-state">Loading...</div></div>
           </div>
-          <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
-            <button class="accent" onclick="exportShiftsCSV()" style="font-size:13px;padding:10px 16px;min-height:40px;">📥 Export Shifts (CSV)</button>
+          <!-- Employee Shifts sub-tab -->
+          <div id="subTimesheetShifts" class="timesheet-subsection" style="display:none;">
+            <h4 style="margin-top:0;margin-bottom:8px;font-size:15px;color:var(--accent);">👤 Employee Shifts (Clock In/Out)</h4>
+            <div class="card" style="margin-bottom:12px;padding:10px 14px;">
+              <div class="form-row" style="gap:8px;flex-wrap:wrap;align-items:center;">
+                <label style="font-size:13px;color:var(--text2);">📅 From:</label>
+                <input type="date" id="shiftsDateFrom" style="max-width:160px;min-height:40px;font-size:14px;">
+                <label style="font-size:13px;color:var(--text2);">To:</label>
+                <input type="date" id="shiftsDateTo" style="max-width:160px;min-height:40px;font-size:14px;">
+                <button class="accent" onclick="loadShifts()" style="min-height:40px;padding:8px 16px;font-size:13px;">🔍 Filter</button>
+                <button class="outline" onclick="document.getElementById('shiftsDateFrom').value='';document.getElementById('shiftsDateTo').value='';loadShifts()" style="min-height:40px;padding:8px 16px;font-size:13px;">✕ Clear</button>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+              <button class="accent" onclick="exportShiftsCSV()" style="font-size:13px;padding:10px 16px;min-height:40px;">📥 Export Shifts (CSV)</button>
+            </div>
+            <div id="shiftList"><div class="empty-state" id="shiftListStatus">Loading shifts...</div></div>
           </div>
-          <div id="shiftList"><div class="empty-state" id="shiftListStatus">Loading shifts...</div></div>
+          <!-- Pay Period sub-tab -->
+          <div id="subTimesheetPayperiod" class="timesheet-subsection" style="display:none;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+              <h4 style="margin:0;font-size:15px;color:var(--accent);">💰 Pay Period Summary</h4>
+              <button class="accent" onclick="loadPayPeriod()" style="font-size:14px;padding:12px 20px;min-height:48px;">🔄 Refresh</button>
+            </div>
+            <div class="card" style="margin-bottom:12px;padding:10px 14px;">
+              <div class="form-row" style="gap:8px;flex-wrap:wrap;align-items:center;">
+                <label style="font-size:13px;color:var(--text2);">📅 From:</label>
+                <input type="date" id="payPeriodDateFrom" style="max-width:160px;min-height:40px;font-size:14px;">
+                <label style="font-size:13px;color:var(--text2);">To:</label>
+                <input type="date" id="payPeriodDateTo" style="max-width:160px;min-height:40px;font-size:14px;">
+                <button class="accent" onclick="loadPayPeriod()" style="min-height:40px;padding:8px 16px;font-size:13px;">🔍 Filter</button>
+                <button class="outline" onclick="document.getElementById('payPeriodDateFrom').value='';document.getElementById('payPeriodDateTo').value='';loadPayPeriod()" style="min-height:40px;padding:8px 16px;font-size:13px;">✕ Clear</button>
+              </div>
+            </div>
+            <div id="payPeriodSummary"><div class="empty-state">Set a date range and click Filter to view pay period summary.</div></div>
+          </div>
         </div>
         <!-- Permissions (owner only) -->
         <div id="secPermissions" class="admin-section">
@@ -3376,8 +3430,78 @@ async function loadShifts() {
     }
     container.innerHTML = html;
   } catch(e) {
-    container.innerHTML = '<div class=\"empty-state\">Network error</div>';
+    container.innerHTML = '<div class="empty-state">Network error</div>';
   }
+}
+
+async function loadPayPeriod() {
+  const container = document.getElementById('payPeriodSummary');
+  if (!container) return;
+  container.innerHTML = '<div class="empty-state">' + t('loading') + '</div>';
+  try {
+    const params = { adminPin: currentUser.id };
+    const dateFrom = document.getElementById('payPeriodDateFrom')?.value || '';
+    const dateTo = document.getElementById('payPeriodDateTo')?.value || '';
+    if (dateFrom) params.date_from = dateFrom;
+    if (dateTo) params.date_to = dateTo;
+    const r = await fetch(BACKEND_URL + '/api/timesheet/pay_period', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params)
+    });
+    if (!r.ok) { container.innerHTML = '<div class="empty-state">Unauthorized</div>'; return; }
+    const data = await r.json();
+    const employees = data.employees || [];
+    if (employees.length === 0) {
+      container.innerHTML = '<div class="empty-state">No shift data found for this period.</div>';
+      return;
+    }
+    // Summary bar
+    const totalHoursAll = employees.reduce((s, e) => s + e.total_hours, 0);
+    const totalPayAll = employees.reduce((s, e) => s + (e.estimated_pay || 0), 0);
+    let html = '<div class="card" style="margin-bottom:16px;padding:14px 18px;display:flex;gap:24px;flex-wrap:wrap;">';
+    html += '<div class="pp-stat"><div class="pp-stat-value green">' + employees.length + '</div><div class="pp-stat-label">Employees</div></div>';
+    html += '<div class="pp-stat"><div class="pp-stat-value">' + totalHoursAll.toFixed(1) + '</div><div class="pp-stat-label">Total Hours</div></div>';
+    html += '<div class="pp-stat"><div class="pp-stat-value gold">$' + totalPayAll.toFixed(2) + '</div><div class="pp-stat-label">Est. Total Pay</div></div>';
+    html += '</div>';
+    // Employee cards
+    employees.forEach(emp => {
+      const hasOT = emp.overtime_hours > 0;
+      const payDisplay = emp.estimated_pay !== null ? '$' + emp.estimated_pay.toFixed(2) : '<span style="color:var(--text2);font-size:13px;">No rate set</span>';
+      html += '<div class="pp-card">';
+      html += '<div class="pp-card-header">';
+      html += '<span class="pp-card-name">' + escHtml(emp.user_name) + ' <span style="font-size:13px;color:var(--text2);font-weight:400;">(' + escHtml(emp.user_id) + ')</span></span>';
+      html += '<button class="pp-details-btn" onclick="togglePayPeriodDetails(\'' + emp.user_id + '\')">📋 ' + emp.shift_count + ' shifts</button>';
+      html += '</div>';
+      html += '<div class="pp-card-meta">';
+      html += '<div class="pp-stat"><div class="pp-stat-value">' + emp.total_hours.toFixed(1) + '</div><div class="pp-stat-label">Hours</div></div>';
+      html += '<div class="pp-stat"><div class="pp-stat-value ' + (hasOT ? 'orange' : 'green') + '">' + emp.overtime_hours.toFixed(1) + '</div><div class="pp-stat-label">Overtime</div></div>';
+      html += '<div class="pp-stat"><div class="pp-stat-value">' + (emp.pay_rate > 0 ? '$' + emp.pay_rate.toFixed(2) : '—') + '</div><div class="pp-stat-label">Rate/hr</div></div>';
+      html += '<div class="pp-stat"><div class="pp-stat-value gold">' + payDisplay + '</div><div class="pp-stat-label">Est. Gross Pay</div></div>';
+      html += '</div>';
+      // Shift details (initially hidden)
+      html += '<div id="ppDetails_' + emp.user_id + '" class="pp-shift-details" style="display:none;margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">';
+      html += '<div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:6px;">📅 Shift Breakdown:</div>';
+      emp.shifts.forEach(s => {
+        const clockIn = s.clock_in_time ? new Date(s.clock_in_time).toLocaleString() : '—';
+        const clockOut = s.clock_out_time ? new Date(s.clock_out_time).toLocaleString() : (s.active ? '<span class="pp-active-badge">🟢 Active</span>' : '—');
+        const otFlag = s.duration_hours > 8 ? ' <span class="pp-overtime">⚡OT</span>' : '';
+        html += '<div class="pp-shift-row">';
+        html += '<span>' + clockIn + ' → ' + clockOut + '</span>';
+        html += '<span><strong>' + s.duration_hours.toFixed(2) + ' hrs</strong>' + otFlag + '</span>';
+        html += '</div>';
+      });
+      html += '</div>';
+      html += '</div>';
+    });
+    container.innerHTML = html;
+  } catch(e) {
+    container.innerHTML = '<div class="empty-state">' + t('network_error') + '</div>';
+  }
+}
+
+function togglePayPeriodDetails(userId) {
+  const el = document.getElementById('ppDetails_' + userId);
+  if (el) el.style.display = el.style.display === 'none' ? '' : 'none';
 }
 
 async function exportShiftsCSV() {
@@ -5445,7 +5569,7 @@ function switchAdminSection(sec) {
   else if (sec === 'tax') loadTaxAdmin();
   else if (sec === 'discounts') loadDiscountAdmin();
   else if (sec === 'log') loadActivityLog();
-  else if (sec === 'timesheet') { loadTimesheet(); loadShifts(); }
+  else if (sec === 'timesheet') { switchTimesheetSubTab('timesheet-logins'); }
   else if (sec === 'permissions') loadPermissions();
   else if (sec === 'menuhistory') loadMenuHistory();
   else if (sec === 'credentials') loadCredentialsStatus();
@@ -5462,6 +5586,18 @@ function switchAdminSection(sec) {
   else if (sec === 'cashdrawer') loadCashDrawer();
   else if (sec === 'servicecharge') loadServiceChargeConfig();
   else if (sec === 'combos') loadCombos();
+}
+
+function switchTimesheetSubTab(subtab) {
+  document.querySelectorAll('.timesheet-subtab').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.timesheet-subtab[data-subtab="${subtab}"]`).classList.add('active');
+  document.querySelectorAll('.timesheet-subsection').forEach(s => s.style.display = 'none');
+  const section = document.getElementById('sub' + subtab.charAt(0).toUpperCase() + subtab.slice(1));
+  if (section) section.style.display = '';
+  // Load on first visit
+  if (subtab === 'timesheet-payperiod') loadPayPeriod();
+  if (subtab === 'timesheet-logins') loadTimesheet();
+  if (subtab === 'timesheet-shifts') loadShifts();
 }
 
 async function loadAdminStats() {
