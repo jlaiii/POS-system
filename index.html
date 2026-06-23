@@ -8708,12 +8708,156 @@ async function loadUsers() {
           ${clearLockoutBtn}
           ${forceLogoutBtn}
           ${banBtn}
+          <button class="outline" onclick="openUserTimeline('${escJs(id)}')" style="font-size:12px;padding:4px 10px;min-height:36px;" title="View account history timeline">📜 Timeline</button>
           <button class="danger" onclick="deleteUser('${escJs(id)}')" style="font-size:13px;padding:6px 12px;min-height:36px;">🗑️ Delete</button>
         </div>
       </div>`);
     }).join('');
   } catch(e) { list.innerHTML = '<div class="empty-state val-err">⚠️ ' + t('network_error') + '</div>'; }
   finally { hideContentLoading('userList'); }
+}
+
+let _tlUserId = null;
+
+async function openUserTimeline(userId) {
+  _tlUserId = userId;
+  document.getElementById('userTimelineOverlay').classList.add('active');
+  document.getElementById('userTimelineTitle').textContent = '📜 Loading timeline...';
+  document.getElementById('tlTypeFilter').innerHTML = '<option value="">All Events</option>';
+  document.getElementById('tlDateFrom').value = '';
+  document.getElementById('tlDateTo').value = '';
+  document.getElementById('tlCount').textContent = '';
+  await refreshUserTimeline();
+}
+
+function closeUserTimeline() {
+  document.getElementById('userTimelineOverlay').classList.remove('active');
+  _tlUserId = null;
+}
+
+async function refreshUserTimeline() {
+  if (!_tlUserId) return;
+  const list = document.getElementById('userTimelineList');
+  list.innerHTML = '<div class="empty-state" style="padding:40px 20px;">⏳ Loading timeline...</div>';
+  try {
+    const r = await fetch(BACKEND_URL + '/api/users/timeline', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        adminPin: currentUser.id,
+        userId: _tlUserId,
+        date_from: document.getElementById('tlDateFrom').value || '',
+        date_to: document.getElementById('tlDateTo').value || '',
+        type_filter: document.getElementById('tlTypeFilter').value || '',
+      })
+    });
+    const d = await r.json();
+    if (!r.ok) { list.innerHTML = '<div class="empty-state val-err">⚠️ ' + escHtml(d.message || 'Failed') + '</div>'; return; }
+
+    document.getElementById('userTimelineTitle').textContent = '📜 Timeline — ' + escHtml(d.target_user_name);
+    document.getElementById('tlCount').textContent = d.total + ' events';
+
+    // Populate type filter dropdown if not already populated
+    const filterSel = document.getElementById('tlTypeFilter');
+    if (filterSel.options.length <= 1 && d.available_types && d.available_types.length > 1) {
+      d.available_types.forEach(label => {
+        const opt = document.createElement('option');
+        opt.value = label;
+        opt.textContent = label;
+        filterSel.appendChild(opt);
+      });
+    }
+
+    if (d.timeline.length === 0) {
+      list.innerHTML = '<div class="empty-state" style="padding:40px 20px;">📭 No timeline events found for this period.</div>';
+      return;
+    }
+
+    // Group by date
+    const groups = {};
+    d.timeline.forEach(entry => {
+      const dateKey = entry.timestamp ? entry.timestamp.substring(0, 10) : 'Unknown date';
+      if (!groups[dateKey]) groups[dateKey] = [];
+      groups[dateKey].push(entry);
+    });
+
+    list.innerHTML = Object.entries(groups).map(([dateKey, entries]) => {
+      const dayLabel = dateKey === 'Unknown date' ? 'Unknown date' : formatDateHeader(dateKey);
+      return `<div style="margin-bottom:12px;">
+        <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:6px;padding:4px 8px;background:rgba(233,69,96,0.08);border-radius:6px;">${escHtml(dayLabel)}</div>
+        ${entries.map(entry => {
+          const detailStr = formatTimelineDetail(entry);
+          return `<div style="display:flex;gap:10px;padding:8px 10px;background:var(--bg);border-radius:8px;align-items:flex-start;border-left:3px solid ${entry.color};margin-bottom:4px;">
+            <div style="flex:1;">
+              <div style="font-size:14px;font-weight:600;">${entry.label}</div>
+              ${detailStr ? '<div style="font-size:12px;color:var(--text2);margin-top:2px;">' + detailStr + '</div>' : ''}
+            </div>
+            <div style="text-align:right;flex-shrink:0;">
+              <div style="font-size:11px;color:var(--text2);">${entry.timestamp ? entry.timestamp.substring(11, 19) : ''}</div>
+              ${entry.ip_address ? '<div style="font-size:10px;color:var(--text2);opacity:0.7;">' + escHtml(entry.ip_address) + '</div>' : ''}
+            </div>
+          </div>`;
+        }).join('')}
+      </div>`;
+    }).join('');
+
+  } catch(e) {
+    list.innerHTML = '<div class="empty-state val-err">⚠️ Network error loading timeline</div>';
+  }
+}
+
+function formatDateHeader(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  const today = new Date();
+  const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+  if (d.toDateString() === today.toDateString()) return '📅 Today — ' + dateStr;
+  if (d.toDateString() === yesterday.toDateString()) return '📅 Yesterday — ' + dateStr;
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  return '📅 ' + days[d.getDay()] + ' — ' + dateStr;
+}
+
+function formatTimelineDetail(entry) {
+  const d = entry.details || {};
+  const parts = [];
+
+  // Login details
+  if (d.status === 'success' && d.method) parts.push('Method: ' + d.method);
+  if (d.status === 'failed') parts.push('Reason: ' + (d.reason || 'invalid credentials'));
+  if (d.status === '2fa_required') parts.push('2FA required');
+  if (d.status === 'locked') parts.push('Account locked (10 min)');
+
+  // PIN changes
+  if (d.old_pin) parts.push('Old PIN: ' + d.old_pin);
+  if (d.new_pin) parts.push('New PIN provided');
+  if (d.old_user_id) parts.push('Old ID: ' + d.old_user_id);
+  if (d.new_user_id !== undefined) parts.push('New ID: ' + d.new_user_id);
+
+  // Admin actions
+  if (d.reason) parts.push('Reason: ' + escHtml(d.reason));
+  if (d.target_user_name) parts.push('User: ' + escHtml(d.target_user_name));
+  if (d.target_user_id) parts.push('Target ID: ' + d.target_user_id);
+
+  // 2FA
+  if (d.remaining_codes !== undefined) parts.push('Remaining codes: ' + d.remaining_codes);
+  if (d.new_codes_count !== undefined) parts.push('New codes: ' + d.new_codes_count);
+
+  // Pay rate / scheduled start
+  if (d.old_pay_rate !== undefined) parts.push('Old rate: $' + parseFloat(d.old_pay_rate).toFixed(2));
+  if (d.new_pay_rate !== undefined) parts.push('New rate: $' + parseFloat(d.new_pay_rate).toFixed(2));
+  if (d.old_scheduled_start !== undefined) parts.push('Old: ' + (d.old_scheduled_start || 'none'));
+  if (d.new_scheduled_start !== undefined) parts.push('New: ' + (d.new_scheduled_start || 'none'));
+
+  // Permissions
+  if (d.old_permissions) parts.push('Old: ' + (Array.isArray(d.old_permissions) ? d.old_permissions.join(', ') : d.old_permissions));
+  if (d.new_permissions) parts.push('New: ' + (Array.isArray(d.new_permissions) ? d.new_permissions.join(', ') : d.new_permissions));
+
+  // Ban / block
+  if (d.banned_reason) parts.push('Reason: ' + escHtml(d.banned_reason));
+  if (d.unbanned_reason) parts.push('Reason: ' + escHtml(d.unbanned_reason));
+
+  // IP / user agent
+  if (entry.user_role) parts.push('Role: ' + entry.user_role);
+
+  return parts.join(' · ');
 }
 
 async function banUser(userId) {
@@ -14930,6 +15074,28 @@ async function submitChangePin() {
     <div class="modal-actions" style="gap:8px;flex-wrap:wrap;">
       <button class="accent" onclick="submitOrderForce()" id="conflictSubmitAnyway" style="min-height:48px;font-size:15px;padding:10px 20px;flex:1;">✅ Submit Anyway</button>
       <button class="outline" onclick="closeConflictModalAndRefresh()" id="conflictRefresh" style="min-height:48px;font-size:15px;padding:10px 20px;flex:1;">🔄 Refresh Cart</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ USER TIMELINE OVERLAY ═══════════ -->
+<div id="userTimelineOverlay" class="modal-overlay">
+  <div class="modal-box" style="max-width:700px;max-height:85vh;width:95%;overflow-y:auto;padding:20px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <h3 id="userTimelineTitle" style="margin:0;">📜 User Timeline</h3>
+      <button class="ghost" onclick="closeUserTimeline()" style="font-size:24px;padding:4px 12px;min-height:44px;line-height:1;">✕</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+      <input type="date" id="tlDateFrom" style="max-width:160px;min-height:44px;font-size:14px;" />
+      <input type="date" id="tlDateTo" style="max-width:160px;min-height:44px;font-size:14px;" />
+      <select id="tlTypeFilter" style="max-width:200px;min-height:44px;font-size:14px;">
+        <option value="">All Events</option>
+      </select>
+      <button class="outline" onclick="refreshUserTimeline()" style="min-height:44px;font-size:14px;padding:8px 16px;">🔍 Filter</button>
+      <span id="tlCount" style="font-size:13px;color:var(--text2);align-self:center;margin-left:auto;"></span>
+    </div>
+    <div id="userTimelineList" style="display:flex;flex-direction:column;gap:6px;">
+      <div class="empty-state" style="padding:40px 20px;">Loading timeline...</div>
     </div>
   </div>
 </div>

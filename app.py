@@ -2746,6 +2746,147 @@ def regenerate_backup_codes():
     })
 
 
+@app.route('/api/users/timeline', methods=['POST'])
+def user_timeline():
+    """Per-user account history timeline.
+    Returns chronological, filterable activity log entries for a specific user.
+    Covers: PIN changes, 2FA setup/disable, login successes/failures, lockouts,
+    temp PIN usage, permission changes, pay rate changes, bans, force logouts.
+    Requires manage_users permission.
+    """
+    data = request.json
+    admin_pin = str(data.get('adminPin', ''))
+    target_user_id = str(data.get('userId', ''))
+    date_from = (data.get('date_from') or '').strip()
+    date_to = (data.get('date_to') or '').strip()
+    type_filter = (data.get('type_filter') or '').strip()
+
+    if not admin_pin:
+        return jsonify({'message': 'Authentication required.'}), 401
+    if not check_perm(admin_pin, 'manage_users'):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+    if not target_user_id:
+        return jsonify({'message': 'userId is required.'}), 400
+
+    users = load_json_data(USERS_FILE)
+    target_user = users.get(target_user_id, {})
+    target_name = target_user.get('name', target_user_id)
+
+    logs = load_json_data(ACTIVITY_LOG_FILE)
+
+    # Activity types relevant to user account timeline
+    relevant_types = {
+        'login', 'login_failed', 'pin_changed', 'pin_change_failed',
+        'pin_change_logout_sessions', 'pin_reset_by_admin',
+        '2fa_setup_initiated', '2fa_verify_success', '2fa_verify_failed',
+        '2fa_login_success', '2fa_login_failed', '2fa_login_locked',
+        '2fa_login_rate_limited', '2fa_backup_code_used', '2fa_backup_codes_low',
+        '2fa_disabled_by_admin', '2fa_backup_regenerated',
+        'user_blocked', 'user_unblocked', 'force_logout',
+        'update_pay_rate', 'update_scheduled_start', 'update_permissions',
+        'ban_user', 'user_banned', 'clear_lockout',
+        'add_user', 'delete_user',
+        'temp_pin_generated', 'temp_pin_used',
+    }
+
+    filtered = []
+    for log in logs:
+        # Must be a relevant type
+        if log.get('type') not in relevant_types:
+            continue
+        # Must involve this user
+        log_user_id = log.get('user_id', '')
+        details = log.get('details', {}) or {}
+        related_user = str(details.get('target_user_id', '')) or str(details.get('userId', ''))
+        if log_user_id != target_user_id and related_user != target_user_id:
+            # Also check if the event is about this user (banned, etc.)
+            if not (details.get('user_name') == target_name or details.get('target_user_name') == target_name):
+                continue
+
+        # Date filter
+        ts = log.get('timestamp', '')
+        if date_from and ts < date_from:
+            continue
+        if date_to:
+            # Include entries up to end of date_to day
+            date_to_end = date_to + 'T23:59:59'
+            if ts > date_to_end:
+                continue
+
+        # Type filter
+        if type_filter and log.get('type') != type_filter:
+            continue
+
+        filtered.append(log)
+
+    # Sort by timestamp descending (most recent first)
+    filtered.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
+
+    # Limit to 500
+    filtered = filtered[:500]
+
+    # Build human-readable labels
+    type_labels = {
+        'login': ('🔑 Login', '#2ecc71'),
+        'login_failed': ('❌ Login Failed', '#e74c3c'),
+        'pin_changed': ('🔐 PIN Changed', '#3498db'),
+        'pin_change_failed': ('❌ PIN Change Failed', '#e74c3c'),
+        'pin_change_logout_sessions': ('🔐 PIN Change — Sessions Ended', '#e67e22'),
+        'pin_reset_by_admin': ('🔐 PIN Reset by Admin', '#e67e22'),
+        '2fa_setup_initiated': ('🔒 2FA Setup Started', '#3498db'),
+        '2fa_verify_success': ('🔒 2FA Setup Verified', '#2ecc71'),
+        '2fa_verify_failed': ('❌ 2FA Verification Failed', '#e74c3c'),
+        '2fa_login_success': ('🔑 2FA Login Success', '#2ecc71'),
+        '2fa_login_failed': ('❌ 2FA Login Failed', '#e74c3c'),
+        '2fa_login_locked': ('🔒 2FA Account Locked', '#e74c3c'),
+        '2fa_login_rate_limited': ('⏳ 2FA Rate Limited', '#e67e22'),
+        '2fa_backup_code_used': ('🔑 Backup Code Used', '#e67e22'),
+        '2fa_backup_codes_low': ('⚠️ Backup Codes Low', '#e67e22'),
+        '2fa_disabled_by_admin': ('🔓 2FA Disabled by Admin', '#e74c3c'),
+        '2fa_backup_regenerated': ('🔄 Backup Codes Regenerated', '#3498db'),
+        'user_blocked': ('🚫 User Blocked', '#e74c3c'),
+        'user_unblocked': ('✅ User Unblocked', '#2ecc71'),
+        'force_logout': ('🚪 Force Logout', '#e67e22'),
+        'update_pay_rate': ('💰 Pay Rate Updated', '#3498db'),
+        'update_scheduled_start': ('📅 Scheduled Start Updated', '#3498db'),
+        'update_permissions': ('🛡️ Permissions Updated', '#e67e22'),
+        'ban_user': ('🚫 Account Banned', '#e74c3c'),
+        'user_banned': ('🚫 User Banned', '#e74c3c'),
+        'clear_lockout': ('🔓 Lockout Cleared', '#2ecc71'),
+        'add_user': ('➕ User Created', '#2ecc71'),
+        'delete_user': ('🗑️ User Deleted', '#e74c3c'),
+        'temp_pin_generated': ('🔑 Temp PIN Generated', '#e67e22'),
+        'temp_pin_used': ('🔑 Temp PIN Used', '#e67e22'),
+    }
+
+    # Gather available types in results for filtering
+    available_types = sorted(set(
+        type_labels.get(e.get('type', ''), (e.get('type', ''), '#95a5a6'))[0]
+        for e in filtered
+    ))
+
+    result = []
+    for entry in filtered:
+        label, color = type_labels.get(entry.get('type', ''), (entry.get('type', ''), '#95a5a6'))
+        result.append({
+            'timestamp': entry.get('timestamp', ''),
+            'type': entry.get('type', ''),
+            'label': label,
+            'color': color,
+            'user_role': entry.get('user_role', ''),
+            'ip_address': entry.get('ip_address', ''),
+            'details': entry.get('details', {}),
+        })
+
+    return jsonify({
+        'timeline': result,
+        'target_user_id': target_user_id,
+        'target_user_name': target_name,
+        'total': len(result),
+        'available_types': available_types,
+    })
+
+
 @app.route('/api/auth/change_pin', methods=['POST'])
 def change_pin():
     """Employee self-service PIN change.
