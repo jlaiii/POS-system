@@ -9798,6 +9798,14 @@ def cash_drawer_close():
     expected, total_in, total_out = calculate_expected_balance(session, drawer)
     difference = round(closing_balance - expected, 2)
 
+    # If there's a variance (over or short), require a variance_reason
+    if difference != 0:
+        variance_reason = data.get('variance_reason', '').strip()
+        if not variance_reason:
+            return jsonify({'message': 'Variance reason is required when the drawer is over or short. Please explain the discrepancy.'}), 400
+    else:
+        variance_reason = data.get('variance_reason', '')
+
     session['closed_at'] = datetime.now().isoformat()
     session['closed_by'] = admin_pin
     session['closed_by_name'] = admin_name
@@ -9805,6 +9813,7 @@ def cash_drawer_close():
     session['expected_balance'] = expected
     session['difference'] = difference
     session['status'] = 'closed'
+    session['variance_reason'] = variance_reason
     session['notes'] = data.get('notes', session.get('notes', ''))
     session['total_cash_in'] = total_in
     session['total_cash_out'] = total_out
@@ -9816,12 +9825,23 @@ def cash_drawer_close():
         'opening_balance': session['opening_balance'],
         'expected_balance': expected,
         'closing_balance': closing_balance,
-        'difference': difference
+        'difference': difference,
+        'variance_reason': variance_reason
     })
 
+    # Build contextual response message
+    diff_abs = abs(difference)
+    if difference > 0:
+        msg = f'Cash drawer closed with ${diff_abs:.2f} over — variance reason noted.'
+    elif difference < 0:
+        msg = f'Cash drawer closed with ${diff_abs:.2f} short — variance reason noted.'
+    else:
+        msg = 'Cash drawer closed and reconciled — exact match.'
+
     return jsonify({
-        'message': 'Cash drawer closed and reconciled.',
+        'message': msg,
         'session': session,
+        'variance_warning': difference != 0,
         'reconciliation': {
             'opening_balance': session['opening_balance'],
             'total_cash_in': total_in,

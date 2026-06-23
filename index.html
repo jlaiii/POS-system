@@ -13054,22 +13054,68 @@ async function closeCashDrawer() {
     return;
   }
   const notes = document.getElementById('cashDrawerCloseNotes').value.trim();
+  const balanceNum = parseFloat(balance);
+  // First, check if there's already a variance_reason in a hidden field
+  let varianceReason = document.getElementById('cashDrawerVarianceReason')?.value?.trim() || '';
+
+  // If we don't have a variance reason yet and we need one, we'll get a 400
+  // and prompt the user. Use a retry flag to avoid infinite loop.
+  if (closeCashDrawer._askingVariance) {
+    // We're retrying after getting a variance reason from prompt
+    varianceReason = closeCashDrawer._pendingVarianceReason || '';
+    if (!varianceReason) {
+      showToast('A variance reason is required when the count does not match.', 'danger');
+      closeCashDrawer._askingVariance = false;
+      closeCashDrawer._pendingVarianceReason = '';
+      return;
+    }
+  }
   if (!confirm('Close the drawer? The expected balance will be compared to your counted amount.')) return;
   try {
+    const body = { adminPin: currentUser.id, closing_balance: balanceNum, notes };
+    if (varianceReason) body.variance_reason = varianceReason;
     const r = await fetch(BACKEND_URL + '/api/cash_drawer/close', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adminPin: currentUser.id, closing_balance: parseFloat(balance), notes })
+      body: JSON.stringify(body)
     });
     const d = await r.json();
-    if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
+    if (!r.ok) {
+      // If variance reason is required, prompt the user
+      if (r.status === 400 && d.message && d.message.includes('Variance reason')) {
+        const reason = prompt('⚠️ Drawer is over or short. Please explain the discrepancy:', '');
+        if (reason && reason.trim()) {
+          closeCashDrawer._askingVariance = true;
+          closeCashDrawer._pendingVarianceReason = reason.trim();
+          return closeCashDrawer(); // retry with reason
+        }
+        closeCashDrawer._askingVariance = false;
+        closeCashDrawer._pendingVarianceReason = '';
+        return;
+      }
+      showToast(d.message || 'Failed', 'danger');
+      closeCashDrawer._askingVariance = false;
+      closeCashDrawer._pendingVarianceReason = '';
+      return;
+    }
     const rec = d.reconciliation || {};
     const diff = rec.difference || 0;
+    const varianceWarn = d.variance_warning;
+    let toastType = 'success';
+    if (varianceWarn) {
+      toastType = diff < 0 ? 'danger' : 'warning';
+    }
     const diffLabel = diff >= 0 ? 'over by $' + diff.toFixed(2) : 'short by $' + Math.abs(diff).toFixed(2);
-    showToast('🔒 Drawer closed. ' + diffLabel, diff === 0 ? 'success' : 'warning');
+    showToast('🔒 ' + (d.message || 'Drawer closed. ' + diffLabel), toastType);
     document.getElementById('cashDrawerClosingBalance').value = '';
     document.getElementById('cashDrawerCloseNotes').value = '';
+    closeCashDrawer._askingVariance = false;
+    closeCashDrawer._pendingVarianceReason = '';
     loadCashDrawer();
-  } catch(e) { showToast('Network error', 'danger'); }
+  } catch(e) {
+    showToast('Network error', 'danger');
+    closeCashDrawer._askingVariance = false;
+    closeCashDrawer._pendingVarianceReason = '';
+  }
 }
 
 async function loadCashDrawerHistory() {
@@ -13089,13 +13135,15 @@ async function loadCashDrawerHistory() {
       return;
     }
     let html = '<div style="overflow-x:auto;"><table class="emp-perf-table"><thead><tr>' +
-      '<th>#</th><th>Status</th><th>Opened</th><th>Opened By</th><th>Closed</th><th>Opening</th><th>Expected</th><th>Actual</th><th>Diff</th><th>Txns</th><th>Notes</th>' +
+      '<th>#</th><th>Status</th><th>Opened</th><th>Opened By</th><th>Closed</th><th>Opening</th><th>Expected</th><th>Actual</th><th>Diff</th><th>Variance</th><th>Txns</th><th>Notes</th>' +
       '</tr></thead><tbody>';
     sessions.forEach(function(s, idx) {
       const isOpen = s.status === 'open';
       const diff = (s.difference !== null && s.difference !== undefined) ? s.difference : '-';
       const diffDisplay = typeof diff === 'number' ? (diff >= 0 ? '+' : '') + diff.toFixed(2) : '-';
       const diffColor = typeof diff === 'number' ? (diff === 0 ? 'var(--text1)' : diff > 0 ? '#2ecc71' : '#e94560') : 'var(--text2)';
+      const hasVariance = typeof diff === 'number' && diff !== 0;
+      const varianceReason = hasVariance ? (s.variance_reason || escHtml(s.notes || 'Variance — no reason given')) : '-';
       html += '<tr>' +
         '<td>' + (idx + 1) + '</td>' +
         '<td>' + (isOpen ? '<span style="color:#2ecc71;font-weight:600;">🔓 Open</span>' : '<span style="color:var(--text2);">🔒 Closed</span>') + '</td>' +
@@ -13106,8 +13154,9 @@ async function loadCashDrawerHistory() {
         '<td class="num">$' + (s.expected_balance !== null && s.expected_balance !== undefined ? s.expected_balance.toFixed(2) : '-') + '</td>' +
         '<td class="num">$' + (s.closing_balance !== null && s.closing_balance !== undefined ? s.closing_balance.toFixed(2) : '-') + '</td>' +
         '<td class="num" style="color:' + diffColor + ';font-weight:600;">' + diffDisplay + '</td>' +
+        '<td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:' + (hasVariance ? (diff < 0 ? '#e94560' : '#f0a500') : 'var(--text2)') + ';">' + varianceReason + '</td>' +
         '<td class="num">' + (s.transaction_count || 0) + '</td>' +
-        '<td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2);font-size:13px;">' + escHtml(s.notes || '') + '</td>' +
+        '<td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2);font-size:13px;">' + escHtml(s.notes || '') + '</td>' +
         '</tr>';
     });
     html += '</tbody></table></div>';

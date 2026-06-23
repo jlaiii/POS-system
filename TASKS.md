@@ -461,7 +461,7 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 
 - [x] worker-2 **Walkthrough: full shift lifecycle** — Clock in → take 10 orders across 5 tables → split payment on 1 → apply discount → add tips → clock out. All APIs function correctly. See worker-2 report for friction points identified.
 
-- [~] worker-1 **Walkthrough: closing shift reconciliation** — Run the cash register closing flow: count drawer → enter expected cash → system compares to actual → variance report → clock out. Test with mismatches: $20 over, $5 short. Does the system flag these clearly? Does it force a reason for variance? Is there a paper trail?
+- [x] worker-1 **Walkthrough: closing shift reconciliation** — Tested full cash register closing flow: open session → cash in/out → close with reconciliation. All 3 variance scenarios tested: exact match ($0 diff), $20 over, $5 short. **Findings & fixes**: (1) Variance reason was NOT forced — added `variance_reason` field required when diff ≠ 0 on close endpoint. (2) Frontend now prompts for reason via popup when variance detected. (3) Toast uses 'danger' for shorts, 'warning' for overs. (4) Session history table now shows "Variance" column with reason. Paper trail confirmed in activity_log.json with full details including IP address and variance_reason. Backward compatible.
 
 - [ ] **Walkthrough: refund/void flow** — Ring up an order → submit → customer changes mind → void entire order. Ring up → submit → customer says "no onions" → refund single item. Test both. Does the refund button appear quickly? Is the reason required? Are refunded items removed from inventory? Is the refund visible in stats/reports?
 
