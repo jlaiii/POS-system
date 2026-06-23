@@ -1782,5 +1782,274 @@
         "details": {
             "status": "success"
         }
+    },
+    {
+        "timestamp": "2026-06-23T14:25:47.676275",
+        "type": "add_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "status": "success",
+            "added_user_id": "7777",
+            "added_user_name": "Reliability Test",
+            "added_user_role": "user"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T14:25:50.488912",
+        "type": "delete_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "status": "success",
+            "deleted_user_id": "7777",
+            "deleted_user_name": "Reliability Test",
+            "deleted_user_role": "user"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T14:26:07.065780",
+        "type": "submit_order",
+        "user_id": "1111",
+        "user_role": "user",
+        "details": {
+            "order_id": 10,
+            "subtotal": 3.0,
+            "tax_amount": 0.0,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 3.0,
+            "payment_method": "Cash",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-23T14:26:07.073681",
+        "type": "loyalty_earn",
+        "user_id": "1111",
+        "user_role": "user",
+        "details": {
+            "customer_phone": "555-TEST-ORDER",
+            "points_earned": 3,
+            "order_id": 10
+        }
+    },
+    {
+        "timestamp": "2026-06-23T14:26:14.106119",
+        "type": "refund_order",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "order_id": 10,
+            "reason": "Reliability Bot - order lifecycle test",
+            "refunded_by_name": "Owner",
+            "order_total": 3.0
+        }
+    },
+    {
+        "timestamp": "2026-06-23T15:16:13.912164",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T15:16:13.962444",
+        "type": "login",
+        "user_id": "5678",
+        "user_role": "user",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Employee Two",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T15:17:34.589002",
+        "type": "login",
+        "user_id": "5678",
+        "user_role": "user",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Employee Two",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T15:17:40.683725",
+        "type": "login",
+        "user_id": "5678",
+        "user_role": "user",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Employee Two",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T15:17:40.735585",
+        "type": "clock_in",
+        "user_id": "5678",
+        "user_role": "user",
+        "details": {
+            "status": "success",
+            "user_name": "Employee Two",
+            "clock_in_time": "2026-06-23T15:17:40.735408",
+            "late_minutes": null,
+            "scheduled_start": null
+        }
+    },
+    {
+        "timestamp": "2026-06-23T15:18:13.132114",
+        "type": "clock_out",
+        "user_id": "5678",
+        "user_role": "user",
+        "details": {
+            "status": "success",
+            "user_name": "Employee Two",
+            "clock_in_time": "2026-06-23T15:17:40.735408",
+            "clock_out_time": "2026-06-23T15:18:13.131706",
+            "duration_hours": 0.01
+        }
+    },
+    {
+        "timestamp": "2026-06-23T15:18:20.730657",
+        "type": "clock_in",
+        "user_id": "5678",
+        "user_role": "user",
+        "details": {
+            "status": "success",
+            "user_name": "Employee Two",
+            "clock_in_time": "2026-06-23T15:18:20.730476",
+            "late_minutes": null,
+            "scheduled_start": null
+        }
+    },
+    {
+        "timestamp": "2026-06-23T15:18:43.545883",
+        "type": "clock_in",
+        "user_id": "5678",
+        "user_role": "user",
+        "details": {
+            "status": "success",
+            "user_name": "Employee Two",
+            "clock_in_time": "2026-06-23T15:18:43.545637",
+            "late_minutes": null,
+            "scheduled_start": null
+        }
+    },
+    {
+        "timestamp": "2026-06-23T15:18:53.591621",
+        "type": "submit_order",
+        "user_id": "5678",
+        "user_role": "user",
+        "details": {
+            "order_id": 11,
+            "subtotal": 18.0,
+            "tax_amount": 1.44,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 23.04,
+            "payment_method": "Split (cash $15.00, card $10.00)",
+            "item_count": 3
+        }
+    },
+    {
+        "timestamp": "2026-06-23T15:19:17.717068",
+        "type": "clock_out",
+        "user_id": "5678",
+        "user_role": "user",
+        "details": {
+            "status": "success",
+            "user_name": "Employee Two",
+            "clock_in_time": "2026-06-23T15:18:20.730476",
+            "clock_out_time": "2026-06-23T15:19:17.716595",
+            "duration_hours": 0.02
+        }
+    },
+    {
+        "timestamp": "2026-06-23T15:19:17.767854",
+        "type": "submit_order",
+        "user_id": "1111",
+        "user_role": "user",
+        "details": {
+            "order_id": 12,
+            "subtotal": 15.0,
+            "tax_amount": 1.2,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 19.2,
+            "payment_method": "card",
+            "item_count": 3
+        }
+    },
+    {
+        "timestamp": "2026-06-23T15:19:23.812477",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T15:19:30.012225",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T15:19:35.875530",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T15:19:35.927101",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T15:19:39.472318",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T15:20:49.080147",
+        "type": "submit_order",
+        "user_id": "1111",
+        "user_role": "user",
+        "details": {
+            "order_id": 13,
+            "subtotal": 9.0,
+            "tax_amount": 0.72,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 11.52,
+            "payment_method": "cash",
+            "item_count": 2
+        }
     }
 ]

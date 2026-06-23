@@ -1,1 +1,161 @@
-[]
+[
+    {
+        "order_id": 11,
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-23T15:18:53.590835",
+        "user": "5678",
+        "payment": "Split (cash $15.00, card $10.00)",
+        "payment_splits": [
+            {
+                "method": "cash",
+                "amount": 15.0
+            },
+            {
+                "method": "card",
+                "amount": 10.0
+            }
+        ],
+        "items": [
+            {
+                "name": "Hamburger - Normal",
+                "price": 6.0,
+                "qty": 2,
+                "note": "no onions",
+                "modifiers": [
+                    {
+                        "group": "Size",
+                        "option": "Regular"
+                    },
+                    {
+                        "group": "Extras",
+                        "option": "Extra Cheese"
+                    }
+                ]
+            },
+            {
+                "name": "Coke",
+                "price": 3.0,
+                "qty": 1,
+                "note": "",
+                "modifiers": []
+            },
+            {
+                "name": "Lemonade",
+                "price": 3.0,
+                "qty": 1,
+                "note": "",
+                "modifiers": []
+            }
+        ],
+        "subtotal": 18.0,
+        "tax_amount": 1.44,
+        "tip_amount": 3.6,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 23.04,
+        "notes": "no onions on the burger",
+        "item_notes": {},
+        "table_number": 5,
+        "delivery_address": null,
+        "customer_email": ""
+    },
+    {
+        "order_id": 12,
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-23T15:19:17.767399",
+        "user": "1111",
+        "payment": "card",
+        "payment_splits": [
+            {
+                "method": "card",
+                "amount": 18.0
+            }
+        ],
+        "items": [
+            {
+                "name": "Hotdog - Loaded",
+                "price": 7.0,
+                "qty": 1,
+                "note": "",
+                "modifiers": []
+            },
+            {
+                "name": "Chips (Large Bag)",
+                "price": 3.0,
+                "qty": 2,
+                "note": "",
+                "modifiers": []
+            },
+            {
+                "name": "Chocolate Bar",
+                "price": 2.0,
+                "qty": 1,
+                "note": "",
+                "modifiers": []
+            }
+        ],
+        "subtotal": 15.0,
+        "tax_amount": 1.2,
+        "tip_amount": 3.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 19.2,
+        "notes": "",
+        "item_notes": {},
+        "table_number": 6,
+        "delivery_address": null,
+        "customer_email": ""
+    },
+    {
+        "order_id": 13,
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-23T15:20:49.079151",
+        "user": "1111",
+        "payment": "cash",
+        "payment_splits": [
+            {
+                "method": "cash",
+                "amount": 15.5
+            }
+        ],
+        "items": [
+            {
+                "name": "Hamburger - Normal",
+                "price": 6.0,
+                "qty": 1,
+                "note": "",
+                "modifiers": []
+            },
+            {
+                "name": "Coke",
+                "price": 3.0,
+                "qty": 1,
+                "note": "",
+                "modifiers": []
+            }
+        ],
+        "subtotal": 9.0,
+        "tax_amount": 0.72,
+        "tip_amount": 1.8,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 11.52,
+        "notes": "",
+        "item_notes": {},
+        "table_number": 7,
+        "delivery_address": null,
+        "customer_email": ""
+    }
+]

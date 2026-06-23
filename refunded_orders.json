@@ -74,5 +74,44 @@
         "reason": "No reason provided",
         "refunded_at": "2026-06-23T13:29:02.245026",
         "refunded_by": "1111"
+    },
+    {
+        "order_id": 10,
+        "original_order": {
+            "order_id": 10,
+            "status": "refunded",
+            "claimed_by": null,
+            "claimed_at": null,
+            "completed_at": null,
+            "date": "2026-06-23T14:26:07.065158",
+            "user": "1111",
+            "payment": "Cash",
+            "payment_splits": null,
+            "items": [
+                {
+                    "name": "Coke",
+                    "price": 3,
+                    "qty": 1
+                }
+            ],
+            "subtotal": 3.0,
+            "tax_amount": 0.0,
+            "tip_amount": 0.0,
+            "service_charge_amount": 0.0,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 3.0,
+            "notes": "",
+            "item_notes": {},
+            "table_number": null,
+            "delivery_address": null,
+            "customer_email": "",
+            "refund_reason": "Reliability Bot - order lifecycle test",
+            "refunded_at": "2026-06-23T14:26:14.105325",
+            "refunded_by": "1111"
+        },
+        "reason": "Reliability Bot - order lifecycle test",
+        "refunded_at": "2026-06-23T14:26:14.105325",
+        "refunded_by": "1111"
     }
 ]

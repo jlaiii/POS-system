@@ -1,16 +1,16 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-23T13:57 UTC
-> Total checks: 55
-> Healthy: 55 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-23T14:24 UTC
+> Total checks: 59
+> Healthy: 59 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK [verified 13:57]
-- [x] All JSON data files exist and are valid — 34/34 files valid [verified 13:57]
-- [x] users.json has at least owner PIN 1111 — Owner exists, 6 users [verified 13:57]
-- [x] Git repo is clean (no uncommitted changes from crashes) — activity_log.json + order_counter.json + refunded_orders.json + SECURITY_WATCHDOG.md modified (expected) [verified 13:57]
+- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK [verified 14:24]
+- [x] All JSON data files exist and are valid — 34/34 files valid [verified 14:24]
+- [x] users.json has at least owner PIN 1111 — Owner exists, 6 users [verified 14:24]
+- [x] Git repo is clean (no uncommitted changes from crashes) — activity_log.json + order_counter.json + refunded_orders.json + SECURITY_WATCHDOG.md modified (expected) [verified 14:24]
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/clock/in works — 200, clocked in successfully [verified 13:29]
@@ -24,19 +24,19 @@
 - [x] /api/webhooks exists — 200, returns "URL is required" (expected) [verified 13:29]
 - [x] /api/sync_orders exists — 200, returns "No orders provided" [verified 13:57]
 - [x] /api/export/shifts_csv works — returns CSV data [verified 13:29]
-- [x] /api/health — {"status":"ok"} [verified 12:58]
-- [x] /api/kitchen/queue — {"count":0,"queue":[]} [verified 12:58]
-- [x] /api/pickup-display/queue — {"count":0,"queue":[]} [verified 12:58]
+- [x] /api/health — {"status":"ok"} [verified 14:24]
+- [x] /api/kitchen/queue — {"count":0,"queue":[]} [verified 14:24]
+- [x] /api/pickup-display/queue — {"count":0,"queue":[]} [verified 14:24]
 - [x] /api/inventory — returns inventory data (GET) [verified 13:57]
 
 ## EVERY 4 HOURS
-- [x] Order lifecycle: create order → verify in orders.json → refund → verify [verified 13:29]
-- [ ] User CRUD: add test user → verify → delete
-- [ ] Inventory: check stock decrements on order
-- [ ] Loyalty: points earned on order
+- [x] Order lifecycle: create order → verify in orders.json → refund → verify [verified 14:26]
+- [x] User CRUD: add test user → verify → delete [verified 14:25]
+- [x] Inventory: check stock decrements on order [verified 14:26]
+- [x] Loyalty: points earned on order [verified 14:26]
 - [ ] Cash register: open drawer → cash in → cash out → close → verify balance
-- [x] Kitchen display: verify /api/kitchen/queue returns valid data — {"count":0,"queue":[]} [verified 13:57]
-- [x] Pickup display: verify /api/pickup-display/queue works — {"count":0,"queue":[]} [verified 13:57]
+- [x] Kitchen display: verify /api/kitchen/queue returns valid data — {"count":0,"queue":[]} [verified 14:24]
+- [x] Pickup display: verify /api/pickup-display/queue works — {"count":0,"queue":[]} [verified 14:24]
 - [ ] Clock-in late detection: set scheduled time, clock in late, verify late flag
 - [ ] Break tracking: start break → end break → verify break subtracted
 - [ ] Shift edit: edit a shift time → verify audit trail
