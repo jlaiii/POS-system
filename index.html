@@ -2280,6 +2280,7 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
             <div class="stat-card"><div class="stat-val" id="secOpenEvents" style="color:#e74c3c;">-</div><div style="font-size:12px;color:var(--text2);">Open Events</div></div>
             <div class="stat-card"><div class="stat-val" id="secCriticalEvents" style="color:#c0392b;">-</div><div style="font-size:12px;color:var(--text2);">Critical</div></div>
             <div class="stat-card"><div class="stat-val" id="secActiveSessions" style="color:#2ecc71;">-</div><div style="font-size:12px;color:var(--text2);">Active Sessions</div></div>
+            <div class="stat-card"><div class="stat-val" id="secAnomalyCount" style="color:#e67e22;">-</div><div style="font-size:12px;color:var(--text2);">🚨 Anomalies</div></div>
           </div>
 
           <!-- Layout: Live Feed + Blocked IPs -->
@@ -6022,6 +6023,20 @@ function renderSecurityDashboard(data) {
   document.getElementById('secCriticalEvents').textContent = s.critical_events_count || 0;
   document.getElementById('secActiveSessions').textContent = s.active_sessions_count || 0;
 
+  // Anomaly event counts
+  const ac = data.anomaly_counts || {};
+  const anomalyTotal = ac.total || 0;
+  document.getElementById('secAnomalyCount').textContent = anomalyTotal > 0 ? anomalyTotal : '0';
+  // Tooltip with breakdown
+  const anomalyBreakdown = [];
+  if (ac.HIGH > 0) anomalyBreakdown.push(`${ac.HIGH} HIGH`);
+  if (ac.MEDIUM > 0) anomalyBreakdown.push(`${ac.MEDIUM} MEDIUM`);
+  if (ac.LOW > 0) anomalyBreakdown.push(`${ac.LOW} LOW`);
+  const anomEl = document.getElementById('secAnomalyCount');
+  if (anomalyBreakdown.length > 0) {
+    anomEl.title = anomalyBreakdown.join(', ');
+  }
+
   // Live feed — recent login attempts
   const feedEl = document.getElementById('secLiveFeed');
   const attempts = data.recent_attempts || [];
@@ -6111,7 +6126,7 @@ function renderSecurityDashboard(data) {
           <span style="font-size:11px;white-space:nowrap;">${date}</span>
         </div>
         <div style="font-size:11px;color:var(--text2);margin-top:4px;">
-          ID: ${escHtml(e.id || '')} · Severity: <span style="color:${sevColor};font-weight:600;">${escHtml(e.severity || '')}</span> · ${statusBadge}
+          ID: ${escHtml(e.id || '')} · <span style="color:${sevColor};font-weight:600;">${escHtml(e.severity || '')}</span> · ${e.category === 'anomaly' ? '<span style="color:#e67e22;">🚨 Anomaly</span>' : escHtml(e.category || '')} · ${statusBadge}
           ${e.affected_user_name ? ' · 👤 ' + escHtml(e.affected_user_name) : ''}
         </div>
         ${e.detail ? '<div style="font-size:12px;color:var(--text);margin-top:6px;padding:6px 8px;background:var(--bg);border-radius:var(--radius);">' + escHtml(e.detail.substring(0, 200)) + (e.detail.length > 200 ? '...' : '') + '</div>' : ''}

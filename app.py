@@ -30,6 +30,15 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 # Structure: {ip: {'count': int, 'window_start': datetime}}
 ip_failed_attempts = {}
 
+# --- Anomaly Detection Engine — In-Memory Trackers ---
+# Tracks orders per user for rapid-order detection
+user_order_tracker = defaultdict(lambda: {'count': 0, 'window_start': None, 'total': 0.0})
+_lock_for_order_tracker = threading.Lock()
+# Tracks known IPs per user for new-IP detection
+user_known_ips = defaultdict(set)
+# Tracks active login sessions per user for simultaneous-login detection
+user_login_sessions = defaultdict(list)
+
 @app.before_request
 def enforce_ip_blocklist():
     """Check client IP against blocklist/allowlist before every request.
@@ -379,6 +388,147 @@ def log_security_event(severity, category, summary, detail=None, affected_user=N
     events.append(event)
     save_json_data(SECURITY_EVENTS_FILE, events)
     return event
+
+
+# ══════════════════════════════════════════════
+# Anomaly Detection Engine
+# ══════════════════════════════════════════════
+
+def check_anomalies_after_login(user_id, user_name, client_ip):
+    """Check for anomalies after a successful login.
+    
+    Checks:
+    1. Off-hours login — login between anomaly_hours_start and anomaly_hours_end
+    2. New IP for user — user logs in from an IP they've never used before
+    3. Simultaneous logins — same user logged in from 2 different IPs
+    """
+    now = datetime.now()
+    config = load_json_data(SECURITY_CONFIG_FILE)
+    if not isinstance(config, dict):
+        config = {}
+    
+    # 1. Off-hours login check
+    try:
+        ah_start = config.get('anomaly_hours_start', '22:00')
+        ah_end = config.get('anomaly_hours_end', '06:00')
+        current_time_str = now.strftime('%H:%M')
+        start_h, start_m = map(int, ah_start.split(':'))
+        end_h, end_m = map(int, ah_end.split(':'))
+        current_h, current_m = map(int, current_time_str.split(':'))
+        current_minutes = current_h * 60 + current_m
+        start_minutes = start_h * 60 + start_m
+        end_minutes = end_h * 60 + end_m
+        
+        is_off_hours = False
+        if start_minutes > end_minutes:
+            # Range crosses midnight (e.g., 22:00-06:00)
+            if current_minutes >= start_minutes or current_minutes <= end_minutes:
+                is_off_hours = True
+        else:
+            # Same-day range
+            if start_minutes <= current_minutes <= end_minutes:
+                is_off_hours = True
+        
+        if is_off_hours:
+            log_security_event(
+                'MEDIUM', 'anomaly',
+                f"⚠️ Off-hours login: {user_name} ({user_id}) at {current_time_str}",
+                detail=f"User {user_name} (PIN {user_id}) logged in during off-hours ({ah_start}–{ah_end}) from IP {client_ip}.",
+                affected_user=user_id, affected_user_name=user_name
+            )
+    except (ValueError, TypeError):
+        pass
+    
+    # 2. New IP for user check
+    known_ips = user_known_ips[user_id]
+    if client_ip not in known_ips:
+        if known_ips:  # Only flag if we have seen this user before
+            log_security_event(
+                'MEDIUM', 'anomaly',
+                f"🆕 New IP for {user_name} ({user_id}): {client_ip}",
+                detail=f"User {user_name} logged in from new IP {client_ip}. Previously seen: {', '.join(known_ips)}.",
+                affected_user=user_id, affected_user_name=user_name
+            )
+        known_ips.add(client_ip)
+    else:
+        known_ips.add(client_ip)
+    
+    # 3. Simultaneous logins check
+    sessions = user_login_sessions[user_id]
+    now_ts = now.timestamp()
+    # Purge sessions older than 1 hour
+    sessions[:] = [(ip, ts) for ip, ts in sessions if now_ts - ts < 3600]
+    # Check for different IPs in last hour
+    other_ips = set(ip for ip, ts in sessions if ip != client_ip and now_ts - ts < 3600)
+    if other_ips:
+        log_security_event(
+            'HIGH', 'anomaly',
+            f"🔄 Simultaneous logins: {user_name} ({user_id}) from {client_ip} and {', '.join(other_ips)}",
+            detail=f"User was already active from IP(s): {', '.join(other_ips)} and now also from {client_ip}.",
+            affected_user=user_id, affected_user_name=user_name
+        )
+    sessions.append((client_ip, now_ts))
+
+
+def check_anomalies_after_order(user_id, order_total, item_count):
+    """Check for anomalies after order submission.
+    
+    Checks:
+    1. Rapid orders — N+ orders in M minutes from same user
+    2. Large order — single order over configurable threshold
+    """
+    now = datetime.now()
+    config = load_json_data(SECURITY_CONFIG_FILE)
+    if not isinstance(config, dict):
+        config = {}
+    
+    rapid_threshold = config.get('rapid_order_threshold', 10)
+    rapid_window = config.get('rapid_order_window_minutes', 5)
+    large_threshold = config.get('max_order_total', 500)
+    
+    # 1. Rapid orders check
+    with _lock_for_order_tracker:
+        tracker = user_order_tracker[user_id]
+        if tracker['window_start'] is None or (now - tracker['window_start']).total_seconds() > rapid_window * 60:
+            tracker['window_start'] = now
+            tracker['count'] = 0
+            tracker['total'] = 0.0
+        tracker['count'] += 1
+        tracker['total'] += float(order_total)
+        if tracker['count'] >= rapid_threshold:
+            log_security_event(
+                'MEDIUM', 'anomaly',
+                f"⚡ Rapid orders: {user_id} — {tracker['count']} orders in {rapid_window} min (${tracker['total']:.2f})",
+                detail=f"User PIN {user_id} submitted {tracker['count']} orders totaling ${tracker['total']:.2f} within {rapid_window} minutes.",
+                affected_user=user_id
+            )
+            tracker['count'] = 0  # Avoid repeat flags
+    
+    # 2. Large order check
+    if float(order_total) > large_threshold:
+        users = load_json_data(USERS_FILE)
+        name = users.get(user_id, {}).get('name', user_id) if isinstance(users, dict) else user_id
+        log_security_event(
+            'LOW', 'anomaly',
+            f"💰 Large order: ${float(order_total):.2f} by {name} ({user_id})",
+            detail=f"Order with {item_count} items totaling ${float(order_total):.2f}. Threshold: ${large_threshold:.2f}.",
+            affected_user=user_id, affected_user_name=name
+        )
+
+
+def get_anomaly_event_counts():
+    """Return counts of unresolved anomaly events by severity."""
+    events = load_json_data(SECURITY_EVENTS_FILE)
+    if not isinstance(events, list):
+        return {'total': 0, 'HIGH': 0, 'MEDIUM': 0, 'LOW': 0}
+    counts = {'total': 0, 'HIGH': 0, 'MEDIUM': 0, 'LOW': 0}
+    for e in events:
+        if e.get('category') == 'anomaly' and e.get('status') == 'unresolved':
+            sev = e.get('severity', 'LOW').upper()
+            if sev in counts:
+                counts[sev] += 1
+            counts['total'] += 1
+    return counts
 
 
 def check_get_auth(admin_pin, permission):
@@ -826,6 +976,10 @@ def login():
                         response_data['pin_reset_info'] = pin_reset_info
                     if force_change_required:
                         response_data['force_pin_change_required'] = True
+                    try:
+                        check_anomalies_after_login(uid, u_data['name'], client_ip)
+                    except Exception:
+                        pass
                     return jsonify(response_data)
                 # Wrong password for this user
                 break  # Username found but wrong password
@@ -899,6 +1053,10 @@ def login():
                 'temp_pin_used': True,
                 'totp_enabled': user_info.get('totp_enabled', False)
             }
+            try:
+                check_anomalies_after_login(user_id, user_info['name'], client_ip)
+            except Exception:
+                pass
             return jsonify(response_data)
         log_activity('login_failed', user_id, 'unknown', {'status': 'failed', 'method': 'temp_pin', 'ip': client_ip})
         record_login_attempt(user_id, False, 'temp_pin', client_ip, {'reason': 'invalid_role'})
@@ -975,6 +1133,10 @@ def login():
                 response_data['pin_reset_info'] = pin_reset_info
             if force_change_required:
                 response_data['force_pin_change_required'] = True
+            try:
+                check_anomalies_after_login(user_id, user_info['name'], client_ip)
+            except Exception:
+                pass
             return jsonify(response_data)
 
     # Record failed login attempt for PIN login
@@ -1125,6 +1287,7 @@ def security_dashboard():
         'recent_events': recent_events,
         'blocked_ips': blocked_ips,
         'active_sessions': list(active_sessions.values()),
+        'anomaly_counts': get_anomaly_event_counts(),
         'config': config
     })
 
@@ -1612,6 +1775,10 @@ def twofa_verify_login():
         users[user_id]['force_pin_change'] = False
         save_json_data(USERS_FILE, users)
 
+    try:
+        check_anomalies_after_login(user_id, user_data['name'], get_client_ip())
+    except Exception:
+        pass
     return jsonify(response_data)
 
 
@@ -1754,6 +1921,10 @@ def twofa_backup_login():
         users[user_id]['force_pin_change'] = False
         save_json_data(USERS_FILE, users)
 
+    try:
+        check_anomalies_after_login(user_id, user_data['name'], get_client_ip())
+    except Exception:
+        pass
     return jsonify(response_data)
 
 
@@ -2984,6 +3155,16 @@ def submit_order():
     emit_customer_update()
     emit_drivethrough_update()
 
+    # Anomaly detection: check rapid orders, large order
+    try:
+        check_anomalies_after_order(
+            str(data.get('user', 'unknown')),
+            order_details['total'],
+            len(items)
+        )
+    except Exception:
+        pass
+
     return jsonify({
         'message': 'Order submitted successfully',
         'order_number': order_number,
@@ -2991,7 +3172,6 @@ def submit_order():
         'low_stock_warnings': low_stock_warnings,
         'loyalty_earned': loyalty_earned
     })
-
 
 @app.route('/api/clear_order', methods=['POST'])
 def clear_order():
