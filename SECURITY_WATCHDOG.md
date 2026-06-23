@@ -1,6 +1,6 @@
 # POS Security Watchdog
 
-> Last run: 2026-06-23T20:55:53 UTC
+> Last run: 2026-06-23T21:37:13 UTC
 > Total events tracked: 7 (5 unresolved)
 > Active blocks: 0 IPs
 > Unresolved alerts: 5 (SEC-001, SEC-003, SEC-005, SEC-006, SEC-007)
@@ -16,32 +16,28 @@ None.
 ### 🟡 MEDIUM (0)
 None.
 
-### ℹ️ Activity Summary (20:35-20:55 UTC, ~21 min)
-- **2 new activity log entries** — all Owner (1111) from 127.0.0.1
-- **20:53:46**: Owner set Discord webhook URL via curl — "discord_webhook_set" (has_url: true)
-- **20:53:52**: Owner immediately cleared Discord webhook URL — "discord_webhook_set" (has_url: false). Config back to empty.
-- **No login attempts** of any kind this window.
-- **No orders, refunds, clock-ins, or shifts** this window.
-- **All activity from 127.0.0.1 (localhost)** — consistent with Owner development/testing.
-- **Other workers active**: SRE Bot modified RELIABILITY_CHECKLIST.md at 20:55:33. TASKS.md, app.py, index.html updated by other workers concurrently.
+### ℹ️ Activity Summary (21:16–21:37 UTC, ~21 min)
+- **1 new activity log entry** — Owner (1111) admin_login at 21:18:59 from 127.0.0.1
+- **0 new login attempts** this window.
+- **0 new orders, refunds, clock-ins, or shifts** this window.
+- **All activity from 127.0.0.1 (localhost)** — consistent with Owner development/testing. No changes since last run.
 
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: 0 IPs with 5+ failed logins. 0 users with 5+ failed attempts. No credential stuffing.
-- **Successful-after-failure**: No instances of failure→success from same IP.
+- **Successful-after-failure**: No failed logins this window. No pattern.
 - **Account enumeration**: 0 new probes against non-existent PINs this window.
-- **Off-hours login**: Current time 20:55 UTC — outside anomaly window (22:00-06:00). Normal.
+- **Off-hours login**: Current time 21:37 UTC — outside anomaly window (22:00-06:00). Normal.
 - **Known IPs**: All traffic from 127.0.0.1 (localhost). 6 users tracked. No new/unknown IPs.
-- **Login attempts since last run**: 0 total (0 failed, 0 successful).
+- **Login attempts since last run**: 1 total (0 failed, 1 successful — Owner admin_login).
 
 ### 🔒 Security Config
-- security_config.json: unchanged content. Owner tested setting/clearing Discord webhook — ended empty. Blocked IPs: empty.
+- security_config.json: unchanged. IP blocklist: empty.
 - users.json: 6 accounts intact. Owner (1111) present and unbanned.
 - Owner 2FA still not persisted (SEC-001 — no change this window).
 
 ### 📂 File Integrity
-- All 34 JSON files parseable. No corruption.
-- No unexpected files in workdir (no .php, .exe, .bat, .sh, .jar found).
-- No hidden suspicious files.
+- All 35 JSON files parseable. No corruption.
+- No unexpected files in workdir (sw.js is expected PWA service worker).
 - Owner account (1111) present and active. No banned accounts.
 
 ## Active Blocks
@@ -63,13 +59,13 @@ None.
 - SEC-002: [LOW] Employee One (1234) 2FA lockout resolved — 2FA re-setup successfully by Owner at 07:59:32.
 
 ## System State
-- **Current time**: 2026-06-23T20:55:53 UTC — daytime, outside off-hours window (anomaly hours: 22:00-06:00)
-- **Activity log**: 4139 lines (2 new entries this window — discord webhook set/clear by Owner)
-- **New login attempts this window**: 0 (0 failed, 0 successful)
-- **Failed logins**: 0 new this window (1 total from 18:31:51 — already assessed as benign)
+- **Current time**: 2026-06-23T21:37:13 UTC — daytime, outside off-hours window (anomaly hours: 22:00-06:00)
+- **Activity log**: 329 entries (1 new this window — Owner admin_login)
+- **New login attempts this window**: 0 (0 failed, 0 successful in login_attempts.json)
+- **Failed logins this window**: 0
 - **Known IPs**: All localhost. 6 users tracked. 127.0.0.1 only IP.
 - **Blocked IPs**: 0 (empty blocklist)
-- **Config changes**: Discord webhook URL tested then cleared (ended empty — no material change).
-- **File integrity**: All 34 JSON files parseable. No unexpected files. No suspicious new files.
+- **Config changes**: None detected.
+- **File integrity**: All 35 JSON files parseable. No unexpected files. pos.db present (expected — SQLite migration).
 - **Users**: 6 accounts. Owner 2FA still broken (SEC-001). Employee One 2FA OK. Test2FA 2FA OK.
-- **Security events**: 7 total (SEC-001→SEC-007). SEC-006 block immediately reverted by same admin.
+- **Security events**: 7 total (SEC-001→SEC-007). SEC-006/007 block/unblock resolved in practice.

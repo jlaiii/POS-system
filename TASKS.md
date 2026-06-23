@@ -316,7 +316,7 @@ New `tickets.json` data store. Each ticket:
 
 ### Priority: MEDIUM
 
-- [ ] **Conflict detection for time-off requests** — When admin views a pending time-off, show warning if too many employees already approved for same dates.
+- [~] worker-3 **Conflict detection for time-off requests** — When admin views a pending time-off, show warning if too many employees already approved for same dates.
 - [ ] **Ticket filtering and search** — Admin queue: filter by type, status, employee, date range. Search by text.
 - [ ] **Recurring time-off patterns** — Allow employee to request recurring time-off (e.g., "every Tuesday for the next 3 months").
 - [ ] **Calendar view for time-off** — Visual calendar in admin showing who's off on which days.
