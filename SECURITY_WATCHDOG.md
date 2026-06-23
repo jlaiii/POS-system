@@ -1,12 +1,13 @@
 # POS Security Watchdog
-> Last run: 2026-06-23T07:47:14 UTC
-> Total events tracked: 2
+> Last run: 2026-06-23T08:43:54 UTC
+> Total events tracked: 2 (1 unresolved)
 > Active blocks: 0 IPs
-> Unresolved alerts: 2
+> Unresolved alerts: 1
 
 ## Current Run Findings
-- [LOW] **Employee One (1234) 2FA lockout (SEC-002)** — System required 2FA for 1234 at 07:32:24 despite users.json showing totp_enabled=false, totp_secret=null. 5 rapid failed codes → 15min account lockout at 07:32:43. Likely same 2FA state persistence bug as SEC-001. Rate limiting worked. [SEC-002]
-- [LOW] Failed login (null user ID) at 07:27:23 followed by failed admin_login at 07:27:24 — then Owner (1111) successfully logged in at 07:27:41. Almost certainly Owner mistyping PIN, not an attack.
+- [NO CHANGE] **No new activity since last run (08:20)** — Last events still from 08:06:33 (Owner PIN login). No new login attempts, orders, or events.
+- [INFO] **login_attempts.json remains empty** — Login endpoints still not populating this file. Activity log is the only source for login tracking.
+- [LOW] **Owner's 2FA still broken (SEC-001)** — No change. Owner still has totp_enabled=false, totp_secret=null.
 
 ## Active Blocks
 None.
@@ -18,18 +19,19 @@ None.
 - SEC-001: [MEDIUM] 2FA state not persisted for Owner (1111) after successful verification — users.json not updated (07:24:40, unresolved)
 
 ## Unresolved LOW Events
-- SEC-002: [LOW] Employee One (1234) 2FA lockout — same 2FA persistence bug (07:47:14, unresolved)
-
-## Resolved This Session
 None.
 
+## Resolved This Session
+- SEC-002: [LOW] Employee One (1234) 2FA lockout resolved — 2FA re-setup successfully by Owner at 07:59:32.
+
 ## System State
-- **Current time**: 2026-06-23T07:47:14 UTC — outside off-hours window (anomaly hours: 22:00-06:00)
-- **Activity log**: 92 entries total, 17 since last run
-- **Failed logins in window**: 2 (null user at 07:27:23-24, likely Owner typo)
-- **2FA events in window**: 1x 2fa_required (1234), 1x 2fa_login_success, 6x 2fa_login_failed, 1x account_locked, 2x rate_limited
-- **Orders**: Orders array empty, cleared_orders empty
-- **Users**: 6 users, none banned. Owner's 2FA still broken (SEC-001). Employee One affected by same bug (SEC-002).
+- **Current time**: 2026-06-23T08:43:54 UTC — daytime, outside off-hours window (anomaly hours: 22:00-06:00)
+- **Activity log**: 1191 entries total, 0 new since last run
+- **Failed logins in window**: 0
+- **Orders**: Empty (no active orders, no cleared orders)
+- **Users**: 6 users, none banned. Employee One 2FA fixed. Owner 2FA still broken (SEC-001).
 - **Known IPs**: Still no IP data — activity log does not log remote_addr
 - **Blocked IPs**: 0 (empty blocklist in security_config.json)
-- **Config unchanged**: Same thresholds as last run
+- **Config unchanged**: Same thresholds, no changes detected
+- **File integrity**: All JSON files at expected sizes, no suspicious new files
+- **login_attempts.json**: Still empty — not being populated by login endpoints
