@@ -414,7 +414,7 @@ New `tickets.json` data store. Each ticket:
 
 - [x] worker-3 **HIGH: Inventory not restored on refund/void** — Added inventory restoration in `/api/orders/refund`: after refunding an order, stock levels are re-incremented for each item (including combo child items). Also added dedup check in `/api/sync_orders` to prevent double-decrement by skipping already-processed `local_id`. Activity log now records `inventory_restored` list. [worker-3]
 
-- [ ] **HIGH: No "Use Backup Code" link in 2FA login UI** — The backend endpoint `/api/auth/2fa/backup_login` exists and works, but the 2FA login screen has no "Use backup code instead" link. If an employee enables 2FA and loses their phone, they're locked out with no frontend-reachable fallback. Add a small text link below the 6-digit input that transitions to a backup code entry field.
+- [~] worker-2 **HIGH: No "Use Backup Code" link in 2FA login UI** — The backend endpoint `/api/auth/2fa/backup_login` exists and works, but the 2FA login screen has no "Use backup code instead" link. If an employee enables 2FA and loses their phone, they're locked out with no frontend-reachable fallback. Add a small text link below the 6-digit input that transitions to a backup code entry field.
 
 |- [ ] **MEDIUM: Waiter quick re-fire / re-send order items** — No button to re-fire an already-submitted order item back to the kitchen (e.g., cook missed it, wrong portion, customer wants a remake). Current workaround: refund the item and re-order it (3+ taps). A "Re-fire" button on order history items would save 3-4 taps per incident.
 
