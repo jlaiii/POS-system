@@ -2291,13 +2291,33 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
                 <div class="empty-state">Loading...</div>
               </div>
             </div>
-            <!-- Right: Blocked IPs + Active Sessions -->
+            <!-- Right: Blocked IPs + Allowlist + Active Sessions -->
             <div>
               <!-- Blocked IPs -->
               <div class="card" style="padding:12px;margin-bottom:12px;">
                 <h4 style="margin:0 0 8px 0;font-size:14px;">🚫 Blocked IPs</h4>
-                <div id="secBlockedIpsList" style="max-height:200px;overflow-y:auto;-webkit-overflow-scrolling:touch;">
+                <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;">
+                  <input type="text" id="secBlockIpInput" placeholder="IP address" style="flex:2;min-width:100px;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;">
+                  <input type="text" id="secBlockReasonInput" placeholder="Reason (optional)" style="flex:2;min-width:100px;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;">
+                  <label style="display:flex;align-items:center;gap:4px;font-size:13px;color:var(--text2);cursor:pointer;white-space:nowrap;">
+                    <input type="checkbox" id="secBlockPermanent" style="width:18px;height:18px;accent-color:var(--accent);"> Permanent
+                  </label>
+                  <button class="accent" onclick="addIpToBlocklist()" style="min-height:44px;padding:8px 16px;font-size:13px;white-space:nowrap;">➕ Block IP</button>
+                </div>
+                <div id="secBlockedIpsList" style="max-height:180px;overflow-y:auto;-webkit-overflow-scrolling:touch;">
                   <div class="empty-state">No blocked IPs.</div>
+                </div>
+              </div>
+              <!-- IP Allowlist -->
+              <div class="card" style="padding:12px;margin-bottom:12px;">
+                <h4 style="margin:0 0 8px 0;font-size:14px;">✅ IP Allowlist</h4>
+                <p style="font-size:12px;color:var(--text2);margin:0 0 6px 0;">When IPs are in the allowlist, <b>ONLY</b> those IPs can access. Localhost (127.0.0.1) is always allowed.</p>
+                <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;">
+                  <input type="text" id="secAllowlistIpInput" placeholder="IP address" style="flex:2;min-width:100px;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;">
+                  <button class="accent" onclick="addIpToAllowlist()" style="min-height:44px;padding:8px 16px;font-size:13px;white-space:nowrap;">➕ Add</button>
+                </div>
+                <div id="secAllowlistIpsList" style="max-height:120px;overflow-y:auto;-webkit-overflow-scrolling:touch;">
+                  <div class="empty-state">No IPs in allowlist (all IPs allowed).</div>
                 </div>
               </div>
               <!-- Active Sessions -->
@@ -6099,6 +6119,25 @@ function renderSecurityDashboard(data) {
     });
     eventsEl.innerHTML = html;
   }
+  
+  // IP Allowlist
+  const allowlistEl = document.getElementById('secAllowlistIpsList');
+  const config = data.config || {};
+  const allowlist = config.ip_allowlist || [];
+  if (allowlist.length === 0) {
+    allowlistEl.innerHTML = '<div class="empty-state">No IPs in allowlist (all IPs allowed).</div>';
+  } else {
+    let html = '<table style="width:100%;border-collapse:collapse;font-size:12px;">';
+    html += '<tr style="color:var(--text2);border-bottom:1px solid var(--border);"><th style="padding:4px 6px;text-align:left;">IP</th><th style="padding:4px 6px;text-align:left;">Action</th></tr>';
+    allowlist.forEach(ip => {
+      html += `<tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:4px 6px;">${escHtml(ip)}</td>
+        <td style="padding:4px 6px;"><button class="ghost" onclick="removeIpFromAllowlist('${ip}')" style="font-size:11px;padding:2px 8px;min-height:28px;" title="Remove from allowlist">✕</button></td>
+      </tr>`;
+    });
+    html += '</table>';
+    allowlistEl.innerHTML = html;
+  }
 }
 
 async function unblockIp(ip) {
@@ -6118,6 +6157,90 @@ async function unblockIp(ip) {
     loadSecurityDashboard();
   } catch (e) {
     showToast('Network error unblocking IP.', 'danger');
+  }
+}
+
+async function addIpToBlocklist() {
+  const ipInput = document.getElementById('secBlockIpInput');
+  const reasonInput = document.getElementById('secBlockReasonInput');
+  const permanentCheck = document.getElementById('secBlockPermanent');
+  const ip = ipInput.value.trim();
+  const reason = reasonInput.value.trim();
+  if (!ip) { showToast('Please enter an IP address.', 'danger'); return; }
+  try {
+    const res = await fetch(BACKEND_URL + '/api/security/blocklist/add', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        adminPin: currentUser.id,
+        ip: ip,
+        reason: reason || 'Blocked via dashboard',
+        permanent: permanentCheck.checked
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(data.message || 'Failed to block IP.', 'danger');
+      return;
+    }
+    showToast('IP blocked: ' + ip, 'success');
+    ipInput.value = '';
+    reasonInput.value = '';
+    permanentCheck.checked = false;
+    loadSecurityDashboard();
+  } catch (e) {
+    showToast('Network error blocking IP.', 'danger');
+  }
+}
+
+async function addIpToAllowlist() {
+  const input = document.getElementById('secAllowlistIpInput');
+  const ip = input.value.trim();
+  if (!ip) { showToast('Please enter an IP address.', 'danger'); return; }
+  try {
+    const res = await fetch(BACKEND_URL + '/api/security/blocklist/allowlist', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        adminPin: currentUser.id,
+        action: 'add',
+        ip: ip
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(data.message || 'Failed to add IP to allowlist.', 'danger');
+      return;
+    }
+    showToast('IP added to allowlist: ' + ip, 'success');
+    input.value = '';
+    loadSecurityDashboard();
+  } catch (e) {
+    showToast('Network error adding IP to allowlist.', 'danger');
+  }
+}
+
+async function removeIpFromAllowlist(ip) {
+  if (!confirm('Remove ' + ip + ' from allowlist?')) return;
+  try {
+    const res = await fetch(BACKEND_URL + '/api/security/blocklist/allowlist', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        adminPin: currentUser.id,
+        action: 'remove',
+        ip: ip
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(data.message || 'Failed to remove IP.', 'danger');
+      return;
+    }
+    showToast('IP removed from allowlist: ' + ip, 'success');
+    loadSecurityDashboard();
+  } catch (e) {
+    showToast('Network error removing IP from allowlist.', 'danger');
   }
 }
 

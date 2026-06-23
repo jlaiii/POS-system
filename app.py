@@ -25,6 +25,55 @@ CORS(app)  # Enable CORS for all origins
 # --- SocketIO for real-time updates ---
 socketio = SocketIO(app, cors_allowed_origins="*")
 
+# --- IP Blocklist / Allowlist Enforcement (before every request) ---
+# In-memory IP failed attempt tracking for auto-block
+# Structure: {ip: {'count': int, 'window_start': datetime}}
+ip_failed_attempts = {}
+
+@app.before_request
+def enforce_ip_blocklist():
+    """Check client IP against blocklist/allowlist before every request.
+    Returns 403 if IP is blocked or not allowed."""
+    # Skip static files, health check, and unblock endpoints (so owner can recover)
+    if request.path.startswith('/static') or request.path == '/favicon.ico':
+        return None
+    if request.path in ('/api/health', '/api/security/unblock_ip', '/api/security/blocklist/add'):
+        return None
+
+    client_ip = get_client_ip()
+    # Localhost is always allowed (admin access from server console)
+    if client_ip in ('127.0.0.1', '::1', 'localhost'):
+        return None
+
+    config = load_json_data(SECURITY_CONFIG_FILE)
+    if not isinstance(config, dict):
+        config = {}
+
+    # IP Allowlist mode: if allowlist is non-empty, ONLY those IPs are allowed
+    ip_allowlist = config.get('ip_allowlist', [])
+    if ip_allowlist and client_ip not in ip_allowlist:
+        return jsonify({
+            'message': 'Access denied: your IP is not in the allowed list.',
+            'code': 'ip_not_allowed'
+        }), 403
+
+    # IP Blocklist check
+    blocked_ips = config.get('blocked_ips', [])
+    for entry in blocked_ips:
+        if isinstance(entry, dict) and entry.get('ip') == client_ip:
+            reason = entry.get('reason', 'No reason provided')
+            return jsonify({
+                'message': f'Access denied: your IP ({client_ip}) is blocked. Reason: {reason}',
+                'code': 'ip_blocked'
+            }), 403
+        elif isinstance(entry, str) and entry == client_ip:
+            return jsonify({
+                'message': f'Access denied: your IP ({client_ip}) is blocked.',
+                'code': 'ip_blocked'
+            }), 403
+
+    return None
+
 USERS_FILE = 'users.json'
 ORDERS_FILE = 'orders.json'
 CLEARED_ORDERS_FILE = 'cleared_orders.json'
@@ -286,6 +335,52 @@ def log_activity(activity_type, user_id, user_role, details=None):
     save_json_data(ACTIVITY_LOG_FILE, logs)
 
 
+def log_security_event(severity, category, summary, detail=None, affected_user=None, affected_user_name=None, related_event=None):
+    """Log a security event to security_events.json (append-only).
+    
+    Args:
+        severity: 'CRITICAL', 'HIGH', 'MEDIUM', or 'LOW'
+        category: event category (e.g., 'authentication', 'access_control', 'data_integrity')
+        summary: short description of the event
+        detail: optional longer description
+        affected_user: optional user PIN affected
+        affected_user_name: optional user name affected
+        related_event: optional related event ID
+    Returns:
+        The event dict that was logged (with assigned ID)
+    """
+    events = load_json_data(SECURITY_EVENTS_FILE)
+    if not isinstance(events, list):
+        events = []
+    # Generate event ID
+    event_num = len(events) + 1
+    event_id = f"SEC-{event_num:03d}"
+    # Make sure ID is unique (in case of gaps/deletions)
+    existing_ids = {e.get('id') for e in events if e.get('id')}
+    while event_id in existing_ids:
+        event_num += 1
+        event_id = f"SEC-{event_num:03d}"
+    
+    event = {
+        'id': event_id,
+        'created_at': datetime.now().isoformat(),
+        'severity': severity.upper() if severity else 'LOW',
+        'category': category,
+        'status': 'unresolved',
+        'summary': summary,
+        'detail': detail or summary,
+        'affected_user': affected_user,
+        'affected_user_name': affected_user_name,
+        'related_event': related_event,
+        'reported_by': 'IP Blocklist Manager',
+        'resolved_at': None,
+        'resolution': None
+    }
+    events.append(event)
+    save_json_data(SECURITY_EVENTS_FILE, events)
+    return event
+
+
 def check_get_auth(admin_pin, permission):
     """Check authentication for GET endpoints that pass adminPin as query param.
     Returns (user_data, None) on success, or (None, (response, status_code)) on failure."""
@@ -535,6 +630,59 @@ def record_login_attempt(user_id, success, method, client_ip=None, details=None)
     if len(attempts) > 10000:
         attempts = attempts[-5000:]
     save_json_data(LOGIN_ATTEMPTS_FILE, attempts)
+
+    # --- Auto-block IP on repeated failed logins ---
+    if not success:
+        now = datetime.now()
+        # Track per-IP failed attempts in memory
+        if client_ip not in ip_failed_attempts:
+            ip_failed_attempts[client_ip] = {'count': 0, 'window_start': now}
+        ip_attempt = ip_failed_attempts[client_ip]
+        # Reset window if outside the tracking window (default 5 min)
+        if (now - ip_attempt['window_start']).total_seconds() > 300:
+            ip_attempt['count'] = 0
+            ip_attempt['window_start'] = now
+        ip_attempt['count'] += 1
+
+        # Check if IP should be auto-blocked
+        config = load_json_data(SECURITY_CONFIG_FILE)
+        if not isinstance(config, dict):
+            config = {}
+        threshold = config.get('auto_block_threshold', 5)
+        duration_minutes = config.get('auto_block_duration_minutes', 60)
+
+        if ip_attempt['count'] >= threshold:
+            # Auto-block this IP
+            blocked = config.get('blocked_ips', [])
+            if not isinstance(blocked, list):
+                blocked = []
+            # Only auto-block if not already blocked
+            already_blocked = False
+            for entry in blocked:
+                if isinstance(entry, dict) and entry.get('ip') == client_ip:
+                    already_blocked = True
+                    break
+            if not already_blocked:
+                blocked.append({
+                    'ip': client_ip,
+                    'reason': f'Auto-blocked after {ip_attempt["count"]} failed logins in 5 minutes',
+                    'blocked_at': now.isoformat(),
+                    'auto_blocked': True,
+                    'permanent': False,
+                    'auto_block_duration_minutes': duration_minutes
+                })
+                config['blocked_ips'] = blocked
+                save_json_data(SECURITY_CONFIG_FILE, config)
+                # Log security event
+                log_security_event(
+                    'HIGH',
+                    'authentication',
+                    f"IP {client_ip} auto-blocked after {ip_attempt['count']} failed logins",
+                    detail=f"IP {client_ip} was automatically added to blocklist after {ip_attempt['count']} failed login attempts within 5 minutes. Block duration: {duration_minutes} minutes.",
+                    affected_user=user_id
+                )
+                # Reset counter so we don't keep re-blocking
+                ip_attempt['count'] = 0
 
 
 # --- User Management Endpoints ---
@@ -981,6 +1129,130 @@ def security_dashboard():
     })
 
 
+@app.route('/api/security/blocklist/add', methods=['POST'])
+def security_blocklist_add():
+    """Add an IP to the blocklist. Requires manage_users permission.
+    Body: { adminPin, ip, reason?, permanent? }
+    If permanent=true, the IP stays blocked until manually removed (no auto-expiry).
+    """
+    data = request.json or {}
+    admin_pin = data.get('adminPin', '')
+    ip_to_block = data.get('ip', '').strip()
+    reason = data.get('reason', '').strip()
+    permanent = data.get('permanent', False)
+    
+    if not admin_pin:
+        return jsonify({'message': 'Authentication required.'}), 401
+    if not check_perm(admin_pin, "manage_users"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+    if not ip_to_block:
+        return jsonify({'message': 'IP address is required.'}), 400
+    # Basic IP format validation
+    import re
+    if not re.match(r'^(\d{1,3}\.){3}\d{1,3}$', ip_to_block) and ip_to_block != '::1':
+        return jsonify({'message': 'Invalid IP address format.'}), 400
+
+    config = load_json_data(SECURITY_CONFIG_FILE)
+    if not isinstance(config, dict):
+        config = {}
+    blocked = config.get('blocked_ips', [])
+    if not isinstance(blocked, list):
+        blocked = []
+
+    # Check if already blocked
+    for entry in blocked:
+        if isinstance(entry, dict) and entry.get('ip') == ip_to_block:
+            return jsonify({'message': 'IP is already in blocklist.', 'ip': ip_to_block}), 409
+    
+    blocked.append({
+        'ip': ip_to_block,
+        'reason': reason or 'Blocked by admin',
+        'blocked_at': datetime.now().isoformat(),
+        'auto_blocked': False,
+        'permanent': permanent
+    })
+    config['blocked_ips'] = blocked
+    save_json_data(SECURITY_CONFIG_FILE, config)
+
+    # Log activity
+    users = load_json_data(USERS_FILE)
+    admin_name = users.get(admin_pin, {}).get('name', admin_pin) if isinstance(users, dict) else admin_pin
+    log_activity('ip_blocked', admin_pin, admin_name, {'ip': ip_to_block, 'reason': reason, 'permanent': permanent})
+    
+    # Log security event
+    log_security_event(
+        'HIGH' if permanent else 'MEDIUM',
+        'access_control',
+        f"IP {ip_to_block} blocked by admin ({admin_name})",
+        detail=f"IP {ip_to_block} was manually added to blocklist by {admin_name}. Reason: {reason or 'Not specified'}. Permanent: {permanent}",
+        affected_user=admin_pin,
+        affected_user_name=admin_name
+    )
+
+    return jsonify({'message': 'IP blocked successfully.', 'blocked_ips': blocked})
+
+
+@app.route('/api/security/blocklist/allowlist', methods=['POST'])
+def security_blocklist_allowlist():
+    """Manage IP allowlist. Requires manage_users permission.
+    Body: { adminPin, action: 'add'|'remove'|'set'|'get', ip?, ips? }
+    If allowlist is non-empty, ONLY those IPs can access the system.
+    """
+    data = request.json or {}
+    admin_pin = data.get('adminPin', '')
+    action = data.get('action', 'get')
+    
+    if not admin_pin:
+        return jsonify({'message': 'Authentication required.'}), 401
+    if not check_perm(admin_pin, "manage_users"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    config = load_json_data(SECURITY_CONFIG_FILE)
+    if not isinstance(config, dict):
+        config = {}
+    
+    ip_allowlist = config.get('ip_allowlist', [])
+    if not isinstance(ip_allowlist, list):
+        ip_allowlist = []
+
+    users = load_json_data(USERS_FILE)
+    admin_name = users.get(admin_pin, {}).get('name', admin_pin) if isinstance(users, dict) else admin_pin
+
+    if action == 'add':
+        ip_to_add = data.get('ip', '').strip()
+        if not ip_to_add:
+            return jsonify({'message': 'IP address is required.'}), 400
+        if ip_to_add not in ip_allowlist:
+            ip_allowlist.append(ip_to_add)
+            config['ip_allowlist'] = ip_allowlist
+            save_json_data(SECURITY_CONFIG_FILE, config)
+            log_activity('allowlist_add', admin_pin, admin_name, {'ip': ip_to_add})
+        return jsonify({'message': 'IP added to allowlist.', 'ip_allowlist': ip_allowlist})
+
+    elif action == 'remove':
+        ip_to_remove = data.get('ip', '').strip()
+        if not ip_to_remove:
+            return jsonify({'message': 'IP address is required.'}), 400
+        if ip_to_remove in ip_allowlist:
+            ip_allowlist.remove(ip_to_remove)
+            config['ip_allowlist'] = ip_allowlist
+            save_json_data(SECURITY_CONFIG_FILE, config)
+            log_activity('allowlist_remove', admin_pin, admin_name, {'ip': ip_to_remove})
+        return jsonify({'message': 'IP removed from allowlist.', 'ip_allowlist': ip_allowlist})
+
+    elif action == 'set':
+        ips = data.get('ips', [])
+        if not isinstance(ips, list):
+            return jsonify({'message': 'ips must be an array.'}), 400
+        config['ip_allowlist'] = ips
+        save_json_data(SECURITY_CONFIG_FILE, config)
+        log_activity('allowlist_set', admin_pin, admin_name, {'count': len(ips)})
+        return jsonify({'message': f'Allowlist set to {len(ips)} IPs.', 'ip_allowlist': ips})
+
+    # action == 'get'
+    return jsonify({'ip_allowlist': ip_allowlist})
+
+
 @app.route('/api/security/unblock_ip', methods=['POST'])
 def security_unblock_ip():
     """Remove an IP from the blocklist. Requires manage_users permission."""
@@ -1013,6 +1285,16 @@ def security_unblock_ip():
     users = load_json_data(USERS_FILE)
     admin_name = users.get(admin_pin, {}).get('name', admin_pin) if isinstance(users, dict) else admin_pin
     log_activity('ip_unblocked', admin_pin, admin_name, {'ip': ip_to_unblock, 'action': 'unblocked'})
+    
+    # Log security event for unblock
+    log_security_event(
+        'LOW',
+        'access_control',
+        f"IP {ip_to_unblock} unblocked by admin ({admin_name})",
+        detail=f"IP {ip_to_unblock} was removed from blocklist by {admin_name}.",
+        affected_user=admin_pin,
+        affected_user_name=admin_name
+    )
 
     return jsonify({'message': 'IP unblocked successfully.', 'blocked_ips': blocked})
 
