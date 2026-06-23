@@ -12070,15 +12070,62 @@ def ticket_my():
 
 @app.route('/api/tickets/queue', methods=['POST'])
 def ticket_queue():
-    """Get all tickets for admin review. Permission-gated (manage_users or manage_tickets)."""
+    """Get all tickets for admin review. Permission-gated (manage_users or manage_tickets).
+    Supports filtering: type, status, employee, date_from, date_to, search text."""
     data = request.json
     admin_pin = data.get('adminPin') if data else None
     if not admin_pin or not (check_perm(admin_pin, 'manage_users')):
         return jsonify({'message': 'Insufficient permissions.'}), 403
 
     tickets = load_json_data(TICKETS_FILE)
-    pending = [t for t in tickets if t.get('status') == 'pending']
-    resolved = [t for t in tickets if t.get('status') in ('approved', 'denied')]
+
+    # Extract filter params
+    filter_type = data.get('filter_type')  # optional: time_off, issue, feedback, pay_review, other
+    filter_status = data.get('filter_status')  # optional: pending, approved, denied
+    filter_employee = data.get('filter_employee', '').strip().lower()  # optional: search by name or user_id
+    filter_date_from = data.get('filter_date_from')  # optional: ISO date string
+    filter_date_to = data.get('filter_date_to')  # optional: ISO date string
+    filter_search = data.get('filter_search', '').strip().lower()  # optional: text search in subject/description
+
+    # Apply filters
+    filtered = []
+    for t in tickets:
+        # Type filter
+        if filter_type and t.get('type') != filter_type:
+            continue
+        # Status filter
+        if filter_status and t.get('status') != filter_status:
+            continue
+        # Employee search (by name or user_id)
+        if filter_employee:
+            emp_name = (t.get('user_name') or '').lower()
+            emp_id = (t.get('user_id') or '').lower()
+            if filter_employee not in emp_name and filter_employee not in emp_id:
+                continue
+        # Date range filter (on created_at)
+        if filter_date_from or filter_date_to:
+            created = t.get('created_at', '')
+            if created:
+                try:
+                    created_date = created[:10]  # Extract YYYY-MM-DD
+                    if filter_date_from and created_date < filter_date_from:
+                        continue
+                    if filter_date_to and created_date > filter_date_to:
+                        continue
+                except (ValueError, TypeError):
+                    pass
+        # Text search (subject, description)
+        if filter_search:
+            subject = (t.get('subject') or '').lower()
+            desc = (t.get('description') or '').lower()
+            ticket_id = (t.get('id') or '').lower()
+            uname = (t.get('user_name') or '').lower()
+            if filter_search not in subject and filter_search not in desc and filter_search not in ticket_id and filter_search not in uname:
+                continue
+        filtered.append(t)
+
+    pending = [t for t in filtered if t.get('status') == 'pending']
+    resolved = [t for t in filtered if t.get('status') in ('approved', 'denied')]
     pending.sort(key=lambda t: t.get('created_at', ''), reverse=True)
     resolved.sort(key=lambda t: t.get('responded_at', ''), reverse=True)
 

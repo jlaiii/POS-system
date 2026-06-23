@@ -2262,17 +2262,71 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
         <div id="secTickets" class="admin-section">
           <h3>📋 Ticket Queue</h3>
           <p style="color:var(--text2);margin-bottom:16px;font-size:14px;" data-i18n="admin.tickets.desc">Review and respond to employee tickets and requests.</p>
+
+          <!-- Filter bar -->
+          <div class="card" style="margin-bottom:16px;padding:12px;">
+            <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;">
+              <!-- Type filter -->
+              <div style="min-width:130px;flex:1;">
+                <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;" data-i18n="admin.tickets.filter_type">Filter by type:</label>
+                <select id="ticketFilterType" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:40px;">
+                  <option value="" data-i18n="admin.tickets.filter_all_types">All Types</option>
+                  <option value="time_off">🕐 Time Off</option>
+                  <option value="issue">🐛 Issue</option>
+                  <option value="feedback">💬 Feedback</option>
+                  <option value="pay_review">💰 Pay Review</option>
+                  <option value="other">📝 Other</option>
+                </select>
+              </div>
+              <!-- Status filter -->
+              <div style="min-width:110px;flex:1;">
+                <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;" data-i18n="admin.tickets.filter_status">Status:</label>
+                <select id="ticketFilterStatus" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:40px;">
+                  <option value="" data-i18n="admin.tickets.filter_all_status">All Statuses</option>
+                  <option value="pending">⏳ Pending</option>
+                  <option value="approved">✅ Approved</option>
+                  <option value="denied">❌ Denied</option>
+                </select>
+              </div>
+              <!-- Employee search -->
+              <div style="min-width:120px;flex:1;">
+                <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;" data-i18n="admin.tickets.filter_employee">Employee:</label>
+                <input type="text" id="ticketFilterEmployee" placeholder="Name or PIN" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:40px;">
+              </div>
+              <!-- Date from -->
+              <div style="min-width:100px;flex:1;">
+                <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;" data-i18n="admin.tickets.filter_date_from">From:</label>
+                <input type="date" id="ticketFilterDateFrom" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:40px;">
+              </div>
+              <!-- Date to -->
+              <div style="min-width:100px;flex:1;">
+                <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;" data-i18n="admin.tickets.filter_date_to">To:</label>
+                <input type="date" id="ticketFilterDateTo" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:40px;">
+              </div>
+              <!-- Search text -->
+              <div style="min-width:120px;flex:1;">
+                <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;" data-i18n="admin.tickets.filter_search">Search...</label>
+                <input type="text" id="ticketFilterSearch" placeholder="Search subject, description, ID..." style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:40px;">
+              </div>
+              <!-- Buttons -->
+              <div style="display:flex;gap:6px;align-items:flex-end;padding-bottom:2px;">
+                <button class="accent" onclick="applyTicketFilters()" style="min-height:40px;padding:8px 16px;font-size:13px;white-space:nowrap;" data-i18n="admin.tickets.filter_apply">🔍 Apply</button>
+                <button onclick="resetTicketFilters()" style="min-height:40px;padding:8px 16px;font-size:13px;white-space:nowrap;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);cursor:pointer;" data-i18n="admin.tickets.filter_reset">✕ Reset</button>
+              </div>
+            </div>
+          </div>
+
           <div id="ticketQueueLoading"><div class="spinner"></div> Loading tickets...</div>
           <div id="ticketQueueContent" style="display:none;">
             <div class="ticket-queue-layout" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
               <!-- Pending Column -->
               <div class="card">
-                <h4 style="margin-bottom:12px;color:#f39c12;">⏳ Pending</h4>
+                <h4 style="margin-bottom:12px;color:#f39c12;">⏳ Pending <span id="ticketPendingCount" style="font-size:12px;color:var(--text2);"></span></h4>
                 <div id="ticketQueuePending"><div class="empty-state">No pending tickets.</div></div>
               </div>
               <!-- Resolved Column -->
               <div class="card">
-                <h4 style="margin-bottom:12px;color:var(--text2);">✅ Resolved</h4>
+                <h4 style="margin-bottom:12px;color:var(--text2);">✅ Resolved <span id="ticketResolvedCount" style="font-size:12px;color:var(--text2);"></span></h4>
                 <div id="ticketQueueResolved"><div class="empty-state">No resolved tickets yet.</div></div>
               </div>
             </div>
@@ -3231,6 +3285,16 @@ const L10N = {
     'admin.combos.toggled': 'Combo toggled!',
     'admin.tickets': '📋 Tickets',
     'admin.tickets.desc': 'Review and respond to employee tickets and requests.',
+    'admin.tickets.filter_type': 'Filter by type:',
+    'admin.tickets.filter_status': 'Status:',
+    'admin.tickets.filter_employee': 'Employee:',
+    'admin.tickets.filter_search': 'Search...',
+    'admin.tickets.filter_date_from': 'From:',
+    'admin.tickets.filter_date_to': 'To:',
+    'admin.tickets.filter_apply': '🔍 Apply',
+    'admin.tickets.filter_reset': '✕ Reset',
+    'admin.tickets.filter_all_types': 'All Types',
+    'admin.tickets.filter_all_status': 'All Statuses',
     'combo.add_to_cart': '➕ Add Combo',
     'combo.contains': 'Includes:',
     'combo.badge': '🧩 Combo',
@@ -3756,6 +3820,16 @@ const L10N = {
     'admin.combos.toggled': '¡Combo cambiado!',
     'admin.tickets': '📋 Tickets',
     'admin.tickets.desc': 'Revise y responda a los tickets y solicitudes de los empleados.',
+    'admin.tickets.filter_type': 'Filtrar por tipo:',
+    'admin.tickets.filter_status': 'Estado:',
+    'admin.tickets.filter_employee': 'Empleado:',
+    'admin.tickets.filter_search': 'Buscar...',
+    'admin.tickets.filter_date_from': 'Desde:',
+    'admin.tickets.filter_date_to': 'Hasta:',
+    'admin.tickets.filter_apply': '🔍 Aplicar',
+    'admin.tickets.filter_reset': '✕ Reiniciar',
+    'admin.tickets.filter_all_types': 'Todos los Tipos',
+    'admin.tickets.filter_all_status': 'Todos los Estados',
     'combo.add_to_cart': '➕ Añadir Combo',
     'combo.contains': 'Incluye:',
     'combo.badge': '🧩 Combo',
@@ -5900,11 +5974,27 @@ async function loadTicketQueue() {
   loadingEl.style.display = '';
   contentEl.style.display = 'none';
 
+  // Gather filter values
+  const filter_type = document.getElementById('ticketFilterType')?.value || '';
+  const filter_status = document.getElementById('ticketFilterStatus')?.value || '';
+  const filter_employee = document.getElementById('ticketFilterEmployee')?.value || '';
+  const filter_date_from = document.getElementById('ticketFilterDateFrom')?.value || '';
+  const filter_date_to = document.getElementById('ticketFilterDateTo')?.value || '';
+  const filter_search = document.getElementById('ticketFilterSearch')?.value || '';
+
   try {
     const res = await fetch(BACKEND_URL + '/api/tickets/queue', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ adminPin: currentUser.id })
+      body: JSON.stringify({
+        adminPin: currentUser.id,
+        filter_type: filter_type || undefined,
+        filter_status: filter_status || undefined,
+        filter_employee: filter_employee || undefined,
+        filter_date_from: filter_date_from || undefined,
+        filter_date_to: filter_date_to || undefined,
+        filter_search: filter_search || undefined
+      })
     });
     const data = await res.json();
     if (!res.ok) {
@@ -5922,6 +6012,12 @@ async function loadTicketQueue() {
 function renderTicketQueue(pending, resolved) {
   const pendingEl = document.getElementById('ticketQueuePending');
   const resolvedEl = document.getElementById('ticketQueueResolved');
+  const pendingCountEl = document.getElementById('ticketPendingCount');
+  const resolvedCountEl = document.getElementById('ticketResolvedCount');
+
+  // Update counts
+  if (pendingCountEl) pendingCountEl.textContent = '(' + (pending ? pending.length : 0) + ')';
+  if (resolvedCountEl) resolvedCountEl.textContent = '(' + (resolved ? resolved.length : 0) + ')';
 
   // Render pending
   if (!pending || pending.length === 0) {
@@ -5944,6 +6040,28 @@ function renderTicketQueue(pending, resolved) {
     });
     resolvedEl.innerHTML = html;
   }
+}
+
+// ═══════════ TICKET FILTER CONTROLS ═══════════
+
+function applyTicketFilters() {
+  loadTicketQueue();
+}
+
+function resetTicketFilters() {
+  const typeEl = document.getElementById('ticketFilterType');
+  const statusEl = document.getElementById('ticketFilterStatus');
+  const empEl = document.getElementById('ticketFilterEmployee');
+  const dateFromEl = document.getElementById('ticketFilterDateFrom');
+  const dateToEl = document.getElementById('ticketFilterDateTo');
+  const searchEl = document.getElementById('ticketFilterSearch');
+  if (typeEl) typeEl.value = '';
+  if (statusEl) statusEl.value = '';
+  if (empEl) empEl.value = '';
+  if (dateFromEl) dateFromEl.value = '';
+  if (dateToEl) dateToEl.value = '';
+  if (searchEl) searchEl.value = '';
+  loadTicketQueue();
 }
 
 function renderTicketCard(t, isPending) {
