@@ -198,6 +198,29 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 #login2faMode .twofa-back:hover { color: var(--text); }
 @media (hover: hover) { #login2faMode .twofa-back:hover { color: var(--text); } }
 
+/* ── 2FA Backup Code Link & Section ── */
+#login2faMode .twofa-backup-link {
+  margin-top: 4px; font-size: 13px; color: var(--accent); cursor: pointer;
+  background: none; border: none; text-decoration: underline;
+  padding: 8px 4px; min-height: 40px; display: inline-block;
+}
+#login2faMode .twofa-backup-link:hover { color: #ff6b7a; }
+@media (hover: hover) { #login2faMode .twofa-backup-link:hover { color: #ff6b7a; } }
+.twofa-backup-input {
+  font-size: 20px; padding: 14px 16px; width: 280px; max-width: 90%;
+  border-radius: var(--radius); background: var(--card); color: var(--text);
+  border: 2px solid var(--border); text-align: center; letter-spacing: 2px;
+  font-family: monospace;
+}
+.twofa-backup-input:focus { border-color: var(--accent); outline: none; }
+.twofa-backup-submit {
+  font-size: 20px; padding: 14px 48px; min-height: 56px;
+  background: var(--accent); color: #fff; border: none;
+  border-radius: var(--radius); cursor: pointer; font-weight: 700;
+}
+.twofa-backup-submit:hover { opacity: 0.9; }
+@media (hover: hover) { .twofa-backup-submit:hover { opacity: 0.9; } }
+
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
   10%, 30%, 50%, 70%, 90% { transform: translateX(-6px); }
@@ -1320,17 +1343,29 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
 
   <!-- 2FA verification mode -->
   <div id="login2faMode">
-    <div class="twofa-header">🔐 Two-Factor Authentication</div>
-    <div class="twofa-sub" id="twofaSub">Enter the 6-digit code from your authenticator app</div>
-    <div class="twofa-code-row" id="twofaCodeRow">
-      <input type="text" class="twofa-digit" id="twofaD0" maxlength="1" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code">
-      <input type="text" class="twofa-digit" id="twofaD1" maxlength="1" inputmode="numeric" pattern="[0-9]*">
-      <input type="text" class="twofa-digit" id="twofaD2" maxlength="1" inputmode="numeric" pattern="[0-9]*">
-      <input type="text" class="twofa-digit" id="twofaD3" maxlength="1" inputmode="numeric" pattern="[0-9]*">
-      <input type="text" class="twofa-digit" id="twofaD4" maxlength="1" inputmode="numeric" pattern="[0-9]*">
-      <input type="text" class="twofa-digit" id="twofaD5" maxlength="1" inputmode="numeric" pattern="[0-9]*">
+    <!-- TOTP code section -->
+    <div id="twofaTotpSection">
+      <div class="twofa-header">🔐 Two-Factor Authentication</div>
+      <div class="twofa-sub" id="twofaSub">Enter the 6-digit code from your authenticator app</div>
+      <div class="twofa-code-row" id="twofaCodeRow">
+        <input type="text" class="twofa-digit" id="twofaD0" maxlength="1" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code">
+        <input type="text" class="twofa-digit" id="twofaD1" maxlength="1" inputmode="numeric" pattern="[0-9]*">
+        <input type="text" class="twofa-digit" id="twofaD2" maxlength="1" inputmode="numeric" pattern="[0-9]*">
+        <input type="text" class="twofa-digit" id="twofaD3" maxlength="1" inputmode="numeric" pattern="[0-9]*">
+        <input type="text" class="twofa-digit" id="twofaD4" maxlength="1" inputmode="numeric" pattern="[0-9]*">
+        <input type="text" class="twofa-digit" id="twofaD5" maxlength="1" inputmode="numeric" pattern="[0-9]*">
+      </div>
+      <button class="twofa-back" onclick="cancel2FA()">← Back to Login</button>
+      <div class="twofa-backup-link" id="twofaBackupLink" onclick="showBackupCodeInput()"></div>
     </div>
-    <button class="twofa-back" onclick="cancel2FA()">← Back to Login</button>
+    <!-- Backup code section (hidden by default) -->
+    <div id="twofaBackupSection" style="display:none;flex-direction:column;align-items:center;gap:16px;width:100%;">
+      <div class="twofa-header" id="twofaBackupHeader">🔑 Use Backup Code</div>
+      <div class="twofa-sub" id="twofaBackupSub">Enter one of your 8-digit backup codes</div>
+      <input type="text" id="twofaBackupInput" placeholder="e.g. XXXX-XXXX" maxlength="12" class="twofa-backup-input" autocomplete="off" onkeydown="if(event.key==='Enter')submitBackupCode()">
+      <button onclick="submitBackupCode()" class="twofa-backup-submit">Verify Backup Code</button>
+      <button class="twofa-back" id="twofaBackToTotpBtn" onclick="backToTOTP()">← Back to Authenticator Code</button>
+    </div>
   </div>
 
   <div id="loginError"></div>
@@ -3062,6 +3097,16 @@ const L10N = {
     'twofa.header': '🔐 Two-Factor Authentication',
     'twofa.sub': 'Enter the 6-digit code from your authenticator app',
     'twofa.back': '← Back to Login',
+    'twofa.backup_code_link': 'Use backup code instead',
+    'twofa.backup_header': '🔑 Use Backup Code',
+    'twofa.backup_sub': 'Enter one of your 8-digit backup codes',
+    'twofa.backup_input_placeholder': 'e.g. XXXX-XXXX',
+    'twofa.verify_backup_btn': 'Verify Backup Code',
+    'twofa.back_to_totp': '← Back to Authenticator Code',
+    'twofa.backup_code_required': 'Please enter your backup code.',
+    'twofa.invalid_backup': 'Invalid backup code.',
+    'twofa.no_backup_codes': 'No backup codes remaining. Contact admin to regenerate codes.',
+    'twofa.verifying': 'Verifying...',
     'twofa.invalid_code': 'Invalid code. {remaining} attempt(s) remaining.',
     'twofa.locked': 'Too many failed attempts. Account locked for 15 minutes.',
     'twofa.success': 'Login successful!',
@@ -3574,6 +3619,16 @@ const L10N = {
     'twofa.header': '🔐 Autenticación de Dos Factores',
     'twofa.sub': 'Ingrese el código de 6 dígitos de su app de autenticación',
     'twofa.back': '← Volver al Inicio de Sesión',
+    'twofa.backup_code_link': 'Usar código de respaldo en su lugar',
+    'twofa.backup_header': '🔑 Usar Código de Respaldo',
+    'twofa.backup_sub': 'Ingrese uno de sus códigos de respaldo de 8 dígitos',
+    'twofa.backup_input_placeholder': 'ej. XXXX-XXXX',
+    'twofa.verify_backup_btn': 'Verificar Código de Respaldo',
+    'twofa.back_to_totp': '← Volver al Código de Autenticación',
+    'twofa.backup_code_required': 'Por favor ingrese su código de respaldo.',
+    'twofa.invalid_backup': 'Código de respaldo inválido.',
+    'twofa.no_backup_codes': 'No quedan códigos de respaldo. Contacte al administrador para regenerarlos.',
+    'twofa.verifying': 'Verificando...',
     'twofa.invalid_code': 'Código inválido. {remaining} intento(s) restante(s).',
     'twofa.locked': 'Demasiados intentos fallidos. Cuenta bloqueada por 15 minutos.',
     'twofa.success': '¡Inicio de sesión exitoso!',
@@ -4027,6 +4082,13 @@ function show2FAInput(userId, userName) {
   document.getElementById('login2faMode').style.display = 'flex';
   document.getElementById('loginSubtitle').textContent = t('twofa.header');
   document.getElementById('twofaSub').textContent = t('twofa.sub') + ' (' + twofaUserName + ')';
+  // Set backup code link and section text
+  document.getElementById('twofaBackupLink').textContent = t('twofa.backup_code_link');
+  document.getElementById('twofaBackupHeader').textContent = t('twofa.backup_header');
+  document.getElementById('twofaBackupSub').textContent = t('twofa.backup_sub');
+  document.getElementById('twofaBackupInput').placeholder = t('twofa.backup_input_placeholder');
+  document.querySelector('.twofa-backup-submit').textContent = t('twofa.verify_backup_btn');
+  document.getElementById('twofaBackToTotpBtn').textContent = t('twofa.back_to_totp');
   document.getElementById('loginError').textContent = '';
   // Clear and focus first digit
   for (let i = 0; i < 6; i++) {
@@ -4041,6 +4103,10 @@ function cancel2FA() {
   document.getElementById('login2faMode').style.display = 'none';
   document.getElementById('loginModeToggle').style.display = '';
   document.getElementById('loginSubtitle').textContent = t('login.subtitle');
+  // Reset backup code view
+  document.getElementById('twofaTotpSection').style.display = '';
+  document.getElementById('twofaBackupSection').style.display = 'none';
+  document.getElementById('twofaBackupInput').value = '';
   // Return to PIN or owner mode
   if (loginMode === 'pin') {
     document.getElementById('loginPinMode').style.display = 'block';
@@ -4050,6 +4116,78 @@ function cancel2FA() {
   document.getElementById('loginError').textContent = '';
   pinValue = '';
   renderPinDisplay();
+}
+
+function showBackupCodeInput() {
+  document.getElementById('twofaTotpSection').style.display = 'none';
+  document.getElementById('twofaBackupSection').style.display = 'flex';
+  document.getElementById('twofaBackupInput').value = '';
+  document.getElementById('loginError').textContent = '';
+  setTimeout(() => document.getElementById('twofaBackupInput').focus(), 100);
+}
+
+function backToTOTP() {
+  document.getElementById('twofaBackupSection').style.display = 'none';
+  document.getElementById('twofaTotpSection').style.display = '';
+  document.getElementById('twofaBackupInput').value = '';
+  document.getElementById('loginError').textContent = '';
+  setTimeout(() => document.getElementById('twofaD0').focus(), 100);
+}
+
+async function submitBackupCode() {
+  const code = document.getElementById('twofaBackupInput').value.trim();
+  if (!code) {
+    document.getElementById('loginError').textContent = t('twofa.backup_code_required') || 'Please enter your backup code.';
+    return;
+  }
+
+  document.getElementById('loginError').textContent = '';
+  const submitBtn = document.querySelector('.twofa-backup-submit');
+  submitBtn.disabled = true;
+  submitBtn.textContent = t('twofa.verifying') || 'Verifying...';
+
+  try {
+    const r = await fetch(BACKEND_URL + '/api/auth/2fa/backup_login', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: twofaUserId, backup_code: code })
+    });
+    const data = await r.json();
+
+    if (r.ok) {
+      // Login successful
+      document.getElementById('login2faMode').style.display = 'none';
+      document.getElementById('loginModeToggle').style.display = '';
+      currentUser = { id: twofaUserId, name: data.user, role: data.role, permissions: data.permissions || [], totp_enabled: true };
+      sessionStorage.setItem('pos_userId', twofaUserId);
+      sessionStorage.setItem('pos_userRole', data.role);
+      sessionStorage.setItem('pos_userName', data.user);
+      sessionStorage.setItem('pos_permissions', JSON.stringify(data.permissions || []));
+      sessionStorage.setItem('pos_totp_enabled', '1');
+      document.getElementById('twofaBackupSection').style.display = 'none';
+      document.getElementById('twofaTotpSection').style.display = '';
+      document.getElementById('twofaBackupInput').value = '';
+      twofaUserId = null;
+      twofaUserName = null;
+      // Show important message about remaining codes
+      if (data.backup_codes_remaining <= 2) {
+        showToast(data.message || 'Logged in via backup code.', 'warning', 8000);
+      } else {
+        showToast(data.message || 'Logged in via backup code.', 'success', 4000);
+      }
+      showApp();
+    } else if (data.locked) {
+      document.getElementById('loginError').textContent = t('twofa.locked');
+    } else if (data.no_codes_remaining) {
+      document.getElementById('loginError').textContent = data.message || t('twofa.no_backup_codes');
+    } else {
+      document.getElementById('loginError').textContent = data.message || t('twofa.invalid_backup');
+    }
+  } catch(e) {
+    document.getElementById('loginError').textContent = t('login.error');
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = t('twofa.verify_backup_btn') || 'Verify Backup Code';
+  }
 }
 
 function get2FACode() {
