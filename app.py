@@ -46,6 +46,7 @@ COMBOS_FILE = 'combos.json'  # Combo/meal deal bundles
 SERVICE_CHARGE_FILE = 'service_charge_config.json'  # Auto-gratuity / service charge settings
 EMAIL_CONFIG_FILE = 'email_config.json'  # Email/SMTP configuration for digital receipts
 SHIFT_FILE = 'shift_log.json'  # Employee shift clock-in/clock-out records
+TIMESHEET_CONFIG_FILE = 'timesheet_config.json'  # Timesheet configuration (overtime thresholds, late grace period)
 
 # --- Loyalty Constants ---
 LOYALTY_POINTS_PER_DOLLAR = 1  # 1 point per $1 spent
@@ -243,6 +244,40 @@ def log_activity(activity_type, user_id, user_role, details=None):
     logs = load_json_data(ACTIVITY_LOG_FILE)
     logs.append(log_entry)
     save_json_data(ACTIVITY_LOG_FILE, logs)
+
+
+def get_timesheet_config():
+    """Load timesheet config with defaults."""
+    defaults = {
+        'overtime_daily_threshold': 8,   # hours per day before OT kicks in
+        'overtime_weekly_threshold': 40, # hours per week before OT kicks in
+        'late_grace_minutes': 5
+    }
+    try:
+        config = load_json_data(TIMESHEET_CONFIG_FILE)
+        if not isinstance(config, dict):
+            config = defaults
+        for k, v in defaults.items():
+            if k not in config:
+                config[k] = v
+        return config
+    except (FileNotFoundError, json.JSONDecodeError):
+        save_json_data(TIMESHEET_CONFIG_FILE, defaults)
+        return dict(defaults)
+
+
+def save_timesheet_config(config):
+    """Save timesheet config (ensure all keys present)."""
+    defaults = {
+        'overtime_daily_threshold': 8,
+        'overtime_weekly_threshold': 40,
+        'late_grace_minutes': 5
+    }
+    for k, v in defaults.items():
+        if k not in config:
+            config[k] = v
+    save_json_data(TIMESHEET_CONFIG_FILE, config)
+
 
 
 def fire_webhooks(order_data):
@@ -5335,6 +5370,32 @@ def export_timesheet_csv():
     return jsonify({'csv': csv_content, 'filename': 'timesheet_export.csv'})
 
 
+@app.route('/api/timesheet/config', methods=['GET', 'POST'])
+def timesheet_config_endpoint():
+    """Get or save timesheet configuration (overtime thresholds, grace period, etc.)."""
+    if request.method == 'GET':
+        config = get_timesheet_config()
+        return jsonify(config)
+    
+    # POST: save config
+    data = request.json
+    admin_pin = data.get('adminPin')
+    if not check_perm(admin_pin, "view_timesheet"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+    
+    new_config = data.get('config', {})
+    if not isinstance(new_config, dict):
+        return jsonify({'message': 'Invalid config format.'}), 400
+    
+    save_timesheet_config(new_config)
+    
+    log_activity('timesheet_config_updated', admin_pin, 'admin', {
+        'config': new_config
+    })
+    
+    return jsonify({'message': 'Timesheet config saved.', 'config': get_timesheet_config()})
+
+
 @app.route('/api/timesheet/pay_period', methods=['POST'])
 def timesheet_pay_period():
     """Get pay period summary with per-employee totals: hours, overtime, estimated pay."""
@@ -5346,6 +5407,9 @@ def timesheet_pay_period():
 
     shift_log = load_json_data(SHIFT_FILE)
     users = load_json_data(USERS_FILE)
+    ts_config = get_timesheet_config()
+    OT_DAILY = ts_config.get('overtime_daily_threshold', 8)
+    OT_WEEKLY = ts_config.get('overtime_weekly_threshold', 40)
 
     date_from = (data.get('date_from') or '').strip()
     date_to = (data.get('date_to') or '').strip()
@@ -5445,14 +5509,28 @@ def timesheet_pay_period():
         except (ValueError, TypeError):
             pass
 
+    # Also compute daily totals per user (for daily OT flag on shifts)
+    daily_hours_by_user = defaultdict(lambda: defaultdict(float))
+    for entry in filtered_shifts:
+        uid = entry.get('user_id', '')
+        ck = entry.get('clock_in_time', '')
+        if not ck:
+            continue
+        try:
+            dt = datetime.fromisoformat(ck)
+            day_key = dt.strftime('%Y-%m-%d')
+            daily_hours_by_user[uid][day_key] += entry.get('duration_hours', 0)
+        except (ValueError, TypeError):
+            pass
+
     results = []
     for uid, ud in user_data_map.items():
         total_hours = round(ud['total_hours'], 2)
-        # Overtime: sum of (week_hours - 40) for each week where week_hours > 40
+        # Overtime: sum of (week_hours - threshold) for each week where week_hours > threshold
         week_ots = []
         for wk, wh in weekly_hours_by_user.get(uid, {}).items():
-            if wh > 40:
-                week_ots.append(round(wh - 40, 2))
+            if wh > OT_WEEKLY:
+                week_ots.append(round(wh - OT_WEEKLY, 2))
         overtime_hours = round(sum(week_ots), 2)
 
         # Pay rate from user profile
@@ -5464,6 +5542,27 @@ def timesheet_pay_period():
         # Sort shifts by clock_in_time
         shifts_sorted = sorted(ud['shifts'], key=lambda s: s.get('clock_in_time', ''))
 
+        # Add per-shift OT flags
+        shifts_with_ot = []
+        for s in shifts_sorted:
+            ck = s.get('clock_in_time', '')
+            day_key = ''
+            try:
+                dt = datetime.fromisoformat(ck)
+                day_key = dt.strftime('%Y-%m-%d')
+            except (ValueError, TypeError):
+                pass
+            day_total = daily_hours_by_user.get(uid, {}).get(day_key, 0)
+            shifts_with_ot.append({
+                'clock_in_time': s.get('clock_in_time', ''),
+                'clock_out_time': s.get('clock_out_time', ''),
+                'duration_hours': s.get('duration_hours', 0),
+                'active': s.get('active', False),
+                'exceeds_daily_ot': s.get('duration_hours', 0) > OT_DAILY,
+                'exceeds_weekly_ot': overtime_hours > 0,
+                'day_total_hours': round(day_total, 2)
+            })
+
         results.append({
             'user_id': uid,
             'user_name': ud['user_name'],
@@ -5473,7 +5572,7 @@ def timesheet_pay_period():
             'pay_rate': pay_rate,
             'has_pay_rate': has_pay_rate,
             'estimated_pay': estimated_pay,
-            'shifts': shifts_sorted
+            'shifts': shifts_with_ot
         })
 
     # Sort by total_hours descending
@@ -5497,6 +5596,8 @@ def export_pay_period_csv():
 
     shift_log = load_json_data(SHIFT_FILE)
     users = load_json_data(USERS_FILE)
+    ts_config = get_timesheet_config()
+    OT_WEEKLY = ts_config.get('overtime_weekly_threshold', 40)
 
     date_from = (data.get('date_from') or '').strip()
     date_to = (data.get('date_to') or '').strip()
@@ -5568,8 +5669,8 @@ def export_pay_period_csv():
         total_hours = round(ud['total_hours'], 2)
         week_ots = []
         for wk, wh in weekly_hours_by_user.get(uid, {}).items():
-            if wh > 40:
-                week_ots.append(round(wh - 40, 2))
+            if wh > OT_WEEKLY:
+                week_ots.append(round(wh - OT_WEEKLY, 2))
         overtime_hours = round(sum(week_ots), 2)
         pay_rate = users.get(uid, {}).get('pay_rate', 0) or 0
         estimated_pay = round(total_hours * pay_rate, 2) if pay_rate > 0 else 0
@@ -5599,6 +5700,8 @@ def export_pay_period_pdf():
 
     shift_log = load_json_data(SHIFT_FILE)
     users = load_json_data(USERS_FILE)
+    ts_config = get_timesheet_config()
+    OT_WEEKLY = ts_config.get('overtime_weekly_threshold', 40)
 
     date_from = (data.get('date_from') or '').strip()
     date_to = (data.get('date_to') or '').strip()
@@ -5713,8 +5816,8 @@ def export_pay_period_pdf():
         total_hours = round(ud['total_hours'], 2)
         week_ots = []
         for wk, wh in weekly_hours_by_user.get(uid, {}).items():
-            if wh > 40:
-                week_ots.append(round(wh - 40, 2))
+            if wh > OT_WEEKLY:
+                week_ots.append(round(wh - OT_WEEKLY, 2))
         overtime_hours = round(sum(week_ots), 2)
         pay_rate = users.get(uid, {}).get('pay_rate', 0) or 0
         estimated_pay = round(total_hours * pay_rate, 2) if pay_rate > 0 else 0
