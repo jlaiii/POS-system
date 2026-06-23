@@ -2711,6 +2711,8 @@ const L10N = {
     'user.temp_pin_reason': 'Enter reason for generating a temporary PIN:',
     'user.temp_pin_success': 'Temporary PIN {tempPin} generated for {name}. Valid for 1 hour.',
     'user.temp_pin_share': 'Temporary PIN: {tempPin}\n\nShare this with the employee. It expires in 1 hour and can only be used once.\n\nAfter login, the employee should set a new PIN.',
+    'user.failed_attempts': 'failed login attempt(s)',
+    'user.clear_lockout_btn': '🔓 Clear Lockout',
   },
   es: {
     'app.title': '🍽️ Sistema POS',
@@ -3164,6 +3166,8 @@ const L10N = {
     'user.temp_pin_reason': 'Ingrese la razón para generar un PIN temporal:',
     'user.temp_pin_success': 'PIN temporal {tempPin} generado para {name}. Válido por 1 hora.',
     'user.temp_pin_share': 'PIN temporal: {tempPin}\n\nCompártalo con el empleado. Expira en 1 hora y solo se puede usar una vez.\n\nDespués de iniciar sesión, el empleado debe establecer un nuevo PIN.',
+    'user.failed_attempts': 'intento(s) de inicio de sesión fallido(s)',
+    'user.clear_lockout_btn': '🔓 Desbloquear',
   }
 };
 
@@ -3484,6 +3488,11 @@ async function doLogin(userId) {
     if (data['2fa_required']) {
       show2FAInput(userId, data.user_name || 'User');
       return;
+    }
+    // Account locked due to too many failed attempts
+    if (r.status === 429 && data.locked) {
+      document.getElementById('loginError').textContent = data.message || 'Account locked. Try again later.';
+      pinValue = ''; renderPinDisplay(); return;
     }
     if (!r.ok) { document.getElementById('loginError').textContent = data.message || t('login.error'); pinValue = ''; renderPinDisplay(); return; }
     currentUser = { id: userId, name: data.user, role: data.role, permissions: data.permissions || [], totp_enabled: data.totp_enabled || false };
@@ -6772,14 +6781,26 @@ async function loadUsers() {
         twofaBtns = `<button class="outline" onclick="disable2fa('${escJs(id)}')" style="font-size:12px;padding:4px 10px;min-height:36px;" title="${t('twofa.disable_btn')}">${t('twofa.disable_btn')}</button>
           <button class="outline" onclick="regenerateBackupCodes('${escJs(id)}')" style="font-size:12px;padding:4px 10px;min-height:36px;" title="${t('twofa.regenerate_btn')}">${t('twofa.regenerate_btn')}</button>`;
       }
+      // Login attempt tracking info
+      let loginAttemptStr = '';
+      if (u.login_locked) {
+        loginAttemptStr = '<span style="color:#e74c3c;font-weight:600;">🔒 Locked</span>';
+      } else if (u.failed_login_attempts > 0) {
+        loginAttemptStr = '<span style="color:var(--text2);">' + u.failed_login_attempts + ' ' + t('user.failed_attempts') + '</span>';
+      }
+      let clearLockoutBtn = '';
+      if (perms.includes('manage_users') && u.login_locked) {
+        clearLockoutBtn = `<button class="outline" onclick="clearLockout('${escJs(id)}')" style="font-size:12px;padding:4px 10px;min-height:36px;color:#e74c3c;border-color:#e74c3c;" title="${t('user.clear_lockout_btn')}">${t('user.clear_lockout_btn')}</button>`;
+      }
       return `<div class="user-entry">
-        <div class="ue-info"><strong>${escHtml(u.name)}</strong> — ID: ${escHtml(id)} <span class="ue-role">(${u.role})</span>${u.banned ? ' <span style="color:#e74c3c;font-weight:700;">🚫 Banned</span>' : ''}<br><span style="font-size:13px;color:var(--text2);">💰 Pay rate: <span id="prDisplay_${escJs(id)}">${payRate}</span></span><br><span style="font-size:13px;color:var(--text2);">${t('user.scheduled_start')} <span id="ssDisplay_${escJs(id)}">${schedStart}</span></span><br><span style="font-size:13px;color:var(--text2);">${t('twofa.status_label')} ${twofaBadge}</span></div>
+        <div class="ue-info"><strong>${escHtml(u.name)}</strong> — ID: ${escHtml(id)} <span class="ue-role">(${u.role})</span>${u.banned ? ' <span style="color:#e74c3c;font-weight:700;">🚫 Banned</span>' : ''}<br><span style="font-size:13px;color:var(--text2);">💰 Pay rate: <span id="prDisplay_${escJs(id)}">${payRate}</span></span><br><span style="font-size:13px;color:var(--text2);">${t('user.scheduled_start')} <span id="ssDisplay_${escJs(id)}">${schedStart}</span></span><br><span style="font-size:13px;color:var(--text2);">${t('twofa.status_label')} ${twofaBadge}</span>${loginAttemptStr ? '<br><span style="font-size:13px;">' + loginAttemptStr + '</span>' : ''}</div>
         <div style="display:flex;gap:6px;align-items:center;">
           <button class="outline" onclick="editPayRate('${escJs(id)}')" style="font-size:12px;padding:4px 10px;min-height:36px;" title="${t('user.pay_rate_edit_title')}">💰 Edit Rate</button>
           ${perms.includes('manage_users') ? `<button class="outline" onclick="resetPin('${escJs(id)}')" style="font-size:12px;padding:4px 10px;min-height:36px;" title="${t('user.reset_pin_btn')}">${t('user.reset_pin_btn')}</button>` : ''}
           ${perms.includes('manage_users') ? `<button class="outline" onclick="generateTempPin('${escJs(id)}')" style="font-size:12px;padding:4px 10px;min-height:36px;" title="${t('user.temp_pin_btn')}">${t('user.temp_pin_btn')}</button>` : ''}
           <button class="outline" onclick="editScheduledStart('${escJs(id)}')" style="font-size:12px;padding:4px 10px;min-height:36px;" title="${t('user.scheduled_start_edit_title')}">${t('user.scheduled_start_btn')}</button>
           ${twofaBtns}
+          ${clearLockoutBtn}
           ${banBtn}
           <button class="danger" onclick="deleteUser('${escJs(id)}')" style="font-size:13px;padding:6px 12px;min-height:36px;">🗑️ Delete</button>
         </div>
@@ -6812,6 +6833,19 @@ async function unbanUser(userId) {
     const d = await r.json();
     if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
     showToast('User unbanned', 'success');
+    loadUsers();
+  } catch(e) { showToast('Network error', 'danger'); }
+}
+
+async function clearLockout(userId) {
+  try {
+    const r = await fetch(BACKEND_URL + '/api/users/clear_lockout', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, userId })
+    });
+    const d = await r.json();
+    if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
+    showToast(d.message || 'Lockout cleared', 'success');
     loadUsers();
   } catch(e) { showToast('Network error', 'danger'); }
 }

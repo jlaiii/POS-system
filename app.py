@@ -438,6 +438,19 @@ active_shifts = {}  # {user_id: {clock_in_time: datetime, user_name: str}}
 # In-memory 2FA rate limiting — resets on server restart
 twofa_failed_attempts = {}  # {user_id: {'count': int, 'lock_until': datetime or None, 'window_start': datetime}}
 
+# In-memory PIN login attempt tracking — resets on server restart
+# Structure: {user_id: {'count': int, 'lock_until': datetime or None, 'window_start': datetime}}
+login_failed_attempts = {}
+
+
+def get_client_ip():
+    """Get client IP from request, handling X-Forwarded-For for proxied requests."""
+    forwarded = request.headers.get('X-Forwarded-For')
+    if forwarded:
+        return forwarded.split(',')[0].strip()
+    return request.remote_addr or 'unknown'
+
+
 # --- User Management Endpoints ---
 
 @app.route('/api/users', methods=['GET'])
@@ -457,8 +470,17 @@ def get_users():
             'scheduled_start': user_data.get('scheduled_start', None),
             'totp_enabled': user_data.get('totp_enabled', False),
             'pin_reset_notification': user_data.get('pin_reset_notification', None),
-            'force_pin_change': user_data.get('force_pin_change', False)
+            'force_pin_change': user_data.get('force_pin_change', False),
+            'failed_login_attempts': 0,
+            'login_locked': False
         }
+        # Enrich with in-memory failed login tracking
+        if uid in login_failed_attempts:
+            attempt_info = login_failed_attempts[uid]
+            now = datetime.now()
+            display_users[uid]['failed_login_attempts'] = attempt_info.get('count', 0)
+            is_locked = attempt_info.get('lock_until') and now < attempt_info['lock_until']
+            display_users[uid]['login_locked'] = is_locked
     return jsonify(display_users)
 
 
@@ -469,6 +491,40 @@ def login():
     username = data.get('username')
     password = data.get('password')
     users = load_json_data(USERS_FILE)
+    client_ip = get_client_ip()
+    now = datetime.now()
+
+    def record_failed_login(uid):
+        """Track failed login attempt, lock after 5. Returns (count, locked, retry_after)."""
+        if uid not in login_failed_attempts:
+            login_failed_attempts[uid] = {'count': 0, 'lock_until': None, 'window_start': now}
+        attempt = login_failed_attempts[uid]
+        # Reset window if >60s have passed
+        if attempt.get('window_start') and (now - attempt['window_start']).total_seconds() > 60:
+            attempt['count'] = 0
+        attempt['count'] += 1
+        if attempt['window_start'] is None:
+            attempt['window_start'] = now
+        locked = False
+        retry_after = None
+        if attempt['count'] >= 5:
+            attempt['lock_until'] = now + timedelta(minutes=10)
+            locked = True
+            retry_after = 600
+        return attempt['count'], locked, retry_after
+
+    def check_lockout(uid):
+        """Check if user is currently locked out. Returns (locked, retry_after) or (False, None)."""
+        if uid in login_failed_attempts:
+            attempt = login_failed_attempts[uid]
+            if attempt.get('lock_until') and now < attempt['lock_until']:
+                remaining = int((attempt['lock_until'] - now).total_seconds())
+                return True, remaining
+            # Clear lock if expired
+            if attempt.get('lock_until') and now >= attempt['lock_until']:
+                attempt['lock_until'] = None
+                attempt['count'] = 0
+        return False, None
 
     # Owner username+password login
     if username and password:
@@ -480,14 +536,17 @@ def login():
                     if u_data.get('banned', False):
                         reason = u_data.get('banned_reason', 'No reason provided')
                         return jsonify({'message': f'User is banned. Reason: {reason}', 'banned': True}), 403
+                    # Clear failed attempts on success
+                    if uid in login_failed_attempts:
+                        del login_failed_attempts[uid]
                     u_data = upgrade_user(u_data)
                     # Check if 2FA is enabled — require 2FA challenge before issuing session
                     if u_data.get('totp_enabled', False):
-                        log_activity('login', uid, u_data['role'], {'status': '2fa_required', 'method': 'password', 'user_name': u_data['name']})
+                        log_activity('login', uid, u_data['role'], {'status': '2fa_required', 'method': 'password', 'user_name': u_data['name'], 'ip': client_ip})
                         return jsonify({'2fa_required': True, 'user_id': uid, 'user_name': u_data['name']}), 200
                     users[uid] = u_data
                     save_json_data(USERS_FILE, users)
-                    log_activity('login', uid, u_data['role'], {'status': 'success', 'method': 'password', 'user_name': u_data['name']})
+                    log_activity('login', uid, u_data['role'], {'status': 'success', 'method': 'password', 'user_name': u_data['name'], 'ip': client_ip})
                     if u_data['role'] in ('admin', 'owner'):
                         active_admin_sessions[uid] = datetime.now()
 
@@ -523,11 +582,14 @@ def login():
                     if force_change_required:
                         response_data['force_pin_change_required'] = True
                     return jsonify(response_data)
-        log_activity('login', username, 'unknown', {'status': 'failed', 'method': 'password'})
+                # Wrong password for this user
+                break  # Username found but wrong password
+        # Failed password login — log it
+        log_activity('login_failed', username or user_id, 'unknown', {'status': 'failed', 'method': 'password', 'ip': client_ip})
         return jsonify({'message': 'Invalid username or password'}), 401
 
     # PIN login (existing)
-    # First, check if user_id matches a temp_pin (temporary access code)
+    # Check if user_id matches a temp_pin (temporary access code)
     temp_pin_user_id = None
     temp_pin_user_data = None
     if user_id not in users:
@@ -564,16 +626,19 @@ def login():
         if user_info.get('banned', False):
             reason = user_info.get('banned_reason', 'No reason provided')
             log_activity('login', user_id, user_info.get('role', 'unknown'),
-                         {'status': 'failed', 'reason': f'User is banned: {reason}'})
+                         {'status': 'failed', 'reason': f'User is banned: {reason}', 'ip': client_ip})
             return jsonify({'message': f'User is banned. Reason: {reason}', 'banned': True}), 403
         
         if user_info.get('role') in ['user', 'admin', 'owner', 'cook']:
+            # Clear failed attempts on successful temp PIN login
+            if user_id in login_failed_attempts:
+                del login_failed_attempts[user_id]
             # Check if 2FA is enabled
             if user_info.get('totp_enabled', False):
-                log_activity('login', user_id, user_info['role'], {'status': '2fa_required', 'method': 'temp_pin', 'user_name': user_info['name']})
+                log_activity('login', user_id, user_info['role'], {'status': '2fa_required', 'method': 'temp_pin', 'user_name': user_info['name'], 'ip': client_ip})
                 return jsonify({'2fa_required': True, 'user_id': user_id, 'user_name': user_info['name']}), 200
             
-            log_activity('login', user_id, user_info['role'], {'status': 'success', 'method': 'temp_pin', 'user_name': user_info['name']})
+            log_activity('login', user_id, user_info['role'], {'status': 'success', 'method': 'temp_pin', 'user_name': user_info['name'], 'ip': client_ip})
             if user_info['role'] in ('admin', 'owner'):
                 active_admin_sessions[user_id] = datetime.now()
             
@@ -586,10 +651,20 @@ def login():
                 'totp_enabled': user_info.get('totp_enabled', False)
             }
             return jsonify(response_data)
-        log_activity('login', user_id, 'unknown', {'status': 'failed', 'method': 'temp_pin'})
+        log_activity('login_failed', user_id, 'unknown', {'status': 'failed', 'method': 'temp_pin', 'ip': client_ip})
         return jsonify({'message': 'Invalid User ID or role'}), 401
 
     if user_id in users:
+        # --- Lockout check (PIN login) ---
+        locked, retry_after = check_lockout(user_id)
+        if locked:
+            log_activity('login_failed', user_id, 'unknown', {'status': 'locked', 'reason': 'account_locked_10min', 'ip': client_ip})
+            return jsonify({
+                'message': f'Account locked due to too many failed attempts. Try again in {retry_after} seconds.',
+                'locked': True,
+                'retry_after': retry_after
+            }), 429
+
         user_info = users[user_id]
         user_info = upgrade_user(user_info)
         users[user_id] = user_info
@@ -598,15 +673,20 @@ def login():
         if user_info.get('banned', False):
             reason = user_info.get('banned_reason', 'No reason provided')
             log_activity('login', user_id, user_info.get('role', 'unknown'),
-                         {'status': 'failed', 'reason': f'User is banned: {reason}'})
+                         {'status': 'failed', 'reason': f'User is banned: {reason}', 'ip': client_ip})
             return jsonify({'message': f'User is banned. Reason: {reason}', 'banned': True}), 403
 
         if user_info.get('role') in ['user', 'admin', 'owner', 'cook']:
             # Check if 2FA is enabled — require 2FA challenge before issuing session
             if user_info.get('totp_enabled', False):
-                log_activity('login', user_id, user_info['role'], {'status': '2fa_required', 'method': 'pin', 'user_name': user_info['name']})
+                log_activity('login', user_id, user_info['role'], {'status': '2fa_required', 'method': 'pin', 'user_name': user_info['name'], 'ip': client_ip})
                 return jsonify({'2fa_required': True, 'user_id': user_id, 'user_name': user_info['name']}), 200
-            log_activity('login', user_id, user_info['role'], {'status': 'success', 'method': 'pin', 'user_name': user_info['name']})
+
+            # Clear failed attempts on successful login
+            if user_id in login_failed_attempts:
+                del login_failed_attempts[user_id]
+
+            log_activity('login', user_id, user_info['role'], {'status': 'success', 'method': 'pin', 'user_name': user_info['name'], 'ip': client_ip})
             if user_info['role'] in ('admin', 'owner'):
                 active_admin_sessions[user_id] = datetime.now()
 
@@ -642,8 +722,23 @@ def login():
             if force_change_required:
                 response_data['force_pin_change_required'] = True
             return jsonify(response_data)
-    log_activity('login', user_id, 'unknown', {'status': 'failed', 'method': 'pin'})
-    return jsonify({'message': 'Invalid User ID or role'}), 401
+
+    # Record failed login attempt for PIN login
+    failed_count, locked, retry_after = record_failed_login(user_id)
+    log_activity('login_failed', user_id, 'unknown', {
+        'status': 'failed', 'method': 'pin', 'ip': client_ip, 'attempt': failed_count
+    })
+    if locked:
+        return jsonify({
+            'message': 'Too many failed attempts. Account locked for 10 minutes.',
+            'locked': True,
+            'retry_after': retry_after
+        }), 429
+    remaining = 5 - failed_count
+    return jsonify({
+        'message': f'Invalid User ID or role. {remaining} attempt(s) remaining.',
+        'remaining_attempts': remaining
+    }), 401
 
 # Owner credentials management
 @app.route('/api/owner/credentials', methods=['POST'])
@@ -5101,6 +5196,37 @@ def unban_user():
         'unbanned_user_id': user_id
     })
     return jsonify({'message': f'User {user_id} unbanned successfully.', 'userId': user_id})
+
+
+@app.route('/api/users/clear_lockout', methods=['POST'])
+def clear_lockout():
+    """Admin clears the failed login lockout for a user. Requires manage_users permission."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+    user_id = str(data.get('userId', ''))
+
+    if not admin_pin or not user_id:
+        return jsonify({'message': 'Admin PIN and User ID required.'}), 400
+
+    users = load_json_data(USERS_FILE)
+    if admin_pin not in users:
+        return jsonify({'message': 'Admin not found.'}), 403
+    if not check_perm(admin_pin, 'manage_users'):
+        return jsonify({'message': 'Permission denied. manage_users required.'}), 403
+
+    if user_id not in users:
+        return jsonify({'message': 'User not found.'}), 404
+
+    if user_id in login_failed_attempts:
+        del login_failed_attempts[user_id]
+
+    admin_name = users.get(admin_pin, {}).get('name', 'Unknown')
+    user_name = users.get(user_id, {}).get('name', 'Unknown')
+    log_activity('clear_lockout', admin_pin, users.get(admin_pin, {}).get('role', 'unknown'), {
+        'cleared_lockout_for': user_id,
+        'user_name': user_name
+    })
+    return jsonify({'message': f'Login lockout cleared for {user_name}.'})
 
 
 # ============================================================
