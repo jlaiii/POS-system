@@ -9,6 +9,7 @@
   "max_same_item_count": 50,
   "refund_rate_threshold_pct": 20,
   "high_severity_blocklist": true,
+  "blocked_ips": [],
   "retention_days": 30,
   "owner_pin": "1111",
   "known_ip_gc_days": 30,
