@@ -2662,6 +2662,53 @@ const BACKEND_URL = (() => {
   catch(e) { return 'http://localhost:5000'; }
 })();
 
+// ═══════════ ERROR HANDLING UTILITIES ═══════════
+/** Safe JSON.parse — returns fallback on parse error */
+function safeJSON(str, fallback) {
+  try { return JSON.parse(str); }
+  catch(e) { return fallback !== undefined ? fallback : null; }
+}
+
+/** Show loading spinner in a content container */
+var _loadingCounter = {};
+function showContentLoading(elemId) {
+  var el = document.getElementById(elemId);
+  if (!el) return;
+  if (!_loadingCounter[elemId]) _loadingCounter[elemId] = 0;
+  _loadingCounter[elemId]++;
+  if (_loadingCounter[elemId] === 1) {
+    el.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;"><div class="spinner" style="width:28px;height:28px;border-width:4px;"></div><div style="margin-top:12px;color:var(--text2);font-size:14px;" data-i18n="loading">Loading...</div></div>';
+  }
+}
+function hideContentLoading(elemId) {
+  if (!_loadingCounter[elemId]) return;
+  _loadingCounter[elemId] = Math.max(0, _loadingCounter[elemId] - 1);
+}
+function isLoadingContent(elemId) {
+  return _loadingCounter[elemId] > 0;
+}
+
+/** Safe fetch + JSON parse with HTTP status checking. Returns {ok, data, status, error}. */
+async function fetchJSON(url, options) {
+  try {
+    var r = await fetch(url, options || {});
+    var contentType = r.headers.get('content-type') || '';
+    var body;
+    if (contentType.includes('application/json')) {
+      body = await r.json();
+    } else {
+      var text = await r.text();
+      body = { message: text || 'Server returned non-JSON response' };
+    }
+    if (!r.ok) {
+      return { ok: false, data: body, status: r.status, error: body.message || body.error || 'HTTP ' + r.status };
+    }
+    return { ok: true, data: body, status: r.status, error: null };
+  } catch(e) {
+    return { ok: false, data: null, status: 0, error: e.message || 'Network error' };
+  }
+}
+
 // ═══════════ MULTI-LANGUAGE SUPPORT ═══════════
 // Translation dictionary: en = English (default), es = Spanish
 const L10N = {
@@ -3916,7 +3963,7 @@ window.addEventListener('DOMContentLoaded', () => {
       id: savedId, 
       name: savedName || 'User', 
       role: savedRole,
-      permissions: savedPerms ? JSON.parse(savedPerms) : [],
+      permissions: savedPerms ? safeJSON(savedPerms, []) : [],
       totp_enabled: savedTotp === '1'
     };
     showApp();
@@ -5869,13 +5916,16 @@ function showDenyPrompt(ticketId) {
 
 // ═══════════ POS TAB ═══════════
 async function loadItems() {
+  showContentLoading('itemGrid');
   try {
     const [itemsRes, invRes, pricingRes] = await Promise.all([
       fetch(BACKEND_URL + '/api/items'),
       fetch(BACKEND_URL + '/api/inventory'),
       fetch(BACKEND_URL + '/api/scheduled_pricing/active')
     ]);
-    if (!itemsRes.ok) throw new Error('Failed');
+    if (!itemsRes.ok) throw new Error('Failed to load items (HTTP ' + itemsRes.status + ')');
+    if (!invRes.ok) { /* inventory is optional */ }
+    if (!pricingRes.ok) { /* pricing is optional */ }
     itemsData = await itemsRes.json();
     if (invRes.ok) {
       inventoryData = await invRes.json();
@@ -5905,8 +5955,10 @@ async function loadItems() {
     }
     renderItems();
   } catch(e) {
-    document.getElementById('itemGrid').innerHTML = '<div class="empty-state">' + t('item.load_fail') + '</div>';
+    document.getElementById('itemGrid').innerHTML = '<div class="empty-state val-err">⚠️ ' + t('item.load_fail') + '</div>';
     scheduledPricing = null;
+  } finally {
+    hideContentLoading('itemGrid');
   }
 }
 
@@ -7428,7 +7480,8 @@ async function loadDiscountAdmin() {
     });
     html += '</div>';
     list.innerHTML = html;
-  } catch(e) { list.innerHTML = '<div class="empty-state">' + t('network_error') + '</div>'; }
+  } catch(e) { list.innerHTML = '<div class="empty-state val-err">⚠️ ' + t('network_error') + '</div>'; }
+  finally { hideContentLoading('historyList'); }
 }
 
 async function saveDiscountCode() {
@@ -7502,7 +7555,7 @@ function clearDiscountForm() {
 // ═══════════ ORDER HISTORY ═══════════
 async function loadOrderHistory() {
   const list = document.getElementById('historyList');
-  list.innerHTML = '<div class="empty-state">' + t('loading') + '</div>';
+  showContentLoading('historyList');
   try {
     // Build request body with optional date range
     const body = { adminPin: currentUser.id };
@@ -7511,13 +7564,12 @@ async function loadOrderHistory() {
     if (dateFrom) body.date_from = dateFrom;
     if (dateTo) body.date_to = dateTo;
 
-    const r = await fetch(BACKEND_URL + '/api/orders/list', {
+    const result = await fetchJSON(BACKEND_URL + '/api/orders/list', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     });
-    if (!r.ok) { list.innerHTML = '<div class="empty-state">' + t('network_error') + '</div>'; return; }
-    const data = await r.json();
-    let orders = data.orders || [];
+    if (!result.ok) { list.innerHTML = '<div class="empty-state val-err">⚠️ ' + (result.error || t('network_error')) + '</div>'; return; }
+    let orders = result.data.orders || [];
     // Sort by date descending
     orders.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
     if (orders.length === 0) { list.innerHTML = '<div class="empty-state">' + t('history.empty') + '</div>'; return; }
@@ -7567,7 +7619,8 @@ async function loadOrderHistory() {
         </div>
       </div>`;
     list.innerHTML = html;
-  } catch(e) { list.innerHTML = '<div class="empty-state">' + t('network_error') + '</div>'; }
+  } catch(e) { list.innerHTML = '<div class="empty-state val-err">⚠️ ' + t('network_error') + '</div>'; }
+  finally { hideContentLoading('historyList'); }
 }
 
 /** Reorder: load all items from a past order into the cart */
@@ -7737,7 +7790,7 @@ async function confirmRefund() {
   btn.textContent = 'Processing...';
 
   try {
-    const r = await fetch(BACKEND_URL + '/api/orders/refund', {
+    const result = await fetchJSON(BACKEND_URL + '/api/orders/refund', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         adminPin: currentUser.id,
@@ -7745,8 +7798,7 @@ async function confirmRefund() {
         reason: reason
       })
     });
-    const data = await r.json();
-    if (!r.ok) { showToast(data.message || 'Failed', 'danger'); btn.disabled = false; btn.textContent = t('history.refund_confirm_btn'); return; }
+    if (!result.ok) { showToast(result.error || 'Failed', 'danger'); btn.disabled = false; btn.textContent = t('history.refund_confirm_btn'); return; }
     showToast(t('history.refund_success', {id: pendingRefundId}), 'success');
     closeRefundOverlay();
     loadOrderHistory();
@@ -7849,7 +7901,7 @@ function switchTimesheetSubTab(subtab) {
 
 async function loadAdminStats() {
   const grid = document.getElementById('statsGrid');
-  grid.innerHTML = '<div class="empty-state">' + t('loading') + '</div>';
+  showContentLoading('statsGrid');
   try {
     const body = { adminPin: currentUser.id };
     const dateFrom = document.getElementById('statsDateFrom').value;
@@ -7857,12 +7909,12 @@ async function loadAdminStats() {
     if (dateFrom) body.date_from = dateFrom;
     if (dateTo) body.date_to = dateTo;
 
-    const r = await fetch(BACKEND_URL + '/api/admin_stats', {
+    const result = await fetchJSON(BACKEND_URL + '/api/admin_stats', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     });
-    if (!r.ok) { grid.innerHTML = '<div class="empty-state">' + t('unauthorized') + '</div>'; return; }
-    const data = await r.json();
+    if (!result.ok) { grid.innerHTML = '<div class="empty-state val-err">⚠️ ' + (result.error || t('unauthorized')) + '</div>'; return; }
+    const data = result.data;
     adminStatsCache = data.stats;
     const s = data.stats;
     const hasDateFilter = dateFrom || dateTo;
@@ -7890,7 +7942,8 @@ async function loadAdminStats() {
       <div class="stat-card"><div class="stat-val">$${parseFloat(s.weekly_sales||0).toFixed(2)}</div><div class="stat-lbl">${t('admin.stats.weekly_sales')}</div></div>
       <div class="stat-card"><div class="stat-val">$${parseFloat(s.monthly_sales||0).toFixed(2)}</div><div class="stat-lbl">${t('admin.stats.monthly_sales')}</div></div>
     `;
-  } catch(e) { grid.innerHTML = '<div class="empty-state">' + t('network_error') + '</div>'; }
+  } catch(e) { grid.innerHTML = '<div class="empty-state val-err">⚠️ ' + t('network_error') + '</div>'; }
+  finally { hideContentLoading('statsGrid'); }
 }
 
 async function loadAdminCharts() {
@@ -8047,11 +8100,11 @@ async function loadMostOrdered() {
 
 async function loadUsers() {
   const list = document.getElementById('userList');
-  list.innerHTML = '<div class="empty-state">' + t('loading') + '</div>';
+  showContentLoading('userList');
   try {
-    const r = await fetch(BACKEND_URL + '/api/users?adminPin=' + encodeURIComponent(currentUser.id));
-    if (!r.ok) throw new Error('Failed');
-    const users = await r.json();
+    const result = await fetchJSON(BACKEND_URL + '/api/users?adminPin=' + encodeURIComponent(currentUser.id));
+    if (!result.ok) throw new Error(result.error || 'Failed');
+    const users = result.data;
     const entries = Object.entries(users);
     if (entries.length === 0) { list.innerHTML = '<div class="empty-state">' + t('no_users') + '</div>'; return; }
     const perms = currentUser.permissions || [];
@@ -8099,9 +8152,10 @@ async function loadUsers() {
           ${banBtn}
           <button class="danger" onclick="deleteUser('${escJs(id)}')" style="font-size:13px;padding:6px 12px;min-height:36px;">🗑️ Delete</button>
         </div>
-      </div>`;
+      </div>`);
     }).join('');
-  } catch(e) { list.innerHTML = '<div class="empty-state">' + t('network_error') + '</div>'; }
+  } catch(e) { list.innerHTML = '<div class="empty-state val-err">⚠️ ' + t('network_error') + '</div>'; }
+  finally { hideContentLoading('userList'); }
 }
 
 async function banUser(userId) {
@@ -8585,7 +8639,7 @@ async function addItem() {
 
 async function loadActivityLog() {
   const list = document.getElementById('activityLogList');
-  list.innerHTML = '<div class="empty-state">' + t('loading') + '</div>';
+  showContentLoading('activityLogList');
   try {
     const userFilter = document.getElementById('logUserFilter').value.trim();
     const typeFilter = document.getElementById('logTypeFilter').value;
@@ -8598,12 +8652,12 @@ async function loadActivityLog() {
     if (dateFrom) body.date_from = dateFrom;
     if (dateTo) body.date_to = dateTo;
 
-    const r = await fetch(BACKEND_URL + '/api/activity_log', {
+    const result = await fetchJSON(BACKEND_URL + '/api/activity_log', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     });
-    if (!r.ok) { list.innerHTML = '<div class="empty-state">Unauthorized</div>'; return; }
-    const data = await r.json();
+    if (!result.ok) { list.innerHTML = '<div class="empty-state val-err">⚠️ ' + (result.error || 'Unauthorized') + '</div>'; return; }
+    const data = result.data;
     const logs = (data.log || []).slice().reverse();
 
     // Populate filter dropdowns with available options (only on first load or when data changes)
@@ -8634,7 +8688,8 @@ async function loadActivityLog() {
         ${l.details && Object.keys(l.details).length ? ' — ' + escHtml(JSON.stringify(l.details)) : ''}
       </div>
     `).join('');
-  } catch(e) { list.innerHTML = '<div class="empty-state">' + t('network_error') + '</div>'; }
+  } catch(e) { list.innerHTML = '<div class="empty-state val-err">⚠️ ' + t('network_error') + '</div>'; }
+  finally { hideContentLoading('activityLogList'); }
 }
 
 function resetActivityLogFilters() {
@@ -10113,7 +10168,8 @@ async function loadWebhooks() {
     });
     html += '</div>';
     list.innerHTML = html;
-  } catch(e) { list.innerHTML = '<div class="empty-state">' + t('network_error') + '</div>'; }
+  } catch(e) { list.innerHTML = '<div class="empty-state val-err">⚠️ ' + t('network_error') + '</div>'; }
+  finally { hideContentLoading('historyList'); }
 }
 
 async function addWebhook() {
@@ -10339,7 +10395,8 @@ async function loadCategories() {
     });
     html += '</div>';
     list.innerHTML = html;
-  } catch(e) { list.innerHTML = '<div class="empty-state">' + t('network_error') + '</div>'; }
+  } catch(e) { list.innerHTML = '<div class="empty-state val-err">⚠️ ' + t('network_error') + '</div>'; }
+  finally { hideContentLoading('historyList'); }
 }
 
 async function createCategory() {
