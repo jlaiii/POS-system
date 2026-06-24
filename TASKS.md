@@ -424,7 +424,7 @@ New `tickets.json` data store. Each ticket:
 
 |||- [-] worker-2 **MEDIUM: Customer online ordering portal** — Too complex for single worker tick: requires building a full standalone online ordering page with cart, checkout, pickup/delivery flow, and kitchen/pickup-display integration. Needs multi-tick project with dedicated worker.|
 |||
-|||- [~] worker-2 **MEDIUM: Proper PWA icons + iOS meta tags** — `sw.js` exists and is registered but `manifest.json` only has an SVG icon (no 192px/512px PNG icons). Without proper PNG icons, the app cannot be properly installed as a PWA on tablets/iPads. Apple-touch-icon and apple-mobile-web-app-capable meta tags missing for iOS home screen. Add multi-size PNG icons (192px, 512px), apple-touch-icon, and apple-mobile-web-app-capable meta tags. Also enhance sw.js to cache CSS and more static assets for better offline experience.|
+|||- [x] worker-2 **MEDIUM: Proper PWA icons + iOS meta tags** — Added 192x192 and 512x512 PNG icons (POS-themed fork+plate design in brand colors). Updated manifest.json with proper PNG icon entries alongside the SVG fallback. Added apple-mobile-web-app-capable, apple-mobile-web-app-status-bar-style (black-translucent), and apple-mobile-web-app-title meta tags to index.html head. Added apple-touch-icon link tags for both icon sizes. Enhanced sw.js to v3 with network-first navigation, cache-first static assets (icons, manifest), offline fallback to offline.html. Created offline.html with dark-theme offline notification page. Python syntax verified, manifest JSON valid, PNG icons confirmed at correct sizes. [worker-2]|
 |||
 |||- [ ] **MEDIUM: 2FA frontend setup UI — QR scan + enable flow missing**
 
