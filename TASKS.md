@@ -361,7 +361,7 @@ New `tickets.json` data store. Each ticket:
 ### Priority: LOW
 
 - [x] worker-2 **Direct deposit info display** — Read-only display of employee's direct deposit details. [worker-2 — Added `POST /api/users/update_direct_deposit` endpoint storing bank_name, account_type, account_last4, routing_last4. New direct deposit display card in My Pay tab with masked account/routing numbers. Admin 🏦 Bank button in user management to set/clear bank info. i18n EN+ES. Activity logging.]
-- [~] worker-1 **Pay comparison charts** — Bar chart in My Pay showing period-by-period gross pay for last 6 periods.
+- [x] worker-1 **Pay comparison charts** — Bar chart in My Pay showing period-by-period gross pay for last 6 periods. Pure CSS bar chart (no Chart.js needed). Shows last 6 periods with proportional accent-colored bars, date labels, dollar amounts, and hover tooltips with hours/shifts/tips. Hides gracefully when <2 periods have pay data. i18n EN+ES.
 - [ ] **Tax withholding estimator** — Optional W-4 based tax estimates.
 
 ## Table-Side Digital Menu & Ad Display (NEW — June 2026)

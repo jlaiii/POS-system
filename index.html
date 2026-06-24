@@ -2303,6 +2303,16 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
       </div>
     </div>
 
+    <!-- Pay Comparison Chart -->
+    <div id="myPayChartCard" class="card" style="margin-bottom:16px;padding:16px 20px;display:none;">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+        <h4 style="margin:0;font-size:15px;color:var(--accent);" data-i18n="mypay.chart_title">📊 Pay Comparison — Last 6 Periods</h4>
+        <span id="myPayChartCount" style="font-size:12px;color:var(--text2);"></span>
+      </div>
+      <div id="myPayChartContainer" style="display:flex;align-items:flex-end;gap:6px;height:180px;padding:4px 8px 0;"></div>
+      <div style="font-size:11px;color:var(--text2);margin-top:8px;text-align:center;" data-i18n="mypay.chart_hint">Gross pay per pay period — taller bars = higher earnings</div>
+    </div>
+
     <!-- Direct Deposit Info -->
     <div class="card" style="margin-bottom:16px;padding:16px 20px;">
       <h4 style="margin:0 0 4px 0;font-size:15px;color:var(--accent);" data-i18n="mypay.dd_title">💳 Direct Deposit</h4>
@@ -3411,6 +3421,8 @@ const L10N = {
     'mypay.pay_review_desc': 'I would like a review of my pay for this period. Details:',
     'mypay.dd_title': '💳 Direct Deposit',
     'mypay.dd_not_set': 'No direct deposit info on file.',
+    'mypay.chart_title': '📊 Pay Comparison — Last 6 Periods',
+    'mypay.chart_hint': 'Gross pay per pay period — taller bars = higher earnings',
     'security.active_sessions': 'Active Sessions',
     'security.logout_all': '🚪 Log Out Everywhere',
     'security.no_sessions': 'No active sessions.',
@@ -4105,6 +4117,8 @@ const L10N = {
     'mypay.pay_review_desc': 'Me gustaría una revisión de mi pago para este período. Detalles:',
     'mypay.dd_title': '💳 Depósito Directo',
     'mypay.dd_not_set': 'No hay información de depósito directo registrada.',
+    'mypay.chart_title': '📊 Comparación de Pago — Últimos 6 Períodos',
+    'mypay.chart_hint': 'Pago bruto por período — barras más altas = mayores ganancias',
     'security.active_sessions': 'Sesiones Activas',
     'security.logout_all': '🚪 Cerrar Todas las Sesiones',
     'security.no_sessions': 'No hay sesiones activas.',
@@ -14508,6 +14522,61 @@ function stopMyPayAutoRefresh() {
   if (badge) badge.style.display = 'none';
 }
 
+function renderPayComparisonChart(history) {
+  /** Render a CSS bar chart of the last 6 pay periods' gross pay. */
+  const chartCard = document.getElementById('myPayChartCard');
+  const chartContainer = document.getElementById('myPayChartContainer');
+  const chartCount = document.getElementById('myPayChartCount');
+  if (!chartCard || !chartContainer) return;
+
+  // Filter to periods with pay data, take last 6 (API returns newest-first)
+  const relevant = history.filter(function(p) {
+    return p.has_pay_rate && p.estimated_gross != null && p.estimated_gross > 0;
+  }).slice(0, 6).reverse();
+
+  if (relevant.length < 2) {
+    chartCard.style.display = 'none';
+    return;
+  }
+
+  chartCard.style.display = 'block';
+  if (chartCount) chartCount.textContent = relevant.length + ' periods shown';
+
+  const maxGross = Math.max.apply(null, relevant.map(function(p) { return p.estimated_gross; }));
+  const barMaxHeight = 148; // max bar height in px
+  const barMinHeight = 6; // minimum visible bar
+
+  let html = '';
+  relevant.forEach(function(period) {
+    const ratio = maxGross > 0 ? period.estimated_gross / maxGross : 0.01;
+    const barHeight = Math.max(barMinHeight, Math.round(ratio * barMaxHeight));
+
+    // Short label: "Apr 5" style
+    let shortLabel = '';
+    if (period.start_date) {
+      try {
+        const d = new Date(period.start_date + 'T12:00:00');
+        shortLabel = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      } catch(e) {
+        shortLabel = period.start_date.substring(5);
+      }
+    }
+
+    const grossStr = '$' + period.estimated_gross.toFixed(2);
+    const tipStr = period.tips > 0 ? ' | 💵 $' + period.tips.toFixed(2) : '';
+    const hoursStr = (period.hours || 0).toFixed(1) + 'h';
+
+    html += '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;min-width:0;">';
+    html += '  <div style="font-size:11px;font-weight:600;color:var(--accent);margin-bottom:2px;white-space:nowrap;" title="' + grossStr + ' · ' + hoursStr + tipStr + '">' + grossStr + '</div>';
+    html += '  <div style="width:100%;max-width:52px;height:' + barHeight + 'px;background:linear-gradient(180deg,var(--accent),rgba(233,69,96,0.6));border-radius:4px 4px 0 0;min-height:4px;transition:height 0.3s;cursor:pointer;"';
+    html += ' title="' + (period.start_date || '') + ' — ' + (period.end_date || '') + ': ' + grossStr + ' (' + hoursStr + ', ' + period.shift_count + ' shifts' + tipStr + ')"></div>';
+    html += '  <div style="font-size:10px;color:var(--text2);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;">' + shortLabel + '</div>';
+    html += '</div>';
+  });
+
+  chartContainer.innerHTML = html;
+}
+
 function renderMyPay(data) {
   /** Render all pay sections from the API response. */
 
@@ -14574,6 +14643,9 @@ function renderMyPay(data) {
   const pct = cp.hours ? Math.min(100, Math.round((cp.hours / targetHours) * 100)) : 0;
   document.getElementById('myPayProgressBar').style.width = pct + '%';
   document.getElementById('myPayProgressPct').textContent = pct + '%';
+
+  // --- Pay Comparison Chart ---
+  renderPayComparisonChart(data.pay_history || []);
 
   // Pay rate notice
   document.getElementById('myPayNoRateNotice').style.display = data.has_pay_rate ? 'none' : 'block';
