@@ -221,5 +221,390 @@
         "details": {
             "status": "success"
         }
+    },
+    {
+        "user_id": "9999",
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-24T07:56:57.104868",
+        "success": true,
+        "user_agent": "Werkzeug/3.1.8",
+        "method": "pin",
+        "details": {
+            "status": "2fa_required"
+        }
+    },
+    {
+        "user_id": "9999",
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-24T07:56:57.114485",
+        "success": true,
+        "user_agent": "Werkzeug/3.1.8",
+        "method": "pin",
+        "details": {
+            "status": "2fa_required"
+        }
+    },
+    {
+        "user_id": "9999",
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-24T07:56:57.122577",
+        "success": true,
+        "user_agent": "Werkzeug/3.1.8",
+        "method": "pin",
+        "details": {
+            "status": "2fa_required"
+        }
+    },
+    {
+        "user_id": "9999",
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-24T07:56:57.131161",
+        "success": true,
+        "user_agent": "Werkzeug/3.1.8",
+        "method": "pin",
+        "details": {
+            "status": "2fa_required"
+        }
+    },
+    {
+        "user_id": "9999",
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-24T07:56:57.143387",
+        "success": true,
+        "user_agent": "Werkzeug/3.1.8",
+        "method": "pin",
+        "details": {
+            "status": "2fa_required"
+        }
+    },
+    {
+        "user_id": "9999",
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-24T07:56:57.150964",
+        "success": true,
+        "user_agent": "Werkzeug/3.1.8",
+        "method": "pin",
+        "details": {
+            "status": "2fa_required"
+        }
+    },
+    {
+        "user_id": "9999",
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-24T07:56:57.159185",
+        "success": true,
+        "user_agent": "Werkzeug/3.1.8",
+        "method": "pin",
+        "details": {
+            "status": "2fa_required"
+        }
+    },
+    {
+        "user_id": "9999",
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-24T07:56:57.166223",
+        "success": true,
+        "user_agent": "Werkzeug/3.1.8",
+        "method": "pin",
+        "details": {
+            "status": "2fa_required"
+        }
+    },
+    {
+        "user_id": "9999",
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-24T07:56:57.175212",
+        "success": true,
+        "user_agent": "Werkzeug/3.1.8",
+        "method": "pin",
+        "details": {
+            "status": "2fa_required"
+        }
+    },
+    {
+        "user_id": "9999",
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-24T07:56:57.183246",
+        "success": true,
+        "user_agent": "Werkzeug/3.1.8",
+        "method": "pin",
+        "details": {
+            "status": "2fa_required"
+        }
+    },
+    {
+        "user_id": "9999",
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-24T07:56:57.191065",
+        "success": true,
+        "user_agent": "Werkzeug/3.1.8",
+        "method": "pin",
+        "details": {
+            "status": "2fa_required"
+        }
+    },
+    {
+        "user_id": "9999",
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-24T07:56:57.199588",
+        "success": true,
+        "user_agent": "Werkzeug/3.1.8",
+        "method": "pin",
+        "details": {
+            "status": "2fa_required"
+        }
+    },
+    {
+        "user_id": "9999",
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-24T07:56:57.208145",
+        "success": true,
+        "user_agent": "Werkzeug/3.1.8",
+        "method": "pin",
+        "details": {
+            "status": "2fa_required"
+        }
+    },
+    {
+        "user_id": "9999",
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-24T07:56:57.215873",
+        "success": true,
+        "user_agent": "Werkzeug/3.1.8",
+        "method": "pin",
+        "details": {
+            "status": "2fa_required"
+        }
+    },
+    {
+        "user_id": "9999",
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-24T07:56:57.223960",
+        "success": true,
+        "user_agent": "Werkzeug/3.1.8",
+        "method": "pin",
+        "details": {
+            "status": "2fa_required"
+        }
+    },
+    {
+        "user_id": "9999",
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-24T07:56:57.231931",
+        "success": true,
+        "user_agent": "Werkzeug/3.1.8",
+        "method": "pin",
+        "details": {
+            "status": "2fa_required"
+        }
+    },
+    {
+        "user_id": "9999",
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-24T07:56:57.239976",
+        "success": true,
+        "user_agent": "Werkzeug/3.1.8",
+        "method": "pin",
+        "details": {
+            "status": "2fa_required"
+        }
+    },
+    {
+        "user_id": "9999",
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-24T07:56:57.247276",
+        "success": true,
+        "user_agent": "Werkzeug/3.1.8",
+        "method": "pin",
+        "details": {
+            "status": "2fa_required"
+        }
+    },
+    {
+        "user_id": "9999",
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-24T07:56:57.254952",
+        "success": true,
+        "user_agent": "Werkzeug/3.1.8",
+        "method": "pin",
+        "details": {
+            "status": "2fa_required"
+        }
+    },
+    {
+        "user_id": "9999",
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-24T07:56:57.262095",
+        "success": true,
+        "user_agent": "Werkzeug/3.1.8",
+        "method": "pin",
+        "details": {
+            "status": "2fa_required"
+        }
+    },
+    {
+        "user_id": "9999",
+        "ip": "203.0.113.42",
+        "timestamp": "2026-06-24T07:57:16.608247",
+        "success": true,
+        "user_agent": "Werkzeug/3.1.8",
+        "method": "pin",
+        "details": {
+            "status": "2fa_required"
+        }
+    },
+    {
+        "user_id": "9999",
+        "ip": "203.0.113.42",
+        "timestamp": "2026-06-24T07:57:16.618270",
+        "success": true,
+        "user_agent": "Werkzeug/3.1.8",
+        "method": "pin",
+        "details": {
+            "status": "2fa_required"
+        }
+    },
+    {
+        "user_id": "9999",
+        "ip": "203.0.113.42",
+        "timestamp": "2026-06-24T07:57:16.628704",
+        "success": true,
+        "user_agent": "Werkzeug/3.1.8",
+        "method": "pin",
+        "details": {
+            "status": "2fa_required"
+        }
+    },
+    {
+        "user_id": "9999",
+        "ip": "192.168.1.50",
+        "timestamp": "2026-06-24T07:57:16.648837",
+        "success": true,
+        "user_agent": "Werkzeug/3.1.8",
+        "method": "pin",
+        "details": {
+            "status": "2fa_required"
+        }
+    },
+    {
+        "user_id": "9999",
+        "ip": "192.168.1.50",
+        "timestamp": "2026-06-24T07:57:16.656453",
+        "success": true,
+        "user_agent": "Werkzeug/3.1.8",
+        "method": "pin",
+        "details": {
+            "status": "2fa_required"
+        }
+    },
+    {
+        "user_id": "9999",
+        "ip": "192.168.1.50",
+        "timestamp": "2026-06-24T07:57:16.663957",
+        "success": true,
+        "user_agent": "Werkzeug/3.1.8",
+        "method": "pin",
+        "details": {
+            "status": "2fa_required"
+        }
+    },
+    {
+        "user_id": "9999",
+        "ip": "192.168.1.50",
+        "timestamp": "2026-06-24T07:57:16.671470",
+        "success": true,
+        "user_agent": "Werkzeug/3.1.8",
+        "method": "pin",
+        "details": {
+            "status": "2fa_required"
+        }
+    },
+    {
+        "user_id": "9999",
+        "ip": "192.168.1.50",
+        "timestamp": "2026-06-24T07:57:16.679937",
+        "success": true,
+        "user_agent": "Werkzeug/3.1.8",
+        "method": "pin",
+        "details": {
+            "status": "2fa_required"
+        }
+    },
+    {
+        "user_id": "9999",
+        "ip": "192.168.1.50",
+        "timestamp": "2026-06-24T07:57:16.689250",
+        "success": true,
+        "user_agent": "Werkzeug/3.1.8",
+        "method": "pin",
+        "details": {
+            "status": "2fa_required"
+        }
+    },
+    {
+        "user_id": "9999",
+        "ip": "192.168.1.50",
+        "timestamp": "2026-06-24T07:57:16.698407",
+        "success": true,
+        "user_agent": "Werkzeug/3.1.8",
+        "method": "pin",
+        "details": {
+            "status": "2fa_required"
+        }
+    },
+    {
+        "user_id": "9999",
+        "ip": "192.168.1.50",
+        "timestamp": "2026-06-24T07:57:16.708071",
+        "success": true,
+        "user_agent": "Werkzeug/3.1.8",
+        "method": "pin",
+        "details": {
+            "status": "2fa_required"
+        }
+    },
+    {
+        "user_id": "9999",
+        "ip": "192.168.1.50",
+        "timestamp": "2026-06-24T07:57:16.717824",
+        "success": true,
+        "user_agent": "Werkzeug/3.1.8",
+        "method": "pin",
+        "details": {
+            "status": "2fa_required"
+        }
+    },
+    {
+        "user_id": "9999",
+        "ip": "192.168.1.50",
+        "timestamp": "2026-06-24T07:57:16.726403",
+        "success": true,
+        "user_agent": "Werkzeug/3.1.8",
+        "method": "pin",
+        "details": {
+            "status": "2fa_required"
+        }
+    },
+    {
+        "user_id": "5678",
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-24T08:02:18.852112",
+        "success": true,
+        "user_agent": "curl/8.5.0",
+        "method": "pin",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "user_id": "1111",
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-24T08:30:34.713154",
+        "success": true,
+        "user_agent": "curl/8.5.0",
+        "method": "pin",
+        "details": {
+            "status": "success"
+        }
     }
 ]

@@ -1,6 +1,6 @@
 # POS Database Migration Tasks
-> Last run: 2026-06-24 09:xx UTC
-> Current phase: Phase 2 — Migration Scripts (3/24 complete)
+> Last run: 2026-06-24 12:xx UTC
+> Current phase: Phase 2 — Migration Scripts (4/24 complete)
 
 ## Phase 1: Schema Design
 - [x] Design all SQLite table schemas (users, shift_log, orders, items, inventory, etc.)
@@ -12,7 +12,7 @@
 - [x] Write migrate_users.py — users table migration (6 rows verified ✓)
 - [x] Write migrate_shift_log.py — shift_log table migration (16 rows verified ✓)
 - [x] Write migrate_activity_log.py — activity_log table migration (377 rows verified ✓)
-- [ ] Write migrate_items.py — items table migration (flatten categories)
+- [x] Write migrate_items.py — items table migration (14 rows verified ✓)
 - [ ] Write migrate_inventory.py — inventory table migration
 - [ ] Write migrate_loyalty_points.py — loyalty_points table migration
 - [ ] Write migrate_orders.py — orders table migration
@@ -66,6 +66,7 @@
 - [x] **migrate_shift_log.py** — Migrated 16 shifts from shift_log.json to SQLite. All fields preserved (edits JSON, breaks JSON, late tracking). Idempotency tested. Commit: 12e292b
 - [x] **migrate_activity_log.py** — Migrated 377 events from activity_log.json to SQLite. All fields preserved (details JSON). Idempotency tested. Commit: 35c9bad
 - [x] **Add `use_database` flag** — Added `use_database: false` to timesheet_config.json for feature-gated endpoint refactoring
+- [x] **migrate_items.py** — Migrated 14 items from items.json to SQLite. Flattened 3 categories (Foods, Drinks, Snacks) into category column. Modifiers JSON preserved. Idempotency tested. Commit: 95e8124
 
 ## ROLLBACK PLAN (always keep current)
 How to revert to JSON mode if DB breaks:
@@ -82,7 +83,7 @@ How to revert to JSON mode if DB breaks:
 | users.json | users | dict (key=pin) | 6 | ✓ |
 | shift_log.json | shift_log | array | 24 | ✓ |
 | activity_log.json | activity_log | array | 377 | ✓ |
-| items.json | items | dict (key=category) | 14 items | |
+| items.json | items | dict (key=category) | 14 items | ✓ |
 | inventory.json | inventory | dict (key=item_name) | 15 | |
 | loyalty_points.json | loyalty_points | dict (key=phone) | 0 | |
 | orders.json | orders | array | 0 | |

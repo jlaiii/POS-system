@@ -5097,5 +5097,951 @@
         "details": {
             "enabled": true
         }
+    },
+    {
+        "timestamp": "2026-06-24T07:44:52.320944",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T07:44:58.834614",
+        "type": "clock_in",
+        "user_id": "9999",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "user_name": "Test2FA",
+            "clock_in_time": "2026-06-24T07:44:58.834328",
+            "late_minutes": null,
+            "scheduled_start": "09:00"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T07:45:00.883913",
+        "type": "clock_out",
+        "user_id": "9999",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "user_name": "Test2FA",
+            "clock_in_time": "2026-06-24T07:44:58.834328",
+            "clock_out_time": "2026-06-24T07:45:00.882923",
+            "duration_hours": 0.0
+        }
+    },
+    {
+        "timestamp": "2026-06-24T07:45:23.374152",
+        "type": "submit_order",
+        "user_id": null,
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 60,
+            "subtotal": 3.0,
+            "tax_amount": 0.0,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 3.0,
+            "payment_method": "Cash",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-24T07:45:32.555400",
+        "type": "refund_order",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 60,
+            "reason": "No reason provided",
+            "refunded_by_name": "Owner",
+            "order_total": 3.0,
+            "inventory_restored": [
+                "Coke x1"
+            ]
+        }
+    },
+    {
+        "timestamp": "2026-06-24T07:56:57.081964",
+        "type": "rate_limit_config_set",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "updated_keys": [
+                "rate_limit_global_max",
+                "rate_limit_api_max"
+            ],
+            "enabled": true
+        }
+    },
+    {
+        "timestamp": "2026-06-24T07:56:57.090053",
+        "type": "rate_limit_config_set",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "updated_keys": [
+                "rate_limit_global_max",
+                "rate_limit_global_window",
+                "rate_limit_login_max",
+                "rate_limit_login_window"
+            ],
+            "enabled": true
+        }
+    },
+    {
+        "timestamp": "2026-06-24T07:56:57.098038",
+        "type": "login",
+        "user_id": "9999",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "2fa_required",
+            "method": "pin",
+            "user_name": "Test2FA",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T07:56:57.107126",
+        "type": "login",
+        "user_id": "9999",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "2fa_required",
+            "method": "pin",
+            "user_name": "Test2FA",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T07:56:57.116200",
+        "type": "login",
+        "user_id": "9999",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "2fa_required",
+            "method": "pin",
+            "user_name": "Test2FA",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T07:56:57.124683",
+        "type": "login",
+        "user_id": "9999",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "2fa_required",
+            "method": "pin",
+            "user_name": "Test2FA",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T07:56:57.132939",
+        "type": "login",
+        "user_id": "9999",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "2fa_required",
+            "method": "pin",
+            "user_name": "Test2FA",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T07:56:57.145153",
+        "type": "login",
+        "user_id": "9999",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "2fa_required",
+            "method": "pin",
+            "user_name": "Test2FA",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T07:56:57.153132",
+        "type": "login",
+        "user_id": "9999",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "2fa_required",
+            "method": "pin",
+            "user_name": "Test2FA",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T07:56:57.160690",
+        "type": "login",
+        "user_id": "9999",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "2fa_required",
+            "method": "pin",
+            "user_name": "Test2FA",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T07:56:57.167738",
+        "type": "login",
+        "user_id": "9999",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "2fa_required",
+            "method": "pin",
+            "user_name": "Test2FA",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T07:56:57.176975",
+        "type": "login",
+        "user_id": "9999",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "2fa_required",
+            "method": "pin",
+            "user_name": "Test2FA",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T07:56:57.184819",
+        "type": "login",
+        "user_id": "9999",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "2fa_required",
+            "method": "pin",
+            "user_name": "Test2FA",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T07:56:57.193182",
+        "type": "login",
+        "user_id": "9999",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "2fa_required",
+            "method": "pin",
+            "user_name": "Test2FA",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T07:56:57.201391",
+        "type": "login",
+        "user_id": "9999",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "2fa_required",
+            "method": "pin",
+            "user_name": "Test2FA",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T07:56:57.209729",
+        "type": "login",
+        "user_id": "9999",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "2fa_required",
+            "method": "pin",
+            "user_name": "Test2FA",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T07:56:57.217513",
+        "type": "login",
+        "user_id": "9999",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "2fa_required",
+            "method": "pin",
+            "user_name": "Test2FA",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T07:56:57.225606",
+        "type": "login",
+        "user_id": "9999",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "2fa_required",
+            "method": "pin",
+            "user_name": "Test2FA",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T07:56:57.233533",
+        "type": "login",
+        "user_id": "9999",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "2fa_required",
+            "method": "pin",
+            "user_name": "Test2FA",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T07:56:57.241683",
+        "type": "login",
+        "user_id": "9999",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "2fa_required",
+            "method": "pin",
+            "user_name": "Test2FA",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T07:56:57.248879",
+        "type": "login",
+        "user_id": "9999",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "2fa_required",
+            "method": "pin",
+            "user_name": "Test2FA",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T07:56:57.256440",
+        "type": "login",
+        "user_id": "9999",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "2fa_required",
+            "method": "pin",
+            "user_name": "Test2FA",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T07:56:57.263658",
+        "type": "rate_limit_config_set",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "updated_keys": [
+                "rate_limit_global_max",
+                "rate_limit_global_window",
+                "rate_limit_login_max",
+                "rate_limit_login_window",
+                "rate_limit_api_max",
+                "rate_limit_api_window"
+            ],
+            "enabled": true
+        }
+    },
+    {
+        "timestamp": "2026-06-24T07:57:16.593978",
+        "type": "rate_limit_config_set",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "updated_keys": [
+                "rate_limit_global_max",
+                "rate_limit_global_window",
+                "rate_limit_login_max",
+                "rate_limit_login_window",
+                "rate_limit_api_max",
+                "rate_limit_api_window"
+            ],
+            "enabled": true
+        }
+    },
+    {
+        "timestamp": "2026-06-24T07:57:16.602217",
+        "type": "login",
+        "user_id": "9999",
+        "user_role": "user",
+        "ip_address": "203.0.113.42",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "2fa_required",
+            "method": "pin",
+            "user_name": "Test2FA",
+            "ip": "203.0.113.42"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T07:57:16.610309",
+        "type": "login",
+        "user_id": "9999",
+        "user_role": "user",
+        "ip_address": "203.0.113.42",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "2fa_required",
+            "method": "pin",
+            "user_name": "Test2FA",
+            "ip": "203.0.113.42"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T07:57:16.620590",
+        "type": "login",
+        "user_id": "9999",
+        "user_role": "user",
+        "ip_address": "203.0.113.42",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "2fa_required",
+            "method": "pin",
+            "user_name": "Test2FA",
+            "ip": "203.0.113.42"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T07:57:16.641063",
+        "type": "login",
+        "user_id": "9999",
+        "user_role": "user",
+        "ip_address": "192.168.1.50",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "2fa_required",
+            "method": "pin",
+            "user_name": "Test2FA",
+            "ip": "192.168.1.50"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T07:57:16.650685",
+        "type": "login",
+        "user_id": "9999",
+        "user_role": "user",
+        "ip_address": "192.168.1.50",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "2fa_required",
+            "method": "pin",
+            "user_name": "Test2FA",
+            "ip": "192.168.1.50"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T07:57:16.658240",
+        "type": "login",
+        "user_id": "9999",
+        "user_role": "user",
+        "ip_address": "192.168.1.50",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "2fa_required",
+            "method": "pin",
+            "user_name": "Test2FA",
+            "ip": "192.168.1.50"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T07:57:16.665669",
+        "type": "login",
+        "user_id": "9999",
+        "user_role": "user",
+        "ip_address": "192.168.1.50",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "2fa_required",
+            "method": "pin",
+            "user_name": "Test2FA",
+            "ip": "192.168.1.50"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T07:57:16.673521",
+        "type": "login",
+        "user_id": "9999",
+        "user_role": "user",
+        "ip_address": "192.168.1.50",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "2fa_required",
+            "method": "pin",
+            "user_name": "Test2FA",
+            "ip": "192.168.1.50"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T07:57:16.682008",
+        "type": "login",
+        "user_id": "9999",
+        "user_role": "user",
+        "ip_address": "192.168.1.50",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "2fa_required",
+            "method": "pin",
+            "user_name": "Test2FA",
+            "ip": "192.168.1.50"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T07:57:16.691106",
+        "type": "login",
+        "user_id": "9999",
+        "user_role": "user",
+        "ip_address": "192.168.1.50",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "2fa_required",
+            "method": "pin",
+            "user_name": "Test2FA",
+            "ip": "192.168.1.50"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T07:57:16.700938",
+        "type": "login",
+        "user_id": "9999",
+        "user_role": "user",
+        "ip_address": "192.168.1.50",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "2fa_required",
+            "method": "pin",
+            "user_name": "Test2FA",
+            "ip": "192.168.1.50"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T07:57:16.709928",
+        "type": "login",
+        "user_id": "9999",
+        "user_role": "user",
+        "ip_address": "192.168.1.50",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "2fa_required",
+            "method": "pin",
+            "user_name": "Test2FA",
+            "ip": "192.168.1.50"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T07:57:16.720271",
+        "type": "login",
+        "user_id": "9999",
+        "user_role": "user",
+        "ip_address": "192.168.1.50",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "2fa_required",
+            "method": "pin",
+            "user_name": "Test2FA",
+            "ip": "192.168.1.50"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T07:57:16.728547",
+        "type": "rate_limit_config_set",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "updated_keys": [
+                "rate_limit_global_max",
+                "rate_limit_global_window",
+                "rate_limit_login_max",
+                "rate_limit_login_window",
+                "rate_limit_api_max",
+                "rate_limit_api_window"
+            ],
+            "enabled": true
+        }
+    },
+    {
+        "timestamp": "2026-06-24T08:02:18.841661",
+        "type": "login",
+        "user_id": "5678",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Employee Two",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T08:02:21.115685",
+        "type": "clock_in",
+        "user_id": "5678",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee Two",
+            "clock_in_time": "2026-06-24T08:02:21.115509",
+            "late_minutes": null,
+            "scheduled_start": null
+        }
+    },
+    {
+        "timestamp": "2026-06-24T08:02:33.838758",
+        "type": "submit_order",
+        "user_id": "5678",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 61,
+            "subtotal": 14.5,
+            "tax_amount": 1.16,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 17.66,
+            "payment_method": "Split (Cash $10.00, Card $7.66)",
+            "item_count": 3
+        }
+    },
+    {
+        "timestamp": "2026-06-24T08:02:42.091035",
+        "type": "submit_order",
+        "user_id": "5678",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 62,
+            "subtotal": 24.0,
+            "tax_amount": 1.92,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 28.92,
+            "payment_method": "Card",
+            "item_count": 3
+        }
+    },
+    {
+        "timestamp": "2026-06-24T08:02:42.106226",
+        "type": "loyalty_earn",
+        "user_id": "5678",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "customer_phone": "555-0123",
+            "points_earned": 24,
+            "order_id": 62
+        }
+    },
+    {
+        "timestamp": "2026-06-24T08:07:59.375394",
+        "type": "clock_out",
+        "user_id": "5678",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee Two",
+            "clock_in_time": "2026-06-24T08:02:21.115509",
+            "clock_out_time": "2026-06-24T08:07:59.374486",
+            "duration_hours": 0.09
+        }
+    },
+    {
+        "timestamp": "2026-06-24T08:28:08.256262",
+        "type": "submit_order",
+        "user_id": "9999",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 63,
+            "subtotal": 5.0,
+            "tax_amount": 0.0,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 5.0,
+            "payment_method": "Cash",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-24T08:28:08.319053",
+        "type": "submit_order",
+        "user_id": "1111",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 64,
+            "subtotal": 5.0,
+            "tax_amount": 0.0,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 5.0,
+            "payment_method": "Cash",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-24T08:28:49.154671",
+        "type": "submit_order",
+        "user_id": "9999",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 65,
+            "subtotal": 5.0,
+            "tax_amount": 0.0,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 5.0,
+            "payment_method": "Cash",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-24T08:28:49.178384",
+        "type": "submit_order",
+        "user_id": "1111",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 66,
+            "subtotal": 5.0,
+            "tax_amount": 0.0,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 5.0,
+            "payment_method": "Cash",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-24T08:29:02.903693",
+        "type": "submit_order",
+        "user_id": "9999",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 67,
+            "subtotal": 5.0,
+            "tax_amount": 0.0,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 5.0,
+            "payment_method": "Cash",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-24T08:29:18.389688",
+        "type": "submit_order",
+        "user_id": "9999",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 68,
+            "subtotal": 5.0,
+            "tax_amount": 0.0,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 5.0,
+            "payment_method": "Cash",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-24T08:29:33.886139",
+        "type": "submit_order",
+        "user_id": null,
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 69,
+            "subtotal": 5.0,
+            "tax_amount": 0.0,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 5.0,
+            "payment_method": "Cash",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-24T08:29:39.533340",
+        "type": "submit_order",
+        "user_id": null,
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 70,
+            "subtotal": 1.0,
+            "tax_amount": 0.0,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 1.0,
+            "payment_method": "Cash",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-24T08:30:34.705946",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T08:31:03.169460",
+        "type": "add_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed",
+            "reason": "Missing data",
+            "new_user_id": null
+        }
+    },
+    {
+        "timestamp": "2026-06-24T08:31:08.063000",
+        "type": "add_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "added_user_id": "9998",
+            "added_user_name": "Reliability Tester",
+            "added_user_role": "user"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T08:31:12.258330",
+        "type": "delete_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "deleted_user_id": "9998",
+            "deleted_user_name": "Reliability Tester",
+            "deleted_user_role": "user"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T08:31:57.513792",
+        "type": "add_item",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "category": "Foods",
+            "name": "\ud83e\udd16 Robot Burger \ud83c\udf54",
+            "price": 12.99
+        }
+    },
+    {
+        "timestamp": "2026-06-24T08:31:57.547342",
+        "type": "delete_item",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "category": "Foods",
+            "name": "\ud83e\udd16 Robot Burger \ud83c\udf54"
+        }
     }
 ]

@@ -511,7 +511,10 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
       <div id="posMain">
         <div id="itemGrid"></div>
         <div id="cart">
-          <h3 data-i18n="cart.title">🧾 Cart</h3>
+          <div id="cartHeader">
+            <h3 data-i18n="cart.title">🧾 Cart</h3>
+            <button id="cartToggle" onclick="toggleCartExpand()" title="Expand cart" data-i18n-title="cart.expand">⬆</button>
+          </div>
           <div id="cartItems"><div class="empty-state" data-i18n="cart.empty">Cart is empty</div></div>
           <div id="discountRow" style="display:none;margin-top:4px;">
             <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
@@ -2325,6 +2328,8 @@ const L10N = {
     'pos.recent_items': 'items',
     'cart.title': '🧾 Cart',
     'cart.empty': 'Cart is empty',
+    'cart.expand': 'Expand cart',
+    'cart.collapse': 'Collapse cart',
     'cart.coupon': 'Coupon code',
     'cart.apply': 'Apply',
     'cart.notes': 'Order notes / special instructions...',
@@ -2961,6 +2966,8 @@ const L10N = {
     'pos.recent_items': 'artículos',
     'cart.title': '🧾 Carrito',
     'cart.empty': 'Carrito vacío',
+    'cart.expand': 'Expandir carrito',
+    'cart.collapse': 'Colapsar carrito',
     'cart.coupon': 'Código de cupón',
     'cart.apply': 'Aplicar',
     'cart.notes': 'Notas del pedido / instrucciones especiales...',
@@ -7527,6 +7534,25 @@ async function submitOrder() {
     document.getElementById('orderNotesInput').value = '';
     renderCart();
   }
+}
+
+/* ── Cart Expand/Collapse Toggle ── */
+let cartExpanded = false;
+function toggleCartExpand() {
+  cartExpanded = !cartExpanded;
+  const cart = document.getElementById('cart');
+  const btn = document.getElementById('cartToggle');
+  if (cartExpanded) {
+    cart.classList.add('cart-expanded');
+    btn.textContent = '⬇';
+    btn.setAttribute('data-i18n-title', 'cart.collapse');
+  } else {
+    cart.classList.remove('cart-expanded');
+    btn.textContent = '⬆';
+    btn.setAttribute('data-i18n-title', 'cart.expand');
+  }
+  // Update title attribute for i18n
+  btn.setAttribute('title', cartExpanded ? 'Collapse cart' : 'Expand cart');
 }
 
 async function clearCart() {

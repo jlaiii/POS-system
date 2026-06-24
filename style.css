@@ -765,6 +765,45 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
   #kioskOverlay .kiosk-payment .kiosk-pay-btns button { font-size: 18px; min-height: 52px; }
 }
 
+/* ── RESPONSIVE <600px BREAKPOINTS ── */
+@media (max-width: 600px) {
+  /* Full-width modals on small screens */
+  .modal-box { max-width: calc(100% - 16px); width: calc(100% - 16px); margin: 8px; }
+  .modal-overlay { padding: 8px; }
+
+  /* Admin sub-tabs: compact and scrollable */
+  #adminSubTabs button { font-size: 11px; padding: 8px 10px; min-height: 36px; }
+
+  /* History filter: full-width inputs */
+  #historyFilter input { max-width: 100%; width: 100%; }
+  #historyFilter { flex-direction: column; align-items: stretch; }
+
+  /* Form rows: stack everything */
+  .form-row { flex-direction: column; align-items: stretch; }
+  .form-row input, .form-row select { max-width: 100%; }
+
+  /* Stat cards: 2 columns minimum */
+  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+
+  /* Payment methods: full width buttons */
+  .payment-methods button { min-width: 60px; font-size: 13px; padding: 8px; }
+
+  /* Main tabs: smaller font, tighter padding */
+  #mainTabs button { font-size: 13px; padding: 10px 12px; }
+
+  /* Cart indicators: more compact */
+  .dt-indicator, .cd-indicator, .pb-indicator { font-size: 11px; }
+}
+
+/* Cart expand/collapse toggle for portrait/compact mode */
+#cart.cart-expanded { max-height: 70vh; }
+#cartToggle { display: none; background: transparent; color: var(--text2); border: none; cursor: pointer; font-size: 18px; padding: 4px 8px; min-height: 32px; min-width: 32px; border-radius: 6px; align-items: center; justify-content: center; }
+#cartToggle:hover { background: var(--hover); color: var(--text); }
+#cartHeader { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+#cartHeader h3 { margin: 0; }
+@media (orientation: portrait) { #cartToggle { display: flex; } }
+@media (max-width: 767px) { #cartToggle { display: flex; } }
+
 /* ── KIOSK LOOKUP MODE ── */
 .kiosk-mode-tabs {
   display: flex; gap: 0; width: 100%; max-width: 700px;

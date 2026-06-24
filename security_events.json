@@ -175,50 +175,5 @@
     "reported_by": "Security Watchdog",
     "resolved_at": null,
     "resolution": null
-  },
-  {
-    "id": "SEC-017",
-    "created_at": "2026-06-24T07:36:55.727266",
-    "severity": "MEDIUM",
-    "category": "anomaly",
-    "status": "unresolved",
-    "summary": "Another MEDIUM event",
-    "detail": "Second test event for digest",
-    "affected_user": null,
-    "affected_user_name": null,
-    "related_event": null,
-    "reported_by": "IP Blocklist Manager",
-    "resolved_at": null,
-    "resolution": null
-  },
-  {
-    "id": "SEC-018",
-    "created_at": "2026-06-24T07:36:55.728189",
-    "severity": "MEDIUM",
-    "category": "anomaly",
-    "status": "unresolved",
-    "summary": "Third MEDIUM event",
-    "detail": "Third test event for digest",
-    "affected_user": null,
-    "affected_user_name": null,
-    "related_event": null,
-    "reported_by": "IP Blocklist Manager",
-    "resolved_at": null,
-    "resolution": null
-  },
-  {
-    "id": "SEC-019",
-    "created_at": "2026-06-24T07:37:02.836883",
-    "severity": "MEDIUM",
-    "category": "anomaly",
-    "status": "unresolved",
-    "summary": "Digest test event",
-    "detail": "Digest test event",
-    "affected_user": null,
-    "affected_user_name": null,
-    "related_event": null,
-    "reported_by": "IP Blocklist Manager",
-    "resolved_at": null,
-    "resolution": null
   }
 ]

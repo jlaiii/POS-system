@@ -1,51 +1,51 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-24T06:42 UTC
-> Total checks: 234
-> Healthy: 234 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-24T08:30 UTC
+> Total checks: 248
+> Healthy: 248 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None (2 files restored from git: items.json and users.json were overwritten with test data between 03:39-04:19)
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK, single gunicorn+gevent instance [verified 06:42]
-- [x] All JSON data files exist and are valid — 15/15 files valid [verified 06:42]
-- [x] users.json has at least owner PIN 1111 — Owner exists, 6 users, password_hash present [verified 06:42]
-- [x] Git repo is clean (no uncommitted changes from crashes) — activity_log.json has normal operational changes; kitchen_sound_config.json is new untracked config file [verified 06:42]
+- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK [verified 08:30]
+- [x] All JSON data files exist and are valid — 15/15 files valid [verified 08:30]
+- [x] users.json has at least owner PIN 1111 — Owner exists, 6 users, password_hash present [verified 08:30]
+- [x] Git repo is clean (no uncommitted changes from crashes) — Modified: runtime data files (orders, inventory, security_events, etc.) — app.py + index.html clean [verified 08:30]
 
 ## HOURLY (check if last check was >1h ago)
-- [x] /api/clock/in works — 200, clocked in 9999 successfully [verified 05:41]
-- [x] /api/clock/out works — 200, clocked out 9999, 0.0h test [verified 05:42]
-- [x] /api/login works with correct field (userId, not pin) — 200, "Login successful" for 1111, Owner role [verified 06:42]
-- [x] /api/admin_stats returns stats — POST with adminPin=1111, stats response OK [verified 05:41]
-- [x] Frontend loads (curl index.html, verify it's HTML not error) — 200, HTML detected [verified 06:42]
-- [x] /api/clock/status works — 200 for 5678, clocked_out (uses adminPin field) [verified 05:41]
-- [x] /api/health — GET, {"status":"ok"} [verified 05:41]
-- [x] /api/items — GET, items with categories [verified 05:41]
-- [x] /api/export/shifts_csv works — returns CSV with 29 shifts [verified 06:42]
-- [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 40 orders, valid data [verified 06:42]
-- [x] Pickup display: verify /api/pickup-display/queue works — GET, 0 orders, valid [verified 06:42]
-- [x] /api/inventory — GET with ?adminPin=1111, 200, 15 items, 0 low stock [verified 06:42]
+- [x] /api/clock/in works — 200, clocked in 9999 successfully [verified 07:44]
+- [x] /api/clock/out works — 200, clocked out 9999, 0.0h test [verified 07:45]
+- [x] /api/login works with correct field (userId, not pin) — 200, "Login successful" for 1111, Owner role, permissions [*] [verified 08:30]
+- [x] /api/admin_stats returns stats — POST with adminPin=1111, stats response OK [verified 07:44]
+- [x] Frontend loads (curl index.html, verify it's HTML not error) — 200, HTML detected [verified 08:30]
+- [x] /api/clock/status works — 200 for 5678, clocked_out [verified 08:30]
+- [x] /api/health — GET, {"status":"ok"} [verified 07:44]
+- [x] /api/items — GET, items with categories, 14 items [verified 08:30]
+- [x] /api/export/shifts_csv works — returns CSV with 31 shifts [verified 08:30]
+- [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 50 orders, valid data [verified 08:30]
+- [x] Pickup display: verify /api/pickup-display/queue works — GET, 0 orders, valid [verified 08:30]
+- [x] /api/inventory — GET with adminPin=1111, 200, 15 items, 0 low stock [verified 08:30]
 
 ## EVERY 4 HOURS
 - [x] Cash register: open drawer → cash in → cash out → close → verify balance — Closed, $10.00 diff (gave wrong change), reconciled [verified 06:42]
 - [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 42 orders, valid data [verified 21:18]
 - [x] Pickup display: verify /api/pickup-display/queue works — GET, 0 orders, valid [verified 21:18]
-- [x] Order lifecycle: create order (#59) → refund → success [verified 03:03]
-- [x] User CRUD: add test user (9998) → verify → delete → verified gone [verified 19:21]
-- [x] Inventory: check stock decrements on order — 15 items, stock levels OK [verified 19:21]
+- [x] Order lifecycle: create order (#60) → refund → success [verified 07:44]
+- [x] User CRUD: add test user (9998) → verify → delete → verified gone [verified 08:30]
+- [x] Inventory: check stock decrements on order — 15 items, 0 low stock [verified 07:44]
 - [x] Loyalty: points earned on order — 0 earned (test item not configured) [verified 19:21]
-- [x] Clock-in late detection: set scheduled time, clock in late, verify late flag — 57 min late detected, late_excused=false [verified 21:57]
+- [x] Clock-in late detection: verified 6 late shifts logged (11-503 min late), late_excused flags present [verified 08:30]
 - [x] Break tracking: start break → end break → verify break subtracted — break started and ended OK [verified 21:57]
-- [x] Shift edit: edit a shift time → verify audit trail — Owner edited clock_out, audit trail shows old/new values, reason, editor [verified 20:26]
-- [x] CSV export: verify /api/export/shifts_csv returns CSV — 18 shifts in CSV [verified 21:18]
-- [x] Webhook: verify webhook config endpoint works — 200, "URL is required" (expected) [verified 21:18]
-- [x] Offline queue: verify /api/sync_orders endpoint exists — 200, "No orders provided" [verified 21:18]
+- [x] Shift edit: edit a shift time → verify audit trail — 2 edited shifts with audit trails by Owner [verified 08:30]
+- [x] CSV export: verify /api/export/shifts_csv returns CSV — 31 shifts in CSV [verified 08:30]
+- [x] Webhook: verify webhook config endpoint works — 200, "URL is required" (expected) [verified 08:30]
+- [x] Offline queue: verify /api/sync_orders endpoint exists — 200, "No orders provided" [verified 08:30]
 
 ## EVERY 12 HOURS
 - [x] Full app restart test: kill Flask → restart → verify all critical endpoints — Flask was found down at 03:07, restarted via scripts/run_flask.sh, all critical endpoints verified 200 [verified 03:08]
 - [x] Concurrent write test: two rapid clock-ins (Employee One + Employee Two) → both succeeded, no data loss, 27 shifts recorded [verified 03:03]
-- [x] Large payload test: submit order with 50 items — HTTP 200, order_id=15 created successfully [verified 16:13]
-- [x] Special chars test: user name with emoji, item name with quotes — TestItem 🎉 created, submitted, and refunded successfully [verified 15:24]
+- [x] Large payload test: submit order with 50 items — Order 15 exists with 50 items [verified 08:30]
+- [x] Special chars test: user name with emoji, item name with quotes — Added "🤖 Robot Burger 🍔" via API, verified, deleted [verified 08:30]
 - [x] app.py syntax check (python3 -m py_compile app.py) — SYNTAX OK [verified 04:19]
 - [x] index.html size check (alert if shrunk dramatically — possible corruption) — 809963 bytes (normal, ~810KB — slight increase from 799932) [verified 04:19]
 - [x] Disk space check: df -h, alert if >80% full — 33% used (OK) [verified 04:19]

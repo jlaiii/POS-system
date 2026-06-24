@@ -371,5 +371,45 @@
         "reason": "No reason provided",
         "refunded_at": "2026-06-24T03:03:28.276056",
         "refunded_by": "1111"
+    },
+    {
+        "order_id": 60,
+        "original_order": {
+            "order_id": 60,
+            "status": "refunded",
+            "claimed_by": null,
+            "claimed_at": null,
+            "completed_at": null,
+            "date": "2026-06-24T07:45:23.370873",
+            "user": null,
+            "payment": "Cash",
+            "payment_splits": null,
+            "items": [
+                {
+                    "name": "Coke",
+                    "price": 3,
+                    "quantity": 1,
+                    "category": "Drinks"
+                }
+            ],
+            "subtotal": 3.0,
+            "tax_amount": 0.0,
+            "tip_amount": 0.0,
+            "service_charge_amount": 0.0,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 3.0,
+            "notes": "",
+            "item_notes": {},
+            "table_number": null,
+            "delivery_address": null,
+            "customer_email": "",
+            "refund_reason": "No reason provided",
+            "refunded_at": "2026-06-24T07:45:32.552398",
+            "refunded_by": "1111"
+        },
+        "reason": "No reason provided",
+        "refunded_at": "2026-06-24T07:45:32.552398",
+        "refunded_by": "1111"
     }
 ]
