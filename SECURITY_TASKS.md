@@ -1,5 +1,5 @@
 # POS Security Tasks
-> Last run: 2026-06-24 08:43 UTC
+> Last run: 2026-06-24 12:45 UTC
 
 ## CRITICAL — LOGIN & AUTH SECURITY (check every run)
 
@@ -22,8 +22,11 @@
 - [x] **Add auth to /api/inventory and /api/inventory/low_stock** — Leaked inventory stock levels. Added `manage_items` permission check.
 - [x] **Add auth to /api/ads GET** — Documentation said "requires manage_items" but no actual check. Fixed: added `manage_items` permission check.
 
-### CRITICAL: /api/tables/tab/<int:table_number>/checkout has zero auth (NEW — this run)
+### CRITICAL: /api/tables/tab/<int:table_number>/checkout has zero auth
 - [x] **Add POS access auth to tab checkout endpoint** — The `/api/tables/tab/<int:table_number>/checkout` POST endpoint accepted any `userId` without verifying it's a valid employee PIN. Anyone on the network could close out all orders at any table with any value in `userId`. Added `check_perm(user_id, "pos_access")` check. Verified: invalid PIN → 403, valid PIN → proceeds, no PIN → 400.
+
+### CRITICAL: /api/orders/lookup GET had no auth — full order data exposed (FIXED this run)
+- [x] **Add tiered auth to /api/orders/lookup** — This GET endpoint returned full order details (items, prices, totals, payment info, customer data) with zero authentication. Anyone on the network could look up any order by order_id or by table_number. Fix: Added `adminPin` query param support. Authenticated requests (valid PIN with pos_access or manage_orders) get full data. Unauthenticated requests get limited kiosk-safe data (no payment info, no PII, no customer data). Table-number lookups also support kiosk mode with limited fields. Verified: unauthenticated order lookup returns limited safe fields, authenticated returns full data, table lookup works in both modes.
 
 ### HIGH: PIN stored as plaintext dict key
 - [ ] **Hash PINs** — User ID IS the PIN, stored as the dict key in users.json in plaintext. Anyone with file-system access (or backup access) sees all PINs. Requires architectural change: separate `user_id` (internal) from `pin_hash`. Postgres/Long-term: store PIN hash, not the PIN itself. MITIGATED: files now saved with 0600 permissions.
@@ -33,25 +36,28 @@
 
 ## HIGH — DATA PROTECTION & COMPLIANCE
 
-### HIGH: PIN complexity not enforced — only warns
-- [ ] **Block weak PINs instead of warning** — The `change_pin` endpoint checks for guessable patterns but only warns. Should reject weak PINs (1111, 1234, 0000, etc.) with a 400 error and suggest a stronger one.
+### HIGH: PIN complexity — now BLOCKS weak PINs (FIXED this run)
+- [x] **Block weak PINs instead of warning** — The `change_pin`, `reset_pin`, and `add_user` endpoints now REJECT weak/guessable PINs (1111, 1234, 0000, 6666, etc.) with a 400 error instead of just warning. Applied to all three PIN-creation paths: self-service change, admin reset, and new user creation. Verified with curl tests — all weak patterns rejected, strong patterns accepted.
 
 ### HIGH: TOTP secrets stored in plaintext in users.json
 - [ ] **Protect TOTP secrets** — `totp_secret` is stored in plaintext in users.json. MITIGATED: file permissions now enforced to 0600 (owner-only). For stronger protection, encrypt TOTP secrets at rest with a server-side key.
 
-### HIGH: /api/orders/lookup GET has no auth (exposes full order details)
-- [ ] **Add kiosk-safe auth to /api/orders/lookup** — This GET endpoint returns full order details (items, prices, totals, payment info) with zero authentication. Used by kiosk payment flow so needs careful design — e.g., session token check for staff, shared-secret API key for kiosk devices, or IP-based restriction.
+### HIGH: /api/orders/lookup GET had no auth (FIXED this run)
+- [x] **Add tiered kiosk-safe auth to /api/orders/lookup** — See CRITICAL section above. Unauthenticated requests get limited data (no payment info, no PII). Authenticated requests get full data.
 
 ### HIGH: /api/sync_orders POST has no full auth
 - [x] **Add user existence validation to /api/sync_orders** — Added check that any `user` field in synced orders exists in users.json (prevents fake user injection). Full PIN verification not added because this endpoint supports kiosk/offline flows where customers may not have accounts.
 
 ## MEDIUM — HARDENING
 
+### MEDIUM: Thread-safe file writes — added I/O lock (FIXED this run)
+- [x] **Add threading lock to save_json_data** — `save_json_data` had no concurrency protection. Multiple concurrent requests modifying the same data file (e.g., users.json) could race: Thread A loads data → Thread B loads same data → Thread A modifies+saves → Thread B modifies+saves (overwrites Thread A's changes). This is the likely root cause of the recurring 2FA state loss bug (SEC-001/SEC-013). Added `_file_io_lock` (threading.RLock) wrapping all file writes. The lock prevents interleaved writes to the same file, ensuring each save completes fully before the next begins.
+
 ### MEDIUM: CORS wide open
 - [x] **Restrict CORS** — `CORS(app)` changed from wildcard to allowed origins (localhost:5000, localhost:3000, 192.168.*, 10.*). SocketIO `cors_allowed_origins` changed from `"*"` to specific domains. Prevents unauthorized cross-origin requests from unknown origins.
 
 ### MEDIUM: Error pages may leak stack traces
-- [ ] **Custom error handlers** — Flask's default error handler may leak stack traces in debug mode. Add `@app.errorhandler(500)` and `@app.errorhandler(404)` handlers that return JSON without stack traces. NOTE: debug mode already disabled (CRITICAL fix).
+- [ ] **Custom error handlers** — Flask's default error handler may leak stack traces in debug mode. Add `@app.errorhandler(500)` and `@app.errorhandler(404)` handlers that return JSON without stack traces. NOTE: debug mode already disabled.
 
 ### MEDIUM: App runs as root
 - [ ] **Run as non-root user** — All processes run as root. Any compromised endpoint gives full system access.
@@ -60,13 +66,13 @@
 - [x] **Set Flask secret_key** — Added `app.secret_key = os.environ.get('FLASK_SECRET_KEY', secrets.token_hex(32))` at app startup. Falls back to a randomly generated key if not set via environment variable.
 
 ### MEDIUM: Kitchen/display endpoints still unauthenticated
-- [ ] **Add optional API key auth for kitchen/drivethrough/pickup displays** — `/api/kitchen/queue`, `/api/kitchen/stats`, `/api/kitchen/order/<id>`, `/api/drivethrough/*`, `/api/customer-display/*`, `/api/pickup-display/*` have no auth. These are intentionally public for displays, but should have an optional shared-secret API key mechanism to prevent network snooping in multi-tenant deployments.
+- [ ] **Add optional API key auth for kitchen/drivethrough/pickup displays** — `/api/kitchen/queue`, `/api/kitchen/stats`, `/api/kitchen/order/<id>`, `/api/drivethrough/*`, `/api/customer-display/*`, `/api/pickup-display/*` have no auth. These are intentionally public for displays but should have an optional shared-secret API key mechanism to prevent network snooping in multi-tenant deployments.
 
 ### MEDIUM: save_json_data creates world-readable files
-- [x] **Permanently enforce 0600 on all saved JSON files** — `save_json_data()` was restoring files to 0444/0644 after write. Changed to always enforce 0600 (owner read/write only). This permanently prevents any JSON data file from being world-readable, regardless of initial permissions. All 30+ JSON files verified at 0600.
+- [x] **Permanently enforce 0600 on all saved JSON files** — `save_json_data()` now always enforces 0600 (owner read/write only). All 30+ JSON files verified at 0600.
 
 ### MEDIUM: File permissions need periodic reinforcement
-- [x] **Re-harden 30+ JSON file permissions to 0600** — Previous hardenings didn't persist because save_json_data restored 0444/0644. Now that save_json_data permanently enforces 0600, permissions will survive writes.
+- [x] **Re-harden 30+ JSON file permissions to 0600** — Now that save_json_data permanently enforces 0600, permissions survive writes.
 
 ## LOW — POLISH
 
@@ -75,3 +81,16 @@
 
 ### LOW: SHA-256 used for password hashing (should be bcrypt/argon2)
 - [ ] **Upgrade password hashing** — `hash_password()` uses SHA-256 with random salt. Not GPU-resistant. Should use bcrypt or argon2 for proper password hashing. Not critical since passwords are only for owner login (PINs are the main auth method).
+
+## COMPLETED (this session)
+
+### Run: 2026-06-24 12:45 UTC
+
+- [x] **Add tiered auth to /api/orders/lookup** — CRITICAL: Unauthenticated full data leak. Fixed with kiosk-safe mode for unauthenticated requests, full data for authenticated.
+- [x] **Block weak PINs in change_pin, reset_pin, add_user** — HIGH: Changed from warning to rejection for 21 common guessable patterns.
+- [x] **Thread-safe file writes in save_json_data** — MEDIUM: Added threading.RLock to prevent race conditions corrupting JSON data files.
+
+## WATCHLIST (monitor, don't fix yet)
+
+- SEC-001/SEC-013: 2FA persistence bug — suspected race condition; threading lock added this run. Monitor next 2 runs to confirm.
+- User 9999 login attempts at ~07:56 UTC on 2026-06-24: 20 rapid attempts from 127.0.0.1 + 203.0.113.42 + 192.168.1.50. User 9999 does NOT currently exist in users.json. The attempts all returned "2fa_required" which suggests 9999 MAY have existed briefly and was deleted. Verify no credential stuffing succeeded. Consider adding endpoint to clean up phantom users.
