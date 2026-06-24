@@ -2,7 +2,7 @@
 
 > Auto-managed by 3 Hermes Worker Crons (every 30 min each, staggered claims).
 > Workers use `[~]` to claim tasks before working. Never pick a claimed task.
-> Last updated: 2026-06-24 (audit #15 — found Flask dev servers running instead of gunicorn, added 3 new deployment/quality tasks)
+> Last updated: 2026-06-24 (audit #16 — fixed stale [~] task, added waiter notification + kitchen modularization tasks)
 
 ## Status Legend
 - `[ ]` = pending (available for any worker)
@@ -325,7 +325,7 @@ New `tickets.json` data store. Each ticket:
 
 ||- [x] worker-1 **Issue/bug ticket triage labels** — Admin can tag issue tickets: "POS bug", "hardware", "menu error", "customer complaint", "other". [worker-1 — Added label field to ticket model (label: pos_bug|hardware|menu_error|customer_complaint|other). Backend: label stored on submit for issue tickets, settable via respond endpoint, filterable in queue. Frontend: label dropdown in employee issue form, label badge on ticket cards, label filter in admin queue, label selector in pending card actions. i18n EN+ES. Dark theme compatible.]
 ||- [x] **Ticket response templates** — Admin can save common response notes as templates. [worker-3 — New ticket_templates.json data store. 3 API endpoints: POST /api/tickets/templates/list, /save, /delete. Frontend: 📋 Templates sub-tab in Tickets admin with add/edit/delete UI. Deny prompt now uses modal with template selector dropdown that pre-fills reason textarea. Permission-gated (manage_users). Activity logged. Dark theme, touch-friendly 44px+ targets. Created 3 default seed templates on first use.]
-- [~] worker-1 **Employee feedback analytics** — Aggregate feedback tickets by category over time.
+- [x] worker-1 **Employee feedback analytics** — Aggregate feedback tickets by category over time.
 - [x] worker-3 **Auto-approve for low-risk time-off** — Configurable rule: auto-approve time-off if requested >2 weeks in advance AND no other approvals for same date. [worker-3 — Added `auto_approve_threshold_days` to timesheet_config (default 14). Auto-approval runs in ticket_submit(): checks advance days against threshold, checks no scheduling conflicts via existing check_timeoff_conflicts(), sets status=approved with responded_by='system'. Configurable via Timesheet Config UI (new input field). Activity logged as ticket_auto_approved. Frontend shows special green toast + glow animation on auto-approval. Python syntax verified, test-passed: advanced request auto-approved, short-notice request correctly left pending.]
 
 ## Employee Pay Portal — Pay Stubs, History & Downloads (NEW — June 2026)
@@ -403,7 +403,13 @@ New `tickets.json` data store. Each ticket:
 - [x] worker-1 **"Most Popular" badge** — Auto-calculated from most-ordered analytics. [worker-1 — New GET /api/items/popular endpoint analyzing orders.json, returns top 5 items by total quantity ordered. Frontend: popularItems Set loaded in loadItems(), "🔥 Most Popular" gold badge on item cards in both POS grid and tablet menu display. i18n EN+ES "Most Popular"/"Más Popular". Dark theme, touch-friendly.]
 - [x] worker-2 **Wake-on-proximity / screensaver mode** — Dim screen when no one nearby, brighten on motion. [worker-2 — Added screensaver dim overlay after 120s of inactivity, auto-updating clock with localized date, wake-on-touch/click/keypress/mousemove/device-motion (accelerometer), Screen Wake Lock API integration to prevent device sleep, iOS motion permission handling, i18n EN+ES. On stationary tablet, overlay shows large clock and date. Any interaction (touch, click, motion) wakes full screen. Works on both ad view and menu view.]
 
-## New Tasks (from Audit #7 — 2026-06-23)
+## New Tasks (from Audit #16 — 2026-06-24)
+
+- [ ] **HIGH: Waiter "Food Ready" push notification via WebSocket** — When kitchen marks an order as complete (`POST /api/kitchen/complete`), emit a SocketIO event `food_ready` to the waiter who submitted the order (track `waiter_id` on order records). The waiter's POS shows a persistent red badge badge on the History/Orders tab + plays a short alert sound. Currently waiters must manually check order status to know food is ready. One-way notification saves 2-3 trips to the kitchen per shift. WebSocket event also plays `navigator.vibrate(100)` on supported devices for physical confirmation.
+
+- [ ] **MEDIUM: Separate lightweight kitchen display page** — The kitchen view (currently embedded in index.html, line 2434) requires loading the full 19K-line POS page. For cheap kitchen tablets ($100 Android), this is slow. Create `/kitchen` as a standalone HTML page (~200 lines) with: auto-refresh polling (8s), SocketIO fallback, kitchen queue grid, claim/complete buttons, sound alerts, priority aging colors. Server serves it as a static file. Cuts load time from ~5s to under 1s on low-end hardware.
+
+- [ ] **MEDIUM: "Call Server" notification for waiters** — The `/api/tablet/call-server` endpoint already exists and stores calls. Add frontend polling/WebSocket listener in POS to show a popup notification when a customer calls from a table: "📞 Table 5 needs assistance". Include a "Dismiss" button that marks it as handled. Shows table number, timestamp, allows quick navigation to that table's tab. Saves waiters from having to check a separate display.
 
 - [x] worker-2 **HIGH: Kitchen offline degradation** — When WebSocket disconnects, the kitchen display silently stops showing new orders. Implement automatic polling fallback (every 8s) triggered by socket disconnect event, with visible "⚠️ Offline — updating every 8s" banner. Currently the main POS has polling fallback but kitchen view doesn't. This is critical for reliability during network blips.
   - Done: Added `startKitchenPolling()` / `stopKitchenPolling()` functions. Socket disconnect/connect_error triggers polling + offline banner. Socket connect stops polling + hides banner. `showKitchenView()` checks socket state before enabling polling. Animated red banner with i18n EN+ES. [worker-2]
