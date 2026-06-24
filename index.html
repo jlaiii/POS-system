@@ -856,6 +856,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
         <button onclick="switchAdminSection('combos')" id="asCombos">🍱 Combos</button>
         <button onclick="switchAdminSection('tickets')" id="asTickets" data-i18n="admin.tickets">📋 Tickets</button>
         <button onclick="switchAdminSection('schedule')" id="asSchedule">📅 Schedule</button>
+        <button onclick="switchAdminSection('reservations')" id="asReservations">📅 Reservations</button>
         <button onclick="switchAdminSection('security')" id="asSecurity">🛡️ Security</button>
         <button onclick="switchAdminSection('backup')" id="asBackup">💾 Backup</button>
       </div>
@@ -2229,6 +2230,159 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
             <button class="accent" onclick="scheduleLoadComparison()" style="min-height:44px;padding:8px 20px;font-size:14px;" data-i18n="schedule.compare_btn">🔄 Load Comparison</button>
             <div id="scheduleComparisonResults" style="margin-top:12px;">
               <div class="empty-state" data-i18n="schedule.press_compare">Press "Load Comparison" to see results.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reservations / Booking System -->
+        <div id="secReservations" class="admin-section">
+          <h3 style="margin:0 0 12px 0;">📅 Table Reservations</h3>
+          <p style="color:var(--text2);margin-bottom:16px;font-size:14px;">Manage customer table reservations, check-ins, and double-booking conflicts.</p>
+
+          <!-- Date Navigator -->
+          <div class="card" style="margin-bottom:16px;padding:12px 16px;">
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+              <button class="accent" onclick="resDateNav(-1)" style="min-height:44px;padding:8px 14px;font-size:16px;" aria-label="Previous day">◀</button>
+              <h4 id="resDateTitle" style="margin:0;font-size:16px;min-width:180px;text-align:center;">Today</h4>
+              <button class="accent" onclick="resDateNav(1)" style="min-height:44px;padding:8px 14px;font-size:16px;" aria-label="Next day">▶</button>
+              <button class="outline" onclick="resGoToday()" style="min-height:44px;padding:8px 16px;font-size:13px;">📅 Today</button>
+              <input type="date" id="resDatePicker" onchange="resJumpToDate()" style="padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;" aria-label="Jump to date"/>
+            </div>
+          </div>
+
+          <!-- Create Reservation Form -->
+          <div class="card" style="margin-bottom:16px;padding:12px 16px;">
+            <h4 style="margin:0 0 10px 0;font-size:15px;">➕ New Reservation</h4>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
+              <div style="min-width:140px;flex:1;">
+                <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;">Name *</label>
+                <input type="text" id="resFormName" placeholder="Customer name" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;" aria-label="Customer name"/>
+              </div>
+              <div style="min-width:60px;flex:0.5;">
+                <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;">Party *</label>
+                <input type="number" id="resFormParty" value="2" min="1" max="50" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;" aria-label="Party size"/>
+              </div>
+              <div style="min-width:100px;flex:0.8;">
+                <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;">Date</label>
+                <input type="date" id="resFormDate" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;" aria-label="Reservation date"/>
+              </div>
+              <div style="min-width:80px;flex:0.6;">
+                <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;">Time *</label>
+                <input type="time" id="resFormTime" value="19:00" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;" aria-label="Reservation time"/>
+              </div>
+              <div style="min-width:100px;flex:0.7;">
+                <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;">Phone</label>
+                <input type="tel" id="resFormPhone" placeholder="555-1234" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;" aria-label="Phone"/>
+              </div>
+              <div style="min-width:100px;flex:0.7;">
+                <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;">Email</label>
+                <input type="email" id="resFormEmail" placeholder="customer@example.com" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;" aria-label="Email"/>
+              </div>
+              <div style="min-width:110px;flex:0.7;">
+                <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;">Tables</label>
+                <input type="text" id="resFormTables" placeholder="e.g. 5,6" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;" aria-label="Table numbers"/>
+              </div>
+              <div style="min-width:160px;flex:1;">
+                <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;">Notes</label>
+                <input type="text" id="resFormNotes" placeholder="Anniversary, allergies, etc." style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;" aria-label="Notes"/>
+              </div>
+              <button class="accent" onclick="resCreateReservation()" style="min-height:44px;padding:8px 20px;font-size:14px;">➕ Create</button>
+            </div>
+            <div id="resFormStatus" style="font-size:13px;margin-top:6px;"></div>
+          </div>
+
+          <!-- Filter Bar -->
+          <div class="card" style="margin-bottom:16px;padding:10px 14px;">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+              <select id="resFilterStatus" onchange="resLoadDay()" style="min-width:120px;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:13px;min-height:40px;" aria-label="Filter by status">
+                <option value="">📋 All Statuses</option>
+                <option value="pending">🟡 Pending</option>
+                <option value="confirmed">🟢 Confirmed</option>
+                <option value="seated">🔵 Seated</option>
+                <option value="cancelled">⚫ Cancelled</option>
+                <option value="no_show">🔴 No Show</option>
+              </select>
+              <input type="text" id="resFilterSearch" placeholder="🔍 Search name, phone, email..." oninput="resLoadDay()" style="flex:1;min-width:150px;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:13px;min-height:40px;" aria-label="Search reservations"/>
+              <button class="outline" onclick="resLoadDay()" style="min-height:40px;padding:8px 14px;font-size:13px;">🔄 Refresh</button>
+            </div>
+          </div>
+
+          <!-- Reservations List -->
+          <div id="resList">
+            <div class="empty-state">Select a date to view reservations.</div>
+          </div>
+
+          <!-- Edit Reservation Modal -->
+          <div id="resEditModal" class="modal-overlay" role="dialog" aria-modal="true" style="display:none;">
+            <div class="modal-content" style="max-width:500px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                <h4 style="margin:0;" id="resEditTitle">Edit Reservation</h4>
+                <button class="ghost" onclick="resCloseEditModal()" style="font-size:24px;min-height:44px;min-width:44px;">✕</button>
+              </div>
+              <input type="hidden" id="resEditId"/>
+              <div class="form-row" style="flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+                <div style="flex:1;min-width:140px;">
+                  <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;">Name</label>
+                  <input type="text" id="resEditName" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;" aria-label="Customer name"/>
+                </div>
+                <div style="min-width:60px;flex:0.5;">
+                  <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;">Party</label>
+                  <input type="number" id="resEditParty" min="1" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;" aria-label="Party size"/>
+                </div>
+              </div>
+              <div class="form-row" style="flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+                <div style="flex:1;min-width:120px;">
+                  <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;">Date</label>
+                  <input type="date" id="resEditDate" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;" aria-label="Date"/>
+                </div>
+                <div style="min-width:80px;flex:0.6;">
+                  <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;">Time</label>
+                  <input type="time" id="resEditTime" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;" aria-label="Time"/>
+                </div>
+              </div>
+              <div class="form-row" style="flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+                <div style="flex:1;min-width:120px;">
+                  <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;">Phone</label>
+                  <input type="tel" id="resEditPhone" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;" aria-label="Phone"/>
+                </div>
+                <div style="flex:1;min-width:120px;">
+                  <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;">Email</label>
+                  <input type="email" id="resEditEmail" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;" aria-label="Email"/>
+                </div>
+              </div>
+              <div class="form-row" style="flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+                <div style="min-width:100px;flex:0.6;">
+                  <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;">Tables</label>
+                  <input type="text" id="resEditTables" placeholder="e.g. 5,6" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;" aria-label="Table numbers"/>
+                </div>
+                <div style="flex:1;min-width:120px;">
+                  <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;">Status</label>
+                  <select id="resEditStatus" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;" aria-label="Status">
+                    <option value="pending">🟡 Pending</option>
+                    <option value="confirmed">🟢 Confirmed</option>
+                    <option value="seated">🔵 Seated</option>
+                    <option value="cancelled">⚫ Cancelled</option>
+                    <option value="no_show">🔴 No Show</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-row" style="margin-bottom:8px;">
+                <div style="flex:1;">
+                  <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;">Notes</label>
+                  <input type="text" id="resEditNotes" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;" aria-label="Notes"/>
+                </div>
+              </div>
+              <div class="form-row" style="margin-bottom:12px;display:none;" id="resEditCancelReasonRow">
+                <div style="flex:1;">
+                  <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;">Cancellation Reason</label>
+                  <input type="text" id="resEditCancelReason" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;" placeholder="Reason for cancellation/no-show"/>
+                </div>
+              </div>
+              <div style="display:flex;gap:8px;justify-content:flex-end;">
+                <button class="outline" onclick="resCloseEditModal()" style="min-height:44px;padding:8px 20px;font-size:14px;">Cancel</button>
+                <button class="accent" onclick="resSaveEdit()" style="min-height:44px;padding:8px 20px;font-size:14px;">💾 Save Changes</button>
+              </div>
+              <div id="resEditStatus" style="font-size:13px;margin-top:6px;"></div>
             </div>
           </div>
         </div>
@@ -18966,6 +19120,368 @@ function _scheduleRenderComparison(data, container) {
 
   container.innerHTML = html;
 }
+
+// ═══════════ TABLE RESERVATIONS ═══════════
+
+let _resCurrentDate = new Date();
+
+function resFormatDate(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return y + '-' + m + '-' + day;
+}
+
+function resFormatDisplay(d) {
+  const opts = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+  return d.toLocaleDateString(undefined, opts);
+}
+
+function resDateNav(dir) {
+  _resCurrentDate.setDate(_resCurrentDate.getDate() + dir);
+  resLoadDay();
+}
+
+function resGoToday() {
+  _resCurrentDate = new Date();
+  resLoadDay();
+}
+
+function resJumpToDate() {
+  const picker = document.getElementById('resDatePicker');
+  if (picker.value) {
+    const parts = picker.value.split('-');
+    _resCurrentDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    resLoadDay();
+  }
+}
+
+function resStatusIcon(status) {
+  const icons = { 'pending': '🟡', 'confirmed': '🟢', 'seated': '🔵', 'cancelled': '⚫', 'no_show': '🔴' };
+  return icons[status] || '⚪';
+}
+
+function resTimeFromNow(dateStr, timeStr) {
+  if (!dateStr || !timeStr) return '';
+  try {
+    const dt = new Date(dateStr + 'T' + timeStr);
+    const now = new Date();
+    const diff = dt - now;
+    if (diff < 0) return '(past)';
+    const hours = Math.floor(diff / 3600000);
+    const mins = Math.floor((diff % 3600000) / 60000);
+    if (hours > 0) return '(in ' + hours + 'h ' + mins + 'm)';
+    return '(in ' + mins + 'm)';
+  } catch(e) { return ''; }
+}
+
+async function resLoadDay() {
+  const listEl = document.getElementById('resList');
+  if (!listEl) return;
+  const date = resFormatDate(_resCurrentDate);
+  const picker = document.getElementById('resDatePicker');
+  if (picker) picker.value = date;
+  const title = document.getElementById('resDateTitle');
+  if (title) title.textContent = resFormatDisplay(_resCurrentDate);
+  const formDate = document.getElementById('resFormDate');
+  if (formDate) formDate.value = date;
+
+  const filterStatus = document.getElementById('resFilterStatus')?.value || '';
+  const filterSearch = document.getElementById('resFilterSearch')?.value || '';
+
+  listEl.innerHTML = '<div class="empty-state"><div class="spinner"></div> Loading...</div>';
+
+  try {
+    const resp = await fetch('/api/reservations/date_reservations', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ date: date })
+    });
+    const data = await resp.json();
+    if (!data || !data.reservations) {
+      listEl.innerHTML = '<div class="empty-state">No reservations for this date.</div>';
+      return;
+    }
+    let reservations = data.reservations;
+
+    // Apply filters
+    if (filterStatus) {
+      reservations = reservations.filter(r => r.status === filterStatus);
+    }
+    if (filterSearch) {
+      const s = filterSearch.toLowerCase();
+      reservations = reservations.filter(r =>
+        (r.customer_name || '').toLowerCase().includes(s) ||
+        (r.customer_phone || '').includes(s) ||
+        (r.customer_email || '').toLowerCase().includes(s) ||
+        (r.id || '').toLowerCase().includes(s)
+      );
+    }
+
+    if (reservations.length === 0) {
+      listEl.innerHTML = '<div class="empty-state">No matching reservations for ' + resFormatDisplay(_resCurrentDate) + '.</div>';
+      return;
+    }
+
+    let html = '<div style="display:flex;flex-direction:column;gap:8px;">';
+    reservations.forEach(r => {
+      const status = r.status || 'pending';
+      const tables = r.table_numbers && r.table_numbers.length > 0 ? r.table_numbers.join(', ') : '—';
+      const timeFromNow = resTimeFromNow(r.date, r.time);
+      html += '<div class="card" style="padding:12px 16px;border-left:4px solid ' +
+        (status === 'pending' ? '#f39c12' : status === 'confirmed' ? '#2ecc71' : status === 'seated' ? '#3498db' : status === 'cancelled' ? '#666' : '#e74c3c') + ';">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">';
+      html += '<div style="flex:1;min-width:200px;">';
+      html += '<div style="font-size:16px;font-weight:700;">' + escHtml(r.customer_name) + ' <span style="font-size:13px;font-weight:400;color:var(--text2);">' + r.id + '</span></div>';
+      html += '<div style="font-size:13px;color:var(--text2);margin-top:4px;display:flex;gap:12px;flex-wrap:wrap;">';
+      html += '<span>👥 ' + r.party_size + ' guests</span>';
+      html += '<span>🕐 ' + (r.time || '—') + ' ' + timeFromNow + '</span>';
+      html += '<span>🪑 Table: ' + tables + '</span>';
+      if (r.customer_phone) html += '<span>📞 ' + escHtml(r.customer_phone) + '</span>';
+      if (r.customer_email) html += '<span>✉️ ' + escHtml(r.customer_email) + '</span>';
+      if (r.notes) html += '<span>📝 ' + escHtml(r.notes) + '</span>';
+      if (r.cancelled_reason) html += '<span style="color:var(--accent);">❌ ' + escHtml(r.cancelled_reason) + '</span>';
+      if (r.late_minutes) html += '<span style="color:#f39c12;">⏰ ' + r.late_minutes + ' min late</span>';
+      html += '</div>';
+      html += '</div>';
+      html += '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">';
+      html += '<span style="font-size:13px;padding:4px 10px;border-radius:12px;background:var(--card-alt);font-weight:600;">' + resStatusIcon(status) + ' ' + status.charAt(0).toUpperCase() + status.slice(1) + '</span>';
+      // Action buttons
+      if (status === 'pending') {
+        html += '<button class="outline" onclick="resQuickStatus(\'' + r.id + '\',\'confirmed\')" style="min-height:36px;padding:4px 10px;font-size:12px;" title="Confirm">✅</button>';
+      }
+      if (status === 'confirmed') {
+        html += '<button class="outline" onclick="resQuickStatus(\'' + r.id + '\',\'seated\')" style="min-height:36px;padding:4px 10px;font-size:12px;" title="Mark Seated">🔵</button>';
+      }
+      if (status === 'pending' || status === 'confirmed') {
+        html += '<button class="outline" onclick="if(confirm(\'Cancel reservation ' + r.id + ' for ' + escHtml(r.customer_name) + '?\'))resQuickStatus(\'' + r.id + '\',\'cancelled\')" style="min-height:36px;padding:4px 10px;font-size:12px;color:var(--accent);" title="Cancel">✕</button>';
+      }
+      html += '<button class="outline" onclick="resOpenEdit(\'' + r.id + '\')" style="min-height:36px;padding:4px 10px;font-size:12px;" title="Edit">✏️</button>';
+      html += '</div>';
+      html += '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+    listEl.innerHTML = html;
+  } catch(e) {
+    listEl.innerHTML = '<div class="empty-state" style="color:var(--accent);">Error loading reservations. Check console.</div>';
+    console.error('resLoadDay error:', e);
+  }
+}
+
+async function resCreateReservation() {
+  const statusEl = document.getElementById('resFormStatus');
+  const userId = localStorage.getItem('userId') || '';
+  if (!userId) { statusEl.textContent = '⚠️ Not logged in.'; statusEl.style.color = 'var(--accent)'; return; }
+
+  const name = document.getElementById('resFormName').value.trim();
+  const party = parseInt(document.getElementById('resFormParty').value) || 0;
+  const date = document.getElementById('resFormDate').value || resFormatDate(_resCurrentDate);
+  const time = document.getElementById('resFormTime').value;
+  const phone = document.getElementById('resFormPhone').value.trim();
+  const email = document.getElementById('resFormEmail').value.trim();
+  const tablesStr = document.getElementById('resFormTables').value.trim();
+  const notes = document.getElementById('resFormNotes').value.trim();
+
+  if (!name) { statusEl.textContent = '⚠️ Customer name is required.'; statusEl.style.color = 'var(--accent)'; return; }
+  if (party < 1) { statusEl.textContent = '⚠️ Party size must be at least 1.'; statusEl.style.color = 'var(--accent)'; return; }
+  if (!time) { statusEl.textContent = '⚠️ Time is required.'; statusEl.style.color = 'var(--accent)'; return; }
+
+  const tableNumbers = tablesStr ? tablesStr.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n)) : [];
+
+  statusEl.textContent = 'Creating reservation...';
+  statusEl.style.color = 'var(--text2)';
+
+  try {
+    const resp = await fetch('/api/reservations/create', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        user_id: userId,
+        customer_name: name,
+        party_size: party,
+        date: date,
+        time: time,
+        customer_phone: phone,
+        customer_email: email,
+        table_numbers: tableNumbers,
+        notes: notes
+      })
+    });
+    const data = await resp.json();
+    if (resp.ok) {
+      statusEl.textContent = '✅ ' + (data.message || 'Reservation created!');
+      statusEl.style.color = '#4caf50';
+      // Clear form
+      document.getElementById('resFormName').value = '';
+      document.getElementById('resFormPhone').value = '';
+      document.getElementById('resFormEmail').value = '';
+      document.getElementById('resFormTables').value = '';
+      document.getElementById('resFormNotes').value = '';
+      // Show conflict warning if any
+      if (data.conflict_warning) {
+        showToast('⚠️ ' + data.conflict_warning.message, 'warning', 5000);
+      }
+      resLoadDay();
+    } else {
+      statusEl.textContent = '⚠️ ' + (data.message || 'Create failed');
+      statusEl.style.color = 'var(--accent)';
+    }
+  } catch(e) {
+    statusEl.textContent = '⚠️ Network error';
+    statusEl.style.color = 'var(--accent)';
+    console.error('resCreateReservation error:', e);
+  }
+}
+
+async function resOpenEdit(resId) {
+  // Fetch all reservations to find the one
+  try {
+    const resp = await fetch('/api/reservations/list', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({})
+    });
+    const data = await resp.json();
+    const reservations = data.reservations || [];
+    const r = reservations.find(x => x.id === resId);
+    if (!r) { showToast('Reservation not found', 'error'); return; }
+
+    document.getElementById('resEditId').value = r.id;
+    document.getElementById('resEditName').value = r.customer_name || '';
+    document.getElementById('resEditParty').value = r.party_size || 1;
+    document.getElementById('resEditDate').value = r.date || '';
+    document.getElementById('resEditTime').value = r.time || '';
+    document.getElementById('resEditPhone').value = r.customer_phone || '';
+    document.getElementById('resEditEmail').value = r.customer_email || '';
+    document.getElementById('resEditTables').value = (r.table_numbers || []).join(', ');
+    document.getElementById('resEditStatus').value = r.status || 'pending';
+    document.getElementById('resEditNotes').value = r.notes || '';
+    document.getElementById('resEditCancelReason').value = r.cancelled_reason || '';
+
+    // Show cancel reason row if status is cancelled or no_show
+    const cancelRow = document.getElementById('resEditCancelReasonRow');
+    if (cancelRow) {
+      cancelRow.style.display = (r.status === 'cancelled' || r.status === 'no_show') ? 'block' : 'none';
+    }
+
+    document.getElementById('resEditStatus').onchange = function() {
+      const cancelRow2 = document.getElementById('resEditCancelReasonRow');
+      if (cancelRow2) {
+        cancelRow2.style.display = (this.value === 'cancelled' || this.value === 'no_show') ? 'block' : 'none';
+      }
+    };
+
+    document.getElementById('resEditModal').style.display = 'flex';
+    document.getElementById('resEditStatus').textContent = '';
+  } catch(e) {
+    console.error('resOpenEdit error:', e);
+    showToast('Error loading reservation details', 'error');
+  }
+}
+
+function resCloseEditModal() {
+  document.getElementById('resEditModal').style.display = 'none';
+}
+
+async function resSaveEdit() {
+  const statusEl = document.getElementById('resEditStatus');
+  const userId = localStorage.getItem('userId') || '';
+  if (!userId) { statusEl.textContent = '⚠️ Not logged in.'; statusEl.style.color = 'var(--accent)'; return; }
+
+  const resId = document.getElementById('resEditId').value;
+  const name = document.getElementById('resEditName').value.trim();
+  const party = parseInt(document.getElementById('resEditParty').value) || 1;
+  const date = document.getElementById('resEditDate').value;
+  const time = document.getElementById('resEditTime').value;
+  const phone = document.getElementById('resEditPhone').value.trim();
+  const email = document.getElementById('resEditEmail').value.trim();
+  const tablesStr = document.getElementById('resEditTables').value.trim();
+  const status = document.getElementById('resEditStatus').value;
+  const notes = document.getElementById('resEditNotes').value.trim();
+  const cancelReason = document.getElementById('resEditCancelReason').value.trim();
+
+  if (!name) { statusEl.textContent = '⚠️ Name is required.'; statusEl.style.color = 'var(--accent)'; return; }
+
+  const tableNumbers = tablesStr ? tablesStr.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n)) : [];
+
+  statusEl.textContent = 'Saving...';
+  statusEl.style.color = 'var(--text2)';
+
+  try {
+    const resp = await fetch('/api/reservations/update', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        user_id: userId,
+        reservation_id: resId,
+        customer_name: name,
+        party_size: party,
+        date: date,
+        time: time,
+        customer_phone: phone,
+        customer_email: email,
+        table_numbers: tableNumbers,
+        status: status,
+        notes: notes,
+        cancelled_reason: cancelReason || null
+      })
+    });
+    const data = await resp.json();
+    if (resp.ok) {
+      statusEl.textContent = '✅ ' + (data.message || 'Saved!');
+      statusEl.style.color = '#4caf50';
+      setTimeout(() => { resCloseEditModal(); }, 800);
+      resLoadDay();
+    } else {
+      statusEl.textContent = '⚠️ ' + (data.message || 'Save failed');
+      statusEl.style.color = 'var(--accent)';
+    }
+  } catch(e) {
+    statusEl.textContent = '⚠️ Network error';
+    statusEl.style.color = 'var(--accent)';
+    console.error('resSaveEdit error:', e);
+  }
+}
+
+async function resQuickStatus(resId, newStatus) {
+  const userId = localStorage.getItem('userId') || '';
+  if (!userId) { showToast('Not logged in', 'error'); return; }
+
+  try {
+    const resp = await fetch('/api/reservations/update', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        user_id: userId,
+        reservation_id: resId,
+        status: newStatus,
+        cancelled_reason: newStatus === 'cancelled' ? 'Cancelled by staff' : null
+      })
+    });
+    const data = await resp.json();
+    if (resp.ok) {
+      showToast(data.message || 'Status updated', 'success');
+      resLoadDay();
+    } else {
+      showToast(data.message || 'Update failed', 'error');
+    }
+  } catch(e) {
+    showToast('Network error', 'error');
+    console.error('resQuickStatus error:', e);
+  }
+}
+
+// Load today's reservations on section switch
+const _origSwitchAdminSection = switchAdminSection;
+switchAdminSection = function(sec) {
+  _origSwitchAdminSection(sec);
+  if (sec === 'reservations') {
+    // Ensure current date is today
+    _resCurrentDate = new Date();
+    resLoadDay();
+  }
+};
 
 </script>
 <!-- ═══════════ SHIFT EDIT OVERLAY ═══════════ -->

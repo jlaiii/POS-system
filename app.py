@@ -154,6 +154,7 @@ EMAIL_CONFIG_FILE = 'email_config.json'  # Email/SMTP configuration for digital 
 SHIFT_FILE = 'shift_log.json'  # Employee shift clock-in/clock-out records
 TIMESHEET_CONFIG_FILE = 'timesheet_config.json'  # Timesheet configuration (overtime thresholds, late grace period)
 TICKETS_FILE = 'tickets.json'  # Employee self-service tickets/requests
+RESERVATIONS_FILE = 'reservations.json'  # Table reservation/booking system
 TICKET_TEMPLATES_FILE = 'ticket_templates.json'  # Saved response templates for admin ticket replies
 APPROVALS_FILE = 'timesheet_approvals.json'  # Timesheet pay period approvals
 RESTAURANT_CONFIG_FILE = 'restaurant_config.json'  # Restaurant info for tablet display (name, hours, wifi)
@@ -262,7 +263,7 @@ def backup_menu():
 
 
 # Ensure JSON files exist and are initialized correctly
-for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE, INVENTORY_FILE, REFUNDED_ORDERS_FILE, FAVORITES_FILE, LOYALTY_FILE, SCHEDULED_PRICING_FILE, WASTE_FILE, DELIVERY_ADDRESSES_FILE, WEBHOOKS_FILE, TABLE_ADS_FILE, CASH_DRAWER_FILE, COMBOS_FILE, SERVICE_CHARGE_FILE, EMAIL_CONFIG_FILE, SHIFT_FILE, TICKETS_FILE, TICKET_TEMPLATES_FILE, APPROVALS_FILE, RESTAURANT_CONFIG_FILE, PRINTER_CONFIG_FILE]:
+for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE, INVENTORY_FILE, REFUNDED_ORDERS_FILE, FAVORITES_FILE, LOYALTY_FILE, SCHEDULED_PRICING_FILE, WASTE_FILE, DELIVERY_ADDRESSES_FILE, WEBHOOKS_FILE, TABLE_ADS_FILE, CASH_DRAWER_FILE, COMBOS_FILE, SERVICE_CHARGE_FILE, EMAIL_CONFIG_FILE, SHIFT_FILE, TICKETS_FILE, RESERVATIONS_FILE, TICKET_TEMPLATES_FILE, APPROVALS_FILE, RESTAURANT_CONFIG_FILE, PRINTER_CONFIG_FILE]:
     if not os.path.exists(f):
         with open(f, 'w') as file:
             if f == USERS_FILE:
@@ -345,7 +346,7 @@ def load_json_data(filepath):
             if filepath == USERS_FILE and not isinstance(data, dict):
                 print(f"Warning: {filepath} is not a dictionary. Initializing as empty dict.")
                 return {}
-            if filepath in [ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, TICKETS_FILE] and not isinstance(data, list):
+            if filepath in [ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, TICKETS_FILE, RESERVATIONS_FILE] and not isinstance(data, list):
                 print(f"Warning: {filepath} is not a list. Initializing as empty list.")
                 return []
             if filepath == ITEMS_FILE and not isinstance(data, dict):
@@ -16559,6 +16560,433 @@ def schedule_compare():
         'date_from': date_from,
         'date_to': date_to,
         'comparison': comparison
+    })
+
+
+# ═══════════ RESERVATION / BOOKING SYSTEM ═══════════
+
+def generate_reservation_id():
+    """Generate a sequential reservation ID like RES-001, RES-002, etc."""
+    reservations = load_json_data(RESERVATIONS_FILE)
+    if not reservations:
+        return "RES-001"
+    max_num = 0
+    for r in reservations:
+        rid = r.get('id', '')
+        if rid.startswith('RES-'):
+            try:
+                num = int(rid[4:])
+                if num > max_num:
+                    max_num = num
+            except ValueError:
+                pass
+    return f"RES-{max_num + 1:03d}"
+
+
+def check_double_booking(reservation_date, reservation_time, duration_minutes=120, exclude_id=None):
+    """Check for double-booking conflicts.
+    Returns a list of conflicting reservations.
+    duration_minutes: how long a reservation typically occupies a table (default 2h)
+    """
+    reservations = load_json_data(RESERVATIONS_FILE)
+    conflicts = []
+    try:
+        # Parse the new reservation's start time
+        new_start = datetime.strptime(f"{reservation_date} {reservation_time}", '%Y-%m-%d %H:%M')
+        new_end = new_start + timedelta(minutes=duration_minutes)
+    except (ValueError, TypeError):
+        return []
+
+    for r in reservations:
+        if r.get('status') in ('cancelled', 'no_show'):
+            continue
+        if exclude_id and r.get('id') == exclude_id:
+            continue
+
+        r_date = r.get('date', '')
+        r_time = r.get('time', '')
+        if not r_date or not r_time:
+            continue
+        try:
+            r_start = datetime.strptime(f"{r_date} {r_time}", '%Y-%m-%d %H:%M')
+            r_end = r_start + timedelta(minutes=duration_minutes)
+        except (ValueError, TypeError):
+            continue
+
+        # Check overlap
+        if r_start < new_end and r_end > new_start:
+            conflicts.append({
+                'id': r.get('id'),
+                'customer_name': r.get('customer_name'),
+                'party_size': r.get('party_size'),
+                'time': r.get('time'),
+                'status': r.get('status'),
+                'table_numbers': r.get('table_numbers', [])
+            })
+
+    return conflicts
+
+
+def auto_cancel_no_shows():
+    """Auto-cancel reservations past their date+time that are still pending/confirmed.
+    Called on every reservation list load.
+    """
+    reservations = load_json_data(RESERVATIONS_FILE)
+    now = datetime.now()
+    modified = False
+    for r in reservations:
+        if r.get('status') in ('pending', 'confirmed'):
+            r_date = r.get('date', '')
+            r_time = r.get('time', '')
+            if r_date and r_time:
+                try:
+                    r_dt = datetime.strptime(f"{r_date} {r_time}", '%Y-%m-%d %H:%M')
+                    # If reservation time is more than 2 hours past, mark as no_show
+                    if now > r_dt + timedelta(hours=2):
+                        r['status'] = 'no_show'
+                        r['updated_at'] = now.isoformat()
+                        r['updated_by'] = 'system'
+                        r['cancelled_reason'] = 'Auto-cancelled — guest did not arrive'
+                        modified = True
+                except (ValueError, TypeError):
+                    pass
+    if modified:
+        save_json_data(RESERVATIONS_FILE, reservations)
+    return modified
+
+
+@app.route('/api/reservations/list', methods=['POST'])
+def list_reservations():
+    """List all reservations with optional date/status filters.
+    Also auto-cancels past no-shows on load.
+    """
+    data = request.json or {}
+    date_from = data.get('date_from', '')
+    date_to = data.get('date_to', '')
+    filter_status = data.get('filter_status', '')
+    filter_search = data.get('filter_search', '')
+
+    # Auto-cancel past no-shows
+    auto_cancel_no_shows()
+
+    reservations = load_json_data(RESERVATIONS_FILE)
+
+    # Sort by date descending, then time descending
+    reservations.sort(key=lambda r: (r.get('date', ''), r.get('time', '')), reverse=True)
+
+    filtered = []
+    for r in reservations:
+        r_date = r.get('date', '')
+
+        # Date range filter
+        if date_from and r_date < date_from:
+            continue
+        if date_to and r_date > date_to:
+            continue
+
+        # Status filter
+        if filter_status and r.get('status') != filter_status:
+            continue
+
+        # Search filter (customer name, phone, email)
+        if filter_search:
+            search_lower = filter_search.lower()
+            if (search_lower not in r.get('customer_name', '').lower() and
+                search_lower not in r.get('customer_phone', '') and
+                search_lower not in r.get('customer_email', '').lower() and
+                search_lower not in r.get('id', '').lower()):
+                continue
+
+        filtered.append(r)
+
+    return jsonify({'reservations': filtered, 'total': len(filtered)})
+
+
+@app.route('/api/reservations/create', methods=['POST'])
+def create_reservation():
+    """Create a new reservation with double-booking conflict detection."""
+    data = request.json
+    if not data:
+        return jsonify({'message': 'No data provided.'}), 400
+
+    user_id = data.get('user_id', '')
+    if not user_id:
+        return jsonify({'message': 'User ID is required.'}), 400
+
+    users = load_json_data(USERS_FILE)
+    user_data = users.get(user_id)
+    if not user_data:
+        return jsonify({'message': 'User not found.'}), 403
+
+    # Required fields
+    customer_name = (data.get('customer_name') or '').strip()
+    party_size = data.get('party_size', 0)
+    date = (data.get('date') or '').strip()
+    time = (data.get('time') or '').strip()
+
+    if not customer_name:
+        return jsonify({'message': 'Customer name is required.'}), 400
+    if not party_size or party_size < 1:
+        return jsonify({'message': 'Party size must be at least 1.'}), 400
+    if not date:
+        return jsonify({'message': 'Date is required.'}), 400
+    if not time:
+        return jsonify({'message': 'Time is required.'}), 400
+
+    # Validate date/time
+    try:
+        datetime.strptime(f"{date} {time}", '%Y-%m-%d %H:%M')
+    except ValueError:
+        return jsonify({'message': 'Invalid date or time format. Use YYYY-MM-DD and HH:MM.'}), 400
+
+    # Check double-booking
+    conflicts = check_double_booking(date, time)
+    conflict_warning = None
+    if conflicts:
+        conflict_warning = {
+            'message': f'⚠️ {len(conflicts)} overlapping reservation(s) found.',
+            'conflicts': conflicts
+        }
+
+    customer_phone = (data.get('customer_phone') or '').strip()
+    customer_email = (data.get('customer_email') or '').strip()
+    table_numbers = data.get('table_numbers', [])
+    notes = (data.get('notes') or '').strip()
+    status = data.get('status', 'pending')
+
+    # Validate status
+    if status not in ('pending', 'confirmed'):
+        status = 'pending'
+
+    reservation = {
+        'id': generate_reservation_id(),
+        'customer_name': customer_name,
+        'customer_phone': customer_phone,
+        'customer_email': customer_email,
+        'party_size': int(party_size),
+        'date': date,
+        'time': time,
+        'table_numbers': table_numbers if isinstance(table_numbers, list) else [],
+        'status': status,
+        'notes': notes,
+        'created_at': datetime.now().isoformat(),
+        'updated_at': datetime.now().isoformat(),
+        'updated_by': user_id,
+        'cancelled_reason': None
+    }
+
+    reservations = load_json_data(RESERVATIONS_FILE)
+    reservations.append(reservation)
+    save_json_data(RESERVATIONS_FILE, reservations)
+
+    # Activity log
+    log_activity('reservation_created', user_id, user_data.get('role', 'user'), {
+        'reservation_id': reservation['id'],
+        'customer_name': customer_name,
+        'party_size': party_size,
+        'date': date,
+        'time': time,
+        'conflict_warning': conflict_warning is not None
+    })
+
+    response = {
+        'message': f'Reservation {reservation["id"]} created for {customer_name}.',
+        'reservation': reservation
+    }
+    if conflict_warning:
+        response['conflict_warning'] = conflict_warning
+
+    # Emit SocketIO event for real-time updates
+    socketio.emit('reservation_update', {'action': 'created', 'reservation': reservation})
+
+    return jsonify(response)
+
+
+@app.route('/api/reservations/update', methods=['POST'])
+def update_reservation():
+    """Update an existing reservation (status, table, notes, etc.)."""
+    data = request.json
+    if not data:
+        return jsonify({'message': 'No data provided.'}), 400
+
+    user_id = data.get('user_id', '')
+    res_id = data.get('reservation_id', '')
+
+    if not user_id:
+        return jsonify({'message': 'User ID is required.'}), 400
+    if not res_id:
+        return jsonify({'message': 'Reservation ID is required.'}), 400
+
+    users = load_json_data(USERS_FILE)
+    user_data = users.get(user_id)
+    if not user_data:
+        return jsonify({'message': 'User not found.'}), 403
+
+    reservations = load_json_data(RESERVATIONS_FILE)
+    found = None
+    for r in reservations:
+        if r.get('id') == res_id:
+            found = r
+            break
+
+    if not found:
+        return jsonify({'message': f'Reservation {res_id} not found.'}), 404
+
+    # Update fields
+    changed = []
+    if 'status' in data and data['status'] in ('pending', 'confirmed', 'seated', 'cancelled', 'no_show'):
+        old_val = found.get('status')
+        new_val = data['status']
+        if old_val != new_val:
+            found['status'] = new_val
+            changed.append(f"status: {old_val} → {new_val}")
+        if new_val in ('cancelled', 'no_show') and 'cancelled_reason' in data:
+            found['cancelled_reason'] = data['cancelled_reason']
+
+    if 'customer_name' in data:
+        name = (data['customer_name'] or '').strip()
+        if name and name != found.get('customer_name'):
+            changed.append(f"name: {found.get('customer_name')} → {name}")
+            found['customer_name'] = name
+
+    if 'customer_phone' in data:
+        phone = (data['customer_phone'] or '').strip()
+        if phone != found.get('customer_phone'):
+            found['customer_phone'] = phone
+
+    if 'customer_email' in data:
+        email = (data['customer_email'] or '').strip()
+        if email != found.get('customer_email'):
+            found['customer_email'] = email
+
+    if 'party_size' in data:
+        ps = int(data['party_size'])
+        if ps > 0 and ps != found.get('party_size'):
+            changed.append(f"party_size: {found.get('party_size')} → {ps}")
+            found['party_size'] = ps
+
+    if 'date' in data and 'time' in data:
+        new_date = (data['date'] or '').strip()
+        new_time = (data['time'] or '').strip()
+        if new_date and new_time:
+            old_dt = f"{found.get('date')} {found.get('time')}"
+            new_dt = f"{new_date} {new_time}"
+            if new_dt != old_dt:
+                try:
+                    datetime.strptime(new_dt, '%Y-%m-%d %H:%M')
+                    found['date'] = new_date
+                    found['time'] = new_time
+                    changed.append(f"datetime: {old_dt} → {new_dt}")
+                except ValueError:
+                    return jsonify({'message': 'Invalid date or time format.'}), 400
+
+    if 'table_numbers' in data:
+        tables = data['table_numbers']
+        if isinstance(tables, list):
+            old_tables = found.get('table_numbers', [])
+            if tables != old_tables:
+                changed.append(f"tables: {old_tables} → {tables}")
+                found['table_numbers'] = tables
+
+    if 'notes' in data:
+        found['notes'] = (data['notes'] or '').strip()
+
+    if changed:
+        found['updated_at'] = datetime.now().isoformat()
+        found['updated_by'] = user_id
+
+    save_json_data(RESERVATIONS_FILE, reservations)
+
+    log_activity('reservation_updated', user_id, user_data.get('role', 'user'), {
+        'reservation_id': res_id,
+        'changes': changed
+    })
+
+    # Emit SocketIO event
+    socketio.emit('reservation_update', {'action': 'updated', 'reservation': found})
+
+    return jsonify({
+        'message': f'Reservation {res_id} updated.',
+        'reservation': found,
+        'changes': changed
+    })
+
+
+@app.route('/api/reservations/delete', methods=['POST'])
+def delete_reservation():
+    """Delete or cancel a reservation."""
+    data = request.json
+    if not data:
+        return jsonify({'message': 'No data provided.'}), 400
+
+    user_id = data.get('user_id', '')
+    res_id = data.get('reservation_id', '')
+
+    if not user_id:
+        return jsonify({'message': 'User ID is required.'}), 400
+    if not res_id:
+        return jsonify({'message': 'Reservation ID is required.'}), 400
+
+    users = load_json_data(USERS_FILE)
+    user_data = users.get(user_id)
+    if not user_data:
+        return jsonify({'message': 'User not found.'}), 403
+
+    reservations = load_json_data(RESERVATIONS_FILE)
+    found = None
+    for r in reservations:
+        if r.get('id') == res_id:
+            found = r
+            break
+
+    if not found:
+        return jsonify({'message': f'Reservation {res_id} not found.'}), 404
+
+    reason = data.get('reason', '').strip() or 'No reason provided'
+
+    # Instead of removing, set status to cancelled with reason
+    found['status'] = 'cancelled'
+    found['cancelled_reason'] = reason
+    found['updated_at'] = datetime.now().isoformat()
+    found['updated_by'] = user_id
+
+    save_json_data(RESERVATIONS_FILE, reservations)
+
+    log_activity('reservation_cancelled', user_id, user_data.get('role', 'user'), {
+        'reservation_id': res_id,
+        'customer_name': found.get('customer_name'),
+        'reason': reason
+    })
+
+    socketio.emit('reservation_update', {'action': 'cancelled', 'reservation': found})
+
+    return jsonify({
+        'message': f'Reservation {res_id} cancelled.',
+        'reservation': found
+    })
+
+
+@app.route('/api/reservations/date_reservations', methods=['POST'])
+def get_date_reservations():
+    """Get reservations for a specific date (for calendar/day view)."""
+    data = request.json or {}
+    date = data.get('date', '')
+
+    if not date:
+        return jsonify({'message': 'Date is required.'}), 400
+
+    auto_cancel_no_shows()
+
+    reservations = load_json_data(RESERVATIONS_FILE)
+    day_reservations = [r for r in reservations if r.get('date') == date]
+
+    # Sort by time
+    day_reservations.sort(key=lambda r: r.get('time', ''))
+
+    return jsonify({
+        'date': date,
+        'reservations': day_reservations,
+        'total': len(day_reservations)
     })
 
 
