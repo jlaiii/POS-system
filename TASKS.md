@@ -408,7 +408,7 @@ New `tickets.json` data store. Each ticket:
 
 - [x] worker-2 **MEDIUM: Table status overview dashboard** — Color-coded floor plan grid (empty/occupied/order_in_progress/needs_bussing) with derived status from order data. Tap a table card to view full detail: active orders, completed orders, order history, last bussed timestamp. Mark Bussed button resets status. Checkout button for tables with active tabs. Uses existing tableTabOverlay modal. Backend: enhanced `/api/tables` with derived `status`, `raw_status`, `last_bussed_at`, `completed_count`; new `POST /api/tables/mark_bussed` endpoint (resets status + logs activity); new `GET /api/tables/tab/<int>/detail` endpoint with full table+orders+stats response. Frontend: `asTablestatus` button in admin sidebar, `secTablestatus` section with color legend + auto-filling grid, `loadTableStatusDashboard()`/`showTableDetail()`/`markTableBussed()` functions, CSS for `.floor-plan-card` with active scaling, responsive grid breakpoints. Backward compatible. [worker-2]
 
-|- [ ] **MEDIUM: Order transfer between waiters** — Add ability to transfer a table's active orders from one waiter to another via admin panel. Essential for shift changes, meal breaks, and when a waiter gets overwhelmed. Store `transferred_from` / `transferred_at` on order records for audit. Activity logging. Simple UI in admin tables section.
+|- [~] worker-1 **MEDIUM: Order transfer between waiters** — Add ability to transfer a table's active orders from one waiter to another via admin panel. Essential for shift changes, meal breaks, and when a waiter gets overwhelmed. Store `transferred_from` / `transferred_at` on order records for audit. Activity logging. Simple UI in admin tables section.
 
 ## New Tasks (from Audit #9 — 2026-06-23)
 
