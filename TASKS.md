@@ -326,7 +326,7 @@ New `tickets.json` data store. Each ticket:
 ||- [x] worker-1 **Issue/bug ticket triage labels** — Admin can tag issue tickets: "POS bug", "hardware", "menu error", "customer complaint", "other". [worker-1 — Added label field to ticket model (label: pos_bug|hardware|menu_error|customer_complaint|other). Backend: label stored on submit for issue tickets, settable via respond endpoint, filterable in queue. Frontend: label dropdown in employee issue form, label badge on ticket cards, label filter in admin queue, label selector in pending card actions. i18n EN+ES. Dark theme compatible.]
 ||- [x] **Ticket response templates** — Admin can save common response notes as templates. [worker-3 — New ticket_templates.json data store. 3 API endpoints: POST /api/tickets/templates/list, /save, /delete. Frontend: 📋 Templates sub-tab in Tickets admin with add/edit/delete UI. Deny prompt now uses modal with template selector dropdown that pre-fills reason textarea. Permission-gated (manage_users). Activity logged. Dark theme, touch-friendly 44px+ targets. Created 3 default seed templates on first use.]
 - [~] worker-1 **Employee feedback analytics** — Aggregate feedback tickets by category over time.
-- [ ] **Auto-approve for low-risk time-off** — Configurable rule: auto-approve time-off if requested >2 weeks in advance AND no other approvals for same date.
+- [~] worker-3 **Auto-approve for low-risk time-off** — Configurable rule: auto-approve time-off if requested >2 weeks in advance AND no other approvals for same date.
 
 ## Employee Pay Portal — Pay Stubs, History & Downloads (NEW — June 2026)
 
