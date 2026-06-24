@@ -62,5 +62,9 @@
     "\ud83e\udd16 Robot Burger \ud83c\udf54": {
         "stock": 0,
         "low_stock_threshold": 10
+    },
+    "Test Nutrition Item": {
+        "stock": 0,
+        "low_stock_threshold": 10
     }
 }

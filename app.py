@@ -4504,6 +4504,31 @@ def get_items():
     return jsonify(items)
 
 
+@app.route('/api/items/popular', methods=['GET'])
+def get_popular_items():
+    """Analyze order history and return the most popular items by total quantity ordered."""
+    orders = load_json_data(ORDERS_FILE)
+    if not isinstance(orders, list):
+        return jsonify({'popular': [], 'message': 'No order data available'})
+    
+    item_counts = Counter()
+    for order in orders:
+        items_list = order.get('items', [])
+        if not isinstance(items_list, list):
+            continue
+        for item in items_list:
+            name = item.get('name', '')
+            qty = item.get('qty', 1)
+            if name:
+                item_counts[name] += (qty if isinstance(qty, (int, float)) else 1)
+    
+    # Sort by count descending, take top 5
+    most_common = item_counts.most_common(5)
+    popular = [{'name': name, 'count': count} for name, count in most_common]
+    
+    return jsonify({'popular': popular, 'total_orders_with_data': len(orders)})
+
+
 @app.route('/api/items/csv_export', methods=['GET'])
 def items_csv_export():
     """Export all menu items as CSV."""

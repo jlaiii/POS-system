@@ -2413,5 +2413,37 @@
         "item_notes": {},
         "table_number": null,
         "delivery_address": null
+    },
+    {
+        "order_id": 71,
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-24T14:26:06.645662",
+        "user": null,
+        "payment": "Cash",
+        "payment_splits": null,
+        "items": [
+            {
+                "id": 1,
+                "name": "Test Burger",
+                "price": 9.99,
+                "quantity": 1,
+                "category": "Burgers"
+            }
+        ],
+        "subtotal": 9.99,
+        "tax_amount": 0.0,
+        "tip_amount": 0.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 10.79,
+        "notes": "",
+        "item_notes": {},
+        "table_number": null,
+        "delivery_address": null,
+        "customer_email": ""
     }
 ]

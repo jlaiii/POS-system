@@ -2863,6 +2863,7 @@ const L10N = {
     'item.add_es': '➕ AÑADIR',
     'item.no_items': 'No items in this category',
     'item.load_fail': 'Cannot load items',
+    'item.popular': 'Most Popular',
     'history.filter_date': 'Filter by date',
     'history.filter_date_from': 'From date',
     'history.filter_date_to': 'To date',
@@ -3572,6 +3573,7 @@ const L10N = {
     'item.add': '➕ AÑADIR',
     'item.no_items': 'No hay artículos en esta categoría',
     'item.load_fail': 'No se pueden cargar los artículos',
+    'item.popular': 'Más Popular',
     'history.filter_date': 'Filtrar por fecha',
     'history.filter_date_from': 'Desde fecha',
     'history.filter_date_to': 'Hasta fecha',
@@ -4343,6 +4345,7 @@ let itemSearchTerm = '';
 let taxConfig = null; // { global_tax_rate, category_tax_rates, item_tax_overrides }
 let appliedDiscount = null; // { code, type, value, discount_amount, description }
 let scheduledPricing = null; // { item_name: { original_price, discounted_price, discount_label, category } }
+let popularItems = new Set(); // Set of item names that are most popular (for "🔥 Most Popular" badge)
 let loyaltyCustomerPhone = ''; // Currently tracked loyalty customer phone
 let loyaltyCustomerData = null; // { phone, name, points, total_earned, ... }
 let chartPayment = null;
@@ -7914,10 +7917,11 @@ async function removeIpFromAllowlist(ip) {
 async function loadItems() {
   showSkeletonScreen('itemGrid', 'grid');
   try {
-    const [itemsRes, invRes, pricingRes] = await Promise.all([
+    const [itemsRes, invRes, pricingRes, popRes] = await Promise.all([
       fetch(BACKEND_URL + '/api/items'),
       fetch(BACKEND_URL + '/api/inventory'),
-      fetch(BACKEND_URL + '/api/scheduled_pricing/active')
+      fetch(BACKEND_URL + '/api/scheduled_pricing/active'),
+      fetch(BACKEND_URL + '/api/items/popular')
     ]);
     if (!itemsRes.ok) throw new Error('Failed to load items (HTTP ' + itemsRes.status + ')');
     if (!invRes.ok) { /* inventory is optional */ }
@@ -7931,6 +7935,13 @@ async function loadItems() {
       scheduledPricing = pricingData.pricing_map || {};
     } else {
       scheduledPricing = null;
+    }
+    // Load popularity data
+    if (popRes.ok) {
+      const popData = await popRes.json();
+      popularItems = new Set((popData.popular || []).map(p => p.name));
+    } else {
+      popularItems = new Set();
     }
     // Load combos in background
     try {
@@ -8176,6 +8187,7 @@ function renderItems() {
       let effectivePrice = item.price;
       let priceHtml = '<div class="item-price">$' + item.price.toFixed(2) + '</div>';
       let saleBadgeHtml = '';
+      let popularBadgeHtml = popularItems.has(item.name) ? '<div class="popular-badge">🔥 ' + t('item.popular') + '</div>' : '';
       if (scheduledPricing && scheduledPricing[item.name]) {
         effectivePrice = scheduledPricing[item.name].discounted_price;
         priceHtml = '<div class="item-price" style="color:#2ecc71;">' + t('item.scheduled_price', {price: effectivePrice.toFixed(2)}) + ' <span style="text-decoration:line-through;color:var(--text2);font-size:12px;">$' + item.price.toFixed(2) + '</span></div>';
@@ -8193,7 +8205,7 @@ function renderItems() {
       const courseBadge = course === 'appetizer' ? '<span class="course-badge appetizer" title="Appetizer — 5 min prep">🥗</span>' : (course === 'dessert' ? '<span class="course-badge dessert" title="Dessert — after mains">🍰</span>' : '');
       card.innerHTML = `
         <div class="item-category-label">${escHtml(item._category)}</div>
-        ${saleBadgeHtml}
+        ${saleBadgeHtml}${popularBadgeHtml}
         ${imgHtml}
         <div class="item-name">${displayName}${modBadge}${courseBadge}${showNutritionBadge(item)}</div>
         ${priceHtml}
@@ -8228,6 +8240,7 @@ function renderItems() {
       let effectivePrice = item.price;
       let priceHtml = '<div class="item-price">$' + item.price.toFixed(2) + '</div>';
       let saleBadgeHtml = '';
+      let popularBadgeHtml = popularItems.has(item.name) ? '<div class="popular-badge">🔥 ' + t('item.popular') + '</div>' : '';
       if (scheduledPricing && scheduledPricing[item.name]) {
         effectivePrice = scheduledPricing[item.name].discounted_price;
         priceHtml = '<div class="item-price" style="color:#2ecc71;">' + t('item.scheduled_price', {price: effectivePrice.toFixed(2)}) + ' <span style="text-decoration:line-through;color:var(--text2);font-size:12px;">$' + item.price.toFixed(2) + '</span></div>';
@@ -8243,7 +8256,7 @@ function renderItems() {
       const course = item.course || 'main';
       const courseBadge = course === 'appetizer' ? '<span class="course-badge appetizer" title="Appetizer — 5 min prep">🥗</span>' : (course === 'dessert' ? '<span class="course-badge dessert" title="Dessert — after mains">🍰</span>' : '');
       card.innerHTML = `
-        ${saleBadgeHtml}
+        ${saleBadgeHtml}${popularBadgeHtml}
         ${imgHtml}
         <div class="item-name">${escHtml(item.name)}${modBadge}${courseBadge}${showNutritionBadge(item)}</div>
         ${priceHtml}

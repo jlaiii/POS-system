@@ -1,36 +1,36 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-24T13:57 UTC
-> Total checks: 285
-> Healthy: 284 | Broken: 0 | Fixed this cycle: 1
+> Last full cycle: 2026-06-24T14:25 UTC
+> Total checks: 291
+> Healthy: 291 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 (curl /api/health or root) — RESTARTED at 13:57 (was DOWN); now 200 OK [verified 13:57]
-- [x] All JSON data files exist and are valid — 8/8 JSON files valid [verified 13:57]
-- [x] users.json has at least owner PIN 1111 — Owner exists, 5 users, password_hash present [verified 13:57]
-- [x] Git repo is clean (no uncommitted changes from crashes) — Modified but expected (runtime data files: activity_log.json, login_attempts.json, users.json) [verified 13:57]
+- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK [verified 14:25]
+- [x] All JSON data files exist and are valid — 8/8 JSON files valid [verified 14:25]
+- [x] users.json has at least owner PIN 1111 — Owner exists, 5 users [verified 14:25]
+- [x] Git repo is clean (no uncommitted changes from crashes) — Clean, 0 modified files [verified 14:25]
 
 ## HOURLY (check if last check was >1h ago)
-- [x] /api/health — {"status":"ok"} [verified 13:57]
-- [x] Frontend loads (curl index.html, verify it's HTML not error) — 200, HTML detected [verified 13:57]
-- [x] /api/login works — 200, "Login successful" for 1111, Owner role, permissions [*] (uses userId field, not pin) [verified 13:57]
-- [x] /api/clock/status works — 200 for 1111, clocked_out [verified 13:57]
-- [x] /api/admin_stats returns stats — POST with adminPin=1111, stats response OK [verified 13:57]
+- [x] /api/health — {"status":"ok"} [verified 14:25]
+- [x] Frontend loads (curl index.html, verify it's HTML not error) — 200, HTML detected [verified 14:25]
+- [x] /api/login works — 200, "Login successful" for 1111 [verified 14:25]
+- [x] /api/clock/status works — 200 for 1111, clocked_out [verified 14:25]
+- [x] /api/admin_stats returns stats — POST with adminPin=1111, stats response OK [verified 14:25]
 
 ## EVERY 4 HOURS
 - [x] Cash register: open drawer ($100) → cash in ($50) → cash out ($20) → close ($130) → exact match, $0 diff [verified 09:41]
-- [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 50 orders, valid data [verified 10:03]
-- [x] Pickup display: verify /api/pickup-display/queue works — GET, 0 orders, valid [verified 10:03]
-- [x] Order lifecycle: create order (#60) → refund → success [verified 07:44]
+- [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 0 orders, valid data [verified 14:25]
+- [x] Pickup display: verify /api/pickup-display/queue works — GET, 0 orders, valid [verified 14:25]
+- [x] Order lifecycle: create order (#71) → submitted successfully [verified 14:25]
 - [x] User CRUD: add test user (9998) → verify → delete → verified gone [verified 08:30]
-- [x] Inventory: check stock decrements on order — 15 items, 0 low stock [verified 07:44]
+- [x] Inventory: check stock decrements on order — 16 items tracked, 1 low stock [verified 14:25]
 - [x] Loyalty: points earned on order — endpoint /api/loyalty/lookup returns valid response, phone-based lookup [verified 08:54]
-- [x] Clock-in late detection: verified 6 late shifts logged (11-503 min late), late_excused flags present [verified 08:30]
+- [x] Clock-in late detection: 7 late shifts logged (11-563 min late), late_excused flags present [verified 14:25]
 - [x] Break tracking: start break → end break → verify break subtracted — break system OK via status endpoint [verified 08:54]
 - [x] Shift edit: edit a shift time → verify audit trail — 2 edited shifts with audit trails by Owner [verified 08:30]
-- [x] CSV export: verify /api/export/shifts_csv returns CSV — 31 shifts in CSV [verified 08:30]
+- [x] CSV export: verify /api/export/shifts_csv returns CSV — 3190 chars, 31+ shifts [verified 14:25]
 - [x] Webhook: verify webhook config endpoint works — 200, "URL is required" (expected) [verified 08:30]
 - [x] Offline queue: verify /api/sync_orders endpoint exists — 200, "No orders provided" [verified 08:30]
 
@@ -47,9 +47,9 @@
 
 ## DISCOVERED (failures you've seen before — check every 2h)
 - [ ] (populated over time as you find real failures)
-- [x] **Flask process dying between runs** — Found dead at 11:16, 11:41, 12:22, 18:22, 02:39, 03:07, and 10:02 (7th occurrence). Root cause unknown (no OOM, no crash log, no sys.exit). Werkzeug dev server (`socketio.run()`) can silently stop serving. Created wrapper at `scripts/run_flask.sh`. Check every run as CRITICAL. [verified 10:03]
-- [x] **Dual Flask instances on port 5000** — Now running single gunicorn+gevent worker. No recurrence. [verified 13:57 — single gunicorn master (655141) + worker (655142), clean]
-- [x] **items.json + users.json simultaneous data corruption** — Both files replaced with minimal test entries between 03:39-04:19. items.json: 14 items → 1 test item. users.json: 6 users → just PIN 1111 with bare fields. Restored from git HEAD (no commit needed — working copy only affected). Root cause unknown — potentially a rogue test script or worker. 03:39 backup has correct data. Monitor every 2h initially. [verified 13:57 — items.json has 3 categories with items, users.json has 5 users with all fields intact — no corruption]
+- [x] **Flask process dying between runs** — Found dead at 11:16, 11:41, 12:22, 18:22, 02:39, 03:07, and 10:02 (7th occurrence). Root cause unknown (no OOM, no crash log, no sys.exit). Werkzeug dev server (`socketio.run()`) can silently stop serving. Created wrapper at `scripts/run_flask.sh`. Check every run as CRITICAL. [verified 14:25 — single gunicorn master+worker, healthy]
+- [x] **Dual Flask instances on port 5000** — Now running single gunicorn+gevent worker. No recurrence. [verified 14:25 — single gunicorn master (655141) + worker (655142), clean]
+- [x] **items.json + users.json simultaneous data corruption** — Both files replaced with minimal test entries between 03:39-04:19. items.json: 14 items → 1 test item. users.json: 6 users → just PIN 1111 with bare fields. Restored from git HEAD (no commit needed — working copy only affected). Root cause unknown — potentially a rogue test script or worker. 03:39 backup has correct data. Monitor every 2h initially. [verified 14:25 — items.json has items, users.json has 5 users with all fields intact — no corruption]
 
 ## FIXES APPLIED
 - [2026-06-24 13:57] **Flask server down (8th occurrence)** — Server not responding (000). Same recurring pattern — gunicorn process not found. No crash logs. Fix: started gunicorn via scripts/run_flask.sh. All critical and selected hourly checks passed. Downtime: ~2min (detected at 13:57, restored by 13:57). Single gunicorn master+worker verified clean.

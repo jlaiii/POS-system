@@ -675,5 +675,17 @@
         "details": {
             "status": "success"
         }
+    },
+    {
+        "user_id": null,
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-24T14:34:07.858474",
+        "success": false,
+        "user_agent": "Werkzeug/3.1.8",
+        "method": "pin",
+        "details": {
+            "reason": "invalid_pin",
+            "attempt": 1
+        }
     }
 ]

@@ -426,6 +426,14 @@ body {
   white-space: nowrap; z-index: 2;
   line-height: 1.4;
 }
+.popular-badge {
+  display: inline-block;
+  background: #f39c12; color: #1a1a2e;
+  font-size: 11px; font-weight: 700;
+  padding: 3px 8px; border-radius: 8px;
+  white-space: nowrap; line-height: 1.4;
+  margin-bottom: 4px;
+}
 .menu-item-card .item-price-sale {
   color: #2ecc71 !important;
 }
@@ -1134,6 +1142,7 @@ let categories = [];
 let activeCategory = '';
 let combosData = [];
 let scheduledPricing = null; // { item_name: { original_price, discounted_price, discount_label, category } }
+let popularItems = new Set(); // Set of popular item names
 let idleTimer = null;
 let countdownTimer = null;
 let countdownValue = 5;
@@ -1376,9 +1385,10 @@ function escJs(s) {
 async function fetchMenuItems() {
   document.getElementById('noItemsMsg').textContent = t('loading_menu');
   try {
-    const [itemsRes, pricingRes] = await Promise.all([
+    const [itemsRes, pricingRes, popRes] = await Promise.all([
       fetch(BACKEND + '/api/items'),
-      fetch(BACKEND + '/api/scheduled_pricing/active')
+      fetch(BACKEND + '/api/scheduled_pricing/active'),
+      fetch(BACKEND + '/api/items/popular')
     ]);
     if (!itemsRes.ok) throw new Error('Fetch failed');
     menuItemsData = await itemsRes.json();
@@ -1387,6 +1397,12 @@ async function fetchMenuItems() {
       scheduledPricing = pricingData.pricing_map || {};
     } else {
       scheduledPricing = null;
+    }
+    // Load popularity data
+    popularItems = new Set();
+    if (popRes.ok) {
+      const popData = await popRes.json();
+      popularItems = new Set((popData.popular || []).map(p => p.name));
     }
     // Build category list (exclude empty categories)
     categories = Object.keys(menuItemsData).filter(cat => {
@@ -1450,6 +1466,7 @@ function renderItems() {
     const pricing = scheduledPricing && scheduledPricing[item.name];
     const priceVal = parseFloat(item.price);
     let saleBadgeHtml = '';
+    let popularBadgeHtml = popularItems.has(item.name) ? '<div class="popular-badge">🔥 Most Popular</div>' : '';
     let priceHtml = '<div class="item-price">$' + priceVal.toFixed(2) + '</div>';
     if (pricing) {
       const discPrice = pricing.discounted_price;
@@ -1457,10 +1474,10 @@ function renderItems() {
       saleBadgeHtml = '<div class="sale-badge">⚡ ' + escHtml(label) + '</div>';
       priceHtml = '<div class="item-price item-price-sale">$' + discPrice.toFixed(2) + ' <span class="item-price-original">$' + priceVal.toFixed(2) + '</span></div>';
     }
-    return '<div class="menu-item-card" onclick="showItemDetail(\\'' + escJs(item.name) + '\\')">' +
+    return '<div class="menu-item-card" onclick="showItemDetail(\'' + escJs(item.name) + '\')">' +
       (item.image_url ? '<img src="' + escHtml(item.image_url) + '" alt="' + escHtml(item.name) + '" loading="lazy"/>' : '') +
-      '<button class="qr-btn" onclick="event.stopPropagation();showQrPopup(\\'' + escJs(item.name) + '\\')" title="' + t('qr_order_this') + '">📱</button>' +
-      saleBadgeHtml +
+      '<button class="qr-btn" onclick="event.stopPropagation();showQrPopup(\'' + escJs(item.name) + '\')" title="' + t('qr_order_this') + '">📱</button>' +
+      saleBadgeHtml + popularBadgeHtml +
       '<div class="item-name">' + escHtml(item.name) + (item.nutritional_info && item.nutritional_info.calories ? '<span style="font-size:10px;color:var(--accent);margin-left:4px;border:1px solid var(--accent);border-radius:4px;padding:0 4px;line-height:16px;display:inline-block;vertical-align:middle;">🍎 ' + Math.round(parseFloat(item.nutritional_info.calories)) + '</span>' : '') + '</div>' +
       priceHtml +
       (item.description ? '<div class="item-desc">' + escHtml(item.description) + '</div>' : '') +
