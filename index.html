@@ -1014,6 +1014,10 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
                   <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:2px;">Late grace period (min)</label>
                   <input type="number" id="tsConfigLateGrace" value="5" min="0" max="60" step="1" style="width:80px;min-height:40px;font-size:14px;" inputmode="numeric" pattern="[0-9]*" >
                 </div>
+                <div>
+                  <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:2px;">Auto-approve time-off (days)</label>
+                  <input type="number" id="tsConfigAutoApprove" value="14" min="0" max="365" step="1" style="width:80px;min-height:40px;font-size:14px;" inputmode="numeric" pattern="[0-9]*" title="Auto-approve time-off if requested this many days in advance with no scheduling conflicts. 0 = disabled.">
+                </div>
                 <button class="accent" onclick="saveTimesheetConfig()" style="min-height:40px;padding:8px 16px;font-size:13px;">💾 Save Config</button>
                 <span id="tsConfigStatus" style="font-size:12px;color:#4caf50;display:none;">✅ Saved</span>
               </div>
@@ -1593,11 +1597,12 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
         </div>
         <!-- Tickets / Ticket Queue Admin -->
         <div id="secTickets" class="admin-section">
-          <!-- Sub-tabs: Queue | Calendar | Templates -->
+          <!-- Sub-tabs: Queue | Calendar | Templates | Analytics -->
           <div style="display:flex;gap:4px;margin-bottom:16px;border-bottom:2px solid var(--border);padding-bottom:0;">
             <button class="ticket-subtab active" onclick="switchTicketsSubTab('queue')" id="ticketSubTabQueue" style="background:transparent;border:none;padding:8px 16px;font-size:14px;cursor:pointer;border-radius:6px 6px 0 0;color:var(--text2);min-height:44px;font-weight:500;transition:all .15s;border-bottom:3px solid transparent;">📋 Queue</button>
             <button class="ticket-subtab" onclick="switchTicketsSubTab('calendar')" id="ticketSubTabCalendar" style="background:transparent;border:none;padding:8px 16px;font-size:14px;cursor:pointer;border-radius:6px 6px 0 0;color:var(--text2);min-height:44px;font-weight:500;transition:all .15s;border-bottom:3px solid transparent;">📅 Calendar</button>
             <button class="ticket-subtab" onclick="switchTicketsSubTab('templates')" id="ticketSubTabTemplates" style="background:transparent;border:none;padding:8px 16px;font-size:14px;cursor:pointer;border-radius:6px 6px 0 0;color:var(--text2);min-height:44px;font-weight:500;transition:all .15s;border-bottom:3px solid transparent;">📋 Templates</button>
+            <button class="ticket-subtab" onclick="switchTicketsSubTab('analytics')" id="ticketSubTabAnalytics" style="background:transparent;border:none;padding:8px 16px;font-size:14px;cursor:pointer;border-radius:6px 6px 0 0;color:var(--text2);min-height:44px;font-weight:500;transition:all .15s;border-bottom:3px solid transparent;">📊 Analytics</button>
           </div>
 
           <!-- Queue View -->
@@ -1751,6 +1756,72 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
             <!-- Templates List -->
             <div id="templatesList" style="display:grid;gap:10px;">
               <div class="empty-state">Loading templates...</div>
+            </div>
+          </div>
+
+          <!-- Analytics View -->
+          <div id="ticketSubAnalytics" style="display:none;">
+            <h3>📊 Ticket Analytics</h3>
+            <p style="color:var(--text2);margin-bottom:16px;font-size:14px;">Aggregated feedback and ticket statistics by category over time.</p>
+
+            <!-- Date range filter -->
+            <div class="card" style="margin-bottom:16px;padding:12px;">
+              <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;">
+                <div style="min-width:120px;flex:1;">
+                  <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;">From:</label>
+                  <input type="date" id="ticketAnalyticsDateFrom" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:40px;">
+                </div>
+                <div style="min-width:120px;flex:1;">
+                  <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;">To:</label>
+                  <input type="date" id="ticketAnalyticsDateTo" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:40px;">
+                </div>
+                <div style="display:flex;gap:6px;align-items:flex-end;padding-bottom:2px;">
+                  <button class="accent" onclick="loadTicketAnalytics()" style="min-height:40px;padding:8px 16px;font-size:13px;">🔍 Refresh</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="stats-grid" style="margin-bottom:16px;" id="ticketAnalyticsSummary">
+              <div class="stat-card"><div class="stat-val" id="ticketAnalyticsTotal">-</div><div style="font-size:12px;color:var(--text2);">Total Tickets</div></div>
+              <div class="stat-card"><div class="stat-val" id="ticketAnalyticsPending" style="color:#f39c12;">-</div><div style="font-size:12px;color:var(--text2);">Pending</div></div>
+              <div class="stat-card"><div class="stat-val" id="ticketAnalyticsResolved" style="color:#2ecc71;">-</div><div style="font-size:12px;color:var(--text2);">Resolved</div></div>
+              <div class="stat-card"><div class="stat-val" id="ticketAnalyticsRate">-</div><div style="font-size:12px;color:var(--text2);">Resolution Rate</div></div>
+              <div class="stat-card"><div class="stat-val" id="ticketAnalyticsResponseTime">-</div><div style="font-size:12px;color:var(--text2);">Avg Response</div></div>
+            </div>
+
+            <!-- Break down by type -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+              <!-- By Type -->
+              <div class="card" style="padding:16px;">
+                <h4 style="margin:0 0 12px 0;font-size:15px;">📂 By Category</h4>
+                <div id="ticketAnalyticsByType"><div class="empty-state">No data.</div></div>
+              </div>
+              <!-- By Status -->
+              <div class="card" style="padding:16px;">
+                <h4 style="margin:0 0 12px 0;font-size:15px;">📊 By Status</h4>
+                <div id="ticketAnalyticsByStatus"><div class="empty-state">No data.</div></div>
+              </div>
+            </div>
+
+            <!-- Issue labels breakdown + Monthly Trend -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+              <!-- By Label (issues only) -->
+              <div class="card" style="padding:16px;">
+                <h4 style="margin:0 0 12px 0;font-size:15px;">🏷️ Issue Labels</h4>
+                <div id="ticketAnalyticsByLabel"><div class="empty-state">No issue tickets.</div></div>
+              </div>
+              <!-- Monthly Trend -->
+              <div class="card" style="padding:16px;" id="ticketAnalyticsTrendCard">
+                <h4 style="margin:0 0 12px 0;font-size:15px;">📈 Monthly Trend (12mo)</h4>
+                <div id="ticketAnalyticsTrend"><div class="empty-state">No data.</div></div>
+              </div>
+            </div>
+
+            <!-- Top Submitters -->
+            <div class="card" style="padding:16px;margin-bottom:16px;">
+              <h4 style="margin:0 0 12px 0;font-size:15px;">👤 Top Submitters</h4>
+              <div id="ticketAnalyticsSubmitters"><div class="empty-state">No data.</div></div>
             </div>
           </div>
         </div>
@@ -6401,7 +6472,18 @@ async function submitTicket() {
     document.getElementById('requestRecurringUntil').value = '';
     const clearMsg = document.getElementById('requestValidationMsg');
     if (clearMsg) { clearMsg.textContent = ''; clearMsg.className = ''; }
-    showToast(data.message || 'Ticket submitted successfully!', 'success');
+    if (data.auto_approved) {
+      showToast('✅ ' + data.message, 'success', 5000);
+      // Add a brief notification highlight to the tickets list
+      const myTicketsEl = document.getElementById('myTickets');
+      if (myTicketsEl) {
+        myTicketsEl.style.transition = 'box-shadow 0.3s';
+        myTicketsEl.style.boxShadow = '0 0 20px rgba(76,175,80,0.4)';
+        setTimeout(() => { if (myTicketsEl) myTicketsEl.style.boxShadow = ''; }, 3000);
+      }
+    } else {
+      showToast(data.message || 'Ticket submitted successfully!', 'success');
+    }
     loadMyTickets();
   } catch (e) {
     showToast(t('toast.network_error') + ' submitting ticket.', 'error');
@@ -6804,12 +6886,15 @@ function switchTicketsSubTab(subtab) {
   document.getElementById('ticketSubQueue').style.display = subtab === 'queue' ? '' : 'none';
   document.getElementById('ticketSubCalendar').style.display = subtab === 'calendar' ? '' : 'none';
   document.getElementById('ticketSubTemplates').style.display = subtab === 'templates' ? '' : 'none';
+  document.getElementById('ticketSubAnalytics').style.display = subtab === 'analytics' ? '' : 'none';
   if (subtab === 'calendar') {
     loadTimeOffCalendar();
   } else if (subtab === 'queue') {
     loadTicketQueue();
   } else if (subtab === 'templates') {
     loadTemplates();
+  } else if (subtab === 'analytics') {
+    loadTicketAnalytics();
   }
 }
 
@@ -7131,6 +7216,220 @@ async function submitDenyWithReason(ticketId, btn) {
     btn.disabled = false;
     btn.textContent = '✅ Confirm Denial';
   }
+}
+
+// ═══════════ TICKET ANALYTICS ═══════════
+
+async function loadTicketAnalytics() {
+  const loadingHtml = '<div class="empty-state"><div class="spinner"></div> Loading analytics...</div>';
+  document.getElementById('ticketAnalyticsByType').innerHTML = loadingHtml;
+  document.getElementById('ticketAnalyticsByStatus').innerHTML = loadingHtml;
+  document.getElementById('ticketAnalyticsByLabel').innerHTML = loadingHtml;
+  document.getElementById('ticketAnalyticsTrend').innerHTML = loadingHtml;
+  document.getElementById('ticketAnalyticsSubmitters').innerHTML = loadingHtml;
+
+  const dateFrom = document.getElementById('ticketAnalyticsDateFrom').value;
+  const dateTo = document.getElementById('ticketAnalyticsDateTo').value;
+
+  try {
+    const res = await fetch(BACKEND_URL + '/api/tickets/analytics', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        adminPin: currentUser.id,
+        date_from: dateFrom || undefined,
+        date_to: dateTo || undefined
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(data.message || 'Failed to load analytics.', 'error');
+      document.getElementById('ticketAnalyticsByType').innerHTML = '<div class="empty-state">Failed to load.</div>';
+      return;
+    }
+
+    // Summary cards
+    document.getElementById('ticketAnalyticsTotal').textContent = data.total || 0;
+    document.getElementById('ticketAnalyticsPending').textContent = data.pending_count || 0;
+    document.getElementById('ticketAnalyticsResolved').textContent = data.resolved_count || 0;
+    document.getElementById('ticketAnalyticsRate').textContent = (data.resolution_rate || 0) + '%';
+    document.getElementById('ticketAnalyticsResponseTime').textContent = data.avg_response_hours !== null && data.avg_response_hours !== undefined
+      ? data.avg_response_hours + 'h' : 'N/A';
+
+    // By Type
+    renderAnalyticsByType(data.by_type, data.type_labels, data.total);
+
+    // By Status
+    renderAnalyticsByStatus(data.by_status, data.total);
+
+    // By Label
+    renderAnalyticsByLabel(data.by_label, data.total);
+
+    // Monthly Trend
+    renderAnalyticsTrend(data.monthly_trend);
+
+    // Top Submitters
+    renderAnalyticsSubmitters(data.top_submitters);
+  } catch (e) {
+    showToast(t('toast.network_error') + ' loading analytics.', 'error');
+  }
+}
+
+function renderAnalyticsByType(byType, typeLabels, total) {
+  const container = document.getElementById('ticketAnalyticsByType');
+  if (!byType || Object.keys(byType).length === 0) {
+    container.innerHTML = '<div class="empty-state">No tickets found.</div>';
+    return;
+  }
+  // Sort by count descending
+  const sorted = Object.entries(byType).sort((a, b) => b[1] - a[1]);
+  const maxVal = sorted[0][1];
+  let html = '';
+  sorted.forEach(([type, count]) => {
+    const label = (typeLabels && typeLabels[type]) || type;
+    const pct = total > 0 ? (count / total * 100).toFixed(1) : 0;
+    const barW = maxVal > 0 ? (count / maxVal * 100) : 0;
+    html += `<div style="margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:2px;">
+        <span>${label}</span>
+        <span style="color:var(--text2);">${count} <span style="font-size:11px;">(${pct}%)</span></span>
+      </div>
+      <div style="height:8px;background:var(--bg);border-radius:4px;overflow:hidden;">
+        <div style="height:100%;width:${barW}%;background:var(--accent);border-radius:4px;transition:width .3s;"></div>
+      </div>
+    </div>`;
+  });
+  container.innerHTML = html;
+}
+
+function renderAnalyticsByStatus(byStatus, total) {
+  const container = document.getElementById('ticketAnalyticsByStatus');
+  if (!byStatus || Object.keys(byStatus).length === 0) {
+    container.innerHTML = '<div class="empty-state">No status data.</div>';
+    return;
+  }
+  const statusColors = {pending: '#f39c12', approved: '#2ecc71', denied: '#e74c3c'};
+  const statusLabels = {pending: '⏳ Pending', approved: '✅ Approved', denied: '❌ Denied'};
+  const sorted = Object.entries(byStatus).sort((a, b) => b[1] - a[1]);
+  const maxVal = sorted[0][1];
+  let html = '';
+  sorted.forEach(([status, count]) => {
+    const label = statusLabels[status] || status;
+    const color = statusColors[status] || 'var(--text2)';
+    const pct = total > 0 ? (count / total * 100).toFixed(1) : 0;
+    const barW = maxVal > 0 ? (count / maxVal * 100) : 0;
+    html += `<div style="margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:2px;">
+        <span>${label}</span>
+        <span style="color:var(--text2);">${count} <span style="font-size:11px;">(${pct}%)</span></span>
+      </div>
+      <div style="height:8px;background:var(--bg);border-radius:4px;overflow:hidden;">
+        <div style="height:100%;width:${barW}%;background:${color};border-radius:4px;transition:width .3s;"></div>
+      </div>
+    </div>`;
+  });
+  container.innerHTML = html;
+}
+
+function renderAnalyticsByLabel(byLabel) {
+  const container = document.getElementById('ticketAnalyticsByLabel');
+  if (!byLabel || Object.keys(byLabel).length === 0) {
+    container.innerHTML = '<div class="empty-state">No issue tickets (with labels) found.</div>';
+    return;
+  }
+  const labelIcons = {
+    pos_bug: '🐞', hardware: '🖥️', menu_error: '📋',
+    customer_complaint: '😠', other: '📝', unlabeled: '❓'
+  };
+  const labelNames = {
+    pos_bug: 'POS Bug', hardware: 'Hardware', menu_error: 'Menu Error',
+    customer_complaint: 'Customer Complaint', other: 'Other', unlabeled: 'Unlabeled'
+  };
+  const sorted = Object.entries(byLabel).sort((a, b) => b[1] - a[1]);
+  const maxVal = sorted[0][1];
+  let html = '';
+  sorted.forEach(([label, count]) => {
+    const icon = labelIcons[label] || '📝';
+    const name = labelNames[label] || label;
+    const barW = maxVal > 0 ? (count / maxVal * 100) : 0;
+    html += `<div style="margin-bottom:8px;">
+      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:2px;">
+        <span>${icon} ${name}</span>
+        <span style="color:var(--text2);">${count}</span>
+      </div>
+      <div style="height:8px;background:var(--bg);border-radius:4px;overflow:hidden;">
+        <div style="height:100%;width:${barW}%;background:#9b59b6;border-radius:4px;transition:width .3s;"></div>
+      </div>
+    </div>`;
+  });
+  container.innerHTML = html;
+}
+
+function renderAnalyticsTrend(monthlyTrend) {
+  const container = document.getElementById('ticketAnalyticsTrend');
+  if (!monthlyTrend || monthlyTrend.length === 0) {
+    container.innerHTML = '<div class="empty-state">No monthly data.</div>';
+    return;
+  }
+  const typeColors = {time_off: '#3498db', issue: '#e74c3c', feedback: '#2ecc71', pay_review: '#f39c12', other: '#95a5a6'};
+  const typeLabels = {time_off: '🕐', issue: '🐛', feedback: '💬', pay_review: '💰', other: '📝'};
+  const maxTotal = Math.max(...monthlyTrend.map(m => m.total || 0), 1);
+
+  let html = '<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">';
+  html += '<table style="width:100%;border-collapse:collapse;font-size:12px;">';
+  html += '<thead><tr style="border-bottom:1px solid var(--border);">';
+  html += '<th style="text-align:left;padding:4px 6px;">Month</th>';
+  html += '<th style="text-align:right;padding:4px 6px;">Total</th>';
+  html += '<th style="padding:4px 6px;width:60%;">Breakdown</th>';
+  html += '</tr></thead><tbody>';
+
+  monthlyTrend.forEach(m => {
+    let barHtml = '';
+    let legendHtml = '';
+    ['time_off', 'issue', 'feedback', 'pay_review', 'other'].forEach(type => {
+      const count = m[type] || 0;
+      if (count > 0) {
+        const pct = (count / m.total) * 100;
+        barHtml += `<div style="display:inline-block;height:14px;width:${pct}%;background:${typeColors[type]};border-radius:2px;vertical-align:middle;" title="${typeLabels[type]} ${count}"></div>`;
+        legendHtml += `<span style="margin-right:6px;">${typeLabels[type]} ${count}</span> `;
+      }
+    });
+    html += `<tr style="border-bottom:1px solid var(--border);">
+      <td style="padding:6px;white-space:nowrap;font-weight:500;">${m.month}</td>
+      <td style="padding:6px;text-align:right;font-weight:600;">${m.total}</td>
+      <td style="padding:6px;">
+        <div style="height:14px;background:var(--bg);border-radius:3px;overflow:hidden;min-width:60px;">${barHtml}</div>
+        <div style="font-size:10px;color:var(--text2);margin-top:2px;">${legendHtml}</div>
+      </td>
+    </tr>`;
+  });
+
+  html += '</tbody></table></div>';
+  container.innerHTML = html;
+}
+
+function renderAnalyticsSubmitters(topSubmitters) {
+  const container = document.getElementById('ticketAnalyticsSubmitters');
+  if (!topSubmitters || topSubmitters.length === 0) {
+    container.innerHTML = '<div class="empty-state">No data.</div>';
+    return;
+  }
+  const maxCount = topSubmitters[0].count;
+  const medals = ['🥇', '🥈', '🥉'];
+  let html = '';
+  topSubmitters.forEach((s, i) => {
+    const rank = i < 3 ? medals[i] : `${i + 1}.`;
+    const barW = (s.count / maxCount) * 100;
+    html += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+      <span style="min-width:24px;text-align:center;font-size:14px;">${rank}</span>
+      <span style="flex:1;font-size:13px;">${escHtml(s.user_name)} <span style="color:var(--text2);font-size:11px;">(${escHtml(s.user_id)})</span></span>
+      <span style="font-size:13px;font-weight:600;min-width:30px;text-align:right;">${s.count}</span>
+      <div style="width:80px;height:10px;background:var(--bg);border-radius:5px;overflow:hidden;flex-shrink:0;">
+        <div style="height:100%;width:${barW}%;background:var(--accent);border-radius:5px;"></div>
+      </div>
+    </div>`;
+  });
+  container.innerHTML = html;
 }
 
 // ═══════════ SECURITY DASHBOARD ═══════════
@@ -9666,6 +9965,7 @@ async function loadTimesheetConfig() {
     document.getElementById('tsConfigDailyOT').value = config.overtime_daily_threshold || 8;
     document.getElementById('tsConfigWeeklyOT').value = config.overtime_weekly_threshold || 40;
     document.getElementById('tsConfigLateGrace').value = config.late_grace_minutes || 5;
+    document.getElementById('tsConfigAutoApprove').value = config.auto_approve_threshold_days !== undefined ? config.auto_approve_threshold_days : 14;
   } catch(e) {}
 }
 
@@ -9673,7 +9973,8 @@ async function saveTimesheetConfig() {
   const config = {
     overtime_daily_threshold: parseFloat(document.getElementById('tsConfigDailyOT').value) || 8,
     overtime_weekly_threshold: parseFloat(document.getElementById('tsConfigWeeklyOT').value) || 40,
-    late_grace_minutes: parseInt(document.getElementById('tsConfigLateGrace').value) || 5
+    late_grace_minutes: parseInt(document.getElementById('tsConfigLateGrace').value) || 5,
+    auto_approve_threshold_days: parseInt(document.getElementById('tsConfigAutoApprove').value) || 14
   };
   try {
     const r = await fetch(BACKEND_URL + '/api/timesheet/config', {

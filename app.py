@@ -859,6 +859,7 @@ def get_timesheet_config():
         'overtime_weekly_threshold': 40, # hours per week before OT kicks in
         'late_grace_minutes': 5,
         'max_staff_off_per_day': 3,      # max employees off same day before warning
+        'auto_approve_threshold_days': 14, # auto-approve time-off if requested this many days in advance with no conflicts
         'offsite_backup': {
             'enabled': False,
             'host': '',
@@ -886,6 +887,7 @@ def save_timesheet_config(config):
         'overtime_weekly_threshold': 40,
         'late_grace_minutes': 5,
         'max_staff_off_per_day': 3,
+        'auto_approve_threshold_days': 14,
         'offsite_backup': {
             'enabled': False,
             'host': '',
@@ -14969,7 +14971,50 @@ def ticket_submit():
     log_activity('ticket_submitted', user_id, user_data.get('role', 'user'),
                  {'ticket_id': ticket['id'], 'type': ticket_type, 'subject': subject})
 
-    return jsonify({'message': 'Ticket submitted successfully!', 'ticket': ticket}), 201
+    # --- Auto-approve for low-risk time-off ---
+    auto_approved = False
+    if ticket_type == 'time_off' and ticket.get('date_from') and ticket.get('date_to'):
+        try:
+            ts_config = get_timesheet_config()
+            threshold = int(ts_config.get('auto_approve_threshold_days', 14))
+            d_from = datetime.strptime(ticket['date_from'], '%Y-%m-%d')
+            created = datetime.fromisoformat(ticket['created_at']).replace(
+                hour=0, minute=0, second=0, microsecond=0)
+            days_advance = (d_from - created).days
+            if days_advance >= threshold:
+                conflict = check_timeoff_conflicts(ticket, tickets)
+                if not conflict:
+                    # Check no other pending conflicts exist
+                    for t in tickets:
+                        if t.get('id') == ticket['id']:
+                            t['status'] = 'approved'
+                            t['responded_by'] = 'system'
+                            t['responded_at'] = datetime.now().isoformat()
+                            t['response_note'] = (
+                                f'Auto-approved: requested {days_advance} days in advance '
+                                f'with no scheduling conflicts.')
+                            t['response_read'] = True
+                            # Update local ticket ref for response
+                            ticket['status'] = 'approved'
+                            ticket['responded_by'] = 'system'
+                            ticket['responded_at'] = t['responded_at']
+                            ticket['response_note'] = t['response_note']
+                            ticket['response_read'] = True
+                            auto_approved = True
+                            break
+                    if auto_approved:
+                        save_json_data(TICKETS_FILE, tickets)
+                        log_activity('ticket_auto_approved', 'system', 'system',
+                                     {'ticket_id': ticket['id'], 'type': 'time_off',
+                                      'days_advance': days_advance, 'threshold': threshold})
+        except Exception:
+            pass  # Auto-approval is a nice-to-have; never block submission
+
+    resp = {'message': 'Ticket submitted successfully!', 'ticket': ticket}
+    if auto_approved:
+        resp['auto_approved'] = True
+        resp['message'] = '✅ Time-off request auto-approved — requested well in advance with no scheduling conflicts!'
+    return jsonify(resp), 201
 
 
 @app.route('/api/tickets/my', methods=['POST'])
@@ -15171,6 +15216,143 @@ def ticket_mark_read():
         'unread_before': unread_before,
         'alerts': alerts,
         'read_count': len(alerts),
+    })
+
+
+@app.route('/api/tickets/analytics', methods=['POST'])
+def ticket_analytics():
+    """Return aggregated ticket analytics by type/category over time.
+    Admin-only endpoint. Accepts optional date_from/date_to for filtering.
+    Returns counts by type, status, label, monthly trend, and top submitters."""
+    data = request.json or {}
+    admin_pin = data.get('adminPin')
+    if not admin_pin or not (check_perm(admin_pin, 'manage_users')):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    tickets = load_json_data(TICKETS_FILE)
+    if not isinstance(tickets, list):
+        tickets = []
+
+    filter_date_from = data.get('date_from')
+    filter_date_to = data.get('date_to')
+
+    # Filter by date range if provided
+    filtered = []
+    for t in tickets:
+        created = t.get('created_at', '')
+        if filter_date_from or filter_date_to:
+            if not created:
+                continue
+            try:
+                created_date = created[:10]
+                if filter_date_from and created_date < filter_date_from:
+                    continue
+                if filter_date_to and created_date > filter_date_to:
+                    continue
+            except (ValueError, TypeError):
+                pass
+        filtered.append(t)
+
+    total = len(filtered)
+    if total == 0:
+        return jsonify({
+            'total': 0,
+            'by_type': {},
+            'by_status': {},
+            'by_label': {},
+            'monthly_trend': [],
+            'avg_response_hours': None,
+            'top_submitters': [],
+        })
+
+    # Count by type
+    by_type = {}
+    type_labels = {'time_off': '🕐 Time Off', 'issue': '🐛 Issue', 'feedback': '💬 Feedback', 'pay_review': '💰 Pay Review', 'other': '📝 Other'}
+    for t in filtered:
+        tt = t.get('type', 'other')
+        by_type[tt] = by_type.get(tt, 0) + 1
+
+    # Count by status
+    by_status = {}
+    for t in filtered:
+        s = t.get('status', 'pending')
+        by_status[s] = by_status.get(s, 0) + 1
+
+    # Count by label (issue tickets only)
+    by_label = {}
+    for t in filtered:
+        if t.get('type') == 'issue':
+            lbl = t.get('label') or 'unlabeled'
+            by_label[lbl] = by_label.get(lbl, 0) + 1
+
+    # Monthly trend (last 12 months)
+    now = datetime.now()
+    monthly_trend = []
+    months_map = {}
+    for i in range(11, -1, -1):
+        m = now.month - i
+        y = now.year
+        while m < 1:
+            m += 12
+            y -= 1
+        month_key = f"{y}-{m:02d}"
+        months_map[month_key] = {'month': month_key, 'time_off': 0, 'issue': 0, 'feedback': 0, 'pay_review': 0, 'other': 0, 'total': 0}
+
+    for t in filtered:
+        created = t.get('created_at', '')
+        if created and len(created) >= 7:
+            month_key = created[:7]  # YYYY-MM
+            if month_key in months_map:
+                tt = t.get('type', 'other')
+                if tt in months_map[month_key]:
+                    months_map[month_key][tt] += 1
+                months_map[month_key]['total'] += 1
+
+    for mk in sorted(months_map.keys()):
+        monthly_trend.append(months_map[mk])
+
+    # Average response time (from created to responded_at, in hours)
+    response_times = []
+    for t in filtered:
+        if t.get('status') in ('approved', 'denied') and t.get('created_at') and t.get('responded_at'):
+            try:
+                created_dt = datetime.fromisoformat(t['created_at'])
+                responded_dt = datetime.fromisoformat(t['responded_at'])
+                diff = (responded_dt - created_dt).total_seconds() / 3600
+                if diff >= 0:
+                    response_times.append(diff)
+            except (ValueError, TypeError):
+                pass
+
+    avg_response_hours = round(sum(response_times) / len(response_times), 1) if response_times else None
+
+    # Top submitters
+    submitter_counts = {}
+    for t in filtered:
+        uid = t.get('user_id', 'unknown')
+        uname = t.get('user_name', 'Unknown')
+        submitter_counts[uid] = submitter_counts.get(uid, {'user_id': uid, 'user_name': uname, 'count': 0})
+        submitter_counts[uid]['count'] += 1
+
+    top_submitters = sorted(submitter_counts.values(), key=lambda x: x['count'], reverse=True)[:10]
+
+    # Resolved vs pending rates
+    resolved_count = sum(1 for t in filtered if t.get('status') in ('approved', 'denied'))
+    pending_count = sum(1 for t in filtered if t.get('status') == 'pending')
+    resolution_rate = round((resolved_count / total) * 100, 1) if total > 0 else 0
+
+    return jsonify({
+        'total': total,
+        'by_type': by_type,
+        'by_status': by_status,
+        'by_label': by_label,
+        'monthly_trend': monthly_trend,
+        'avg_response_hours': avg_response_hours,
+        'top_submitters': top_submitters,
+        'resolved_count': resolved_count,
+        'pending_count': pending_count,
+        'resolution_rate': resolution_rate,
+        'type_labels': type_labels,
     })
 
 
