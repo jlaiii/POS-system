@@ -332,12 +332,62 @@ def load_json_data(filepath):
         return []  # Return empty list for others
 
 
+# ── Data Guardian — critical file write protection ───────────────────
+CRITICAL_JSON_FILES = ['items.json', 'users.json', 'orders.json']
+MIN_RECORDS_BASELINE = {
+    'users.json': 3,
+    'items.json': 5,
+    'orders.json': 1,
+}
+
+def _count_records(data, filename):
+    """Count meaningful records in a JSON structure."""
+    if filename == 'items.json':
+        if isinstance(data, dict):
+            return sum(len(v) for v in data.values())
+        return len(data) if isinstance(data, list) else 0
+    if isinstance(data, dict):
+        return len(data)
+    if isinstance(data, list):
+        return len(data)
+    return 0
+
+def _data_guardian_check(filepath, data):
+    """Warn if writing critical file would shrink it dangerously.
+    Returns True if the write should proceed, False if blocked.
+    """
+    basename = os.path.basename(filepath)
+    if basename not in CRITICAL_JSON_FILES:
+        return True  # Not a critical file, allow
+    current_count = _count_records(data, basename)
+    min_rec = MIN_RECORDS_BASELINE.get(basename, 0)
+    if min_rec > 0 and current_count < min_rec:
+        import traceback
+        stack = ''.join(traceback.format_stack(limit=6))
+        print(f"[DATA GUARDIAN] ⚠️  BLOCKED write to {basename}: "
+              f"only {current_count} records (minimum {min_rec}). "
+              f"Caller:\n{stack}")
+        return False
+    return True
+
+
 def save_json_data(filepath, data):
     dirname = os.path.dirname(filepath)
     if dirname:
         os.makedirs(dirname, exist_ok=True)
+    if not _data_guardian_check(filepath, data):
+        return  # Block the write — data would be dangerously small
+    # Make file writable if it's read-only, then restore after
+    was_readonly = False
+    if os.path.exists(filepath):
+        mode = os.stat(filepath).st_mode
+        if not (mode & 0o200):  # owner write bit not set
+            was_readonly = True
+            os.chmod(filepath, 0o644)
     with open(filepath, 'w') as f:
         json.dump(data, f, indent=4)
+    if was_readonly:
+        os.chmod(filepath, 0o444)
 
 
 # --- Platform / Multi-Tenant Helpers ---

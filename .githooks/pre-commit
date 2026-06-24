@@ -1,0 +1,60 @@
+#!/bin/sh
+# POS System — Pre-commit Hook
+# Prevents committing corrupted data files
+#
+# Installed via: git config core.hooksPath .githooks
+
+# Files that should never shrink below minimum record count
+# (checked before each commit)
+MIN_ITEMS=5
+MIN_USERS=3
+
+# Check items.json
+if [ -f "items.json" ]; then
+    ITEM_COUNT=$(python3 -c "
+import json
+with open('items.json') as f:
+    data = json.load(f)
+if isinstance(data, dict):
+    cnt = sum(len(v) for v in data.values())
+else:
+    cnt = len(data)
+print(cnt)
+" 2>/dev/null)
+    if [ -n "$ITEM_COUNT" ] && [ "$ITEM_COUNT" -lt "$MIN_ITEMS" ] 2>/dev/null; then
+        echo "❌ PRE-COMMIT BLOCKED: items.json has only $ITEM_COUNT items (minimum $MIN_ITEMS)"
+        echo "   This looks like data corruption. Restore from backup or baseline before committing."
+        exit 1
+    fi
+fi
+
+# Check users.json
+if [ -f "users.json" ]; then
+    USER_COUNT=$(python3 -c "
+import json
+with open('users.json') as f:
+    data = json.load(f)
+if isinstance(data, dict):
+    print(len(data))
+elif isinstance(data, list):
+    print(len(data))
+else:
+    print(0)
+" 2>/dev/null)
+    if [ -n "$USER_COUNT" ] && [ "$USER_COUNT" -lt "$MIN_USERS" ] 2>/dev/null; then
+        echo "❌ PRE-COMMIT BLOCKED: users.json has only $USER_COUNT users (minimum $MIN_USERS)"
+        echo "   This looks like data corruption. Restore from backup or baseline before committing."
+        exit 1
+    fi
+fi
+
+# Run data guardian quick check
+python3 scripts/data_guardian.py --check-only --quiet 2>/dev/null
+GUARDIAN_EXIT=$?
+if [ "$GUARDIAN_EXIT" -ne 0 ]; then
+    echo "⚠️  Data Guardian check failed. Run 'python3 scripts/data_guardian.py' for details."
+    echo "   If this is intentional, commit with --no-verify."
+    exit 1
+fi
+
+exit 0

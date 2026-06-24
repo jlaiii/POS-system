@@ -1,0 +1,32 @@
+{
+  "users.json": {
+    "count": 6,
+    "size": 4332,
+    "updated": "2026-06-24T04:44:00"
+  },
+  "items.json": {
+    "count": 14,
+    "size": 2561,
+    "updated": "2026-06-24T04:44:00"
+  },
+  "orders.json": {
+    "count": 48,
+    "size": 54029,
+    "updated": "2026-06-24T04:44:00"
+  },
+  "inventory.json": {
+    "count": 15,
+    "size": 1320,
+    "updated": "2026-06-24T04:44:00"
+  },
+  "shift_log.json": {
+    "count": 27,
+    "size": 13105,
+    "updated": "2026-06-24T04:44:00"
+  },
+  "activity_log.json": {
+    "count": 388,
+    "size": 139378,
+    "updated": "2026-06-24T04:44:00"
+  }
+}
