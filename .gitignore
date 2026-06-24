@@ -22,3 +22,4 @@ pos_orders_backup.json
 pos.db
 timesheet_approvals.json
 tickets.json
+.data_baseline.json
