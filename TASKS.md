@@ -2,7 +2,7 @@
 
 > Auto-managed by 3 Hermes Worker Crons (every 30 min each, staggered claims).
 > Workers use `[~]` to claim tasks before working. Never pick a claimed task.
-> Last updated: 2026-06-24 (curation #14 — removed duplicate Reliability section, promoted Discord alerts + rate limiting to HIGH, moved dietary tags task to MEDIUM, trimmed Done section, added bulk CSV import task)
+> Last updated: 2026-06-24 (audit #15 — found Flask dev servers running instead of gunicorn, added 3 new deployment/quality tasks)
 
 ## Status Legend
 - `[ ]` = pending (available for any worker)
@@ -736,6 +736,18 @@ Super admin PIN is separate from any business PIN. Super admin can create busine
 - [ ] **Business-facing status page** — `status.posapp.com` showing platform uptime, incident history, scheduled maintenance. Automatic — if the Reliability Bot detects an outage, it updates the status page. Gives business owners confidence that "it's not just me, the platform is down."
 
 - [ ] **Multi-language per business** — While the platform supports EN+ES, some businesses may want additional languages (French, Chinese, Arabic). Per-business language config: enabled languages, default language. Menu items support translations per language. This is for international deployment.
+
+## Audit #15 — 2026-06-24: Deployment & Quality Gaps
+
+### Priority: HIGH
+
+- [ ] **Fix deployment: gunicorn not running, Flask dev servers in use** — The gunicorn migration (marked [x] at line 745) is NOT actually deployed. The system is running on two Flask dev server instances (ports 5000 and 5996) instead of gunicorn. The systemd service `pos-system.service` is **disabled** and **inactive (dead)**. The `pos_monitor.py` cron tries to fix but falls back to `run_flask.sh` which uses gunicorn, yet the running PIDs show `python3 -c "from app import app; app.run(...)"` — suggesting the Hermes agent or another script starts Flask directly. Fix: (1) Enable + start systemd service, (2) identify what's starting the Flask dev servers and disable it, (3) verify gunicorn is the only process on port 5000, (4) update pos_monitor.py to report gunicorn health correctly.
+
+### Priority: MEDIUM
+
+- [ ] **Add test suite (zero tests in repo)** — The entire repository has 0 test files. For a production POS handling real money, orders, timesheets, and employee data, this is critically risky. Minimum: add unit tests for API endpoints (orders, clock-in/out, refunds), JSON data integrity, and frontend utility functions. Use pytest for backend and a simple JS test runner for frontend. Target: 50+ tests covering core workflows.
+
+- [ ] **Clean up duplicate Flask/gunicorn instances** — Two server processes are currently running simultaneously: one on port 5000 (localhost only, Flask dev server) and one on port 5996 (0.0.0.0, Flask dev server). This is a deployment drift/duplication issue — only one should be running. The port 5996 instance appears to be started by an external process (Hermes agent?). Audit all startup paths (cron, Hermes agent, systemd, manual scripts) and ensure only one production instance runs on port 5000 via systemd + gunicorn.
 
 ## Reliability — Auto-Discovered Issues (NEW — June 2026)
 
