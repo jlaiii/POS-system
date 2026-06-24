@@ -5012,6 +5012,116 @@ def get_refunds():
     return jsonify({'refunds': refunded_orders, 'count': len(refunded_orders)})
 
 
+# --- Re-fire / Re-send Order Items to Kitchen Endpoint ---
+
+@app.route('/api/orders/refire', methods=['POST'])
+def refire_order_items():
+    """
+    Re-fire specific line items from a completed/refunded order back to the kitchen.
+    Creates a new pending order with the re-fired items so they appear fresh in the
+    kitchen display queue. Links back to the original order via refire_source.
+    Requires manage_orders permission.
+    """
+    data = request.json
+    admin_pin = data.get('adminPin')
+    order_id = data.get('order_id')
+    item_indices = data.get('item_indices')  # optional array; None or [] means re-fire ALL items
+
+    if not admin_pin:
+        return jsonify({'message': 'Admin PIN is required.'}), 400
+    if order_id is None:
+        return jsonify({'message': 'Order ID is required.'}), 400
+
+    if not check_perm(admin_pin, 'manage_orders'):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    orders = load_json_data(ORDERS_FILE)
+
+    # Find the original order
+    source_order = None
+    for o in orders:
+        if o.get('order_id') == order_id:
+            source_order = o
+            break
+
+    if source_order is None:
+        return jsonify({'message': f'Order #{order_id} not found'}), 404
+
+    source_items = source_order.get('items', [])
+    if not source_items:
+        return jsonify({'message': 'Original order has no items to re-fire.'}), 400
+
+    # Determine which items to re-fire
+    if item_indices and isinstance(item_indices, list) and len(item_indices) > 0:
+        refire_items = []
+        for idx in item_indices:
+            if 0 <= idx < len(source_items):
+                refire_items.append(source_items[idx])
+        if not refire_items:
+            return jsonify({'message': 'No valid items found at the specified indices.'}), 400
+    else:
+        # Re-fire all items
+        refire_items = [dict(it) for it in source_items]
+
+    # Get next order ID from counter
+    counter_data = load_json_data(ORDER_COUNTER_FILE)
+    if not isinstance(counter_data, dict):
+        counter_data = {"counter": 1}
+    new_order_id = counter_data.get("counter", 1)
+
+    # Build a summary of re-fired items for notes
+    item_summary = ', '.join(f"{it.get('name', 'Unknown')} x{it.get('qty', 1)}" for it in refire_items)
+
+    new_order = {
+        'order_id': new_order_id,
+        'status': 'pending',
+        'claimed_by': None,
+        'claimed_at': None,
+        'completed_at': None,
+        'date': datetime.now().isoformat(),
+        'user': source_order.get('user', admin_pin),
+        'payment': source_order.get('payment', 'N/A'),
+        'items': refire_items,
+        'subtotal': sum(float(it.get('price', 0)) * int(it.get('qty', 1)) for it in refire_items),
+        'tax_amount': 0,
+        'tip_amount': 0,
+        'service_charge_amount': 0,
+        'total': sum(float(it.get('price', 0)) * int(it.get('qty', 1)) for it in refire_items),
+        'notes': f"🔁 Re-fire from Order #{order_id}: {item_summary}",
+        'table_number': source_order.get('table_number'),
+        'refire_source': order_id,
+        'delivery_address': source_order.get('delivery_address'),
+        'customer_email': ''
+    }
+    new_order['subtotal'] = round(new_order['subtotal'], 2)
+    new_order['total'] = round(new_order['total'], 2)
+
+    orders.append(new_order)
+    save_json_data(ORDERS_FILE, orders)
+
+    # Increment counter
+    counter_data["counter"] = new_order_id + 1
+    save_json_data(ORDER_COUNTER_FILE, counter_data)
+
+    # Activity logging
+    log_activity('refire_order', admin_pin, 'user', {
+        'source_order_id': order_id,
+        'new_order_id': new_order_id,
+        'item_count': len(refire_items),
+        'item_indices': item_indices if item_indices else 'all',
+        'item_summary': item_summary
+    })
+
+    # Notify kitchen
+    emit_kitchen_update()
+
+    return jsonify({
+        'message': f'🔁 {len(refire_items)} item(s) re-fired from Order #{order_id} as Order #{new_order_id}',
+        'new_order_id': new_order_id,
+        'refired_items': len(refire_items)
+    })
+
+
 # --- Quick-Order Favorites Endpoints ---
 
 @app.route('/api/favorites/save', methods=['POST'])

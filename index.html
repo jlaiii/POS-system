@@ -3586,6 +3586,12 @@ const L10N = {
     'security.active_sessions': 'Active Sessions',
     'security.logout_all': '🚪 Log Out Everywhere',
     'security.no_sessions': 'No active sessions.',
+    'history.refire': '🔁 Re-fire',
+    'history.refire_all': '🔁 Re-fire All',
+    'history.refiring_items': 'Re-firing items to kitchen...',
+    'history.refiring_all': 'Re-firing all items to kitchen...',
+    'history.refire_failed': 'Failed to re-fire items',
+    'history.refire_success': 'Items re-fired to kitchen!',
   },
   es: {
     'app.title': '🍽️ Sistema POS',
@@ -4143,6 +4149,12 @@ const L10N = {
     'security.active_sessions': 'Sesiones Activas',
     'security.logout_all': '🚪 Cerrar Todas las Sesiones',
     'security.no_sessions': 'No hay sesiones activas.',
+    'history.refire': '🔁 Re-enviar',
+    'history.refire_all': '🔁 Re-enviar Todo',
+    'history.refiring_items': 'Re-enviando artículos a cocina...',
+    'history.refiring_all': 'Re-enviando todos los artículos a cocina...',
+    'history.refire_failed': 'Error al re-enviar artículos',
+    'history.refire_success': '¡Artículos re-enviados a cocina!',
   }
 };
 
@@ -8711,9 +8723,9 @@ async function loadOrderHistory() {
           <span><strong>#${orderNum}</strong> — ${dt}${statusBadge}</span>
           <span class="ho-total">$${total}</span>
         </div>
-        <div class="ho-meta">${t('history.payment')} ${escHtml(paymentDisplay)} | ${t('history.user')} ${escHtml(o.user || 'N/A')}${hasTax ? ' | ' + t('history.tax') + ': $' + parseFloat(o.tax_amount).toFixed(2) : ''}${hasServiceCharge ? ' | 🔧 +$' + parseFloat(o.service_charge_amount).toFixed(2) : ''}${hasTip ? ' | 💬 ' + t('receipt.tip') + ': $' + parseFloat(o.tip_amount).toFixed(2) : ''}${o.table_number ? ' | 🪪 Table #' + o.table_number : ''}${hasDelivery ? ' | 📮 ' + escHtml(formatDeliveryAddress(deliveryAddr)) : ''}${orderNotes ? ' | 📝 ' + t('history.notes') : ''}${refundReasonStr} <button class="ghost" onclick="event.stopPropagation();reorderFromHistory(${JSON.stringify(items).replace(/"/g, '&quot;')})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#2ecc71;" title="${t('history.reorder')}">🔄</button> <button class="ghost" onclick="event.stopPropagation();printHistoryReceipt(${JSON.stringify(o).replace(/"/g, '&quot;')}, ${orderNum})" style="font-size:12px;padding:4px 8px;min-height:28px;color:var(--accent);">🖨️</button> <button class="ghost" onclick="event.stopPropagation();emailHistoryReceipt(${o.order_id})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#4fc3f7;" title="${t('history.email_receipt')}">📧</button>${canRefund && !isRefunded ? \`<button class="ghost" onclick="event.stopPropagation();showRefundOverlay({order_id: ${o.order_id}, total: '${total}', date: '${(o.date || '').replace(/'/g, "\\'")}', payment: '${(o.payment || '').replace(/'/g, "\\'")}', user: '${(o.user || '').replace(/'/g, "\\'")}', orderNum: ${orderNum}, items: ${JSON.stringify(items).replace(/\"/g, '&quot;')}})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#e74c3c;">↩️</button>\` : ''}${isCompleted && !isReadyForPickup && !isCollected ? \`<button class="ghost" onclick="event.stopPropagation();markOrderReadyForPickup(${o.order_id})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#f39c12;">📋 Ready</button>\` : ''}</div>
+        <div class="ho-meta">${t('history.payment')} ${escHtml(paymentDisplay)} | ${t('history.user')} ${escHtml(o.user || 'N/A')}${hasTax ? ' | ' + t('history.tax') + ': $' + parseFloat(o.tax_amount).toFixed(2) : ''}${hasServiceCharge ? ' | 🔧 +$' + parseFloat(o.service_charge_amount).toFixed(2) : ''}${hasTip ? ' | 💬 ' + t('receipt.tip') + ': $' + parseFloat(o.tip_amount).toFixed(2) : ''}${o.table_number ? ' | 🪪 Table #' + o.table_number : ''}${hasDelivery ? ' | 📮 ' + escHtml(formatDeliveryAddress(deliveryAddr)) : ''}${orderNotes ? ' | 📝 ' + t('history.notes') : ''}${refundReasonStr} <button class="ghost" onclick="event.stopPropagation();reorderFromHistory(${JSON.stringify(items).replace(/\"/g, '&quot;')})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#2ecc71;" title="${t('history.reorder')}">🔄</button>${!isRefunded ? `<button class="ghost" onclick="event.stopPropagation();refireOrderItem(${o.order_id}, null, this)" style="font-size:12px;padding:4px 8px;min-height:28px;color:#f39c12;" title="${t('history.refire_all')}">🔁 All</button>` : ''} <button class="ghost" onclick="event.stopPropagation();printHistoryReceipt(${JSON.stringify(o).replace(/\"/g, '&quot;')}, ${orderNum})" style="font-size:12px;padding:4px 8px;min-height:28px;color:var(--accent);">🖨️</button> <button class="ghost" onclick="event.stopPropagation();emailHistoryReceipt(${o.order_id})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#4fc3f7;" title="${t('history.email_receipt')}">📧</button>${canRefund && !isRefunded ? \`<button class="ghost" onclick="event.stopPropagation();showRefundOverlay({order_id: ${o.order_id}, total: '${total}', date: '${(o.date || '').replace(/'/g, "\\'")}', payment: '${(o.payment || '').replace(/'/g, "\\'")}', user: '${(o.user || '').replace(/'/g, "\\'")}', orderNum: ${orderNum}, items: ${JSON.stringify(items).replace(/\\"/g, '&quot;')}})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#e74c3c;">↩️</button>\` : ''}${isCompleted && !isReadyForPickup && !isCollected ? \`<button class="ghost" onclick="event.stopPropagation();markOrderReadyForPickup(${o.order_id})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#f39c12;">📋 Ready</button>\` : ''}</div>
         <div class="ho-details">
-          ${items.map((it, idx) => { const refundedItem = (o.refunded_items || []).find(ri => ri.item_index === idx); const isRefundedItem = !!refundedItem; return \`<div class="ho-item"${isRefundedItem ? ' style=\"opacity:0.6;\"' : ''}><span${isRefundedItem ? ' style=\"text-decoration:line-through;\"' : ''}>${isRefundedItem ? '↩️ ' : ''}${escHtml(it.name)} x${it.qty||1}${it.note ? '<br/><span style="color:var(--text2);font-size:12px;padding-left:12px;">📝 ' + escHtml(it.note) + '</span>' : ''}${it.modifiers && it.modifiers.length > 0 ? '<br/><span style="color:#f39c12;font-size:12px;padding-left:12px;">⚙️ ' + it.modifiers.map(m => escHtml(m.option)).join(' · ') + '</span>' : ''}${isRefundedItem ? '<br/><span style="color:#e74c3c;font-size:11px;padding-left:12px;">↩️ Refunded</span>' : ''}</span><span${isRefundedItem ? ' style=\"text-decoration:line-through;\"' : ''}>$${((it.price||0)*(it.qty||1)).toFixed(2)}</span></div>\`;}).join('')}
+          ${items.map((it, idx) => { const refundedItem = (o.refunded_items || []).find(ri => ri.item_index === idx); const isRefundedItem = !!refundedItem; const canRefire = !isRefundedItem; return \`<div class="ho-item"\${isRefundedItem ? ' style="opacity:0.6;"' : ''}><span\${isRefundedItem ? ' style="text-decoration:line-through;"' : ''}>\${isRefundedItem ? '↩️ ' : ''}\${escHtml(it.name)} x\${it.qty||1}\${it.note ? '<br/><span style="color:var(--text2);font-size:12px;padding-left:12px;">📝 ' + escHtml(it.note) + '</span>' : ''}\${it.modifiers && it.modifiers.length > 0 ? '<br/><span style="color:#f39c12;font-size:12px;padding-left:12px;">⚙️ ' + it.modifiers.map(m => escHtml(m.option)).join(' · ') + '</span>' : ''}\${isRefundedItem ? '<br/><span style="color:#e74c3c;font-size:11px;padding-left:12px;">↩️ Refunded</span>' : ''}</span><span\${isRefundedItem ? ' style="text-decoration:line-through;"' : ''}>\$\${((it.price||0)*(it.qty||1)).toFixed(2)}\${canRefire ? \` <button class="ghost" onclick="event.stopPropagation();refireOrderItem(${o.order_id}, [${idx}], this)" style="font-size:11px;padding:2px 6px;min-height:24px;color:#f39c12;" title="\${t('history.refire')}">🔁</button>\` : ''}</span></div>\`;}).join('')}
           ${hasTax ? \`
             <div class="ho-item" style="color:var(--text2);"><span>${t('history.subtotal')}</span><span>$${parseFloat(o.subtotal || o.total || 0).toFixed(2)}</span></div>
             <div class="ho-item" style="color:var(--text2);"><span>${t('history.tax')}</span><span>$${parseFloat(o.tax_amount).toFixed(2)}</span></div>
@@ -8765,6 +8777,64 @@ function reorderFromHistory(items) {
   // Also try more specific selector
   const posTabBtn = document.querySelector('#posTabBtn') || document.querySelector('[data-tab="pos"]');
   if (posTabBtn) posTabBtn.click();
+}
+
+// ═══════════ RE-FIRE ORDER ITEMS TO KITCHEN ═══════════
+
+/**
+ * Re-fire one or more items from a past order back to the kitchen.
+ * @param {number} orderId - The original order ID
+ * @param {number[]|null} itemIndices - Array of item indices to re-fire, or null for ALL items
+ * @param {HTMLElement} btnEl - The button element (for loading state)
+ */
+async function refireOrderItem(orderId, itemIndices, btnEl) {
+  if (!currentUser) {
+    showToast(t('login_required', 'Please log in first.'), 'warning');
+    return;
+  }
+  if (btnEl) {
+    btnEl.disabled = true;
+    btnEl.textContent = '⏳';
+  }
+
+  const label = itemIndices && itemIndices.length > 0
+    ? t('history.refiring_items', 'Re-firing items...')
+    : t('history.refiring_all', 'Re-firing all items...');
+  showToast(label, 'info');
+
+  try {
+    const result = await fetchJSON(BACKEND_URL + '/api/orders/refire', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        adminPin: currentUser.id,
+        order_id: orderId,
+        item_indices: itemIndices
+      })
+    });
+
+    if (!result.ok) {
+      showToast(result.error || t('history.refire_failed', 'Failed to re-fire items'), 'danger');
+      if (btnEl) {
+        btnEl.disabled = false;
+        btnEl.textContent = '🔁';
+      }
+      return;
+    }
+
+    const data = result.data || result;
+    showToast(data.message || t('history.refire_success', 'Items re-fired to kitchen!'), 'success');
+
+    // Refresh order history to reflect the new order
+    loadOrderHistory();
+
+  } catch (e) {
+    showToast(t('network_error'), 'danger');
+    if (btnEl) {
+      btnEl.disabled = false;
+      btnEl.textContent = '🔁';
+    }
+  }
 }
 
 // ═══════════ RECENT ORDERS QUICK-ACCESS ═══════════
