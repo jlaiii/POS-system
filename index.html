@@ -801,6 +801,11 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
             <button class="accent" onclick="submitOrder()" data-i18n="cart.submit">✅ Submit Order</button>
             <button class="danger" onclick="clearCart()" data-i18n="cart.clear">🗑️ Clear</button>
           </div>
+          <div id="posCashActions" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">
+            <button class="outline" onclick="noSaleOpenDrawer()" style="flex:1;min-width:100px;font-size:13px;border-color:#f39c12;color:#f39c12;min-height:48px;" data-i18n="pos.open_drawer">🔓 Open Drawer</button>
+            <button class="outline" onclick="posCashIn()" style="flex:1;min-width:100px;font-size:13px;border-color:#2ecc71;color:#2ecc71;min-height:48px;" data-i18n="pos.cash_in">💰 Cash In</button>
+            <button class="outline" onclick="posCashOut()" style="flex:1;min-width:100px;font-size:13px;border-color:#e94560;color:#e94560;min-height:48px;" data-i18n="pos.cash_out">💸 Cash Out</button>
+          </div>
           <div id="favoritesRow" style="display:none;margin-top:6px;gap:6px;flex-wrap:wrap;">
             <button class="outline" onclick="saveFavoriteDialog()" style="flex:1;min-width:100px;font-size:13px;border-color:#f39c12;color:#f39c12;" data-i18n="favorites.save_as">⭐ Save as Favorite</button>
             <button class="outline" onclick="showFavorites()" style="flex:1;min-width:100px;font-size:13px;border-color:#9b59b6;color:#9b59b6;" data-i18n="favorites.load">⭐ My Favorites</button>
@@ -3842,6 +3847,15 @@ const L10N = {
     'callserver.gototable': '🪑 Go to Table',
     'callserver.badge': '📞 {count} call(s)',
     'callserver.no_calls': 'No pending calls',
+    // POS quick cash actions
+    'pos.open_drawer': '🔓 Open Drawer',
+    'pos.open_drawer_confirm': 'Open the cash drawer for change (no sale)?',
+    'pos.cash_in': '💰 Cash In',
+    'pos.cash_out': '💸 Cash Out',
+    'pos.cash_in_prompt': 'Enter Cash In amount ($):',
+    'pos.cash_out_prompt': 'Enter Cash Out amount ($):',
+    'pos.amount_invalid': 'Invalid amount. Enter a positive number.',
+    'pos.reason_prompt': 'Enter reason:',
   },
   es: {
     'app.title': '🍽️ Sistema POS',
@@ -4594,6 +4608,15 @@ const L10N = {
     'callserver.gototable': '🪑 Ir a Mesa',
     'callserver.badge': '📞 {count} llamada(s)',
     'callserver.no_calls': 'Sin llamadas pendientes',
+    // POS quick cash actions
+    'pos.open_drawer': '🔓 Abrir Cajón',
+    'pos.open_drawer_confirm': '¿Abrir el cajón para cambio (sin venta)?',
+    'pos.cash_in': '💰 Entrada Efectivo',
+    'pos.cash_out': '💸 Salida Efectivo',
+    'pos.cash_in_prompt': 'Ingrese monto de entrada ($):',
+    'pos.cash_out_prompt': 'Ingrese monto de salida ($):',
+    'pos.amount_invalid': 'Monto inválido. Ingrese un número positivo.',
+    'pos.reason_prompt': 'Ingrese motivo:',
   }
 };
 
@@ -18183,6 +18206,59 @@ async function closeCashDrawer() {
     closeCashDrawer._askingVariance = false;
     closeCashDrawer._pendingVarianceReason = '';
   }
+}
+
+// ═══════════ POS CASH ACTIONS (No Sale Drawer, Manual Cash In/Out) ═══════════
+async function noSaleOpenDrawer() {
+  if (!currentUser) { showToast(t('toast.auth_required'), 'danger'); return; }
+  if (!confirm(t('pos.open_drawer_confirm'))) return;
+  try {
+    const r = await fetch(BACKEND_URL + '/api/cash_drawer/no_sale', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id })
+    });
+    const d = await r.json();
+    if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
+    showToast(d.message || '🔓 Drawer opened (no sale)', 'success');
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
+}
+
+async function posCashIn() {
+  if (!currentUser) { showToast(t('toast.auth_required'), 'danger'); return; }
+  const amount = prompt(t('pos.cash_in_prompt'));
+  if (!amount) return;
+  const amt = parseFloat(amount);
+  if (isNaN(amt) || amt <= 0) { showToast(t('pos.amount_invalid'), 'danger'); return; }
+  const reason = prompt(t('pos.reason_prompt'));
+  if (!reason || !reason.trim()) { showToast(t('toast.reason_required'), 'danger'); return; }
+  try {
+    const r = await fetch(BACKEND_URL + '/api/cash_drawer/transaction', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, type: 'cash_in', amount: amt, reason: reason.trim() })
+    });
+    const d = await r.json();
+    if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
+    showToast('💰 Cash In of $' + amt.toFixed(2) + ' recorded!', 'success');
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
+}
+
+async function posCashOut() {
+  if (!currentUser) { showToast(t('toast.auth_required'), 'danger'); return; }
+  const amount = prompt(t('pos.cash_out_prompt'));
+  if (!amount) return;
+  const amt = parseFloat(amount);
+  if (isNaN(amt) || amt <= 0) { showToast(t('pos.amount_invalid'), 'danger'); return; }
+  const reason = prompt(t('pos.reason_prompt'));
+  if (!reason || !reason.trim()) { showToast(t('toast.reason_required'), 'danger'); return; }
+  try {
+    const r = await fetch(BACKEND_URL + '/api/cash_drawer/transaction', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, type: 'cash_out', amount: amt, reason: reason.trim() })
+    });
+    const d = await r.json();
+    if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
+    showToast('💸 Cash Out of $' + amt.toFixed(2) + ' recorded!', 'success');
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
 
 async function loadCashDrawerHistory() {

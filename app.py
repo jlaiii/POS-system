@@ -14591,6 +14591,52 @@ def cash_drawer_transaction():
     })
 
 
+@app.route('/api/cash_drawer/no_sale', methods=['POST'])
+def cash_drawer_no_sale():
+    """Record a no-sale drawer open (making change without a sale)."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+
+    if not check_perm(admin_pin, "manage_items"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    drawer = get_cash_drawer_data()
+
+    # Find active session
+    session = get_active_session(drawer)
+    if not session:
+        return jsonify({'message': 'No open cash drawer session. Open one first.'}), 409
+
+    users_data = load_json_data(USERS_FILE)
+    admin_user = users_data.get(admin_pin, {})
+    admin_name = admin_user.get('name', 'Unknown')
+
+    txn_id = secrets.token_hex(8)
+    transaction = {
+        'id': txn_id,
+        'session_id': session['id'],
+        'type': 'no_sale',
+        'amount': 0,
+        'reason': 'No sale — drawer opened for change',
+        'created_at': datetime.now().isoformat(),
+        'created_by': admin_pin,
+        'created_by_name': admin_name
+    }
+
+    drawer['transactions'].append(transaction)
+    save_cash_drawer_data(drawer)
+
+    log_activity('cash_drawer_no_sale', admin_pin, admin_user.get('role', 'unknown'), {
+        'session_id': session['id'],
+        'type': 'no_sale'
+    })
+
+    return jsonify({
+        'message': '🔓 Drawer opened (no sale).',
+        'transaction': transaction
+    })
+
+
 @app.route('/api/cash_drawer/close', methods=['POST'])
 def cash_drawer_close():
     """Close the current cash drawer session with reconciliation."""
