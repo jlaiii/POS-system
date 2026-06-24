@@ -86,6 +86,31 @@ button.ghost { background: transparent; color: var(--text2); }
 /* Compact button for tight-context layouts (36px vs 48px default) */
 button.btn-sm, .btn-sm { font-size: 13px; padding: 4px 12px; min-height: 36px; min-width: 36px; }
 
+/* ── Dietary Tag Chips ── */
+.dtag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  cursor: pointer;
+  user-select: none;
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  color: var(--text2);
+  transition: all 0.15s;
+  min-height: 36px;
+  touch-action: manipulation;
+}
+.dtag-chip:active { transform: scale(0.95); }
+.dtag-chip.selected {
+  background: rgba(233,69,96,0.15);
+  border-color: var(--accent);
+  color: var(--text);
+  box-shadow: 0 0 8px rgba(233,69,96,0.2);
+}
+
 .val-err { color: #ff6b6b; background: rgba(255,107,107,0.1); border: 1px solid rgba(255,107,107,0.3); }
 .val-warn { color: #ffd93d; background: rgba(255,217,61,0.1); border: 1px solid rgba(255,217,61,0.3); }
 
@@ -740,6 +765,23 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
             <input type="text" id="addItemImageUrl" placeholder="Image URL (optional)" style="max-width:200px;"/>
             <button class="accent" onclick="addItem()">Add</button>
           </div>
+          <div class="form-row" style="flex-wrap:wrap;gap:6px;align-items:center;">
+            <span style="font-size:13px;color:var(--text2);min-width:60px;">🏷️ Tags:</span>
+            <span class="dtag-chip" data-form="addItem" data-tag="Vegetarian" onclick="toggleDietaryTag('addItem',this)">🌿 Vegetarian</span>
+            <span class="dtag-chip" data-form="addItem" data-tag="Vegan" onclick="toggleDietaryTag('addItem',this)">🥦 Vegan</span>
+            <span class="dtag-chip" data-form="addItem" data-tag="Gluten-Free" onclick="toggleDietaryTag('addItem',this)">🌾 Gluten-Free</span>
+            <span class="dtag-chip" data-form="addItem" data-tag="Spicy" onclick="toggleDietaryTag('addItem',this)">🌶️ Spicy</span>
+            <span class="dtag-chip" data-form="addItem" data-tag="Nuts" onclick="toggleDietaryTag('addItem',this)">🥜 Nuts</span>
+            <span class="dtag-chip" data-form="addItem" data-tag="Dairy" onclick="toggleDietaryTag('addItem',this)">🥛 Dairy</span>
+            <span class="dtag-chip" data-form="addItem" data-tag="Eggs" onclick="toggleDietaryTag('addItem',this)">🥚 Eggs</span>
+            <span class="dtag-chip" data-form="addItem" data-tag="Seafood" onclick="toggleDietaryTag('addItem',this)">🦐 Seafood</span>
+            <span class="dtag-chip" data-form="addItem" data-tag="Soy" onclick="toggleDietaryTag('addItem',this)">🫘 Soy</span>
+            <span class="dtag-chip" data-form="addItem" data-tag="Organic" onclick="toggleDietaryTag('addItem',this)">🌱 Organic</span>
+            <span class="dtag-chip" data-form="addItem" data-tag="Halal" onclick="toggleDietaryTag('addItem',this)">☪️ Halal</span>
+            <span class="dtag-chip" data-form="addItem" data-tag="Kosher" onclick="toggleDietaryTag('addItem',this)">✡️ Kosher</span>
+            <span class="dtag-chip" data-form="addItem" data-tag="Sugar-Free" onclick="toggleDietaryTag('addItem',this)">🍃 Sugar-Free</span>
+            <span class="dtag-chip" data-form="addItem" data-tag="Low-Carb" onclick="toggleDietaryTag('addItem',this)">🥬 Low-Carb</span>
+          </div>
           </div>
           <div id="editItemForm">
             <h4>✏️ Edit Item</h4>
@@ -758,6 +800,23 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
               <input type="text" id="editNewImageUrl" placeholder="Image URL" style="max-width:200px;"/>
               <button class="success" onclick="saveEditItem()">Save</button>
               <button class="ghost" onclick="cancelEditItem()">Cancel</button>
+            </div>
+            <div class="form-row" style="flex-wrap:wrap;gap:6px;align-items:center;">
+              <span style="font-size:13px;color:var(--text2);min-width:60px;">🏷️ Tags:</span>
+              <span class="dtag-chip" data-form="editItem" data-tag="Vegetarian" onclick="toggleDietaryTag('editItem',this)">🌿 Vegetarian</span>
+              <span class="dtag-chip" data-form="editItem" data-tag="Vegan" onclick="toggleDietaryTag('editItem',this)">🥦 Vegan</span>
+              <span class="dtag-chip" data-form="editItem" data-tag="Gluten-Free" onclick="toggleDietaryTag('editItem',this)">🌾 Gluten-Free</span>
+              <span class="dtag-chip" data-form="editItem" data-tag="Spicy" onclick="toggleDietaryTag('editItem',this)">🌶️ Spicy</span>
+              <span class="dtag-chip" data-form="editItem" data-tag="Nuts" onclick="toggleDietaryTag('editItem',this)">🥜 Nuts</span>
+              <span class="dtag-chip" data-form="editItem" data-tag="Dairy" onclick="toggleDietaryTag('editItem',this)">🥛 Dairy</span>
+              <span class="dtag-chip" data-form="editItem" data-tag="Eggs" onclick="toggleDietaryTag('editItem',this)">🥚 Eggs</span>
+              <span class="dtag-chip" data-form="editItem" data-tag="Seafood" onclick="toggleDietaryTag('editItem',this)">🦐 Seafood</span>
+              <span class="dtag-chip" data-form="editItem" data-tag="Soy" onclick="toggleDietaryTag('editItem',this)">🫘 Soy</span>
+              <span class="dtag-chip" data-form="editItem" data-tag="Organic" onclick="toggleDietaryTag('editItem',this)">🌱 Organic</span>
+              <span class="dtag-chip" data-form="editItem" data-tag="Halal" onclick="toggleDietaryTag('editItem',this)">☪️ Halal</span>
+              <span class="dtag-chip" data-form="editItem" data-tag="Kosher" onclick="toggleDietaryTag('editItem',this)">✡️ Kosher</span>
+              <span class="dtag-chip" data-form="editItem" data-tag="Sugar-Free" onclick="toggleDietaryTag('editItem',this)">🍃 Sugar-Free</span>
+              <span class="dtag-chip" data-form="editItem" data-tag="Low-Carb" onclick="toggleDietaryTag('editItem',this)">🥬 Low-Carb</span>
             </div>
           </div>
           <div id="itemMgmtList"><div class="empty-state">Loading items...</div></div>
@@ -9533,14 +9592,19 @@ async function loadItemMgmt() {
         const bc = item.barcode || '';
         const imgUrl = item.image_url || '';
         const course = item.course || 'main';
+        const dietaryTags = item.dietary_tags || [];
         const imgHtml = imgUrl ? `<img src="${escHtml(imgUrl)}" alt="" style="width:32px;height:32px;border-radius:6px;object-fit:cover;margin-right:8px;vertical-align:middle;">` : '';
         const bcHtml = bc ? `<span class="ime-barcode" style="color:var(--text2);font-size:12px;font-family:monospace;margin-left:8px;">📷 ${escHtml(bc)}</span>` : '';
         const courseBadge = course === 'appetizer' ? '<span style="font-size:14px;margin-left:6px;" title="Appetizer — prepare first (5 min)">🥗</span>' : (course === 'dessert' ? '<span style="font-size:14px;margin-left:6px;" title="Dessert — prepare after mains">🍰</span>' : '');
+        const dietaryHtml = dietaryTags.length > 0 ? ' ' + dietaryTags.map(t => {
+          const icons = {'Vegetarian':'🌿','Vegan':'🥦','Gluten-Free':'🌾','Spicy':'🌶️','Nuts':'🥜','Dairy':'🥛','Eggs':'🥚','Seafood':'🦐','Soy':'🫘','Organic':'🌱','Halal':'☪️','Kosher':'✡️','Sugar-Free':'🍃','Low-Carb':'🥬'};
+          return `<span style="font-size:11px;margin-left:4px;" title="${escHtml(t)}">${icons[t]||'🏷️'}</span>`;
+        }).join('') : '';
         html += `<div class="item-mgmt-entry">
-          <div class="ime-info">${imgHtml}<span class="ime-cat">${escHtml(cat)}</span> — ${escHtml(item.name)} <span class="ime-price">$${item.price.toFixed(2)}</span>${bcHtml}${courseBadge}${item.modifiers && item.modifiers.groups && item.modifiers.groups.length > 0 ? '<span style="color:#f39c12;font-size:11px;margin-left:6px;">⚙️</span>' : ''} ${item.active === false ? '<span style="color:var(--text2);font-size:11px;margin-left:6px;" data-i18n="item.hidden">🚫 Hidden</span>' : '<span style="color:#2ecc71;font-size:11px;margin-left:6px;" data-i18n="item.visible">👁️ Visible</span>'}</div>
+          <div class="ime-info">${imgHtml}<span class="ime-cat">${escHtml(cat)}</span> — ${escHtml(item.name)} <span class="ime-price">$${item.price.toFixed(2)}</span>${bcHtml}${courseBadge}${dietaryHtml}${item.modifiers && item.modifiers.groups && item.modifiers.groups.length > 0 ? '<span style="color:#f39c12;font-size:11px;margin-left:6px;">⚙️</span>' : ''} ${item.active === false ? '<span style="color:var(--text2);font-size:11px;margin-left:6px;" data-i18n="item.hidden">🚫 Hidden</span>' : '<span style="color:#2ecc71;font-size:11px;margin-left:6px;" data-i18n="item.visible">👁️ Visible</span>'}</div>
           <div class="ime-actions">
             <button class="outline" onclick='toggleItemVisibility(${JSON.stringify(cat)},${JSON.stringify(item.name)})' style="font-size:13px;padding:6px 12px;min-height:36px;" title="${item.active === false ? t('item.show') : t('item.hide')}">${item.active === false ? '👁️' : '🚫'}</button>
-            <button class="outline" onclick='startEditItem(${JSON.stringify(cat)},${JSON.stringify(item.name)},${item.price},${JSON.stringify(bc)},${JSON.stringify(imgUrl)},${JSON.stringify(course)})' style="font-size:13px;padding:6px 12px;min-height:36px;">✏️</button>
+            <button class="outline" onclick='startEditItem(${JSON.stringify(cat)},${JSON.stringify(item.name)},${item.price},${JSON.stringify(bc)},${JSON.stringify(imgUrl)},${JSON.stringify(course)},${JSON.stringify(dietaryTags)})' style="font-size:13px;padding:6px 12px;min-height:36px;">✏️</button>
             <button class="outline" onclick='editItemModifiers(${JSON.stringify(cat)},${JSON.stringify(item.name)})' style="font-size:13px;padding:6px 12px;min-height:36px;">⚙️</button>
             <button class="danger" onclick='deleteItem(${JSON.stringify(cat)},${JSON.stringify(item.name)})' style="font-size:13px;padding:6px 12px;min-height:36px;">🗑️</button>
           </div>
@@ -9551,7 +9615,7 @@ async function loadItemMgmt() {
   } catch(e) { list.innerHTML = '<div class="empty-state">' + t('network_error') + '</div>'; }
 }
 
-function startEditItem(cat, name, price, barcode, imageUrl, course) {
+function startEditItem(cat, name, price, barcode, imageUrl, course, dietaryTags) {
   document.getElementById('editItemForm').classList.add('active');
   document.getElementById('editOldCat').value = cat;
   document.getElementById('editOldName').value = name;
@@ -9561,6 +9625,7 @@ function startEditItem(cat, name, price, barcode, imageUrl, course) {
   document.getElementById('editNewBarcode').value = barcode || '';
   document.getElementById('editNewImageUrl').value = imageUrl || '';
   document.getElementById('editNewCourse').value = course || 'main';
+  setDietaryTags('editItem', dietaryTags || []);
   document.getElementById('editItemForm').scrollIntoView({ behavior: 'smooth' });
 }
 
@@ -9577,11 +9642,12 @@ async function saveEditItem() {
   const newBarcode = document.getElementById('editNewBarcode').value.trim();
   const newImageUrl = document.getElementById('editNewImageUrl').value.trim();
   const newCourse = document.getElementById('editNewCourse').value;
+  const dietaryTags = getSelectedDietaryTags('editItem');
   if (!newCat || !newName || isNaN(newPrice) || newPrice <= 0) { showToast(t('toast.fill_all_fields'), 'danger'); return; }
   try {
     const r = await fetch(BACKEND_URL + '/api/edit_item', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adminPin: currentUser.id, oldCategory: oldCat, oldName, newCategory: newCat, newName, newPrice, barcode: newBarcode, image_url: newImageUrl, course: newCourse })
+      body: JSON.stringify({ adminPin: currentUser.id, oldCategory: oldCat, oldName, newCategory: newCat, newName, newPrice, barcode: newBarcode, image_url: newImageUrl, course: newCourse, dietary_tags: dietaryTags })
     });
     const d = await r.json();
     if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
@@ -9733,6 +9799,23 @@ async function saveModifierEditor() {
   } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
 
+// ── Dietary Tag helpers ──
+function toggleDietaryTag(formId, el) {
+  el.classList.toggle('selected');
+}
+function getSelectedDietaryTags(formId) {
+  const chips = document.querySelectorAll(`.dtag-chip[data-form="${formId}"].selected`);
+  return Array.from(chips).map(c => c.getAttribute('data-tag'));
+}
+function setDietaryTags(formId, tags) {
+  const chips = document.querySelectorAll(`.dtag-chip[data-form="${formId}"]`);
+  chips.forEach(c => {
+    const tag = c.getAttribute('data-tag');
+    if (tags.includes(tag)) c.classList.add('selected');
+    else c.classList.remove('selected');
+  });
+}
+
 async function addItem() {
   const category = document.getElementById('addItemCategory').value.trim();
   const name = document.getElementById('addItemName').value.trim();
@@ -9740,11 +9823,12 @@ async function addItem() {
   const barcode = document.getElementById('addItemBarcode').value.trim();
   const imageUrl = document.getElementById('addItemImageUrl').value.trim();
   const course = document.getElementById('addItemCourse').value;
+  const dietaryTags = getSelectedDietaryTags('addItem');
   if (!category || !name || isNaN(price) || price <= 0) { showToast(t('toast.fill_all_fields'), 'danger'); return; }
   try {
     const r = await fetch(BACKEND_URL + '/api/add_item', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adminPin: currentUser.id, category, name, price, barcode, image_url: imageUrl, course })
+      body: JSON.stringify({ adminPin: currentUser.id, category, name, price, barcode, image_url: imageUrl, course, dietary_tags: dietaryTags })
     });
     const d = await r.json();
     if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
@@ -9754,6 +9838,7 @@ async function addItem() {
     document.getElementById('addItemPrice').value = '';
     document.getElementById('addItemBarcode').value = '';
     document.getElementById('addItemImageUrl').value = '';
+    setDietaryTags('addItem', []); // Clear selected tags
     loadItemMgmt();
     loadItems();
   } catch(e) { showToast(t('toast.network_error'), 'danger'); }

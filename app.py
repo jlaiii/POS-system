@@ -3933,7 +3933,7 @@ def edit_item():
                 old_barcode = items_data[old_category][i].get('barcode', '')
                 old_course = item.get('course', 'main')
                 old_active = item.get('active', True)
-                items_data[new_category].append({"name": new_name, "price": new_price, "barcode": data.get('barcode', old_barcode), "image_url": data.get('image_url', old_image_url), "course": data.get('course', old_course), "active": old_active, "dietary_tags": item.get('dietary_tags', [])})
+                items_data[new_category].append({"name": new_name, "price": new_price, "barcode": data.get('barcode', old_barcode), "image_url": data.get('image_url', old_image_url), "course": data.get('course', old_course), "active": old_active, "dietary_tags": data.get('dietary_tags', item.get('dietary_tags', []))})
             else:  # Only name/price/barcode changing within same category
                 items_data[old_category][i]["name"] = new_name
                 items_data[old_category][i]["price"] = new_price
@@ -3943,6 +3943,8 @@ def edit_item():
                     items_data[old_category][i]["image_url"] = data.get('image_url', '')
                 if 'course' in data and data.get('course') is not None:
                     items_data[old_category][i]["course"] = data.get('course', 'main')
+                if 'dietary_tags' in data:
+                    items_data[old_category][i]["dietary_tags"] = data.get('dietary_tags', [])
             break
 
     if not item_found:
