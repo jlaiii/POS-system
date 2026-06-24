@@ -167,6 +167,40 @@ body {
   box-shadow: 0 2px 12px rgba(0,0,0,0.1);
 }
 
+/* Language Toggle Button */
+#langToggle {
+  position: fixed;
+  top: 72px;
+  left: 16px;
+  z-index: 25;
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.3s, transform 0.15s, border-color 0.3s;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+  min-height: 48px;
+  min-width: 48px;
+}
+
+#langToggle:active {
+  transform: scale(0.92);
+}
+
+.light-theme #langToggle {
+  border-color: rgba(0,0,0,0.1);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+}
+
 /* ---- View Menu Button (floating over ads) ---- */
 #viewMenuBtn {
   position: fixed;
@@ -894,29 +928,30 @@ body {
 </head>
 <body>
 
-<!-- Theme Toggle Button (top-left corner) -->
+<!-- Theme & Language Toggle Buttons (top-left corner) -->
 <button id="themeToggle" aria-label="Toggle light/dark theme">🌙</button>
+<button id="langToggle" aria-label="Switch language" style="position:fixed;top:72px;left:16px;z-index:25;background:var(--card);color:var(--text);border:1px solid rgba(255,255,255,0.1);border-radius:50%;width:48px;height:48px;font-size:18px;font-weight:700;cursor:pointer;touch-action:manipulation;display:flex;align-items:center;justify-content:center;transition:background 0.3s,transform 0.15s;box-shadow:0 2px 12px rgba(0,0,0,0.3);min-height:48px;min-width:48px;">EN</button>
 
 <!-- Ad Rotator -->
 <div id="adContainer">
   <div id="adSlides"></div>
   <div id="adDots"></div>
-  <div id="noAdsMessage">No ads available<br/><span style="font-size:18px;color:var(--text2);">Waiting for content...</span></div>
-  <div id="connectionStatus">● Connected</div>
+  <div id="noAdsMessage"><span data-i18n="no_ads">No ads available</span><br/><span style="font-size:18px;color:var(--text2);" data-i18n="waiting_content">Waiting for content...</span></div>
+  <div id="connectionStatus" data-i18n="connected">● Connected</div>
 </div>
 
 <!-- View Menu Floating Button -->
-<button id="viewMenuBtn">🍽️ View Menu</button>
+<button id="viewMenuBtn" data-i18n="view_menu">🍽️ View Menu</button>
 
 <!-- Menu View Overlay -->
 <div id="menuView">
   <div id="menuHeader">
-    <button id="backToAdsBtn">← <span>Back</span></button>
-    <h2>📋 Our Menu</h2>
+    <button id="backToAdsBtn">← <span data-i18n="back">Back</span></button>
+    <h2><span data-i18n="our_menu">📋 Our Menu</span></h2>
   </div>
   <div id="catTabs"></div>
   <div id="comboRow">
-    <h3>🔥 Featured Combos</h3>
+    <h3 data-i18n="featured_combos">🔥 Featured Combos</h3>
     <div id="comboCards"></div>
   </div>
   <div id="menuItemsGrid">
@@ -926,7 +961,7 @@ body {
 
 <!-- Item Detail Overlay -->
 <div id="itemDetailOverlay" onclick="closeItemDetail(event)">
-  <button class="detail-close" onclick="closeItemDetail()">← Back</button>
+  <button class="detail-close" onclick="closeItemDetail()" data-i18n="back_detail">← Back</button>
   <div class="detail-inner" style="width:100%;max-width:500px;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;align-items:center;padding:20px 24px 10px;max-height:90vh;">
     <img class="detail-img" id="detailImg" src="" alt=""/>
     <div class="detail-name" id="detailName"></div>
@@ -945,15 +980,15 @@ body {
 </div>
 
 <div id="orderActiveOverlay">
-  <h1>🍽️ Order in Progress</h1>
-  <p>Your table has an active order.<br/>Please wait while we prepare your items.</p>
+  <h1>🍽️ <span data-i18n="order_in_progress">Order in Progress</span></h1>
+  <p><span data-i18n="order_active_msg">Your table has an active order.</span><br/><span data-i18n="order_active_msg2">Please wait while we prepare your items.</span></p>
 </div>
 
 <!-- Auto-return countdown toast -->
 <div id="countdownOverlay">
-  <span class="countdown-text">↩️ Returning to ads in</span>
+  <span class="countdown-text"><span data-i18n="returning_to_ads">↩️ Returning to ads in</span></span>
   <span class="countdown-number" id="countdownNumber">5</span>
-  <button class="countdown-cancel" id="countdownCancelBtn">✕ Stay</button>
+  <button class="countdown-cancel" id="countdownCancelBtn" data-i18n="stay">✕ Stay</button>
 </div>
 
 <!-- Restaurant Info Bar -->
@@ -964,8 +999,8 @@ body {
     <span class="wifi-info" id="wifiInfo"></span>
   </div>
   <div class="info-bar-right">
-    <span class="table-num" id="tableNumber">Table: --</span>
-    <button id="callServerBtn">📞 Call Server</button>
+    <span class="table-num" id="tableNumber" data-i18n="table_label">Table: --</span>
+    <button id="callServerBtn" data-i18n="call_server">📞 Call Server</button>
   </div>
 </div>
 
@@ -996,19 +1031,132 @@ const DIETARY_ICONS = {
   'kosher': '✡️', 'sugar-free': '🍃', 'low-carb': '🥬'
 };
 
+// ═══════════ MULTI-LANGUAGE SUPPORT ═══════════
+const L10N = {
+  en: {
+    'no_ads': 'No ads available',
+    'waiting_content': 'Waiting for content...',
+    'connected': '● Connected',
+    'disconnected': '○ Disconnected',
+    'view_menu': '🍽️ View Menu',
+    'back': 'Back',
+    'our_menu': '📋 Our Menu',
+    'featured_combos': '🔥 Featured Combos',
+    'loading_menu': 'Loading menu...',
+    'could_not_load_menu': 'Could not load menu.',
+    'no_items_category': 'No items in this category.',
+    'back_detail': '← Back',
+    'order_in_progress': 'Order in Progress',
+    'order_active_msg': 'Your table has an active order.',
+    'order_active_msg2': 'Please wait while we prepare your items.',
+    'returning_to_ads': '↩️ Returning to ads in',
+    'stay': '✕ Stay',
+    'our_restaurant': 'Our Restaurant',
+    'table_label': 'Table: --',
+    'table_label_dynamic': '🍽️ Table {table}',
+    'call_server': '📞 Call Server',
+    'server_called': '✅ Server Called',
+    'learn_more': '🔗 Learn More',
+    'customize_order': '⚙️ Customize Your Order',
+    'choose_any': '(Choose any)',
+    'choose_one': '(Choose one)',
+    'combo_suffix': '(Combo)',
+    'includes': '🍽️ Includes:',
+    'combo_deal': '🔥 Combo Deal',
+    'lang_name': 'EN',
+    'lang_other': 'ES',
+    'unknown_table': 'Unknown',
+  },
+  es: {
+    'no_ads': 'No hay anuncios',
+    'waiting_content': 'Esperando contenido...',
+    'connected': '● Conectado',
+    'disconnected': '○ Desconectado',
+    'view_menu': '🍽️ Ver Menú',
+    'back': 'Atrás',
+    'our_menu': '📋 Nuestro Menú',
+    'featured_combos': '🔥 Combos Destacados',
+    'loading_menu': 'Cargando menú...',
+    'could_not_load_menu': 'No se pudo cargar el menú.',
+    'no_items_category': 'No hay artículos en esta categoría.',
+    'back_detail': '← Atrás',
+    'order_in_progress': 'Pedido en Progreso',
+    'order_active_msg': 'Su mesa tiene un pedido activo.',
+    'order_active_msg2': 'Espere mientras preparamos sus artículos.',
+    'returning_to_ads': '↩️ Volviendo a anuncios en',
+    'stay': '✕ Quedarse',
+    'our_restaurant': 'Nuestro Restaurante',
+    'table_label': 'Mesa: --',
+    'table_label_dynamic': '🍽️ Mesa {table}',
+    'call_server': '📞 Llamar Mesero',
+    'server_called': '✅ Mesero Llamado',
+    'learn_more': '🔗 Más Información',
+    'customize_order': '⚙️ Personaliza tu Pedido',
+    'choose_any': '(Elige cualquiera)',
+    'choose_one': '(Elige uno)',
+    'combo_suffix': '(Combo)',
+    'includes': '🍽️ Incluye:',
+    'combo_deal': '🔥 Combo Oferta',
+    'lang_name': 'ES',
+    'lang_other': 'EN',
+    'unknown_table': 'Desconocida',
+  }
+};
+
+let currentLang = localStorage.getItem('tablet_lang') || 'en';
+
+/** Translate a key with optional variable interpolation {var} */
+function t(key, vars) {
+  const langData = L10N[currentLang] || L10N.en;
+  let str = langData[key] || L10N.en[key] || key;
+  if (vars) {
+    for (const [k, v] of Object.entries(vars)) {
+      str = str.replace(new RegExp('\\{' + k + '\\}', 'g'), String(v));
+    }
+  }
+  return str;
+}
+
+/** Apply translations to all elements with data-i18n attribute */
+function applyTranslations() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    el.textContent = t(key);
+  });
+  // Update lang toggle button text
+  const langBtn = document.getElementById('langToggle');
+  if (langBtn) {
+    langBtn.textContent = currentLang === 'en' ? 'EN' : 'ES';
+  }
+  // Update dynamic elements
+  document.getElementById('connectionStatus').textContent = t('connected');
+  document.getElementById('connectionStatus').style.color = '#4ade80';
+}
+
+/** Toggle language */
+function toggleLang() {
+  currentLang = currentLang === 'en' ? 'es' : 'en';
+  localStorage.setItem('tablet_lang', currentLang);
+  applyTranslations();
+  // Refresh any rendered items with dynamic strings
+  if (Object.keys(menuItemsData).length > 0) renderItems();
+  if (combosData.length > 0) renderCombos();
+}
+
 // ---- Ad functions ----
 async function fetchAds() {
   try {
     const r = await fetch(BACKEND + '/api/ads/current');
     if (!r.ok) throw new Error('Fetch failed');
     adsData = await r.json();
-    document.getElementById('connectionStatus').textContent = '● Connected';
+    document.getElementById('connectionStatus').textContent = t('connected');
     document.getElementById('connectionStatus').style.color = '#4ade80';
     renderAds();
   } catch (e) {
-    document.getElementById('connectionStatus').textContent = '○ Disconnected';
+    document.getElementById('connectionStatus').textContent = t('disconnected');
     document.getElementById('connectionStatus').style.color = '#e94560';
   }
+  applyTranslations();
 }
 
 function renderAds() {
@@ -1033,7 +1181,7 @@ function renderAds() {
     <div class="ad-slide ${i === 0 ? 'active' : ''}" data-index="${i}" onclick="handleAdClick('${escHtml(ad.link_url || '')}')">
       <img src="${escHtml(ad.image_url)}" alt="${escHtml(ad.title)}" loading="${i === 0 ? 'eager' : 'lazy'}"/>
       <div class="ad-title">${escHtml(ad.title)}</div>
-      ${ad.link_url ? '<div class="ad-link">🔗 Learn More</div>' : ''}
+      ${ad.link_url ? '<div class="ad-link" data-i18n="learn_more">🔗 Learn More</div>' : ''}
     </div>
   `).join('');
 
@@ -1084,6 +1232,7 @@ function escHtml(str) {
 
 // ---- Menu functions ----
 async function fetchMenuItems() {
+  document.getElementById('noItemsMsg').textContent = t('loading_menu');
   try {
     const r = await fetch(BACKEND + '/api/items');
     if (!r.ok) throw new Error('Fetch failed');
@@ -1098,8 +1247,9 @@ async function fetchMenuItems() {
     renderCategoryTabs();
     renderItems();
   } catch (e) {
-    document.getElementById('noItemsMsg').textContent = 'Could not load menu.';
+    document.getElementById('noItemsMsg').textContent = t('could_not_load_menu');
   }
+  applyTranslations();
 }
 
 async function fetchCombos() {
@@ -1140,7 +1290,7 @@ function renderItems() {
   const items = (menuItemsData[activeCategory] || []).filter(it => it.active !== false);
 
   if (items.length === 0) {
-    grid.innerHTML = '<div id="noItemsMsg">No items in this category.</div>';
+    grid.innerHTML = '<div id="noItemsMsg" data-i18n="no_items_category">No items in this category.</div>';
     return;
   }
 
@@ -1152,6 +1302,7 @@ function renderItems() {
       ${item.description ? `<div class="item-desc">${escHtml(item.description)}</div>` : ''}
     </div>
   `).join('');
+  applyTranslations();
 }
 
 function renderCombos() {
@@ -1247,8 +1398,8 @@ function renderItemDetail(item) {
   const modifiers = item.modifiers || {};
   const groups = modifiers.groups || [];
   if (groups.length > 0) {
-    modEl.innerHTML = '<h4>⚙️ Customize Your Order</h4>' + groups.map(g => {
-      const typeLabel = g.type === 'multiple' ? '(Choose any)' : '(Choose one)';
+    modEl.innerHTML = '<h4>' + t('customize_order') + '</h4>' + groups.map(g => {
+      const typeLabel = g.type === 'multiple' ? t('choose_any') : t('choose_one');
       const optionsHtml = (g.options || []).map(opt => {
         const priceStr = opt.price_mod && opt.price_mod > 0
           ? `<span class="price-mod">+$${parseFloat(opt.price_mod).toFixed(2)}</span>`
@@ -1343,7 +1494,7 @@ function showComboDetail(name) {
   ).join('');
 
   document.getElementById('detailImg').style.display = 'none';
-  document.getElementById('detailName').textContent = combo.name + ' (Combo)';
+  document.getElementById('detailName').textContent = combo.name + ' ' + t('combo_suffix');
   document.getElementById('detailPrice').innerHTML = `
     <span style="color:var(--accent);font-weight:700;">$${comboPrice.toFixed(2)}</span>
     ${savings > 0 ? `<span style="text-decoration:line-through;color:var(--text2);opacity:0.7;margin-left:10px;font-size:clamp(18px,2vw,24px);">$${originalTotal.toFixed(2)}</span>
@@ -1351,13 +1502,13 @@ function showComboDetail(name) {
   `;
   document.getElementById('detailDesc').innerHTML = childrenHtml
     ? `<div style="margin-top:8px;background:var(--card);border-radius:12px;padding:10px 14px;max-width:400px;text-align:left;">
-      <div style="font-size:clamp(13px,1.3vw,16px);font-weight:600;margin-bottom:6px;color:var(--text2);">🍽️ Includes:</div>
+      <div style="font-size:clamp(13px,1.3vw,16px);font-weight:600;margin-bottom:6px;color:var(--text2);">${t('includes')}</div>
       ${childrenHtml}
     </div>`
-    : 'Includes: ' + childItems.map(ci => escHtml(ci.name)).join(' + ');
+    : t('includes') + ' ' + childItems.map(ci => escHtml(ci.name)).join(' + ');
   document.getElementById('detailDietary').style.display = 'none';
   document.getElementById('detailModifiers').style.display = 'none';
-  document.getElementById('detailMeta').innerHTML = '<span class="detail-badge">🔥 Combo Deal</span>';
+  document.getElementById('detailMeta').innerHTML = '<span class="detail-badge">' + t('combo_deal') + '</span>';
   updateDetailNav();
 
   document.getElementById('itemDetailOverlay').classList.add('show');
@@ -1541,7 +1692,7 @@ async function loadRestaurantInfo() {
     const r = await fetch(BACKEND + '/api/restaurant/info');
     if (!r.ok) throw new Error('Fetch failed');
     const config = await r.json();
-    document.getElementById('restaurantName').textContent = config.name || 'Our Restaurant';
+    document.getElementById('restaurantName').textContent = config.name || t('our_restaurant');
     if (config.hours_today) {
       document.getElementById('restaurantHours').textContent = '🕐 ' + config.hours_today;
     }
@@ -1580,15 +1731,22 @@ document.addEventListener('DOMContentLoaded', () => {
   const tableNum = getTableNumber();
   const tableEl = document.getElementById('tableNumber');
   if (tableNum) {
-    tableEl.textContent = '🍽️ Table ' + tableNum;
+    tableEl.textContent = t('table_label_dynamic', { table: tableNum });
   }
+  
+  // Language toggle
+  const langBtn = document.getElementById('langToggle');
+  if (langBtn) {
+    langBtn.addEventListener('click', toggleLang);
+  }
+  applyTranslations();
   
   loadRestaurantInfo();
   initTabletSocket();
 
   const callBtn = document.getElementById('callServerBtn');
   callBtn.addEventListener('click', () => {
-    const table = getTableNumber() || 'Unknown';
+    const table = getTableNumber() || t('unknown_table');
     // Emit via SocketIO
     if (tabletSocket && tabletSocket.connected) {
       tabletSocket.emit('tablet_call_server', { table_number: table });
@@ -1601,10 +1759,10 @@ document.addEventListener('DOMContentLoaded', () => {
       }).catch(() => {});
     }
     // Visual feedback
-    callBtn.textContent = '✅ Server Called';
+    callBtn.textContent = t('server_called');
     callBtn.classList.add('called');
     setTimeout(() => {
-      callBtn.textContent = '📞 Call Server';
+      callBtn.textContent = t('call_server');
       callBtn.classList.remove('called');
     }, 4000);
   });
