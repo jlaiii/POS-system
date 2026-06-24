@@ -9133,7 +9133,7 @@ async function loadUsers() {
         clearLockoutBtn = `<button class="outline" onclick="clearLockout('${escJs(id)}')" style="font-size:12px;padding:4px 10px;min-height:36px;color:#e74c3c;border-color:#e74c3c;" title="${t('user.clear_lockout_btn')}">${t('user.clear_lockout_btn')}</button>`;
       }
       return `<div class="user-entry">
-        <div class="ue-info"><strong>${escHtml(u.name)}</strong> — ID: ${escHtml(id)} <span class="ue-role">(${u.role})</span>${u.banned ? ' <span style="color:#e74c3c;font-weight:700;">🚫 Banned</span>' : ''}<br><span style="font-size:13px;color:var(--text2);">💰 Pay rate: <span id="prDisplay_${escJs(id)}">${payRate}</span></span><br><span style="font-size:13px;color:var(--text2);">${t('user.scheduled_start')} <span id="ssDisplay_${escJs(id)}">${schedStart}</span></span><br><span style="font-size:13px;color:var(--text2);">${t('twofa.status_label')} ${twofaBadge}</span><br><span style="font-size:13px;color:var(--text2);">📧 Email: <span id="emailDisplay_${escJs(id)}">${userEmail}</span></span>${loginAttemptStr ? '<br><span style="font-size:13px;">' + loginAttemptStr + '</span>' : ''}</div>
+        <div class="ue-info"><strong>${escHtml(u.name)}</strong> — ID: ${escHtml(id)} <span class="ue-role">(${u.role})</span>${u.banned ? ' <span style="color:#e74c3c;font-weight:700;">🚫 Banned</span>' : ''}<br><span style="font-size:13px;color:var(--text2);">💰 Pay rate: <span id="prDisplay_${escJs(id)}">${payRate}</span></span><br><span style="font-size:13px;color:var(--text2);">${t('user.scheduled_start')} <span id="ssDisplay_${escJs(id)}">${schedStart}</span></span><br><span style="font-size:13px;color:var(--text2);">${t('twofa.status_label')} ${twofaBadge}</span><br><span style="font-size:13px;color:var(--text2);">📧 Email: <span id="emailDisplay_${escJs(id)}">${userEmail}</span></span><br><span style="font-size:13px;color:var(--text2);">🏖️ PTO balance: <span id="ptoDisplay_${escJs(id)}">${u.pto_balance != null ? u.pto_balance + ' days' : '<span style="color:var(--text2);font-style:italic;">0 days</span>'}</span></span>${loginAttemptStr ? '<br><span style="font-size:13px;">' + loginAttemptStr + '</span>' : ''}</div>
         <div style="display:flex;gap:6px;align-items:center;">
           <button class="outline" onclick="editPayRate('${escJs(id)}')" style="font-size:12px;padding:4px 10px;min-height:36px;" title="${t('user.pay_rate_edit_title')}">💰 Edit Rate</button>
           <button class="outline" onclick="editUserEmail('${escJs(id)}')" style="font-size:12px;padding:4px 10px;min-height:36px;" title="Edit email address">📧 Email</button>
@@ -9145,6 +9145,7 @@ async function loadUsers() {
           ${forceLogoutBtn}
           ${banBtn}
           <button class="outline" onclick="openUserTimeline('${escJs(id)}')" style="font-size:12px;padding:4px 10px;min-height:36px;" title="View account history timeline">📜 Timeline</button>
+          <button class="outline" onclick="openPtoLog('${escJs(id)}')" style="font-size:12px;padding:4px 10px;min-height:36px;" title="Manage PTO / sick days">🏖️ PTO</button>
           <button class="danger" onclick="deleteUser('${escJs(id)}')" style="font-size:13px;padding:6px 12px;min-height:36px;">🗑️ Delete</button>
         </div>
       </div>`);
@@ -9294,6 +9295,118 @@ function formatTimelineDetail(entry) {
   if (entry.user_role) parts.push('Role: ' + entry.user_role);
 
   return parts.join(' · ');
+}
+
+// ═══════════ PTO / SICK DAY TRACKING ═══════════
+
+let _ptoUserId = null;
+
+function openPtoLog(userId) {
+  _ptoUserId = userId;
+  document.getElementById('ptoLogOverlay').classList.add('active');
+  document.getElementById('ptoLogTitle').textContent = '🏖️ PTO Management — ' + userId;
+  // Reset form
+  document.getElementById('ptoDateFrom').value = '';
+  document.getElementById('ptoDateTo').value = '';
+  document.getElementById('ptoType').value = 'pto';
+  document.getElementById('ptoReason').value = '';
+  loadPtoLog();
+}
+
+function closePtoLog() {
+  document.getElementById('ptoLogOverlay').classList.remove('active');
+  _ptoUserId = null;
+}
+
+async function loadPtoLog() {
+  if (!_ptoUserId) return;
+  const list = document.getElementById('ptoLogList');
+  list.innerHTML = '<div class="empty-state" style="padding:20px;">⏳ Loading...</div>';
+  try {
+    const r = await fetch(BACKEND_URL + '/api/users/pto_log', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, userId: _ptoUserId })
+    });
+    if (!r.ok) { list.innerHTML = '<div class="empty-state val-err">⚠️ Failed to load PTO log</div>'; return; }
+    const data = await r.json();
+    document.getElementById('ptoLogBalance').textContent = data.pto_balance != null ? data.pto_balance : 0;
+    const log = data.pto_log || [];
+    if (log.length === 0) {
+      list.innerHTML = '<div class="empty-state">No PTO entries logged yet.</div>';
+      return;
+    }
+    list.innerHTML = log.slice().reverse().map((entry, idx) => {
+      const typeIcon = entry.type === 'sick' ? '🤒' : '🏖️';
+      const typeLabel = entry.type === 'sick' ? 'Sick Day' : 'PTO';
+      const dateRange = entry.date_from === entry.date_to
+        ? entry.date_from
+        : entry.date_from + ' → ' + entry.date_to;
+      const days = entry.date_from === entry.date_to
+        ? '1 day'
+        : Math.round((new Date(entry.date_to + 'T23:59:59') - new Date(entry.date_from + 'T00:00:00')) / 86400000 + 1) + ' days';
+      const reasonStr = entry.reason ? '<div style="font-size:12px;color:var(--text2);margin-top:2px;">📝 ' + escHtml(entry.reason) + '</div>' : '';
+      return `<div style="padding:10px 12px;background:var(--bg);border-radius:8px;border-left:3px solid ${entry.type === 'sick' ? '#e74c3c' : '#2ecc71'};">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div>
+            <span style="font-weight:600;">${typeIcon} ${typeLabel}</span>
+            <span style="font-size:13px;color:var(--text2);margin-left:8px;">${dateRange}</span>
+            <span style="font-size:12px;color:var(--text2);margin-left:6px;">(${days})</span>
+          </div>
+          <div style="text-align:right;flex-shrink:0;">
+            <div style="font-size:11px;color:var(--text2);">${entry.logged_at ? entry.logged_at.substring(0, 10) : ''}</div>
+            <div style="font-size:10px;color:var(--text2);opacity:0.7;">by ${escHtml(entry.logged_by_name || entry.logged_by || '?')}</div>
+          </div>
+        </div>
+        ${reasonStr}
+      </div>`;
+    }).join('');
+  } catch(e) {
+    list.innerHTML = '<div class="empty-state val-err">⚠️ Network error</div>';
+  }
+}
+
+async function logPto() {
+  if (!_ptoUserId) { showToast('No user selected', 'danger'); return; }
+  const dateFrom = document.getElementById('ptoDateFrom').value;
+  const dateTo = document.getElementById('ptoDateTo').value;
+  const ptoType = document.getElementById('ptoType').value;
+  const reason = document.getElementById('ptoReason').value.trim();
+  if (!dateFrom || !dateTo) { showToast('Please select date range', 'danger'); return; }
+  try {
+    const r = await fetch(BACKEND_URL + '/api/users/log_pto', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, userId: _ptoUserId, date_from: dateFrom, date_to: dateTo, type: ptoType, reason })
+    });
+    const d = await r.json();
+    if (!r.ok) { showToast(d.message || 'Failed to log PTO', 'danger'); return; }
+    showToast('✅ PTO entry logged successfully', 'success');
+    // Reload log and user list
+    loadPtoLog();
+    loadUsers();
+  } catch(e) {
+    showToast(t('network_error'), 'danger');
+  }
+}
+
+function editPtoBalance() {
+  if (!_ptoUserId) return;
+  const currentBalance = document.getElementById('ptoLogBalance').textContent;
+  const newBalance = prompt('Enter new PTO balance (in days):', currentBalance);
+  if (newBalance === null) return;
+  const num = parseFloat(newBalance);
+  if (isNaN(num) || num < 0) { showToast('Please enter a valid number of days', 'danger'); return; }
+  fetch(BACKEND_URL + '/api/users/update_pto_balance', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ adminPin: currentUser.id, userId: _ptoUserId, ptoBalance: num })
+  }).then(r => r.json()).then(d => {
+    if (d.message && d.message.includes('success')) {
+      showToast('✅ PTO balance updated to ' + num + ' days', 'success');
+      document.getElementById('ptoLogBalance').textContent = num;
+      loadUsers();
+    } else {
+      showToast(d.message || 'Failed to update balance', 'danger');
+    }
+  }).catch(() => showToast(t('network_error'), 'danger'));
 }
 
 async function banUser(userId) {
@@ -16743,6 +16856,59 @@ async function submitChangePin() {
     </div>
     <div id="userTimelineList" style="display:flex;flex-direction:column;gap:6px;">
       <div class="empty-state" style="padding:40px 20px;">Loading timeline...</div>
+    </div>
+  </div>
+</div>
+
+<!-- PTO / Sick Day Management Overlay -->
+<div id="ptoLogOverlay" class="modal-overlay">
+  <div class="modal-box" style="max-width:600px;max-height:85vh;width:95%;overflow-y:auto;padding:20px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <h3 id="ptoLogTitle" style="margin:0;">🏖️ PTO / Sick Day Management</h3>
+      <button class="ghost" onclick="closePtoLog()" style="font-size:24px;padding:4px 12px;min-height:44px;line-height:1;">✕</button>
+    </div>
+
+    <!-- Balance row -->
+    <div style="display:flex;gap:12px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
+      <span style="font-size:15px;font-weight:600;color:var(--text);">🏖️ PTO Balance: <span id="ptoLogBalance">0</span> days</span>
+      <button class="outline" onclick="editPtoBalance()" style="font-size:13px;padding:6px 14px;min-height:40px;">✏️ Set Balance</button>
+    </div>
+
+    <!-- Log new PTO form -->
+    <div style="background:var(--card-bg);border-radius:8px;padding:16px;margin-bottom:16px;">
+      <h4 style="margin:0 0 10px 0;font-size:14px;color:var(--text2);">Log New PTO / Sick Day</h4>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div>
+          <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:3px;">Date From</label>
+          <input type="date" id="ptoDateFrom" style="width:100%;min-height:44px;font-size:14px;" />
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:3px;">Date To</label>
+          <input type="date" id="ptoDateTo" style="width:100%;min-height:44px;font-size:14px;" />
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;">
+        <div>
+          <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:3px;">Type</label>
+          <select id="ptoType" style="width:100%;min-height:44px;font-size:14px;">
+            <option value="pto">🏖️ PTO (Paid Time Off)</option>
+            <option value="sick">🤒 Sick Day</option>
+          </select>
+        </div>
+        <div style="display:flex;align-items:flex-end;">
+          <button class="accent" onclick="logPto()" style="width:100%;min-height:44px;font-size:14px;">➕ Log Entry</button>
+        </div>
+      </div>
+      <div style="margin-top:10px;">
+        <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:3px;">Reason (optional)</label>
+        <textarea id="ptoReason" style="width:100%;min-height:44px;font-size:14px;padding:8px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);resize:vertical;" placeholder="e.g. Doctor appointment, vacation..." rows="2"></textarea>
+      </div>
+    </div>
+
+    <!-- PTO Log list -->
+    <h4 style="margin:0 0 8px 0;font-size:14px;color:var(--text2);">📋 PTO Log</h4>
+    <div id="ptoLogList" style="display:flex;flex-direction:column;gap:6px;">
+      <div class="empty-state" style="padding:20px;">Loading...</div>
     </div>
   </div>
 </div>

@@ -3005,6 +3005,10 @@ def add_user():
     else:
         new_user_data['email'] = ''
 
+    # PTO / sick day tracking fields
+    new_user_data['pto_balance'] = 0.0
+    new_user_data['pto_log'] = []
+
     users[new_user_id] = new_user_data
     save_json_data(USERS_FILE, users)
     log_activity('add_user', admin_pin, admin_user['role'] if admin_user else 'unknown',
@@ -3185,6 +3189,143 @@ def update_user_email():
         'message': 'Email address updated successfully.',
         'user_id': user_id,
         'email': email
+    })
+
+
+@app.route('/api/users/update_pto_balance', methods=['POST'])
+def update_user_pto_balance():
+    """Admin updates PTO balance for a user."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+    user_id = data.get('userId')
+    pto_balance = data.get('ptoBalance')
+
+    if not check_perm(admin_pin, "manage_users"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    if not user_id:
+        return jsonify({'message': 'User ID is required.'}), 400
+
+    users = load_json_data(USERS_FILE)
+
+    if user_id not in users:
+        return jsonify({'message': 'User not found.'}), 404
+
+    admin_user = users.get(admin_pin, {})
+
+    try:
+        users[user_id]['pto_balance'] = float(pto_balance) if pto_balance is not None else 0.0
+    except (ValueError, TypeError):
+        return jsonify({'message': 'PTO balance must be a number.'}), 400
+
+    if 'pto_log' not in users[user_id]:
+        users[user_id]['pto_log'] = []
+
+    save_json_data(USERS_FILE, users)
+
+    log_activity('update_pto_balance', admin_pin, admin_user.get('role', 'unknown'),
+                 {'status': 'success', 'target_user_id': user_id,
+                  'new_pto_balance': users[user_id]['pto_balance'],
+                  'user_name': users[user_id].get('name', 'Unknown')})
+
+    return jsonify({
+        'message': 'PTO balance updated successfully.',
+        'user_id': user_id,
+        'pto_balance': users[user_id]['pto_balance']
+    })
+
+
+@app.route('/api/users/log_pto', methods=['POST'])
+def log_pto():
+    """Admin logs a PTO/sick day for a user."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+    user_id = data.get('userId')
+    date_from = data.get('date_from', '').strip()
+    date_to = data.get('date_to', '').strip()
+    pto_type = data.get('type', 'pto').strip()  # 'pto' or 'sick'
+    reason = data.get('reason', '').strip()
+
+    if not check_perm(admin_pin, "manage_users"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    if not user_id:
+        return jsonify({'message': 'User ID is required.'}), 400
+
+    if not date_from or not date_to:
+        return jsonify({'message': 'Date range (date_from, date_to) is required.'}), 400
+
+    if pto_type not in ('pto', 'sick'):
+        return jsonify({'message': 'Type must be \"pto\" or \"sick\".'}), 400
+
+    users = load_json_data(USERS_FILE)
+
+    if user_id not in users:
+        return jsonify({'message': 'User not found.'}), 404
+
+    admin_user = users.get(admin_pin, {})
+
+    # Validate date format YYYY-MM-DD
+    try:
+        f = datetime.strptime(date_from, '%Y-%m-%d')
+        t = datetime.strptime(date_to, '%Y-%m-%d')
+        if t < f:
+            return jsonify({'message': 'date_to must be on or after date_from.'}), 400
+    except ValueError:
+        return jsonify({'message': 'Dates must be in YYYY-MM-DD format.'}), 400
+
+    entry = {
+        'date_from': date_from,
+        'date_to': date_to,
+        'type': pto_type,
+        'reason': reason,
+        'logged_by': admin_pin,
+        'logged_by_name': users.get(admin_pin, {}).get('name', 'Unknown'),
+        'logged_at': datetime.now().isoformat()
+    }
+
+    if 'pto_log' not in users[user_id]:
+        users[user_id]['pto_log'] = []
+
+    users[user_id]['pto_log'].append(entry)
+    save_json_data(USERS_FILE, users)
+
+    log_activity('log_pto', admin_pin, admin_user.get('role', 'unknown'),
+                 {'status': 'success', 'target_user_id': user_id,
+                  'pto_entry': entry,
+                  'user_name': users[user_id].get('name', 'Unknown')})
+
+    return jsonify({
+        'message': 'PTO entry logged successfully.',
+        'entry': entry
+    })
+
+
+@app.route('/api/users/pto_log', methods=['POST'])
+def get_pto_log():
+    """Get PTO log entries for a user."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+    user_id = data.get('userId')
+
+    if not check_perm(admin_pin, "manage_users"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    if not user_id:
+        return jsonify({'message': 'User ID is required.'}), 400
+
+    users = load_json_data(USERS_FILE)
+
+    if user_id not in users:
+        return jsonify({'message': 'User not found.'}), 404
+
+    pto_log = users[user_id].get('pto_log', [])
+    pto_balance = users[user_id].get('pto_balance', 0.0)
+
+    return jsonify({
+        'pto_log': pto_log,
+        'pto_balance': pto_balance,
+        'user_name': users[user_id].get('name', 'Unknown')
     })
 
 
@@ -7149,11 +7290,23 @@ def clock_missing_clockout():
         return jsonify({'message': 'Insufficient permissions.'}), 403
 
     now = datetime.now()
+    today_str = now.strftime('%Y-%m-%d')
     threshold_hours = 8
     users = load_json_data(USERS_FILE)
     overdue = []
 
     for uid, shift in list(active_shifts.items()):
+        # Skip users who have PTO/sick day covering today
+        user_data = users.get(uid, {})
+        pto_log = user_data.get('pto_log', [])
+        is_on_pto_today = False
+        for pto_entry in pto_log:
+            if pto_entry.get('date_from', '') <= today_str <= pto_entry.get('date_to', ''):
+                is_on_pto_today = True
+                break
+        if is_on_pto_today:
+            continue
+
         duration_hours = (now - shift['clock_in_time']).total_seconds() / 3600
         if duration_hours >= threshold_hours:
             user_data = users.get(uid, {})

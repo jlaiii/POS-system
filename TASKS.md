@@ -121,7 +121,7 @@
 
 ### Priority: LOW
 
-- [~] worker-2 **PTO / sick day tracking** — Optional accrual-based or manual tracking. `pto_balance` field per user. Admin can log PTO/sick days with date range and type. Excluded from "missing clock-out" alerts for those days.
+- [x] worker-2 **PTO / sick day tracking** — Optional accrual-based or manual tracking. `pto_balance` field per user. Admin can log PTO/sick days with date range and type. Excluded from "missing clock-out" alerts for those days. [worker-2 — New endpoints: POST /api/users/update_pto_balance, /api/users/log_pto, /api/users/pto_log. Frontend: PTO balance + Log PTO button in user management, PTO overlay with log form, date range, type selector, reason field, entry history. Missing clock-out detection skips users on PTO. Activity logging. i18n ready.]
 
 - [ ] **Shift schedule builder** — Weekly schedule grid where manager assigns shifts (Mon 9-5: John, Tue 9-5: Maria, etc.). Compare scheduled vs actual hours. Visual schedule calendar in admin. Helps catch no-shows.
 
