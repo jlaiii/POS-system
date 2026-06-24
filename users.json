@@ -19,7 +19,8 @@
         "pin_reset_notification": null,
         "force_pin_change": false,
         "temp_pin": null,
-        "temp_pin_expiry": null
+        "temp_pin_expiry": null,
+        "email": "owner@example.com"
     },
     "1234": {
         "name": "Employee One",

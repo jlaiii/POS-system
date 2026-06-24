@@ -392,7 +392,7 @@ New `tickets.json` data store. Each ticket:
 - [x] worker-3 **Dark/light theme toggle on tablet** — Sun/moon toggle in corner for customers. Added `.light-theme` CSS variables override, top-left corner toggle button with sun/moon icon, localStorage persistence, DOMContentLoaded init.
 - [x] worker-3 **Language toggle (EN/ES)** — Added full i18n system to tablet.html: L10N translation dictionary (EN+ES), `t()` function with variable interpolation, `applyTranslations()` for all `data-i18n` elements, language toggle button (top-left corner below theme toggle, shows EN/ES), localStorage persistence. All UI labels (30+ strings) translate between English and Spanish. Item names remain in admin's language. Touch-friendly 48px button. Dark/light theme compatible. [worker-3]
 |- [x] worker-1 **Happy hour / specials badge on items** — Show "⚡ Happy Hour" badge with discounted price when scheduled pricing is active. Added sale badge ⚡ to item cards in POS grid (index.html) + tablet menu display (tablet.html) with discount label from active pricing rules. Green discounted price + strikethrough original. Item detail overlay shows badge + discounted price. CSS `.sale-badge` with absolute positioning. Backend already existed; frontend integration complete. [worker-1]
-- [ ] **"Order This" QR code** — QR code icon on each item linking to online ordering page.
+- [~] worker-3 **"Order This" QR code** — QR code icon on each item linking to online ordering page.
 
 ### Priority: LOW
 

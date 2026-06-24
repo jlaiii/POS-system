@@ -4848,5 +4848,45 @@
         "details": {
             "status": "success"
         }
+    },
+    {
+        "timestamp": "2026-06-24T01:30:25.298792",
+        "type": "update_email",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "target_user_id": "1111",
+            "old_email": "",
+            "new_email": "owner@example.com",
+            "user_name": "Owner"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T02:39:55.337061",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T02:40:06.822322",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
     }
 ]
