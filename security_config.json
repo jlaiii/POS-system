@@ -15,5 +15,14 @@
     "known_ip_gc_days": 30,
     "created_at": "2026-06-23T06:51:47",
     "description": "Security Watchdog configuration \u2014 thresholds and rules for anomaly detection",
-    "discord_webhook_url": ""
+    "discord_webhook_url": "",
+    "discord_security_alerts": {
+        "enabled": true,
+        "severities": {
+            "CRITICAL": "immediate",
+            "HIGH": "immediate",
+            "LOW": "none",
+            "MEDIUM": "digest"
+        }
+    }
 }

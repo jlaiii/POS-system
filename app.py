@@ -508,6 +508,48 @@ def log_security_event(severity, category, summary, detail=None, affected_user=N
     }
     events.append(event)
     save_json_data(SECURITY_EVENTS_FILE, events)
+
+    # ─── Fire Discord alert based on security config ──────────────
+    try:
+        alert_config = load_json_data(SECURITY_CONFIG_FILE)
+        if not isinstance(alert_config, dict):
+            alert_config = {}
+        alert_settings = alert_config.get('discord_security_alerts', {})
+        if not isinstance(alert_settings, dict):
+            alert_settings = {}
+        enabled = alert_settings.get('enabled', True)
+        sev_config = alert_settings.get('severities', {})
+
+        # Default: CRITICAL+HIGH=immediate, MEDIUM=digest, LOW=none
+        sev = event['severity']
+        if sev not in sev_config:
+            default_map = {'CRITICAL': 'immediate', 'HIGH': 'immediate', 'MEDIUM': 'digest', 'LOW': 'none'}
+            sev_config[sev] = default_map.get(sev, 'none')
+
+        action = sev_config.get(sev, 'none')
+
+        if enabled and action != 'none':
+            # Build a Discord-friendly message
+            event_emoji = {'CRITICAL': '🚨', 'HIGH': '🔴', 'MEDIUM': '⚠️', 'LOW': 'ℹ️'}
+            sev_display = event_emoji.get(sev, '🔵')
+            discord_msg = f"{sev_display} **[{sev}]** {summary}"
+            if detail and detail != summary:
+                discord_msg += f"\n📝 {detail[:500]}"
+            if affected_user_name:
+                discord_msg += f"\n👤 User: {affected_user_name} ({affected_user})"
+
+            if action == 'immediate':
+                send_discord_alert_async(discord_msg, level='danger' if sev in ('CRITICAL','HIGH') else 'warning')
+            elif action == 'digest':
+                with SECURITY_DIGEST_LOCK:
+                    SECURITY_DIGEST_BUFFER.append({
+                        'message': discord_msg,
+                        'severity': sev,
+                        'timestamp': datetime.now().isoformat()
+                    })
+    except Exception:
+        pass  # Never let alert dispatch crash the event logging
+
     return event
 
 
@@ -977,6 +1019,11 @@ clock_failed_attempts = {}
 # Used for security events like account lockouts.
 DISCORD_ALERT_COOLDOWN = {}  # {key: last_sent} — prevent spam
 
+# Security event digest buffer — MEDIUM events accumulate here for hourly batch send
+SECURITY_DIGEST_LOCK = threading.Lock()
+SECURITY_DIGEST_BUFFER = []  # list of event dicts pending in hourly digest
+SECURITY_DIGEST_TIMER = None  # reference to the background timer thread
+
 def send_discord_alert(message, level='warning'):
     """Send a message to the configured Discord webhook.
     Returns True if sent, False if no webhook configured or on failure.
@@ -1015,6 +1062,55 @@ def send_discord_alert_async(message, level='warning'):
     """Fire Discord alert in a background thread (non-blocking)."""
     t = threading.Thread(target=send_discord_alert, args=(message, level), daemon=True)
     t.start()
+
+def flush_security_digest():
+    """Send a batched digest of buffered MEDIUM security events to Discord.
+    Called automatically by a background timer every hour.
+    Also reschedules itself recursively for continuous hourly runs.
+    """
+    global SECURITY_DIGEST_TIMER
+    try:
+        # Capture and clear the buffer
+        events_to_send = []
+        with SECURITY_DIGEST_LOCK:
+            events_to_send = list(SECURITY_DIGEST_BUFFER)
+            SECURITY_DIGEST_BUFFER.clear()
+
+        if not events_to_send:
+            return  # Nothing to send
+
+        # Build a formatted digest message
+        now_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        digest_lines = [f"📋 **Security Digest — {now_str}**", f"⚠️ {len(events_to_send)} MEDIUM events in the last hour:"]
+        for ev in events_to_send[:20]:  # Max 20 events per digest
+            ts = ev.get('timestamp', '?')[:16] if ev.get('timestamp') else '?'
+            msg = ev.get('message', '')
+            digest_lines.append(f"• `{ts}` {msg}")
+        if len(events_to_send) > 20:
+            digest_lines.append(f"... and {len(events_to_send) - 20} more events.")
+
+        digest_msg = "\n".join(digest_lines)
+        # Truncate to Discord's 2000-char limit
+        if len(digest_msg) > 1900:
+            digest_msg = digest_msg[:1900] + "\n... (truncated)"
+
+        send_discord_alert(digest_msg, level='warning')
+    except Exception:
+        pass
+    finally:
+        # Reschedule the next digest in 60 minutes
+        SECURITY_DIGEST_TIMER = threading.Timer(3600, flush_security_digest)
+        SECURITY_DIGEST_TIMER.daemon = True
+        SECURITY_DIGEST_TIMER.start()
+
+def start_security_digest_timer():
+    """Start (or restart) the hourly security digest timer."""
+    global SECURITY_DIGEST_TIMER
+    if SECURITY_DIGEST_TIMER and SECURITY_DIGEST_TIMER.is_alive():
+        SECURITY_DIGEST_TIMER.cancel()
+    SECURITY_DIGEST_TIMER = threading.Timer(3600, flush_security_digest)
+    SECURITY_DIGEST_TIMER.daemon = True
+    SECURITY_DIGEST_TIMER.start()
 
 def maybe_notify_lockout(user_id, user_name, user_role):
     """Send a one-time Discord notification about a user lockout.
@@ -2018,6 +2114,69 @@ def security_test_discord_webhook():
         return jsonify({'message': 'Test message sent to Discord successfully.'})
     else:
         return jsonify({'message': 'Failed to send test message. Check the webhook URL.'}), 500
+
+
+@app.route('/api/security/alert_config', methods=['POST'])
+def security_alert_config():
+    """Get or set the Discord security alert configuration.
+    POST with { adminPin } to get current config.
+    POST with { adminPin, discord_security_alerts: {...} } to set.
+    Requires manage_users permission.
+    """
+    data = request.json or {}
+    admin_pin = data.get('adminPin', '')
+
+    if not admin_pin:
+        return jsonify({'message': 'Authentication required.'}), 401
+    if not check_perm(admin_pin, 'manage_users'):
+        return jsonify({'message': 'Permission denied.'}), 403
+
+    config = load_json_data(SECURITY_CONFIG_FILE)
+    if not isinstance(config, dict):
+        config = {}
+
+    # Set mode — update alert config
+    if 'discord_security_alerts' in data:
+        new_alerts = data['discord_security_alerts']
+        if isinstance(new_alerts, dict):
+            config['discord_security_alerts'] = new_alerts
+            save_json_data(SECURITY_CONFIG_FILE, config)
+            # Restart digest timer if digest was possibly toggled
+            start_security_digest_timer()
+            admin_data = load_json_data(USERS_FILE).get(admin_pin, {})
+            log_activity('security_alert_config_set', admin_pin, admin_data.get('role', 'unknown'), {
+                'enabled': new_alerts.get('enabled', True)
+            })
+            return jsonify({'message': 'Security alert configuration updated.', 'config': config.get('discord_security_alerts', {})})
+        else:
+            return jsonify({'message': 'discord_security_alerts must be an object.'}), 400
+
+    # Get mode — return current config with defaults
+    alert_settings = config.get('discord_security_alerts', {})
+    if not isinstance(alert_settings, dict):
+        alert_settings = {}
+    defaults = {
+        'enabled': True,
+        'severities': {
+            'CRITICAL': 'immediate',
+            'HIGH': 'immediate',
+            'MEDIUM': 'digest',
+            'LOW': 'none'
+        }
+    }
+    for key, val in defaults.items():
+        if key not in alert_settings:
+            alert_settings[key] = val
+    if 'severities' in alert_settings:
+        sevs = alert_settings['severities']
+        for sev, default_action in defaults['severities'].items():
+            if sev not in sevs:
+                sevs[sev] = default_action
+
+    return jsonify({
+        'discord_security_alerts': alert_settings,
+        'discord_webhook_set': bool(config.get('discord_webhook_url', '').strip())
+    })
 
 
 # ══════════════════════════════════════════════
@@ -14443,6 +14602,9 @@ def system_restore():
         'safety_backup': safety_path
     })
 
+
+# Start the hourly security digest timer (works on import, including gunicorn)
+start_security_digest_timer()
 
 if __name__ == '__main__':
     # PRODUCTION: use gunicorn + gevent (see scripts/run_flask.sh)

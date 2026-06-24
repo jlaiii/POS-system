@@ -1645,6 +1645,54 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
               <button class="danger" onclick="clearDiscordWebhook()" style="min-height:40px;padding:8px 16px;font-size:13px;" title="Remove webhook URL">✕ Remove</button>
             </div>
           </div>
+          <!-- Security Alerts Config -->
+          <div class="card" style="padding:12px;margin-top:12px;">
+            <h4 style="margin:0 0 8px 0;font-size:14px;">🚨 Security Alert Routing</h4>
+            <p style="font-size:12px;color:var(--text2);margin:0 0 8px 0;">Configure which security severity levels trigger Discord notifications. CRITICAL/HIGH fire immediately. MEDIUM batch into an hourly digest. LOW severity events are logged but not sent.</p>
+            <div id="secAlertConfigForm" style="display:flex;flex-direction:column;gap:8px;">
+              <label style="display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer;min-height:44px;">
+                <input type="checkbox" id="secAlertsEnabled" checked style="width:20px;height:20px;accent-color:var(--accent);"> <span>Enable Discord Security Alerts</span>
+              </label>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;">
+                <div style="display:flex;flex-direction:column;gap:4px;">
+                  <label style="font-size:13px;color:var(--text2);font-weight:600;">🚨 CRITICAL</label>
+                  <select id="sevCritical" style="padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;">
+                    <option value="immediate">Immediate</option>
+                    <option value="digest">Hourly Digest</option>
+                    <option value="none">Off</option>
+                  </select>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:4px;">
+                  <label style="font-size:13px;color:var(--text2);font-weight:600;">🔴 HIGH</label>
+                  <select id="sevHigh" style="padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;">
+                    <option value="immediate">Immediate</option>
+                    <option value="digest">Hourly Digest</option>
+                    <option value="none">Off</option>
+                  </select>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:4px;">
+                  <label style="font-size:13px;color:var(--text2);font-weight:600;">⚠️ MEDIUM</label>
+                  <select id="sevMedium" style="padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;">
+                    <option value="immediate">Immediate</option>
+                    <option value="digest">Hourly Digest</option>
+                    <option value="none">Off</option>
+                  </select>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:4px;">
+                  <label style="font-size:13px;color:var(--text2);font-weight:600;">ℹ️ LOW</label>
+                  <select id="sevLow" style="padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;">
+                    <option value="immediate">Immediate</option>
+                    <option value="digest">Hourly Digest</option>
+                    <option value="none">Off</option>
+                  </select>
+                </div>
+              </div>
+              <div style="display:flex;gap:8px;align-items:center;margin-top:4px;">
+                <button class="accent" onclick="saveSecurityAlertConfig()" style="min-height:40px;padding:8px 20px;font-size:13px;">💾 Save Alert Config</button>
+                <span id="secAlertConfigStatus" style="font-size:13px;color:#4caf50;display:none;"></span>
+              </div>
+            </div>
+          </div>
           <!-- Idle Timeout Config -->
           <div class="card" style="padding:12px;margin-top:12px;">
             <h4 style="margin:0 0 8px 0;font-size:14px;">⏰ Idle Timeout & Auto-Lock</h4>
@@ -6154,6 +6202,7 @@ async function loadSecurityDashboard() {
     // Load lockout state and Discord webhook config
     loadLockoutState();
     loadDiscordWebhookConfig();
+    loadSecurityAlertConfig();
   } catch (e) {
     showToast(t('toast.network_error') + ' loading security dashboard.', 'danger');
   }
@@ -9987,6 +10036,58 @@ async function clearDiscordWebhook() {
     }
   } catch(e) {
     showToast(t('toast.network_error') + ' clearing webhook.', 'danger');
+  }
+}
+
+/** Load the security alert config into the form */
+async function loadSecurityAlertConfig() {
+  const adminPin = localStorage.getItem('adminPin');
+  if (!adminPin) return;
+  try {
+    const r = await fetch(BACKEND_URL + '/api/security/alert_config', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({adminPin})
+    });
+    if (!r.ok) return;
+    const data = await r.json();
+    const ac = data.discord_security_alerts || {};
+    const enabled = document.getElementById('secAlertsEnabled');
+    if (enabled) enabled.checked = ac.enabled !== false;
+    const sevs = ac.severities || {};
+    const map = {'CRITICAL':'sevCritical','HIGH':'sevHigh','MEDIUM':'sevMedium','LOW':'sevLow'};
+    for (const [sev, elId] of Object.entries(map)) {
+      const el = document.getElementById(elId);
+      if (el) el.value = sevs[sev] || (sev === 'LOW' ? 'none' : sev === 'MEDIUM' ? 'digest' : 'immediate');
+    }
+  } catch(e) { /* silently fail */ }
+}
+
+/** Save the security alert config from the form */
+async function saveSecurityAlertConfig() {
+  const adminPin = localStorage.getItem('adminPin');
+  if (!adminPin) return showToast(t('toast.auth_required'), 'danger');
+  try {
+    const enabled = document.getElementById('secAlertsEnabled').checked;
+    const sevs = {
+      CRITICAL: document.getElementById('sevCritical').value,
+      HIGH: document.getElementById('sevHigh').value,
+      MEDIUM: document.getElementById('sevMedium').value,
+      LOW: document.getElementById('sevLow').value
+    };
+    const r = await fetch(BACKEND_URL + '/api/security/alert_config', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({adminPin, discord_security_alerts: {enabled, severities: sevs}})
+    });
+    const data = await r.json();
+    if (r.ok) {
+      showToast(data.message || 'Alert config saved.', 'success');
+      const status = document.getElementById('secAlertConfigStatus');
+      if (status) { status.textContent = '✅ Saved'; status.style.display = 'inline'; setTimeout(() => status.style.display = 'none', 3000); }
+    } else {
+      showToast(data.message || 'Failed to save alert config.', 'danger');
+    }
+  } catch(e) {
+    showToast(t('toast.network_error') + ' saving alert config.', 'danger');
   }
 }
 

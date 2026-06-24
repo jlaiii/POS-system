@@ -1,33 +1,33 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-24T04:19 UTC
-> Total checks: 225
-> Healthy: 224 | Broken: 1 (fixed) | Fixed this cycle: 2
+> Last full cycle: 2026-06-24T06:42 UTC
+> Total checks: 234
+> Healthy: 234 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None (2 files restored from git: items.json and users.json were overwritten with test data between 03:39-04:19)
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK, single gunicorn+gevent instance [verified 04:19]
-- [x] All JSON data files exist and are valid — 15/15 files valid (items.json + users.json restored from git after corruption) [verified 04:19]
-- [x] users.json has at least owner PIN 1111 — Owner exists, 6 users (restored from git) [verified 04:19]
-- [x] Git repo is clean (no uncommitted changes from crashes) — data files have drift from normal operations + Security Watchdog timestamp update; items.json + users.json restored from HEAD [verified 04:19]
+- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK, single gunicorn+gevent instance [verified 06:42]
+- [x] All JSON data files exist and are valid — 15/15 files valid [verified 06:42]
+- [x] users.json has at least owner PIN 1111 — Owner exists, 6 users, password_hash present [verified 06:42]
+- [x] Git repo is clean (no uncommitted changes from crashes) — activity_log.json has normal operational changes; kitchen_sound_config.json is new untracked config file [verified 06:42]
 
 ## HOURLY (check if last check was >1h ago)
-- [x] /api/clock/in works — 200, clocked in successfully [verified 03:03]
-- [x] /api/clock/out works — 200, clocked out successfully, 0.0h test [verified 03:03]
-- [x] /api/login works with correct field (userId, not pin) — 200, "Login successful" for 1111 [verified 04:19]
-- [x] /api/admin_stats returns stats — POST, 200, stats response OK [verified 04:19]
-- [x] Frontend loads (curl index.html, verify it's HTML not error) — 200, 809963 bytes [verified 04:19]
-- [x] /api/clock/status works — 200 for 1111, clocked_out (uses adminPin field) [verified 04:19]
-- [x] /api/health — GET, {"status":"ok"} [verified 04:19]
-- [x] /api/items — GET, 14 items across 3 categories (restored from git) [verified 04:19]
-- [x] /api/export/shifts_csv works — returns CSV with 27 shifts [verified 03:03]
-- [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 40 orders, valid data [verified 03:08]
-- [x] Pickup display: verify /api/pickup-display/queue works — GET, 0 orders, valid [verified 03:08]
-- [x] /api/inventory — GET with ?adminPin=1111, 200, 15 items, 0 low stock [verified 03:03]
+- [x] /api/clock/in works — 200, clocked in 9999 successfully [verified 05:41]
+- [x] /api/clock/out works — 200, clocked out 9999, 0.0h test [verified 05:42]
+- [x] /api/login works with correct field (userId, not pin) — 200, "Login successful" for 1111, Owner role [verified 06:42]
+- [x] /api/admin_stats returns stats — POST with adminPin=1111, stats response OK [verified 05:41]
+- [x] Frontend loads (curl index.html, verify it's HTML not error) — 200, HTML detected [verified 06:42]
+- [x] /api/clock/status works — 200 for 5678, clocked_out (uses adminPin field) [verified 05:41]
+- [x] /api/health — GET, {"status":"ok"} [verified 05:41]
+- [x] /api/items — GET, items with categories [verified 05:41]
+- [x] /api/export/shifts_csv works — returns CSV with 29 shifts [verified 06:42]
+- [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 40 orders, valid data [verified 06:42]
+- [x] Pickup display: verify /api/pickup-display/queue works — GET, 0 orders, valid [verified 06:42]
+- [x] /api/inventory — GET with ?adminPin=1111, 200, 15 items, 0 low stock [verified 06:42]
 
 ## EVERY 4 HOURS
-- [x] Cash register: open drawer → cash in → cash out → close → verify balance — Closed, $0.00 diff, reconciled [verified 17:51]
+- [x] Cash register: open drawer → cash in → cash out → close → verify balance — Closed, $10.00 diff (gave wrong change), reconciled [verified 06:42]
 - [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 42 orders, valid data [verified 21:18]
 - [x] Pickup display: verify /api/pickup-display/queue works — GET, 0 orders, valid [verified 21:18]
 - [x] Order lifecycle: create order (#59) → refund → success [verified 03:03]
