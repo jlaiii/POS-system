@@ -426,7 +426,7 @@ New `tickets.json` data store. Each ticket:
 |||
 |||- [x] worker-2 **MEDIUM: Proper PWA icons + iOS meta tags** — Added 192x192 and 512x512 PNG icons (POS-themed fork+plate design in brand colors). Updated manifest.json with proper PNG icon entries alongside the SVG fallback. Added apple-mobile-web-app-capable, apple-mobile-web-app-status-bar-style (black-translucent), and apple-mobile-web-app-title meta tags to index.html head. Added apple-touch-icon link tags for both icon sizes. Enhanced sw.js to v3 with network-first navigation, cache-first static assets (icons, manifest), offline fallback to offline.html. Created offline.html with dark-theme offline notification page. Python syntax verified, manifest JSON valid, PNG icons confirmed at correct sizes. [worker-2]|
 |||
-|||- [ ] **MEDIUM: 2FA frontend setup UI — QR scan + enable flow missing**
+|||- [~] worker-1 **MEDIUM: 2FA frontend setup UI — QR scan + enable flow missing**
 
 ## Production Readiness & Mobile Optimization (NEW — June 2026)
 
