@@ -529,6 +529,40 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 }
 .skeleton-stat-card .skeleton-line { margin-bottom: 0; }
 
+/* Inventory health card in stats grid */
+.inv-health-card { cursor: default; }
+.inv-health-card.inv-critical { border-left: 4px solid #ff4444; }
+.inv-health-card.inv-warning { border-left: 4px solid #ffaa00; }
+.inv-health-card.inv-ok { border-left: 4px solid #44cc44; }
+
+/* Low-stock collapsible section */
+.low-stock-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 16px; cursor: pointer; user-select: none;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+}
+.low-stock-header:hover { background: rgba(233,69,96,0.08); }
+.low-stock-header .collapse-icon.rotated { transform: rotate(180deg); }
+.low-stock-body {
+  max-height: 0; overflow: hidden;
+  transition: max-height .3s ease;
+}
+.low-stock-body.open { max-height: 800px; }
+.low-stock-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px; gap: 8px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+.low-stock-item:last-child { border-bottom: none; }
+.low-stock-item.oos { border-left: 3px solid #ff4444; }
+.low-stock-item.low { border-left: 3px solid #ffaa00; }
+.low-stock-name { font-weight: 500; font-size: 14px; }
+.low-stock-badge { font-size: 12px; padding: 4px 10px; border-radius: 20px; white-space: nowrap; }
+.badge-oos { background: rgba(255,68,68,0.15); color: #ff6666; }
+.badge-low { background: rgba(255,170,0,0.15); color: #ffbb33; }
+
 </style>
 <link rel="stylesheet" href="style.css" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="style.css"></noscript>
@@ -835,6 +869,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
             <button class="ghost" onclick="document.getElementById('statsDateFrom').value='';document.getElementById('statsDateTo').value='';loadAdminStats();" style="font-size:13px;padding:8px 12px;min-height:36px;">✕ Clear</button>
           </div>
           <div class="stats-grid" id="statsGrid"><div class="skeleton-stats-grid"><div class="skeleton-stat-card"><div class="skeleton skeleton-line" style="width:40%;height:12px;"></div><div class="skeleton skeleton-line" style="width:60%;height:22px;"></div><div class="skeleton skeleton-line tiny"></div></div><div class="skeleton-stat-card"><div class="skeleton skeleton-line" style="width:50%;height:12px;"></div><div class="skeleton skeleton-line" style="width:45%;height:22px;"></div><div class="skeleton skeleton-line tiny"></div></div></div></div>
+          <div id="lowStockSection" style="margin-top:12px;"></div>
           <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
             <button class="accent" onclick="exportOrdersCSV()" style="font-size:14px;padding:12px 20px;min-height:48px;">📥 Export Orders (CSV)</button>
           </div>
@@ -2962,6 +2997,12 @@ const L10N = {
     'admin.stats.total_orders': 'Total All-Time Orders',
     'admin.stats.weekly_sales': 'Sales This Week',
     'admin.stats.monthly_sales': 'Sales This Month',
+    'admin.stats.inventory_health': 'Inventory Health',
+    'admin.stats.low_stock': 'items low on stock',
+    'admin.stats.out_of_stock': 'items out of stock',
+    'admin.stats.low_stock_list': 'Low-Stock Items',
+    'admin.stats.no_low_stock': 'No low-stock items',
+    'admin.stats.view_inventory': 'Go to Inventory →',
     'admin.charts.daily_revenue': '📅 Daily Revenue (Last 7 Days)',
     'admin.charts.payment_methods': '💳 Payment Methods',
     'admin.charts.item_trends': '📈 Item Popularity Trend (7d vs Prior 7d)',
@@ -3680,6 +3721,12 @@ const L10N = {
     'admin.stats.total_orders': 'Pedidos totales',
     'admin.stats.weekly_sales': 'Ventas esta semana',
     'admin.stats.monthly_sales': 'Ventas este mes',
+    'admin.stats.inventory_health': 'Salud del Inventario',
+    'admin.stats.low_stock': 'artículos bajos en stock',
+    'admin.stats.out_of_stock': 'artículos sin stock',
+    'admin.stats.low_stock_list': 'Artículos con Stock Bajo',
+    'admin.stats.no_low_stock': 'Sin artículos con stock bajo',
+    'admin.stats.view_inventory': 'Ir a Inventario →',
     'admin.charts.daily_revenue': '📅 Ingresos diarios (últimos 7 días)',
     'admin.charts.payment_methods': '💳 Métodos de pago',
     'admin.charts.item_trends': '📈 Tendencia de popularidad (7d vs 7d anterior)',
@@ -10599,7 +10646,33 @@ async function loadAdminStats() {
       <div class="stat-card"><div class="stat-val">${s.total_traffic||0}</div><div class="stat-lbl">${t('admin.stats.total_orders')}</div></div>
       <div class="stat-card"><div class="stat-val">$${parseFloat(s.weekly_sales||0).toFixed(2)}</div><div class="stat-lbl">${t('admin.stats.weekly_sales')}</div></div>
       <div class="stat-card"><div class="stat-val">$${parseFloat(s.monthly_sales||0).toFixed(2)}</div><div class="stat-lbl">${t('admin.stats.monthly_sales')}</div></div>
+      <div class="stat-card inv-health-card${(s.out_of_stock_count||0) > 0 ? ' inv-critical' : (s.low_stock_count||0) > 0 ? ' inv-warning' : ' inv-ok'}"><div class="stat-val">${(s.out_of_stock_count||0) > 0 ? '🚫 ' : (s.low_stock_count||0) > 0 ? '⚠️ ' : '✅ '}${(s.out_of_stock_count||0) + (s.low_stock_count||0)}</div><div class="stat-lbl">${t('admin.stats.inventory_health')}<br><span style="font-size:12px;color:var(--text2);">${(s.out_of_stock_count||0) > 0 ? (s.out_of_stock_count + ' ' + t('admin.stats.out_of_stock') + ', ') : ''}${(s.low_stock_count||0)} ${t('admin.stats.low_stock')}</span></div></div>
     `;
+
+    // Render low-stock items collapsible section
+    const lowItems = s.low_stock_items || [];
+    const lowSection = document.getElementById('lowStockSection');
+    if (lowItems.length > 0) {
+      lowSection.innerHTML = `
+        <div class="card" style="padding:0;overflow:hidden;">
+          <div class="low-stock-header" onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('.collapse-icon').classList.toggle('rotated');">
+            <span style="font-weight:600;">${t('admin.stats.low_stock_list')}</span>
+            <span style="color:var(--text2);font-size:13px;">${lowItems.length} item${lowItems.length > 1 ? 's' : ''}</span>
+            <span class="collapse-icon" style="margin-left:auto;transition:transform .2s;">▼</span>
+          </div>
+          <div class="low-stock-body">
+            ${lowItems.map(it => `
+              <div class="low-stock-item ${it.status === 'out_of_stock' ? 'oos' : 'low'}">
+                <span class="low-stock-name">${escHtml(it.item_name)}</span>
+                <span class="low-stock-badge ${it.status === 'out_of_stock' ? 'badge-oos' : 'badge-low'}">${it.status === 'out_of_stock' ? '🚫 ' + t('admin.stats.out_of_stock') : '⚠️ ' + t('admin.stats.low_stock')} (${it.stock}/${it.threshold})</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    } else {
+      lowSection.innerHTML = '';
+    }
   } catch(e) { grid.innerHTML = '<div class="empty-state val-err">⚠️ ' + t('network_error') + '</div>'; }
   finally { hideContentLoading('statsGrid'); }
 }

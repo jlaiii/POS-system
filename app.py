@@ -7051,6 +7051,37 @@ def admin_stats():
     orders = load_json_data(ORDERS_FILE)
     cleared_orders = load_json_data(CLEARED_ORDERS_FILE)
 
+    # --- Inventory low-stock / out-of-stock counts ---
+    try:
+        inventory = load_json_data(INVENTORY_FILE)
+        low_stock_count = 0
+        out_of_stock_count = 0
+        low_stock_items = []
+        for item_name, inv_data in inventory.items():
+            stock = inv_data.get('stock', 0)
+            threshold = inv_data.get('low_stock_threshold', 10)
+            if stock <= 0:
+                out_of_stock_count += 1
+                low_stock_items.append({
+                    'item_name': item_name,
+                    'stock': stock,
+                    'threshold': threshold,
+                    'status': 'out_of_stock'
+                })
+            elif stock <= threshold:
+                low_stock_count += 1
+                low_stock_items.append({
+                    'item_name': item_name,
+                    'stock': stock,
+                    'threshold': threshold,
+                    'status': 'low_stock'
+                })
+    except Exception:
+        low_stock_count = 0
+        out_of_stock_count = 0
+        low_stock_items = []
+    # --- End inventory health ---
+
     # --- Date range filtering ---
     date_from = data.get('date_from', '').strip()
     date_to = data.get('date_to', '').strip()
@@ -7160,6 +7191,9 @@ def admin_stats():
         'cash_count': cash_count,
         'card_count': card_count,
         'other_count': other_count,
+        'low_stock_count': low_stock_count,
+        'out_of_stock_count': out_of_stock_count,
+        'low_stock_items': low_stock_items,
         'raw_orders': orders,
         'raw_cleared_orders': cleared_orders
     }
