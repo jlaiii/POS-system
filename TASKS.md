@@ -323,7 +323,7 @@ New `tickets.json` data store. Each ticket:
 
 ### Priority: LOW
 
-||- [~] worker-1 **Issue/bug ticket triage labels** — Admin can tag issue tickets: "POS bug", "hardware", "menu error", "customer complaint", "other".
+||- [x] worker-1 **Issue/bug ticket triage labels** — Admin can tag issue tickets: "POS bug", "hardware", "menu error", "customer complaint", "other". [worker-1 — Added label field to ticket model (label: pos_bug|hardware|menu_error|customer_complaint|other). Backend: label stored on submit for issue tickets, settable via respond endpoint, filterable in queue. Frontend: label dropdown in employee issue form, label badge on ticket cards, label filter in admin queue, label selector in pending card actions. i18n EN+ES. Dark theme compatible.]
 - [ ] **Ticket response templates** — Admin can save common response notes as templates.
 - [ ] **Employee feedback analytics** — Aggregate feedback tickets by category over time.
 - [ ] **Auto-approve for low-risk time-off** — Configurable rule: auto-approve time-off if requested >2 weeks in advance AND no other approvals for same date.

@@ -14846,6 +14846,14 @@ def ticket_submit():
         if ticket['priority'] not in ('normal', 'low', 'urgent'):
             ticket['priority'] = 'normal'
 
+    if ticket_type == 'issue':
+        label = data.get('label')
+        valid_labels = ('pos_bug', 'hardware', 'menu_error', 'customer_complaint', 'other')
+        if label and label in valid_labels:
+            ticket['label'] = label
+        else:
+            ticket['label'] = None  # No label set by employee; admin can set later
+
     tickets = load_json_data(TICKETS_FILE)
     tickets.append(ticket)
     save_json_data(TICKETS_FILE, tickets)
@@ -14896,6 +14904,7 @@ def ticket_queue():
     filter_date_from = data.get('filter_date_from')  # optional: ISO date string
     filter_date_to = data.get('filter_date_to')  # optional: ISO date string
     filter_search = data.get('filter_search', '').strip().lower()  # optional: text search in subject/description
+    filter_label = data.get('filter_label')  # optional: pos_bug, hardware, menu_error, customer_complaint, other
 
     # Apply filters
     filtered = []
@@ -14931,6 +14940,11 @@ def ticket_queue():
             ticket_id = (t.get('id') or '').lower()
             uname = (t.get('user_name') or '').lower()
             if filter_search not in subject and filter_search not in desc and filter_search not in ticket_id and filter_search not in uname:
+                continue
+        # Label filter (for issue/bug tickets)
+        if filter_label:
+            ticket_label = t.get('label') or ''
+            if ticket_label != filter_label:
                 continue
         filtered.append(t)
 
@@ -14988,6 +15002,14 @@ def ticket_respond():
             t['responded_at'] = datetime.now().isoformat()
             t['response_note'] = reason if reason else None
             t['response_read'] = False
+            # Admin can set/change label when responding
+            label = data.get('label')
+            valid_labels = ('pos_bug', 'hardware', 'menu_error', 'customer_complaint', 'other')
+            if label is not None:
+                if label in valid_labels:
+                    t['label'] = label
+                elif label == '':
+                    t['label'] = None  # Clear label
             found = True
             break
 

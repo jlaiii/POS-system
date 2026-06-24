@@ -1578,6 +1578,18 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
                   <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;" data-i18n="admin.tickets.filter_employee">Employee:</label>
                   <input type="text" id="ticketFilterEmployee" placeholder="Name or PIN" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:40px;">
                 </div>
+                <!-- Label filter -->
+                <div style="min-width:120px;flex:1;">
+                  <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;" data-i18n="admin.tickets.filter_label">Label:</label>
+                  <select id="ticketFilterLabel" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:40px;">
+                    <option value="" data-i18n="admin.tickets.filter_all_labels">All Labels</option>
+                    <option value="pos_bug">🐞 POS Bug</option>
+                    <option value="hardware">🖥️ Hardware</option>
+                    <option value="menu_error">📋 Menu Error</option>
+                    <option value="customer_complaint">😠 Customer Complaint</option>
+                    <option value="other">📝 Other</option>
+                  </select>
+                </div>
                 <!-- Date from -->
                 <div style="min-width:100px;flex:1;">
                   <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;" data-i18n="admin.tickets.filter_date_from">From:</label>
@@ -1983,6 +1995,14 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
           <option value="normal" data-i18n="requests.priority.normal">🔵 Normal</option>
           <option value="urgent" data-i18n="requests.priority.urgent">🔴 Urgent</option>
           <option value="low" data-i18n="requests.priority.low">🟢 Low</option>
+        </select>
+        <select id="requestLabel" style="flex:1;min-width:140px;display:none;" aria-label="Issue label">
+          <option value="" data-i18n="requests.label.none">🏷️ No Label</option>
+          <option value="pos_bug" data-i18n="requests.label.pos_bug">🐞 POS Bug</option>
+          <option value="hardware" data-i18n="requests.label.hardware">🖥️ Hardware</option>
+          <option value="menu_error" data-i18n="requests.label.menu_error">📋 Menu Error</option>
+          <option value="customer_complaint" data-i18n="requests.label.customer_complaint">😠 Customer Complaint</option>
+          <option value="other" data-i18n="requests.label.other">📝 Other</option>
         </select>
       </div>
       <div id="requestDateRow" style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
@@ -2974,6 +2994,8 @@ const L10N = {
     'admin.tickets.filter_reset': '✕ Reset',
     'admin.tickets.filter_all_types': 'All Types',
     'admin.tickets.filter_all_status': 'All Statuses',
+    'admin.tickets.filter_label': 'Label:',
+    'admin.tickets.filter_all_labels': 'All Labels',
     'combo.add_to_cart': '➕ Add Combo',
     'combo.contains': 'Includes:',
     'combo.badge': '🧩 Combo',
@@ -3094,6 +3116,12 @@ const L10N = {
     'requests.type_label.feedback': 'Feedback',
     'requests.type_label.pay_review': 'Pay Review',
     'requests.type_label.other': 'Request',
+    'requests.label.none': '🏷️ No Label',
+    'requests.label.pos_bug': '🐞 POS Bug',
+    'requests.label.hardware': '🖥️ Hardware',
+    'requests.label.menu_error': '📋 Menu Error',
+    'requests.label.customer_complaint': '😠 Customer Complaint',
+    'requests.label.other': '📝 Other',
     'tab.mypay': '💰 My Pay',
     'mypay.title': '💰 My Pay',
     'mypay.subtitle': 'Your hours, pay, and earnings at a glance',
@@ -3658,6 +3686,8 @@ const L10N = {
     'admin.tickets.filter_reset': '✕ Reiniciar',
     'admin.tickets.filter_all_types': 'Todos los Tipos',
     'admin.tickets.filter_all_status': 'Todos los Estados',
+    'admin.tickets.filter_label': 'Etiqueta:',
+    'admin.tickets.filter_all_labels': 'Todas las Etiquetas',
     'combo.add_to_cart': '➕ Añadir Combo',
     'combo.contains': 'Incluye:',
     'combo.badge': '🧩 Combo',
@@ -3778,6 +3808,12 @@ const L10N = {
     'requests.type_label.feedback': 'Comentario',
     'requests.type_label.pay_review': 'Revisión de Pago',
     'requests.type_label.other': 'Solicitud',
+    'requests.label.none': '🏷️ Sin Etiqueta',
+    'requests.label.pos_bug': '🐞 Error de POS',
+    'requests.label.hardware': '🖥️ Hardware',
+    'requests.label.menu_error': '📋 Error de Menú',
+    'requests.label.customer_complaint': '😠 Queja de Cliente',
+    'requests.label.other': '📝 Otro',
     'tab.mypay': '💰 Mi Pago',
     'mypay.title': '💰 Mi Pago',
     'mypay.subtitle': 'Sus horas, pago y ganancias de un vistazo',
@@ -5921,9 +5957,11 @@ function onRequestTypeChange() {
   const prioritySelect = document.getElementById('requestPriority');
   const dateRow = document.getElementById('requestDateRow');
   const recurringRow = document.getElementById('requestRecurringRow');
+  const labelSelect = document.getElementById('requestLabel');
   prioritySelect.style.display = (type === 'issue' || type === 'feedback') ? '' : 'none';
   dateRow.style.display = (type === 'time_off') ? 'flex' : 'none';
   recurringRow.style.display = (type === 'time_off') ? 'flex' : 'none';
+  labelSelect.style.display = (type === 'issue') ? '' : 'none';
   // Hide recurring options if not time_off
   if (type !== 'time_off') {
     document.getElementById('requestRecurring').checked = false;
@@ -6153,6 +6191,10 @@ async function submitTicket() {
     payload.priority = document.getElementById('requestPriority').value;
   }
 
+  if (type === 'issue') {
+    payload.label = document.getElementById('requestLabel').value || null;
+  }
+
   try {
     const res = await fetch(BACKEND_URL + '/api/tickets/submit', {
       method: 'POST',
@@ -6338,6 +6380,7 @@ async function loadTicketQueue() {
   const filter_date_from = document.getElementById('ticketFilterDateFrom')?.value || '';
   const filter_date_to = document.getElementById('ticketFilterDateTo')?.value || '';
   const filter_search = document.getElementById('ticketFilterSearch')?.value || '';
+  const filter_label = document.getElementById('ticketFilterLabel')?.value || '';
 
   try {
     const res = await fetch(BACKEND_URL + '/api/tickets/queue', {
@@ -6350,7 +6393,8 @@ async function loadTicketQueue() {
         filter_employee: filter_employee || undefined,
         filter_date_from: filter_date_from || undefined,
         filter_date_to: filter_date_to || undefined,
-        filter_search: filter_search || undefined
+        filter_search: filter_search || undefined,
+        filter_label: filter_label || undefined
       })
     });
     const data = await res.json();
@@ -6412,12 +6456,14 @@ function resetTicketFilters() {
   const dateFromEl = document.getElementById('ticketFilterDateFrom');
   const dateToEl = document.getElementById('ticketFilterDateTo');
   const searchEl = document.getElementById('ticketFilterSearch');
+  const labelEl = document.getElementById('ticketFilterLabel');
   if (typeEl) typeEl.value = '';
   if (statusEl) statusEl.value = '';
   if (empEl) empEl.value = '';
   if (dateFromEl) dateFromEl.value = '';
   if (dateToEl) dateToEl.value = '';
   if (searchEl) searchEl.value = '';
+  if (labelEl) labelEl.value = '';
   loadTicketQueue();
 }
 
@@ -6434,6 +6480,13 @@ function renderTicketCard(t, isPending) {
     ? '<span style="background:#e74c3c;color:#fff;padding:2px 8px;border-radius:8px;font-size:11px;font-weight:700;margin-left:6px;">🔴 Urgent</span>'
     : t.priority === 'low'
     ? '<span style="background:#95a5a6;color:#fff;padding:2px 8px;border-radius:8px;font-size:11px;font-weight:700;margin-left:6px;">🟢 Low</span>'
+    : '';
+
+  const labelColors = {pos_bug: '#e74c3c', hardware: '#3498db', menu_error: '#f39c12', customer_complaint: '#9b59b6', other: '#95a5a6'};
+  const labelIcons = {pos_bug: '🐞', hardware: '🖥️', menu_error: '📋', customer_complaint: '😠', other: '📝'};
+  const labelNames = {pos_bug: 'POS Bug', hardware: 'Hardware', menu_error: 'Menu Error', customer_complaint: 'Customer Complaint', other: 'Other'};
+  const labelBadge = t.label && labelColors[t.label]
+    ? `<span style="background:${labelColors[t.label]};color:#fff;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:700;margin-left:4px;">${labelIcons[t.label] || '🏷️'} ${labelNames[t.label] || t.label}</span>`
     : '';
 
   const statusBadge = t.status === 'approved'
@@ -6458,9 +6511,26 @@ function renderTicketCard(t, isPending) {
 
   let actionsHtml = '';
   if (isPending) {
-    actionsHtml = `<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
-      <button class="success" onclick="respondToTicket('${t.id}','approved')" style="min-height:40px;padding:8px 16px;font-size:13px;">✅ Approve</button>
-      <button class="danger" onclick="showDenyPrompt('${t.id}')" style="min-height:40px;padding:8px 16px;font-size:13px;">❌ Deny</button>
+    const isIssue = t.type === 'issue';
+    const currentLabel = t.label || '';
+    const labelOptions = ['pos_bug','hardware','menu_error','customer_complaint','other'];
+    const labelLabels = {'pos_bug':'🐞 POS Bug','hardware':'🖥️ Hardware','menu_error':'📋 Menu Error','customer_complaint':'😠 Customer Complaint','other':'📝 Other'};
+    let labelSelectHtml = '';
+    if (isIssue) {
+      labelSelectHtml = `<div style="margin-top:8px;display:flex;align-items:center;gap:6px;">
+        <span style="font-size:11px;color:var(--text2);white-space:nowrap;">🏷️ Label:</span>
+        <select id="labelSelect_${t.id}" style="flex:1;padding:6px 8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:12px;min-height:36px;">
+          <option value="" ${currentLabel === '' ? 'selected' : ''}>— No Label —</option>
+          ${labelOptions.map(l => `<option value="${l}" ${currentLabel === l ? 'selected' : ''}>${labelLabels[l]}</option>`).join('')}
+        </select>
+      </div>`;
+    }
+    actionsHtml = `<div style="margin-top:10px;">
+      ${labelSelectHtml}
+      <div style="display:flex;gap:8px;flex-wrap:wrap;${isIssue ? 'margin-top:6px;' : ''}">
+        <button class="success" onclick="respondToTicket('${t.id}','approved')" style="min-height:40px;padding:8px 16px;font-size:13px;">✅ Approve</button>
+        <button class="danger" onclick="showDenyPrompt('${t.id}')" style="min-height:40px;padding:8px 16px;font-size:13px;">❌ Deny</button>
+      </div>
     </div>`;
   }
 
@@ -6469,6 +6539,7 @@ function renderTicketCard(t, isPending) {
       <div>
         <strong>${typeIcon} ${escHtml(t.subject)}</strong>
         ${priorityBadge}
+        ${labelBadge}
         ${!isPending ? '<span style="margin-left:4px;">' + statusBadge + '</span>' : ''}
       </div>
       <span style="color:var(--text2);font-size:11px;">${date}</span>
@@ -6503,6 +6574,10 @@ async function respondToTicket(ticketId, action) {
     }
   }
 
+  // Read the label from the dropdown, if present
+  const labelEl = document.getElementById('labelSelect_' + ticketId);
+  const label = labelEl ? labelEl.value : undefined;
+
   try {
     const res = await fetch(BACKEND_URL + '/api/tickets/respond', {
       method: 'POST',
@@ -6511,7 +6586,8 @@ async function respondToTicket(ticketId, action) {
         adminPin: currentUser.id,
         ticket_id: ticketId,
         action: action,
-        reason: reason
+        reason: reason,
+        label: label
       })
     });
     const data = await res.json();
