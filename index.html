@@ -313,6 +313,10 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
   0%, 100% { box-shadow: 0 0 5px rgba(231,76,60,0.3); background: var(--accent); }
   50% { box-shadow: 0 0 25px rgba(231,76,60,0.8); background: #e74c3c; }
 }
+@keyframes foodReadyPulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(233,69,96,0.7); }
+  50% { transform: scale(1.3); box-shadow: 0 0 15px 5px rgba(233,69,96,0.4); }
+}
 
 /* ═══════════ IDLE TIMEOUT OVERLAYS ═══════════ */
 #idleCountdownOverlay, #lockOverlay {
@@ -620,7 +624,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 
   <div id="mainTabs">
     <button onclick="switchMainTab('pos')" id="mainTabPos" class="active" data-i18n="tab.pos">🛒 POS</button>
-    <button onclick="switchMainTab('history')" id="mainTabHistory" data-i18n="tab.history">📋 History</button>
+    <button onclick="switchMainTab('history')" id="mainTabHistory" data-i18n="tab.history">📋 History <span id="foodReadyBadge" class="badge" style="display:none;background:#e94560;color:#fff;border-radius:10px;padding:2px 8px;font-size:11px;font-weight:700;margin-left:4px;vertical-align:middle;">0</span></button>
     <button onclick="switchMainTab('admin')" id="mainTabAdmin" style="display:none;" data-i18n="tab.admin">⚙️ Admin</button>
     <button onclick="showKitchenView()" id="mainTabKitchen" style="display:none;" data-i18n="tab.kitchen">🔪 Kitchen</button>
     <button onclick="switchMainTab('requests')" id="mainTabRequests" data-i18n="tab.requests">📋 Requests <span id="requestsBadge" class="badge" style="display:none;background:#e94560;color:#fff;border-radius:10px;padding:2px 8px;font-size:11px;font-weight:700;margin-left:4px;vertical-align:middle;">0</span></button>
@@ -4469,6 +4473,10 @@ function initSocketIO() {
       stopKitchenPolling();
       // Join relevant rooms
       if (kitchenViewActive) socket.emit('join_kitchen');
+      // Join waiter room for food-ready notifications
+      if (currentUser && currentUser.id) {
+        socket.emit('join_waiter', currentUser.id);
+      }
     });
 
     socket.on('disconnect', () => {
@@ -4500,6 +4508,38 @@ function initSocketIO() {
     socket.on('server_call', (data) => {
       const tableNum = data && data.table_number ? data.table_number : 'Unknown';
       showToast('📞 Table ' + tableNum + ' is calling for service!', 'warning', 10000);
+    });
+
+    // ── Food ready notification for waiters ──
+    socket.on('food_ready', (data) => {
+      const orderId = data && data.order_id ? data.order_id : '?';
+      const tableNum = data && data.table_number ? data.table_number : null;
+      const items = data && data.items ? data.items : [];
+      // Increment badge on History tab
+      const badge = document.getElementById('foodReadyBadge');
+      if (badge) {
+        let count = parseInt(badge.textContent) || 0;
+        count++;
+        badge.textContent = count;
+        badge.style.display = 'inline';
+        // Pulse animation
+        badge.style.animation = 'none';
+        badge.offsetHeight; // reflow
+        badge.style.animation = 'foodReadyPulse 0.5s ease 3';
+      }
+      // Play notification sound
+      playNotificationSound();
+      // Vibration feedback (100ms = two short pulses)
+      if (navigator.vibrate) navigator.vibrate(100);
+      // Show toast
+      let msg = '🍔 ' + (orderId > 0 ? ('Order #' + orderId + ' food is ready!') : 'Food is ready!');
+      if (tableNum) msg += ' (Table ' + tableNum + ')';
+      if (items.length > 0) {
+        const itemNames = items.slice(0, 3).map(i => i.name).join(', ');
+        if (items.length > 3) msg += ' — ' + itemNames + ' +' + (items.length - 3);
+        else msg += ' — ' + itemNames;
+      }
+      showToast(msg, 'success', 8000);
     });
   } catch(e) {
     socketEnabled = false;
@@ -6174,6 +6214,11 @@ function showApp() {
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('appScreen').classList.add('active');
   
+  // Join waiter-specific room for food-ready notifications
+  if (socket && socketConnected && currentUser && currentUser.id) {
+    socket.emit('join_waiter', currentUser.id);
+  }
+  
   // User info display with role badge
   const userInfoEl = document.getElementById('userInfoDisplay');
   let badgeHtml = '';
@@ -6334,6 +6379,9 @@ function switchMainTab(tab, skipAnim) {
   } else if (tab === 'history') {
     stopMyPayAutoRefresh();
     loadOrderHistory();
+    // Clear food-ready badge when viewing history
+    const badge = document.getElementById('foodReadyBadge');
+    if (badge) { badge.style.display = 'none'; badge.textContent = '0'; }
   } else if (tab === 'admin') {
     stopMyPayAutoRefresh();
     loadAdminStats();

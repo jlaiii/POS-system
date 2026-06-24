@@ -1002,6 +1002,20 @@ def handle_leave_pickup():
     leave_room(PICKUP_ROOM)
 
 
+@socketio.on('join_waiter')
+def handle_join_waiter(waiter_id):
+    """POS client (waiter) joins their personal notification room."""
+    if waiter_id:
+        join_room(f'waiter_{waiter_id}')
+
+
+@socketio.on('leave_waiter')
+def handle_leave_waiter(waiter_id):
+    """POS client leaves their personal notification room."""
+    if waiter_id:
+        leave_room(f'waiter_{waiter_id}')
+
+
 def emit_kitchen_update():
     """Broadcast to kitchen room that order state changed."""
     socketio.emit('kitchen_update', {}, room=KITCHEN_ROOM)
@@ -10225,6 +10239,15 @@ def kitchen_complete():
                     'order_id': order_id, 'action': 'completed'
                 })
                 emit_kitchen_update()
+                # Emit food_ready event to the waiter who submitted the order
+                waiter_id = order.get('user')
+                if waiter_id:
+                    socketio.emit('food_ready', {
+                        'order_id': order_id,
+                        'waiter_id': waiter_id,
+                        'table_number': order.get('table_number'),
+                        'items': [{'name': i.get('name'), 'qty': i.get('qty', 1)} for i in order.get('items', []) if not i.get('is_combo_child')]
+                    }, room=f'waiter_{waiter_id}')
                 return jsonify({'message': f'Order #{order_id} completed', 'order': order})
         return jsonify({'error': f'Order #{order_id} not found'}), 404
     except Exception as e:
