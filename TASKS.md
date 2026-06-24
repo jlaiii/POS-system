@@ -497,7 +497,7 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 
 ### Priority: LOW — Polish & Professionalism
 
-- [ ] **Loading skeleton screens** — Replace "Loading..." text with skeleton screens (animated gray placeholders) for: item grid, order history, timesheet, pay period. Makes the app feel 2x faster even if load time is the same. Perceived performance is real performance in a busy restaurant.
+- [~] worker-2 **Loading skeleton screens** — Replace "Loading..." text with skeleton screens (animated gray placeholders) for: item grid, order history, timesheet, pay period. Makes the app feel 2x faster even if load time is the same. Perceived performance is real performance in a busy restaurant.
 
 - [ ] **Smooth page transitions** — Currently switching between POS / History / Admin tabs is instant (jarring). Add subtle transitions: slide-left for forward navigation, slide-right for back, fade for modals. 150ms duration — fast enough to not feel slow, present enough to feel polished.
 
