@@ -4888,5 +4888,130 @@
         "details": {
             "status": "success"
         }
+    },
+    {
+        "timestamp": "2026-06-24T03:03:07.657134",
+        "type": "clock_in",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee One",
+            "clock_in_time": "2026-06-24T03:03:07.656964",
+            "late_minutes": null,
+            "scheduled_start": null
+        }
+    },
+    {
+        "timestamp": "2026-06-24T03:03:09.729178",
+        "type": "clock_out",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee One",
+            "clock_in_time": "2026-06-24T03:03:07.656964",
+            "clock_out_time": "2026-06-24T03:03:09.728242",
+            "duration_hours": 0.0
+        }
+    },
+    {
+        "timestamp": "2026-06-24T03:03:23.547463",
+        "type": "submit_order",
+        "user_id": null,
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 59,
+            "subtotal": 3.0,
+            "tax_amount": 0.0,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 3.0,
+            "payment_method": "Cash",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-24T03:03:28.279916",
+        "type": "refund_order",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 59,
+            "reason": "No reason provided",
+            "refunded_by_name": "Owner",
+            "order_total": 3.0,
+            "inventory_restored": [
+                "Lemonade x1"
+            ]
+        }
+    },
+    {
+        "timestamp": "2026-06-24T03:03:57.247137",
+        "type": "clock_in",
+        "user_id": "5678",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee Two",
+            "clock_in_time": "2026-06-24T03:03:57.246994",
+            "late_minutes": null,
+            "scheduled_start": null
+        }
+    },
+    {
+        "timestamp": "2026-06-24T03:03:57.255655",
+        "type": "clock_in",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee One",
+            "clock_in_time": "2026-06-24T03:03:57.255460",
+            "late_minutes": null,
+            "scheduled_start": null
+        }
+    },
+    {
+        "timestamp": "2026-06-24T03:03:57.273844",
+        "type": "clock_out",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee One",
+            "clock_in_time": "2026-06-24T03:03:57.255460",
+            "clock_out_time": "2026-06-24T03:03:57.272926",
+            "duration_hours": 0.0
+        }
+    },
+    {
+        "timestamp": "2026-06-24T03:03:57.286309",
+        "type": "clock_out",
+        "user_id": "5678",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee Two",
+            "clock_in_time": "2026-06-24T03:03:57.246994",
+            "clock_out_time": "2026-06-24T03:03:57.285533",
+            "duration_hours": 0.0
+        }
     }
 ]
