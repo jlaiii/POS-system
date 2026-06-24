@@ -362,7 +362,7 @@ New `tickets.json` data store. Each ticket:
 
 - [x] worker-2 **Direct deposit info display** — Read-only display of employee's direct deposit details. [worker-2 — Added `POST /api/users/update_direct_deposit` endpoint storing bank_name, account_type, account_last4, routing_last4. New direct deposit display card in My Pay tab with masked account/routing numbers. Admin 🏦 Bank button in user management to set/clear bank info. i18n EN+ES. Activity logging.]
 - [x] worker-1 **Pay comparison charts** — Bar chart in My Pay showing period-by-period gross pay for last 6 periods. Pure CSS bar chart (no Chart.js needed). Shows last 6 periods with proportional accent-colored bars, date labels, dollar amounts, and hover tooltips with hours/shifts/tips. Hides gracefully when <2 periods have pay data. i18n EN+ES.
-- [ ] **Tax withholding estimator** — Optional W-4 based tax estimates.
+- [-] **Tax withholding estimator** — Optional W-4 based tax estimates. [Cancelled by worker-3: too vague/no implementation specification — would need full W-4 form logic, federal/state tax tables, allowances system, and per-employee configuration. Not feasible in single worker tick without detailed spec.]
 
 ## Table-Side Digital Menu & Ad Display (NEW — June 2026)
 
@@ -398,7 +398,7 @@ New `tickets.json` data store. Each ticket:
 
 ### Priority: LOW
 
-- [ ] **Allergen filter toggle** — Filter button to show/hide items by allergen.
+- [~] worker-3 **Allergen filter toggle** — Filter button to show/hide items by allergen.
 - [ ] **Nutritional info popup** — Optional per-item calorie/protein/carbs/fat display.
 - [ ] **"Most Popular" badge** — Auto-calculated from most-ordered analytics.
 - [ ] **Wake-on-proximity / screensaver mode** — Dim screen when no one nearby, brighten on motion.
