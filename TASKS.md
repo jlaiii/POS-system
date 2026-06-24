@@ -399,7 +399,7 @@ New `tickets.json` data store. Each ticket:
 ### Priority: LOW
 
 - [x] worker-3 **Allergen filter toggle** — Filter button to show/hide items by allergen. [worker-3 — Added collapsible 🥜 Allergen filter bar above POS item grid. Toggle button opens a chip panel showing dietary tags present in the current category/search view. Each chip toggles hiding items with that tag. "Show All" clears filters. Active filter count badge on toggle button. Allergen chips dynamically re-render on category switch or search. i18n EN+ES. Dark theme compatible. Touch-friendly 36px+ chips. Filter applies to both search results and normal category view. Empty-state message when all items hidden by filter.]
-- [~] worker-2 **Nutritional info popup** — Optional per-item calorie/protein/carbs/fat display.
+- [x] worker-2 **Nutritional info popup** — Optional per-item calorie/protein/carbs/fat display. [worker-2 — Nutritional fields (calories, protein, carbs, fat) added to item data model on add/edit/CUD endpoints. Admin Add/Edit item forms include nutrition inputs. POS item cards show 🍎 calorie badge with toast popup showing full breakdown. CSV import/export includes nutrition columns. Tablet menu item detail overlay shows nutrition card. i18n EN+ES. Backward compatible.]
 - [ ] **"Most Popular" badge** — Auto-calculated from most-ordered analytics.
 - [ ] **Wake-on-proximity / screensaver mode** — Dim screen when no one nearby, brighten on motion.
 

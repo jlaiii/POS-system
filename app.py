@@ -4512,11 +4512,12 @@ def items_csv_export():
     items_data = load_json_data(ITEMS_FILE)
     output = io.StringIO()
     writer = csv.writer(output)
-    writer.writerow(['category', 'name', 'price', 'description', 'image_url', 'dietary_tags', 'barcode'])
+    writer.writerow(['category', 'name', 'price', 'description', 'image_url', 'dietary_tags', 'barcode', 'calories', 'protein', 'carbs', 'fat'])
     for cat, items in items_data.items():
         for item in items:
             description = item.get('description', '')
             dietary_tags = ';'.join(item.get('dietary_tags', []))
+            ni = item.get('nutritional_info', {})
             writer.writerow([
                 cat,
                 item.get('name', ''),
@@ -4524,7 +4525,11 @@ def items_csv_export():
                 description,
                 item.get('image_url', ''),
                 dietary_tags,
-                item.get('barcode', '')
+                item.get('barcode', ''),
+                ni.get('calories', ''),
+                ni.get('protein', ''),
+                ni.get('carbs', ''),
+                ni.get('fat', '')
             ])
     csv_content = output.getvalue()
     output.close()
@@ -4617,10 +4622,29 @@ def items_csv_import():
                         existing['barcode'] = barcode
                     if dietary_tags:
                         existing['dietary_tags'] = dietary_tags
+                    # Parse nutritional columns
+                    ni = existing.get('nutritional_info', {})
+                    for nk in ['calories', 'protein', 'carbs', 'fat']:
+                        nv = (row.get(nk) or '').strip()
+                        if nv:
+                            try:
+                                ni[nk] = round(float(nv), 1)
+                            except ValueError:
+                                pass
+                    if ni:
+                        existing['nutritional_info'] = ni
                     updated += 1
                     found = True
                     break
             if not found:
+                ni = {}
+                for nk in ['calories', 'protein', 'carbs', 'fat']:
+                    nv = (row.get(nk) or '').strip()
+                    if nv:
+                        try:
+                            ni[nk] = round(float(nv), 1)
+                        except ValueError:
+                            pass
                 items_data[category].append({
                     'name': name,
                     'price': price,
@@ -4629,7 +4653,8 @@ def items_csv_import():
                     'barcode': barcode,
                     'dietary_tags': dietary_tags,
                     'course': 'main',
-                    'active': True
+                    'active': True,
+                    'nutritional_info': ni
                 })
                 created += 1
         except Exception as e:
@@ -4701,7 +4726,15 @@ def add_item():
             log_activity('add_item', admin_pin, admin_role, {'status': 'failed', 'reason': 'Item already exists', 'item_data': data})
             return jsonify({'message': f'Item "{name}" already exists in category "{category}".'}), 409
 
-    items_data[category].append({"name": name, "price": price, "barcode": data.get('barcode', ''), "image_url": data.get('image_url', ''), "course": data.get('course', 'main'), "active": True, "dietary_tags": data.get('dietary_tags', [])})
+    nutrition = {}
+    for key in ['calories', 'protein', 'carbs', 'fat']:
+        val = data.get(key)
+        if val is not None:
+            try:
+                nutrition[key] = round(float(val), 1)
+            except (ValueError, TypeError):
+                pass
+    items_data[category].append({"name": name, "price": price, "barcode": data.get('barcode', ''), "image_url": data.get('image_url', ''), "course": data.get('course', 'main'), "active": True, "dietary_tags": data.get('dietary_tags', []), "nutritional_info": nutrition if nutrition else {}})
     save_json_data(ITEMS_FILE, items_data)
     backup_menu()  # Auto-backup after successful save
     
@@ -4779,7 +4812,7 @@ def edit_item():
                 old_barcode = items_data[old_category][i].get('barcode', '')
                 old_course = item.get('course', 'main')
                 old_active = item.get('active', True)
-                items_data[new_category].append({"name": new_name, "price": new_price, "barcode": data.get('barcode', old_barcode), "image_url": data.get('image_url', old_image_url), "course": data.get('course', old_course), "active": old_active, "dietary_tags": data.get('dietary_tags', item.get('dietary_tags', []))})
+                items_data[new_category].append({"name": new_name, "price": new_price, "barcode": data.get('barcode', old_barcode), "image_url": data.get('image_url', old_image_url), "course": data.get('course', old_course), "active": old_active, "dietary_tags": data.get('dietary_tags', item.get('dietary_tags', [])), "nutritional_info": data.get('nutritional_info', item.get('nutritional_info', {}))})
             else:  # Only name/price/barcode changing within same category
                 items_data[old_category][i]["name"] = new_name
                 items_data[old_category][i]["price"] = new_price
@@ -4791,6 +4824,8 @@ def edit_item():
                     items_data[old_category][i]["course"] = data.get('course', 'main')
                 if 'dietary_tags' in data:
                     items_data[old_category][i]["dietary_tags"] = data.get('dietary_tags', [])
+                if 'nutritional_info' in data:
+                    items_data[old_category][i]["nutritional_info"] = data.get('nutritional_info', {})
             break
 
     if not item_found:

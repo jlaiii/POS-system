@@ -1075,6 +1075,7 @@ body {
     <div class="detail-name" id="detailName"></div>
     <div class="detail-price" id="detailPrice"></div>
     <div class="detail-dietary" id="detailDietary"></div>
+    <div class="detail-nutrition" id="detailNutrition" style="display:none;margin:8px 0;padding:8px 12px;background:var(--card);border-radius:8px;"></div>
     <div class="detail-desc" id="detailDesc"></div>
     <div class="detail-modifiers" id="detailModifiers"></div>
     <div class="detail-meta" id="detailMeta"></div>
@@ -1189,6 +1190,12 @@ const L10N = {
     'qr_order_this': '📱 Order This',
     'qr_scan_order': '📱 Scan to order this item',
     'qr_close': '✕ Close',
+    // Nutritional info
+    'nutrition_title': '🍎 Nutrition Info',
+    'nutrition_cal': 'cal',
+    'nutrition_protein': 'protein',
+    'nutrition_carbs': 'carbs',
+    'nutrition_fat': 'fat',
   },
   es: {
     'no_ads': 'No hay anuncios',
@@ -1226,6 +1233,12 @@ const L10N = {
     'qr_order_this': '📱 Ordenar Esto',
     'qr_scan_order': '📱 Escanea para pedir este artículo',
     'qr_close': '✕ Cerrar',
+    // Nutritional info
+    'nutrition_title': '🍎 Info Nutricional',
+    'nutrition_cal': 'cal',
+    'nutrition_protein': 'proteína',
+    'nutrition_carbs': 'carboh.',
+    'nutrition_fat': 'grasa',
   }
 };
 
@@ -1444,11 +1457,11 @@ function renderItems() {
       saleBadgeHtml = '<div class="sale-badge">⚡ ' + escHtml(label) + '</div>';
       priceHtml = '<div class="item-price item-price-sale">$' + discPrice.toFixed(2) + ' <span class="item-price-original">$' + priceVal.toFixed(2) + '</span></div>';
     }
-    return '<div class="menu-item-card" onclick="showItemDetail(\'' + escJs(item.name) + '\')">' +
+    return '<div class="menu-item-card" onclick="showItemDetail(\\'' + escJs(item.name) + '\\')">' +
       (item.image_url ? '<img src="' + escHtml(item.image_url) + '" alt="' + escHtml(item.name) + '" loading="lazy"/>' : '') +
-      '<button class="qr-btn" onclick="event.stopPropagation();showQrPopup(\'' + escJs(item.name) + '\')" title="' + t('qr_order_this') + '">📱</button>' +
+      '<button class="qr-btn" onclick="event.stopPropagation();showQrPopup(\\'' + escJs(item.name) + '\\')" title="' + t('qr_order_this') + '">📱</button>' +
       saleBadgeHtml +
-      '<div class="item-name">' + escHtml(item.name) + '</div>' +
+      '<div class="item-name">' + escHtml(item.name) + (item.nutritional_info && item.nutritional_info.calories ? '<span style="font-size:10px;color:var(--accent);margin-left:4px;border:1px solid var(--accent);border-radius:4px;padding:0 4px;line-height:16px;display:inline-block;vertical-align:middle;">🍎 ' + Math.round(parseFloat(item.nutritional_info.calories)) + '</span>' : '') + '</div>' +
       priceHtml +
       (item.description ? '<div class="item-desc">' + escHtml(item.description) + '</div>' : '') +
     '</div>';
@@ -1552,6 +1565,21 @@ function renderItemDetail(item) {
     dietaryEl.style.display = 'flex';
   } else {
     dietaryEl.style.display = 'none';
+  }
+
+  // Nutritional info
+  const nutritionEl = document.getElementById('detailNutrition');
+  const ni = item.nutritional_info;
+  if (ni && (ni.calories || ni.protein || ni.carbs || ni.fat)) {
+    const parts = [];
+    if (ni.calories) parts.push('🔥 <strong>' + Math.round(ni.calories) + '</strong> ' + t('nutrition_cal'));
+    if (ni.protein) parts.push('🥩 <strong>' + ni.protein + 'g</strong> ' + t('nutrition_protein'));
+    if (ni.carbs) parts.push('🌾 <strong>' + ni.carbs + 'g</strong> ' + t('nutrition_carbs'));
+    if (ni.fat) parts.push('🧈 <strong>' + ni.fat + 'g</strong> ' + t('nutrition_fat'));
+    nutritionEl.innerHTML = '<div style="font-size:12px;color:var(--text2);margin-bottom:4px;">🍎 ' + t('nutrition_title') + '</div><div style="display:flex;gap:12px;flex-wrap:wrap;">' + parts.map(p => '<span style="font-size:14px;">' + p + '</span>').join('') + '</div>';
+    nutritionEl.style.display = 'block';
+  } else {
+    nutritionEl.style.display = 'none';
   }
 
   // Modifier groups

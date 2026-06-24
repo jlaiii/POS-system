@@ -888,6 +888,13 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
             <span class="dtag-chip" data-form="addItem" data-tag="Sugar-Free" onclick="toggleDietaryTag('addItem',this)">🍃 Sugar-Free</span>
             <span class="dtag-chip" data-form="addItem" data-tag="Low-Carb" onclick="toggleDietaryTag('addItem',this)">🥬 Low-Carb</span>
           </div>
+          <div class="form-row" style="flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px;">
+            <span style="font-size:13px;color:var(--text2);min-width:60px;">🍎 Nutrition:</span>
+            <input type="number" id="addItemCalories" placeholder="Calories" step="1" min="0" style="max-width:100px;min-height:36px;padding:6px 8px;font-size:13px;" inputmode="numeric" pattern="[0-9]*" title="Calories"/>
+            <input type="number" id="addItemProtein" placeholder="Protein (g)" step="0.1" min="0" style="max-width:110px;min-height:36px;padding:6px 8px;font-size:13px;" inputmode="decimal" pattern="[0-9]*" title="Protein in grams"/>
+            <input type="number" id="addItemCarbs" placeholder="Carbs (g)" step="0.1" min="0" style="max-width:110px;min-height:36px;padding:6px 8px;font-size:13px;" inputmode="decimal" pattern="[0-9]*" title="Carbohydrates in grams"/>
+            <input type="number" id="addItemFat" placeholder="Fat (g)" step="0.1" min="0" style="max-width:100px;min-height:36px;padding:6px 8px;font-size:13px;" inputmode="decimal" pattern="[0-9]*" title="Fat in grams"/>
+          </div>
           </div>
           <div id="editItemForm">
             <h4>✏️ Edit Item</h4>
@@ -923,6 +930,13 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
               <span class="dtag-chip" data-form="editItem" data-tag="Kosher" onclick="toggleDietaryTag('editItem',this)">✡️ Kosher</span>
               <span class="dtag-chip" data-form="editItem" data-tag="Sugar-Free" onclick="toggleDietaryTag('editItem',this)">🍃 Sugar-Free</span>
               <span class="dtag-chip" data-form="editItem" data-tag="Low-Carb" onclick="toggleDietaryTag('editItem',this)">🥬 Low-Carb</span>
+            </div>
+            <div class="form-row" style="flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px;">
+              <span style="font-size:13px;color:var(--text2);min-width:60px;">🍎 Nutrition:</span>
+              <input type="number" id="editItemCalories" placeholder="Calories" step="1" min="0" style="max-width:100px;min-height:36px;padding:6px 8px;font-size:13px;" inputmode="numeric" pattern="[0-9]*" title="Calories"/>
+              <input type="number" id="editItemProtein" placeholder="Protein (g)" step="0.1" min="0" style="max-width:110px;min-height:36px;padding:6px 8px;font-size:13px;" inputmode="decimal" pattern="[0-9]*" title="Protein in grams"/>
+              <input type="number" id="editItemCarbs" placeholder="Carbs (g)" step="0.1" min="0" style="max-width:110px;min-height:36px;padding:6px 8px;font-size:13px;" inputmode="decimal" pattern="[0-9]*" title="Carbohydrates in grams"/>
+              <input type="number" id="editItemFat" placeholder="Fat (g)" step="0.1" min="0" style="max-width:100px;min-height:36px;padding:6px 8px;font-size:13px;" inputmode="decimal" pattern="[0-9]*" title="Fat in grams"/>
             </div>
           </div>
           <div id="itemMgmtList"><div class="empty-state">Loading items...</div></div>
@@ -3505,6 +3519,12 @@ const L10N = {
     'item.allergen_hide': 'Hide items with:',
     'item.allergen_filter_off': 'Allergen filter off',
     'item.allergen_filter_on': 'Filtering {count} allergen(s)',
+    // Nutritional info
+    'item.nutrition_title': 'View nutrition info',
+    'item.nutrition_cal': 'cal',
+    'item.nutrition_protein': 'protein',
+    'item.nutrition_carbs': 'carbs',
+    'item.nutrition_fat': 'fat',
   },
   es: {
     'app.title': '🍽️ Sistema POS',
@@ -4208,6 +4228,12 @@ const L10N = {
     'item.allergen_hide': 'Ocultar artículos con:',
     'item.allergen_filter_off': 'Filtro de alérgenos desactivado',
     'item.allergen_filter_on': 'Filtrando {count} alérgeno(s)',
+    // Nutritional info
+    'item.nutrition_title': 'Ver información nutricional',
+    'item.nutrition_cal': 'cal',
+    'item.nutrition_protein': 'proteína',
+    'item.nutrition_carbs': 'carboh.',
+    'item.nutrition_fat': 'grasa',
   }
 };
 
@@ -8169,7 +8195,7 @@ function renderItems() {
         <div class="item-category-label">${escHtml(item._category)}</div>
         ${saleBadgeHtml}
         ${imgHtml}
-        <div class="item-name">${displayName}${modBadge}${courseBadge}</div>
+        <div class="item-name">${displayName}${modBadge}${courseBadge}${showNutritionBadge(item)}</div>
         ${priceHtml}
         ${stockHtml}
         <button class="item-add${stock !== null && stock <= 0 ? ' item-add-disabled' : ''}" onclick="event.stopPropagation(); addToCart('${escJs(item.name)}', ${effectivePrice}, '${escJs(item._category)}')"${stock !== null && stock <= 0 ? ' disabled' : ''}>${stock !== null && stock <= 0 ? t('item.out') : t('item.add')}</button>
@@ -8219,7 +8245,7 @@ function renderItems() {
       card.innerHTML = `
         ${saleBadgeHtml}
         ${imgHtml}
-        <div class="item-name">${escHtml(item.name)}${modBadge}${courseBadge}</div>
+        <div class="item-name">${escHtml(item.name)}${modBadge}${courseBadge}${showNutritionBadge(item)}</div>
         ${priceHtml}
         ${stockHtml}
         <button class="item-add${stock !== null && stock <= 0 ? ' item-add-disabled' : ''}" onclick="event.stopPropagation(); addToCart('${escJs(item.name)}', ${effectivePrice}, '${escJs(currentCategory)}')"${stock !== null && stock <= 0 ? ' disabled' : ''}>${stock !== null && stock <= 0 ? t('item.out') : t('item.add')}</button>
@@ -8265,6 +8291,27 @@ function getItemModifiers(name, category) {
     }
   }
   return null;
+}
+
+/** Return a small nutrition badge HTML if item has nutritional info, or empty string */
+function showNutritionBadge(item) {
+  const ni = item.nutritional_info;
+  if (!ni || !ni.calories) return '';
+  const cal = parseInt(ni.calories, 10);
+  if (isNaN(cal) || cal <= 0) return '';
+  return `<span class="nutrition-badge" onclick="event.stopPropagation(); showNutritionPopup(this, ${JSON.stringify(ni)})" title="${t('item.nutrition_title')}" style="font-size:10px;color:var(--accent);margin-left:4px;cursor:pointer;border:1px solid var(--accent);border-radius:4px;padding:0 4px;line-height:16px;display:inline-block;vertical-align:middle;">🍎 ${cal}</span>`;
+}
+
+/** Show a small popover with full nutritional breakdown */
+function showNutritionPopup(anchor, ni) {
+  if (!ni) return;
+  const lines = [];
+  if (ni.calories) lines.push('🔥 ' + Math.round(ni.calories) + ' ' + t('item.nutrition_cal'));
+  if (ni.protein) lines.push('🥩 ' + ni.protein + 'g ' + t('item.nutrition_protein'));
+  if (ni.carbs) lines.push('🌾 ' + ni.carbs + 'g ' + t('item.nutrition_carbs'));
+  if (ni.fat) lines.push('🧈 ' + ni.fat + 'g ' + t('item.nutrition_fat'));
+  if (lines.length === 0) return;
+  showToast(lines.join(' · '), 'info', 4000);
 }
 
 // ═══════════ MODIFIER OVERLAY ═══════════
@@ -11173,7 +11220,7 @@ async function loadItemMgmt() {
           <div class="ime-info">${imgHtml}<span class="ime-cat">${escHtml(cat)}</span> — ${escHtml(item.name)} <span class="ime-price">$${item.price.toFixed(2)}</span>${bcHtml}${courseBadge}${dietaryHtml}${item.modifiers && item.modifiers.groups && item.modifiers.groups.length > 0 ? '<span style="color:#f39c12;font-size:11px;margin-left:6px;">⚙️</span>' : ''} ${item.active === false ? '<span style="color:var(--text2);font-size:11px;margin-left:6px;" data-i18n="item.hidden">🚫 Hidden</span>' : '<span style="color:#2ecc71;font-size:11px;margin-left:6px;" data-i18n="item.visible">👁️ Visible</span>'}</div>
           <div class="ime-actions">
             <button class="outline" onclick='toggleItemVisibility(${JSON.stringify(cat)},${JSON.stringify(item.name)})' style="font-size:13px;padding:6px 12px;min-height:36px;" title="${item.active === false ? t('item.show') : t('item.hide')}">${item.active === false ? '👁️' : '🚫'}</button>
-            <button class="outline" onclick='startEditItem(${JSON.stringify(cat)},${JSON.stringify(item.name)},${item.price},${JSON.stringify(bc)},${JSON.stringify(imgUrl)},${JSON.stringify(course)},${JSON.stringify(dietaryTags)})' style="font-size:13px;padding:6px 12px;min-height:36px;">✏️</button>
+            <button class="outline" onclick='startEditItem(${JSON.stringify(cat)},${JSON.stringify(item.name)},${item.price},${JSON.stringify(bc)},${JSON.stringify(imgUrl)},${JSON.stringify(course)},${JSON.stringify(dietaryTags)},${JSON.stringify(item.nutritional_info || {})})' style="font-size:13px;padding:6px 12px;min-height:36px;">✏️</button>
             <button class="outline" onclick='editItemModifiers(${JSON.stringify(cat)},${JSON.stringify(item.name)})' style="font-size:13px;padding:6px 12px;min-height:36px;">⚙️</button>
             <button class="danger" onclick='deleteItem(${JSON.stringify(cat)},${JSON.stringify(item.name)})' style="font-size:13px;padding:6px 12px;min-height:36px;">🗑️</button>
           </div>
@@ -11184,7 +11231,7 @@ async function loadItemMgmt() {
   } catch(e) { list.innerHTML = '<div class="empty-state">' + t('network_error') + '</div>'; }
 }
 
-function startEditItem(cat, name, price, barcode, imageUrl, course, dietaryTags) {
+function startEditItem(cat, name, price, barcode, imageUrl, course, dietaryTags, nutritionalInfo) {
   document.getElementById('editItemForm').classList.add('active');
   document.getElementById('editOldCat').value = cat;
   document.getElementById('editOldName').value = name;
@@ -11195,6 +11242,11 @@ function startEditItem(cat, name, price, barcode, imageUrl, course, dietaryTags)
   document.getElementById('editNewImageUrl').value = imageUrl || '';
   document.getElementById('editNewCourse').value = course || 'main';
   setDietaryTags('editItem', dietaryTags || []);
+  const ni = nutritionalInfo || {};
+  document.getElementById('editItemCalories').value = ni.calories || '';
+  document.getElementById('editItemProtein').value = ni.protein || '';
+  document.getElementById('editItemCarbs').value = ni.carbs || '';
+  document.getElementById('editItemFat').value = ni.fat || '';
   document.getElementById('editItemForm').scrollIntoView({ behavior: 'smooth' });
 }
 
@@ -11212,11 +11264,22 @@ async function saveEditItem() {
   const newImageUrl = document.getElementById('editNewImageUrl').value.trim();
   const newCourse = document.getElementById('editNewCourse').value;
   const dietaryTags = getSelectedDietaryTags('editItem');
+  const calories = document.getElementById('editItemCalories').value.trim();
+  const protein = document.getElementById('editItemProtein').value.trim();
+  const carbs = document.getElementById('editItemCarbs').value.trim();
+  const fat = document.getElementById('editItemFat').value.trim();
   if (!newCat || !newName || isNaN(newPrice) || newPrice <= 0) { showToast(t('toast.fill_all_fields'), 'danger'); return; }
   try {
+    const body = { adminPin: currentUser.id, oldCategory: oldCat, oldName, newCategory: newCat, newName, newPrice, barcode: newBarcode, image_url: newImageUrl, course: newCourse, dietary_tags: dietaryTags };
+    const ni = {};
+    if (calories) ni.calories = parseFloat(calories);
+    if (protein) ni.protein = parseFloat(protein);
+    if (carbs) ni.carbs = parseFloat(carbs);
+    if (fat) ni.fat = parseFloat(fat);
+    if (Object.keys(ni).length > 0) body.nutritional_info = ni;
     const r = await fetch(BACKEND_URL + '/api/edit_item', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adminPin: currentUser.id, oldCategory: oldCat, oldName, newCategory: newCat, newName, newPrice, barcode: newBarcode, image_url: newImageUrl, course: newCourse, dietary_tags: dietaryTags })
+      body: JSON.stringify(body)
     });
     const d = await r.json();
     if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
@@ -11546,11 +11609,20 @@ async function addItem() {
   const imageUrl = document.getElementById('addItemImageUrl').value.trim();
   const course = document.getElementById('addItemCourse').value;
   const dietaryTags = getSelectedDietaryTags('addItem');
+  const calories = document.getElementById('addItemCalories').value.trim();
+  const protein = document.getElementById('addItemProtein').value.trim();
+  const carbs = document.getElementById('addItemCarbs').value.trim();
+  const fat = document.getElementById('addItemFat').value.trim();
   if (!category || !name || isNaN(price) || price <= 0) { showToast(t('toast.fill_all_fields'), 'danger'); return; }
   try {
+    const body = { adminPin: currentUser.id, category, name, price, barcode, image_url: imageUrl, course, dietary_tags: dietaryTags };
+    if (calories) body.calories = parseFloat(calories);
+    if (protein) body.protein = parseFloat(protein);
+    if (carbs) body.carbs = parseFloat(carbs);
+    if (fat) body.fat = parseFloat(fat);
     const r = await fetch(BACKEND_URL + '/api/add_item', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adminPin: currentUser.id, category, name, price, barcode, image_url: imageUrl, course, dietary_tags: dietaryTags })
+      body: JSON.stringify(body)
     });
     const d = await r.json();
     if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
@@ -11560,6 +11632,10 @@ async function addItem() {
     document.getElementById('addItemPrice').value = '';
     document.getElementById('addItemBarcode').value = '';
     document.getElementById('addItemImageUrl').value = '';
+    document.getElementById('addItemCalories').value = '';
+    document.getElementById('addItemProtein').value = '';
+    document.getElementById('addItemCarbs').value = '';
+    document.getElementById('addItemFat').value = '';
     setDietaryTags('addItem', []); // Clear selected tags
     loadItemMgmt();
     loadItems();
