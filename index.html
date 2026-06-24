@@ -83,6 +83,8 @@ button.danger { background: #c0392b; color: #fff; }
 button.success { background: var(--success); color: #fff; }
 button.outline { background: transparent; border: 2px solid var(--accent); color: var(--accent); }
 button.ghost { background: transparent; color: var(--text2); }
+/* Compact button for tight-context layouts (36px vs 48px default) */
+button.btn-sm, .btn-sm { font-size: 13px; padding: 4px 12px; min-height: 36px; min-width: 36px; }
 
 .val-err { color: #ff6b6b; background: rgba(255,107,107,0.1); border: 1px solid rgba(255,107,107,0.3); }
 .val-warn { color: #ffd93d; background: rgba(255,217,61,0.1); border: 1px solid rgba(255,217,61,0.3); }
@@ -845,7 +847,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
           <div class="card" style="margin-bottom:12px;padding:12px 14px;" id="timesheetConfigCard">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
               <h4 style="margin:0;font-size:14px;color:var(--accent);">⚙️ Timesheet Config</h4>
-              <button class="ghost" onclick="toggleTimesheetConfig()" style="font-size:12px;padding:4px 10px;min-height:32px;">🔽 Show</button>
+              <button class="ghost btn-sm" onclick="toggleTimesheetConfig()">🔽 Show</button>
             </div>
             <div id="timesheetConfigBody" style="display:none;">
               <p style="font-size:12px;color:var(--text2);margin-bottom:8px;">Configure overtime thresholds and late grace period. Changes apply to all new period calculations.</p>
@@ -4735,8 +4737,8 @@ async function loadShifts() {
             <span style="font-size:13px;color:var(--accent);font-weight:500;">Paid: ${s.paid_hours || s.duration_hours} hrs</span>
             ${lateBadge}
             <div style="margin-left:auto;display:flex;gap:4px;">
-              ${shiftLocked ? '' : `<button class="shift-edit-btn" onclick="openShiftEditModal(${actualIndex})" title="Edit shift times" style="font-size:12px;padding:4px 10px;min-height:32px;">✏️ Edit</button>`}
-              ${shiftLocked ? '' : `<button class="shift-edit-btn" onclick="adminAddNote(${actualIndex})" title="Add/edit shift notes" style="font-size:12px;padding:4px 10px;min-height:32px;">📝 Note</button>`}
+              ${shiftLocked ? '' : `<button class="shift-edit-btn btn-sm" onclick="openShiftEditModal(${actualIndex})" title="Edit shift times">✏️ Edit</button>`}
+              ${shiftLocked ? '' : `<button class="shift-edit-btn btn-sm" onclick="adminAddNote(${actualIndex})" title="Add/edit shift notes">📝 Note</button>`}
             </div>
           </div>
           ${notesHtml}${lateNote}
@@ -7076,7 +7078,7 @@ function renderCart() {
       </div>
       ${comboChildrenHtml}
       <div style="display:flex;gap:6px;align-items:center;">
-        <input type="text" id="itemNote_${i}" value="${escJs(itemNote)}" placeholder="${t('cart.item_note')}" maxlength="200" style="flex:1;min-height:32px;padding:6px 10px;font-size:13px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);" onchange="cart[${i}].note = this.value"/>
+        <input type="text" id="itemNote_${i}" value="${escJs(itemNote)}" placeholder="${t('cart.item_note')}" maxlength="200" style="flex:1;min-height:36px;padding:6px 10px;font-size:13px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);" onchange="cart[${i}].note = this.value"/>
       </div>
     </div>`;
   });
@@ -9669,13 +9671,13 @@ function renderModifierEditor() {
       <div style="padding-left:12px;">`;
     group.options.forEach((opt, oi) => {
       html += `<div style="display:flex;gap:6px;align-items:center;margin-bottom:4px;">
-        <input type="text" value="${escJs(opt.name)}" placeholder="${t('modifier.option_name')}" style="flex:1;min-height:32px;font-size:13px;padding:4px 8px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);" onchange="modifierEditorState.groups[${gi}].options[${oi}].name = this.value"/>
+        <input type="text" value="${escJs(opt.name)}" placeholder="${t('modifier.option_name')}" style="flex:1;min-height:36px;font-size:13px;padding:4px 8px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);" onchange="modifierEditorState.groups[${gi}].options[${oi}].name = this.value"/>
         <span style="color:var(--text2);font-size:13px;">$</span>
-        <input type="number" value="${opt.price_mod}" step="0.25" min="0" style="width:80px;min-height:32px;font-size:13px;padding:4px 8px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);" onchange="modifierEditorState.groups[${gi}].options[${oi}].price_mod = parseFloat(this.value) || 0" inputmode="decimal" pattern="[0-9]*" />
-        <button class="ghost" onclick="removeModifierOption(${gi}, ${oi})" style="font-size:12px;padding:4px 8px;min-height:32px;color:var(--accent);" data-i18n="modifier.remove_option">✕</button>
+        <input type="number" value="${opt.price_mod}" step="0.25" min="0" style="width:80px;min-height:36px;font-size:13px;padding:4px 8px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);" onchange="modifierEditorState.groups[${gi}].options[${oi}].price_mod = parseFloat(this.value) || 0" inputmode="decimal" pattern="[0-9]*" />
+        <button class="ghost btn-sm" onclick="removeModifierOption(${gi}, ${oi})" style="color:var(--accent);" data-i18n="modifier.remove_option">✕</button>
       </div>`;
     });
-    html += `<button class="outline" onclick="addModifierOption(${gi})" style="font-size:12px;padding:4px 12px;min-height:32px;margin-top:4px;" data-i18n="modifier.add_option">➕ Add Option</button>`;
+    html += `<button class="outline btn-sm" onclick="addModifierOption(${gi})" style="margin-top:4px;" data-i18n="modifier.add_option">➕ Add Option</button>`;
     html += `</div></div>`;
   });
   container.innerHTML = html;
@@ -10567,7 +10569,7 @@ function renderTsDashboard(container, employees, approvalData, params) {
       html += ' <span style="background:#ff9800;color:#fff;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600;vertical-align:middle;">⚠️ ' + editedShifts + ' edited</span>';
     }
     html += '</span>';
-    html += '<button class="pp-details-btn" style="font-size:12px;padding:4px 12px;min-height:32px;" onclick="event.stopPropagation();toggleTsEmployeeDetails(\'' + emp.user_id + '\')">📋 ' + emp.shift_count + ' shifts ▼</button>';
+    html += '<button class="pp-details-btn btn-sm" onclick="event.stopPropagation();toggleTsEmployeeDetails(\'' + emp.user_id + '\')">📋 ' + emp.shift_count + ' shifts ▼</button>';
     html += '</div>';
     // Stats row
     html += '<div class="pp-card-meta">';
