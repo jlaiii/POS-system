@@ -1537,10 +1537,11 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
         </div>
         <!-- Tickets / Ticket Queue Admin -->
         <div id="secTickets" class="admin-section">
-          <!-- Sub-tabs: Queue | Calendar -->
+          <!-- Sub-tabs: Queue | Calendar | Templates -->
           <div style="display:flex;gap:4px;margin-bottom:16px;border-bottom:2px solid var(--border);padding-bottom:0;">
             <button class="ticket-subtab active" onclick="switchTicketsSubTab('queue')" id="ticketSubTabQueue" style="background:transparent;border:none;padding:8px 16px;font-size:14px;cursor:pointer;border-radius:6px 6px 0 0;color:var(--text2);min-height:44px;font-weight:500;transition:all .15s;border-bottom:3px solid transparent;">📋 Queue</button>
             <button class="ticket-subtab" onclick="switchTicketsSubTab('calendar')" id="ticketSubTabCalendar" style="background:transparent;border:none;padding:8px 16px;font-size:14px;cursor:pointer;border-radius:6px 6px 0 0;color:var(--text2);min-height:44px;font-weight:500;transition:all .15s;border-bottom:3px solid transparent;">📅 Calendar</button>
+            <button class="ticket-subtab" onclick="switchTicketsSubTab('templates')" id="ticketSubTabTemplates" style="background:transparent;border:none;padding:8px 16px;font-size:14px;cursor:pointer;border-radius:6px 6px 0 0;color:var(--text2);min-height:44px;font-weight:500;transition:all .15s;border-bottom:3px solid transparent;">📋 Templates</button>
           </div>
 
           <!-- Queue View -->
@@ -1656,6 +1657,44 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
               <span><span style="display:inline-block;width:14px;height:14px;background:#27ae60;border-radius:3px;vertical-align:middle;"></span> Approved</span>
               <span><span style="display:inline-block;width:14px;height:14px;background:#f39c12;border-radius:3px;vertical-align:middle;"></span> Pending</span>
               <span><span style="display:inline-block;width:14px;height:14px;border:2px solid var(--accent);border-radius:3px;vertical-align:middle;"></span> Today</span>
+            </div>
+          </div>
+
+          <!-- Templates View -->
+          <div id="ticketSubTemplates" style="display:none;">
+            <h3>📋 Response Templates</h3>
+            <p style="color:var(--text2);margin-bottom:16px;font-size:14px;">Manage saved response notes for quick use when approving or denying tickets.</p>
+
+            <!-- Add Template Form -->
+            <div class="card" style="margin-bottom:16px;padding:16px;">
+              <h4 id="templateFormTitle">➕ Add New Template</h4>
+              <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;">
+                <div style="flex:2;min-width:160px;">
+                  <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;">Template Name</label>
+                  <input type="text" id="templateNameInput" placeholder="e.g. Standard Approval" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;">
+                </div>
+                <div style="flex:1;min-width:120px;">
+                  <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;">Type</label>
+                  <select id="templateTypeSelect" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;">
+                    <option value="general">General</option>
+                    <option value="approval">Approval</option>
+                    <option value="denial">Denial</option>
+                  </select>
+                </div>
+              </div>
+              <div style="margin-top:8px;">
+                <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;">Template Text</label>
+                <textarea id="templateTextInput" rows="3" placeholder="Write the response text here..." style="width:100%;padding:10px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:80px;resize:vertical;"></textarea>
+              </div>
+              <div style="display:flex;gap:8px;margin-top:12px;">
+                <button class="success" onclick="saveTemplate()" style="min-height:44px;padding:8px 20px;font-size:14px;">💾 Save Template</button>
+                <button onclick="cancelTemplateEdit()" id="templateCancelBtn" style="display:none;min-height:44px;padding:8px 20px;font-size:14px;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);cursor:pointer;">✕ Cancel</button>
+              </div>
+            </div>
+
+            <!-- Templates List -->
+            <div id="templatesList" style="display:grid;gap:10px;">
+              <div class="empty-state">Loading templates...</div>
             </div>
           </div>
         </div>
@@ -2479,6 +2518,14 @@ function hideContentLoading(elemId) {
 }
 function isLoadingContent(elemId) {
   return _loadingCounter[elemId] > 0;
+}
+
+/** Escape HTML special chars for safe insertion */
+function escapeHtml(str) {
+  if (typeof str !== 'string') return '';
+  var div = document.createElement('div');
+  div.appendChild(document.createTextNode(str));
+  return div.innerHTML;
 }
 
 /** Safe fetch + JSON parse with HTTP status checking. Returns {ok, data, status, error}. */
@@ -6623,10 +6670,13 @@ function switchTicketsSubTab(subtab) {
   document.getElementById('ticketSubTab' + subtab.charAt(0).toUpperCase() + subtab.slice(1)).classList.add('active');
   document.getElementById('ticketSubQueue').style.display = subtab === 'queue' ? '' : 'none';
   document.getElementById('ticketSubCalendar').style.display = subtab === 'calendar' ? '' : 'none';
+  document.getElementById('ticketSubTemplates').style.display = subtab === 'templates' ? '' : 'none';
   if (subtab === 'calendar') {
     loadTimeOffCalendar();
   } else if (subtab === 'queue') {
     loadTicketQueue();
+  } else if (subtab === 'templates') {
+    loadTemplates();
   }
 }
 
@@ -6726,6 +6776,228 @@ function calendarGoToday() {
   calendarMonth = now.getMonth() + 1;
   calendarYear = now.getFullYear();
   loadTimeOffCalendar();
+}
+
+// ═══════════ TICKET RESPONSE TEMPLATES ═══════════
+
+let templateEditId = null;
+
+async function loadTemplates() {
+  const listEl = document.getElementById('templatesList');
+  listEl.innerHTML = '<div class="empty-state"><div class="spinner"></div> Loading templates...</div>';
+  try {
+    const res = await fetch(BACKEND_URL + '/api/tickets/templates/list', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'}
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      listEl.innerHTML = '<div class="empty-state" style="color:#e74c3c;">Failed to load templates.</div>';
+      return;
+    }
+    const templates = data.templates || [];
+    if (templates.length === 0) {
+      listEl.innerHTML = '<div class="empty-state">No response templates yet. Create one above!</div>';
+      return;
+    }
+    let html = '';
+    templates.forEach(t => {
+      const typeLabel = t.type === 'approval' ? '✅ Approval' : t.type === 'denial' ? '❌ Denial' : '📝 General';
+      html += `<div class="card" style="padding:14px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <strong style="font-size:15px;">${escapeHtml(t.name)}</strong>
+            <span style="font-size:11px;background:var(--bg);padding:2px 8px;border-radius:10px;color:var(--text2);">${typeLabel}</span>
+            <span style="font-size:11px;color:var(--text2);">${t.id}</span>
+          </div>
+          <div style="margin-top:6px;font-size:13px;color:var(--text2);white-space:pre-wrap;word-break:break-word;background:var(--bg);padding:8px;border-radius:6px;border:1px solid var(--border);">${escapeHtml(t.text)}</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0;">
+          <button onclick="editTemplate('${t.id}')" style="min-height:40px;padding:6px 12px;font-size:13px;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);cursor:pointer;" aria-label="Edit template">✏️</button>
+          <button onclick="deleteTemplate('${t.id}')" style="min-height:40px;padding:6px 12px;font-size:13px;background:var(--bg);border:2px solid #e74c3c;border-radius:var(--radius);color:#e74c3c;cursor:pointer;" aria-label="Delete template">🗑️</button>
+        </div>
+      </div>`;
+    });
+    listEl.innerHTML = html;
+  } catch (e) {
+    listEl.innerHTML = '<div class="empty-state" style="color:#e74c3c;">Network error loading templates.</div>';
+    showToast(t('toast.network_error') + ' loading templates.', 'error');
+  }
+}
+
+async function saveTemplate() {
+  const name = document.getElementById('templateNameInput').value.trim();
+  const text = document.getElementById('templateTextInput').value.trim();
+  const type = document.getElementById('templateTypeSelect').value;
+
+  if (!name) { showToast('Template name is required.', 'error'); return; }
+  if (!text) { showToast('Template text is required.', 'error'); return; }
+
+  try {
+    const res = await fetch(BACKEND_URL + '/api/tickets/templates/save', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        adminPin: currentUser.id,
+        id: templateEditId,
+        name: name,
+        text: text,
+        type: type
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(data.message || 'Failed to save template.', 'error');
+      return;
+    }
+    showToast(data.message || 'Template saved!', 'success');
+    cancelTemplateEdit();
+    loadTemplates();
+  } catch (e) {
+    showToast(t('toast.network_error') + ' saving template.', 'error');
+  }
+}
+
+function editTemplate(templateId) {
+  // Find the template in the currently loaded list
+  const listEl = document.getElementById('templatesList');
+  const cards = listEl.querySelectorAll('.card');
+  // We'll re-fetch to get the data
+  fetch(BACKEND_URL + '/api/tickets/templates/list', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'}
+  }).then(r => r.json()).then(data => {
+    const templates = data.templates || [];
+    const t = templates.find(t => t.id === templateId);
+    if (!t) { showToast('Template not found.', 'error'); return; }
+    templateEditId = t.id;
+    document.getElementById('templateFormTitle').textContent = '✏️ Edit Template: ' + t.name;
+    document.getElementById('templateNameInput').value = t.name;
+    document.getElementById('templateTextInput').value = t.text;
+    document.getElementById('templateTypeSelect').value = t.type || 'general';
+    document.getElementById('templateCancelBtn').style.display = '';
+  }).catch(e => {
+    showToast(t('toast.network_error'), 'error');
+  });
+}
+
+function cancelTemplateEdit() {
+  templateEditId = null;
+  document.getElementById('templateFormTitle').textContent = '➕ Add New Template';
+  document.getElementById('templateNameInput').value = '';
+  document.getElementById('templateTextInput').value = '';
+  document.getElementById('templateTypeSelect').value = 'general';
+  document.getElementById('templateCancelBtn').style.display = 'none';
+}
+
+async function deleteTemplate(templateId) {
+  if (!confirm('Delete this template? This cannot be undone.')) return;
+  try {
+    const res = await fetch(BACKEND_URL + '/api/tickets/templates/delete', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        adminPin: currentUser.id,
+        id: templateId
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(data.message || 'Failed to delete template.', 'error');
+      return;
+    }
+    showToast(data.message || 'Template deleted!', 'success');
+    loadTemplates();
+  } catch (e) {
+    showToast(t('toast.network_error') + ' deleting template.', 'error');
+  }
+}
+
+// Enhance deny prompt with template selector
+async function showDenyPrompt(ticketId) {
+  // Load templates for the dropdown
+  let templates = [];
+  try {
+    const res = await fetch(BACKEND_URL + '/api/tickets/templates/list', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'}
+    });
+    const data = await res.json();
+    templates = (data.templates || []).filter(t => t.type === 'denial' || t.type === 'general');
+  } catch (e) {
+    // Continue without templates
+  }
+
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:10000;';
+  modal.setAttribute('role','dialog');
+  modal.setAttribute('aria-modal','true');
+
+  const templateOptions = templates.map(t => `<option value="${escapeHtml(t.text)}">${escapeHtml(t.name)}</option>`).join('');
+
+  modal.innerHTML = `<div class="card" style="max-width:500px;width:90%;padding:20px;">
+    <h4 style="margin-bottom:12px;">❌ Deny Ticket — Reason</h4>
+    ${templates.length > 0 ? `<div style="margin-bottom:8px;">
+      <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;">Use a template:</label>
+      <select id="denyTemplateSelect" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;" onchange="document.getElementById('denyReasonInput').value = this.value">
+        <option value="">— Select a template —</option>
+        ${templateOptions}
+      </select>
+    </div>` : ''}
+    <div>
+      <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;">Reason (required):</label>
+      <textarea id="denyReasonInput" rows="4" placeholder="Explain why this request is being denied..." style="width:100%;padding:10px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:100px;resize:vertical;"></textarea>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px;">
+      <button class="danger" onclick="this.closest('[role=dialog]').parentElement.remove();showToast('Denial cancelled.','info')" style="min-height:44px;padding:8px 20px;font-size:14px;">✕ Cancel</button>
+      <button class="success" onclick="submitDenyWithReason('${ticketId}', this)" style="min-height:44px;padding:8px 20px;font-size:14px;">✅ Confirm Denial</button>
+    </div>
+  </div>`;
+
+  document.body.appendChild(modal);
+}
+
+async function submitDenyWithReason(ticketId, btn) {
+  const reason = document.getElementById('denyReasonInput').value.trim();
+  if (!reason) {
+    showToast('Reason is required when denying a ticket.', 'error');
+    return;
+  }
+  btn.disabled = true;
+  btn.textContent = '⏳ Sending...';
+
+  // Read label if available
+  const labelEl = document.getElementById('labelSelect_' + ticketId);
+  const label = labelEl ? labelEl.value : undefined;
+
+  try {
+    const res = await fetch(BACKEND_URL + '/api/tickets/respond', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        adminPin: currentUser.id,
+        ticket_id: ticketId,
+        action: 'denied',
+        reason: reason,
+        label: label
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(data.message || 'Failed to respond.', 'error');
+      btn.disabled = false;
+      btn.textContent = '✅ Confirm Denial';
+      return;
+    }
+    showToast(data.message || 'Ticket denied successfully!', 'success');
+    // Close modal
+    btn.closest('[role=dialog]').parentElement.remove();
+    loadTicketQueue();
+  } catch (e) {
+    showToast(t('toast.network_error') + ' responding to ticket.', 'error');
+    btn.disabled = false;
+    btn.textContent = '✅ Confirm Denial';
+  }
 }
 
 // ═══════════ SECURITY DASHBOARD ═══════════

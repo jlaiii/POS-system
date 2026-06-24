@@ -149,6 +149,7 @@ EMAIL_CONFIG_FILE = 'email_config.json'  # Email/SMTP configuration for digital 
 SHIFT_FILE = 'shift_log.json'  # Employee shift clock-in/clock-out records
 TIMESHEET_CONFIG_FILE = 'timesheet_config.json'  # Timesheet configuration (overtime thresholds, late grace period)
 TICKETS_FILE = 'tickets.json'  # Employee self-service tickets/requests
+TICKET_TEMPLATES_FILE = 'ticket_templates.json'  # Saved response templates for admin ticket replies
 APPROVALS_FILE = 'timesheet_approvals.json'  # Timesheet pay period approvals
 RESTAURANT_CONFIG_FILE = 'restaurant_config.json'  # Restaurant info for tablet display (name, hours, wifi)
 SCHEDULE_FILE = 'schedule.json'  # Shift schedule builder — weekly shift assignments
@@ -256,7 +257,7 @@ def backup_menu():
 
 
 # Ensure JSON files exist and are initialized correctly
-for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE, INVENTORY_FILE, REFUNDED_ORDERS_FILE, FAVORITES_FILE, LOYALTY_FILE, SCHEDULED_PRICING_FILE, WASTE_FILE, DELIVERY_ADDRESSES_FILE, WEBHOOKS_FILE, TABLE_ADS_FILE, CASH_DRAWER_FILE, COMBOS_FILE, SERVICE_CHARGE_FILE, EMAIL_CONFIG_FILE, SHIFT_FILE, TICKETS_FILE, APPROVALS_FILE, RESTAURANT_CONFIG_FILE, PRINTER_CONFIG_FILE]:
+for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE, INVENTORY_FILE, REFUNDED_ORDERS_FILE, FAVORITES_FILE, LOYALTY_FILE, SCHEDULED_PRICING_FILE, WASTE_FILE, DELIVERY_ADDRESSES_FILE, WEBHOOKS_FILE, TABLE_ADS_FILE, CASH_DRAWER_FILE, COMBOS_FILE, SERVICE_CHARGE_FILE, EMAIL_CONFIG_FILE, SHIFT_FILE, TICKETS_FILE, TICKET_TEMPLATES_FILE, APPROVALS_FILE, RESTAURANT_CONFIG_FILE, PRINTER_CONFIG_FILE]:
     if not os.path.exists(f):
         with open(f, 'w') as file:
             if f == USERS_FILE:
@@ -15162,6 +15163,124 @@ def ticket_timeoff_calendar():
         'tickets': calendar_tickets,
         'total_off_days': len(days),
     })
+
+
+def generate_template_id():
+    """Generate a sequential template ID like TMP-001, TMP-002, etc."""
+    templates = load_json_data(TICKET_TEMPLATES_FILE)
+    if not templates:
+        return "TMP-001"
+    max_num = 0
+    for t in templates:
+        tid = t.get('id', '')
+        if tid.startswith('TMP-'):
+            try:
+                num = int(tid[4:])
+                if num > max_num:
+                    max_num = num
+            except ValueError:
+                pass
+    return f"TMP-{max_num + 1:03d}"
+
+
+@app.route('/api/tickets/templates/list', methods=['POST'])
+def ticket_templates_list():
+    """Return all saved response templates."""
+    templates = load_json_data(TICKET_TEMPLATES_FILE)
+    if not isinstance(templates, list):
+        return jsonify({'templates': []})
+    # Sort by name
+    templates.sort(key=lambda t: t.get('name', ''))
+    return jsonify({'templates': templates})
+
+
+@app.route('/api/tickets/templates/save', methods=['POST'])
+def ticket_templates_save():
+    """Create or update a response template. Requires manage_users permission."""
+    data = request.json
+    if not data:
+        return jsonify({'message': 'Request body is required.'}), 400
+
+    admin_pin = data.get('adminPin')
+    if not admin_pin or not (check_perm(admin_pin, 'manage_users')):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    template_id = data.get('id')
+    name = data.get('name', '').strip()
+    text = data.get('text', '').strip()
+    template_type = data.get('type', 'general').strip()
+
+    if not name:
+        return jsonify({'message': 'Template name is required.'}), 400
+    if not text:
+        return jsonify({'message': 'Template text is required.'}), 400
+
+    templates = load_json_data(TICKET_TEMPLATES_FILE)
+    if not isinstance(templates, list):
+        templates = []
+
+    if template_id:
+        # Update existing template
+        found = False
+        for t in templates:
+            if t.get('id') == template_id:
+                t['name'] = name
+                t['text'] = text
+                t['type'] = template_type if template_type in ('approval', 'denial', 'general') else 'general'
+                found = True
+                break
+        if not found:
+            return jsonify({'message': f'Template {template_id} not found.'}), 404
+    else:
+        # Create new template
+        template_id = generate_template_id()
+        templates.append({
+            'id': template_id,
+            'name': name,
+            'text': text,
+            'type': template_type if template_type in ('approval', 'denial', 'general') else 'general',
+            'created_at': datetime.now().isoformat()
+        })
+
+    save_json_data(TICKET_TEMPLATES_FILE, templates)
+
+    admin_users = load_json_data(USERS_FILE)
+    log_activity('ticket_template_saved', admin_pin, admin_users.get(admin_pin, {}).get('role', 'unknown'),
+                 {'template_id': template_id, 'name': name})
+
+    return jsonify({'message': 'Template saved successfully!', 'template_id': template_id})
+
+
+@app.route('/api/tickets/templates/delete', methods=['POST'])
+def ticket_templates_delete():
+    """Delete a response template. Requires manage_users permission."""
+    data = request.json
+    if not data:
+        return jsonify({'message': 'Request body is required.'}), 400
+
+    admin_pin = data.get('adminPin')
+    if not admin_pin or not (check_perm(admin_pin, 'manage_users')):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    template_id = data.get('id')
+    if not template_id:
+        return jsonify({'message': 'Template ID is required.'}), 400
+
+    templates = load_json_data(TICKET_TEMPLATES_FILE)
+    if not isinstance(templates, list):
+        return jsonify({'message': 'No templates found.'}), 404
+
+    new_templates = [t for t in templates if t.get('id') != template_id]
+    if len(new_templates) == len(templates):
+        return jsonify({'message': f'Template {template_id} not found.'}), 404
+
+    save_json_data(TICKET_TEMPLATES_FILE, new_templates)
+
+    admin_users = load_json_data(USERS_FILE)
+    log_activity('ticket_template_deleted', admin_pin, admin_users.get(admin_pin, {}).get('role', 'unknown'),
+                 {'template_id': template_id})
+
+    return jsonify({'message': 'Template deleted successfully!'})
 
 
 # ============================================================
