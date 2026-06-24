@@ -67,7 +67,7 @@
 - [x] **migrate_activity_log.py** — Migrated 377 events from activity_log.json to SQLite. All fields preserved (details JSON). Idempotency tested. Commit: 35c9bad
 - [x] **Add `use_database` flag** — Added `use_database: false` to timesheet_config.json for feature-gated endpoint refactoring
 - [x] **migrate_items.py** — Migrated 14 items from items.json to SQLite. Flattened 3 categories (Foods, Drinks, Snacks) into category column. Modifiers JSON preserved. Idempotency tested. Commit: 95e8124
-- [x] **migrate_inventory.py** — Migrated 16 inventory items from inventory.json to SQLite. Mapped 'low_stock_threshold' to 'threshold' column. Idempotency tested. Commit: [pending]
+- [x] **migrate_inventory.py** — Migrated 16 inventory items from inventory.json to SQLite. Mapped 'low_stock_threshold' to 'threshold' column. Idempotency tested. Commit: 7d5ee21
 
 ## ROLLBACK PLAN (always keep current)
 How to revert to JSON mode if DB breaks:
