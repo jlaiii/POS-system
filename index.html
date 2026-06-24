@@ -697,6 +697,28 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 .item-mgmt-entry .ime-actions { display: flex; gap: 4px; }
 .item-mgmt-entry .ime-actions button { font-size: 13px; padding: 6px 12px; min-height: 36px; }
 
+/* Floor Plan Table Status Cards */
+.floor-plan-card {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+  position: relative;
+  overflow: hidden;
+}
+.floor-plan-card:active {
+  transform: scale(0.96) !important;
+}
+#tableStatusGrid {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+@media (max-width: 500px) {
+  #tableStatusGrid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; }
+}
+@media (orientation: portrait) {
+  #tableStatusGrid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
+}
+
 #editItemForm { display: none; background: var(--card); border-radius: var(--radius); padding: 16px; margin-top: 10px; }
 #editItemForm.active { display: block; }
 
@@ -1594,6 +1616,7 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
         <button onclick="switchAdminSection('menuhistory')" id="asMenuhistory" data-i18n="admin.menu_history" style="display:none;">📋 Menu History</button>
         <button onclick="switchAdminSection('credentials')" id="asCredentials" data-i18n="admin.credentials" style="display:none;">🔐 Owner Credentials</button>
         <button onclick="switchAdminSection('tables')" id="asTables" data-i18n="admin.tables">🪑 Tables</button>
+        <button onclick="switchAdminSection('tablestatus')" id="asTablestatus">🗺️ Floor Plan</button>
         <button onclick="switchAdminSection('inventory')" id="asInventory" data-i18n="admin.inventory">📦 Inventory</button>
         <button onclick="switchAdminSection('employees')" id="asEmployees" data-i18n="admin.employees">👤 Employee Perf</button>
         <button onclick="switchAdminSection('loyalty')" id="asLoyalty">⭐ Loyalty</button>
@@ -1928,6 +1951,24 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
             </div>
           </div>
           <div id="tablesList"><div class="empty-state">Loading tables...</div></div>
+        </div>
+        <!-- Floor Plan / Table Status Dashboard -->
+        <div id="secTablestatus" class="admin-section">
+          <h3>🗺️ Floor Plan — Table Status Overview</h3>
+          <p style="color:var(--text2);margin-bottom:12px;font-size:14px;">Color-coded table grid. Tap a table to view details, mark it bussed, or open its tab.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center;">
+            <div style="display:flex;gap:6px;flex-wrap:wrap;font-size:12px;">
+              <span style="display:inline-flex;align-items:center;gap:3px;"><span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#2ecc71;"></span> Empty</span>
+              <span style="display:inline-flex;align-items:center;gap:3px;"><span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#3498db;"></span> Occupied</span>
+              <span style="display:inline-flex;align-items:center;gap:3px;"><span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#f39c12;"></span> In Progress</span>
+              <span style="display:inline-flex;align-items:center;gap:3px;"><span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#e67e22;"></span> Ready</span>
+              <span style="display:inline-flex;align-items:center;gap:3px;"><span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#e74c3c;"></span> Needs Bussing</span>
+            </div>
+            <button class="ghost" onclick="loadTableStatusDashboard()" style="margin-left:auto;min-height:36px;font-size:13px;">🔄 Refresh</button>
+          </div>
+          <div id="tableStatusGrid" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(140px, 1fr));gap:10px;">
+            <div class="empty-state">Loading floor plan...</div>
+          </div>
         </div>
         <!-- Inventory Management -->
         <div id="secInventory" class="admin-section">
@@ -8951,6 +8992,7 @@ function switchAdminSection(sec) {
   else if (sec === 'menuhistory') loadMenuHistory();
   else if (sec === 'credentials') loadCredentialsStatus();
   else if (sec === 'tables') loadTableAdmin();
+  else if (sec === 'tablestatus') loadTableStatusDashboard();
   else if (sec === 'inventory') loadInventoryAdmin();
   else if (sec === 'employees') loadEmployeePerformance();
   else if (sec === 'loyalty') loadLoyaltyAdmin();
@@ -12431,7 +12473,178 @@ async function loadTableSelector() {
   }
 }
 
-// ═══════════ MY PAY / EMPLOYEE PAY PORTAL ═══════════
+// ═══════════ TABLE STATUS / FLOOR PLAN DASHBOARD ═══════════
+
+const TABLE_STATUS_COLORS = {
+  'empty': '#2ecc71',
+  'occupied': '#3498db',
+  'order_in_progress': '#f39c12',
+  'ready_to_serve': '#e67e22',
+  'needs_bussing': '#e74c3c'
+};
+
+const TABLE_STATUS_ICONS = {
+  'empty': '🟢',
+  'occupied': '🔵',
+  'order_in_progress': '🟡',
+  'ready_to_serve': '🟠',
+  'needs_bussing': '🔴'
+};
+
+const TABLE_STATUS_LABELS = {
+  'empty': 'Empty',
+  'occupied': 'Occupied',
+  'order_in_progress': 'In Progress',
+  'ready_to_serve': 'Ready',
+  'needs_bussing': 'Needs Bussing'
+};
+
+let floorPlanTablesData = [];
+
+async function loadTableStatusDashboard() {
+  const grid = document.getElementById('tableStatusGrid');
+  if (!grid) return;
+  grid.innerHTML = '<div class="empty-state">Loading floor plan...</div>';
+  try {
+    const r = await fetch(BACKEND_URL + '/api/tables');
+    if (!r.ok) { grid.innerHTML = '<div class="empty-state">Failed to load</div>'; return; }
+    const tables = await r.json();
+    const entries = Object.entries(tables);
+    if (entries.length === 0) {
+      grid.innerHTML = '<div class="empty-state">No tables configured. Go to 🪑 Tables to add tables.</div>';
+      return;
+    }
+    floorPlanTablesData = entries;
+    let html = '';
+    entries.forEach(([num, t]) => {
+      const status = t.status || 'empty';
+      const color = TABLE_STATUS_COLORS[status] || '#666';
+      const icon = TABLE_STATUS_ICONS[status] || '⚪';
+      const label = TABLE_STATUS_LABELS[status] || status;
+      const tabInfo = t.tab_order_count > 0
+        ? `<div style="font-size:12px;color:var(--accent);font-weight:600;">💵 $${t.tab_total.toFixed(2)}</div>`
+        : (t.completed_count > 0 ? `<div style="font-size:11px;color:var(--text2);">${t.completed_count} completed order(s)</div>` : '');
+      
+      html += `<div class="floor-plan-card" style="background:var(--card);border-radius:12px;padding:14px 10px;text-align:center;cursor:pointer;border-left:4px solid ${color};transition:transform 0.1s,box-shadow 0.1s;display:flex;flex-direction:column;align-items:center;gap:4px;min-height:100px;justify-content:center;" onclick="showTableDetail(${t.number})" ontouchstart="this.style.transform='scale(0.96)'" ontouchend="this.style.transform='scale(1)'" onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,0.3)'" onmouseout="this.style.boxShadow='none'">
+        <div style="font-size:28px;font-weight:700;color:${color};">#${t.number}</div>
+        <div style="font-size:12px;color:var(--text2);font-weight:500;margin-top:2px;">${escHtml(t.name)}</div>
+        <div style="font-size:11px;color:${color};font-weight:600;">${icon} ${label}</div>
+        ${tabInfo}
+      </div>`;
+    });
+    grid.innerHTML = html;
+  } catch(e) {
+    grid.innerHTML = '<div class="empty-state">Network error</div>';
+  }
+}
+
+async function showTableDetail(tableNumber) {
+  const overlay = document.getElementById('tableTabOverlay');
+  overlay.dataset.tableNumber = tableNumber;
+  document.getElementById('tableTabTitle').innerHTML = `🗺️ Table #${tableNumber} — Detail`;
+  document.getElementById('tableTabContent').innerHTML = '<div class="empty-state">Loading table details...</div>';
+  overlay.classList.add('active');
+  
+  try {
+    const r = await fetch(BACKEND_URL + '/api/tables/tab/' + tableNumber + '/detail');
+    if (!r.ok) {
+      document.getElementById('tableTabContent').innerHTML = '<div class="empty-state">Failed to load table details</div>';
+      return;
+    }
+    const data = await r.json();
+    const tbl = data.table || {};
+    const status = tbl.status || 'empty';
+    const color = TABLE_STATUS_COLORS[status] || '#666';
+    const icon = TABLE_STATUS_ICONS[status] || '⚪';
+    const label = TABLE_STATUS_LABELS[status] || status;
+    const lastBussed = tbl.last_bussed_at ? new Date(tbl.last_bussed_at).toLocaleString() : 'Never';
+    
+    let html = `<div style="background:var(--bg);border-radius:8px;padding:12px;margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px;">
+        <div style="font-size:20px;font-weight:700;color:${color};">${icon} ${escHtml(tbl.name || 'Table ' + tableNumber)}</div>
+        <div style="font-size:14px;font-weight:600;color:${color};background:${color}22;padding:4px 12px;border-radius:20px;">${label}</div>
+      </div>
+      <div style="font-size:13px;color:var(--text2);margin-top:8px;display:flex;gap:12px;flex-wrap:wrap;">
+        <span>📱 Tablet: ${tbl.tablet_id || 'None'}</span>
+        <span>🧹 Last Bussed: ${lastBussed}</span>
+      </div>
+    </div>`;
+    
+    if (data.active_order_count > 0) {
+      html += `<div style="background:var(--card);border-radius:8px;padding:12px;margin-bottom:12px;">
+        <h4 style="margin-bottom:8px;">Active Orders (${data.active_order_count})</h4>
+        <div style="font-size:16px;font-weight:700;">💵 Active Total: $${data.active_total.toFixed(2)}</div>
+        <div style="font-size:13px;color:var(--text2);">${data.active_items_count} item(s)</div>
+      </div>`;
+    }
+    
+    if (data.completed_order_count > 0) {
+      html += `<div style="background:var(--card);border-radius:8px;padding:12px;margin-bottom:12px;">
+        <h4 style="margin-bottom:6px;">Completed Orders (${data.completed_order_count})</h4>
+        <div style="font-size:14px;color:var(--text2);">💵 Total Spent: $${data.total_spent.toFixed(2)}</div>
+      </div>`;
+    }
+    
+    if (data.orders && data.orders.length > 0) {
+      html += '<h4 style="margin-bottom:8px;">All Orders</h4>';
+      data.orders.forEach((o, i) => {
+        const dt = o.date ? new Date(o.date).toLocaleString() : 'Unknown';
+        const items = o.items || [];
+        const statusBadge = o.status === 'completed' ? '✅' : o.status === 'refunded' ? '↩️' : o.status === 'preparing' ? '👨‍🍳' : '⏳';
+        html += `<div style="background:var(--card);border-radius:8px;padding:10px;margin-bottom:6px;font-size:13px;">
+          <div style="display:flex;justify-content:space-between;">
+            <span><strong>${statusBadge} Order #${o.order_id}</strong> <span style="color:var(--text2);font-size:11px;">${o.status}</span></span>
+            <span style="color:var(--text2);font-size:11px;">${escHtml(dt)}</span>
+          </div>
+          <div style="margin-top:4px;">
+            ${items.map(it => `<div style="display:flex;justify-content:space-between;font-size:12px;padding:1px 0;">
+              <span>${escHtml(it.name)} x${it.qty || 1}</span>
+              <span>$${((it.price || 0) * (it.qty || 1)).toFixed(2)}</span>
+            </div>`).join('')}
+          </div>
+          <div style="display:flex;justify-content:space-between;font-weight:600;border-top:1px solid var(--border);padding-top:4px;margin-top:4px;">
+            <span>Total</span>
+            <span>$${parseFloat(o.total || 0).toFixed(2)}</span>
+          </div>
+        </div>`;
+      });
+    } else {
+      html += '<div class="empty-state" style="margin:12px 0;">No orders for this table yet.</div>';
+    }
+    
+    // Action buttons
+    let actionsHtml = '<button class="outline" onclick="closeTableTab()">Close</button>';
+    if (status === 'needs_bussing' || status === 'empty') {
+      actionsHtml += `<button class="accent" onclick="markTableBussed(${tableNumber})" style="margin-left:8px;min-height:44px;">🧹 Mark Bussed</button>`;
+    }
+    if (data.active_order_count > 0) {
+      actionsHtml += `<button class="accent" onclick="checkoutTableTab(${tableNumber})" style="margin-left:8px;min-height:44px;">✅ Checkout</button>`;
+    }
+    
+    document.getElementById('tableTabContent').innerHTML = html;
+    document.getElementById('tableTabActions').innerHTML = actionsHtml;
+  } catch(e) {
+    document.getElementById('tableTabContent').innerHTML = '<div class="empty-state">Network error</div>';
+  }
+}
+
+async function markTableBussed(tableNumber) {
+  if (!currentUser || !currentUser.id) { showToast('Please log in first', 'danger'); return; }
+  if (!confirm(`Mark Table #${tableNumber} as bussed? This resets it to available.`)) return;
+  try {
+    const r = await fetch(BACKEND_URL + '/api/tables/mark_bussed', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, table_number: tableNumber })
+    });
+    const d = await r.json();
+    if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
+    showToast(`Table #${tableNumber} marked as bussed!`, 'success');
+    closeTableTab();
+    loadTableStatusDashboard();
+    loadTableAdmin();
+    loadTableSelector();
+  } catch(e) { showToast('Network error', 'danger'); }
+}
 
 async function loadMyPay() {
   /** Load employee pay data from the backend. */

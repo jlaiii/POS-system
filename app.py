@@ -8693,9 +8693,33 @@ def pickup_display_collected():
 
 @app.route('/api/tables', methods=['GET'])
 def get_tables():
-    """Returns all tables with their assignments and running tab info."""
+    """Returns all tables with their assignments, running tab info, and derived status."""
     tables = load_json_data(TABLES_FILE)
     orders = load_json_data(ORDERS_FILE)
+    
+    def derive_status(table_num, raw_status):
+        """Derive smart table status from orders data."""
+        table_orders = [o for o in orders if o.get('table_number') == int(table_num)]
+        
+        if not table_orders:
+            return 'empty'
+        
+        active_orders = [o for o in table_orders if o.get('status') in ('pending', 'preparing')]
+        completed_orders = [o for o in table_orders if o.get('status') == 'completed']
+        
+        # Has preparing orders → order_in_progress
+        if any(o.get('status') == 'preparing' for o in active_orders):
+            return 'order_in_progress'
+        
+        # Has pending orders → occupied (order submitted, not yet cooking)
+        if any(o.get('status') == 'pending' for o in active_orders):
+            return 'occupied'
+        
+        # Has completed orders with no active orders → needs_bussing
+        if completed_orders and not active_orders:
+            return 'needs_bussing'
+        
+        return 'empty'
     
     result = {}
     for table_num, tdata in tables.items():
@@ -8704,15 +8728,25 @@ def get_tables():
         tab_total = sum(float(o.get('total', 0)) for o in table_orders)
         tab_items_count = sum(len(o.get('items', [])) for o in table_orders)
         
+        ds = derive_status(table_num, tdata.get('status', 'available'))
+        
+        # Count completed unpaid orders (ready to serve)
+        completed_unpaid = []
+        if ds == 'needs_bussing' or ds == 'empty':
+            completed_unpaid = [o for o in orders if o.get('table_number') == int(table_num) and o.get('status') == 'completed']
+        
         result[table_num] = {
             'number': tdata.get('number'),
             'name': tdata.get('name', f"Table {table_num}"),
             'tablet_id': tdata.get('tablet_id', ''),
-            'status': tdata.get('status', 'available'),
+            'status': ds,
+            'raw_status': tdata.get('status', 'available'),
             'created_at': tdata.get('created_at', ''),
+            'last_bussed_at': tdata.get('last_bussed_at'),
             'tab_total': round(tab_total, 2),
             'tab_order_count': len(table_orders),
-            'tab_items_count': tab_items_count
+            'tab_items_count': tab_items_count,
+            'completed_count': len(completed_unpaid) if completed_unpaid else 0
         }
     return jsonify(result)
 
@@ -8788,6 +8822,88 @@ def remove_table():
         'table_number': table_number
     })
     return jsonify({'message': f'Table {table_number} removed successfully.'})
+
+
+@app.route('/api/tables/mark_bussed', methods=['POST'])
+def mark_table_bussed():
+    """Marks a table as bussed/cleaned — resets status to available."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+    table_number = data.get('table_number')
+
+    if not check_perm(admin_pin, "manage_items"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    if not table_number:
+        return jsonify({'message': 'Table number is required.'}), 400
+
+    tables = load_json_data(TABLES_FILE)
+    key = str(table_number)
+    if key not in tables:
+        return jsonify({'message': 'Table not found.'}), 404
+
+    tables[key]['last_bussed_at'] = datetime.now().isoformat()
+    tables[key]['status'] = 'available'
+    save_json_data(TABLES_FILE, tables)
+
+    admin_user = load_json_data(USERS_FILE).get(admin_pin, {})
+    log_activity('mark_table_bussed', admin_pin, admin_user.get('role', 'admin'), {
+        'table_number': table_number,
+        'status': 'available',
+        'last_bussed_at': tables[key]['last_bussed_at']
+    })
+    return jsonify({'message': f'Table {table_number} marked as bussed.', 'last_bussed_at': tables[key]['last_bussed_at']})
+
+
+@app.route('/api/tables/tab/<int:table_number>/detail', methods=['GET'])
+def get_table_detail(table_number):
+    """Returns full table detail with all orders (not just active)."""
+    orders = load_json_data(ORDERS_FILE)
+    table_orders = [o for o in orders if o.get('table_number') == table_number]
+    table_orders.sort(key=lambda o: o.get('date', ''))
+
+    tables = load_json_data(TABLES_FILE)
+    table_info = tables.get(str(table_number), {})
+
+    # Derive status for the detail view
+    def derive_detail_status():
+        table_orders_all = [o for o in orders if o.get('table_number') == table_number]
+        if not table_orders_all:
+            return 'empty'
+        active_orders = [o for o in table_orders_all if o.get('status') in ('pending', 'preparing')]
+        completed_orders = [o for o in table_orders_all if o.get('status') == 'completed']
+        if any(o.get('status') == 'preparing' for o in active_orders):
+            return 'order_in_progress'
+        if any(o.get('status') == 'pending' for o in active_orders):
+            return 'occupied'
+        if completed_orders and not active_orders:
+            return 'needs_bussing'
+        return 'empty'
+
+    # Aggregate order stats
+    active_orders = [o for o in table_orders if o.get('status') in ('pending', 'preparing')]
+    completed_raw = [o for o in table_orders if o.get('status') == 'completed']
+    total_spent = sum(float(o.get('total', 0)) for o in completed_raw)
+    active_total = sum(float(o.get('total', 0)) for o in active_orders)
+    active_items_count = sum(len(o.get('items', [])) for o in active_orders)
+
+    return jsonify({
+        'table': {
+            'number': table_info.get('number'),
+            'name': table_info.get('name', f'Table {table_number}'),
+            'tablet_id': table_info.get('tablet_id', ''),
+            'created_at': table_info.get('created_at', ''),
+            'last_bussed_at': table_info.get('last_bussed_at'),
+            'status': derive_detail_status()
+        },
+        'orders': table_orders,
+        'order_count': len(table_orders),
+        'active_order_count': len(active_orders),
+        'completed_order_count': len(completed_raw),
+        'total_spent': round(total_spent, 2),
+        'active_total': round(active_total, 2),
+        'active_items_count': active_items_count
+    })
 
 
 @app.route('/api/tables/tab/<int:table_number>', methods=['GET'])
