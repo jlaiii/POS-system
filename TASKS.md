@@ -2,7 +2,7 @@
 
 > Auto-managed by 3 Hermes Worker Crons (every 30 min each, staggered claims).
 > Workers use `[~]` to claim tasks before working. Never pick a claimed task.
-> Last updated: 2026-06-23 (curation #12 — system audit: corrected PWA task (sw.js exists), corrected 2FA task (login UI exists, setup UI missing), added i18n gap task with specific line references)
+> Last updated: 2026-06-24 (curation #13 — system audit: marked duplicate tablet dark-mode and PWA-icon tasks as consolidated, added single-item/partial refund HIGH task, added dietary-tag admin UI MEDIUM task)
 
 ## Status Legend
 - `[ ]` = pending (available for any worker)
@@ -416,9 +416,11 @@ New `tickets.json` data store. Each ticket:
 
 - [x] worker-2 **HIGH: No "Use Backup Code" link in 2FA login UI** — The backend endpoint `/api/auth/2fa/backup_login` exists and works, but the 2FA login screen has no "Use backup code instead" link. Added a "Use backup code instead" link below the TOTP input that transitions to a backup code entry field with validation, i18n EN+ES. Users who lost their phone can now log in via backup codes. [worker-2]
 
-|- [ ] **MEDIUM: Waiter quick re-fire / re-send order items** — No button to re-fire an already-submitted order item back to the kitchen (e.g., cook missed it, wrong portion, customer wants a remake). Current workaround: refund the item and re-order it (3+ taps). A "Re-fire" button on order history items would save 3-4 taps per incident.
+||- [ ] **MEDIUM: Waiter quick re-fire / re-send order items** — No button to re-fire an already-submitted order item back to the kitchen (e.g., cook missed it, wrong portion, customer wants a remake). Current workaround: refund the item and re-order it (3+ taps). A "Re-fire" button on order history items would save 3-4 taps per incident.
 
-|- [ ] **MEDIUM: System-wide data backup & restore** — Currently only menu backups exist. Add full system backup endpoint (`POST /api/system/backup`) that creates a downloadable zip of all JSON data files (users, orders, items, configs, shifts, etc.). Add restore endpoint (`POST /api/system/restore`) to load from a backup zip. Admin UI in Settings panel with one-click backup download and file-upload restore. Auto-scheduled daily backup with configurable retention (keep last N backups). Critical for disaster recovery — without this, a disk failure or corruption means total data loss.
+||- [ ] **HIGH: Single-item/partial refund (backend + frontend)** — Documented gap from walkthrough (line 466). Currently only FULL order refund is supported via /api/orders/refund. No way to refund/void individual line items. Waiters must refund the entire order and re-submit good items back to the kitchen. Add new POST /api/orders/refund_item endpoint accepting order_id + item_index(es) + reason. Frontend: checkboxes next to each line item in refund overlay to select which items to refund. Partial refund amounts reflected in stats (exclude refunded item revenue). Must restore inventory only for refunded items. Activity logging.
+
+|||- [ ] **MEDIUM: System-wide data backup & restore** — Currently only menu backups exist. Add full system backup endpoint (POST /api/system/backup) that creates a downloadable zip of all JSON data files (users, orders, items, configs, shifts, etc.). Add restore endpoint (POST /api/system/restore) to load from a backup zip. Admin UI in Settings panel with one-click backup download and file-upload restore. Auto-scheduled daily backup with configurable retention (keep last N backups). Critical for disaster recovery — without this, a disk failure or corruption means total data loss.
 
 ||- [ ] **MEDIUM: Customer online ordering portal** — Mobile-friendly standalone page (e.g. `/order`) for customers to browse menu, view item details + images, add to cart with modifiers/notes, and place pickup or delivery orders. Reuses existing backend (orders, items, combos, delivery addresses, payment processing). Integrates with existing pickup-display, kitchen queue, and order notification system. No staff intervention needed for order placement. Essential for any restaurant wanting to accept direct online orders without third-party delivery apps.|
 ||
@@ -493,9 +495,9 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 
 - [ ] **Haptic feedback on order submit** — On supported devices (iOS, modern Android), trigger a short vibration when an order is successfully submitted. `navigator.vibrate(50)`. This gives the waiter physical confirmation without looking at the screen — they can keep eyes on the customer.
 
-- [ ] **Dark mode on the tablet menu page** — The `/tablet` customer-facing menu should respect the POS dark theme. Currently it's a separate page — verify it renders correctly in dark mode. Add theme toggle for customers who prefer light.
+|- [-] **Dark mode on the tablet menu page** — Already done: Dark/light theme toggle on tablet implemented with `.light-theme` CSS, sun/moon toggle, localStorage persistence (see task at line 392). [consolidated]
 
-- [ ] **App icon + splash screen for PWA** — When installed to home screen (Add to Home Screen on iPad), the app should show a proper icon and splash screen. Verify manifest.json has all icon sizes (192px, 512px). Add `apple-touch-icon` and `apple-mobile-web-app-capable` meta tags for iOS.
+|- [-] **App icon + splash screen for PWA** — Duplicate of "Proper PWA icons + iOS meta tags" at line 425. Consolidate there. [consolidated]
 
 ## Security Operations Center — Owner Security Dashboard & Monitoring (NEW — June 2026)
 
@@ -759,6 +761,8 @@ Super admin PIN is separate from any business PIN. Super admin can create busine
 |||- [x] worker-2 **Pay history with period-by-period breakdown** — Enhanced pay history period cards with pay rate display ($X.XX/hr), expandable grid-based shift breakdown showing date/day, clock in/out, paid+break hours, period total summary row. Added i18n keys EN+ES. [worker-2]
 |||- [x] worker-3 **PDF timesheet report export** — New `POST /api/export/timesheet_pdf` endpoint generating print-ready HTML report from employee shift data. Employee name, shift dates/times, daily totals, period total, overtime, estimated pay, signature line. Print-friendly CSS with page breaks per employee. Button in Employee Shifts sub-tab. [worker-3]
 ||- [x] worker-3 **Item detail popup** — Enhanced tablet menu item detail overlay with dietary badges (🌿 Vegetarian, 🌶️ Spicy, etc.), modifier options display (groups with type labels and price chips), and prev/next navigation (buttons + swipe + arrow keys) to browse items within same category. Added `dietary_tags` field to item data model. Configurable dietary icon mapping with 15 types. Dark theme, touch-friendly 56px nav buttons. [worker-3]
+
+|- [ ] **MEDIUM: Admin UI for item dietary tags** — The `dietary_tags` field exists on items and is displayed on tablet menu detail popups, but there's NO admin UI to manage them. Add a dietary tag multi-select (🌿 Vegetarian, 🌶️ Spicy, 🥜 Contains Nuts, 🥛 Dairy, 🌾 Gluten, 🥩 Meat, 🐟 Fish, etc.) in both add-item and edit-item forms in the admin panel. Currently dietary_tags is hardcoded to empty array on item creation with no UI to configure it.
 |||- [x] worker-3 **Restaurant info bar** — Persistent footer on tablet display: restaurant name, hours, Wi-Fi info, "📞 Call Server" button (SocketIO + REST fallback), table number from URL param `?table=N`. Config via `restaurant_config.json`. Staff notified via SocketIO `server_call` toast. [worker-3]
 ||- [x] worker-3 **Global data model + platform config** — Created `data/global/businesses.json` (with sample businesses: Maria's Tacos, Bob's Burgers) and `data/global/super_admins.json` (platform owner PIN 1111). Added `GLOCAL_DIR`, `BUSINESSES_FILE`, `SUPER_ADMINS_FILE` constants, `load_businesses/save_businesses/load_super_admins/save_super_admins/verify_super_admin/get_business_context` helpers, and 6 platform API endpoints (`POST /api/platform/super_admin/login`, `/businesses/list`, `/businesses/create`, `/businesses/detail`, `/businesses/status`, `/api/platform/stats`) — all gated by in-memory super admin session tokens. Enhanced `save_json_data()` to auto-create directories. [worker-3]
 |- [x] worker-3 **Backup monitoring in Discord** — Created `scripts/backup_monitor.py` that scans backup archives, categorizes by retention age, validates latest archive integrity, runs db_health.py, and sends formatted Discord embed summary. Added system crontab entry (`0 6 * * *`) for daily 6am execution. Reports: total backups, retention breakdown, date range, integrity status. Gracefully handles missing webhook config. [worker-3]
