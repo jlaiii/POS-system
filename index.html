@@ -2854,16 +2854,23 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
 
 <!-- ═══════════ REFUND OVERLAY ═══════════ -->
 <div id="refundOverlay" class="modal-overlay">
-  <div class="modal-box" style="max-width:500px;max-height:80vh;overflow-y:auto;">
-    <h3 id="refundTitle" style="margin-bottom:12px;">↩️ Refund Order</h3>
+  <div class="modal-box" style="max-width:550px;max-height:85vh;overflow-y:auto;">
+    <h3 id="refundTitle" style="margin-bottom:12px;">↩️ Refund Items</h3>
     <div id="refundOrderSummary" style="background:var(--bg);padding:12px;border-radius:8px;margin-bottom:12px;"></div>
+    <div id="refundItemList" style="margin-bottom:12px;max-height:300px;overflow-y:auto;-webkit-overflow-scrolling:touch;">
+      <p style="color:var(--text2);font-size:14px;margin-bottom:8px;" data-i18n="history.refund_select_items">Select items to refund:</p>
+      <div id="refundItemCheckboxes"></div>
+    </div>
     <div style="margin-bottom:12px;">
       <label style="display:block;color:var(--text2);font-size:14px;margin-bottom:4px;" data-i18n="history.refund_reason_placeholder">Reason for refund:</label>
       <textarea id="refundReasonInput" rows="3" style="width:100%;padding:12px;border-radius:8px;background:var(--bg);border:2px solid var(--border);color:var(--text);font-size:16px;resize:vertical;" placeholder="Enter reason for refund..."></textarea>
     </div>
+    <div id="refundItemTotal" style="margin-bottom:12px;display:none;">
+      <strong data-i18n="history.refund_selected_total">Selected refund total:</strong> $<span id="refundSelectedTotal">0.00</span>
+    </div>
     <div style="display:flex;gap:8px;justify-content:flex-end;">
       <button class="ghost" onclick="closeRefundOverlay()" data-i18n="history.refund_cancel_btn" style="font-size:16px;padding:12px 24px;min-height:48px;">Cancel</button>
-      <button class="danger" id="refundConfirmBtn" onclick="confirmRefund()" data-i18n="history.refund_confirm_btn" style="font-size:16px;padding:12px 24px;min-height:48px;">✅ Confirm Refund</button>
+      <button class="danger" id="refundConfirmBtn" onclick="confirmRefund()" data-i18n="history.refund_confirm_btn" style="font-size:16px;padding:12px 24px;min-height:48px;">✅ Refund Selected</button>
     </div>
   </div>
 </div>
@@ -3096,6 +3103,12 @@ const L10N = {
     'history.refund_cancel_btn': 'Cancel',
     'history.refund_success': 'Order #{id} refunded!',
     'history.refund_already': 'Order already refunded',
+    'history.refund_select_items': 'Select items to refund:',
+    'history.refund_select_none': 'Please select at least one item to refund',
+    'history.refund_selected_total': 'Selected refund total:',
+    'history.refund_partial_success': '{count} item(s) refunded for Order #{id}!',
+    'history.partial_refund': 'Partial Refund',
+    'history.refunded_items': 'items',
     'history.status_pending': 'Pending',
     'history.status_preparing': 'Preparing',
     'history.status_completed': 'Completed',
@@ -3647,6 +3660,12 @@ const L10N = {
     'history.refund_cancel_btn': 'Cancelar',
     'history.refund_success': '¡Pedido #{id} reembolsado!',
     'history.refund_already': 'Pedido ya reembolsado',
+    'history.refund_select_items': 'Seleccione artículos para reembolsar:',
+    'history.refund_select_none': 'Seleccione al menos un artículo para reembolsar',
+    'history.refund_selected_total': 'Total del reembolso seleccionado:',
+    'history.refund_partial_success': '¡{count} artículo(s) reembolsado(s) del Pedido #{id}!',
+    'history.partial_refund': 'Reembolso Parcial',
+    'history.refunded_items': 'artículos',
     'history.status_pending': 'Pendiente',
     'history.status_preparing': 'Preparando',
     'history.status_completed': 'Completado',
@@ -8624,15 +8643,19 @@ async function loadOrderHistory() {
     const isCollected = o.collected_at ? true : false;
     const statusLabel = t('history.status_' + status) || status;
     const statusBadge = `<span class="ho-status-badge ${status}">${statusLabel}</span>`;
-    const refundReasonStr = isRefunded && o.refund_reason ? `<br/><span style="color:var(--text2);font-size:12px;">${t('history.refund_reason', {reason: escHtml(o.refund_reason)})}</span>\` : '';
+    const refundReasonStr = isRefunded && o.refund_reason
+      ? `<br/><span style="color:var(--text2);font-size:12px;">${t('history.refund_reason', {reason: escHtml(o.refund_reason)})}</span>\`
+      : (o.refunded_items && o.refunded_items.length > 0 && !isRefunded
+        ? `<br/><span style="color:#e74c3c;font-size:12px;">↩️ ${t('history.partial_refund')} (${o.refunded_items.length} ${t('history.refunded_items')})</span>\`
+        : '');
     html += `<div class="history-order" onclick="this.classList.toggle('expanded')">
         <div class="ho-header">
           <span><strong>#${orderNum}</strong> — ${dt}${statusBadge}</span>
           <span class="ho-total">$${total}</span>
         </div>
-        <div class="ho-meta">${t('history.payment')} ${escHtml(paymentDisplay)} | ${t('history.user')} ${escHtml(o.user || 'N/A')}${hasTax ? ' | ' + t('history.tax') + ': $' + parseFloat(o.tax_amount).toFixed(2) : ''}${hasServiceCharge ? ' | 🔧 +$' + parseFloat(o.service_charge_amount).toFixed(2) : ''}${hasTip ? ' | 💬 ' + t('receipt.tip') + ': $' + parseFloat(o.tip_amount).toFixed(2) : ''}${o.table_number ? ' | 🪪 Table #' + o.table_number : ''}${hasDelivery ? ' | 📮 ' + escHtml(formatDeliveryAddress(deliveryAddr)) : ''}${orderNotes ? ' | 📝 ' + t('history.notes') : ''}${refundReasonStr} <button class="ghost" onclick="event.stopPropagation();reorderFromHistory(${JSON.stringify(items).replace(/"/g, '&quot;')})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#2ecc71;" title="${t('history.reorder')}">🔄</button> <button class="ghost" onclick="event.stopPropagation();printHistoryReceipt(${JSON.stringify(o).replace(/"/g, '&quot;')}, ${orderNum})" style="font-size:12px;padding:4px 8px;min-height:28px;color:var(--accent);">🖨️</button> <button class="ghost" onclick="event.stopPropagation();emailHistoryReceipt(${o.order_id})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#4fc3f7;" title="${t('history.email_receipt')}">📧</button>${canRefund && !isRefunded ? \`<button class="ghost" onclick="event.stopPropagation();showRefundOverlay({order_id: ${o.order_id}, total: '${total}', date: '${(o.date || '').replace(/'/g, "\\'")}', payment: '${(o.payment || '').replace(/'/g, "\\'")}', user: '${(o.user || '').replace(/'/g, "\\'")}', orderNum: ${orderNum}})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#e74c3c;">↩️</button>\` : ''}${isCompleted && !isReadyForPickup && !isCollected ? \`<button class="ghost" onclick="event.stopPropagation();markOrderReadyForPickup(${o.order_id})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#f39c12;">📋 Ready</button>\` : ''}</div>
+        <div class="ho-meta">${t('history.payment')} ${escHtml(paymentDisplay)} | ${t('history.user')} ${escHtml(o.user || 'N/A')}${hasTax ? ' | ' + t('history.tax') + ': $' + parseFloat(o.tax_amount).toFixed(2) : ''}${hasServiceCharge ? ' | 🔧 +$' + parseFloat(o.service_charge_amount).toFixed(2) : ''}${hasTip ? ' | 💬 ' + t('receipt.tip') + ': $' + parseFloat(o.tip_amount).toFixed(2) : ''}${o.table_number ? ' | 🪪 Table #' + o.table_number : ''}${hasDelivery ? ' | 📮 ' + escHtml(formatDeliveryAddress(deliveryAddr)) : ''}${orderNotes ? ' | 📝 ' + t('history.notes') : ''}${refundReasonStr} <button class="ghost" onclick="event.stopPropagation();reorderFromHistory(${JSON.stringify(items).replace(/"/g, '&quot;')})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#2ecc71;" title="${t('history.reorder')}">🔄</button> <button class="ghost" onclick="event.stopPropagation();printHistoryReceipt(${JSON.stringify(o).replace(/"/g, '&quot;')}, ${orderNum})" style="font-size:12px;padding:4px 8px;min-height:28px;color:var(--accent);">🖨️</button> <button class="ghost" onclick="event.stopPropagation();emailHistoryReceipt(${o.order_id})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#4fc3f7;" title="${t('history.email_receipt')}">📧</button>${canRefund && !isRefunded ? \`<button class="ghost" onclick="event.stopPropagation();showRefundOverlay({order_id: ${o.order_id}, total: '${total}', date: '${(o.date || '').replace(/'/g, "\\'")}', payment: '${(o.payment || '').replace(/'/g, "\\'")}', user: '${(o.user || '').replace(/'/g, "\\'")}', orderNum: ${orderNum}, items: ${JSON.stringify(items).replace(/\"/g, '&quot;')}})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#e74c3c;">↩️</button>\` : ''}${isCompleted && !isReadyForPickup && !isCollected ? \`<button class="ghost" onclick="event.stopPropagation();markOrderReadyForPickup(${o.order_id})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#f39c12;">📋 Ready</button>\` : ''}</div>
         <div class="ho-details">
-          ${items.map((it, idx) => \`<div class="ho-item"><span>${escHtml(it.name)} x${it.qty||1}${it.note ? '<br/><span style="color:var(--text2);font-size:12px;padding-left:12px;">📝 ' + escHtml(it.note) + '</span>' : ''}${it.modifiers && it.modifiers.length > 0 ? '<br/><span style="color:#f39c12;font-size:12px;padding-left:12px;">⚙️ ' + it.modifiers.map(m => escHtml(m.option)).join(' · ') + '</span>' : ''}</span><span>$${((it.price||0)*(it.qty||1)).toFixed(2)}</span></div>\`).join('')}
+          ${items.map((it, idx) => { const refundedItem = (o.refunded_items || []).find(ri => ri.item_index === idx); const isRefundedItem = !!refundedItem; return \`<div class="ho-item"${isRefundedItem ? ' style=\"opacity:0.6;\"' : ''}><span${isRefundedItem ? ' style=\"text-decoration:line-through;\"' : ''}>${isRefundedItem ? '↩️ ' : ''}${escHtml(it.name)} x${it.qty||1}${it.note ? '<br/><span style="color:var(--text2);font-size:12px;padding-left:12px;">📝 ' + escHtml(it.note) + '</span>' : ''}${it.modifiers && it.modifiers.length > 0 ? '<br/><span style="color:#f39c12;font-size:12px;padding-left:12px;">⚙️ ' + it.modifiers.map(m => escHtml(m.option)).join(' · ') + '</span>' : ''}${isRefundedItem ? '<br/><span style="color:#e74c3c;font-size:11px;padding-left:12px;">↩️ Refunded</span>' : ''}</span><span${isRefundedItem ? ' style=\"text-decoration:line-through;\"' : ''}>$${((it.price||0)*(it.qty||1)).toFixed(2)}</span></div>\`;}).join('')}
           ${hasTax ? \`
             <div class="ho-item" style="color:var(--text2);"><span>${t('history.subtotal')}</span><span>$${parseFloat(o.subtotal || o.total || 0).toFixed(2)}</span></div>
             <div class="ho-item" style="color:var(--text2);"><span>${t('history.tax')}</span><span>$${parseFloat(o.tax_amount).toFixed(2)}</span></div>
@@ -8783,9 +8806,17 @@ function reloadRecentOrder(order) {
 // ═══════════ REFUND / VOID ORDER ═══════════
 
 let pendingRefundId = null;
+let pendingRefundItems = [];
 
 function showRefundOverlay(orderInfo) {
   pendingRefundId = orderInfo.order_id;
+  pendingRefundItems = (orderInfo.items || []).map((it, idx) => ({
+    index: idx,
+    name: it.name || 'Unknown',
+    price: parseFloat(it.price || 0),
+    qty: parseInt(it.qty || 1),
+    checked: false
+  }));
   const summary = document.getElementById('refundOrderSummary');
   const total = orderInfo.total || '0.00';
   const payment = orderInfo.payment || 'N/A';
@@ -8797,17 +8828,58 @@ function showRefundOverlay(orderInfo) {
     <div style="font-size:20px;font-weight:700;color:var(--accent);margin-top:8px;">Total: $${total}</div>
     <div style="color:#e74c3c;font-size:13px;margin-top:8px;font-weight:600;">⚠️ ${t('history.refund_confirm', {id: orderInfo.order_id, total: total})}</div>
   `;
+  renderRefundItemCheckboxes();
   document.getElementById('refundReasonInput').value = '';
+  document.getElementById('refundItemTotal').style.display = 'none';
   document.getElementById('refundOverlay').classList.add('active');
+}
+
+function renderRefundItemCheckboxes() {
+  const container = document.getElementById('refundItemCheckboxes');
+  if (!container) return;
+  container.innerHTML = pendingRefundItems.map((it, idx) => {
+    const refundedBadge = it.refunded ? ' <span style="color:#e74c3c;font-size:11px;">↩️</span>' : '';
+    return `<label style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;background:var(--bg);margin-bottom:4px;cursor:pointer;min-height:48px;transition:background 0.15s;">
+      <input type="checkbox" data-item-idx="${idx}" ${it.checked ? 'checked' : ''} style="width:22px;height:22px;cursor:pointer;flex-shrink:0;" onchange="toggleRefundItem(${idx}, this.checked)">
+      <span style="flex:1;font-size:15px;">${escHtml(it.name)} x${it.qty} <span style="color:var(--text2);font-size:14px;">— $${(it.price * it.qty).toFixed(2)}</span>${refundedBadge}</span>
+    </label>`;
+  }).join('');
+}
+
+function toggleRefundItem(idx, checked) {
+  if (pendingRefundItems[idx]) {
+    pendingRefundItems[idx].checked = checked;
+  }
+  updateRefundSelectedTotal();
+}
+
+function updateRefundSelectedTotal() {
+  const selected = pendingRefundItems.filter(it => it.checked);
+  const totalEl = document.getElementById('refundItemTotal');
+  const amountEl = document.getElementById('refundSelectedTotal');
+  if (!totalEl || !amountEl) return;
+  if (selected.length === 0) {
+    totalEl.style.display = 'none';
+    return;
+  }
+  const total = selected.reduce((sum, it) => sum + (it.price * it.qty), 0);
+  amountEl.textContent = total.toFixed(2);
+  totalEl.style.display = 'block';
 }
 
 function closeRefundOverlay() {
   document.getElementById('refundOverlay').classList.remove('active');
   pendingRefundId = null;
+  pendingRefundItems = [];
 }
 
 async function confirmRefund() {
   if (!pendingRefundId) return;
+  const selectedIndices = pendingRefundItems.filter(it => it.checked).map(it => it.index);
+  if (selectedIndices.length === 0) {
+    showToast(t('history.refund_select_none'), 'warning');
+    return;
+  }
   const reason = document.getElementById('refundReasonInput').value.trim();
   if (!reason) { showToast(t('history.refund_reason_placeholder'), 'danger'); return; }
 
@@ -8816,16 +8888,20 @@ async function confirmRefund() {
   btn.textContent = 'Processing...';
 
   try {
-    const result = await fetchJSON(BACKEND_URL + '/api/orders/refund', {
+    const result = await fetchJSON(BACKEND_URL + '/api/orders/refund_item', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         adminPin: currentUser.id,
         order_id: pendingRefundId,
+        item_indices: selectedIndices,
         reason: reason
       })
     });
     if (!result.ok) { showToast(result.error || 'Failed', 'danger'); btn.disabled = false; btn.textContent = t('history.refund_confirm_btn'); return; }
-    showToast(t('history.refund_success', {id: pendingRefundId}), 'success');
+    const msg = result.order_fully_refunded
+      ? t('history.refund_success', {id: pendingRefundId})
+      : t('history.refund_partial_success', {count: result.refunded_count, id: pendingRefundId});
+    showToast(msg, 'success');
     closeRefundOverlay();
     loadOrderHistory();
   } catch(e) {

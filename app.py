@@ -4825,6 +4825,178 @@ def refund_order():
     })
 
 
+# --- Single-Item / Partial Refund Endpoint ---
+
+@app.route('/api/orders/refund_item', methods=['POST'])
+def refund_item():
+    """
+    Refund/void specific line items within an order (partial refund).
+    Requires manage_orders permission.
+    Accepts order_id + list of item_indices to refund.
+    Marks those items as refunded in the order record, restores inventory,
+    and recalculates effective totals. Does NOT change order status unless
+    ALL items are refunded (then marks order as refunded).
+    """
+    data = request.json
+    admin_pin = data.get('adminPin')
+    order_id = data.get('order_id')
+    item_indices = data.get('item_indices', [])
+    reason = data.get('reason', '').strip()
+
+    if not check_perm(admin_pin, "manage_orders"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    if order_id is None:
+        return jsonify({'message': 'Order ID is required.'}), 400
+
+    if not item_indices or not isinstance(item_indices, list):
+        return jsonify({'message': 'item_indices list is required.'}), 400
+
+    # Validate indices are integers
+    try:
+        item_indices = [int(i) for i in item_indices]
+    except (ValueError, TypeError):
+        return jsonify({'message': 'item_indices must be a list of integers.'}), 400
+
+    orders = load_json_data(ORDERS_FILE)
+    found_order = None
+    order_idx = None
+
+    for idx, order in enumerate(orders):
+        if order.get('order_id') == int(order_id):
+            if order.get('status') in ('refunded', 'voided'):
+                return jsonify({'message': f'Order #{order_id} has already been fully refunded/voided.'}), 400
+            found_order = order
+            order_idx = idx
+            break
+
+    if not found_order:
+        return jsonify({'message': f'Order #{order_id} not found.'}), 404
+
+    if not reason:
+        reason = 'No reason provided'
+
+    items = found_order.get('items', [])
+    if not items:
+        return jsonify({'message': 'Order has no items to refund.'}), 400
+
+    # Validate item indices are within range
+    invalid_indices = [i for i in item_indices if i < 0 or i >= len(items)]
+    if invalid_indices:
+        return jsonify({'message': f'Invalid item indices: {invalid_indices}. Order has {len(items)} items (0-{len(items)-1}).'}), 400
+
+    # Deduplicate and sort indices
+    item_indices = sorted(set(item_indices))
+
+    # Check if any of these items were already refunded
+    existing_refunded = found_order.get('refunded_items', [])
+    already_refunded = [ri for ri in existing_refunded if ri.get('item_index') in item_indices]
+    if already_refunded:
+        already_names = [ri.get('name', 'item') for ri in already_refunded]
+        return jsonify({'message': f'Items already refunded: {", ".join(already_names)}'}), 400
+
+    # --- Process the refund ---
+    refunded_at = datetime.now().isoformat()
+    inventory = load_json_data(INVENTORY_FILE)
+    refund_entries = []
+    restored_items = []
+    total_refund_amount = 0.0
+
+    for idx in item_indices:
+        item = items[idx]
+        item_name = item.get('name', '')
+        item_price = float(item.get('price', 0))
+        item_qty = int(item.get('qty', 1))
+        item_total = item_price * item_qty
+
+        refund_entry = {
+            'item_index': idx,
+            'name': item_name,
+            'price': item_price,
+            'qty': item_qty,
+            'total': item_total,
+            'reason': reason,
+            'refunded_at': refunded_at,
+            'refunded_by': admin_pin
+        }
+        refund_entries.append(refund_entry)
+        total_refund_amount += item_total
+
+        # Restore inventory
+        if item.get('is_combo') and item.get('child_items'):
+            for ci in item['child_items']:
+                ci_name = ci.get('name', '')
+                ci_qty = int(ci.get('qty', 1)) * item_qty
+                if ci_name in inventory:
+                    current_stock = inventory[ci_name].get('stock', 0)
+                    inventory[ci_name]['stock'] = current_stock + ci_qty
+                    restored_items.append(f"{ci_name} x{ci_qty}")
+        else:
+            if item_name in inventory:
+                current_stock = inventory[item_name].get('stock', 0)
+                inventory[item_name]['stock'] = current_stock + item_qty
+                restored_items.append(f"{item_name} x{item_qty}")
+
+    save_json_data(INVENTORY_FILE, inventory)
+
+    # Add refund entries to order's refunded_items list
+    if 'refunded_items' not in found_order:
+        found_order['refunded_items'] = []
+    found_order['refunded_items'].extend(refund_entries)
+
+    # Check if ALL items are now refunded
+    total_item_count = len(items)
+    refunded_indices_count = len(set(
+        [ri.get('item_index') for ri in found_order['refunded_items']]
+    ))
+
+    if refunded_indices_count >= total_item_count:
+        # All items refunded — mark entire order as refunded
+        found_order['status'] = 'refunded'
+        found_order['refund_reason'] = reason
+        found_order['refunded_at'] = refunded_at
+        found_order['refunded_by'] = admin_pin
+
+    save_json_data(ORDERS_FILE, orders)
+
+    # Log to refunded_orders.json for audit trail
+    refunded_orders = load_json_data(REFUNDED_ORDERS_FILE)
+    refunded_orders.append({
+        'order_id': int(order_id),
+        'refund_type': 'partial',
+        'item_indices': item_indices,
+        'refund_entries': refund_entries,
+        'total_refund_amount': round(total_refund_amount, 2),
+        'reason': reason,
+        'refunded_at': refunded_at,
+        'refunded_by': admin_pin
+    })
+    save_json_data(REFUNDED_ORDERS_FILE, refunded_orders)
+
+    # Log activity
+    users = load_json_data(USERS_FILE)
+    user_name = users.get(admin_pin, {}).get('name', 'Unknown')
+    user_role = users.get(admin_pin, {}).get('role', 'unknown')
+    log_activity('refund_item', admin_pin, user_role, {
+        'order_id': int(order_id),
+        'item_indices': item_indices,
+        'refunded_items': [e.get('name') for e in refund_entries],
+        'total_refund_amount': round(total_refund_amount, 2),
+        'reason': reason,
+        'refunded_by_name': user_name,
+        'inventory_restored': restored_items,
+        'order_fully_refunded': refunded_indices_count >= total_item_count
+    })
+
+    return jsonify({
+        'message': f'Order #{order_id}: {len(refund_entries)} item(s) refunded.',
+        'refunded_count': len(refund_entries),
+        'total_refund_amount': round(total_refund_amount, 2),
+        'order_fully_refunded': refunded_indices_count >= total_item_count,
+        'refunded_items': refund_entries
+    })
+
+
 # --- Refund History Endpoint ---
 
 @app.route('/api/orders/refunds', methods=['POST'])
@@ -5007,6 +5179,14 @@ def admin_stats():
             continue
         try:
             order_total = float(order.get('total', 0))
+            # Subtract partially refunded items from the total
+            refunded_items = order.get('refunded_items', [])
+            if refunded_items:
+                refunded_sum = sum(
+                    float(ri.get('total', ri.get('price', 0) * ri.get('qty', 1)))
+                    for ri in refunded_items
+                )
+                order_total = max(0, order_total - refunded_sum)
             order['total'] = order_total
             processed_orders.append(order)
         except (ValueError, TypeError):
@@ -9657,6 +9837,14 @@ def employee_performance():
 
         try:
             total = float(order.get('total', 0))
+            # Subtract partially refunded items from the total
+            refunded_items = order.get('refunded_items', [])
+            if refunded_items:
+                refunded_sum = sum(
+                    float(ri.get('total', ri.get('price', 0) * ri.get('qty', 1)))
+                    for ri in refunded_items
+                )
+                total = max(0, total - refunded_sum)
             tip = float(order.get('tip_amount', 0))
             items_list = order.get('items', [])
             items_qty = sum(int(i.get('qty', 1)) for i in items_list)
