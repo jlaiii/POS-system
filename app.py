@@ -57,18 +57,24 @@ SESSION_IDLE_HOURS = 24   # session considered "active" in listing if last_activ
 
 @app.before_request
 def enforce_ip_blocklist():
-    """Check client IP against blocklist/allowlist before every request.
-    Returns 403 if IP is blocked or not allowed."""
+    """Check client IP against blocklist/allowlist and rate limits before every request.
+    Returns 403 if IP is blocked/not allowed, 429 if rate limited."""
     # Skip static files, health check, and unblock endpoints (so owner can recover)
     if request.path.startswith('/static') or request.path == '/favicon.ico':
         return None
-    if request.path in ('/api/health', '/api/security/unblock_ip', '/api/security/blocklist/add'):
+    if request.path in ('/api/health', '/api/security/unblock_ip', '/api/security/blocklist/add',
+                        '/api/security/blocklist/allowlist', '/api/security/rate_limit_config'):
         return None
 
     client_ip = get_client_ip()
     # Localhost is always allowed (admin access from server console)
     if client_ip in ('127.0.0.1', '::1', 'localhost'):
         return None
+
+    # --- Rate limiting check (before IP blocklist for better UX) ---
+    rate_result = check_rate_limit_request()
+    if rate_result is not None:
+        return rate_result
 
     config = load_json_data(SECURITY_CONFIG_FILE)
     if not isinstance(config, dict):
@@ -1013,6 +1019,161 @@ login_failed_attempts = {}
 # In-memory clock in/out attempt tracking — resets on server restart
 # Structure: {ip_or_user_id: {'count': int, 'lock_until': datetime or None, 'window_start': datetime}}
 clock_failed_attempts = {}
+
+# In-memory per-IP rate limit tracker — resets on server restart
+# Structure: {client_ip: {'requests': [timestamp1, timestamp2, ...], 'login_requests': [ts1, ...], 'api_requests': [ts1, ...]}}
+rate_limit_tracker = defaultdict(lambda: {'requests': [], 'login_requests': [], 'api_requests': []})
+RATE_LIMIT_DEFAULTS = {
+    'rate_limit_enabled': True,
+    'rate_limit_global_max': 60,
+    'rate_limit_global_window': 60,       # seconds
+    'rate_limit_login_max': 10,
+    'rate_limit_login_window': 60,        # seconds
+    'rate_limit_api_max': 30,
+    'rate_limit_api_window': 60,          # seconds
+    'rate_limit_whitelist': ['127.0.0.1', '::1', 'localhost', '192.168.']
+}
+
+def get_rate_limit_config():
+    """Load rate limit config from security_config.json with defaults."""
+    config = load_json_data(SECURITY_CONFIG_FILE)
+    if not isinstance(config, dict):
+        config = {}
+    result = {}
+    for key, default in RATE_LIMIT_DEFAULTS.items():
+        result[key] = config.get(key, default)
+    # Also read whitelist from the existing ip_allowlist field as fallback
+    if not result.get('rate_limit_whitelist'):
+        allowlist = config.get('ip_allowlist', [])
+        if allowlist:
+            result['rate_limit_whitelist'] = allowlist
+    # Merge in any per-IP whitelist additions from the allowlist
+    return result
+
+
+def is_rate_limited(ip, tracker_key, max_requests, window_seconds, now=None):
+    """Check if an IP has exceeded the rate limit for a given tracker key.
+    
+    Args:
+        ip: Client IP address
+        tracker_key: 'requests', 'login_requests', or 'api_requests'
+        max_requests: Maximum allowed requests in the window
+        window_seconds: Time window in seconds
+        now: Current datetime (for testing)
+    
+    Returns:
+        (is_limited, retry_after_seconds) tuple.
+        is_limited=True means the request should be blocked.
+    """
+    if now is None:
+        now = datetime.now()
+    if max_requests <= 0:
+        return True, 0
+    
+    tracker = rate_limit_tracker[ip]
+    timestamps = tracker.get(tracker_key, [])
+    
+    # Prune timestamps older than the window
+    cutoff = now.timestamp() - window_seconds
+    timestamps = [ts for ts in timestamps if ts > cutoff]
+    tracker[tracker_key] = timestamps
+    
+    if len(timestamps) >= max_requests:
+        # Calculate retry-after: how long until the oldest timestamp falls out
+        oldest = timestamps[0]
+        retry_after = int(oldest + window_seconds - now.timestamp()) + 1
+        if retry_after < 1:
+            retry_after = 1
+        return True, retry_after
+    
+    # Record this request
+    timestamps.append(now.timestamp())
+    return False, 0
+
+
+def check_rate_limit_request():
+    """Called from before_request to enforce rate limits per IP.
+    Returns a (json_response, status_code) tuple if rate limited, or None if allowed."""
+    # Skip static files, health check, and unblock endpoints
+    if request.path.startswith('/static') or request.path == '/favicon.ico':
+        return None
+    if request.path in ('/api/health', '/api/security/unblock_ip',
+                        '/api/security/blocklist/add', '/api/security/blocklist/allowlist',
+                        '/api/security/rate_limit_config'):
+        return None
+    
+    client_ip = get_client_ip()
+    
+    # Always allow localhost
+    if client_ip in ('127.0.0.1', '::1', 'localhost'):
+        return None
+    
+    config = get_rate_limit_config()
+    if not config.get('rate_limit_enabled', True):
+        return None
+    
+    # Check whitelist — IPs starting with any whitelisted prefix are exempt
+    whitelist = config.get('rate_limit_whitelist', RATE_LIMIT_DEFAULTS['rate_limit_whitelist'])
+    for prefix in whitelist:
+        if client_ip.startswith(prefix):
+            return None
+    
+    now = datetime.now()
+    
+    # Determine endpoint type for more specific limits
+    path = request.path
+    
+    # Login endpoints get stricter limits
+    is_login = path.startswith('/api/login') or '/auth/' in path or '/clock/in' in path
+    
+    # Heavy API endpoints (order submission, sync, refund)
+    is_heavy_api = any(path.startswith(p) for p in [
+        '/api/submit_order', '/api/sync_orders', '/api/orders/refund',
+        '/api/orders/refund_item', '/api/clear_order',
+        '/api/items/csv_import', '/api/items/csv_export',
+        '/api/system/backup', '/api/system/restore'
+    ])
+    
+    # 1. Global rate limit
+    global_max = config.get('rate_limit_global_max', RATE_LIMIT_DEFAULTS['rate_limit_global_max'])
+    global_window = config.get('rate_limit_global_window', RATE_LIMIT_DEFAULTS['rate_limit_global_window'])
+    limited, retry_after = is_rate_limited(client_ip, 'requests', global_max, global_window, now)
+    if limited:
+        return jsonify({
+            'message': f'Rate limit exceeded. Too many requests. Try again in {retry_after} seconds.',
+            'code': 'rate_limited',
+            'retry_after': retry_after,
+            'limit_type': 'global'
+        }), 429, {'Retry-After': str(retry_after)}
+    
+    # 2. Login-specific rate limit
+    if is_login:
+        login_max = config.get('rate_limit_login_max', RATE_LIMIT_DEFAULTS['rate_limit_login_max'])
+        login_window = config.get('rate_limit_login_window', RATE_LIMIT_DEFAULTS['rate_limit_login_window'])
+        limited, retry_after = is_rate_limited(client_ip, 'login_requests', login_max, login_window, now)
+        if limited:
+            return jsonify({
+                'message': f'Too many login attempts. Try again in {retry_after} seconds.',
+                'code': 'rate_limited',
+                'retry_after': retry_after,
+                'limit_type': 'login'
+            }), 429, {'Retry-After': str(retry_after)}
+    
+    # 3. Heavy API rate limit
+    if is_heavy_api:
+        api_max = config.get('rate_limit_api_max', RATE_LIMIT_DEFAULTS['rate_limit_api_max'])
+        api_window = config.get('rate_limit_api_window', RATE_LIMIT_DEFAULTS['rate_limit_api_window'])
+        limited, retry_after = is_rate_limited(client_ip, 'api_requests', api_max, api_window, now)
+        if limited:
+            return jsonify({
+                'message': f'API rate limit exceeded. Try again in {retry_after} seconds.',
+                'code': 'rate_limited',
+                'retry_after': retry_after,
+                'limit_type': 'api'
+            }), 429, {'Retry-After': str(retry_after)}
+    
+    return None
+
 
 # ─── Discord Alert Support ─────────────────────────────────────────
 # Sends formatted alert messages to a Discord webhook (if configured).
@@ -2177,6 +2338,53 @@ def security_alert_config():
         'discord_security_alerts': alert_settings,
         'discord_webhook_set': bool(config.get('discord_webhook_url', '').strip())
     })
+
+
+@app.route('/api/security/rate_limit_config', methods=['POST'])
+def security_rate_limit_config():
+    """Get or set the rate limiting configuration.
+    POST with { adminPin } to get current config.
+    POST with { adminPin, ... } to set rate limit params.
+    Requires manage_users permission.
+    """
+    data = request.json or {}
+    admin_pin = data.get('adminPin', '')
+
+    if not admin_pin:
+        return jsonify({'message': 'Authentication required.'}), 401
+    if not check_perm(admin_pin, 'manage_users'):
+        return jsonify({'message': 'Permission denied.'}), 403
+
+    config = load_json_data(SECURITY_CONFIG_FILE)
+    if not isinstance(config, dict):
+        config = {}
+
+    # Determine if this is a get or set request
+    set_keys = ['rate_limit_enabled', 'rate_limit_global_max', 'rate_limit_global_window',
+                'rate_limit_login_max', 'rate_limit_login_window',
+                'rate_limit_api_max', 'rate_limit_api_window',
+                'rate_limit_whitelist']
+
+    has_updates = any(k in data for k in set_keys)
+
+    if has_updates:
+        # Set mode — update rate limit settings
+        for key in set_keys:
+            if key in data:
+                config[key] = data[key]
+        save_json_data(SECURITY_CONFIG_FILE, config)
+        admin_data = load_json_data(USERS_FILE).get(admin_pin, {})
+        log_activity('rate_limit_config_set', admin_pin, admin_data.get('role', 'unknown'), {
+            'updated_keys': [k for k in set_keys if k in data],
+            'enabled': data.get('rate_limit_enabled', config.get('rate_limit_enabled', True))
+        })
+        # Return updated config
+        result = get_rate_limit_config()
+        return jsonify({'message': 'Rate limit configuration updated.', 'config': result})
+
+    # Get mode
+    result = get_rate_limit_config()
+    return jsonify({'config': result})
 
 
 # ══════════════════════════════════════════════

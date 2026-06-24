@@ -561,13 +561,7 @@ New `security_events.json` (append-only log of flagged events):
 |
 - [x] worker-1 **Discord security alerts** — Critical/HIGH severity events fire a Discord notification immediately. MEDIUM events batch into a hourly digest. Configurable per severity. Backend: `log_security_event()` auto-dispatches to Discord based on config; `flush_security_digest()` sends batched MEDIUM digest every hour; timer auto-starts on app import. New `POST /api/security/alert_config` endpoint for GET/SET. Frontend: 🚨 Security Alert Routing card in Security dashboard with per-severity routing selector (Immediate/Digest/Off) and enable toggle. All security events go through `log_security_event()` which routes based on `discord_security_alerts` config in security_config.json. Webhook URL configured via existing Discord Webhook section. Backward compatible (default: CRITICAL+HIGH=immediate, MEDIUM=digest, LOW=none). [worker-1]
 |
-||- [~] worker-3 **Rate limiting middleware** — Flask before_request hook that enforces:
-|  - Global: max 60 requests/minute per IP (prevents basic DoS)
-|  - Login: max 10 attempts/minute per IP (already covered by anomaly detection)
-|  - API: max 30 requests/minute per IP for order-heavy endpoints
-|  - Returns 429 with `Retry-After` header
-|  - Configurable in security_config
-|  - Whitelist localhost/192.168.x.x so internal traffic isn't rate-limited
+||- [x] worker-3 **Rate limiting middleware** — Flask before_request hook that enforces: rate_limit_enabled flag, global 60 req/min per IP, login 10 req/min per IP, API 30 req/min per IP for order-heavy endpoints, all configurable via security_config.json with whitelist support (127.0.0.1, ::1, localhost, 192.168.\*). Returns 429 Too Many Requests with `Retry-After` header. Admin UI card in Security Dashboard with enable toggle, global/login/API max/min inputs, whitelist prefix editor, and save button. In-memory sliding-window tracker (resets on restart). Full i18n EN + ES. Backend: `/api/security/rate_limit_config` GET/SET endpoint. Tested: rate limiting blocks non-localhost IPs after threshold, whitelisted 192.168.x.x IPs are exempt, Retry-After header returned correctly. [worker-3]
 |
 |### Priority: MEDIUM
 

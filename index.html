@@ -1693,6 +1693,38 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
               </div>
             </div>
           </div>
+          <!-- Rate Limiting Config -->
+          <div class="card" style="padding:12px;margin-top:12px;">
+            <h4 style="margin:0 0 8px 0;font-size:14px;">🚦 Rate Limiting</h4>
+            <p style="font-size:12px;color:var(--text2);margin:0 0 8px 0;">Protect against abuse by limiting request rates per IP. Localhost and 192.168.x.x are always exempt. A 429 Too Many Requests response is returned when limits are exceeded.</p>
+            <div class="form-row" style="gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px;">
+              <label style="display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer;min-height:44px;">
+                <input type="checkbox" id="rateLimitEnabled" checked style="width:20px;height:20px;accent-color:var(--accent);"> <span data-i18n="rate_limit.enabled">Enable Rate Limiting</span>
+              </label>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin-bottom:8px;">
+              <div style="display:flex;flex-direction:column;gap:4px;">
+                <label style="font-size:13px;color:var(--text2);font-weight:600;" data-i18n="rate_limit.global_max">Global Max/Min</label>
+                <input type="number" id="rateLimitGlobalMax" value="60" min="5" max="1000" style="padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;">
+              </div>
+              <div style="display:flex;flex-direction:column;gap:4px;">
+                <label style="font-size:13px;color:var(--text2);font-weight:600;" data-i18n="rate_limit.login_max">Login Max/Min</label>
+                <input type="number" id="rateLimitLoginMax" value="10" min="1" max="200" style="padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;">
+              </div>
+              <div style="display:flex;flex-direction:column;gap:4px;">
+                <label style="font-size:13px;color:var(--text2);font-weight:600;" data-i18n="rate_limit.api_max">API Max/Min</label>
+                <input type="number" id="rateLimitApiMax" value="30" min="1" max="200" style="padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;">
+              </div>
+              <div style="display:flex;flex-direction:column;gap:4px;">
+                <label style="font-size:13px;color:var(--text2);font-weight:600;" data-i18n="rate_limit.whitelist">Whitelist Prefixes</label>
+                <input type="text" id="rateLimitWhitelist" value="127.0.0.1, ::1, localhost, 192.168." style="padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;">
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;margin-top:4px;">
+              <button class="accent" onclick="saveRateLimitConfig()" style="min-height:40px;padding:8px 20px;font-size:13px;">💾 Save Rate Limits</button>
+              <span id="rateLimitStatus" style="font-size:13px;color:#4caf50;display:none;"></span>
+            </div>
+          </div>
           <!-- Idle Timeout Config -->
           <div class="card" style="padding:12px;margin-top:12px;">
             <h4 style="margin:0 0 8px 0;font-size:14px;">⏰ Idle Timeout & Auto-Lock</h4>
@@ -2895,6 +2927,13 @@ const L10N = {
     'history.refiring_all': 'Re-firing all items to kitchen...',
     'history.refire_failed': 'Failed to re-fire items',
     'history.refire_success': 'Items re-fired to kitchen!',
+    // Rate limiting
+    'rate_limit.enabled': 'Enable Rate Limiting',
+    'rate_limit.global_max': 'Global Max/Min',
+    'rate_limit.login_max': 'Login Max/Min',
+    'rate_limit.api_max': 'API Max/Min',
+    'rate_limit.whitelist': 'Whitelist Prefixes',
+    'rate_limit.saved': 'Rate limit configuration saved!',
     // Idle timeout
     'idle.countdown': 'Locking in {seconds} seconds... tap to stay.',
     'idle.stay': '✕ Stay',
@@ -3523,6 +3562,13 @@ const L10N = {
     'history.refiring_all': 'Re-enviando todos los artículos a cocina...',
     'history.refire_failed': 'Error al re-enviar artículos',
     'history.refire_success': '¡Artículos re-enviados a cocina!',
+    // Rate limiting
+    'rate_limit.enabled': 'Activar Límite de Tasa',
+    'rate_limit.global_max': 'Global Máx/Min',
+    'rate_limit.login_max': 'Inicio Máx/Min',
+    'rate_limit.api_max': 'API Máx/Min',
+    'rate_limit.whitelist': 'Prefijos Permitidos',
+    'rate_limit.saved': '¡Configuración de límite de tasa guardada!',
     // Idle timeout
     'idle.countdown': 'Bloqueando en {seconds} segundos... toque para continuar.',
     'idle.stay': '✕ Permanecer',
@@ -6203,6 +6249,7 @@ async function loadSecurityDashboard() {
     loadLockoutState();
     loadDiscordWebhookConfig();
     loadSecurityAlertConfig();
+    loadRateLimitConfig();
   } catch (e) {
     showToast(t('toast.network_error') + ' loading security dashboard.', 'danger');
   }
@@ -10088,6 +10135,77 @@ async function saveSecurityAlertConfig() {
     }
   } catch(e) {
     showToast(t('toast.network_error') + ' saving alert config.', 'danger');
+  }
+}
+
+/** Load the rate limit config into the form */
+async function loadRateLimitConfig() {
+  const adminPin = localStorage.getItem('adminPin');
+  if (!adminPin) return;
+  try {
+    const r = await fetch(BACKEND_URL + '/api/security/rate_limit_config', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({adminPin})
+    });
+    if (!r.ok) return;
+    const data = await r.json();
+    const c = data.config || {};
+    const setVal = (id, val) => {
+      const el = document.getElementById(id);
+      if (el) {
+        if (el.type === 'checkbox') {
+          el.checked = val !== false;
+        } else {
+          el.value = val !== undefined && val !== null ? val : '';
+        }
+      }
+    };
+    setVal('rateLimitEnabled', c.rate_limit_enabled);
+    setVal('rateLimitGlobalMax', c.rate_limit_global_max);
+    setVal('rateLimitLoginMax', c.rate_limit_login_max);
+    setVal('rateLimitApiMax', c.rate_limit_api_max);
+    // Whitelist is an array — join for display
+    const whitelist = c.rate_limit_whitelist || [];
+    setVal('rateLimitWhitelist', whitelist.join(', '));
+  } catch(e) { /* silently fail */ }
+}
+
+/** Save the rate limit config from the form */
+async function saveRateLimitConfig() {
+  const adminPin = localStorage.getItem('adminPin');
+  if (!adminPin) return showToast(t('toast.auth_required'), 'danger');
+  try {
+    const enabled = document.getElementById('rateLimitEnabled').checked;
+    const globalMax = parseInt(document.getElementById('rateLimitGlobalMax').value) || 60;
+    const loginMax = parseInt(document.getElementById('rateLimitLoginMax').value) || 10;
+    const apiMax = parseInt(document.getElementById('rateLimitApiMax').value) || 30;
+    const whitelistStr = document.getElementById('rateLimitWhitelist').value || '';
+    // Parse comma-separated whitelist, trim each entry
+    const whitelist = whitelistStr.split(',').map(s => s.trim()).filter(s => s.length > 0);
+
+    const payload = {
+      adminPin,
+      rate_limit_enabled: enabled,
+      rate_limit_global_max: Math.max(5, Math.min(1000, globalMax)),
+      rate_limit_login_max: Math.max(1, Math.min(200, loginMax)),
+      rate_limit_api_max: Math.max(1, Math.min(200, apiMax)),
+      rate_limit_whitelist: whitelist
+    };
+
+    const r = await fetch(BACKEND_URL + '/api/security/rate_limit_config', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const data = await r.json();
+    if (r.ok) {
+      showToast(t('rate_limit.saved'), 'success');
+      const status = document.getElementById('rateLimitStatus');
+      if (status) { status.textContent = '✅ ' + t('rate_limit.saved'); status.style.display = 'inline'; setTimeout(() => status.style.display = 'none', 3000); }
+    } else {
+      showToast(data.message || 'Failed to save rate limit config.', 'danger');
+    }
+  } catch(e) {
+    showToast(t('toast.network_error') + ' saving rate limit config.', 'danger');
   }
 }
 
