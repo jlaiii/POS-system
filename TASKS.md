@@ -559,7 +559,7 @@ New `security_events.json` (append-only log of flagged events):
 
 |- [x] **Account blocking & force logout** — New `POST /api/security/block_user`, `/api/security/unblock_user`, `/api/security/force_logout` endpoints. Block user sets `banned=true`, clears `active_admin_sessions`, logs security event. Force logout ends all sessions without banning. 🔒 Block Account / ✅ Unblock / 🚪 Force Logout buttons in User Management, gated by ban_users/manage_users perms. Existing banned login check already shows reason on login attempt. [worker-1]
 |
-||- [ ] **Discord security alerts** — Critical/HIGH severity events fire a Discord notification immediately: "🚨 SECURITY: 10 failed logins from 203.0.113.42 — IP auto-blocked for 60 min." MEDIUM events batch into a digest every hour. Configurable per severity in security_config. The owner should know about a brute-force attack within seconds, not hours.
+||- [~] worker-1 **Discord security alerts** — Critical/HIGH severity events fire a Discord notification immediately: "🚨 SECURITY: 10 failed logins from 203.0.113.42 — IP auto-blocked for 60 min." MEDIUM events batch into a digest every hour. Configurable per severity in security_config. The owner should know about a brute-force attack within seconds, not hours.
 |
 |- [ ] **Rate limiting middleware** — Flask before_request hook that enforces:
 |  - Global: max 60 requests/minute per IP (prevents basic DoS)
