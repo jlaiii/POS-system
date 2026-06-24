@@ -7201,6 +7201,182 @@ def admin_stats():
     return jsonify({'message': 'Admin data retrieved', 'stats': stats})
 
 
+# --- End-of-Day Sales Summary Report ---
+
+@app.route('/api/end_of_day_summary', methods=['POST'])
+def end_of_day_summary():
+    """
+    One-page closeout report showing: total sales by payment method,
+    tips, taxes, item sales counts by category, refunds/voids, net sales,
+    order count, average ticket size. Date-range filterable.
+    """
+    data = request.json
+    admin_pin = data.get('adminPin')
+
+    if not check_perm(admin_pin, "view_stats"):
+        log_activity('admin_login', admin_pin, 'unauthorized', {'status': 'failed'})
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    # --- Date range filtering ---
+    date_from = (data.get('date_from') or '').strip()
+    date_to = (data.get('date_to') or '').strip()
+
+    def filter_by_date_range(order_list, date_field='date'):
+        filtered = order_list
+        if date_from:
+            try:
+                dt_from = datetime.fromisoformat(date_from)
+                filtered = [o for o in filtered if datetime.fromisoformat(o.get(date_field, '')) >= dt_from]
+            except (ValueError, KeyError):
+                pass
+        if date_to:
+            try:
+                if 'T' not in date_to:
+                    dt_to = datetime.fromisoformat(date_to + 'T23:59:59')
+                else:
+                    dt_to = datetime.fromisoformat(date_to)
+                filtered = [o for o in filtered if datetime.fromisoformat(o.get(date_field, '')) <= dt_to]
+            except (ValueError, KeyError):
+                pass
+        return filtered
+
+    orders = load_json_data(ORDERS_FILE)
+    orders = filter_by_date_range(orders)
+
+    # Build item-name → category lookup from items.json
+    items_data = load_json_data(ITEMS_FILE)
+    name_to_category = {}
+    for cat, items in items_data.items():
+        for item in items:
+            name_to_category[item['name'].lower()] = cat
+
+    # --- Compute summary ---
+    total_sales = 0.0
+    cash_total = 0.0
+    card_total = 0.0
+    other_total = 0.0
+    cash_count = 0
+    card_count = 0
+    other_count = 0
+    tips_total = 0.0
+    taxes_total = 0.0
+    discount_total = 0.0
+    order_count = 0
+    net_sales = 0.0
+    category_qty = {}  # category name → total quantity sold
+    refunded_total = 0.0
+    refunded_count = 0
+
+    for order in orders:
+        status = order.get('status', '').lower()
+        if status in ('refunded', 'voided'):
+            refunded_count += 1
+            try:
+                refunded_total += float(order.get('total', 0))
+            except (ValueError, TypeError):
+                pass
+            continue  # Skip refunded/voided for revenue calcs
+
+        order_count += 1
+        try:
+            total = float(order.get('total', 0))
+        except (ValueError, TypeError):
+            continue
+
+        # Subtract partially refunded items from the total
+        refunded_items = order.get('refunded_items', [])
+        if refunded_items:
+            refunded_sum = sum(
+                float(ri.get('total', ri.get('price', 0) * ri.get('qty', 1)))
+                for ri in refunded_items
+            )
+            total = max(0, total - refunded_sum)
+
+        total_sales += total
+
+        # Tips & taxes
+        try:
+            tips_total += float(order.get('tip_amount', 0))
+        except (ValueError, TypeError):
+            pass
+        try:
+            taxes_total += float(order.get('tax_amount', 0))
+        except (ValueError, TypeError):
+            pass
+        try:
+            discount_total += float(order.get('discount_amount', 0))
+        except (ValueError, TypeError):
+            pass
+
+        # Payment method breakdown
+        payment = str(order.get('payment', '')).strip().lower()
+        if payment == 'cash' or (payment.startswith('split') and 'cash' in payment):
+            splits = order.get('payment_splits')
+            if splits and isinstance(splits, list):
+                cash_portion = sum(float(s.get('amount', 0)) for s in splits if s.get('method', '').lower() == 'cash')
+                card_portion = sum(float(s.get('amount', 0)) for s in splits if s.get('method', '').lower() in ('card', 'credit card', 'debit'))
+                if cash_portion > 0 or card_portion > 0:
+                    split_sum = cash_portion + card_portion
+                    if split_sum > total and split_sum > 0:
+                        ratio = total / split_sum
+                        cash_portion = round(cash_portion * ratio, 2)
+                        card_portion = round(card_portion * ratio, 2)
+                    cash_total += cash_portion
+                    card_total += card_portion
+                    if cash_portion > 0: cash_count += 1
+                    if card_portion > 0: card_count += 1
+                    continue
+            cash_total += total
+            cash_count += 1
+        elif payment in ('card', 'credit card', 'debit', 'credit'):
+            card_total += total
+            card_count += 1
+        else:
+            other_total += total
+            other_count += 1
+
+        # Item category sales
+        items_list = order.get('items', [])
+        if isinstance(items_list, list):
+            for item in items_list:
+                qty = int(item.get('qty', 1))
+                # Try to find category from items.json lookup
+                item_name = str(item.get('name', '')).lower()
+                cat = name_to_category.get(item_name, 'Uncategorized')
+                category_qty[cat] = category_qty.get(cat, 0) + qty
+
+    net_sales = max(0, total_sales)
+    avg_ticket = net_sales / order_count if order_count > 0 else 0
+
+    # Sort categories by quantity descending
+    sorted_categories = sorted(category_qty.items(), key=lambda x: -x[1])
+
+    summary = {
+        'report_date': datetime.now().strftime('%Y-%m-%d %H:%M'),
+        'date_from': date_from or 'All time',
+        'date_to': date_to or 'All time',
+        'total_sales': round(total_sales, 2),
+        'order_count': order_count,
+        'average_ticket': round(avg_ticket, 2),
+        'net_sales': round(net_sales, 2),
+        'tips_total': round(tips_total, 2),
+        'taxes_total': round(taxes_total, 2),
+        'discount_total': round(discount_total, 2),
+        'payment_methods': {
+            'cash': {'total': round(cash_total, 2), 'count': cash_count},
+            'card': {'total': round(card_total, 2), 'count': card_count},
+            'other': {'total': round(other_total, 2), 'count': other_count}
+        },
+        'category_sales': [{'category': cat, 'quantity': qty} for cat, qty in sorted_categories],
+        'refunds': {
+            'total': round(refunded_total, 2),
+            'count': refunded_count
+        },
+        'total_traffic': len(orders)  # including refunded
+    }
+    return jsonify({'message': 'End of day summary', 'summary': summary})
+
+
 @app.route('/api/admin_timesheet', methods=['POST'])
 def admin_timesheet():
     data = request.json

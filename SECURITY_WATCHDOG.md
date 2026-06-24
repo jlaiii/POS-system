@@ -1,10 +1,10 @@
 # POS Security Watchdog
 
-> Last run: 2026-06-24T15:21:43 UTC
-> Total events tracked: 13 (SEC-001 → SEC-013)
+> Last run: 2026-06-24T19:32:07 UTC
+> Total events tracked: 14 (SEC-001 → SEC-013)
 > Active blocks: 0 IPs
 > Unresolved alerts: 11 (SEC-001, SEC-003, SEC-005, SEC-006, SEC-007, SEC-008, SEC-009, SEC-010, SEC-011, SEC-012, SEC-013)
-> Run result: All clear — no new activity since last run
+> Run result: SILENT — no anomalies detected
 
 ## Current Run Findings
 
@@ -15,45 +15,48 @@ None.
 None.
 
 ### 🟡 MEDIUM (0)
-None — no new activity detected.
+None.
 
-### ℹ️ Activity Summary (14:34–15:21 UTC, ~47m window)
+### 🟢 LOW (1)
+- **3 failed admin_login attempts from Employee One (1234)** at 19:24:48–19:25:13 from 127.0.0.1 (curl). Below the auto_block threshold (3 < 5). All from localhost whitelisted IP. Followed immediately by successful Owner (1111) admin_logins from same IP — consistent with owner testing. Not an attack pattern. Logged for awareness.
 
-No new events recorded since last run. System idle.
+### ℹ️ Activity Summary (19:10–19:32 UTC, ~22m window)
 
-**Pattern:** No activity detected in this window. No logins, no orders, no config changes. System idle but responding normally.
+**Login attempts (login_attempts.json)**: 1 new entry — Owner (1111) successful login at 19:17:27 from 127.0.0.1 (curl/8.5.0). Normal hours, normal behavior.
+
+**Activity log**: 13 new entries since last check:
+- 1 login (Owner, 1111, success, 19:17)
+- 1 admin_login (Owner, 1111, success, 19:17)
+- 3 admin_login (Employee One, 1234, FAILED, 19:24-19:25)
+- 6 admin_login (Owner, 1111, success, 19:25-19:26)
+- 1 submit_order (order 72, Reliability Bot lifecycle check)
+- 1 refund_order (order 72, Reliability Bot cleanup)
 
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: 0 IPs with 5+ failed logins. 0 users with 5+ failed attempts. No credential stuffing.
-- **Failed logins last 5 min**: 0
-- **Failed logins since last run**: 0
-- **Successful-after-failure**: None (no logins at all this window).
-- **Account enumeration**: No probes detected.
-- **Off-hours**: Current time 15:21 UTC — normal hours (off-hours window 22:00-06:00).
+- **Failed logins last 5 min**: 0 — below threshold (3 fails at 19:24-25, all before 19:30)
+- **Failed logins since last run**: 3 — all Employee One (1234), all 127.0.0.1
+- **Successful-after-failure**: Not applicable — no successful login from 1234 after failures. Owner (1111) successes are separate user.
+- **Account enumeration**: No probes detected
+- **Off-hours**: Current time 19:32 UTC — normal hours (off-hours window 22:00-06:00)
 - **Known IPs**: Unchanged. No new IPs.
-- **login_attempts.json**: No new entries.
-- **Active shifts**: None. No active sessions.
-- **New logins this window**: 0.
+- **Active shifts**: None.
+- **Gap noted**: admin_login failures not recorded in login_attempts.json — only in activity_log. Attackers using admin_login endpoint would not be tracked by login_attempts-based brute force detection.
 
 ### 🔒 Security Config
 - security_config.json: Unchanged. require_2fa_for_admins=false, auto_block_threshold=5, blocked_ips empty.
-- users.json: Unchanged. Owner 2FA still NOT enabled (SEC-001/SEC-013).
-- timesheet_config.json: Unchanged from Owner's update at 13:45.
+- users.json: Unchanged. Owner 2FA still NOT enabled (SEC-001/SEC-013 — unresolved).
 - No configuration sabotage detected.
 
 ### 💰 Financial Check
-- No new orders this window. Last order was Order 71 at 14:26 ($10.79, Cash).
-- No refunds, discounts, or unusual pricing patterns.
-- No cash drawer activity.
-- All clear.
+- Order 72: Created and refunded by Reliability Bot (automated lifecycle check, not suspicious).
+- No other new orders or refunds.
+- Cash drawer: No new sessions.
 
 ### 📂 File Integrity
-- All JSON files parseable. No corruption.
-- No suspicious files.
+- All 39 JSON files parseable. No corruption.
+- No suspicious new files detected.
 - Owner account (1111) present, active, not banned — unchanged.
-- RELIABILITY_CHECKLIST.md updated by SRE Bot at 14:47 — routine health check, no issues found.
-- All data files present with normal sizes.
-- Server responding normally on port 5000.
 
 ## Active Blocks
 None.
@@ -77,14 +80,15 @@ None.
 None.
 
 ## System State
-- **Current time**: 2026-06-24T15:21:43 UTC — normal hours (off-hours window 22:00-06:00)
-- **Activity log**: 6762 entries (unchanged since last run). No new activity.
-- **New login attempts since last run**: 0
-- **Failed logins since last run**: 0
+- **Current time**: 2026-06-24T19:32:07 UTC — normal hours (off-hours window 22:00-06:00)
+- **Activity log since last run**: 13 new entries (including 3 failed admin_logins from 1234)
+- **New login attempts since last run**: 1 (Owner 1111 success)
+- **Failed logins since last run**: 3 (all Employee One 1234 admin_login failures)
 - **Known IPs**: Unchanged. No new IPs.
 - **Blocked IPs**: 0
 - **Config changes**: None since last run.
-- **File integrity**: All JSON files parseable. No suspicious files. No unexpected changes.
-- **Users**: 5 accounts in users.json. Owner 2FA still NOT enabled (SEC-001/SEC-013).
+- **File integrity**: All 39 JSON files parseable. No suspicious files. No unexpected changes.
+- **Users**: 5 accounts in users.json. Owner 2FA still NOT enabled (SEC-001/SEC-013 — unresolved).
 - **Security events**: 13 tracked. 2 resolved. 11 unresolved.
-- **Server**: Responding normally on port 5000.
+- **Server**: HTTP 200 — responding normally.
+- **Git status**: RELIABILITY_CHECKLIST.md, SECURITY_WATCHDOG.md, activity_log.json, login_attempts.json, order_counter.json, orders.json, refunded_orders.json modified (expected operational changes).

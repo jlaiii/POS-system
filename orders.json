@@ -2445,5 +2445,45 @@
         "table_number": null,
         "delivery_address": null,
         "customer_email": ""
+    },
+    {
+        "order_id": 72,
+        "status": "refunded",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-24T18:31:40.227274",
+        "user": null,
+        "payment": "Cash",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Burger",
+                "price": 8.99,
+                "quantity": 1,
+                "category": "Foods"
+            },
+            {
+                "name": "Fries",
+                "price": 3.49,
+                "quantity": 1,
+                "category": "Snacks"
+            }
+        ],
+        "subtotal": 12.48,
+        "tax_amount": 0.0,
+        "tip_amount": 0.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 12.48,
+        "notes": "",
+        "item_notes": {},
+        "table_number": null,
+        "delivery_address": null,
+        "customer_email": "",
+        "refund_reason": "Reliability bot test \u2014 automated order lifecycle check",
+        "refunded_at": "2026-06-24T18:31:50.232300",
+        "refunded_by": "1111"
     }
 ]
