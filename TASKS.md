@@ -184,7 +184,7 @@ Use Python `pyotp` (pure Python, no C extensions, `pip install pyotp qrcode`):
 
 - [x] worker-1 **2FA audit log** — All 2FA events go to activity_log: `2fa_setup`, `2fa_disabled`, `2fa_disabled_by_admin`, `2fa_backup_code_used`, `2fa_login_success`, `2fa_login_failed`, `2fa_rate_limited`, `2fa_backup_regenerated`. Filterable in Activity Log. Gives owner a trail: "Who disabled Carlos's 2FA and why?" [worker-1 — Standardized event type names (2fa_verify_success→2fa_setup, 2fa_login_rate_limited→2fa_rate_limited), added 2fa_disabled event paired with 2fa_disabled_by_admin, added prefix-based type filter support (__prefix__:2fa_) to activity_log endpoint for grouped 2FA filtering, added 🔐 2FA Events group option in frontend filter dropdown, added type-specific emoji icons (🔐🔓🔑✅❌⏳🔄) for 2FA events in log rendering, added .log-entry-2fa CSS highlight (accent left border). i18n compatible. Backward compatible.]
 
-- [ ] **WebAuthn / Passkey support (future)** — Optional upgrade path: support for hardware security keys (YubiKey) and platform passkeys (Face ID, Touch ID, Windows Hello) via WebAuthn API. Faster than typing TOTP codes, phishing-resistant. Requires `webauthn` Python library. Phase this in after TOTP is stable.
+- [-] **WebAuthn / Passkey support (future)** — Too complex for single worker tick (needs webauthn library + full frontend/backend flow). Requires dedicated multi-tick project when prioritized.
 
 ## Account Recovery & Admin Controls (NEW — June 2026)
 
@@ -212,7 +212,7 @@ Use Python `pyotp` (pure Python, no C extensions, `pip install pyotp qrcode`):
 
 ### Priority: LOW
 
-- [ ] **Bulk PIN reset for shift change** — At shift change, owner can reset PINs for all clocked-out employees in one action. Each gets a unique random temp PIN delivered via printed slip or displayed on screen. Useful for high-turnover environments where new hires get fresh PINs each shift.
+- [~] worker-3 **Bulk PIN reset for shift change** — At shift change, owner can reset PINs for all clocked-out employees in one action. Each gets a unique random temp PIN delivered via printed slip or displayed on screen. Useful for high-turnover environments where new hires get fresh PINs each shift.
 
 - [ ] **Biometric / device-bound PIN** — If the POS terminal has a fingerprint reader or camera, allow biometric auth as a faster alternative to PIN. Uses WebAuthn platform authenticator. "Tap to clock in" — employee taps fingerprint, auto-identified, clocked in. No PIN needed. This is aspirational but worth listing.
 
