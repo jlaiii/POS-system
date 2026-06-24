@@ -1,6 +1,6 @@
 # POS Database Migration Tasks
-> Last run: 2026-06-23 23:xx UTC
-> Current phase: Phase 2 — Migration Scripts (2/24 complete)
+> Last run: 2026-06-24 09:xx UTC
+> Current phase: Phase 2 — Migration Scripts (3/24 complete)
 
 ## Phase 1: Schema Design
 - [x] Design all SQLite table schemas (users, shift_log, orders, items, inventory, etc.)
@@ -11,7 +11,7 @@
 ## Phase 2: Migration Scripts (one at a time)
 - [x] Write migrate_users.py — users table migration (6 rows verified ✓)
 - [x] Write migrate_shift_log.py — shift_log table migration (16 rows verified ✓)
-- [ ] Write migrate_activity_log.py — activity_log table migration
+- [x] Write migrate_activity_log.py — activity_log table migration (377 rows verified ✓)
 - [ ] Write migrate_items.py — items table migration (flatten categories)
 - [ ] Write migrate_inventory.py — inventory table migration
 - [ ] Write migrate_loyalty_points.py — loyalty_points table migration
@@ -64,6 +64,8 @@
 - [x] **Initial setup** — Created DB_TASKS.md, db.py, migrations/, and first migration script (users)
 - [x] **migrate_users.py** — Migrated 6 users from users.json to SQLite. Verified row count matches. Idempotency tested. Commit: 0df93e1
 - [x] **migrate_shift_log.py** — Migrated 16 shifts from shift_log.json to SQLite. All fields preserved (edits JSON, breaks JSON, late tracking). Idempotency tested. Commit: 12e292b
+- [x] **migrate_activity_log.py** — Migrated 377 events from activity_log.json to SQLite. All fields preserved (details JSON). Idempotency tested. Commit: <PENDING>
+- [x] **Add `use_database` flag** — Added `use_database: false` to timesheet_config.json for feature-gated endpoint refactoring
 
 ## ROLLBACK PLAN (always keep current)
 How to revert to JSON mode if DB breaks:
@@ -78,8 +80,8 @@ How to revert to JSON mode if DB breaks:
 | JSON File | Table Name | Type | Records | Migrated |
 |---|---|---|---|---|
 | users.json | users | dict (key=pin) | 6 | ✓ |
-| shift_log.json | shift_log | array | 8 | |
-| activity_log.json | activity_log | array | ~90 | |
+| shift_log.json | shift_log | array | 24 | ✓ |
+| activity_log.json | activity_log | array | 377 | ✓ |
 | items.json | items | dict (key=category) | 14 items | |
 | inventory.json | inventory | dict (key=item_name) | 15 | |
 | loyalty_points.json | loyalty_points | dict (key=phone) | 0 | |
