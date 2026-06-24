@@ -129,6 +129,7 @@ TICKETS_FILE = 'tickets.json'  # Employee self-service tickets/requests
 APPROVALS_FILE = 'timesheet_approvals.json'  # Timesheet pay period approvals
 RESTAURANT_CONFIG_FILE = 'restaurant_config.json'  # Restaurant info for tablet display (name, hours, wifi)
 PRINTER_CONFIG_FILE = 'printer_config.json'  # Thermal printer configuration (IP, port, enabled)
+KITCHEN_SOUND_FILE = 'kitchen_sound_config.json'  # Kitchen display sound configuration (enabled, volume)
 LOGIN_ATTEMPTS_FILE = 'login_attempts.json'  # Persistent login attempt records (user_id, ip, timestamp, success, user_agent)
 SECURITY_EVENTS_FILE = 'security_events.json'  # Security events/incidents log
 SECURITY_CONFIG_FILE = 'security_config.json'  # Security config (blocked IPs, thresholds)
@@ -8951,6 +8952,48 @@ def kitchen_order_detail(order_id):
         return jsonify({'error': f'Order #{order_id} not found'}), 404
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/kitchen/sound_config', methods=['POST'])
+def get_kitchen_sound_config():
+    """Get kitchen display sound configuration."""
+    data = request.json or {}
+    admin_pin = data.get('adminPin', '')
+    if admin_pin:
+        _, err_response = check_get_auth(admin_pin, "kitchen_access")
+        if err_response:
+            return err_response
+    config = load_json_data(KITCHEN_SOUND_FILE)
+    if not isinstance(config, dict):
+        config = {"sound_enabled": True, "sound_volume": 0.25}
+    return jsonify(config)
+
+
+@app.route('/api/kitchen/sound_config/save', methods=['POST'])
+def save_kitchen_sound_config():
+    """Save kitchen display sound configuration. Requires manage_orders permission."""
+    data = request.json or {}
+    admin_pin = data.get('adminPin', '')
+    users = load_json_data(USERS_FILE)
+    if admin_pin not in users:
+        return jsonify({'message': 'Invalid user'}), 403
+    user_info = users.get(admin_pin, {})
+    perms = user_info.get('permissions', [])
+    if '*' not in perms and 'manage_orders' not in perms:
+        return jsonify({'message': 'Permission denied'}), 403
+
+    config = load_json_data(KITCHEN_SOUND_FILE)
+    if not isinstance(config, dict):
+        config = {}
+    if 'sound_enabled' in data:
+        config['sound_enabled'] = bool(data['sound_enabled'])
+    if 'sound_volume' in data:
+        vol = float(data['sound_volume'])
+        config['sound_volume'] = max(0.0, min(1.0, vol))
+
+    save_json_data(KITCHEN_SOUND_FILE, config)
+    log_activity('save_kitchen_sound_config', admin_pin, user_info.get('role', 'user'), {})
+    return jsonify({'message': 'Kitchen sound configuration saved', 'config': config})
 
 
 # ============================================================

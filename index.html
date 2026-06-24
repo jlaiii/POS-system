@@ -1643,6 +1643,7 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
         <button onclick="switchAdminSection('webhooks')" id="asWebhooks" data-i18n="admin.webhooks">🔗 Webhooks</button>
         <button onclick="switchAdminSection('email')" id="asEmail" data-i18n="admin.email">📧 Email</button>
         <button onclick="switchAdminSection('printer')" id="asPrinter" data-i18n="admin.printer">🖨️ Printer</button>
+        <button onclick="switchAdminSection('kitchensound')" id="asKitchensound" data-i18n="admin.kitchen_sound">🔊 Kitchen Sound</button>
         <button onclick="switchAdminSection('ads')" id="asAds" data-i18n="admin.ads">📺 Ads</button>
         <button onclick="switchAdminSection('categories')" id="asCategories" data-i18n="admin.categories">📁 Categories</button>
         <button onclick="switchAdminSection('cashdrawer')" id="asCashdrawer">💰 Cash Drawer</button>
@@ -2222,6 +2223,31 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
               <button class="outline" onclick="testPrinter()" style="min-height:44px;border-color:#e67e22;color:#e67e22;" data-i18n="admin.printer.test">🖨️ Test Print</button>
             </div>
             <div style="margin-top:12px;font-size:13px;color:var(--text2);" data-i18n="admin.printer.test_desc">Send a test receipt to verify the printer is working.</div>
+          </div>
+        </div>
+        <!-- Kitchen Display Sound Settings -->
+        <div id="secKitchensound" class="admin-section">
+          <h3 data-i18n="admin.kitchen_sound.title">🔊 Kitchen Display Sound</h3>
+          <p style="color:var(--text2);margin-bottom:16px;font-size:14px;" data-i18n="admin.kitchen_sound.desc">Configure the new-order alert sound for the kitchen display. Volume is clamped between 5% and 80% to prevent deafening alarms.</p>
+          <div class="card" style="margin-bottom:12px;">
+            <div class="form-row" style="flex-wrap:wrap;gap:12px;">
+              <div style="flex:0 0 160px;">
+                <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:2px;" data-i18n="admin.kitchen_sound.enabled">Sound Enabled</label>
+                <select id="kitchenSoundEnabled" style="min-height:44px;">
+                  <option value="true" data-i18n="admin.yes">Yes</option>
+                  <option value="false" data-i18n="admin.no">No</option>
+                </select>
+              </div>
+              <div style="flex:1;min-width:180px;">
+                <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:2px;" data-i18n="admin.kitchen_sound.volume">Volume (<span id="kitchenSoundVolumeLabel">25</span>%)</label>
+                <input type="range" id="kitchenSoundVolume" min="5" max="80" value="25" style="width:100%;min-height:44px;" oninput="document.getElementById('kitchenSoundVolumeLabel').textContent=this.value">
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;">
+              <button class="accent" onclick="saveKitchenSoundConfig()" style="min-height:44px;" data-i18n="admin.kitchen_sound.save_btn">💾 Save Sound Settings</button>
+              <button class="outline" onclick="loadKitchenSoundConfigAdmin()" style="min-height:44px;" data-i18n="admin.email.load_btn">🔄 Refresh</button>
+              <button class="outline" onclick="testKitchenSound()" style="min-height:44px;border-color:#e67e22;color:#e67e22;" data-i18n="admin.kitchen_sound.test">🔊 Test Sound</button>
+            </div>
           </div>
         </div>
         <!-- Table-side Ads -->
@@ -2817,6 +2843,12 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
 
 <!-- ═══════════ KITCHEN DISPLAY VIEW ═══════════ -->
 <div id="kitchenView">
+  <!-- First-interaction overlay for iOS audio unlock -->
+  <div id="kitchenAudioOverlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:9999;justify-content:center;align-items:center;flex-direction:column;gap:20px;cursor:pointer;" onclick="enableKitchenAudio()">
+    <div style="font-size:64px;">🔊</div>
+    <div style="font-size:22px;font-weight:700;color:#fff;text-align:center;padding:0 24px;" data-i18n="kitchen.tap_to_enable_audio">Tap anywhere to enable kitchen alerts</div>
+    <div style="font-size:14px;color:rgba(255,255,255,0.6);text-align:center;padding:0 24px;" data-i18n="kitchen.tap_to_enable_audio_desc">Your device requires a tap before it can play sounds for new orders.</div>
+  </div>
   <div id="kitchenHeader">
     <span class="kh-title" data-i18n="kitchen.title">🔪 Kitchen Display</span>
     <span class="kh-user" id="kitchenUserName"></span>
@@ -3302,6 +3334,15 @@ const L10N = {
     'admin.printer.test_sending': 'Sending test page...',
     'admin.printer.test_sent': 'Test page sent to printer!',
     'admin.printer.test_failed': 'Test print failed: ',
+    'admin.kitchen_sound': '🔊 Kitchen Sound',
+    'admin.kitchen_sound.title': '🔊 Kitchen Display Sound',
+    'admin.kitchen_sound.desc': 'Configure the new-order alert sound for the kitchen display. Volume is clamped between 5% and 80% to prevent deafening alarms.',
+    'admin.kitchen_sound.enabled': 'Sound Enabled',
+    'admin.kitchen_sound.volume': 'Volume',
+    'admin.kitchen_sound.save_btn': '💾 Save Sound Settings',
+    'admin.kitchen_sound.test': '🔊 Test Sound',
+    'kitchen.tap_to_enable_audio': 'Tap anywhere to enable kitchen alerts',
+    'kitchen.tap_to_enable_audio_desc': 'Your device requires a tap before it can play sounds for new orders.',
     'history.print_thermal': '🖨️ Thermal',
     'toast.printer_not_configured': 'No printer configured. Configure in Admin → Printer settings.',
     'toast.printer_error': 'Printer error. Using browser print.',
@@ -3887,6 +3928,15 @@ const L10N = {
     'admin.printer.test_sending': 'Enviando página de prueba...',
     'admin.printer.test_sent': '¡Página de prueba enviada a la impresora!',
     'admin.printer.test_failed': 'Prueba falló: ',
+    'admin.kitchen_sound': '🔊 Sonido Cocina',
+    'admin.kitchen_sound.title': '🔊 Sonido de Pantalla de Cocina',
+    'admin.kitchen_sound.desc': 'Configure el sonido de alerta de nuevos pedidos para la cocina. El volumen se limita entre 5% y 80% para evitar alarmas ensordecedoras.',
+    'admin.kitchen_sound.enabled': 'Sonido Habilitado',
+    'admin.kitchen_sound.volume': 'Volumen',
+    'admin.kitchen_sound.save_btn': '💾 Guardar Configuración',
+    'admin.kitchen_sound.test': '🔊 Probar Sonido',
+    'kitchen.tap_to_enable_audio': 'Toque en cualquier lugar para activar alertas de cocina',
+    'kitchen.tap_to_enable_audio_desc': 'Su dispositivo requiere un toque antes de poder reproducir sonidos para nuevos pedidos.',
     'history.print_thermal': '🖨️ Térmica',
     'toast.printer_not_configured': 'Impresora no configurada. Configure en Admin → Impresora.',
     'toast.printer_error': 'Error de impresora. Usando navegador.',
@@ -4430,6 +4480,52 @@ let kitchenStatsCache = { pending: 0, preparing: 0, done: 0 };
 let kitchenClockTimer = null;
 let kitchenPrevOrderIds = new Set(); // track new orders for sound
 let kitchenViewActive = false;
+let kitchenAudioEnabled = false; // tracks if user has interacted for iOS audio unlock
+let kitchenSoundConfig = { sound_enabled: true, sound_volume: 0.25 }; // cached sound config
+
+/** Show the first-interaction overlay for iOS audio unlock when kitchen view opens */
+function showKitchenAudioOverlay() {
+  const overlay = document.getElementById('kitchenAudioOverlay');
+  if (!overlay) return;
+  // Only show if audio hasn't been unlocked yet this session
+  if (!kitchenAudioEnabled) {
+    overlay.style.display = 'flex';
+  }
+}
+
+/** Called when user taps the audio overlay — initializes AudioContext and hides overlay */
+function enableKitchenAudio() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    // Resume if suspended (required by iOS/Safari autoplay policy)
+    if (ctx.state === 'suspended') {
+      ctx.resume();
+    }
+    ctx.close(); // don't keep it open, playNotificationSound creates its own
+  } catch(e) { /* audio not available */ }
+  kitchenAudioEnabled = true;
+  const overlay = document.getElementById('kitchenAudioOverlay');
+  if (overlay) overlay.style.display = 'none';
+}
+
+/** Load kitchen sound config from backend */
+async function loadKitchenSoundConfig() {
+  try {
+    const pin = currentUser ? currentUser.id : '';
+    const r = await fetch(BACKEND_URL + '/api/kitchen/sound_config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: pin })
+    });
+    if (r.ok) {
+      const data = await r.json();
+      kitchenSoundConfig = {
+        sound_enabled: data.sound_enabled !== false,
+        sound_volume: parseFloat(data.sound_volume) || 0.25
+      };
+    }
+  } catch(e) { /* use defaults */ }
+}
 
 // ═══════════ SOCKETIO (real-time) ═══════════
 let socket = null;
@@ -9226,6 +9322,7 @@ function switchAdminSection(sec) {
   else if (sec === 'tickets') loadTicketQueue();
   else if (sec === 'security') loadSecurityDashboard();
   else if (sec === 'backup') checkBackupStatus();
+  else if (sec === 'kitchensound') loadKitchenSoundConfigAdmin();
 }
 
 // ═══════════ TIMESHEET CONFIG ═══════════
@@ -13433,6 +13530,9 @@ function showKitchenView() {
   updateKitchenClock();
   if (kitchenClockTimer) clearInterval(kitchenClockTimer);
   kitchenClockTimer = setInterval(updateKitchenClock, 1000);
+  // Load sound config and show audio-overlay for iOS unlock
+  loadKitchenSoundConfig();
+  showKitchenAudioOverlay();
   // Join SocketIO kitchen room for real-time updates
   if (socket && socket.connected) {
     socket.emit('join_kitchen');
@@ -13934,9 +14034,14 @@ async function cancelKitchenOrder(orderId) {
 }
 
 function playNotificationSound() {
+  // Check if sound is enabled in config
+  if (!kitchenSoundConfig.sound_enabled) return;
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
     const now = ctx.currentTime;
+    const baseVolume = kitchenSoundConfig.sound_volume || 0.25;
+    // Clamp volume to ensure it's audible but not deafening
+    const vol = Math.max(0.05, Math.min(0.8, baseVolume));
     // More noticeable alarm: 3-note rising sequence
     [440, 554, 659].forEach((freq, i) => {
       const osc = ctx.createOscillator();
@@ -13945,7 +14050,7 @@ function playNotificationSound() {
       gain.connect(ctx.destination);
       osc.type = 'square';
       osc.frequency.setValueAtTime(freq, now + i * 0.15);
-      gain.gain.setValueAtTime(0.25, now + i * 0.15);
+      gain.gain.setValueAtTime(vol, now + i * 0.15);
       gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.15 + 0.25);
       osc.start(now + i * 0.15);
       osc.stop(now + i * 0.15 + 0.25);
@@ -14196,6 +14301,61 @@ async function testPrinter() {
   } catch(e) {
     showToast(t('network_error'), 'danger');
   }
+}
+
+/** Load kitchen sound config into admin form */
+async function loadKitchenSoundConfigAdmin() {
+  try {
+    const r = await fetch(BACKEND_URL + '/api/kitchen/sound_config', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser ? currentUser.id : '' })
+    });
+    if (!r.ok) return;
+    const config = await r.json();
+    document.getElementById('kitchenSoundEnabled').value = config.sound_enabled !== false ? 'true' : 'false';
+    const vol = Math.round((parseFloat(config.sound_volume) || 0.25) * 100);
+    const clamped = Math.max(5, Math.min(80, vol));
+    document.getElementById('kitchenSoundVolume').value = clamped;
+    document.getElementById('kitchenSoundVolumeLabel').textContent = clamped;
+  } catch(e) { /* silent */ }
+}
+
+/** Save kitchen sound config to backend */
+async function saveKitchenSoundConfig() {
+  if (!currentUser) { showToast(t('login_required', 'Please log in first.'), 'warning'); return; }
+  const vol = parseInt(document.getElementById('kitchenSoundVolume').value) / 100;
+  const config = {
+    sound_enabled: document.getElementById('kitchenSoundEnabled').value === 'true',
+    sound_volume: vol
+  };
+  try {
+    const r = await fetch(BACKEND_URL + '/api/kitchen/sound_config/save', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, ...config })
+    });
+    const data = await r.json();
+    if (!r.ok) { showToast(data.message || 'Failed to save', 'danger'); return; }
+    // Update cached config immediately
+    kitchenSoundConfig = data.config || config;
+    showToast('Kitchen sound configuration saved!', 'success');
+  } catch(e) {
+    showToast(t('network_error'), 'danger');
+  }
+}
+
+/** Test the kitchen notification sound with current volume */
+function testKitchenSound() {
+  // Temporarily set config to test values and play
+  const savedConfig = { ...kitchenSoundConfig };
+  const vol = parseInt(document.getElementById('kitchenSoundVolume').value) / 100;
+  kitchenSoundConfig = {
+    sound_enabled: true,
+    sound_volume: vol
+  };
+  playNotificationSound();
+  // Restore after a short delay
+  setTimeout(() => { kitchenSoundConfig = savedConfig; }, 500);
+  showToast('🔊 Playing test sound at ' + Math.round(vol * 100) + '% volume', 'info');
 }
 
 

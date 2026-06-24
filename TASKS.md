@@ -477,7 +477,7 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 
 - [x] worker-3 **Printer integration (ESC/POS thermal printers)** — Added `/api/print/receipt` endpoint generating ESC/POS byte commands for network thermal printers (Epson TM-T88, etc.) via TCP port 9100. `_escpos_receipt_bytes()` function formats receipt with header, items, notes/modifiers, totals, bold TOTAL, and cut command. Printer config in admin UI (`/api/printer/config` + `/api/printer/config/save`): IP, port, enabled toggle, header/footer text, characters per line. Frontend: 🖨️ thermal print button in order history and receipt overlay, browser print fallback when printer unreachable. HTML receipt fallback via `_generate_print_html()` and `/api/print/receipt_html/<id>` endpoint. Full i18n EN+ES. Permission-gated (manage_items). Dark theme, touch-friendly.
 
-- [~] worker-2 **Sound alerts for kitchen display** — Kitchen display already has a 3-note alarm. Verify it works on tablets (requires user gesture to unlock audio on iOS/Safari). Add a "first interaction" screen that enables audio: "Tap anywhere to enable kitchen alerts." Check volume levels — should be audible in a noisy kitchen but not deafening. Configurable sound on/off and volume in admin.
+- [x] worker-2 **Sound alerts for kitchen display** — Kitchen display already has a 3-note alarm. Added first-interaction overlay for iOS/Safari audio unlock ("Tap anywhere to enable kitchen alerts"). Modified playNotificationSound() to use configurable volume (clamped 5%-80%) and respect on/off toggle. New admin sub-tab "🔊 Kitchen Sound" with enable/disable select + volume range slider + test sound button. New backend endpoints GET/POST /api/kitchen/sound_config and POST /api/kitchen/sound_config/save storing to kitchen_sound_config.json (sound_enabled, sound_volume). Sound config loaded on kitchen view open and cached globally. i18n EN + ES. Touch-friendly range slider (44px min-height). [worker-2]
 
 - [ ] **Idle timeout + auto-lock** — After 5 minutes of inactivity on the POS screen, auto-lock and require PIN re-entry. This prevents unauthorized use when a waiter walks away from the tablet. Configurable timeout (1-30 minutes). Show a countdown warning: "Locking in 30 seconds... tap to stay." Also: clock-out auto-lock — when an employee clocks out, force logout on that device.
 
@@ -834,6 +834,7 @@ Super admin PIN is separate from any business PIN. Super admin can create busine
 |- [x] **Table management system** — Admin assigns tablets to tables, running tabs. [worker-3]
 |- [x] **Drive-through order display** — Drive-through TV view at `/drivethrough`. [worker-1]
 |- [x] **Granular role/permission system** — Three-tier roles with 10 granular permissions. [worker-2]
-|- [x] **Menu version history with restore** — Auto-backup, owner restores any day's menu. [worker-3]
+||- [x] **Menu version history with restore** — Auto-backup, owner restores any day's menu. [worker-3]
+||- [x] worker-2 **Sound alerts for kitchen display** — Added iOS-first-interaction overlay, configurable volume/sound on/off in admin, new backend endpoints + kitchen_sound_config.json. i18n EN+ES. [worker-2]
 
 </details>
