@@ -9017,6 +9017,74 @@ def checkout_table_tab(table_number):
     })
 
 
+@app.route('/api/tables/transfer_orders', methods=['POST'])
+def transfer_table_orders():
+    """Transfer all active orders for a table from one waiter to another."""
+    data = request.json
+    admin_pin = data.get('adminPin', '')
+    table_number = data.get('table_number')
+    target_user_id = str(data.get('target_user_id', ''))
+
+    if not admin_pin or not check_perm(admin_pin, 'manage_items'):
+        return jsonify({'error': 'Insufficient permissions.'}), 403
+
+    if table_number is None or not target_user_id:
+        return jsonify({'error': 'table_number and target_user_id are required.'}), 400
+
+    users = load_json_data(USERS_FILE)
+    if target_user_id not in users:
+        return jsonify({'error': 'Target user not found.'}), 404
+
+    orders = load_json_data(ORDERS_FILE)
+    active_orders = []
+    remaining = []
+    now = datetime.now().isoformat()
+
+    for order in orders:
+        if order.get('table_number') == int(table_number) and order.get('status') in ('pending', 'preparing'):
+            original_user = order.get('user', 'unknown')
+            # Store transfer audit trail on the order
+            transfers = order.get('transfers', [])
+            transfers.append({
+                'transferred_from': original_user,
+                'transferred_from_name': users.get(original_user, {}).get('name', 'Unknown'),
+                'transferred_to': target_user_id,
+                'transferred_to_name': users.get(target_user_id, {}).get('name', 'Unknown'),
+                'transferred_at': now,
+                'transferred_by': admin_pin,
+                'transferred_by_name': users.get(admin_pin, {}).get('name', 'Unknown')
+            })
+            order['transfers'] = transfers
+            order['user'] = target_user_id
+            active_orders.append(order)
+        remaining.append(order)
+
+    if not active_orders:
+        return jsonify({'error': f'No active orders for table #{table_number}.'}), 404
+
+    save_json_data(ORDERS_FILE, remaining)
+
+    target_name = users.get(target_user_id, {}).get('name', 'Unknown')
+    log_activity('table_orders_transferred', admin_pin, 'admin', {
+        'table_number': table_number,
+        'from_user': active_orders[0].get('transfers', [])[-1].get('transferred_from', ''),
+        'from_name': active_orders[0].get('transfers', [])[-1].get('transferred_from_name', ''),
+        'to_user': target_user_id,
+        'to_name': target_name,
+        'order_count': len(active_orders),
+        'order_ids': [o.get('order_id') for o in active_orders]
+    })
+
+    return jsonify({
+        'message': f'✅ Transferred {len(active_orders)} active order(s) from Table #{table_number} to {_html.escape(target_name)}.',
+        'table_number': table_number,
+        'order_count': len(active_orders),
+        'target_user_id': target_user_id,
+        'target_name': target_name,
+        'order_ids': [o.get('order_id') for o in active_orders]
+    })
+
+
 @app.route('/api/tables/tab/<int:table_number>/history', methods=['GET'])
 def get_table_tab_history(table_number):
     """Returns completed/cancelled orders for a table (tab history)."""

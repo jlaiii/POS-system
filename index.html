@@ -12619,6 +12619,7 @@ async function showTableDetail(tableNumber) {
     }
     if (data.active_order_count > 0) {
       actionsHtml += `<button class="accent" onclick="checkoutTableTab(${tableNumber})" style="margin-left:8px;min-height:44px;">✅ Checkout</button>`;
+      actionsHtml += `<button class="outline" onclick="showTransferWaiterSelector(${tableNumber})" style="margin-left:6px;min-height:44px;">🔄 Transfer</button>`;
     }
     
     document.getElementById('tableTabContent').innerHTML = html;
@@ -12644,6 +12645,82 @@ async function markTableBussed(tableNumber) {
     loadTableAdmin();
     loadTableSelector();
   } catch(e) { showToast('Network error', 'danger'); }
+}
+
+async function showTransferWaiterSelector(tableNumber) {
+  /** Open a modal to select which waiter to transfer active orders to. */
+  // Load users list for the dropdown
+  let users = [];
+  try {
+    const r = await fetch(BACKEND_URL + '/api/users?adminPin=' + encodeURIComponent(currentUser.id));
+    if (!r.ok) { showToast('Failed to load staff list', 'danger'); return; }
+    const data = await r.json();
+    // Filter to users with pos_access who are not the current waiter on these orders
+    users = Object.entries(data.users || data || {})
+      .filter(([uid, u]) => {
+        const perms = u.permissions || [];
+        return !u.banned && (perms.includes('*') || perms.includes('pos_access'));
+      })
+      .map(([uid, u]) => ({ id: uid, name: u.name }));
+  } catch(e) {
+    showToast('Failed to load staff list', 'danger');
+    return;
+  }
+
+  if (users.length === 0) {
+    showToast('No available staff to transfer to', 'danger');
+    return;
+  }
+
+  // Build selector HTML
+  let options = users.map(u => `<option value="${u.id}">${escHtml(u.name)} (${u.id})</option>`).join('');
+  const overlay = document.getElementById('genericModalOverlay');
+  const box = document.getElementById('genericModalBox');
+  box.innerHTML = `
+    <h3 style="margin-bottom:12px;">🔄 Transfer Orders — Table #${tableNumber}</h3>
+    <p style="color:var(--text2);margin-bottom:16px;font-size:14px;">Transfer all active orders at this table to another staff member.</p>
+    <label style="display:block;margin-bottom:6px;font-weight:600;font-size:14px;">Transfer to:</label>
+    <select id="transferTargetSelect" style="width:100%;min-height:48px;font-size:16px;padding:8px 12px;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);margin-bottom:16px;">
+      ${options}
+    </select>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button class="outline" onclick="document.getElementById('genericModalOverlay').classList.remove('active');" style="min-height:48px;">Cancel</button>
+      <button class="accent" onclick="transferTableOrders(${tableNumber})" style="min-height:48px;">🔄 Transfer Orders</button>
+    </div>
+  `;
+  overlay.classList.add('active');
+}
+
+async function transferTableOrders(tableNumber) {
+  /** Execute the order transfer to the selected waiter. */
+  const select = document.getElementById('transferTargetSelect');
+  if (!select) return;
+  const targetUserId = select.value;
+  if (!targetUserId) { showToast('Please select a target staff member.', 'danger'); return; }
+
+  if (!confirm(`Transfer all active orders from Table #${tableNumber} to this staff member?`)) return;
+
+  try {
+    const r = await fetch(BACKEND_URL + '/api/tables/transfer_orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        adminPin: currentUser.id,
+        table_number: tableNumber,
+        target_user_id: targetUserId
+      })
+    });
+    const d = await r.json();
+    if (!r.ok) { showToast(d.error || 'Transfer failed', 'danger'); return; }
+    showToast(d.message || 'Orders transferred!', 'success');
+    document.getElementById('genericModalOverlay').classList.remove('active');
+    closeTableTab();
+    loadTableStatusDashboard();
+    loadTableAdmin();
+    loadTableSelector();
+  } catch(e) {
+    showToast('Network error', 'danger');
+  }
 }
 
 async function loadMyPay() {
