@@ -25,14 +25,31 @@ import zipfile
 import io
 
 app = Flask(__name__, static_folder='.', static_url_path='')
-CORS(app)  # Enable CORS for all origins
+# Set secret key from environment or generate one on first run
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', secrets.token_hex(32))
+# Restrict CORS — production should set a specific origin
+# Allow common dev origins + the POS domain for multi-tenant access
+CORS(app, origins=[
+    'http://localhost:5000',
+    'http://127.0.0.1:5000',
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'https://jlaiii.github.io',
+    'http://192.168.',
+    'http://10.',
+])
 
 # --- SocketIO for real-time updates ---
 # NOTE: Production deployment uses gunicorn + eventlet:
 #   gunicorn -k eventlet -w 1 app:app
 # The `app` Flask object is used as the WSGI entry point; Flask-SocketIO
 # hooks into the gevent async worker transparently when async_mode='gevent'.
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='gevent')
+socketio = SocketIO(app, cors_allowed_origins=[
+    'http://localhost:5000',
+    'http://127.0.0.1:5000',
+    'http://localhost:3000',
+    'https://jlaiii.github.io',
+], async_mode='gevent')
 
 # --- IP Blocklist / Allowlist Enforcement (before every request) ---
 # In-memory IP failed attempt tracking for auto-block
@@ -388,17 +405,17 @@ def save_json_data(filepath, data):
         os.makedirs(dirname, exist_ok=True)
     if not _data_guardian_check(filepath, data):
         return  # Block the write — data would be dangerously small
-    # Make file writable if it's read-only, then restore after
+    # Make file writable if it's read-only, then restore to 0600 after
     was_readonly = False
     if os.path.exists(filepath):
         mode = os.stat(filepath).st_mode
         if not (mode & 0o200):  # owner write bit not set
             was_readonly = True
-            os.chmod(filepath, 0o644)
+            os.chmod(filepath, 0o600)
     with open(filepath, 'w') as f:
         json.dump(data, f, indent=4)
-    if was_readonly:
-        os.chmod(filepath, 0o444)
+    # Always enforce owner-only read/write (0600) for data files
+    os.chmod(filepath, 0o600)
 
 
 # --- Platform / Multi-Tenant Helpers ---
@@ -4485,6 +4502,13 @@ def sync_orders():
     orders = data.get('orders', [])
     if not isinstance(orders, list) or len(orders) == 0:
         return jsonify({'message': 'No orders provided'}), 400
+
+    # Validate that all referencing users exist (prevents fake user injection)
+    users = load_json_data(USERS_FILE)
+    for order_data in orders:
+        uid = order_data.get('user')
+        if uid and str(uid) not in users:
+            return jsonify({'message': f'Invalid user: {uid} does not exist'}), 403
 
     results = []
     orders_data = load_json_data(ORDERS_FILE)
