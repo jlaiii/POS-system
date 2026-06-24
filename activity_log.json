@@ -6130,5 +6130,86 @@
                 "Row 4: invalid price 'invalid'"
             ]
         }
+    },
+    {
+        "timestamp": "2026-06-24T09:34:50.034748",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T09:34:52.197249",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T09:41:05.881718",
+        "type": "cash_drawer_open",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "session_id": "8eaac585e8ade90c",
+            "opening_balance": 100.0
+        }
+    },
+    {
+        "timestamp": "2026-06-24T09:41:11.230989",
+        "type": "cash_drawer_transaction",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "session_id": "8eaac585e8ade90c",
+            "type": "cash_in",
+            "amount": 50.0,
+            "reason": "Test deposit"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T09:41:13.292617",
+        "type": "cash_drawer_transaction",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "session_id": "8eaac585e8ade90c",
+            "type": "cash_out",
+            "amount": 20.0,
+            "reason": "Test withdrawal"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T09:41:15.729731",
+        "type": "cash_drawer_close",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "session_id": "8eaac585e8ade90c",
+            "opening_balance": 100.0,
+            "expected_balance": 130.0,
+            "closing_balance": 130.0,
+            "difference": 0.0,
+            "variance_reason": ""
+        }
     }
 ]

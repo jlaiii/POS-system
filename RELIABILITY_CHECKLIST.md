@@ -1,33 +1,34 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-24T08:54 UTC
-> Total checks: 258
-> Healthy: 258 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-24T09:34 UTC
+> Total checks: 259
+> Healthy: 259 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None (2 files restored from git: items.json and users.json were overwritten with test data between 03:39-04:19)
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK [verified 08:54]
-- [x] All JSON data files exist and are valid — 15/15 files valid [verified 08:54]
-- [x] users.json has at least owner PIN 1111 — Owner exists, 6 users, password_hash present [verified 08:54]
-- [x] Git repo is clean (no uncommitted changes from crashes) — Clean [verified 08:54]
+- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK [verified 09:34]
+- [x] All JSON data files exist and are valid — 8/8 JSON files valid [verified 09:34]
+- [x] users.json has at least owner PIN 1111 — Owner exists, 6 users, password_hash present [verified 09:34]
+- [x] Git repo is clean (no uncommitted changes from crashes) — Clean [verified 09:34]
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/clock/in works — 200, clocked in 9999 successfully [verified 08:54]
 - [x] /api/clock/out works — 200, clocked out 9999, 0.0h test [verified 08:54]
-- [x] /api/login works with correct field (userId, not pin) — 200, "Login successful" for 1111, Owner role, permissions [*] [verified 08:30]
-- [x] /api/admin_stats returns stats — POST with adminPin=1111, stats response OK [verified 08:54]
-- [x] Frontend loads (curl index.html, verify it's HTML not error) — 200, HTML detected [verified 08:30]
-- [x] /api/clock/status works — 200 for 5678, clocked_out [verified 08:54]
-- [x] /api/health — GET, {"status":"ok"} [verified 08:53]
-- [x] /api/items — GET, items with categories, 14 items [verified 08:30]
-- [x] /api/export/shifts_csv works — returns CSV with 31 shifts [verified 08:30]
-- [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 50 orders, valid data [verified 08:30]
-- [x] Pickup display: verify /api/pickup-display/queue works — GET, 0 orders, valid [verified 08:30]
-- [x] /api/inventory — GET with adminPin=1111, 200, 15 items, 0 low stock [verified 08:30]
+- [x] /api/login works with correct field (userId, not pin) — 200, "Login successful" for 1111, Owner role, permissions [*] [verified 09:34]
+- [x] /api/admin_stats returns stats — POST with adminPin=1111, stats response OK [verified 09:34]
+- [x] Frontend loads (curl index.html, verify it's HTML not error) — 200, HTML detected [verified 09:34]
+- [x] /api/clock/status works — 200 for 5678, clocked_out [verified 09:34]
+- [x] /api/health — GET, {"status":"ok"} [verified 09:34]
+- [x] /api/items — GET, items with categories, 14 items [verified 09:34]
+- [x] /api/admin_shifts returns shifts — POST, 32 shifts returned [verified 09:34]
+- [x] /api/export/shifts_csv works — returns CSV with 31 shifts [verified 09:34]
+- [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 50 orders, valid data [verified 09:34]
+- [x] Pickup display: verify /api/pickup-display/queue works — GET, 0 orders, valid [verified 09:34]
+- [x] /api/inventory — GET with adminPin=1111, 200, 16 items, 1 low stock [verified 09:34]
 
 ## EVERY 4 HOURS
-- [x] Cash register: open drawer → cash in → cash out → close → verify balance — Closed, $10.00 diff (gave wrong change), reconciled [verified 06:42]
+- [x] Cash register: open drawer ($100) → cash in ($50) → cash out ($20) → close ($130) → exact match, $0 diff [verified 09:41]
 - [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 42 orders, valid data [verified 21:18]
 - [x] Pickup display: verify /api/pickup-display/queue works — GET, 0 orders, valid [verified 21:18]
 - [x] Order lifecycle: create order (#60) → refund → success [verified 07:44]
