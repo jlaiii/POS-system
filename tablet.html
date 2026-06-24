@@ -16,6 +16,15 @@
   --text2: #a0a0b0;
 }
 
+/* Light theme override */
+.light-theme {
+  --bg: #f8f9fa;
+  --card: #ffffff;
+  --accent: #e94560;
+  --text: #1a1a2e;
+  --text2: #6c757d;
+}
+
 html, body {
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
   background: var(--bg);
@@ -123,6 +132,39 @@ body {
   color: var(--text2);
   opacity: 0.7;
   z-index: 20;
+}
+
+/* Theme Toggle Button */
+#themeToggle {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 25;
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  font-size: 22px;
+  cursor: pointer;
+  touch-action: manipulation;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.3s, transform 0.15s, border-color 0.3s;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+  min-height: 48px;
+  min-width: 48px;
+}
+
+#themeToggle:active {
+  transform: scale(0.92);
+}
+
+.light-theme #themeToggle {
+  border-color: rgba(0,0,0,0.1);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.1);
 }
 
 /* ---- View Menu Button (floating over ads) ---- */
@@ -852,6 +894,9 @@ body {
 </head>
 <body>
 
+<!-- Theme Toggle Button (top-left corner) -->
+<button id="themeToggle" aria-label="Toggle light/dark theme">🌙</button>
+
 <!-- Ad Rotator -->
 <div id="adContainer">
   <div id="adSlides"></div>
@@ -1419,6 +1464,21 @@ document.getElementById('menuView').addEventListener('click', () => {
   resetIdleTimer();
 }, { passive: true });
 
+// ---- Theme Toggle (Dark/Light) ----
+function initThemeToggle() {
+  const savedTheme = localStorage.getItem('tablet_theme');
+  if (savedTheme === 'light') {
+    document.body.classList.add('light-theme');
+    document.getElementById('themeToggle').textContent = '☀️';
+  }
+
+  document.getElementById('themeToggle').addEventListener('click', () => {
+    const isLight = document.body.classList.toggle('light-theme');
+    document.getElementById('themeToggle').textContent = isLight ? '☀️' : '🌙';
+    localStorage.setItem('tablet_theme', isLight ? 'light' : 'dark');
+  });
+}
+
 // ---- Init ----
 fetchAds();
 pollTimer = setInterval(fetchAds, 30000);
@@ -1516,6 +1576,7 @@ function initTabletSocket() {
 
 // Call server button
 document.addEventListener('DOMContentLoaded', () => {
+  initThemeToggle();
   const tableNum = getTableNumber();
   const tableEl = document.getElementById('tableNumber');
   if (tableNum) {
