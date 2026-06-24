@@ -1,16 +1,16 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-23T23:31 UTC
-> Total checks: 195
-> Healthy: 193 | Broken: 0 | Fixed this cycle: 4
+> Last full cycle: 2026-06-24T00:07 UTC
+> Total checks: 198
+> Healthy: 197 | Broken: 0 | Fixed this cycle: 5
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK, single gunicorn instance [verified 23:31]
-- [x] All JSON data files exist and are valid — 15/15 files valid [verified 23:31]
-- [x] users.json has at least owner PIN 1111 — Owner exists, 6 users [verified 23:31]
-- [x] Git repo is clean (no uncommitted changes from crashes) — working tree has expected changes from normal ops (SECURITY_WATCHDOG.md, security_events.json, activity_log.json) [verified 23:31]
+- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK, single gunicorn+gevent instance [verified 00:07]
+- [x] All JSON data files exist and are valid — 15/15 files valid [verified 00:07]
+- [x] users.json has at least owner PIN 1111 — Owner exists, 6 users [verified 00:07]
+- [x] Git repo is clean (no uncommitted changes from crashes) — working tree has expected changes from normal ops, committed gevent fix [verified 00:07]
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/clock/in works — 200, clocked in successfully [verified 23:31]
@@ -57,10 +57,11 @@
 
 ## DISCOVERED (failures you've seen before — check every 2h)
 - [ ] (populated over time as you find real failures)
-- [x] **Flask process dying between runs** — Found dead at 11:16, 11:41, 12:22, and 18:22 (4th occurrence). Root cause unknown (no OOM, no crash log, no sys.exit). Werkzeug dev server (`socketio.run()`) can silently stop serving. Created wrapper at `scripts/run_flask.sh`. Check every run as CRITICAL. [verified 23:31]
-- [x] **Dual Flask instances on port 5000** — `scripts/run_flask.sh` (gunicorn+eventlet) and stray `python3 app.py` dev server can both bind to port 5000. On 2026-06-23T23:31, found **4** dev server instances (pids 298359, 306102, 324385, 324580) all listening on port 5000. Root cause: previous reliability bot runs started `python3 app.py &` during restart, and 2 other cron workers apparently also spawned instances. Fix: kill all extra instances, start only `scripts/run_flask.sh`. Now running single gunicorn worker. Monitor for recurrence. [verified 23:31]
+- [x] **Flask process dying between runs** — Found dead at 11:16, 11:41, 12:22, and 18:22 (4th occurrence). Root cause unknown (no OOM, no crash log, no sys.exit). Werkzeug dev server (`socketio.run()`) can silently stop serving. Created wrapper at `scripts/run_flask.sh`. Check every run as CRITICAL. [verified 00:07]
+- [x] **Dual Flask instances on port 5000** — `scripts/run_flask.sh` (gunicorn) and stray `python3 app.py` dev server can both bind to port 5000. On 2026-06-24T00:05, found **2** `python3 app.py` processes on port 5000 with run_flask.sh launcher hung. Root cause: gunicorn 26 dropped eventlet worker class, so run_flask.sh failed to start gunicorn. Other cron workers spawned `python3 app.py &` as fallback, accumulating instances. Fix: switched from eventlet to gevent worker class, updated app.py async_mode accordingly. Now running single gunicorn+gevent worker. [verified 00:07]
 
 ## FIXES APPLIED
+- [2026-06-24 00:05] **Dual Flask instances + run_flask.sh not starting gunicorn** — 2× `python3 app.py` running on port 5000 with run_flask.sh launcher hung. Root cause: gunicorn 26 dropped eventlet worker class. Fix: changed app.py SocketIO async_mode from 'eventlet' to 'gevent', switched run_flask.sh to use `-k gevent` worker. Killed all dev server instances. Started single gunicorn+gevent worker. Commit: e8b92ae. Downtime: ~2min (during instance switchover).
 - [2026-06-23] **Flask server down** — Server was not running. `cd /root/pos-system-work && python3 app.py &` — started in background. Confirmed 200 response on root endpoint. Downtime: unknown (first run this cycle).
 - [2026-06-23 11:41] **Flask server down (2nd occurrence)** — Server not responding (000). Restarted via `cd /root/pos-system-work && python3 app.py &`. Verified 200 on root. All critical and hourly checks passed. Downtime: ~1min.
 - [2026-06-23 18:22] **Flask server down (4th occurrence)** — Server not responding (000). 4th crash — same pattern as before. Werkzeug dev server silently stopped. Restarted via `cd /root/pos-system-work && python3 app.py &`. Verified 200 on root and all critical endpoints. Downtime: ~2min (caught by this run).
