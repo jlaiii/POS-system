@@ -1,10 +1,10 @@
 # POS Security Watchdog
 
-> Last run: 2026-06-24T11:20:22 UTC
+> Last run: 2026-06-24T13:40:27 UTC
 > Total events tracked: 13 (SEC-001 → SEC-013)
 > Active blocks: 0 IPs
 > Unresolved alerts: 11 (SEC-001, SEC-003, SEC-005, SEC-006, SEC-007, SEC-008, SEC-009, SEC-010, SEC-011, SEC-012, SEC-013)
-> Run result: SILENT — nothing new to report
+> Run result: STATUS SUMMARY — 4-hour check, all clear
 
 ## Current Run Findings
 
@@ -17,51 +17,52 @@ None.
 ### 🟡 MEDIUM (0)
 None — all pre-existing issues unchanged.
 
-### ℹ️ Activity Summary (10:32–11:20 UTC, ~48m window)
-
-**Minimal activity — Owner tested 2FA mandatory config endpoint, then logged in.**
+### ℹ️ Activity Summary (12:30–13:40 UTC, ~70m window — delayed run)
 
 | Time | Event | Detail |
 |------|-------|--------|
-| 11:10:55 | 2fa_mandatory_config — Owner (1111) | Set require_2fa_for_admins=true, exempted=[] |
-| 11:11:03 | 2fa_mandatory_config — Owner (1111) | Set require_2fa_for_admins=true, exempted=[] |
-| 11:11:03 | 2fa_mandatory_config — Owner (1111) | Set require_2fa_for_admins=true, exempted=[1111] |
-| 11:11:03 | 2fa_mandatory_config — Owner (1111) | Set require_2fa_for_admins=true, exempted=[] |
-| 11:11:03 | login — Owner (1111) | Successful login from 127.0.0.1 (Werkzeug) |
-| 11:11:03 | 2fa_mandatory_config — Owner (1111) | Set require_2fa_for_admins=false, exempted=[] |
+| 12:39:30 | pin_changed — Employee Two (5678→9991) | Successful PIN change |
+| 12:39:31 | pin_changed — Employee Two (9991→5678) | Reverted back |
+| 12:39:37 | pin_change_failed — Employee Two (5678) | Guessable PIN rejected |
+| 12:39:37 | add_user failed — Owner (1111) | Guessable PIN for ID 6666 |
+| 12:40:30 | pin_change_failed — Employee Two (5678) | Guessable PIN rejected |
+| 12:41:17 | pin_change_failed — Employee Two (5678) | Guessable PIN rejected |
+| 12:51:09 | login_failed — null user, 127.0.0.1 | Invalid PIN attempt |
+| 12:51:28 | login_failed — null user, 127.0.0.1 | Invalid PIN attempt |
+| 13:18:10 | login — Owner (1111), 127.0.0.1 | Successful login |
+| 13:18:11 | admin_login — Owner (1111), 127.0.0.1 | Successful admin login |
 
-**Pattern:** Owner tested the 2FA mandatory config feature, toggling it on/off in rapid succession. Config left at default (require_2fa_for_admins=false). Normal testing activity.
+**Pattern:** Employee Two tested PIN change multiple times (rejected for guessable PIN). Owner added test user (also rejected). Two failed login attempts (invalid PIN, no user ID — likely mistype). Owner logged in normally at 13:18. All from localhost. No security concerns.
 
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: 0 IPs with 5+ failed logins. 0 users with 5+ failed attempts. No credential stuffing.
 - **Failed logins last 5 min**: 0
-- **Failed logins since last run**: 0 (still 3 total failures in file, all historical from June 23)
-- **Successful-after-failure**: No new patterns.
-- **Account enumeration**: 0 probes for non-existent PINs.
-- **Off-hours**: Current time ~11:20 UTC — well within normal hours (off-hours 22:00-06:00).
-- **Known IPs**: Unchanged. Note: user 9999 (Test2FA) has entries in known_ips.json + shift_log.json but does NOT exist in users.json — orphan data from deleted test account. Not a security issue (can't authenticate).
-- **login_attempts.json**: 63 entries (7 new since last run: 1x Owner successful + 6x user 9999 from 3 IPs at 07:57, all "2fa_required"). 3 failures total (all historical).
-- **Active sessions**: Server responding on port 5000. No stale session indicators.
-- **New logins this window**: 1 (Owner at 11:11).
+- **Failed logins since last run**: 2 (both null user_id, 127.0.0.1 — under threshold)
+- **Successful-after-failure**: Owner login at 13:18 from same IP as 2 earlier failures, but failures targeted null users (not Owner's account). No concern.
+- **Account enumeration**: 2 probes from 127.0.0.1 for invalid PINs — under 10 threshold.
+- **Off-hours**: Current time 13:40 UTC — well within normal hours (off-hours window 22:00-06:00).
+- **Known IPs**: Unchanged. No new IPs tracked.
+- **login_attempts.json**: All entries historical. No new external IPs.
+- **Active sessions**: No active shifts. Server responding.
+- **New logins this window**: 1 (Owner at 13:18).
 
 ### 🔒 Security Config
-- security_config.json: Modified at 11:11:03 by Owner. Back to original state (require_2fa_for_admins=false). Auto_block_threshold=5 unchanged. Blocked IPs empty.
-- users.json: Unchanged. Owner 2FA still NOT enabled (SEC-001/SEC-013). User 9999 does not exist.
-- timesheet_config.json: use_database=false. Unchanged.
-- No configuration sabotage detected — Owner legitimately testing.
+- security_config.json: Unchanged since 11:11. require_2fa_for_admins=false (was toggled on/off at 11:11 by Owner). Auto_block_threshold=5. Blocked IPs empty.
+- users.json: Unchanged. Owner 2FA still NOT enabled (SEC-001/SEC-013).
+- No configuration sabotage detected.
 
 ### 💰 Financial Check
-- No new orders this window (total still 59, last order at 08:29 UTC).
-- No cash drawer activity (last session at 09:41 — Owner test).
+- No new orders (still 59, last order at 08:29 UTC).
+- No cash drawer activity.
 - No refunds, tips, or discounts.
 - All clear.
 
 ### 📂 File Integrity
 - All JSON files parseable. No corruption.
-- No suspicious files (.php, .pl, .exe, .bat) found.
+- No suspicious files.
 - Owner account (1111) present, active, not banned — unchanged.
-- All data files present and valid.
-- **Orphan data note**: User 9999 (Test2FA) exists in known_ips.json (3 IPs tracked) and shift_log.json (multiple shifts with pay_rate=15.0) but NOT in users.json. This account was removed from users but cleanup data remains in other files. Low priority cleanup item.
+- All data files present with normal sizes.
+- Server process changed: old Flask dev PID 530950 died, replaced by gunicorn (PID 621117, 628650). Server still responding normally on port 5000.
 
 ## Active Blocks
 None.
@@ -85,15 +86,15 @@ None.
 None.
 
 ## System State
-- **Current time**: 2026-06-24T11:20:22 UTC — normal hours (off-hours window 22:00-06:00)
-- **Activity log**: 478 entries (6 new since last run: 5× 2fa_mandatory_config + 1× login for Owner). No truncation.
-- **New login attempts this window**: 1 (Owner successful)
-- **Failed logins this window**: 0
+- **Current time**: 2026-06-24T13:40:27 UTC — normal hours (off-hours window 22:00-06:00)
+- **Activity log**: 498 entries (37 new since 08:58: ticket templates, PIN changes, login attempts, admin operations). No truncation.
+- **New login attempts since last run**: 3 (2 failed, 1 success)
+- **Failed logins since last run**: 2 (both null user_id)
 - **Known IPs**: Unchanged. No new IPs.
 - **Blocked IPs**: 0
-- **Config changes**: Owner tested require_2fa_for_admins toggling (5 calls), left at false — normal operation.
-- **File integrity**: All JSON files parseable. No suspicious files. Orphan 9999 data noted.
-- **Users**: 5 accounts in users.json. Owner 2FA still NOT enabled (SEC-001/SEC-013). Account 9999 (Test2FA) exists in shift_log + known_ips but not users.json.
-- **Security events**: 13 tracked. 2 resolved (SEC-002, SEC-004). 11 unresolved.
-- **Server**: Responding on port 5000.
-- **Next 4-hour summary**: Not due yet (last summary at 08:58, next ~12:58 UTC).
+- **Config changes**: Owner toggled require_2fa_for_admins on/off at 11:11 (normal admin testing).
+- **File integrity**: All JSON files parseable. No suspicious files. No unexpected changes.
+- **Users**: 5 accounts in users.json. Owner 2FA still NOT enabled (SEC-001/SEC-013).
+- **Security events**: 13 tracked. 2 resolved. 11 unresolved.
+- **Server**: gunicorn (PIDs 621117, 628650) responding on port 5000.
+- **Last 4-hour summary**: 08:58 UTC (this is the replacement).

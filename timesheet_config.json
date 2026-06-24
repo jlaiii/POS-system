@@ -1,13 +1,1 @@
-{
-    "max_staff_off_per_day": 3,
-    "overtime_daily_threshold": 8,
-    "overtime_weekly_threshold": 40,
-    "late_grace_minutes": 5,
-    "use_database": false,
-    "offsite_backup": {
-        "enabled": false,
-        "host": "",
-        "path": "",
-        "ssh_key": ""
-    }
-}
+{"max_staff_off_per_day": 3, "overtime_daily_threshold": 8, "overtime_weekly_threshold": 40, "late_grace_minutes": 5, "use_database": false, "offsite_backup": {"enabled": false, "host": "", "path": "", "ssh_key": ""}, "auto_approve_threshold_days": 14}

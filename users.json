@@ -49,26 +49,11 @@
     "force_pin_change": false,
     "temp_pin": null,
     "temp_pin_expiry": null,
-    "email": "employee@example.com"
-  },
-  "5678": {
-    "name": "Employee Two",
-    "role": "user",
-    "permissions": [
-      "pos_access"
-    ],
-    "banned": false,
-    "banned_reason": "",
-    "pay_rate": null,
-    "scheduled_start": null,
-    "totp_secret": null,
-    "totp_enabled": false,
-    "totp_backup_codes": [],
-    "totp_setup_at": null,
-    "pin_reset_notification": null,
-    "force_pin_change": false,
-    "temp_pin": null,
-    "temp_pin_expiry": null
+    "email": "employee@example.com",
+    "bank_name": null,
+    "bank_account_type": null,
+    "account_last4": null,
+    "routing_last4": null
   },
   "2222": {
     "name": "Manager",
@@ -97,6 +82,25 @@
     "permissions": [
       "pos_access"
     ],
+    "pay_rate": null,
+    "scheduled_start": null,
+    "totp_secret": null,
+    "totp_enabled": false,
+    "totp_backup_codes": [],
+    "totp_setup_at": null,
+    "pin_reset_notification": null,
+    "force_pin_change": false,
+    "temp_pin": null,
+    "temp_pin_expiry": null
+  },
+  "5678": {
+    "name": "Employee Two",
+    "role": "user",
+    "permissions": [
+      "pos_access"
+    ],
+    "banned": false,
+    "banned_reason": "",
     "pay_rate": null,
     "scheduled_start": null,
     "totp_secret": null,

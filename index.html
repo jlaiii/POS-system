@@ -2303,6 +2303,12 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
       </div>
     </div>
 
+    <!-- Direct Deposit Info -->
+    <div class="card" style="margin-bottom:16px;padding:16px 20px;">
+      <h4 style="margin:0 0 4px 0;font-size:15px;color:var(--accent);" data-i18n="mypay.dd_title">💳 Direct Deposit</h4>
+      <div id="myPayDirectDepositInfo" style="font-size:14px;color:var(--text2);margin-top:8px;line-height:1.7;" data-i18n="mypay.dd_not_set">No direct deposit info on file.</div>
+    </div>
+
     <!-- Pay History -->
     <div class="card" style="margin-bottom:16px;padding:16px 20px;">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
@@ -3403,6 +3409,8 @@ const L10N = {
     'mypay.request_review_cur': '⚠️ Request Review of Current Period',
     'mypay.pay_review_title': 'Pay Review — {period}',
     'mypay.pay_review_desc': 'I would like a review of my pay for this period. Details:',
+    'mypay.dd_title': '💳 Direct Deposit',
+    'mypay.dd_not_set': 'No direct deposit info on file.',
     'security.active_sessions': 'Active Sessions',
     'security.logout_all': '🚪 Log Out Everywhere',
     'security.no_sessions': 'No active sessions.',
@@ -4095,6 +4103,8 @@ const L10N = {
     'mypay.request_review_cur': '⚠️ Solicitar Revisión del Período Actual',
     'mypay.pay_review_title': 'Revisión de Pago — {period}',
     'mypay.pay_review_desc': 'Me gustaría una revisión de mi pago para este período. Detalles:',
+    'mypay.dd_title': '💳 Depósito Directo',
+    'mypay.dd_not_set': 'No hay información de depósito directo registrada.',
     'security.active_sessions': 'Sesiones Activas',
     'security.logout_all': '🚪 Cerrar Todas las Sesiones',
     'security.no_sessions': 'No hay sesiones activas.',
@@ -10230,6 +10240,16 @@ async function loadUsers() {
         ? '<span style="color:#2ecc71;font-weight:600;">' + t('twofa.enabled') + '</span>'
         : '<span style="color:var(--text2);font-style:italic;">' + t('twofa.not_setup') + '</span>';
       const userEmail = u.email ? escHtml(u.email) : '<span style="color:var(--text2);font-style:italic;">Not set</span>';
+      // Direct deposit display
+      let ddDisplay = '';
+      if (u.direct_deposit && u.direct_deposit.bank_name) {
+        const dd = u.direct_deposit;
+        const typeLabel = dd.bank_account_type === 'checking' ? 'Checking' : (dd.bank_account_type === 'savings' ? 'Savings' : '');
+        const acctStr = dd.account_last4 ? '****' + dd.account_last4 : '';
+        ddDisplay = '<br><span style="font-size:13px;color:var(--text2);">🏦 Bank: <span id="ddDisplay_' + escJs(id) + '">' + escHtml(dd.bank_name) + (typeLabel ? ' (' + typeLabel + ')' : '') + (acctStr ? ' — ' + acctStr : '') + '</span></span>';
+      } else {
+        ddDisplay = '<br><span style="font-size:13px;color:var(--text2);">🏦 Bank: <span id="ddDisplay_' + escJs(id) + '" style="color:var(--text2);font-style:italic;">Not set</span></span>';
+      }
       let twofaBtns = '';
       if (perms.includes('manage_users') && u.totp_enabled) {
         twofaBtns = `<button class="outline" onclick="disable2fa('${escJs(id)}')" style="font-size:12px;padding:4px 10px;min-height:36px;" title="${t('twofa.disable_btn')}">${t('twofa.disable_btn')}</button>
@@ -10247,7 +10267,7 @@ async function loadUsers() {
         clearLockoutBtn = `<button class="outline" onclick="clearLockout('${escJs(id)}')" style="font-size:12px;padding:4px 10px;min-height:36px;color:#e74c3c;border-color:#e74c3c;" title="${t('user.clear_lockout_btn')}">${t('user.clear_lockout_btn')}</button>`;
       }
       return `<div class="user-entry">
-        <div class="ue-info"><strong>${escHtml(u.name)}</strong> — ID: ${escHtml(id)} <span class="ue-role">(${u.role})</span>${u.banned ? ' <span style="color:#e74c3c;font-weight:700;">🚫 Banned</span>' : ''}<br><span style="font-size:13px;color:var(--text2);">💰 Pay rate: <span id="prDisplay_${escJs(id)}">${payRate}</span></span><br><span style="font-size:13px;color:var(--text2);">${t('user.scheduled_start')} <span id="ssDisplay_${escJs(id)}">${schedStart}</span></span><br><span style="font-size:13px;color:var(--text2);">${t('twofa.status_label')} ${twofaBadge}</span><br><span style="font-size:13px;color:var(--text2);">📧 Email: <span id="emailDisplay_${escJs(id)}">${userEmail}</span></span><br><span style="font-size:13px;color:var(--text2);">🏖️ PTO balance: <span id="ptoDisplay_${escJs(id)}">${u.pto_balance != null ? u.pto_balance + ' days' : '<span style="color:var(--text2);font-style:italic;">0 days</span>'}</span></span>${loginAttemptStr ? '<br><span style="font-size:13px;">' + loginAttemptStr + '</span>' : ''}</div>
+        <div class="ue-info"><strong>${escHtml(u.name)}</strong> — ID: ${escHtml(id)} <span class="ue-role">(${u.role})</span>${u.banned ? ' <span style="color:#e74c3c;font-weight:700;">🚫 Banned</span>' : ''}<br><span style="font-size:13px;color:var(--text2);">💰 Pay rate: <span id="prDisplay_${escJs(id)}">${payRate}</span></span><br><span style="font-size:13px;color:var(--text2);">${t('user.scheduled_start')} <span id="ssDisplay_${escJs(id)}">${schedStart}</span></span><br><span style="font-size:13px;color:var(--text2);">${t('twofa.status_label')} ${twofaBadge}</span><br><span style="font-size:13px;color:var(--text2);">📧 Email: <span id="emailDisplay_${escJs(id)}">${userEmail}</span></span><br><span style="font-size:13px;color:var(--text2);">🏖️ PTO balance: <span id="ptoDisplay_${escJs(id)}">${u.pto_balance != null ? u.pto_balance + ' days' : '<span style="color:var(--text2);font-style:italic;">0 days</span>'}</span></span>${ddDisplay}${loginAttemptStr ? '<br><span style="font-size:13px;">' + loginAttemptStr + '</span>' : ''}</div>
         <div style="display:flex;gap:6px;align-items:center;">
           <button class="outline" onclick="editPayRate('${escJs(id)}')" style="font-size:12px;padding:4px 10px;min-height:36px;" title="${t('user.pay_rate_edit_title')}">💰 Edit Rate</button>
           <button class="outline" onclick="editUserEmail('${escJs(id)}')" style="font-size:12px;padding:4px 10px;min-height:36px;" title="Edit email address">📧 Email</button>
@@ -10260,6 +10280,7 @@ async function loadUsers() {
           ${banBtn}
           <button class="outline" onclick="openUserTimeline('${escJs(id)}')" style="font-size:12px;padding:4px 10px;min-height:36px;" title="View account history timeline">📜 Timeline</button>
           <button class="outline" onclick="openPtoLog('${escJs(id)}')" style="font-size:12px;padding:4px 10px;min-height:36px;" title="Manage PTO / sick days">🏖️ PTO</button>
+          <button class="outline" onclick="editDirectDeposit('${escJs(id)}')" style="font-size:12px;padding:4px 10px;min-height:36px;" title="Manage direct deposit bank info">🏦 Bank</button>
           <button class="danger" onclick="deleteUser('${escJs(id)}')" style="font-size:13px;padding:6px 12px;min-height:36px;">🗑️ Delete</button>
         </div>
       </div>`);
@@ -10735,6 +10756,65 @@ async function editUserEmail(userId) {
     const d = await r.json();
     if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
     showToast('Email address updated!', 'success');
+    loadUsers();
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
+}
+
+async function editDirectDeposit(userId) {
+  /** Admin sets direct deposit bank info for a user. Prompts for details, stores only masked last-4. */
+  const ddDisplay = document.getElementById('ddDisplay_' + userId);
+  const currentText = ddDisplay ? ddDisplay.textContent.trim() : '';
+  const hasExisting = currentText && currentText !== 'Not set' && currentText !== 'No establecido';
+  
+  const bankName = prompt('Enter bank name (leave empty to clear):', hasExisting ? currentText.split(' (')[0].split(' —')[0] : '');
+  if (bankName === null) return;
+  const bankNameStr = bankName.trim();
+  
+  let accountType = '';
+  if (bankNameStr) {
+    accountType = prompt('Account type (checking/savings):', 'checking');
+    if (accountType === null) return;
+    accountType = accountType.trim().toLowerCase();
+    if (accountType && accountType !== 'checking' && accountType !== 'savings') {
+      showToast('Account type must be "checking" or "savings".', 'danger');
+      return;
+    }
+  }
+  
+  let accountNumber = '';
+  let routingNumber = '';
+  if (bankNameStr) {
+    accountNumber = prompt('Enter account number (only last 4 digits will be stored):', '');
+    if (accountNumber === null) return;
+    accountNumber = accountNumber.trim();
+    if (accountNumber && accountNumber.length < 4) {
+      showToast('Account number must be at least 4 digits.', 'danger');
+      return;
+    }
+    routingNumber = prompt('Enter routing number (only last 4 digits will be stored):', '');
+    if (routingNumber === null) return;
+    routingNumber = routingNumber.trim();
+    if (routingNumber && routingNumber.length < 4) {
+      showToast('Routing number must be at least 4 digits.', 'danger');
+      return;
+    }
+  }
+  
+  try {
+    const r = await fetch(BACKEND_URL + '/api/users/update_direct_deposit', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        adminPin: currentUser.id,
+        userId,
+        bank_name: bankNameStr,
+        bank_account_type: accountType,
+        account_number: accountNumber,
+        routing_number: routingNumber
+      })
+    });
+    const d = await r.json();
+    if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
+    showToast('Direct deposit info updated!', 'success');
     loadUsers();
   } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
@@ -14497,6 +14577,26 @@ function renderMyPay(data) {
 
   // Pay rate notice
   document.getElementById('myPayNoRateNotice').style.display = data.has_pay_rate ? 'none' : 'block';
+
+  // --- Direct Deposit Info ---
+  const ddEl = document.getElementById('myPayDirectDepositInfo');
+  const dd = data.direct_deposit || {};
+  if (dd.bank_name) {
+    const typeLabel = dd.bank_account_type === 'checking' ? 'Checking' : (dd.bank_account_type === 'savings' ? 'Savings' : '');
+    const acctDisplay = dd.account_last4 ? '****' + dd.account_last4 : '';
+    const routingDisplay = dd.routing_last4 ? '****' + dd.routing_last4 : '';
+    let ddHtml = '<div style="background:var(--card-alt);padding:12px 16px;border-radius:8px;">';
+    ddHtml += '<div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center;">';
+    ddHtml += '<div><span style="color:var(--text);font-weight:600;">' + escHtml(dd.bank_name) + '</span>';
+    if (typeLabel) ddHtml += ' <span style="font-size:12px;color:var(--text2);">(' + typeLabel + ')</span>';
+    ddHtml += '</div>';
+    if (acctDisplay) ddHtml += '<div style="font-size:13px;"><span style="color:var(--text2);">Account:</span> <span style="color:var(--text);font-family:monospace;letter-spacing:1px;">' + acctDisplay + '</span></div>';
+    if (routingDisplay) ddHtml += '<div style="font-size:13px;"><span style="color:var(--text2);">Routing:</span> <span style="color:var(--text);font-family:monospace;letter-spacing:1px;">' + routingDisplay + '</span></div>';
+    ddHtml += '</div></div>';
+    ddEl.innerHTML = ddHtml;
+  } else {
+    ddEl.innerHTML = '<span data-i18n="mypay.dd_not_set">No direct deposit info on file.</span>';
+  }
 
   // --- Pay History ---
   const history = data.pay_history || [];

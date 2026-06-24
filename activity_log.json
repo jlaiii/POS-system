@@ -6347,5 +6347,358 @@
                 }
             }
         }
+    },
+    {
+        "timestamp": "2026-06-24T12:06:00.639730",
+        "type": "ticket_submitted",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "ticket_id": "TKT-001",
+            "type": "issue",
+            "subject": "Test issue with label"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T12:06:11.847266",
+        "type": "get_users",
+        "user_id": "anonymous",
+        "user_role": "unauthorized",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "failed",
+            "reason": "Missing adminPin"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T12:06:20.507160",
+        "type": "login_failed",
+        "user_id": null,
+        "user_role": "unknown",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "failed",
+            "method": "pin",
+            "ip": "127.0.0.1",
+            "attempt": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-24T12:06:20.520651",
+        "type": "ticket_responded",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "ticket_id": "TKT-001",
+            "action": "approved",
+            "reason": "Looks fine"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T12:24:32.927746",
+        "type": "ticket_template_saved",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "template_id": "TMP-001",
+            "name": "Standard Approval"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T12:24:32.980668",
+        "type": "ticket_template_saved",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "template_id": "TMP-002",
+            "name": "Standard Denial"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T12:24:33.039288",
+        "type": "ticket_template_saved",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "template_id": "TMP-003",
+            "name": "Need More Info"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T12:24:33.144246",
+        "type": "ticket_template_deleted",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "template_id": "TMP-001"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T12:24:37.206912",
+        "type": "ticket_template_saved",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "template_id": "TMP-002",
+            "name": "Standard Denial (Updated)"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T12:39:30.238894",
+        "type": "pin_changed",
+        "user_id": "9991",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "old_user_id": "5678",
+            "new_user_id": "9991",
+            "user_name": "Employee Two",
+            "totp_verified": false
+        }
+    },
+    {
+        "timestamp": "2026-06-24T12:39:31.291117",
+        "type": "pin_changed",
+        "user_id": "5678",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "old_user_id": "9991",
+            "new_user_id": "5678",
+            "user_name": "Employee Two",
+            "totp_verified": false
+        }
+    },
+    {
+        "timestamp": "2026-06-24T12:39:37.657503",
+        "type": "pin_change_failed",
+        "user_id": "5678",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "guessable_pin",
+            "user_name": "Employee Two"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T12:39:37.768178",
+        "type": "add_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed",
+            "reason": "Guessable PIN",
+            "new_user_id": "6666"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T12:40:30.688862",
+        "type": "pin_change_failed",
+        "user_id": "5678",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "guessable_pin",
+            "user_name": "Employee Two"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T12:41:17.375880",
+        "type": "pin_change_failed",
+        "user_id": "5678",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "guessable_pin",
+            "user_name": "Employee Two"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T12:51:09.838875",
+        "type": "login_failed",
+        "user_id": null,
+        "user_role": "unknown",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "failed",
+            "method": "pin",
+            "ip": "127.0.0.1",
+            "attempt": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-24T12:51:28.688222",
+        "type": "login_failed",
+        "user_id": null,
+        "user_role": "unknown",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "failed",
+            "method": "pin",
+            "ip": "127.0.0.1",
+            "attempt": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-24T13:18:10.111539",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T13:18:11.193829",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T13:44:38.748759",
+        "type": "ticket_submitted",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "ticket_id": "TKT-001",
+            "type": "time_off",
+            "subject": "Vacation test"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T13:44:38.762059",
+        "type": "ticket_auto_approved",
+        "user_id": "system",
+        "user_role": "system",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "ticket_id": "TKT-001",
+            "type": "time_off",
+            "days_advance": 5,
+            "threshold": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-24T13:44:45.783490",
+        "type": "ticket_submitted",
+        "user_id": "9999",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "ticket_id": "TKT-001",
+            "type": "time_off",
+            "subject": "Short notice test"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T13:45:03.948639",
+        "type": "timesheet_config_updated",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "config": {
+                "auto_approve_threshold_days": 7,
+                "late_grace_minutes": 5,
+                "max_staff_off_per_day": 3,
+                "overtime_daily_threshold": 8,
+                "overtime_weekly_threshold": 40,
+                "offsite_backup": {
+                    "enabled": false,
+                    "host": "",
+                    "path": "",
+                    "ssh_key": ""
+                }
+            }
+        }
+    },
+    {
+        "timestamp": "2026-06-24T13:51:30.609350",
+        "type": "get_users",
+        "user_id": "9999",
+        "user_role": "unauthorized",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "failed",
+            "reason": "Insufficient permissions"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T13:51:37.370145",
+        "type": "get_users",
+        "user_id": "None",
+        "user_role": "unauthorized",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "failed",
+            "reason": "Insufficient permissions"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T13:51:46.170285",
+        "type": "update_direct_deposit",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "success",
+            "target_user_id": "1234",
+            "user_name": "Employee One",
+            "old": {
+                "bank_name": "",
+                "bank_account_type": "",
+                "account_last4": "",
+                "routing_last4": ""
+            },
+            "new": {
+                "bank_name": "Chase Bank",
+                "bank_account_type": "checking",
+                "account_last4": "9012",
+                "routing_last4": "0021"
+            }
+        }
     }
 ]

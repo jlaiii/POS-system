@@ -1451,6 +1451,12 @@ def get_users():
             'totp_enabled': user_data.get('totp_enabled', False),
             'pin_reset_notification': user_data.get('pin_reset_notification', None),
             'force_pin_change': user_data.get('force_pin_change', False),
+            'direct_deposit': {
+                'bank_name': user_data.get('bank_name'),
+                'bank_account_type': user_data.get('bank_account_type'),
+                'account_last4': user_data.get('account_last4'),
+                'routing_last4': user_data.get('routing_last4')
+            },
             'failed_login_attempts': 0,
             'login_locked': False
         }
@@ -3721,6 +3727,73 @@ def get_pto_log():
         'pto_log': pto_log,
         'pto_balance': pto_balance,
         'user_name': users[user_id].get('name', 'Unknown')
+    })
+
+
+@app.route('/api/users/update_direct_deposit', methods=['POST'])
+def update_user_direct_deposit():
+    """Admin sets direct deposit bank info for a user."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+    user_id = data.get('userId')
+    bank_name = (data.get('bank_name') or '').strip()
+    bank_account_type = (data.get('bank_account_type') or '').strip()
+    account_number = (data.get('account_number') or '').strip()
+    routing_number = (data.get('routing_number') or '').strip()
+
+    if not check_perm(admin_pin, "manage_users"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    if not user_id:
+        return jsonify({'message': 'User ID is required.'}), 400
+
+    users = load_json_data(USERS_FILE)
+
+    if user_id not in users:
+        return jsonify({'message': 'User not found.'}), 404
+
+    admin_user = users.get(admin_pin, {})
+
+    # Validate account type
+    if bank_account_type and bank_account_type not in ('checking', 'savings'):
+        return jsonify({'message': 'Account type must be "checking" or "savings".'}), 400
+
+    # Only store last 4 digits for security
+    account_last4 = account_number[-4:] if account_number and len(account_number) >= 4 else (account_number if account_number else '')
+    routing_last4 = routing_number[-4:] if routing_number and len(routing_number) >= 4 else (routing_number if routing_number else '')
+
+    old_dd = {
+        'bank_name': users[user_id].get('bank_name', ''),
+        'bank_account_type': users[user_id].get('bank_account_type', ''),
+        'account_last4': users[user_id].get('account_last4', ''),
+        'routing_last4': users[user_id].get('routing_last4', '')
+    }
+
+    users[user_id]['bank_name'] = bank_name if bank_name else None
+    users[user_id]['bank_account_type'] = bank_account_type if bank_account_type else None
+    users[user_id]['account_last4'] = account_last4 if account_last4 else None
+    users[user_id]['routing_last4'] = routing_last4 if routing_last4 else None
+
+    save_json_data(USERS_FILE, users)
+
+    log_activity('update_direct_deposit', admin_pin, admin_user.get('role', 'unknown'),
+                 {'status': 'success', 'target_user_id': user_id,
+                  'user_name': users[user_id].get('name', 'Unknown'),
+                  'old': old_dd,
+                  'new': {
+                      'bank_name': bank_name,
+                      'bank_account_type': bank_account_type,
+                      'account_last4': account_last4,
+                      'routing_last4': routing_last4
+                  }})
+
+    return jsonify({
+        'message': 'Direct deposit info updated successfully.',
+        'user_id': user_id,
+        'bank_name': bank_name,
+        'bank_account_type': bank_account_type,
+        'account_last4': account_last4,
+        'routing_last4': routing_last4
     })
 
 
@@ -8306,6 +8379,12 @@ def employee_my_pay():
         'user_name': user_name,
         'pay_rate': pay_rate_val if has_pay_rate else None,
         'has_pay_rate': has_pay_rate,
+        'direct_deposit': {
+            'bank_name': user_data.get('bank_name'),
+            'bank_account_type': user_data.get('bank_account_type'),
+            'account_last4': user_data.get('account_last4'),
+            'routing_last4': user_data.get('routing_last4')
+        },
         'current_period': current_period,
         'pay_history': past_periods,
         'ytd': ytd

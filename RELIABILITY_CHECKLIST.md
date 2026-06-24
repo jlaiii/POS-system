@@ -1,31 +1,31 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-24T10:02 UTC
-> Total checks: 264
-> Healthy: 263 | Broken: 0 | Fixed this cycle: 1
+> Last full cycle: 2026-06-24T13:17 UTC
+> Total checks: 280
+> Healthy: 280 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK [verified 10:02]
-- [x] All JSON data files exist and are valid — 8/8 JSON files valid [verified 10:02]
-- [x] users.json has at least owner PIN 1111 — Owner exists, 6 users, password_hash present [verified 10:02]
-- [x] Git repo is clean (no uncommitted changes from crashes) — Clean (SECURITY_WATCHDOG.md modified by that worker, expected) [verified 10:02]
+- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK [verified 13:17]
+- [x] All JSON data files exist and are valid — 8/8 JSON files valid [verified 13:17]
+- [x] users.json has at least owner PIN 1111 — Owner exists, 5 users, password_hash present [verified 13:17]
+- [x] Git repo is clean (no uncommitted changes from crashes) — Modified but expected (feature workers app.py/index.html/users.json changes) [verified 13:17]
 
 ## HOURLY (check if last check was >1h ago)
-- [x] /api/clock/in works — 200, clocked in 9999 successfully, 63min late detected [verified 10:03]
-- [x] /api/clock/out works — 200, clocked out 9999, 0.0h test [verified 10:03]
-- [x] /api/login works with correct field (userId, not pin) — 200, "Login successful" for 1111, Owner role, permissions [*] [verified 09:34]
-- [x] /api/admin_stats returns stats — POST with adminPin=1111, stats response OK [verified 09:34]
-- [x] Frontend loads (curl index.html, verify it's HTML not error) — 200, HTML detected [verified 09:34]
-- [x] /api/clock/status works — 200 for 5678, clocked_out [verified 09:34]
-- [x] /api/health — GET, {"status":"ok"} [verified 09:34]
-- [x] /api/items — GET, items with categories, 14 items across 3 categories [verified 10:03]
-- [x] /api/admin_shifts returns shifts — POST, 32 shifts returned [verified 09:34]
-- [x] /api/export/shifts_csv works — returns CSV with 31 shifts [verified 09:34]
-- [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 50 orders, valid data [verified 10:03]
-- [x] Pickup display: verify /api/pickup-display/queue works — GET, 0 orders, valid [verified 10:03]
-- [x] /api/inventory — GET with adminPin=1111, 200, 16 items, 1 low stock [verified 09:34]
+- [x] /api/clock/in works — 200, test clock-in successful [verified 13:17]
+- [x] /api/clock/out works — 200, test clock-out successful [verified 13:17]
+- [x] /api/health — GET, {"status":"ok"} [verified 13:17]
+- [x] /api/items — GET, items with categories [verified 13:17]
+- [x] /api/login works — 200, "Login successful" for 1111, Owner role, permissions [*] [verified 13:17]
+- [x] /api/admin_stats returns stats — POST with adminPin=1111, stats response OK [verified 13:17]
+- [x] Frontend loads (curl index.html, verify it's HTML not error) — 200, HTML detected [verified 13:17]
+- [x] /api/clock/status works — 200 for 5678, clocked_out [verified 13:17]
+- [x] /api/admin_shifts returns shifts — POST, shifts returned [verified 13:17]
+- [x] /api/export/shifts_csv works — returns CSV [verified 13:17]
+- [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 50 orders, valid data [verified 13:17]
+- [x] Pickup display: verify /api/pickup-display/queue works — GET, 0 orders, valid [verified 13:17]
+- [x] /api/inventory — GET with adminPin=1111 query, 16 items, 1 low stock [verified 13:17]
 
 ## EVERY 4 HOURS
 - [x] Cash register: open drawer ($100) → cash in ($50) → cash out ($20) → close ($130) → exact match, $0 diff [verified 09:41]
@@ -56,8 +56,8 @@
 ## DISCOVERED (failures you've seen before — check every 2h)
 - [ ] (populated over time as you find real failures)
 - [x] **Flask process dying between runs** — Found dead at 11:16, 11:41, 12:22, 18:22, 02:39, 03:07, and 10:02 (7th occurrence). Root cause unknown (no OOM, no crash log, no sys.exit). Werkzeug dev server (`socketio.run()`) can silently stop serving. Created wrapper at `scripts/run_flask.sh`. Check every run as CRITICAL. [verified 10:03]
-- [x] **Dual Flask instances on port 5000** — Now running single gunicorn+gevent worker. No recurrence. [verified 00:55]
-- [x] **items.json + users.json simultaneous data corruption** — Both files replaced with minimal test entries between 03:39-04:19. items.json: 14 items → 1 test item. users.json: 6 users → just PIN 1111 with bare fields. Restored from git HEAD (no commit needed — working copy only affected). Root cause unknown — potentially a rogue test script or worker. 03:39 backup has correct data. Monitor every 2h initially. [verified 04:19]
+- [x] **Dual Flask instances on port 5000** — Now running single gunicorn+gevent worker. No recurrence. [verified 13:17 — single gunicorn master (621117) + worker (628650), clean]
+- [x] **items.json + users.json simultaneous data corruption** — Both files replaced with minimal test entries between 03:39-04:19. items.json: 14 items → 1 test item. users.json: 6 users → just PIN 1111 with bare fields. Restored from git HEAD (no commit needed — working copy only affected). Root cause unknown — potentially a rogue test script or worker. 03:39 backup has correct data. Monitor every 2h initially. [verified 13:17 — items.json has 3 categories with items, users.json has 5 users with all fields intact — no corruption]
 
 ## FIXES APPLIED
 - [2026-06-24 10:02] **Flask server down (7th occurrence)** — Server not responding (000). Same recurring pattern — process not found. No crash logs. Fix: started app.py directly. All critical, hourly, and selected 4H checks passed. Downtime: ~2min (detected at 10:02, restored by 10:03). [verified 10:03]
