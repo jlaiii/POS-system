@@ -1040,6 +1040,52 @@ body {
     padding-bottom: 80px;
   }
 }
+
+/* ---- Screensaver Dim Overlay ---- */
+#screensaverOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: rgba(0,0,0,0.85);
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+#screensaverOverlay.show {
+  display: flex;
+}
+#screensaverOverlay .ss-clock {
+  font-size: clamp(60px, 10vw, 120px);
+  font-weight: 300;
+  color: rgba(255,255,255,0.7);
+  letter-spacing: 4px;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 2px 20px rgba(0,0,0,0.5);
+}
+#screensaverOverlay .ss-date {
+  font-size: clamp(18px, 3vw, 32px);
+  color: rgba(255,255,255,0.4);
+  margin-top: 12px;
+  font-weight: 400;
+}
+#screensaverOverlay .ss-touch-hint {
+  font-size: clamp(14px, 2vw, 20px);
+  color: rgba(255,255,255,0.25);
+  margin-top: 40px;
+  animation: ssPulse 3s ease-in-out infinite;
+  text-align: center;
+  padding: 20px;
+}
+@keyframes ssPulse {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 0.6; }
+}
 </style>
 </head>
 <body>
@@ -1118,6 +1164,13 @@ body {
   <button class="countdown-cancel" id="countdownCancelBtn" data-i18n="stay">✕ Stay</button>
 </div>
 
+<!-- Screensaver Dim Overlay -->
+<div id="screensaverOverlay" onclick="clickWakeScreensaver()">
+  <div class="ss-clock" id="screensaverClock"></div>
+  <div class="ss-date" id="screensaverDate"></div>
+  <div class="ss-touch-hint" data-i18n="touch_to_wake">👆 Touch to wake</div>
+</div>
+
 <!-- Restaurant Info Bar -->
 <div id="tabletInfoBar">
   <div class="info-bar-left">
@@ -1151,6 +1204,14 @@ const COUNTDOWN_SECONDS = 5; // 5s countdown before auto-return
 let detailCategoryItems = []; // Items in current category for navigation
 let detailCurrentIdx = 0; // Current index in detailCategoryItems
 let onlineOrderingBaseUrl = ''; // Base URL for online ordering (QR codes)
+
+// Screensaver / wake-on-proximity state
+let screensaverTimer = null;
+let screensaverActive = false;
+let screensaverClockInterval = null;
+let wakeLock = null;
+const SCREENSAVER_TIMEOUT = 120000; // 2 min inactivity → dim screen
+let motionPermissionGranted = false;
 
 // Dietary tag icon mapping
 const DIETARY_ICONS = {
@@ -1205,6 +1266,7 @@ const L10N = {
     'nutrition_protein': 'protein',
     'nutrition_carbs': 'carbs',
     'nutrition_fat': 'fat',
+    'touch_to_wake': '👆 Touch to wake',
   },
   es: {
     'no_ads': 'No hay anuncios',
@@ -1248,6 +1310,7 @@ const L10N = {
     'nutrition_protein': 'proteína',
     'nutrition_carbs': 'carboh.',
     'nutrition_fat': 'grasa',
+    'touch_to_wake': '👆 Tocar para activar',
   }
 };
 
@@ -1816,6 +1879,136 @@ function cancelCountdown() {
   document.getElementById('countdownOverlay').classList.remove('show');
 }
 
+// ═══════════ SCREENSAVER / WAKE-ON-PROXIMITY ═══════════
+
+/** Update the screensaver clock display */
+function updateScreensaverClock() {
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString(currentLang === 'es' ? 'es-ES' : 'en-US', {
+    hour: '2-digit', minute: '2-digit'
+  });
+  document.getElementById('screensaverClock').textContent = timeStr;
+  const dateStr = now.toLocaleDateString(currentLang === 'es' ? 'es-ES' : 'en-US', {
+    weekday: 'long', month: 'long', day: 'numeric'
+  });
+  document.getElementById('screensaverDate').textContent = dateStr;
+}
+
+/** Request a screen wake lock to prevent device sleep */
+async function requestWakeLock() {
+  try {
+    if ('wakeLock' in navigator && document.visibilityState === 'visible') {
+      wakeLock = await navigator.wakeLock.request('screen');
+    }
+  } catch (e) {
+    // Wake lock not supported or denied — screensaver still works
+  }
+}
+
+/** Re-acquire wake lock if it was released (e.g., tab backgrounded) */
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && !wakeLock && navigator.wakeLock) {
+    requestWakeLock();
+  }
+});
+
+/** Show the dimmed screensaver overlay */
+function showScreensaver() {
+  if (screensaverActive) return;
+  screensaverActive = true;
+  const overlay = document.getElementById('screensaverOverlay');
+  overlay.classList.add('show');
+  updateScreensaverClock();
+  screensaverClockInterval = setInterval(updateScreensaverClock, 10000); // Update clock every 10s
+  // Release wake lock while dimmed — let the device sleep fully
+  if (wakeLock) {
+    try { wakeLock.release(); } catch(e) {}
+    wakeLock = null;
+  }
+}
+
+/** Hide the screensaver overlay and reset timers */
+function hideScreensaver() {
+  if (!screensaverActive) return;
+  screensaverActive = false;
+  document.getElementById('screensaverOverlay').classList.remove('show');
+  if (screensaverClockInterval) {
+    clearInterval(screensaverClockInterval);
+    screensaverClockInterval = null;
+  }
+  // Re-acquire wake lock now that screen is active
+  requestWakeLock();
+  resetScreensaverTimer();
+}
+
+/** Called when user clicks/taps the screensaver overlay */
+function clickWakeScreensaver() {
+  hideScreensaver();
+}
+
+/** Reset the screensaver inactivity timer */
+function resetScreensaverTimer() {
+  if (screensaverTimer) clearTimeout(screensaverTimer);
+  if (!screensaverActive) {
+    screensaverTimer = setTimeout(showScreensaver, SCREENSAVER_TIMEOUT);
+  }
+}
+
+/** Request DeviceMotion permission (iOS 13+) and start listening */
+function initMotionWake() {
+  // Request permission if needed (iOS 13+)
+  const requestPermission = () => {
+    if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+      DeviceMotionEvent.requestPermission().then(state => {
+        motionPermissionGranted = state === 'granted';
+      }).catch(() => {});
+    } else {
+      motionPermissionGranted = true; // No permission needed
+    }
+    // Add motion listener
+    window.addEventListener('devicemotion', handleDeviceMotion, { passive: true });
+  };
+  // On iOS 13+, permission requires user gesture — request on first touch
+  document.addEventListener('touchstart', () => {
+    if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+      if (!motionPermissionGranted) {
+        DeviceMotionEvent.requestPermission().then(state => {
+          motionPermissionGranted = state === 'granted';
+        }).catch(() => {});
+      }
+    }
+  }, { once: true, passive: true });
+  // Start listening immediately (works on non-iOS)
+  try {
+    window.addEventListener('devicemotion', handleDeviceMotion, { passive: true });
+    motionPermissionGranted = true;
+  } catch (e) {
+    // Motion API not available
+  }
+}
+
+/** Handle device motion events — wake on pickup */
+let lastMotionTime = 0;
+function handleDeviceMotion(event) {
+  const acc = event.accelerationIncludingGravity;
+  if (!acc) return;
+  // On a stationary tablet, magnitude ≈ 9.8 m/s² (gravity)
+  const magnitude = Math.sqrt(acc.x * acc.x + acc.y * acc.y + acc.z * acc.z);
+  const now = Date.now();
+  // Debounce: check at most once per 500ms
+  if (now - lastMotionTime < 500) return;
+  lastMotionTime = now;
+  // Detect significant change from gravity baseline
+  if (screensaverActive && Math.abs(magnitude - 9.8) > 0.8) {
+    hideScreensaver();
+    return;
+  }
+  // Also reset screensaver timer on detected motion (someone walked by)
+  if (!screensaverActive && Math.abs(magnitude - 9.8) > 0.8) {
+    resetScreensaverTimer();
+  }
+}
+
 // ---- Event listeners ----
 document.getElementById('viewMenuBtn').addEventListener('click', () => {
   showMenuView();
@@ -1977,6 +2170,29 @@ document.addEventListener('DOMContentLoaded', () => {
   
   loadRestaurantInfo();
   initTabletSocket();
+
+  // ═══ Screensaver / wake-on-proximity init ═══
+  // Request wake lock to keep screen alive
+  requestWakeLock();
+  // Start screensaver timer
+  resetScreensaverTimer();
+  // Initialize motion detection for wake-on-pickup
+  initMotionWake();
+  // Global interaction → reset screensaver timer + wake from screensaver
+  const screensaverWakeEvents = ['touchstart', 'click', 'keydown', 'mousemove', 'wheel'];
+  screensaverWakeEvents.forEach(evt => {
+    document.addEventListener(evt, () => {
+      if (screensaverActive) hideScreensaver();
+      resetScreensaverTimer();
+    }, { passive: true });
+  });
+  // Reset timer on visibility change (user returns to tab)
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      if (screensaverActive) hideScreensaver();
+      resetScreensaverTimer();
+    }
+  });
 
   const callBtn = document.getElementById('callServerBtn');
   callBtn.addEventListener('click', () => {
