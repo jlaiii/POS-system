@@ -3405,6 +3405,30 @@ const L10N = {
     'toast.network_error': 'Network error',
     'toast.discount_applied': 'Discount applied!',
     'toast.discount_removed': 'Discount removed',
+    'toast.date_range_required': '❌ Please select a date range first.',
+    'toast.reason_unlock': '❌ Reason is required to unlock.',
+    'toast.pay_period_csv': '✅ Pay period CSV exported!',
+    'toast.shifts_csv': 'Shifts CSV exported',
+    'toast.export_failed': 'Export failed',
+    'toast.pay_period_pdf': '✅ Pay period PDF report opened!',
+    'toast.timesheet_pdf': '✅ Timesheet PDF report opened!',
+    'toast.auth_required': 'Authentication required.',
+    'toast.please_log_in': 'Please log in first',
+    'toast.valid_email': 'Valid email required',
+    'toast.item_out_of_stock': 'Item out of stock',
+    'toast.fill_all_fields': 'Fill all fields correctly',
+    'toast.select_payment': 'Please select a payment method',
+    'toast.no_data_export': 'No data to export. Load a period first.',
+    'toast.enter_ip': 'Please enter an IP address.',
+    'toast.select_date_range': 'Select a date range first',
+    'toast.cart_is_empty': 'Cart is empty',
+    'toast.error_saving_notes': 'Error saving notes',
+    'toast.reason_required': 'Reason is required.',
+    'toast.select_item': 'Please select an item',
+    'toast.pin_4_digits': 'PIN must be 4 digits',
+    'toast.enter_valid_rate': 'Enter a valid rate (0-100)',
+    'toast.failed_load_staff': 'Failed to load staff list',
+    'toast.no_staff_available': 'No available staff to transfer to',
     'barcode.placeholder': 'Scan barcode...',
     'barcode.camera_btn': '📷',
     'barcode.not_found': 'No item found for barcode {code}',
@@ -4009,6 +4033,30 @@ const L10N = {
     'toast.network_error': 'Error de red',
     'toast.discount_applied': '¡Descuento aplicado!',
     'toast.discount_removed': 'Descuento eliminado',
+    'toast.date_range_required': '❌ Seleccione un rango de fechas primero.',
+    'toast.reason_unlock': '❌ Se requiere un motivo para desbloquear.',
+    'toast.pay_period_csv': '✅ ¡CSV del período de pago exportado!',
+    'toast.shifts_csv': 'CSV de turnos exportado',
+    'toast.export_failed': 'Exportación falló',
+    'toast.pay_period_pdf': '✅ ¡Reporte PDF del período abierto!',
+    'toast.timesheet_pdf': '✅ ¡Reporte PDF de horario abierto!',
+    'toast.auth_required': 'Se requiere autenticación.',
+    'toast.please_log_in': 'Inicie sesión primero',
+    'toast.valid_email': 'Correo electrónico válido requerido',
+    'toast.item_out_of_stock': 'Artículo agotado',
+    'toast.fill_all_fields': 'Complete todos los campos correctamente',
+    'toast.select_payment': 'Seleccione un método de pago',
+    'toast.no_data_export': 'Sin datos para exportar. Cargue un período primero.',
+    'toast.enter_ip': 'Ingrese una dirección IP.',
+    'toast.select_date_range': 'Seleccione un rango de fechas primero',
+    'toast.cart_is_empty': 'Carrito vacío',
+    'toast.error_saving_notes': 'Error al guardar notas',
+    'toast.reason_required': 'Se requiere un motivo.',
+    'toast.select_item': 'Seleccione un artículo',
+    'toast.pin_4_digits': 'El PIN debe tener 4 dígitos',
+    'toast.enter_valid_rate': 'Ingrese una tasa válida (0-100)',
+    'toast.failed_load_staff': 'Error al cargar la lista de personal',
+    'toast.no_staff_available': 'No hay personal disponible para transferir',
     'loading': 'Cargando...',
     'network_error': 'Error de red',
     'unauthorized': 'No autorizado',
@@ -5249,7 +5297,7 @@ async function toggleClock() {
         showToast(data.message || 'Error', 'error');
       }
     } catch(e) {
-      showToast('Network error', 'error');
+      showToast(t('toast.network_error'), 'error');
     }
   } else {
     // Clock out — show notes modal
@@ -5276,7 +5324,7 @@ async function toggleBreak() {
       showToast(data.message || 'Error', 'error');
     }
   } catch(e) {
-    showToast('Network error', 'error');
+    showToast(t('toast.network_error'), 'error');
   }
 }
 
@@ -5311,7 +5359,7 @@ async function confirmClockOut() {
       showToast(data.message || 'Error', 'error');
     }
   } catch(e) {
-    showToast('Network error', 'error');
+    showToast(t('toast.network_error'), 'error');
   }
 }
 
@@ -5333,7 +5381,7 @@ function adminAddNote(shiftIndex) {
     if (data.message) showToast(data.message, 'success');
     loadTimesheetDashboard();
   })
-  .catch(e => showToast('Error saving notes', 'error'));
+  .catch(e => showToast(t('toast.error_saving_notes'), 'error'));
 }
 
 /** Late badge popover — admin can excuse or re-flag a late shift */
@@ -5437,7 +5485,7 @@ async function submitExcuseLate() {
       showToast(data.message || 'Error excusing late', 'error');
     }
   } catch(e) {
-    showToast('Network error', 'error');
+    showToast(t('toast.network_error'), 'error');
   }
 }
 
@@ -5466,7 +5514,7 @@ async function submitLateFlag() {
       showToast(data.message || 'Error flagging late', 'error');
     }
   } catch(e) {
-    showToast('Network error', 'error');
+    showToast(t('toast.network_error'), 'error');
   }
 }
 
@@ -5833,7 +5881,7 @@ async function submitPayPeriodApproval() {
   const dateFrom = document.getElementById('payPeriodDateFrom')?.value || '';
   const dateTo = document.getElementById('payPeriodDateTo')?.value || '';
   if (!dateFrom || !dateTo) {
-    showToast('❌ Please select a date range first.', 'danger');
+    showToast(t('toast.date_range_required'), 'danger');
     return;
   }
 
@@ -5849,7 +5897,7 @@ async function submitPayPeriodApproval() {
     showToast('✅ ' + data.message, 'success');
     loadApprovalStatus();
   } catch(e) {
-    showToast('❌ Network error', 'danger');
+    showToast('❌ ' + t('toast.network_error'), 'danger');
   }
 }
 
@@ -5857,7 +5905,7 @@ async function approveMyShifts() {
   const dateFrom = document.getElementById('payPeriodDateFrom')?.value || '';
   const dateTo = document.getElementById('payPeriodDateTo')?.value || '';
   if (!dateFrom || !dateTo) {
-    showToast('❌ Please select a date range first.', 'danger');
+    showToast(t('toast.date_range_required'), 'danger');
     return;
   }
 
@@ -5873,7 +5921,7 @@ async function approveMyShifts() {
     showToast('✅ ' + data.message, 'success');
     loadApprovalStatus();
   } catch(e) {
-    showToast('❌ Network error', 'danger');
+    showToast('❌ ' + t('toast.network_error'), 'danger');
   }
 }
 
@@ -5881,7 +5929,7 @@ async function finalizePayPeriodApproval() {
   const dateFrom = document.getElementById('payPeriodDateFrom')?.value || '';
   const dateTo = document.getElementById('payPeriodDateTo')?.value || '';
   if (!dateFrom || !dateTo) {
-    showToast('❌ Please select a date range first.', 'danger');
+    showToast(t('toast.date_range_required'), 'danger');
     return;
   }
 
@@ -5897,7 +5945,7 @@ async function finalizePayPeriodApproval() {
     showToast('✅ ' + data.message, 'success');
     loadApprovalStatus();
   } catch(e) {
-    showToast('❌ Network error', 'danger');
+    showToast('❌ ' + t('toast.network_error'), 'danger');
   }
 }
 
@@ -5905,13 +5953,13 @@ async function unlockPayPeriod() {
   const dateFrom = document.getElementById('payPeriodDateFrom')?.value || '';
   const dateTo = document.getElementById('payPeriodDateTo')?.value || '';
   if (!dateFrom || !dateTo) {
-    showToast('❌ Please select a date range first.', 'danger');
+    showToast(t('toast.date_range_required'), 'danger');
     return;
   }
 
   const reason = prompt('Reason for unlocking (required):');
   if (!reason || !reason.trim()) {
-    showToast('❌ Reason is required to unlock.', 'danger');
+    showToast(t('toast.reason_unlock'), 'danger');
     return;
   }
 
@@ -5927,7 +5975,7 @@ async function unlockPayPeriod() {
     showToast('✅ ' + data.message, 'success');
     loadApprovalStatus();
   } catch(e) {
-    showToast('❌ Network error', 'danger');
+    showToast('❌ ' + t('toast.network_error'), 'danger');
   }
 }
 
@@ -5942,10 +5990,10 @@ async function exportPayPeriodCSV() {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(params)
     });
-    if (!r.ok) { const d = await r.json(); showToast(d.message || 'Export failed', 'danger'); return; }
+    if (!r.ok) { const d = await r.json(); showToast(d.message || t('toast.export_failed'), 'danger'); return; }
     const data = await r.json();
     downloadCSV(data.csv, data.filename);
-    showToast('✅ Pay period CSV exported!', 'success');
+    showToast(t('toast.pay_period_csv'), 'success');
   } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
 
@@ -5960,7 +6008,7 @@ async function exportPayPeriodPDF() {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(params)
     });
-    if (!r.ok) { const d = await r.json(); showToast(d.message || 'Export failed', 'danger'); return; }
+    if (!r.ok) { const d = await r.json(); showToast(d.message || t('toast.export_failed'), 'danger'); return; }
     const data = await r.json();
     // Open in new window for printing
     const w = window.open('', '_blank');
@@ -5968,7 +6016,7 @@ async function exportPayPeriodPDF() {
     w.document.close();
     w.focus();
     setTimeout(() => { w.print(); }, 500);
-    showToast('✅ Pay period PDF report opened!', 'success');
+    showToast(t('toast.pay_period_pdf'), 'success');
   } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
 
@@ -5986,9 +6034,9 @@ async function exportShiftsCSV() {
     if (!r.ok) { showToast('Unauthorized', 'error'); return; }
     const data = await r.json();
     downloadCSV(data.csv, data.filename);
-    showToast('Shifts CSV exported', 'success');
+    showToast(t('toast.shifts_csv'), 'success');
   } catch(e) {
-    showToast('Network error', 'error');
+    showToast(t('toast.network_error'), 'error');
   }
 }
 
@@ -6003,7 +6051,7 @@ async function exportTimesheetPDF() {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(params)
     });
-    if (!r.ok) { const d = await r.json(); showToast(d.message || 'Export failed', 'danger'); return; }
+    if (!r.ok) { const d = await r.json(); showToast(d.message || t('toast.export_failed'), 'danger'); return; }
     const data = await r.json();
     // Open in new window for printing
     const w = window.open('', '_blank');
@@ -6011,8 +6059,8 @@ async function exportTimesheetPDF() {
     w.document.close();
     w.focus();
     setTimeout(() => { w.print(); }, 500);
-    showToast('✅ Timesheet PDF report opened!', 'success');
-  } catch(e) { showToast('Network error', 'error'); }
+    showToast(t('toast.timesheet_pdf'), 'success');
+  } catch(e) { showToast(t('toast.network_error'), 'error'); }
 }
 
 // ═══════════ LOGOUT ═══════════
@@ -6176,7 +6224,7 @@ async function saveIdleTimeoutConfig() {
       showToast(data.message || 'Error saving config', 'error');
     }
   } catch(e) {
-    showToast('Network error', 'error');
+    showToast(t('toast.network_error'), 'error');
   }
 }
 
@@ -6601,7 +6649,7 @@ async function submitTicket() {
     showToast(data.message || 'Ticket submitted successfully!', 'success');
     loadMyTickets();
   } catch (e) {
-    showToast('Network error submitting ticket.', 'error');
+    showToast(t('toast.network_error') + ' submitting ticket.', 'error');
   }
 }
 
@@ -6947,7 +6995,7 @@ async function respondToTicket(ticketId, action) {
     }
     loadTicketQueue();
   } catch (e) {
-    showToast('Network error responding to ticket.', 'error');
+    showToast(t('toast.network_error') + ' responding to ticket.', 'error');
   }
 }
 
@@ -7091,7 +7139,7 @@ async function loadSecurityDashboard() {
     loadLockoutState();
     loadDiscordWebhookConfig();
   } catch (e) {
-    showToast('Network error loading security dashboard.', 'danger');
+    showToast(t('toast.network_error') + ' loading security dashboard.', 'danger');
   }
 }
 
@@ -7275,7 +7323,7 @@ async function logoutSessionByUser(userId) {
       showToast(data.message || 'Failed to log out sessions.', 'error');
     }
   } catch (e) {
-    showToast('Network error logging out sessions.', 'error');
+    showToast(t('toast.network_error') + ' logging out sessions.', 'error');
   }
 }
 
@@ -7317,7 +7365,7 @@ async function logoutAllSessions() {
     showToast('Logged out ' + totalRemoved + ' session(s) across all users.', 'success');
     loadSecurityDashboard();
   } catch (e) {
-    showToast('Network error logging out all sessions.', 'error');
+    showToast(t('toast.network_error') + ' logging out all sessions.', 'error');
   }
 }
 
@@ -7355,7 +7403,7 @@ async function unblockIp(ip) {
     showToast('IP unblocked: ' + ip, 'success');
     loadSecurityDashboard();
   } catch (e) {
-    showToast('Network error unblocking IP.', 'danger');
+    showToast(t('toast.network_error') + ' unblocking IP.', 'danger');
   }
 }
 
@@ -7365,7 +7413,7 @@ async function addIpToBlocklist() {
   const permanentCheck = document.getElementById('secBlockPermanent');
   const ip = ipInput.value.trim();
   const reason = reasonInput.value.trim();
-  if (!ip) { showToast('Please enter an IP address.', 'danger'); return; }
+  if (!ip) { showToast(t('toast.enter_ip'), 'danger'); return; }
   try {
     const res = await fetch(BACKEND_URL + '/api/security/blocklist/add', {
       method: 'POST',
@@ -7388,14 +7436,14 @@ async function addIpToBlocklist() {
     permanentCheck.checked = false;
     loadSecurityDashboard();
   } catch (e) {
-    showToast('Network error blocking IP.', 'danger');
+    showToast(t('toast.network_error') + ' blocking IP.', 'danger');
   }
 }
 
 async function addIpToAllowlist() {
   const input = document.getElementById('secAllowlistIpInput');
   const ip = input.value.trim();
-  if (!ip) { showToast('Please enter an IP address.', 'danger'); return; }
+  if (!ip) { showToast(t('toast.enter_ip'), 'danger'); return; }
   try {
     const res = await fetch(BACKEND_URL + '/api/security/blocklist/allowlist', {
       method: 'POST',
@@ -7415,7 +7463,7 @@ async function addIpToAllowlist() {
     input.value = '';
     loadSecurityDashboard();
   } catch (e) {
-    showToast('Network error adding IP to allowlist.', 'danger');
+    showToast(t('toast.network_error') + ' adding IP to allowlist.', 'danger');
   }
 }
 
@@ -7439,7 +7487,7 @@ async function removeIpFromAllowlist(ip) {
     showToast('IP removed from allowlist: ' + ip, 'success');
     loadSecurityDashboard();
   } catch (e) {
-    showToast('Network error removing IP from allowlist.', 'danger');
+    showToast(t('toast.network_error') + ' removing IP from allowlist.', 'danger');
   }
 }
 
@@ -7613,7 +7661,7 @@ function renderItems() {
         ${stockHtml}
         <button class="item-add${stock !== null && stock <= 0 ? ' item-add-disabled' : ''}" onclick="event.stopPropagation(); addToCart('${escJs(item.name)}', ${effectivePrice}, '${escJs(item._category)}')"${stock !== null && stock <= 0 ? ' disabled' : ''}>${stock !== null && stock <= 0 ? t('item.out') : t('item.add')}</button>
       `;
-      card.onclick = () => { if (stock !== null && stock <= 0) { showToast('Item out of stock', 'danger'); return; } addToCart(item.name, effectivePrice, item._category); };
+      card.onclick = () => { if (stock !== null && stock <= 0) { showToast(t('toast.item_out_of_stock'), 'danger'); return; } addToCart(item.name, effectivePrice, item._category); };
       grid.appendChild(card);
     });
   } else {
@@ -7662,7 +7710,7 @@ function renderItems() {
         ${stockHtml}
         <button class="item-add${stock !== null && stock <= 0 ? ' item-add-disabled' : ''}" onclick="event.stopPropagation(); addToCart('${escJs(item.name)}', ${effectivePrice}, '${escJs(currentCategory)}')"${stock !== null && stock <= 0 ? ' disabled' : ''}>${stock !== null && stock <= 0 ? t('item.out') : t('item.add')}</button>
       `;
-      card.onclick = () => { if (stock !== null && stock <= 0) { showToast('Item out of stock', 'danger'); return; } addToCart(item.name, effectivePrice, currentCategory); };
+      card.onclick = () => { if (stock !== null && stock <= 0) { showToast(t('toast.item_out_of_stock'), 'danger'); return; } addToCart(item.name, effectivePrice, currentCategory); };
       grid.appendChild(card);
     });
   }
@@ -8793,7 +8841,7 @@ function loyaltyLookup() {
       loyaltyCustomerData = null;
     }
   })
-  .catch(e => { showToast('Network error', 'danger'); });
+  .catch(e => { showToast(t('toast.network_error'), 'danger'); });
 }
 
 function loyaltyShowRegister() {
@@ -8832,7 +8880,7 @@ function loyaltyRegister() {
       showToast(data.message || 'Registration failed.', 'warning');
     }
   })
-  .catch(e => { showToast('Network error', 'danger'); });
+  .catch(e => { showToast(t('toast.network_error'), 'danger'); });
 }
 
 async function loyaltyRedeem() {
@@ -8885,7 +8933,7 @@ async function loyaltyRedeem() {
       showToast(data.message, 'warning');
     }
   } catch(e) {
-    showToast('Network error', 'danger');
+    showToast(t('toast.network_error'), 'danger');
   }
 }
 
@@ -8977,7 +9025,7 @@ async function markOrderReadyForPickup(orderId) {
       showToast(data.message || 'Failed to mark ready', 'danger');
     }
   } catch(e) {
-    showToast('Network error marking order ready', 'danger');
+    showToast(t('toast.network_error') + ' marking order ready', 'danger');
   }
 }
 
@@ -8999,7 +9047,7 @@ async function applyDiscount() {
   // Calculate current subtotal
   let subtotal = 0;
   cart.forEach(item => { subtotal += item.price * item.qty; });
-  if (subtotal <= 0) { showToast('Cart is empty', 'danger'); return; }
+  if (subtotal <= 0) { showToast(t('toast.cart_is_empty'), 'danger'); return; }
 
   try {
     const r = await fetch(BACKEND_URL + '/api/validate_discount', {
@@ -9594,7 +9642,7 @@ async function saveTimesheetConfig() {
     setTimeout(() => { status.style.display = 'none'; }, 3000);
     showToast('✅ Timesheet config saved', 'success');
   } catch(e) {
-    showToast('Network error saving config', 'danger');
+    showToast(t('toast.network_error') + ' saving config', 'danger');
   }
 }
 
@@ -10026,7 +10074,7 @@ async function banUser(userId) {
     if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
     showToast('User banned', 'success');
     loadUsers();
-  } catch(e) { showToast('Network error', 'danger'); }
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
 
 async function unbanUser(userId) {
@@ -10039,7 +10087,7 @@ async function unbanUser(userId) {
     if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
     showToast('User unbanned', 'success');
     loadUsers();
-  } catch(e) { showToast('Network error', 'danger'); }
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
 
 async function blockUser(userId) {
@@ -10054,7 +10102,7 @@ async function blockUser(userId) {
     if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
     showToast('🚫 User blocked — sessions invalidated', 'success');
     loadUsers();
-  } catch(e) { showToast('Network error', 'danger'); }
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
 
 async function unblockUser(userId) {
@@ -10068,7 +10116,7 @@ async function unblockUser(userId) {
     if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
     showToast('✅ User unblocked', 'success');
     loadUsers();
-  } catch(e) { showToast('Network error', 'danger'); }
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
 
 async function forceLogout(userId) {
@@ -10082,7 +10130,7 @@ async function forceLogout(userId) {
     if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
     showToast('🚪 ' + (d.message || 'Force logout completed'), 'success');
     loadUsers();
-  } catch(e) { showToast('Network error', 'danger'); }
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
 
 async function clearLockout(userId) {
@@ -10095,14 +10143,14 @@ async function clearLockout(userId) {
     if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
     showToast(d.message || 'Lockout cleared', 'success');
     loadUsers();
-  } catch(e) { showToast('Network error', 'danger'); }
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
 
 async function disable2fa(userId) {
   const name = document.querySelector(`#userList .user-entry:has(button[onclick*="'${escJs(userId)}'"]) .ue-info strong`)?.textContent || userId;
   const reason = prompt(t('twofa.disable_reason_prompt').replace('{userId}', userId));
   if (reason === null) return;
-  if (!reason.trim()) { showToast('Reason is required.', 'danger'); return; }
+  if (!reason.trim()) { showToast(t('toast.reason_required'), 'danger'); return; }
   try {
     const r = await fetch(BACKEND_URL + '/api/users/disable_2fa', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -10112,7 +10160,7 @@ async function disable2fa(userId) {
     if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
     showToast(t('twofa.disabled_toast').replace('{name}', name), 'success');
     loadUsers();
-  } catch(e) { showToast('Network error', 'danger'); }
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
 
 async function regenerateBackupCodes(userId) {
@@ -10139,7 +10187,7 @@ async function regenerateBackupCodes(userId) {
       </div>
     `);
     loadUsers();
-  } catch(e) { showToast('Network error', 'danger'); }
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
 
 async function editPayRate(userId) {
@@ -10294,7 +10342,7 @@ async function addUser() {
   const userEmail = document.getElementById('addUserEmail').value.trim();
   const schedStart = document.getElementById('addUserSchedStart').value.trim();
   if (!userId || !userName) { showToast('Fill all fields', 'danger'); return; }
-  if (userId.length !== 4 || !/^\d{4}$/.test(userId)) { showToast('PIN must be 4 digits', 'danger'); return; }
+  if (userId.length !== 4 || !/^\d{4}$/.test(userId)) { showToast(t('toast.pin_4_digits'), 'danger'); return; }
   try {
     const body = { adminPin: currentUser.id, userId, userName, userRole };
     if (payRate) body.payRate = parseFloat(payRate);
@@ -10386,7 +10434,7 @@ async function saveEditItem() {
   const newBarcode = document.getElementById('editNewBarcode').value.trim();
   const newImageUrl = document.getElementById('editNewImageUrl').value.trim();
   const newCourse = document.getElementById('editNewCourse').value;
-  if (!newCat || !newName || isNaN(newPrice) || newPrice <= 0) { showToast('Fill all fields correctly', 'danger'); return; }
+  if (!newCat || !newName || isNaN(newPrice) || newPrice <= 0) { showToast(t('toast.fill_all_fields'), 'danger'); return; }
   try {
     const r = await fetch(BACKEND_URL + '/api/edit_item', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -10549,7 +10597,7 @@ async function addItem() {
   const barcode = document.getElementById('addItemBarcode').value.trim();
   const imageUrl = document.getElementById('addItemImageUrl').value.trim();
   const course = document.getElementById('addItemCourse').value;
-  if (!category || !name || isNaN(price) || price <= 0) { showToast('Fill all fields correctly', 'danger'); return; }
+  if (!category || !name || isNaN(price) || price <= 0) { showToast(t('toast.fill_all_fields'), 'danger'); return; }
   try {
     const r = await fetch(BACKEND_URL + '/api/add_item', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -10658,7 +10706,7 @@ async function exportOrdersCSV() {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ adminPin: currentUser.id })
     });
-    if (!r.ok) { const d = await r.json(); showToast(d.message || 'Export failed', 'danger'); return; }
+    if (!r.ok) { const d = await r.json(); showToast(d.message || t('toast.export_failed'), 'danger'); return; }
     const data = await r.json();
     downloadCSV(data.csv, data.filename);
     showToast('✅ Orders exported!', 'success');
@@ -10853,7 +10901,7 @@ async function loadDiscordWebhookConfig() {
 async function saveDiscordWebhook() {
   const adminPin = localStorage.getItem('adminPin');
   const url = document.getElementById('secDiscordWebhookUrl').value.trim();
-  if (!adminPin) return showToast('Authentication required.', 'danger');
+  if (!adminPin) return showToast(t('toast.auth_required'), 'danger');
   try {
     const r = await fetch(BACKEND_URL + '/api/security/discord_webhook', {
       method:'POST', headers:{'Content-Type':'application/json'},
@@ -10868,14 +10916,14 @@ async function saveDiscordWebhook() {
       showToast(data.message || 'Failed to save.', 'danger');
     }
   } catch(e) {
-    showToast('Network error saving webhook URL.', 'danger');
+    showToast(t('toast.network_error') + ' saving webhook URL.', 'danger');
   }
 }
 
 /** Test the Discord webhook by sending a test alert */
 async function testDiscordWebhook() {
   const adminPin = localStorage.getItem('adminPin');
-  if (!adminPin) return showToast('Authentication required.', 'danger');
+  if (!adminPin) return showToast(t('toast.auth_required'), 'danger');
   try {
     const url = document.getElementById('secDiscordWebhookUrl').value.trim();
     if (!url) return showToast('Enter a webhook URL first.', 'warning');
@@ -10897,14 +10945,14 @@ async function testDiscordWebhook() {
       showToast(data.message || 'Test failed.', 'danger');
     }
   } catch(e) {
-    showToast('Network error testing webhook.', 'danger');
+    showToast(t('toast.network_error') + ' testing webhook.', 'danger');
   }
 }
 
 /** Clear the Discord webhook URL */
 async function clearDiscordWebhook() {
   const adminPin = localStorage.getItem('adminPin');
-  if (!adminPin) return showToast('Authentication required.', 'danger');
+  if (!adminPin) return showToast(t('toast.auth_required'), 'danger');
   if (!confirm('Remove the Discord webhook URL? Lockout notifications will stop.')) return;
   try {
     const r = await fetch(BACKEND_URL + '/api/security/discord_webhook', {
@@ -10919,7 +10967,7 @@ async function clearDiscordWebhook() {
       showToast(data.message || 'Failed to remove.', 'danger');
     }
   } catch(e) {
-    showToast('Network error clearing webhook.', 'danger');
+    showToast(t('toast.network_error') + ' clearing webhook.', 'danger');
   }
 }
 
@@ -10931,7 +10979,7 @@ async function downloadSystemBackup() {
   const status = document.getElementById('backupDownloadStatus');
   const userId = localStorage.getItem('userId') || localStorage.getItem('adminUser');
   const adminPin = localStorage.getItem('adminPin');
-  if (!adminPin) { showToast('Authentication required.', 'danger'); return; }
+  if (!adminPin) { showToast(t('toast.auth_required'), 'danger'); return; }
   if (!userId) { showToast('User ID not found. Please log in again.', 'danger'); return; }
 
   btn.disabled = true;
@@ -10975,7 +11023,7 @@ async function downloadSystemBackup() {
   } catch(e) {
     status.textContent = '❌ Network error: ' + e.message;
     status.style.color = '#e74c3c';
-    showToast('Network error downloading backup.', 'danger');
+    showToast(t('toast.network_error') + ' downloading backup.', 'danger');
   } finally {
     btn.disabled = false;
     btn.textContent = '📥 Download Backup';
@@ -10990,7 +11038,7 @@ async function restoreSystemBackup() {
   const userId = localStorage.getItem('userId') || localStorage.getItem('adminUser');
   const adminPin = localStorage.getItem('adminPin');
 
-  if (!adminPin) { showToast('Authentication required.', 'danger'); return; }
+  if (!adminPin) { showToast(t('toast.auth_required'), 'danger'); return; }
   if (!userId) { showToast('User ID not found.', 'danger'); return; }
 
   if (!fileInput.files || fileInput.files.length === 0) {
@@ -11044,7 +11092,7 @@ async function restoreSystemBackup() {
   } catch(e) {
     status.textContent = '❌ Network error: ' + e.message;
     status.style.color = '#e74c3c';
-    showToast('Network error during restore.', 'danger');
+    showToast(t('toast.network_error') + ' during restore.', 'danger');
   } finally {
     btn.disabled = false;
     btn.textContent = '⚠️ Restore';
@@ -11471,7 +11519,7 @@ async function loadTsAdminLogins() {
 /** Export dashboard as CSV */
 async function exportTsDashboardCSV() {
   if (!_tsDashboardEmployees || _tsDashboardEmployees.length === 0) {
-    showToast('No data to export. Load a period first.', 'warning');
+    showToast(t('toast.no_data_export'), 'warning');
     return;
   }
   try {
@@ -11504,7 +11552,7 @@ async function exportTsDashboardCSV() {
 /** Export dashboard as PDF (print-friendly HTML) */
 async function exportTsDashboardPDF() {
   if (!_tsDashboardEmployees || _tsDashboardEmployees.length === 0) {
-    showToast('No data to export. Load a period first.', 'warning');
+    showToast(t('toast.no_data_export'), 'warning');
     return;
   }
   try {
@@ -11514,7 +11562,7 @@ async function exportTsDashboardPDF() {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ adminPin: currentUser.id, date_from: dateFrom, date_to: dateTo })
     });
-    if (!r.ok) { const d = await r.json(); showToast(d.message || 'Export failed', 'danger'); return; }
+    if (!r.ok) { const d = await r.json(); showToast(d.message || t('toast.export_failed'), 'danger'); return; }
     const data = await r.json();
     if (data.html) {
       const w = window.open('', '_blank');
@@ -11526,7 +11574,7 @@ async function exportTsDashboardPDF() {
       showToast('PDF export unavailable', 'warning');
     }
   } catch(e) {
-    showToast('Network error exporting PDF', 'danger');
+    showToast(t('toast.network_error') + ' exporting PDF', 'danger');
   }
 }
 
@@ -11708,7 +11756,7 @@ function renderTsApprovalStatus(approvalData, params) {
 async function submitTsPeriodApproval() {
   const dateFrom = document.getElementById('tsPeriodDateFrom')?.value || '';
   const dateTo = document.getElementById('tsPeriodDateTo')?.value || '';
-  if (!dateFrom || !dateTo) { showToast('Select a date range first', 'warning'); return; }
+  if (!dateFrom || !dateTo) { showToast(t('toast.select_date_range'), 'warning'); return; }
   try {
     const r = await fetch(BACKEND_URL + '/api/timesheet/approval/submit', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -11717,7 +11765,7 @@ async function submitTsPeriodApproval() {
     const data = await r.json();
     showToast(data.message || 'Submitted for approval', r.ok ? 'success' : 'danger');
     if (r.ok) loadTimesheetDashboard();
-  } catch(e) { showToast('Network error', 'danger'); }
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
 
 /** Approve my shifts for the current period */
@@ -11732,7 +11780,7 @@ async function approveTsMyShifts() {
     const data = await r.json();
     showToast(data.message || 'Shifts approved', r.ok ? 'success' : 'danger');
     if (r.ok) loadTimesheetDashboard();
-  } catch(e) { showToast('Network error', 'danger'); }
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
 
 /** Owner finalizes approval for the period */
@@ -11747,7 +11795,7 @@ async function finalizeTsPeriodApproval() {
     const data = await r.json();
     showToast(data.message || 'Period finalized', r.ok ? 'success' : 'danger');
     if (r.ok) loadTimesheetDashboard();
-  } catch(e) { showToast('Network error', 'danger'); }
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
 
 /** Mark pay period as paid and email pay stubs */
@@ -11755,7 +11803,7 @@ async function markPayPeriodPaid() {
   const dateFrom = document.getElementById('tsPeriodDateFrom')?.value || '';
   const dateTo = document.getElementById('tsPeriodDateTo')?.value || '';
   if (!dateFrom || !dateTo) {
-    showToast('Please select a date range first.', 'danger');
+    showToast(t('toast.date_range_required'), 'danger');
     return;
   }
   if (!confirm('📧 Email pay stubs to all employees in this period and mark it as paid? This action cannot be undone.')) return;
@@ -11775,7 +11823,7 @@ async function markPayPeriodPaid() {
     }
     showToast('✅ ' + msg, 'success');
     loadTimesheetDashboard();
-  } catch(e) { showToast('❌ Network error', 'danger'); }
+  } catch(e) { showToast('❌ ' + t('toast.network_error'), 'danger'); }
 }
 
 /** Owner unlocks a locked period */
@@ -11790,7 +11838,7 @@ async function unlockTsPeriod() {
     const data = await r.json();
     showToast(data.message || 'Period unlocked', r.ok ? 'success' : 'danger');
     if (r.ok) loadTimesheetDashboard();
-  } catch(e) { showToast('Network error', 'danger'); }
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
 
 /* Add CSS for dense table */
@@ -11820,7 +11868,7 @@ async function exportActivityLogCSV() {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ adminPin: currentUser.id })
     });
-    if (!r.ok) { const d = await r.json(); showToast(d.message || 'Export failed', 'danger'); return; }
+    if (!r.ok) { const d = await r.json(); showToast(d.message || t('toast.export_failed'), 'danger'); return; }
     const data = await r.json();
     downloadCSV(data.csv, data.filename);
     showToast('✅ Activity log exported!', 'success');
@@ -11891,7 +11939,7 @@ async function savePermissions(targetUserId, permNames, toggleIds) {
     if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
     showToast('Permissions updated!', 'success');
     loadPermissions();
-  } catch(e) { showToast('Network error', 'danger'); }
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
 
 // ═══════════ MENU HISTORY (owner only) ═══════════
@@ -11935,7 +11983,7 @@ async function restoreMenu(date) {
     showToast('Menu restored successfully!', 'success');
     loadMenuHistory();
     loadItems();
-  } catch(e) { showToast('Network error', 'danger'); }
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
 
 // ═══════════ TABLE MANAGEMENT ═══════════
@@ -12074,7 +12122,7 @@ function closeTableTab() {
 }
 
 async function checkoutTableTab(tableNumber) {
-  if (!currentUser || !currentUser.id) { showToast('Please log in first', 'danger'); return; }
+  if (!currentUser || !currentUser.id) { showToast(t('toast.please_log_in'), 'danger'); return; }
   // Show payment method selection dialog
   const paymentMethods = ['Cash', 'Card', 'Mobile Pay'];
   let paymentHtml = `<div style="padding:12px;">
@@ -12135,7 +12183,7 @@ async function confirmCheckoutTableTab(tableNumber) {
     loadTableAdmin();
     loadOrderHistory();
   } catch(e) {
-    showToast('Network error during checkout', 'danger');
+    showToast(t('toast.network_error') + ' during checkout', 'danger');
   }
 }
 
@@ -12413,7 +12461,7 @@ async function logWaste() {
   const reason = document.getElementById('wasteReason').value;
   const notes = document.getElementById('wasteNotes').value.trim();
 
-  if (!itemName) { showToast('Please select an item', 'danger'); return; }
+  if (!itemName) { showToast(t('toast.select_item'), 'danger'); return; }
   if (!quantity || quantity < 1) { showToast('Quantity must be a positive integer', 'danger'); return; }
 
   try {
@@ -12931,7 +12979,7 @@ async function doLoyaltyAdjust(phone) {
       showToast(data.message || 'Failed', 'danger');
     }
   } catch(e) {
-    showToast('Network error', 'danger');
+    showToast(t('toast.network_error'), 'danger');
   }
 }
 
@@ -13135,7 +13183,7 @@ function editCrmField(field) {
         showToast(data.message || 'Failed to update', 'danger');
       }
     } catch(e) {
-      showToast('Network error', 'danger');
+      showToast(t('toast.network_error'), 'danger');
     }
   };
   cancelBtn.onclick = function() {
@@ -13341,7 +13389,7 @@ async function showTableDetail(tableNumber) {
 }
 
 async function markTableBussed(tableNumber) {
-  if (!currentUser || !currentUser.id) { showToast('Please log in first', 'danger'); return; }
+  if (!currentUser || !currentUser.id) { showToast(t('toast.please_log_in'), 'danger'); return; }
   if (!confirm(`Mark Table #${tableNumber} as bussed? This resets it to available.`)) return;
   try {
     const r = await fetch(BACKEND_URL + '/api/tables/mark_bussed', {
@@ -13355,7 +13403,7 @@ async function markTableBussed(tableNumber) {
     loadTableStatusDashboard();
     loadTableAdmin();
     loadTableSelector();
-  } catch(e) { showToast('Network error', 'danger'); }
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
 
 async function showTransferWaiterSelector(tableNumber) {
@@ -13364,7 +13412,7 @@ async function showTransferWaiterSelector(tableNumber) {
   let users = [];
   try {
     const r = await fetch(BACKEND_URL + '/api/users?adminPin=' + encodeURIComponent(currentUser.id));
-    if (!r.ok) { showToast('Failed to load staff list', 'danger'); return; }
+    if (!r.ok) { showToast(t('toast.failed_load_staff'), 'danger'); return; }
     const data = await r.json();
     // Filter to users with pos_access who are not the current waiter on these orders
     users = Object.entries(data.users || data || {})
@@ -13374,12 +13422,12 @@ async function showTransferWaiterSelector(tableNumber) {
       })
       .map(([uid, u]) => ({ id: uid, name: u.name }));
   } catch(e) {
-    showToast('Failed to load staff list', 'danger');
+    showToast(t('toast.failed_load_staff'), 'danger');
     return;
   }
 
   if (users.length === 0) {
-    showToast('No available staff to transfer to', 'danger');
+    showToast(t('toast.no_staff_available'), 'danger');
     return;
   }
 
@@ -13430,7 +13478,7 @@ async function transferTableOrders(tableNumber) {
     loadTableAdmin();
     loadTableSelector();
   } catch(e) {
-    showToast('Network error', 'danger');
+    showToast(t('toast.network_error'), 'danger');
   }
 }
 
@@ -13665,7 +13713,7 @@ async function downloadPayStub(startDate) {
       showToast('Pay stub generated. Enable pop-ups or use Print (Ctrl+P).', 'info');
     }
   } catch (e) {
-    showToast('Network error generating pay stub.', 'error');
+    showToast(t('toast.network_error') + ' generating pay stub.', 'error');
   } finally {
     if (btn) {
       btn.disabled = false;
@@ -13735,7 +13783,7 @@ async function exportPayHistoryCSV() {
     downloadCSV(data.csv, data.filename);
     showToast('Pay history exported!', 'success');
   } catch (e) {
-    showToast('Network error exporting pay history.', 'error');
+    showToast(t('toast.network_error') + ' exporting pay history.', 'error');
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = '📥 Export CSV'; }
   }
@@ -14395,7 +14443,7 @@ async function emailCurrentReceipt() {
   }
   const email = lastReceiptData.customer_email || prompt('Enter customer email:');
   if (!email || !email.includes('@')) {
-    showToast('Valid email required', 'danger');
+    showToast(t('toast.valid_email'), 'danger');
     return;
   }
   const orderId = lastReceiptData.order_id || 0;
@@ -14406,7 +14454,7 @@ async function emailCurrentReceipt() {
 async function emailHistoryReceipt(orderId) {
   const email = prompt('Enter customer email:');
   if (!email || !email.includes('@')) {
-    showToast('Valid email required', 'danger');
+    showToast(t('toast.valid_email'), 'danger');
     return;
   }
   await sendEmailReceipt(orderId, email);
@@ -14423,7 +14471,7 @@ async function sendEmailReceipt(orderId, email) {
     if (!r.ok) { showToast(data.message || 'Failed to send email', 'danger'); return; }
     showToast(data.message || 'Receipt sent!', 'success');
   } catch(e) {
-    showToast('Network error sending email', 'danger');
+    showToast(t('toast.network_error') + ' sending email', 'danger');
   }
 }
 
@@ -14926,7 +14974,7 @@ async function saveCategoryTaxRate(cat) {
   const val = input.value.trim();
   const rate = val ? parseFloat(val) / 100 : null;
   if (val && (isNaN(rate) || rate < 0 || rate > 1)) {
-    showToast('Enter a valid rate (0-100)', 'danger');
+    showToast(t('toast.enter_valid_rate'), 'danger');
     return;
   }
   const catRates = { ...(taxConfig.category_tax_rates || {}), [cat]: rate };
@@ -14959,7 +15007,7 @@ async function saveTaxConfig() {
   const input = document.getElementById('globalTaxRate');
   const val = parseFloat(input.value);
   if (isNaN(val) || val < 0 || val > 100) {
-    showToast('Enter a valid rate (0-100)', 'danger');
+    showToast(t('toast.enter_valid_rate'), 'danger');
     return;
   }
   try {
@@ -14996,7 +15044,7 @@ async function saveItemTaxOverride() {
   const rateInput = document.getElementById('taxItemRate');
   const val = parseFloat(rateInput.value);
   if (isNaN(val) || val < 0 || val > 100) {
-    showToast('Enter a valid rate (0-100)', 'danger');
+    showToast(t('toast.enter_valid_rate'), 'danger');
     return;
   }
   const overrides = { ...(taxConfig.item_tax_overrides || {}), [itemName]: val / 100 };
@@ -15059,7 +15107,7 @@ let kioskLookupPaySplits = [];
 
 function enterKioskMode() {
   if (cart.length === 0) { showToast(t('toast.cart_empty'), 'danger'); return; }
-  if (!currentUser) { showToast('Please log in first', 'danger'); return; }
+  if (!currentUser) { showToast(t('toast.please_log_in'), 'danger'); return; }
   
   kioskTipAmount = 0;
   kioskTipPercent = 0;
@@ -15264,8 +15312,8 @@ function updateKioskTipCustom() {
 }
 
 async function kioskPay() {
-  if (cart.length === 0) { showToast('Cart is empty', 'danger'); return; }
-  if (!paymentSplits || paymentSplits.length === 0) { showToast('Please select a payment method', 'danger'); return; }
+  if (cart.length === 0) { showToast(t('toast.cart_is_empty'), 'danger'); return; }
+  if (!paymentSplits || paymentSplits.length === 0) { showToast(t('toast.select_payment'), 'danger'); return; }
   
   const btn = document.getElementById('kioskPayBtn');
   btn.disabled = true;
@@ -15337,7 +15385,7 @@ async function kioskPay() {
       }
     }, 1000);
   } catch(e) {
-    showToast('Network error', 'danger');
+    showToast(t('toast.network_error'), 'danger');
     btn.disabled = false;
     btn.textContent = '💵 Pay Now';
   }
@@ -15646,7 +15694,7 @@ async function kioskLookupPay() {
   const order = kioskLookupOrderData;
   if (!order) { showToast('No order selected', 'danger'); return; }
   if (!kioskLookupPaySplits || kioskLookupPaySplits.length === 0) {
-    showToast('Please select a payment method', 'danger');
+    showToast(t('toast.select_payment'), 'danger');
     return;
   }
 
@@ -15704,7 +15752,7 @@ async function kioskLookupPay() {
       }
     }, 1000);
   } catch (e) {
-    showToast('Network error', 'danger');
+    showToast(t('toast.network_error'), 'danger');
     btn.disabled = false;
     btn.textContent = '💵 Pay Now';
   }
@@ -15713,8 +15761,8 @@ async function kioskLookupPay() {
 // ═══════════ FAVORITES (Quick-Order Combos) ═══════════
 
 function saveFavoriteDialog() {
-  if (!currentUser) { showToast('Please log in first', 'danger'); return; }
-  if (cart.length === 0) { showToast('Cart is empty', 'danger'); return; }
+  if (!currentUser) { showToast(t('toast.please_log_in'), 'danger'); return; }
+  if (cart.length === 0) { showToast(t('toast.cart_is_empty'), 'danger'); return; }
   document.getElementById('saveFavoriteName').value = '';
   document.getElementById('saveFavoriteOverlay').classList.add('active');
 }
@@ -15726,7 +15774,7 @@ function closeSaveFavorite() {
 async function confirmSaveFavorite() {
   const name = document.getElementById('saveFavoriteName').value.trim();
   if (!name) { showToast('Please enter a name for your favorite', 'danger'); return; }
-  if (!currentUser) { showToast('Please log in first', 'danger'); return; }
+  if (!currentUser) { showToast(t('toast.please_log_in'), 'danger'); return; }
 
   const items = cart.map(item => ({
     name: item.name,
@@ -15754,14 +15802,14 @@ async function confirmSaveFavorite() {
       closeSaveFavorite();
     }
   } catch(e) {
-    showToast('Network error', 'danger');
+    showToast(t('toast.network_error'), 'danger');
   }
   btn.disabled = false;
   btn.textContent = '💾 Save';
 }
 
 async function showFavorites() {
-  if (!currentUser) { showToast('Please log in first', 'danger'); return; }
+  if (!currentUser) { showToast(t('toast.please_log_in'), 'danger'); return; }
 
   const overlay = document.getElementById('favoritesOverlay');
   const list = document.getElementById('favoritesList');
@@ -15810,7 +15858,7 @@ function closeFavorites() {
 }
 
 async function loadFavorite(favoriteId) {
-  if (!currentUser) { showToast('Please log in first', 'danger'); return; }
+  if (!currentUser) { showToast(t('toast.please_log_in'), 'danger'); return; }
 
   try {
     // First get the list to find the specific favorite
@@ -15851,7 +15899,7 @@ async function loadFavorite(favoriteId) {
     renderCart();
     closeFavorites();
   } catch(e) {
-    showToast('Network error', 'danger');
+    showToast(t('toast.network_error'), 'danger');
   }
 }
 
@@ -15869,7 +15917,7 @@ async function deleteFavorite(favoriteId) {
     showToast('Favorite deleted', 'success');
     showFavorites(); // Refresh the list
   } catch(e) {
-    showToast('Network error', 'danger');
+    showToast(t('toast.network_error'), 'danger');
   }
 }
 
@@ -15965,7 +16013,7 @@ async function openCashDrawer() {
     document.getElementById('cashDrawerOpeningBalance').value = '';
     document.getElementById('cashDrawerOpenNotes').value = '';
     loadCashDrawer();
-  } catch(e) { showToast('Network error', 'danger'); }
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
 
 async function cashDrawerTransaction(type) {
@@ -15993,7 +16041,7 @@ async function cashDrawerTransaction(type) {
     document.getElementById(prefix + 'Amount').value = '';
     document.getElementById(prefix + 'Reason').value = '';
     loadCashDrawer();
-  } catch(e) { showToast('Network error', 'danger'); }
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
 
 async function closeCashDrawer() {
@@ -16061,7 +16109,7 @@ async function closeCashDrawer() {
     closeCashDrawer._pendingVarianceReason = '';
     loadCashDrawer();
   } catch(e) {
-    showToast('Network error', 'danger');
+    showToast(t('toast.network_error'), 'danger');
     closeCashDrawer._askingVariance = false;
     closeCashDrawer._pendingVarianceReason = '';
   }
@@ -16281,7 +16329,7 @@ function addComboChildItem() {
   const sel = document.getElementById('comboChildItemSelect');
   const qtyInput = document.getElementById('comboChildQty');
   if (!sel || !sel.value) {
-    showToast('Please select an item', 'danger');
+    showToast(t('toast.select_item'), 'danger');
     return;
   }
   const [name, category] = sel.value.split('|');
@@ -16355,7 +16403,7 @@ async function saveCombo() {
       showToast(data.message || 'Error saving combo', 'danger');
     }
   } catch (e) {
-    showToast('Network error', 'danger');
+    showToast(t('toast.network_error'), 'danger');
   }
 }
 
@@ -16408,7 +16456,7 @@ async function deleteCombo(comboId) {
       showToast(data.message || 'Error deleting combo', 'danger');
     }
   } catch (e) {
-    showToast('Network error', 'danger');
+    showToast(t('toast.network_error'), 'danger');
   }
 }
 
@@ -16431,7 +16479,7 @@ async function toggleCombo(comboId) {
       showToast(data.message || 'Error toggling combo', 'danger');
     }
   } catch (e) {
-    showToast('Network error', 'danger');
+    showToast(t('toast.network_error'), 'danger');
   }
 }
 
@@ -16742,7 +16790,7 @@ async function showTwofaSetup() {
     document.getElementById('twofaAccountName').textContent = data.user_name;
     document.getElementById('twofaSetupDesc').textContent = 'Scan this QR code with your authenticator app to set up two-factor authentication.';
   } catch (e) {
-    showToast('Network error loading 2FA setup', 'danger');
+    showToast(t('toast.network_error') + ' loading 2FA setup', 'danger');
     closeTwofaSetup();
   }
 }
