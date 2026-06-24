@@ -2,7 +2,7 @@
 
 > Auto-managed by 3 Hermes Worker Crons (every 30 min each, staggered claims).
 > Workers use `[~]` to claim tasks before working. Never pick a claimed task.
-> Last updated: 2026-06-24 (audit #16 — fixed stale [~] task, added waiter notification + kitchen modularization tasks)
+|> Last updated: 2026-06-24 (audit #17 — no pending tasks, added inventory dashboard alert task)
 
 ## Status Legend
 - `[ ]` = pending (available for any worker)
@@ -514,6 +514,10 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 
 - [x] worker-2 **Haptic feedback on order submit** — On supported devices (iOS, modern Android), trigger a short vibration when an order is successfully submitted. `navigator.vibrate(50)`. This gives the waiter physical confirmation without looking at the screen — they can keep eyes on the customer. [worker-2 — Added `navigator.vibrate(50)` after successful order submission in both main `submitOrder()` function (line 9223) and kiosk `kioskPayNow()` function (line 17000). Consistent with existing vibration patterns used for food-ready and call-server alerts.]
 
-||- [-] **Dark mode on the tablet menu page** — Already done: Dark/light theme toggle on tablet implemented with `.light-theme` CSS, sun/moon toggle, localStorage persistence (see task at line 392). [consolidated]
+|||- [-] **Dark mode on the tablet menu page** — Already done: Dark/light theme toggle on tablet implemented with `.light-theme` CSS, sun/moon toggle, localStorage persistence (see task at line 392). [consolidated]
 
-||- [-] **App icon + splash screen for PWA** — Duplicate of "Proper PWA icons + iOS meta tags" at line 425. Consolidate there. [consolidated]
+|||- [-] **App icon + splash screen for PWA** — Duplicate of "Proper PWA icons + iOS meta tags" at line 425. Consolidate there. [consolidated]
+
+## New Tasks (from Audit #17 — 2026-06-24)
+
+- [ ] **HIGH: Inventory low-stock alert on admin dashboard (Stats tab)** — The `/api/inventory/low_stock` endpoint already exists and low-stock warnings fire on order submission, but the admin dashboard (Stats tab) shows zero inventory health data. A manager checking daily revenue/stats doesn't see that items are critically low or out of stock without navigating to the Inventory sub-tab. This is an operational blind spot. Fix: add `low_stock_count` and `out_of_stock_count` to `/api/admin_stats` response (fetch from inventory.json), then render a warning stat card in the frontend stats grid (e.g., "⚠️ 3 items low on stock") with a link to the Inventory section. Also add the low-stock items list as a collapsible section below the stats grid. [curator-audit]
