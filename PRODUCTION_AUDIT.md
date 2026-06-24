@@ -48,9 +48,9 @@
 
 ## FIXED (this session)
 
-- [x] **Admin stats missing payment method breakdown** — Added `cash_sales`, `card_sales`, `other_sales`, `cash_count`, `card_count`, `other_count` fields to `/api/admin_stats` endpoint. Manager can now see "Cash: $946.72 (14 orders)" vs "Card: $870.44 (32 orders)" at a glance. Split payments are pro-rated correctly (cash portion → cash, card portion → card). Also added `total_orders` field (same as `total_traffic` but explicitly named). Commit: `[pending]`
+- [x] **Admin stats missing payment method breakdown** — Added `cash_sales`, `card_sales`, `other_sales`, `cash_count`, `card_count`, `other_count` fields to `/api/admin_stats` endpoint. Manager can now see "Cash: $941.56 (14 orders)" vs "Card: $869.66 (32 orders)" at a glance. Split payments are pro-rated proportionally (ratio-capped when split amounts exceed total due to discounts/tips). Also added `total_orders` field. Fix v2 corrected split attribution math. Commits: `f4fe0a7`, `c332b61`
 
-- [x] **Viewport `user-scalable=no` reverted by conflicting worker** — Previous fix (commit `0d968ac`) was overwritten by worker-2's "mobile viewport meta tag verification" task. Re-applied the fix: changed viewport to `maximum-scale=5.0` without `user-scalable=no`. This preserves accessibility (visually impaired staff can pinch-zoom) while preventing accidental zoom interference. The `font-size: 16px` on inputs (iOS zoom prevention) from the conflicting change was preserved. Commit: `[pending]`
+- [x] **Viewport `user-scalable=no` reverted by conflicting worker** — Previous fix (commit `0d968ac`) was overwritten by worker-2's "mobile viewport meta tag verification" task. Re-applied the fix: changed viewport to `maximum-scale=5.0` without `user-scalable=no`. This preserves accessibility (visually impaired staff can pinch-zoom) while preventing accidental zoom interference. The `font-size: 16px` on inputs (iOS zoom prevention) from the conflicting change was preserved. Commit: `f4fe0a7`
 
 ## PREVIOUSLY FIXED (archive)
 

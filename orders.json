@@ -1,1950 +1,1992 @@
 [
-  {
-    "order_id": 11,
-    "status": "pending",
-    "claimed_by": null,
-    "claimed_at": null,
-    "completed_at": null,
-    "date": "2026-06-23T15:18:53.590835",
-    "user": "5678",
-    "payment": "Split (cash $15.00, card $10.00)",
-    "payment_splits": [
-      {
-        "method": "cash",
-        "amount": 15.0
-      },
-      {
-        "method": "card",
-        "amount": 10.0
-      }
-    ],
-    "items": [
-      {
-        "name": "Hamburger - Normal",
-        "price": 6.0,
-        "qty": 2,
-        "note": "no onions",
-        "modifiers": [
-          {
-            "group": "Size",
-            "option": "Regular"
-          },
-          {
-            "group": "Extras",
-            "option": "Extra Cheese"
-          }
-        ]
-      },
-      {
-        "name": "Coke",
-        "price": 3.0,
-        "qty": 1,
-        "note": "",
-        "modifiers": []
-      },
-      {
-        "name": "Lemonade",
-        "price": 3.0,
-        "qty": 1,
-        "note": "",
-        "modifiers": []
-      }
-    ],
-    "subtotal": 18.0,
-    "tax_amount": 1.44,
-    "tip_amount": 3.6,
-    "service_charge_amount": 0.0,
-    "discount_code": null,
-    "discount_amount": 0.0,
-    "total": 23.04,
-    "notes": "no onions on the burger",
-    "item_notes": {},
-    "table_number": 5,
-    "delivery_address": null,
-    "customer_email": ""
-  },
-  {
-    "order_id": 12,
-    "status": "pending",
-    "claimed_by": null,
-    "claimed_at": null,
-    "completed_at": null,
-    "date": "2026-06-23T15:19:17.767399",
-    "user": "1111",
-    "payment": "card",
-    "payment_splits": [
-      {
-        "method": "card",
-        "amount": 18.0
-      }
-    ],
-    "items": [
-      {
-        "name": "Hotdog - Loaded",
-        "price": 7.0,
-        "qty": 1,
-        "note": "",
-        "modifiers": []
-      },
-      {
-        "name": "Chips (Large Bag)",
-        "price": 3.0,
-        "qty": 2,
-        "note": "",
-        "modifiers": []
-      },
-      {
-        "name": "Chocolate Bar",
-        "price": 2.0,
-        "qty": 1,
-        "note": "",
-        "modifiers": []
-      }
-    ],
-    "subtotal": 15.0,
-    "tax_amount": 1.2,
-    "tip_amount": 3.0,
-    "service_charge_amount": 0.0,
-    "discount_code": null,
-    "discount_amount": 0.0,
-    "total": 19.2,
-    "notes": "",
-    "item_notes": {},
-    "table_number": 6,
-    "delivery_address": null,
-    "customer_email": ""
-  },
-  {
-    "order_id": 13,
-    "status": "pending",
-    "claimed_by": null,
-    "claimed_at": null,
-    "completed_at": null,
-    "date": "2026-06-23T15:20:49.079151",
-    "user": "1111",
-    "payment": "cash",
-    "payment_splits": [
-      {
-        "method": "cash",
-        "amount": 15.5
-      }
-    ],
-    "items": [
-      {
-        "name": "Hamburger - Normal",
-        "price": 6.0,
-        "qty": 1,
-        "note": "",
-        "modifiers": []
-      },
-      {
-        "name": "Coke",
-        "price": 3.0,
-        "qty": 1,
-        "note": "",
-        "modifiers": []
-      }
-    ],
-    "subtotal": 9.0,
-    "tax_amount": 0.72,
-    "tip_amount": 1.8,
-    "service_charge_amount": 0.0,
-    "discount_code": null,
-    "discount_amount": 0.0,
-    "total": 11.52,
-    "notes": "",
-    "item_notes": {},
-    "table_number": 7,
-    "delivery_address": null,
-    "customer_email": ""
-  },
-  {
-    "order_id": 14,
-    "status": "refunded",
-    "claimed_by": null,
-    "claimed_at": null,
-    "completed_at": null,
-    "date": "2026-06-23T15:24:45.846255",
-    "user": null,
-    "payment": "Cash",
-    "payment_splits": null,
-    "items": [
-      {
-        "name": "TestItem \ud83c\udf89",
-        "price": 1.99,
-        "qty": 1
-      }
-    ],
-    "subtotal": 1.99,
-    "tax_amount": 0.0,
-    "tip_amount": 0.0,
-    "service_charge_amount": 0.0,
-    "discount_code": null,
-    "discount_amount": 0.0,
-    "total": 1.99,
-    "notes": "",
-    "item_notes": {},
-    "table_number": null,
-    "delivery_address": null,
-    "customer_email": "",
-    "refund_reason": "Test order - cleanup",
-    "refunded_at": "2026-06-23T15:25:05.514736",
-    "refunded_by": "1111"
-  },
-  {
-    "order_id": 15,
-    "status": "pending",
-    "claimed_by": null,
-    "claimed_at": null,
-    "completed_at": null,
-    "date": "2026-06-23T16:13:57.203135",
-    "user": null,
-    "payment": "Cash",
-    "payment_splits": null,
-    "items": [
-      {
-        "name": "Coke",
-        "category": "Drinks",
-        "price": 8.45,
-        "quantity": 1,
-        "modifiers": []
-      },
-      {
-        "name": "Taco",
-        "category": "Foods",
-        "price": 15.99,
-        "quantity": 1,
-        "modifiers": []
-      },
-      {
-        "name": "Cookie",
-        "category": "Snacks",
-        "price": 6.78,
-        "quantity": 1,
-        "modifiers": []
-      },
-      {
-        "name": "Nuts",
-        "category": "Snacks",
-        "price": 5.65,
-        "quantity": 3,
-        "modifiers": []
-      },
-      {
-        "name": "Burger",
-        "category": "Foods",
-        "price": 12.15,
-        "quantity": 1,
-        "modifiers": []
-      },
-      {
-        "name": "Salad",
-        "category": "Foods",
-        "price": 4.28,
-        "quantity": 1,
-        "modifiers": []
-      },
-      {
-        "name": "Chips",
-        "category": "Snacks",
-        "price": 15.75,
-        "quantity": 1,
-        "modifiers": []
-      },
-      {
-        "name": "Cookie",
-        "category": "Snacks",
-        "price": 11.45,
-        "quantity": 1,
-        "modifiers": []
-      },
-      {
-        "name": "Coke",
-        "category": "Drinks",
-        "price": 8.99,
-        "quantity": 3,
-        "modifiers": []
-      },
-      {
-        "name": "Fries",
-        "category": "Foods",
-        "price": 7.08,
-        "quantity": 3,
-        "modifiers": []
-      },
-      {
-        "name": "Fries",
-        "category": "Foods",
-        "price": 10.23,
-        "quantity": 1,
-        "modifiers": []
-      },
-      {
-        "name": "Pepsi",
-        "category": "Drinks",
-        "price": 9.9,
-        "quantity": 3,
-        "modifiers": []
-      },
-      {
-        "name": "Salad",
-        "category": "Foods",
-        "price": 8.67,
-        "quantity": 2,
-        "modifiers": []
-      },
-      {
-        "name": "Salad",
-        "category": "Foods",
-        "price": 3.33,
-        "quantity": 2,
-        "modifiers": []
-      },
-      {
-        "name": "Coffee",
-        "category": "Drinks",
-        "price": 4.26,
-        "quantity": 2,
-        "modifiers": []
-      },
-      {
-        "name": "Pizza",
-        "category": "Foods",
-        "price": 8.14,
-        "quantity": 3,
-        "modifiers": []
-      },
-      {
-        "name": "Candy",
-        "category": "Snacks",
-        "price": 9.86,
-        "quantity": 2,
-        "modifiers": []
-      },
-      {
-        "name": "Chips",
-        "category": "Snacks",
-        "price": 6.08,
-        "quantity": 1,
-        "modifiers": []
-      },
-      {
-        "name": "Juice",
-        "category": "Drinks",
-        "price": 4.09,
-        "quantity": 1,
-        "modifiers": []
-      },
-      {
-        "name": "Taco",
-        "category": "Foods",
-        "price": 4.99,
-        "quantity": 1,
-        "modifiers": []
-      },
-      {
-        "name": "Pizza",
-        "category": "Foods",
-        "price": 2.66,
-        "quantity": 1,
-        "modifiers": []
-      },
-      {
-        "name": "Salad",
-        "category": "Foods",
-        "price": 2.61,
-        "quantity": 2,
-        "modifiers": []
-      },
-      {
-        "name": "Salad",
-        "category": "Foods",
-        "price": 12.24,
-        "quantity": 2,
-        "modifiers": []
-      },
-      {
-        "name": "Salad",
-        "category": "Foods",
-        "price": 9.58,
-        "quantity": 2,
-        "modifiers": []
-      },
-      {
-        "name": "Water",
-        "category": "Drinks",
-        "price": 4.37,
-        "quantity": 1,
-        "modifiers": []
-      },
-      {
-        "name": "Juice",
-        "category": "Drinks",
-        "price": 4.47,
-        "quantity": 1,
-        "modifiers": []
-      },
-      {
-        "name": "Burger",
-        "category": "Foods",
-        "price": 14.59,
-        "quantity": 1,
-        "modifiers": []
-      },
-      {
-        "name": "Cookie",
-        "category": "Snacks",
-        "price": 4.01,
-        "quantity": 2,
-        "modifiers": []
-      },
-      {
-        "name": "Pretzel",
-        "category": "Snacks",
-        "price": 7.3,
-        "quantity": 1,
-        "modifiers": []
-      },
-      {
-        "name": "Salad",
-        "category": "Foods",
-        "price": 15.31,
-        "quantity": 2,
-        "modifiers": []
-      },
-      {
-        "name": "Fries",
-        "category": "Foods",
-        "price": 4.74,
-        "quantity": 1,
-        "modifiers": []
-      },
-      {
-        "name": "Candy",
-        "category": "Snacks",
-        "price": 9.86,
-        "quantity": 2,
-        "modifiers": []
-      },
-      {
-        "name": "Pretzel",
-        "category": "Snacks",
-        "price": 11.28,
-        "quantity": 2,
-        "modifiers": []
-      },
-      {
-        "name": "Pepsi",
-        "category": "Drinks",
-        "price": 13.0,
-        "quantity": 2,
-        "modifiers": []
-      },
-      {
-        "name": "Pepsi",
-        "category": "Drinks",
-        "price": 4.8,
-        "quantity": 2,
-        "modifiers": []
-      },
-      {
-        "name": "Candy",
-        "category": "Snacks",
-        "price": 11.75,
-        "quantity": 2,
-        "modifiers": []
-      },
-      {
-        "name": "Cookie",
-        "category": "Snacks",
-        "price": 15.8,
-        "quantity": 2,
-        "modifiers": []
-      },
-      {
-        "name": "Pretzel",
-        "category": "Snacks",
-        "price": 4.89,
-        "quantity": 3,
-        "modifiers": []
-      },
-      {
-        "name": "Pepsi",
-        "category": "Drinks",
-        "price": 12.47,
-        "quantity": 2,
-        "modifiers": []
-      },
-      {
-        "name": "Nuts",
-        "category": "Snacks",
-        "price": 7.26,
-        "quantity": 1,
-        "modifiers": []
-      },
-      {
-        "name": "Candy",
-        "category": "Snacks",
-        "price": 3.52,
-        "quantity": 1,
-        "modifiers": []
-      },
-      {
-        "name": "Chips",
-        "category": "Snacks",
-        "price": 13.43,
-        "quantity": 3,
-        "modifiers": []
-      },
-      {
-        "name": "Candy",
-        "category": "Snacks",
-        "price": 5.58,
-        "quantity": 1,
-        "modifiers": []
-      },
-      {
-        "name": "Pepsi",
-        "category": "Drinks",
-        "price": 14.69,
-        "quantity": 1,
-        "modifiers": []
-      },
-      {
-        "name": "Salad",
-        "category": "Foods",
-        "price": 13.6,
-        "quantity": 1,
-        "modifiers": []
-      },
-      {
-        "name": "Fries",
-        "category": "Foods",
-        "price": 5.97,
-        "quantity": 3,
-        "modifiers": []
-      },
-      {
-        "name": "Chips",
-        "category": "Snacks",
-        "price": 8.89,
-        "quantity": 1,
-        "modifiers": []
-      },
-      {
-        "name": "Pretzel",
-        "category": "Snacks",
-        "price": 13.77,
-        "quantity": 3,
-        "modifiers": []
-      },
-      {
-        "name": "Water",
-        "category": "Drinks",
-        "price": 5.18,
-        "quantity": 1,
-        "modifiers": []
-      },
-      {
-        "name": "Chips",
-        "category": "Snacks",
-        "price": 5.79,
-        "quantity": 1,
-        "modifiers": []
-      }
-    ],
-    "subtotal": 429.53,
-    "tax_amount": 0.0,
-    "tip_amount": 0.0,
-    "service_charge_amount": 0.0,
-    "discount_code": null,
-    "discount_amount": 0.0,
-    "total": 734.0,
-    "notes": "",
-    "item_notes": {},
-    "table_number": null,
-    "delivery_address": null,
-    "customer_email": ""
-  },
-  {
-    "order_id": 16,
-    "status": "pending",
-    "claimed_by": null,
-    "claimed_at": null,
-    "completed_at": null,
-    "date": "2026-06-23T17:56:30.609578",
-    "user": "5678",
-    "payment": "Cash",
-    "payment_splits": null,
-    "items": [
-      {
-        "name": "Hamburger - Normal",
-        "price": 6,
-        "qty": 2
-      },
-      {
-        "name": "Coke",
-        "price": 3,
-        "qty": 1
-      }
-    ],
-    "subtotal": 15.0,
-    "tax_amount": 1.2,
-    "tip_amount": 3.0,
-    "service_charge_amount": 0.0,
-    "discount_code": "SAVE10",
-    "discount_amount": 1.5,
-    "total": 17.7,
-    "notes": "Table 1 first order",
-    "item_notes": {},
-    "table_number": 1,
-    "delivery_address": null,
-    "customer_email": ""
-  },
-  {
-    "order_id": 17,
-    "status": "pending",
-    "claimed_by": null,
-    "claimed_at": null,
-    "completed_at": null,
-    "date": "2026-06-23T17:56:30.668998",
-    "user": "5678",
-    "payment": "Card",
-    "payment_splits": null,
-    "items": [
-      {
-        "name": "Hotdog - Loaded",
-        "price": 7,
-        "qty": 2
-      },
-      {
-        "name": "Lemonade",
-        "price": 3,
-        "qty": 1
-      }
-    ],
-    "subtotal": 17.0,
-    "tax_amount": 1.36,
-    "tip_amount": 0.0,
-    "service_charge_amount": 0.0,
-    "discount_code": null,
-    "discount_amount": 0.0,
-    "total": 18.36,
-    "notes": "",
-    "item_notes": {},
-    "table_number": 1,
-    "delivery_address": null,
-    "customer_email": ""
-  },
-  {
-    "order_id": 18,
-    "status": "pending",
-    "claimed_by": null,
-    "claimed_at": null,
-    "completed_at": null,
-    "date": "2026-06-23T17:56:30.728899",
-    "user": "5678",
-    "payment": "Cash",
-    "payment_splits": null,
-    "items": [
-      {
-        "name": "Taco - Beef & Cheese",
-        "price": 7,
-        "qty": 2
-      },
-      {
-        "name": "Water Bottle",
-        "price": 2,
-        "qty": 1
-      }
-    ],
-    "subtotal": 16.0,
-    "tax_amount": 1.28,
-    "tip_amount": 4.0,
-    "service_charge_amount": 0.0,
-    "discount_code": null,
-    "discount_amount": 0.0,
-    "total": 21.28,
-    "notes": "",
-    "item_notes": {},
-    "table_number": 2,
-    "delivery_address": null,
-    "customer_email": ""
-  },
-  {
-    "order_id": 19,
-    "status": "pending",
-    "claimed_by": null,
-    "claimed_at": null,
-    "completed_at": null,
-    "date": "2026-06-23T17:56:30.790418",
-    "user": "5678",
-    "payment": "Card",
-    "payment_splits": null,
-    "items": [
-      {
-        "name": "Hamburger - All the Fixings",
-        "price": 8,
-        "qty": 1
-      },
-      {
-        "name": "Chips (Large Bag)",
-        "price": 3,
-        "qty": 2
-      }
-    ],
-    "subtotal": 14.0,
-    "tax_amount": 1.12,
-    "tip_amount": 0.0,
-    "service_charge_amount": 0.0,
-    "discount_code": null,
-    "discount_amount": 0.0,
-    "total": 15.12,
-    "notes": "",
-    "item_notes": {},
-    "table_number": 2,
-    "delivery_address": null,
-    "customer_email": ""
-  },
-  {
-    "order_id": 20,
-    "status": "pending",
-    "claimed_by": null,
-    "claimed_at": null,
-    "completed_at": null,
-    "date": "2026-06-23T17:56:36.350158",
-    "user": "5678",
-    "payment": "Split (Cash $10.00, Card $7.28)",
-    "payment_splits": [
-      {
-        "method": "Cash",
-        "amount": 10.0
-      },
-      {
-        "method": "Card",
-        "amount": 7.28
-      }
-    ],
-    "items": [
-      {
-        "name": "Hotdog - Plain",
-        "price": 5,
-        "qty": 2
-      },
-      {
-        "name": "Coke",
-        "price": 3,
-        "qty": 2
-      }
-    ],
-    "subtotal": 16.0,
-    "tax_amount": 1.28,
-    "tip_amount": 0.0,
-    "service_charge_amount": 0.0,
-    "discount_code": null,
-    "discount_amount": 0.0,
-    "total": 17.28,
-    "notes": "Split payment on table 3",
-    "item_notes": {},
-    "table_number": 3,
-    "delivery_address": null,
-    "customer_email": ""
-  },
-  {
-    "order_id": 21,
-    "status": "pending",
-    "claimed_by": null,
-    "claimed_at": null,
-    "completed_at": null,
-    "date": "2026-06-23T17:56:36.398547",
-    "user": "5678",
-    "payment": "Cash",
-    "payment_splits": null,
-    "items": [
-      {
-        "name": "Taco - Chicken with Salsa",
-        "price": 7,
-        "qty": 2
-      },
-      {
-        "name": "Lemonade",
-        "price": 3,
-        "qty": 1
-      }
-    ],
-    "subtotal": 17.0,
-    "tax_amount": 1.36,
-    "tip_amount": 0.0,
-    "service_charge_amount": 0.0,
-    "discount_code": null,
-    "discount_amount": 0.0,
-    "total": 18.36,
-    "notes": "",
-    "item_notes": {},
-    "table_number": 3,
-    "delivery_address": null,
-    "customer_email": ""
-  },
-  {
-    "order_id": 22,
-    "status": "pending",
-    "claimed_by": null,
-    "claimed_at": null,
-    "completed_at": null,
-    "date": "2026-06-23T17:56:36.447043",
-    "user": "5678",
-    "payment": "Card",
-    "payment_splits": null,
-    "items": [
-      {
-        "name": "Hamburger - Normal",
-        "price": 6,
-        "qty": 1,
-        "modifiers": {
-          "Size": "Large"
-        }
-      },
-      {
-        "name": "Water Bottle",
-        "price": 2,
-        "qty": 2
-      }
-    ],
-    "subtotal": 10.0,
-    "tax_amount": 0.8,
-    "tip_amount": 0.0,
-    "service_charge_amount": 1.5,
-    "discount_code": null,
-    "discount_amount": 0.0,
-    "total": 12.3,
-    "notes": "",
-    "item_notes": {},
-    "table_number": 4,
-    "delivery_address": null,
-    "customer_email": ""
-  },
-  {
-    "order_id": 23,
-    "status": "refunded",
-    "claimed_by": null,
-    "claimed_at": null,
-    "completed_at": null,
-    "date": "2026-06-23T17:56:36.494715",
-    "user": "5678",
-    "payment": "Cash",
-    "payment_splits": null,
-    "items": [
-      {
-        "name": "Chips (Large Bag)",
-        "price": 3,
-        "qty": 1
-      },
-      {
-        "name": "Coke",
-        "price": 3,
-        "qty": 2
-      }
-    ],
-    "subtotal": 9.0,
-    "tax_amount": 0.72,
-    "tip_amount": 0.0,
-    "service_charge_amount": 0.0,
-    "discount_code": null,
-    "discount_amount": 0.0,
-    "total": 9.72,
-    "notes": "",
-    "item_notes": {},
-    "table_number": 4,
-    "delivery_address": null,
-    "customer_email": "",
-    "refund_reason": "Customer double-ordered chips and Coke",
-    "refunded_at": "2026-06-23T17:57:38.277971",
-    "refunded_by": "1111"
-  },
-  {
-    "order_id": 24,
-    "status": "pending",
-    "claimed_by": null,
-    "claimed_at": null,
-    "completed_at": null,
-    "date": "2026-06-23T17:56:39.994682",
-    "user": "5678",
-    "payment": "Cash",
-    "payment_splits": null,
-    "items": [
-      {
-        "name": "Hamburger - Normal",
-        "price": 6,
-        "qty": 1
-      },
-      {
-        "name": "Mixed Nuts (Small Pack)",
-        "price": 4,
-        "qty": 1
-      }
-    ],
-    "subtotal": 10.0,
-    "tax_amount": 0.8,
-    "tip_amount": 5.0,
-    "service_charge_amount": 0.0,
-    "discount_code": null,
-    "discount_amount": 0.0,
-    "total": 15.8,
-    "notes": "",
-    "item_notes": {},
-    "table_number": 5,
-    "delivery_address": null,
-    "customer_email": ""
-  },
-  {
-    "order_id": 25,
-    "status": "pending",
-    "claimed_by": null,
-    "claimed_at": null,
-    "completed_at": null,
-    "date": "2026-06-23T17:56:40.049926",
-    "user": "5678",
-    "payment": "Card",
-    "payment_splits": null,
-    "items": [
-      {
-        "name": "Hotdog - Loaded",
-        "price": 7,
-        "qty": 1
-      },
-      {
-        "name": "Granola Bar",
-        "price": 2,
-        "qty": 1
-      }
-    ],
-    "subtotal": 9.0,
-    "tax_amount": 0.72,
-    "tip_amount": 0.0,
-    "service_charge_amount": 0.0,
-    "discount_code": null,
-    "discount_amount": 0.0,
-    "total": 9.72,
-    "notes": "",
-    "item_notes": {},
-    "table_number": 5,
-    "delivery_address": null,
-    "customer_email": ""
-  },
-  {
-    "order_id": 26,
-    "status": "refunded",
-    "claimed_by": null,
-    "claimed_at": null,
-    "completed_at": null,
-    "date": "2026-06-23T18:32:26.911814",
-    "user": "1111",
-    "payment": "Cash",
-    "payment_splits": null,
-    "items": [
-      {
-        "name": "Hamburger - Normal",
-        "price": 6,
-        "qty": 2,
-        "category": "Foods"
-      },
-      {
-        "name": "Hotdog - Loaded",
-        "price": 7,
-        "qty": 1,
-        "category": "Foods"
-      },
-      {
-        "name": "Coke",
-        "price": 2,
-        "qty": 3,
-        "category": "Drinks"
-      }
-    ],
-    "subtotal": 25.0,
-    "tax_amount": 2.5,
-    "tip_amount": 0.0,
-    "service_charge_amount": 0.0,
-    "discount_code": null,
-    "discount_amount": 0.0,
-    "total": 27.5,
-    "notes": "",
-    "item_notes": {},
-    "table_number": 5,
-    "delivery_address": null,
-    "customer_email": "",
-    "refund_reason": "Customer changed mind - walkthrough test",
-    "refunded_at": "2026-06-23T18:32:39.633651",
-    "refunded_by": "1111"
-  },
-  {
-    "order_id": 27,
-    "local_id": "test-001",
-    "status": "pending",
-    "claimed_by": null,
-    "claimed_at": null,
-    "completed_at": null,
-    "date": "2026-06-23T19:18:44.179372",
-    "user": "1111",
-    "payment": "Cash",
-    "payment_splits": null,
-    "items": [
-      {
-        "name": "Test Item",
-        "price": 9.99,
-        "qty": 2
-      }
-    ],
-    "subtotal": 19.98,
-    "tax_amount": 1.6,
-    "tip_amount": 3.0,
-    "service_charge_amount": 0.0,
-    "discount_code": null,
-    "discount_amount": 0.0,
-    "total": 24.58,
-    "notes": "Test offline order",
-    "item_notes": {},
-    "table_number": 5,
-    "delivery_address": null
-  },
-  {
-    "order_id": 28,
-    "local_id": "test-002",
-    "status": "pending",
-    "claimed_by": null,
-    "claimed_at": null,
-    "completed_at": null,
-    "date": "2026-06-23T19:18:44.195169",
-    "user": "1111",
-    "payment": "Split (Cash $10.00, Card $9.20)",
-    "payment_splits": [
-      {
-        "method": "Cash",
-        "amount": 10.0
-      },
-      {
-        "method": "Card",
-        "amount": 9.2
-      }
-    ],
-    "items": [
-      {
-        "name": "Pizza",
-        "price": 15.0,
-        "qty": 1
-      }
-    ],
-    "subtotal": 15.0,
-    "tax_amount": 1.2,
-    "tip_amount": 3.0,
-    "service_charge_amount": 0.0,
-    "discount_code": null,
-    "discount_amount": 0.0,
-    "total": 19.2,
-    "notes": "Split payment test",
-    "item_notes": {},
-    "table_number": 3,
-    "delivery_address": null
-  },
-  {
-    "order_id": 29,
-    "local_id": "bulk-000",
-    "status": "pending",
-    "claimed_by": null,
-    "claimed_at": null,
-    "completed_at": null,
-    "date": "2026-06-23T19:18:57.427233",
-    "user": "1111",
-    "payment": "Card",
-    "payment_splits": null,
-    "items": [
-      {
-        "name": "Item 0",
-        "price": 5.0,
-        "qty": 1
-      }
-    ],
-    "subtotal": 5.0,
-    "tax_amount": 0.4,
-    "tip_amount": 1.0,
-    "service_charge_amount": 0.0,
-    "discount_code": null,
-    "discount_amount": 0.0,
-    "total": 6.4,
-    "notes": "Bulk test order 0",
-    "item_notes": {},
-    "table_number": 10,
-    "delivery_address": null
-  },
-  {
-    "order_id": 30,
-    "local_id": "bulk-001",
-    "status": "pending",
-    "claimed_by": null,
-    "claimed_at": null,
-    "completed_at": null,
-    "date": "2026-06-23T19:18:57.431900",
-    "user": "1111",
-    "payment": "Card",
-    "payment_splits": null,
-    "items": [
-      {
-        "name": "Item 1",
-        "price": 5.0,
-        "qty": 1
-      }
-    ],
-    "subtotal": 5.0,
-    "tax_amount": 0.4,
-    "tip_amount": 1.0,
-    "service_charge_amount": 0.0,
-    "discount_code": null,
-    "discount_amount": 0.0,
-    "total": 6.4,
-    "notes": "Bulk test order 1",
-    "item_notes": {},
-    "table_number": 11,
-    "delivery_address": null
-  },
-  {
-    "order_id": 31,
-    "local_id": "bulk-002",
-    "status": "pending",
-    "claimed_by": null,
-    "claimed_at": null,
-    "completed_at": null,
-    "date": "2026-06-23T19:18:57.435861",
-    "user": "1111",
-    "payment": "Card",
-    "payment_splits": null,
-    "items": [
-      {
-        "name": "Item 2",
-        "price": 5.0,
-        "qty": 1
-      }
-    ],
-    "subtotal": 5.0,
-    "tax_amount": 0.4,
-    "tip_amount": 1.0,
-    "service_charge_amount": 0.0,
-    "discount_code": null,
-    "discount_amount": 0.0,
-    "total": 6.4,
-    "notes": "Bulk test order 2",
-    "item_notes": {},
-    "table_number": 12,
-    "delivery_address": null
-  },
-  {
-    "order_id": 32,
-    "local_id": "bulk-003",
-    "status": "pending",
-    "claimed_by": null,
-    "claimed_at": null,
-    "completed_at": null,
-    "date": "2026-06-23T19:18:57.440530",
-    "user": "1111",
-    "payment": "Card",
-    "payment_splits": null,
-    "items": [
-      {
-        "name": "Item 3",
-        "price": 5.0,
-        "qty": 1
-      }
-    ],
-    "subtotal": 5.0,
-    "tax_amount": 0.4,
-    "tip_amount": 1.0,
-    "service_charge_amount": 0.0,
-    "discount_code": null,
-    "discount_amount": 0.0,
-    "total": 6.4,
-    "notes": "Bulk test order 3",
-    "item_notes": {},
-    "table_number": 13,
-    "delivery_address": null
-  },
-  {
-    "order_id": 33,
-    "local_id": "bulk-004",
-    "status": "pending",
-    "claimed_by": null,
-    "claimed_at": null,
-    "completed_at": null,
-    "date": "2026-06-23T19:18:57.444369",
-    "user": "1111",
-    "payment": "Card",
-    "payment_splits": null,
-    "items": [
-      {
-        "name": "Item 4",
-        "price": 5.0,
-        "qty": 1
-      }
-    ],
-    "subtotal": 5.0,
-    "tax_amount": 0.4,
-    "tip_amount": 1.0,
-    "service_charge_amount": 0.0,
-    "discount_code": null,
-    "discount_amount": 0.0,
-    "total": 6.4,
-    "notes": "Bulk test order 4",
-    "item_notes": {},
-    "table_number": 14,
-    "delivery_address": null
-  },
-  {
-    "order_id": 34,
-    "local_id": "bulk-005",
-    "status": "pending",
-    "claimed_by": null,
-    "claimed_at": null,
-    "completed_at": null,
-    "date": "2026-06-23T19:18:57.448209",
-    "user": "1111",
-    "payment": "Card",
-    "payment_splits": null,
-    "items": [
-      {
-        "name": "Item 5",
-        "price": 5.0,
-        "qty": 1
-      }
-    ],
-    "subtotal": 5.0,
-    "tax_amount": 0.4,
-    "tip_amount": 1.0,
-    "service_charge_amount": 0.0,
-    "discount_code": null,
-    "discount_amount": 0.0,
-    "total": 6.4,
-    "notes": "Bulk test order 5",
-    "item_notes": {},
-    "table_number": 15,
-    "delivery_address": null
-  },
-  {
-    "order_id": 35,
-    "local_id": "bulk-006",
-    "status": "pending",
-    "claimed_by": null,
-    "claimed_at": null,
-    "completed_at": null,
-    "date": "2026-06-23T19:18:57.451793",
-    "user": "1111",
-    "payment": "Card",
-    "payment_splits": null,
-    "items": [
-      {
-        "name": "Item 6",
-        "price": 5.0,
-        "qty": 1
-      }
-    ],
-    "subtotal": 5.0,
-    "tax_amount": 0.4,
-    "tip_amount": 1.0,
-    "service_charge_amount": 0.0,
-    "discount_code": null,
-    "discount_amount": 0.0,
-    "total": 6.4,
-    "notes": "Bulk test order 6",
-    "item_notes": {},
-    "table_number": 16,
-    "delivery_address": null
-  },
-  {
-    "order_id": 36,
-    "local_id": "bulk-007",
-    "status": "pending",
-    "claimed_by": null,
-    "claimed_at": null,
-    "completed_at": null,
-    "date": "2026-06-23T19:18:57.455255",
-    "user": "1111",
-    "payment": "Card",
-    "payment_splits": null,
-    "items": [
-      {
-        "name": "Item 7",
-        "price": 5.0,
-        "qty": 1
-      }
-    ],
-    "subtotal": 5.0,
-    "tax_amount": 0.4,
-    "tip_amount": 1.0,
-    "service_charge_amount": 0.0,
-    "discount_code": null,
-    "discount_amount": 0.0,
-    "total": 6.4,
-    "notes": "Bulk test order 7",
-    "item_notes": {},
-    "table_number": 17,
-    "delivery_address": null
-  },
-  {
-    "order_id": 37,
-    "local_id": "bulk-008",
-    "status": "pending",
-    "claimed_by": null,
-    "claimed_at": null,
-    "completed_at": null,
-    "date": "2026-06-23T19:18:57.459369",
-    "user": "1111",
-    "payment": "Card",
-    "payment_splits": null,
-    "items": [
-      {
-        "name": "Item 8",
-        "price": 5.0,
-        "qty": 1
-      }
-    ],
-    "subtotal": 5.0,
-    "tax_amount": 0.4,
-    "tip_amount": 1.0,
-    "service_charge_amount": 0.0,
-    "discount_code": null,
-    "discount_amount": 0.0,
-    "total": 6.4,
-    "notes": "Bulk test order 8",
-    "item_notes": {},
-    "table_number": 18,
-    "delivery_address": null
-  },
-  {
-    "order_id": 38,
-    "local_id": "bulk-009",
-    "status": "pending",
-    "claimed_by": null,
-    "claimed_at": null,
-    "completed_at": null,
-    "date": "2026-06-23T19:18:57.462994",
-    "user": "1111",
-    "payment": "Card",
-    "payment_splits": null,
-    "items": [
-      {
-        "name": "Item 9",
-        "price": 5.0,
-        "qty": 1
-      }
-    ],
-    "subtotal": 5.0,
-    "tax_amount": 0.4,
-    "tip_amount": 1.0,
-    "service_charge_amount": 0.0,
-    "discount_code": null,
-    "discount_amount": 0.0,
-    "total": 6.4,
-    "notes": "Bulk test order 9",
-    "item_notes": {},
-    "table_number": 19,
-    "delivery_address": null
-  },
-  {
-    "order_id": 39,
-    "local_id": "test-003",
-    "status": "pending",
-    "claimed_by": null,
-    "claimed_at": null,
-    "completed_at": null,
-    "date": "2026-06-23T19:18:57.476614",
-    "user": "1111",
-    "payment": "Cash",
-    "payment_splits": null,
-    "items": [
-      {
-        "name": "Burger",
-        "price": 12.0,
-        "qty": 1
-      }
-    ],
-    "subtotal": 12.0,
-    "tax_amount": 0.96,
-    "tip_amount": 2.0,
-    "service_charge_amount": 0.0,
-    "discount_code": null,
-    "discount_amount": 0.0,
-    "total": 14.96,
-    "notes": "",
-    "item_notes": {},
-    "table_number": null,
-    "delivery_address": null
-  },
-  {
-    "order_id": 40,
-    "local_id": "test-004",
-    "status": "pending",
-    "claimed_by": null,
-    "claimed_at": null,
-    "completed_at": null,
-    "date": "2026-06-23T19:18:57.504070",
-    "user": "1111",
-    "payment": "Card",
-    "payment_splits": null,
-    "items": [
-      {
-        "name": "Lunch Combo",
-        "price": 12.99,
-        "qty": 1,
-        "is_combo": true,
-        "child_items": [
-          {
-            "name": "Hamburger",
-            "qty": 1,
-            "price": 5.99
-          },
-          {
-            "name": "Fries",
-            "qty": 1,
-            "price": 2.99
-          },
-          {
-            "name": "Coke",
-            "qty": 1,
-            "price": 1.99
-          }
-        ]
-      }
-    ],
-    "subtotal": 12.99,
-    "tax_amount": 1.04,
-    "tip_amount": 2.0,
-    "service_charge_amount": 0.0,
-    "discount_code": null,
-    "discount_amount": 0.0,
-    "total": 16.03,
-    "notes": "",
-    "item_notes": {},
-    "table_number": 99,
-    "delivery_address": null
-  },
-  {
-    "order_id": 41,
-    "local_id": "verify-001",
-    "status": "pending",
-    "claimed_by": null,
-    "claimed_at": null,
-    "completed_at": null,
-    "date": "2026-06-23T19:19:59.277173",
-    "user": "1111",
-    "payment": "Cash",
-    "payment_splits": null,
-    "items": [
-      {
-        "name": "Test Item",
-        "price": 9.99,
-        "qty": 2
-      }
-    ],
-    "subtotal": 19.98,
-    "customer_email": "test@example.com",
-    "tax_amount": 1.6,
-    "tip_amount": 3.0,
-    "service_charge_amount": 0.0,
-    "discount_code": null,
-    "discount_amount": 0.0,
-    "total": 24.58,
-    "notes": "",
-    "item_notes": {},
-    "table_number": 5,
-    "delivery_address": null
-  },
-  {
-    "order_id": 42,
-    "local_id": "verify-002",
-    "status": "pending",
-    "claimed_by": null,
-    "claimed_at": null,
-    "completed_at": null,
-    "date": "2026-06-23T19:19:59.287316",
-    "user": "1111",
-    "payment": "Cash",
-    "payment_splits": null,
-    "items": [
-      {
-        "name": "Burger",
-        "price": 12.0,
-        "qty": 1
-      }
-    ],
-    "subtotal": 12.0,
-    "customer_email": "loyal@test.com",
-    "tax_amount": 0.96,
-    "tip_amount": 2.0,
-    "service_charge_amount": 0.0,
-    "discount_code": null,
-    "discount_amount": 0.0,
-    "total": 14.96,
-    "notes": "",
-    "item_notes": {},
-    "table_number": null,
-    "delivery_address": null
-  },
-  {
-    "order_id": 43,
-    "local_id": "verify-003",
-    "status": "pending",
-    "claimed_by": null,
-    "claimed_at": null,
-    "completed_at": null,
-    "date": "2026-06-23T19:19:59.301643",
-    "user": "1111",
-    "payment": "Split (Cash $10.00, Card $9.20)",
-    "payment_splits": [
-      {
-        "method": "Cash",
-        "amount": 10.0
-      },
-      {
-        "method": "Card",
-        "amount": 9.2
-      }
-    ],
-    "items": [
-      {
-        "name": "Pizza",
-        "price": 15.0,
-        "qty": 1
-      }
-    ],
-    "subtotal": 15.0,
-    "customer_email": "",
-    "tax_amount": 1.2,
-    "tip_amount": 3.0,
-    "service_charge_amount": 0.0,
-    "discount_code": null,
-    "discount_amount": 0.0,
-    "total": 19.2,
-    "notes": "",
-    "item_notes": {},
-    "table_number": 3,
-    "delivery_address": null
-  },
-  {
-    "order_id": 44,
-    "local_id": "bulk-vrfy-000",
-    "status": "pending",
-    "claimed_by": null,
-    "claimed_at": null,
-    "completed_at": null,
-    "date": "2026-06-23T19:19:59.312550",
-    "user": "1111",
-    "payment": "Card",
-    "payment_splits": null,
-    "items": [
-      {
-        "name": "Item 0",
-        "price": 5.0,
-        "qty": 1
-      }
-    ],
-    "subtotal": 5.0,
-    "customer_email": "",
-    "tax_amount": 0.4,
-    "tip_amount": 1.0,
-    "service_charge_amount": 0.0,
-    "discount_code": null,
-    "discount_amount": 0.0,
-    "total": 6.4,
-    "notes": "",
-    "item_notes": {},
-    "table_number": 50,
-    "delivery_address": null
-  },
-  {
-    "order_id": 45,
-    "local_id": "bulk-vrfy-001",
-    "status": "pending",
-    "claimed_by": null,
-    "claimed_at": null,
-    "completed_at": null,
-    "date": "2026-06-23T19:19:59.316903",
-    "user": "1111",
-    "payment": "Card",
-    "payment_splits": null,
-    "items": [
-      {
-        "name": "Item 1",
-        "price": 5.0,
-        "qty": 1
-      }
-    ],
-    "subtotal": 5.0,
-    "customer_email": "",
-    "tax_amount": 0.4,
-    "tip_amount": 1.0,
-    "service_charge_amount": 0.0,
-    "discount_code": null,
-    "discount_amount": 0.0,
-    "total": 6.4,
-    "notes": "",
-    "item_notes": {},
-    "table_number": 51,
-    "delivery_address": null
-  },
-  {
-    "order_id": 46,
-    "local_id": "bulk-vrfy-002",
-    "status": "pending",
-    "claimed_by": null,
-    "claimed_at": null,
-    "completed_at": null,
-    "date": "2026-06-23T19:19:59.322014",
-    "user": "1111",
-    "payment": "Card",
-    "payment_splits": null,
-    "items": [
-      {
-        "name": "Item 2",
-        "price": 5.0,
-        "qty": 1
-      }
-    ],
-    "subtotal": 5.0,
-    "customer_email": "",
-    "tax_amount": 0.4,
-    "tip_amount": 1.0,
-    "service_charge_amount": 0.0,
-    "discount_code": null,
-    "discount_amount": 0.0,
-    "total": 6.4,
-    "notes": "",
-    "item_notes": {},
-    "table_number": 52,
-    "delivery_address": null
-  },
-  {
-    "order_id": 47,
-    "local_id": "bulk-vrfy-003",
-    "status": "pending",
-    "claimed_by": null,
-    "claimed_at": null,
-    "completed_at": null,
-    "date": "2026-06-23T19:19:59.326835",
-    "user": "1111",
-    "payment": "Card",
-    "payment_splits": null,
-    "items": [
-      {
-        "name": "Item 3",
-        "price": 5.0,
-        "qty": 1
-      }
-    ],
-    "subtotal": 5.0,
-    "customer_email": "",
-    "tax_amount": 0.4,
-    "tip_amount": 1.0,
-    "service_charge_amount": 0.0,
-    "discount_code": null,
-    "discount_amount": 0.0,
-    "total": 6.4,
-    "notes": "",
-    "item_notes": {},
-    "table_number": 53,
-    "delivery_address": null
-  },
-  {
-    "order_id": 48,
-    "local_id": "bulk-vrfy-004",
-    "status": "pending",
-    "claimed_by": null,
-    "claimed_at": null,
-    "completed_at": null,
-    "date": "2026-06-23T19:19:59.330941",
-    "user": "1111",
-    "payment": "Card",
-    "payment_splits": null,
-    "items": [
-      {
-        "name": "Item 4",
-        "price": 5.0,
-        "qty": 1
-      }
-    ],
-    "subtotal": 5.0,
-    "customer_email": "",
-    "tax_amount": 0.4,
-    "tip_amount": 1.0,
-    "service_charge_amount": 0.0,
-    "discount_code": null,
-    "discount_amount": 0.0,
-    "total": 6.4,
-    "notes": "",
-    "item_notes": {},
-    "table_number": 54,
-    "delivery_address": null
-  },
-  {
-    "order_id": 49,
-    "local_id": "bulk-vrfy-005",
-    "status": "pending",
-    "claimed_by": null,
-    "claimed_at": null,
-    "completed_at": null,
-    "date": "2026-06-23T19:19:59.335536",
-    "user": "1111",
-    "payment": "Card",
-    "payment_splits": null,
-    "items": [
-      {
-        "name": "Item 5",
-        "price": 5.0,
-        "qty": 1
-      }
-    ],
-    "subtotal": 5.0,
-    "customer_email": "",
-    "tax_amount": 0.4,
-    "tip_amount": 1.0,
-    "service_charge_amount": 0.0,
-    "discount_code": null,
-    "discount_amount": 0.0,
-    "total": 6.4,
-    "notes": "",
-    "item_notes": {},
-    "table_number": 55,
-    "delivery_address": null
-  },
-  {
-    "order_id": 50,
-    "local_id": "bulk-vrfy-006",
-    "status": "pending",
-    "claimed_by": null,
-    "claimed_at": null,
-    "completed_at": null,
-    "date": "2026-06-23T19:19:59.340276",
-    "user": "1111",
-    "payment": "Card",
-    "payment_splits": null,
-    "items": [
-      {
-        "name": "Item 6",
-        "price": 5.0,
-        "qty": 1
-      }
-    ],
-    "subtotal": 5.0,
-    "customer_email": "",
-    "tax_amount": 0.4,
-    "tip_amount": 1.0,
-    "service_charge_amount": 0.0,
-    "discount_code": null,
-    "discount_amount": 0.0,
-    "total": 6.4,
-    "notes": "",
-    "item_notes": {},
-    "table_number": 56,
-    "delivery_address": null
-  },
-  {
-    "order_id": 51,
-    "local_id": "bulk-vrfy-007",
-    "status": "pending",
-    "claimed_by": null,
-    "claimed_at": null,
-    "completed_at": null,
-    "date": "2026-06-23T19:19:59.345152",
-    "user": "1111",
-    "payment": "Card",
-    "payment_splits": null,
-    "items": [
-      {
-        "name": "Item 7",
-        "price": 5.0,
-        "qty": 1
-      }
-    ],
-    "subtotal": 5.0,
-    "customer_email": "",
-    "tax_amount": 0.4,
-    "tip_amount": 1.0,
-    "service_charge_amount": 0.0,
-    "discount_code": null,
-    "discount_amount": 0.0,
-    "total": 6.4,
-    "notes": "",
-    "item_notes": {},
-    "table_number": 57,
-    "delivery_address": null
-  },
-  {
-    "order_id": 52,
-    "local_id": "bulk-vrfy-008",
-    "status": "pending",
-    "claimed_by": null,
-    "claimed_at": null,
-    "completed_at": null,
-    "date": "2026-06-23T19:19:59.349571",
-    "user": "1111",
-    "payment": "Card",
-    "payment_splits": null,
-    "items": [
-      {
-        "name": "Item 8",
-        "price": 5.0,
-        "qty": 1
-      }
-    ],
-    "subtotal": 5.0,
-    "customer_email": "",
-    "tax_amount": 0.4,
-    "tip_amount": 1.0,
-    "service_charge_amount": 0.0,
-    "discount_code": null,
-    "discount_amount": 0.0,
-    "total": 6.4,
-    "notes": "",
-    "item_notes": {},
-    "table_number": 58,
-    "delivery_address": null
-  },
-  {
-    "order_id": 53,
-    "local_id": "bulk-vrfy-009",
-    "status": "pending",
-    "claimed_by": null,
-    "claimed_at": null,
-    "completed_at": null,
-    "date": "2026-06-23T19:19:59.354476",
-    "user": "1111",
-    "payment": "Card",
-    "payment_splits": null,
-    "items": [
-      {
-        "name": "Item 9",
-        "price": 5.0,
-        "qty": 1
-      }
-    ],
-    "subtotal": 5.0,
-    "customer_email": "",
-    "tax_amount": 0.4,
-    "tip_amount": 1.0,
-    "service_charge_amount": 0.0,
-    "discount_code": null,
-    "discount_amount": 0.0,
-    "total": 6.4,
-    "notes": "",
-    "item_notes": {},
-    "table_number": 59,
-    "delivery_address": null
-  },
-  {
-    "order_id": 54,
-    "local_id": "verify-004",
-    "status": "pending",
-    "claimed_by": null,
-    "claimed_at": null,
-    "completed_at": null,
-    "date": "2026-06-23T19:19:59.374008",
-    "user": "1111",
-    "payment": "Card",
-    "payment_splits": null,
-    "items": [
-      {
-        "name": "Lunch Combo",
-        "price": 12.99,
-        "qty": 1,
-        "is_combo": true,
-        "child_items": [
-          {
-            "name": "Hamburger",
-            "qty": 1,
-            "price": 5.99
-          },
-          {
-            "name": "Fries",
-            "qty": 1,
-            "price": 2.99
-          }
-        ]
-      }
-    ],
-    "subtotal": 12.99,
-    "customer_email": "",
-    "tax_amount": 1.04,
-    "tip_amount": 2.0,
-    "service_charge_amount": 0.0,
-    "discount_code": null,
-    "discount_amount": 0.0,
-    "total": 16.03,
-    "notes": "",
-    "item_notes": {},
-    "table_number": null,
-    "delivery_address": null
-  },
-  {
-    "order_id": 55,
-    "status": "refunded",
-    "claimed_by": null,
-    "claimed_at": null,
-    "completed_at": null,
-    "date": "2026-06-23T19:22:09.915855",
-    "user": "1111",
-    "payment": {
-      "method": "cash",
-      "amount": 6.0
+    {
+        "order_id": 11,
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-23T15:18:53.590835",
+        "user": "5678",
+        "payment": "Split (cash $15.00, card $10.00)",
+        "payment_splits": [
+            {
+                "method": "cash",
+                "amount": 15.0
+            },
+            {
+                "method": "card",
+                "amount": 10.0
+            }
+        ],
+        "items": [
+            {
+                "name": "Hamburger - Normal",
+                "price": 6.0,
+                "qty": 2,
+                "note": "no onions",
+                "modifiers": [
+                    {
+                        "group": "Size",
+                        "option": "Regular"
+                    },
+                    {
+                        "group": "Extras",
+                        "option": "Extra Cheese"
+                    }
+                ]
+            },
+            {
+                "name": "Coke",
+                "price": 3.0,
+                "qty": 1,
+                "note": "",
+                "modifiers": []
+            },
+            {
+                "name": "Lemonade",
+                "price": 3.0,
+                "qty": 1,
+                "note": "",
+                "modifiers": []
+            }
+        ],
+        "subtotal": 18.0,
+        "tax_amount": 1.44,
+        "tip_amount": 3.6,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 23.04,
+        "notes": "no onions on the burger",
+        "item_notes": {},
+        "table_number": 5,
+        "delivery_address": null,
+        "customer_email": ""
     },
-    "payment_splits": null,
-    "items": [
-      {
-        "name": "Test Item SRE",
-        "price": 5.0,
-        "quantity": 1,
-        "category": "Beverages"
-      }
-    ],
-    "subtotal": 5.0,
-    "tax_amount": 0.0,
-    "tip_amount": 0.0,
-    "service_charge_amount": 0.0,
-    "discount_code": null,
-    "discount_amount": 0.0,
-    "total": 5.5,
-    "notes": "",
-    "item_notes": {},
-    "table_number": null,
-    "delivery_address": null,
-    "customer_email": "",
-    "refund_reason": "No reason provided",
-    "refunded_at": "2026-06-23T19:22:28.343724",
-    "refunded_by": "1111"
-  },
-  {
-    "order_id": 56,
-    "status": "pending",
-    "claimed_by": null,
-    "claimed_at": null,
-    "completed_at": null,
-    "date": "2026-06-23T20:15:41.809518",
-    "user": "1111",
-    "payment": "Credit Card",
-    "payment_splits": null,
-    "items": [
-      {
-        "name": "Premium Steak",
-        "price": 600.0,
-        "qty": 1
-      }
-    ],
-    "subtotal": 600.0,
-    "tax_amount": 0.0,
-    "tip_amount": 0.0,
-    "service_charge_amount": 0.0,
-    "discount_code": null,
-    "discount_amount": 0.0,
-    "total": 600.0,
-    "notes": "",
-    "item_notes": {},
-    "table_number": null,
-    "delivery_address": null,
-    "customer_email": ""
-  }
+    {
+        "order_id": 12,
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-23T15:19:17.767399",
+        "user": "1111",
+        "payment": "card",
+        "payment_splits": [
+            {
+                "method": "card",
+                "amount": 18.0
+            }
+        ],
+        "items": [
+            {
+                "name": "Hotdog - Loaded",
+                "price": 7.0,
+                "qty": 1,
+                "note": "",
+                "modifiers": []
+            },
+            {
+                "name": "Chips (Large Bag)",
+                "price": 3.0,
+                "qty": 2,
+                "note": "",
+                "modifiers": []
+            },
+            {
+                "name": "Chocolate Bar",
+                "price": 2.0,
+                "qty": 1,
+                "note": "",
+                "modifiers": []
+            }
+        ],
+        "subtotal": 15.0,
+        "tax_amount": 1.2,
+        "tip_amount": 3.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 19.2,
+        "notes": "",
+        "item_notes": {},
+        "table_number": 6,
+        "delivery_address": null,
+        "customer_email": ""
+    },
+    {
+        "order_id": 13,
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-23T15:20:49.079151",
+        "user": "1111",
+        "payment": "cash",
+        "payment_splits": [
+            {
+                "method": "cash",
+                "amount": 15.5
+            }
+        ],
+        "items": [
+            {
+                "name": "Hamburger - Normal",
+                "price": 6.0,
+                "qty": 1,
+                "note": "",
+                "modifiers": []
+            },
+            {
+                "name": "Coke",
+                "price": 3.0,
+                "qty": 1,
+                "note": "",
+                "modifiers": []
+            }
+        ],
+        "subtotal": 9.0,
+        "tax_amount": 0.72,
+        "tip_amount": 1.8,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 11.52,
+        "notes": "",
+        "item_notes": {},
+        "table_number": 7,
+        "delivery_address": null,
+        "customer_email": ""
+    },
+    {
+        "order_id": 14,
+        "status": "refunded",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-23T15:24:45.846255",
+        "user": null,
+        "payment": "Cash",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "TestItem \ud83c\udf89",
+                "price": 1.99,
+                "qty": 1
+            }
+        ],
+        "subtotal": 1.99,
+        "tax_amount": 0.0,
+        "tip_amount": 0.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 1.99,
+        "notes": "",
+        "item_notes": {},
+        "table_number": null,
+        "delivery_address": null,
+        "customer_email": "",
+        "refund_reason": "Test order - cleanup",
+        "refunded_at": "2026-06-23T15:25:05.514736",
+        "refunded_by": "1111"
+    },
+    {
+        "order_id": 15,
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-23T16:13:57.203135",
+        "user": null,
+        "payment": "Cash",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Coke",
+                "category": "Drinks",
+                "price": 8.45,
+                "quantity": 1,
+                "modifiers": []
+            },
+            {
+                "name": "Taco",
+                "category": "Foods",
+                "price": 15.99,
+                "quantity": 1,
+                "modifiers": []
+            },
+            {
+                "name": "Cookie",
+                "category": "Snacks",
+                "price": 6.78,
+                "quantity": 1,
+                "modifiers": []
+            },
+            {
+                "name": "Nuts",
+                "category": "Snacks",
+                "price": 5.65,
+                "quantity": 3,
+                "modifiers": []
+            },
+            {
+                "name": "Burger",
+                "category": "Foods",
+                "price": 12.15,
+                "quantity": 1,
+                "modifiers": []
+            },
+            {
+                "name": "Salad",
+                "category": "Foods",
+                "price": 4.28,
+                "quantity": 1,
+                "modifiers": []
+            },
+            {
+                "name": "Chips",
+                "category": "Snacks",
+                "price": 15.75,
+                "quantity": 1,
+                "modifiers": []
+            },
+            {
+                "name": "Cookie",
+                "category": "Snacks",
+                "price": 11.45,
+                "quantity": 1,
+                "modifiers": []
+            },
+            {
+                "name": "Coke",
+                "category": "Drinks",
+                "price": 8.99,
+                "quantity": 3,
+                "modifiers": []
+            },
+            {
+                "name": "Fries",
+                "category": "Foods",
+                "price": 7.08,
+                "quantity": 3,
+                "modifiers": []
+            },
+            {
+                "name": "Fries",
+                "category": "Foods",
+                "price": 10.23,
+                "quantity": 1,
+                "modifiers": []
+            },
+            {
+                "name": "Pepsi",
+                "category": "Drinks",
+                "price": 9.9,
+                "quantity": 3,
+                "modifiers": []
+            },
+            {
+                "name": "Salad",
+                "category": "Foods",
+                "price": 8.67,
+                "quantity": 2,
+                "modifiers": []
+            },
+            {
+                "name": "Salad",
+                "category": "Foods",
+                "price": 3.33,
+                "quantity": 2,
+                "modifiers": []
+            },
+            {
+                "name": "Coffee",
+                "category": "Drinks",
+                "price": 4.26,
+                "quantity": 2,
+                "modifiers": []
+            },
+            {
+                "name": "Pizza",
+                "category": "Foods",
+                "price": 8.14,
+                "quantity": 3,
+                "modifiers": []
+            },
+            {
+                "name": "Candy",
+                "category": "Snacks",
+                "price": 9.86,
+                "quantity": 2,
+                "modifiers": []
+            },
+            {
+                "name": "Chips",
+                "category": "Snacks",
+                "price": 6.08,
+                "quantity": 1,
+                "modifiers": []
+            },
+            {
+                "name": "Juice",
+                "category": "Drinks",
+                "price": 4.09,
+                "quantity": 1,
+                "modifiers": []
+            },
+            {
+                "name": "Taco",
+                "category": "Foods",
+                "price": 4.99,
+                "quantity": 1,
+                "modifiers": []
+            },
+            {
+                "name": "Pizza",
+                "category": "Foods",
+                "price": 2.66,
+                "quantity": 1,
+                "modifiers": []
+            },
+            {
+                "name": "Salad",
+                "category": "Foods",
+                "price": 2.61,
+                "quantity": 2,
+                "modifiers": []
+            },
+            {
+                "name": "Salad",
+                "category": "Foods",
+                "price": 12.24,
+                "quantity": 2,
+                "modifiers": []
+            },
+            {
+                "name": "Salad",
+                "category": "Foods",
+                "price": 9.58,
+                "quantity": 2,
+                "modifiers": []
+            },
+            {
+                "name": "Water",
+                "category": "Drinks",
+                "price": 4.37,
+                "quantity": 1,
+                "modifiers": []
+            },
+            {
+                "name": "Juice",
+                "category": "Drinks",
+                "price": 4.47,
+                "quantity": 1,
+                "modifiers": []
+            },
+            {
+                "name": "Burger",
+                "category": "Foods",
+                "price": 14.59,
+                "quantity": 1,
+                "modifiers": []
+            },
+            {
+                "name": "Cookie",
+                "category": "Snacks",
+                "price": 4.01,
+                "quantity": 2,
+                "modifiers": []
+            },
+            {
+                "name": "Pretzel",
+                "category": "Snacks",
+                "price": 7.3,
+                "quantity": 1,
+                "modifiers": []
+            },
+            {
+                "name": "Salad",
+                "category": "Foods",
+                "price": 15.31,
+                "quantity": 2,
+                "modifiers": []
+            },
+            {
+                "name": "Fries",
+                "category": "Foods",
+                "price": 4.74,
+                "quantity": 1,
+                "modifiers": []
+            },
+            {
+                "name": "Candy",
+                "category": "Snacks",
+                "price": 9.86,
+                "quantity": 2,
+                "modifiers": []
+            },
+            {
+                "name": "Pretzel",
+                "category": "Snacks",
+                "price": 11.28,
+                "quantity": 2,
+                "modifiers": []
+            },
+            {
+                "name": "Pepsi",
+                "category": "Drinks",
+                "price": 13.0,
+                "quantity": 2,
+                "modifiers": []
+            },
+            {
+                "name": "Pepsi",
+                "category": "Drinks",
+                "price": 4.8,
+                "quantity": 2,
+                "modifiers": []
+            },
+            {
+                "name": "Candy",
+                "category": "Snacks",
+                "price": 11.75,
+                "quantity": 2,
+                "modifiers": []
+            },
+            {
+                "name": "Cookie",
+                "category": "Snacks",
+                "price": 15.8,
+                "quantity": 2,
+                "modifiers": []
+            },
+            {
+                "name": "Pretzel",
+                "category": "Snacks",
+                "price": 4.89,
+                "quantity": 3,
+                "modifiers": []
+            },
+            {
+                "name": "Pepsi",
+                "category": "Drinks",
+                "price": 12.47,
+                "quantity": 2,
+                "modifiers": []
+            },
+            {
+                "name": "Nuts",
+                "category": "Snacks",
+                "price": 7.26,
+                "quantity": 1,
+                "modifiers": []
+            },
+            {
+                "name": "Candy",
+                "category": "Snacks",
+                "price": 3.52,
+                "quantity": 1,
+                "modifiers": []
+            },
+            {
+                "name": "Chips",
+                "category": "Snacks",
+                "price": 13.43,
+                "quantity": 3,
+                "modifiers": []
+            },
+            {
+                "name": "Candy",
+                "category": "Snacks",
+                "price": 5.58,
+                "quantity": 1,
+                "modifiers": []
+            },
+            {
+                "name": "Pepsi",
+                "category": "Drinks",
+                "price": 14.69,
+                "quantity": 1,
+                "modifiers": []
+            },
+            {
+                "name": "Salad",
+                "category": "Foods",
+                "price": 13.6,
+                "quantity": 1,
+                "modifiers": []
+            },
+            {
+                "name": "Fries",
+                "category": "Foods",
+                "price": 5.97,
+                "quantity": 3,
+                "modifiers": []
+            },
+            {
+                "name": "Chips",
+                "category": "Snacks",
+                "price": 8.89,
+                "quantity": 1,
+                "modifiers": []
+            },
+            {
+                "name": "Pretzel",
+                "category": "Snacks",
+                "price": 13.77,
+                "quantity": 3,
+                "modifiers": []
+            },
+            {
+                "name": "Water",
+                "category": "Drinks",
+                "price": 5.18,
+                "quantity": 1,
+                "modifiers": []
+            },
+            {
+                "name": "Chips",
+                "category": "Snacks",
+                "price": 5.79,
+                "quantity": 1,
+                "modifiers": []
+            }
+        ],
+        "subtotal": 429.53,
+        "tax_amount": 0.0,
+        "tip_amount": 0.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 734.0,
+        "notes": "",
+        "item_notes": {},
+        "table_number": null,
+        "delivery_address": null,
+        "customer_email": ""
+    },
+    {
+        "order_id": 16,
+        "status": "completed",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": "2026-06-23T23:51:12.725528",
+        "date": "2026-06-23T17:56:30.609578",
+        "user": "5678",
+        "payment": "Cash",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Hamburger - Normal",
+                "price": 6,
+                "qty": 2
+            },
+            {
+                "name": "Coke",
+                "price": 3,
+                "qty": 1
+            }
+        ],
+        "subtotal": 15.0,
+        "tax_amount": 1.2,
+        "tip_amount": 3.0,
+        "service_charge_amount": 0.0,
+        "discount_code": "SAVE10",
+        "discount_amount": 1.5,
+        "total": 17.7,
+        "notes": "Table 1 first order",
+        "item_notes": {},
+        "table_number": 1,
+        "delivery_address": null,
+        "customer_email": "",
+        "tab_checkout": true,
+        "tab_checkout_at": "2026-06-23T23:51:12.725528",
+        "tab_checkout_by": "1234",
+        "tab_checkout_notes": ""
+    },
+    {
+        "order_id": 17,
+        "status": "completed",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": "2026-06-23T23:51:12.725528",
+        "date": "2026-06-23T17:56:30.668998",
+        "user": "5678",
+        "payment": "Cash",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Hotdog - Loaded",
+                "price": 7,
+                "qty": 2
+            },
+            {
+                "name": "Lemonade",
+                "price": 3,
+                "qty": 1
+            }
+        ],
+        "subtotal": 17.0,
+        "tax_amount": 1.36,
+        "tip_amount": 0.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 18.36,
+        "notes": "",
+        "item_notes": {},
+        "table_number": 1,
+        "delivery_address": null,
+        "customer_email": "",
+        "tab_checkout": true,
+        "tab_checkout_at": "2026-06-23T23:51:12.725528",
+        "tab_checkout_by": "1234",
+        "tab_checkout_notes": ""
+    },
+    {
+        "order_id": 18,
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-23T17:56:30.728899",
+        "user": "5678",
+        "payment": "Cash",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Taco - Beef & Cheese",
+                "price": 7,
+                "qty": 2
+            },
+            {
+                "name": "Water Bottle",
+                "price": 2,
+                "qty": 1
+            }
+        ],
+        "subtotal": 16.0,
+        "tax_amount": 1.28,
+        "tip_amount": 4.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 21.28,
+        "notes": "",
+        "item_notes": {},
+        "table_number": 2,
+        "delivery_address": null,
+        "customer_email": ""
+    },
+    {
+        "order_id": 19,
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-23T17:56:30.790418",
+        "user": "5678",
+        "payment": "Card",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Hamburger - All the Fixings",
+                "price": 8,
+                "qty": 1
+            },
+            {
+                "name": "Chips (Large Bag)",
+                "price": 3,
+                "qty": 2
+            }
+        ],
+        "subtotal": 14.0,
+        "tax_amount": 1.12,
+        "tip_amount": 0.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 15.12,
+        "notes": "",
+        "item_notes": {},
+        "table_number": 2,
+        "delivery_address": null,
+        "customer_email": ""
+    },
+    {
+        "order_id": 20,
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-23T17:56:36.350158",
+        "user": "5678",
+        "payment": "Split (Cash $10.00, Card $7.28)",
+        "payment_splits": [
+            {
+                "method": "Cash",
+                "amount": 10.0
+            },
+            {
+                "method": "Card",
+                "amount": 7.28
+            }
+        ],
+        "items": [
+            {
+                "name": "Hotdog - Plain",
+                "price": 5,
+                "qty": 2
+            },
+            {
+                "name": "Coke",
+                "price": 3,
+                "qty": 2
+            }
+        ],
+        "subtotal": 16.0,
+        "tax_amount": 1.28,
+        "tip_amount": 0.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 17.28,
+        "notes": "Split payment on table 3",
+        "item_notes": {},
+        "table_number": 3,
+        "delivery_address": null,
+        "customer_email": ""
+    },
+    {
+        "order_id": 21,
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-23T17:56:36.398547",
+        "user": "5678",
+        "payment": "Cash",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Taco - Chicken with Salsa",
+                "price": 7,
+                "qty": 2
+            },
+            {
+                "name": "Lemonade",
+                "price": 3,
+                "qty": 1
+            }
+        ],
+        "subtotal": 17.0,
+        "tax_amount": 1.36,
+        "tip_amount": 0.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 18.36,
+        "notes": "",
+        "item_notes": {},
+        "table_number": 3,
+        "delivery_address": null,
+        "customer_email": ""
+    },
+    {
+        "order_id": 22,
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-23T17:56:36.447043",
+        "user": "5678",
+        "payment": "Card",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Hamburger - Normal",
+                "price": 6,
+                "qty": 1,
+                "modifiers": {
+                    "Size": "Large"
+                }
+            },
+            {
+                "name": "Water Bottle",
+                "price": 2,
+                "qty": 2
+            }
+        ],
+        "subtotal": 10.0,
+        "tax_amount": 0.8,
+        "tip_amount": 0.0,
+        "service_charge_amount": 1.5,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 12.3,
+        "notes": "",
+        "item_notes": {},
+        "table_number": 4,
+        "delivery_address": null,
+        "customer_email": ""
+    },
+    {
+        "order_id": 23,
+        "status": "refunded",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-23T17:56:36.494715",
+        "user": "5678",
+        "payment": "Cash",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Chips (Large Bag)",
+                "price": 3,
+                "qty": 1
+            },
+            {
+                "name": "Coke",
+                "price": 3,
+                "qty": 2
+            }
+        ],
+        "subtotal": 9.0,
+        "tax_amount": 0.72,
+        "tip_amount": 0.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 9.72,
+        "notes": "",
+        "item_notes": {},
+        "table_number": 4,
+        "delivery_address": null,
+        "customer_email": "",
+        "refund_reason": "Customer double-ordered chips and Coke",
+        "refunded_at": "2026-06-23T17:57:38.277971",
+        "refunded_by": "1111"
+    },
+    {
+        "order_id": 24,
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-23T17:56:39.994682",
+        "user": "5678",
+        "payment": "Cash",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Hamburger - Normal",
+                "price": 6,
+                "qty": 1
+            },
+            {
+                "name": "Mixed Nuts (Small Pack)",
+                "price": 4,
+                "qty": 1
+            }
+        ],
+        "subtotal": 10.0,
+        "tax_amount": 0.8,
+        "tip_amount": 5.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 15.8,
+        "notes": "",
+        "item_notes": {},
+        "table_number": 5,
+        "delivery_address": null,
+        "customer_email": ""
+    },
+    {
+        "order_id": 25,
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-23T17:56:40.049926",
+        "user": "5678",
+        "payment": "Card",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Hotdog - Loaded",
+                "price": 7,
+                "qty": 1
+            },
+            {
+                "name": "Granola Bar",
+                "price": 2,
+                "qty": 1
+            }
+        ],
+        "subtotal": 9.0,
+        "tax_amount": 0.72,
+        "tip_amount": 0.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 9.72,
+        "notes": "",
+        "item_notes": {},
+        "table_number": 5,
+        "delivery_address": null,
+        "customer_email": ""
+    },
+    {
+        "order_id": 26,
+        "status": "refunded",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-23T18:32:26.911814",
+        "user": "1111",
+        "payment": "Cash",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Hamburger - Normal",
+                "price": 6,
+                "qty": 2,
+                "category": "Foods"
+            },
+            {
+                "name": "Hotdog - Loaded",
+                "price": 7,
+                "qty": 1,
+                "category": "Foods"
+            },
+            {
+                "name": "Coke",
+                "price": 2,
+                "qty": 3,
+                "category": "Drinks"
+            }
+        ],
+        "subtotal": 25.0,
+        "tax_amount": 2.5,
+        "tip_amount": 0.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 27.5,
+        "notes": "",
+        "item_notes": {},
+        "table_number": 5,
+        "delivery_address": null,
+        "customer_email": "",
+        "refund_reason": "Customer changed mind - walkthrough test",
+        "refunded_at": "2026-06-23T18:32:39.633651",
+        "refunded_by": "1111"
+    },
+    {
+        "order_id": 27,
+        "local_id": "test-001",
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-23T19:18:44.179372",
+        "user": "1111",
+        "payment": "Cash",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Test Item",
+                "price": 9.99,
+                "qty": 2
+            }
+        ],
+        "subtotal": 19.98,
+        "tax_amount": 1.6,
+        "tip_amount": 3.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 24.58,
+        "notes": "Test offline order",
+        "item_notes": {},
+        "table_number": 5,
+        "delivery_address": null
+    },
+    {
+        "order_id": 28,
+        "local_id": "test-002",
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-23T19:18:44.195169",
+        "user": "1111",
+        "payment": "Split (Cash $10.00, Card $9.20)",
+        "payment_splits": [
+            {
+                "method": "Cash",
+                "amount": 10.0
+            },
+            {
+                "method": "Card",
+                "amount": 9.2
+            }
+        ],
+        "items": [
+            {
+                "name": "Pizza",
+                "price": 15.0,
+                "qty": 1
+            }
+        ],
+        "subtotal": 15.0,
+        "tax_amount": 1.2,
+        "tip_amount": 3.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 19.2,
+        "notes": "Split payment test",
+        "item_notes": {},
+        "table_number": 3,
+        "delivery_address": null
+    },
+    {
+        "order_id": 29,
+        "local_id": "bulk-000",
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-23T19:18:57.427233",
+        "user": "1111",
+        "payment": "Card",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Item 0",
+                "price": 5.0,
+                "qty": 1
+            }
+        ],
+        "subtotal": 5.0,
+        "tax_amount": 0.4,
+        "tip_amount": 1.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 6.4,
+        "notes": "Bulk test order 0",
+        "item_notes": {},
+        "table_number": 10,
+        "delivery_address": null
+    },
+    {
+        "order_id": 30,
+        "local_id": "bulk-001",
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-23T19:18:57.431900",
+        "user": "1111",
+        "payment": "Card",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Item 1",
+                "price": 5.0,
+                "qty": 1
+            }
+        ],
+        "subtotal": 5.0,
+        "tax_amount": 0.4,
+        "tip_amount": 1.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 6.4,
+        "notes": "Bulk test order 1",
+        "item_notes": {},
+        "table_number": 11,
+        "delivery_address": null
+    },
+    {
+        "order_id": 31,
+        "local_id": "bulk-002",
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-23T19:18:57.435861",
+        "user": "1111",
+        "payment": "Card",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Item 2",
+                "price": 5.0,
+                "qty": 1
+            }
+        ],
+        "subtotal": 5.0,
+        "tax_amount": 0.4,
+        "tip_amount": 1.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 6.4,
+        "notes": "Bulk test order 2",
+        "item_notes": {},
+        "table_number": 12,
+        "delivery_address": null
+    },
+    {
+        "order_id": 32,
+        "local_id": "bulk-003",
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-23T19:18:57.440530",
+        "user": "1111",
+        "payment": "Card",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Item 3",
+                "price": 5.0,
+                "qty": 1
+            }
+        ],
+        "subtotal": 5.0,
+        "tax_amount": 0.4,
+        "tip_amount": 1.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 6.4,
+        "notes": "Bulk test order 3",
+        "item_notes": {},
+        "table_number": 13,
+        "delivery_address": null
+    },
+    {
+        "order_id": 33,
+        "local_id": "bulk-004",
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-23T19:18:57.444369",
+        "user": "1111",
+        "payment": "Card",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Item 4",
+                "price": 5.0,
+                "qty": 1
+            }
+        ],
+        "subtotal": 5.0,
+        "tax_amount": 0.4,
+        "tip_amount": 1.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 6.4,
+        "notes": "Bulk test order 4",
+        "item_notes": {},
+        "table_number": 14,
+        "delivery_address": null
+    },
+    {
+        "order_id": 34,
+        "local_id": "bulk-005",
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-23T19:18:57.448209",
+        "user": "1111",
+        "payment": "Card",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Item 5",
+                "price": 5.0,
+                "qty": 1
+            }
+        ],
+        "subtotal": 5.0,
+        "tax_amount": 0.4,
+        "tip_amount": 1.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 6.4,
+        "notes": "Bulk test order 5",
+        "item_notes": {},
+        "table_number": 15,
+        "delivery_address": null
+    },
+    {
+        "order_id": 35,
+        "local_id": "bulk-006",
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-23T19:18:57.451793",
+        "user": "1111",
+        "payment": "Card",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Item 6",
+                "price": 5.0,
+                "qty": 1
+            }
+        ],
+        "subtotal": 5.0,
+        "tax_amount": 0.4,
+        "tip_amount": 1.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 6.4,
+        "notes": "Bulk test order 6",
+        "item_notes": {},
+        "table_number": 16,
+        "delivery_address": null
+    },
+    {
+        "order_id": 36,
+        "local_id": "bulk-007",
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-23T19:18:57.455255",
+        "user": "1111",
+        "payment": "Card",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Item 7",
+                "price": 5.0,
+                "qty": 1
+            }
+        ],
+        "subtotal": 5.0,
+        "tax_amount": 0.4,
+        "tip_amount": 1.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 6.4,
+        "notes": "Bulk test order 7",
+        "item_notes": {},
+        "table_number": 17,
+        "delivery_address": null
+    },
+    {
+        "order_id": 37,
+        "local_id": "bulk-008",
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-23T19:18:57.459369",
+        "user": "1111",
+        "payment": "Card",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Item 8",
+                "price": 5.0,
+                "qty": 1
+            }
+        ],
+        "subtotal": 5.0,
+        "tax_amount": 0.4,
+        "tip_amount": 1.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 6.4,
+        "notes": "Bulk test order 8",
+        "item_notes": {},
+        "table_number": 18,
+        "delivery_address": null
+    },
+    {
+        "order_id": 38,
+        "local_id": "bulk-009",
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-23T19:18:57.462994",
+        "user": "1111",
+        "payment": "Card",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Item 9",
+                "price": 5.0,
+                "qty": 1
+            }
+        ],
+        "subtotal": 5.0,
+        "tax_amount": 0.4,
+        "tip_amount": 1.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 6.4,
+        "notes": "Bulk test order 9",
+        "item_notes": {},
+        "table_number": 19,
+        "delivery_address": null
+    },
+    {
+        "order_id": 39,
+        "local_id": "test-003",
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-23T19:18:57.476614",
+        "user": "1111",
+        "payment": "Cash",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Burger",
+                "price": 12.0,
+                "qty": 1
+            }
+        ],
+        "subtotal": 12.0,
+        "tax_amount": 0.96,
+        "tip_amount": 2.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 14.96,
+        "notes": "",
+        "item_notes": {},
+        "table_number": null,
+        "delivery_address": null
+    },
+    {
+        "order_id": 40,
+        "local_id": "test-004",
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-23T19:18:57.504070",
+        "user": "1111",
+        "payment": "Card",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Lunch Combo",
+                "price": 12.99,
+                "qty": 1,
+                "is_combo": true,
+                "child_items": [
+                    {
+                        "name": "Hamburger",
+                        "qty": 1,
+                        "price": 5.99
+                    },
+                    {
+                        "name": "Fries",
+                        "qty": 1,
+                        "price": 2.99
+                    },
+                    {
+                        "name": "Coke",
+                        "qty": 1,
+                        "price": 1.99
+                    }
+                ]
+            }
+        ],
+        "subtotal": 12.99,
+        "tax_amount": 1.04,
+        "tip_amount": 2.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 16.03,
+        "notes": "",
+        "item_notes": {},
+        "table_number": 99,
+        "delivery_address": null
+    },
+    {
+        "order_id": 41,
+        "local_id": "verify-001",
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-23T19:19:59.277173",
+        "user": "1111",
+        "payment": "Cash",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Test Item",
+                "price": 9.99,
+                "qty": 2
+            }
+        ],
+        "subtotal": 19.98,
+        "customer_email": "test@example.com",
+        "tax_amount": 1.6,
+        "tip_amount": 3.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 24.58,
+        "notes": "",
+        "item_notes": {},
+        "table_number": 5,
+        "delivery_address": null
+    },
+    {
+        "order_id": 42,
+        "local_id": "verify-002",
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-23T19:19:59.287316",
+        "user": "1111",
+        "payment": "Cash",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Burger",
+                "price": 12.0,
+                "qty": 1
+            }
+        ],
+        "subtotal": 12.0,
+        "customer_email": "loyal@test.com",
+        "tax_amount": 0.96,
+        "tip_amount": 2.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 14.96,
+        "notes": "",
+        "item_notes": {},
+        "table_number": null,
+        "delivery_address": null
+    },
+    {
+        "order_id": 43,
+        "local_id": "verify-003",
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-23T19:19:59.301643",
+        "user": "1111",
+        "payment": "Split (Cash $10.00, Card $9.20)",
+        "payment_splits": [
+            {
+                "method": "Cash",
+                "amount": 10.0
+            },
+            {
+                "method": "Card",
+                "amount": 9.2
+            }
+        ],
+        "items": [
+            {
+                "name": "Pizza",
+                "price": 15.0,
+                "qty": 1
+            }
+        ],
+        "subtotal": 15.0,
+        "customer_email": "",
+        "tax_amount": 1.2,
+        "tip_amount": 3.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 19.2,
+        "notes": "",
+        "item_notes": {},
+        "table_number": 3,
+        "delivery_address": null
+    },
+    {
+        "order_id": 44,
+        "local_id": "bulk-vrfy-000",
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-23T19:19:59.312550",
+        "user": "1111",
+        "payment": "Card",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Item 0",
+                "price": 5.0,
+                "qty": 1
+            }
+        ],
+        "subtotal": 5.0,
+        "customer_email": "",
+        "tax_amount": 0.4,
+        "tip_amount": 1.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 6.4,
+        "notes": "",
+        "item_notes": {},
+        "table_number": 50,
+        "delivery_address": null
+    },
+    {
+        "order_id": 45,
+        "local_id": "bulk-vrfy-001",
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-23T19:19:59.316903",
+        "user": "1111",
+        "payment": "Card",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Item 1",
+                "price": 5.0,
+                "qty": 1
+            }
+        ],
+        "subtotal": 5.0,
+        "customer_email": "",
+        "tax_amount": 0.4,
+        "tip_amount": 1.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 6.4,
+        "notes": "",
+        "item_notes": {},
+        "table_number": 51,
+        "delivery_address": null
+    },
+    {
+        "order_id": 46,
+        "local_id": "bulk-vrfy-002",
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-23T19:19:59.322014",
+        "user": "1111",
+        "payment": "Card",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Item 2",
+                "price": 5.0,
+                "qty": 1
+            }
+        ],
+        "subtotal": 5.0,
+        "customer_email": "",
+        "tax_amount": 0.4,
+        "tip_amount": 1.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 6.4,
+        "notes": "",
+        "item_notes": {},
+        "table_number": 52,
+        "delivery_address": null
+    },
+    {
+        "order_id": 47,
+        "local_id": "bulk-vrfy-003",
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-23T19:19:59.326835",
+        "user": "1111",
+        "payment": "Card",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Item 3",
+                "price": 5.0,
+                "qty": 1
+            }
+        ],
+        "subtotal": 5.0,
+        "customer_email": "",
+        "tax_amount": 0.4,
+        "tip_amount": 1.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 6.4,
+        "notes": "",
+        "item_notes": {},
+        "table_number": 53,
+        "delivery_address": null
+    },
+    {
+        "order_id": 48,
+        "local_id": "bulk-vrfy-004",
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-23T19:19:59.330941",
+        "user": "1111",
+        "payment": "Card",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Item 4",
+                "price": 5.0,
+                "qty": 1
+            }
+        ],
+        "subtotal": 5.0,
+        "customer_email": "",
+        "tax_amount": 0.4,
+        "tip_amount": 1.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 6.4,
+        "notes": "",
+        "item_notes": {},
+        "table_number": 54,
+        "delivery_address": null
+    },
+    {
+        "order_id": 49,
+        "local_id": "bulk-vrfy-005",
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-23T19:19:59.335536",
+        "user": "1111",
+        "payment": "Card",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Item 5",
+                "price": 5.0,
+                "qty": 1
+            }
+        ],
+        "subtotal": 5.0,
+        "customer_email": "",
+        "tax_amount": 0.4,
+        "tip_amount": 1.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 6.4,
+        "notes": "",
+        "item_notes": {},
+        "table_number": 55,
+        "delivery_address": null
+    },
+    {
+        "order_id": 50,
+        "local_id": "bulk-vrfy-006",
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-23T19:19:59.340276",
+        "user": "1111",
+        "payment": "Card",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Item 6",
+                "price": 5.0,
+                "qty": 1
+            }
+        ],
+        "subtotal": 5.0,
+        "customer_email": "",
+        "tax_amount": 0.4,
+        "tip_amount": 1.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 6.4,
+        "notes": "",
+        "item_notes": {},
+        "table_number": 56,
+        "delivery_address": null
+    },
+    {
+        "order_id": 51,
+        "local_id": "bulk-vrfy-007",
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-23T19:19:59.345152",
+        "user": "1111",
+        "payment": "Card",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Item 7",
+                "price": 5.0,
+                "qty": 1
+            }
+        ],
+        "subtotal": 5.0,
+        "customer_email": "",
+        "tax_amount": 0.4,
+        "tip_amount": 1.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 6.4,
+        "notes": "",
+        "item_notes": {},
+        "table_number": 57,
+        "delivery_address": null
+    },
+    {
+        "order_id": 52,
+        "local_id": "bulk-vrfy-008",
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-23T19:19:59.349571",
+        "user": "1111",
+        "payment": "Card",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Item 8",
+                "price": 5.0,
+                "qty": 1
+            }
+        ],
+        "subtotal": 5.0,
+        "customer_email": "",
+        "tax_amount": 0.4,
+        "tip_amount": 1.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 6.4,
+        "notes": "",
+        "item_notes": {},
+        "table_number": 58,
+        "delivery_address": null
+    },
+    {
+        "order_id": 53,
+        "local_id": "bulk-vrfy-009",
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-23T19:19:59.354476",
+        "user": "1111",
+        "payment": "Card",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Item 9",
+                "price": 5.0,
+                "qty": 1
+            }
+        ],
+        "subtotal": 5.0,
+        "customer_email": "",
+        "tax_amount": 0.4,
+        "tip_amount": 1.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 6.4,
+        "notes": "",
+        "item_notes": {},
+        "table_number": 59,
+        "delivery_address": null
+    },
+    {
+        "order_id": 54,
+        "local_id": "verify-004",
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-23T19:19:59.374008",
+        "user": "1111",
+        "payment": "Card",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Lunch Combo",
+                "price": 12.99,
+                "qty": 1,
+                "is_combo": true,
+                "child_items": [
+                    {
+                        "name": "Hamburger",
+                        "qty": 1,
+                        "price": 5.99
+                    },
+                    {
+                        "name": "Fries",
+                        "qty": 1,
+                        "price": 2.99
+                    }
+                ]
+            }
+        ],
+        "subtotal": 12.99,
+        "customer_email": "",
+        "tax_amount": 1.04,
+        "tip_amount": 2.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 16.03,
+        "notes": "",
+        "item_notes": {},
+        "table_number": null,
+        "delivery_address": null
+    },
+    {
+        "order_id": 55,
+        "status": "refunded",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-23T19:22:09.915855",
+        "user": "1111",
+        "payment": {
+            "method": "cash",
+            "amount": 6.0
+        },
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Test Item SRE",
+                "price": 5.0,
+                "quantity": 1,
+                "category": "Beverages"
+            }
+        ],
+        "subtotal": 5.0,
+        "tax_amount": 0.0,
+        "tip_amount": 0.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 5.5,
+        "notes": "",
+        "item_notes": {},
+        "table_number": null,
+        "delivery_address": null,
+        "customer_email": "",
+        "refund_reason": "No reason provided",
+        "refunded_at": "2026-06-23T19:22:28.343724",
+        "refunded_by": "1111"
+    },
+    {
+        "order_id": 56,
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-23T20:15:41.809518",
+        "user": "1111",
+        "payment": "Credit Card",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Premium Steak",
+                "price": 600.0,
+                "qty": 1
+            }
+        ],
+        "subtotal": 600.0,
+        "tax_amount": 0.0,
+        "tip_amount": 0.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 600.0,
+        "notes": "",
+        "item_notes": {},
+        "table_number": null,
+        "delivery_address": null,
+        "customer_email": ""
+    },
+    {
+        "order_id": 58,
+        "status": "refunded",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-24T00:07:13.795857",
+        "user": null,
+        "payment": "Cash",
+        "payment_splits": null,
+        "items": [
+            {
+                "id": 1,
+                "name": "Test Item",
+                "price": 5.0,
+                "quantity": 1
+            }
+        ],
+        "subtotal": 5.0,
+        "tax_amount": 0.0,
+        "tip_amount": 0.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 5.0,
+        "notes": "",
+        "item_notes": {},
+        "table_number": null,
+        "delivery_address": null,
+        "customer_email": "",
+        "refund_reason": "Reliability test",
+        "refunded_at": "2026-06-24T00:07:18.453978",
+        "refunded_by": "1111"
+    }
 ]

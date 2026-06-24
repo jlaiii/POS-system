@@ -355,7 +355,7 @@ New `tickets.json` data store. Each ticket:
 
 - [x] worker-2 **Year-to-date (YTD) earnings card** — Summary card at top of My Pay showing YTD gross pay, YTD hours, average hours/week, average hourly rate. Added avg_hours_per_week and avg_hourly_rate to backend YTD response, 2 new stat cards in frontend with i18n EN+ES. [worker-2]
 - [x] worker-1 **Multi-rate support** — Per-shift pay rate override: `pay_rate` stored on each shift record at clock-out, used in all pay calculations (pay period, my pay, PDF, CSV, pay stub). Per-shift rate visible in timesheet shift tables and employee pay history. New `new_pay_rate` param in clock/edit endpoint for admin overrides. Shift edit modal includes pay rate field. Effective rate (weighted average) shown in employee cards with star indicator when multiple rates active. Backward compatible.
-- [~] worker-2 **Pay stub email delivery** — Auto-email pay stub PDF to employee when admin marks a pay period as "paid".
+- [x] worker-2 **Pay stub email delivery** — Auto-email pay stub PDF to employee when admin marks a pay period as "paid". Added `email` field to user model (add_user, update_email endpoint, display + edit in user management). New `POST /api/timesheet/pay_period/mark_paid` endpoint generates per-employee pay stub HTML and sends via SMTP (reuses existing email config). Frontend: 📧 Email button in user management, 📧 Email Pay Stubs & Mark Paid button after approval finalization, paid status badge in approval section. i18n compatible. Backward compatible.
 - [ ] **Tip tracking in My Pay** — Aggregate tip data per pay period.
 
 ### Priority: LOW

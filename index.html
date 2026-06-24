@@ -1638,6 +1638,7 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
               <input type="text" id="addUserName" placeholder="User name"/>
               <select id="addUserRole"><option value="user">User</option><option value="admin">Admin</option><option value="cook">Cook</option><option value="owner">Owner</option></select>
               <input type="number" id="addUserPayRate" placeholder="Pay rate ($/hr)" step="0.25" min="0" style="max-width:140px;" inputmode="decimal" pattern="[0-9]*" />
+              <input type="email" id="addUserEmail" placeholder="Email (for pay stubs)" style="max-width:200px;" inputmode="email" />
               <input type="time" id="addUserSchedStart" style="max-width:150px;" title="Scheduled start time (optional)"/>
               <button class="accent" onclick="addUser()">Add</button>
             </div>
@@ -1862,6 +1863,7 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
                   <button id="tsBtnApprovalSubmit" class="accent" onclick="submitTsPeriodApproval()" style="display:none;font-size:13px;padding:8px 16px;min-height:40px;">📋 Submit for Approval</button>
                   <button id="tsBtnApprovalApprove" class="outline" onclick="approveTsMyShifts()" style="display:none;font-size:13px;padding:8px 16px;min-height:40px;">✅ Approve My Shifts</button>
                   <button id="tsBtnApprovalFinalize" class="accent" onclick="finalizeTsPeriodApproval()" style="display:none;font-size:13px;padding:8px 16px;min-height:40px;">✅ Finalize Approval</button>
+                  <button id="tsBtnMarkPaid" class="accent" onclick="markPayPeriodPaid()" style="display:none;font-size:13px;padding:8px 16px;min-height:40px;">📧 Email Pay Stubs & Mark Paid</button>
                   <button id="tsBtnApprovalUnlock" class="danger" onclick="unlockTsPeriod()" style="display:none;font-size:13px;padding:8px 16px;min-height:40px;">🔓 Unlock (Owner Only)</button>
                 </div>
               </div>
@@ -9142,6 +9144,7 @@ async function loadUsers() {
       const twofaBadge = u.totp_enabled
         ? '<span style="color:#2ecc71;font-weight:600;">' + t('twofa.enabled') + '</span>'
         : '<span style="color:var(--text2);font-style:italic;">' + t('twofa.not_setup') + '</span>';
+      const userEmail = u.email ? escHtml(u.email) : '<span style="color:var(--text2);font-style:italic;">Not set</span>';
       let twofaBtns = '';
       if (perms.includes('manage_users') && u.totp_enabled) {
         twofaBtns = `<button class="outline" onclick="disable2fa('${escJs(id)}')" style="font-size:12px;padding:4px 10px;min-height:36px;" title="${t('twofa.disable_btn')}">${t('twofa.disable_btn')}</button>
@@ -9159,9 +9162,10 @@ async function loadUsers() {
         clearLockoutBtn = `<button class="outline" onclick="clearLockout('${escJs(id)}')" style="font-size:12px;padding:4px 10px;min-height:36px;color:#e74c3c;border-color:#e74c3c;" title="${t('user.clear_lockout_btn')}">${t('user.clear_lockout_btn')}</button>`;
       }
       return `<div class="user-entry">
-        <div class="ue-info"><strong>${escHtml(u.name)}</strong> — ID: ${escHtml(id)} <span class="ue-role">(${u.role})</span>${u.banned ? ' <span style="color:#e74c3c;font-weight:700;">🚫 Banned</span>' : ''}<br><span style="font-size:13px;color:var(--text2);">💰 Pay rate: <span id="prDisplay_${escJs(id)}">${payRate}</span></span><br><span style="font-size:13px;color:var(--text2);">${t('user.scheduled_start')} <span id="ssDisplay_${escJs(id)}">${schedStart}</span></span><br><span style="font-size:13px;color:var(--text2);">${t('twofa.status_label')} ${twofaBadge}</span>${loginAttemptStr ? '<br><span style="font-size:13px;">' + loginAttemptStr + '</span>' : ''}</div>
+        <div class="ue-info"><strong>${escHtml(u.name)}</strong> — ID: ${escHtml(id)} <span class="ue-role">(${u.role})</span>${u.banned ? ' <span style="color:#e74c3c;font-weight:700;">🚫 Banned</span>' : ''}<br><span style="font-size:13px;color:var(--text2);">💰 Pay rate: <span id="prDisplay_${escJs(id)}">${payRate}</span></span><br><span style="font-size:13px;color:var(--text2);">${t('user.scheduled_start')} <span id="ssDisplay_${escJs(id)}">${schedStart}</span></span><br><span style="font-size:13px;color:var(--text2);">${t('twofa.status_label')} ${twofaBadge}</span><br><span style="font-size:13px;color:var(--text2);">📧 Email: <span id="emailDisplay_${escJs(id)}">${userEmail}</span></span>${loginAttemptStr ? '<br><span style="font-size:13px;">' + loginAttemptStr + '</span>' : ''}</div>
         <div style="display:flex;gap:6px;align-items:center;">
           <button class="outline" onclick="editPayRate('${escJs(id)}')" style="font-size:12px;padding:4px 10px;min-height:36px;" title="${t('user.pay_rate_edit_title')}">💰 Edit Rate</button>
+          <button class="outline" onclick="editUserEmail('${escJs(id)}')" style="font-size:12px;padding:4px 10px;min-height:36px;" title="Edit email address">📧 Email</button>
           ${perms.includes('manage_users') ? `<button class="outline" onclick="resetPin('${escJs(id)}')" style="font-size:12px;padding:4px 10px;min-height:36px;" title="${t('user.reset_pin_btn')}">${t('user.reset_pin_btn')}</button>` : ''}
           ${perms.includes('manage_users') ? `<button class="outline" onclick="generateTempPin('${escJs(id)}')" style="font-size:12px;padding:4px 10px;min-height:36px;" title="${t('user.temp_pin_btn')}">${t('user.temp_pin_btn')}</button>` : ''}
           <button class="outline" onclick="editScheduledStart('${escJs(id)}')" style="font-size:12px;padding:4px 10px;min-height:36px;" title="${t('user.scheduled_start_edit_title')}">${t('user.scheduled_start_btn')}</button>
@@ -9508,6 +9512,35 @@ async function editScheduledStart(userId) {
   } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
 
+async function editUserEmail(userId) {
+  const display = document.getElementById('emailDisplay_' + userId);
+  const currentText = display ? display.textContent.trim() : '';
+  const currentEmail = currentText !== 'Not set' && currentText !== 'No establecido' ? currentText : '';
+  const newEmail = prompt('Enter email address for user ' + userId + ' (leave empty to clear):', currentEmail);
+  if (newEmail === null) return;
+  const emailStr = newEmail.trim();
+  if (emailStr && (!emailStr.includes('@') || !emailStr.includes('.'))) {
+    showToast('Invalid email address format.', 'danger');
+    return;
+  }
+  try {
+    const body = { adminPin: currentUser.id, userId };
+    if (emailStr) {
+      body.email = emailStr;
+    } else {
+      body.email = '';
+    }
+    const r = await fetch(BACKEND_URL + '/api/users/update_email', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const d = await r.json();
+    if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
+    showToast('Email address updated!', 'success');
+    loadUsers();
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
+}
+
 async function resetPin(userId) {
   const name = document.querySelector(`#userList .user-entry:has(button[onclick*="'${escJs(userId)}'"]) .ue-info strong`)?.textContent || userId;
   const newPin = prompt(t('user.reset_pin_prompt', { userId: userId }));
@@ -9569,12 +9602,14 @@ async function addUser() {
   const userName = document.getElementById('addUserName').value.trim();
   const userRole = document.getElementById('addUserRole').value;
   const payRate = document.getElementById('addUserPayRate').value.trim();
+  const userEmail = document.getElementById('addUserEmail').value.trim();
   const schedStart = document.getElementById('addUserSchedStart').value.trim();
   if (!userId || !userName) { showToast('Fill all fields', 'danger'); return; }
   if (userId.length !== 4 || !/^\d{4}$/.test(userId)) { showToast('PIN must be 4 digits', 'danger'); return; }
   try {
     const body = { adminPin: currentUser.id, userId, userName, userRole };
     if (payRate) body.payRate = parseFloat(payRate);
+    if (userEmail) body.email = userEmail;
     if (schedStart) body.scheduledStart = schedStart;
     const r = await fetch(BACKEND_URL + '/api/add_user', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -9586,6 +9621,7 @@ async function addUser() {
     document.getElementById('addUserId').value = '';
     document.getElementById('addUserName').value = '';
     document.getElementById('addUserPayRate').value = '';
+    document.getElementById('addUserEmail').value = '';
     loadUsers();
   } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
@@ -10744,6 +10780,7 @@ function renderTsApprovalStatus(approvalData, params) {
   const submitBtn = document.getElementById('tsBtnApprovalSubmit');
   const approveBtn = document.getElementById('tsBtnApprovalApprove');
   const finalizeBtn = document.getElementById('tsBtnApprovalFinalize');
+  const markPaidBtn = document.getElementById('tsBtnMarkPaid');
   const unlockBtn = document.getElementById('tsBtnApprovalUnlock');
   const empList = document.getElementById('tsApprovalEmployeeList');
 
@@ -10782,6 +10819,7 @@ function renderTsApprovalStatus(approvalData, params) {
       submitBtn.style.display = 'none';
       approveBtn.style.display = 'inline-block';
       finalizeBtn.style.display = 'none';
+      markPaidBtn.style.display = 'none';
       unlockBtn.style.display = currentUser.role === 'owner' ? 'inline-block' : 'none';
       // Show which employees have/haven't approved
       const approvedBy = currentApproval.approved_by || [];
@@ -10795,8 +10833,19 @@ function renderTsApprovalStatus(approvalData, params) {
       submitBtn.style.display = 'none';
       approveBtn.style.display = 'none';
       finalizeBtn.style.display = 'none';
+      markPaidBtn.style.display = 'inline-block';
       unlockBtn.style.display = currentUser.role === 'owner' ? 'inline-block' : 'none';
-      empList.textContent = 'Approved by: ' + (currentApproval.finalized_by_name || 'Owner') + ' on ' + (currentApproval.finalized_at ? new Date(currentApproval.finalized_at).toLocaleString() : '');
+      empList.textContent = 'Approved by: ' + (currentApproval.finalized_by_name || currentApproval.approved_by_name || 'Owner') + ' on ' + (currentApproval.finalized_at || currentApproval.approved_at ? new Date(currentApproval.finalized_at || currentApproval.approved_at).toLocaleString() : '');
+      break;
+    case 'paid':
+      badge.textContent = '✅💰 Pay period paid. Pay stubs have been emailed to employees.';
+      submitBtn.style.display = 'none';
+      approveBtn.style.display = 'none';
+      finalizeBtn.style.display = 'none';
+      markPaidBtn.style.display = 'none';
+      unlockBtn.style.display = currentUser.role === 'owner' ? 'inline-block' : 'none';
+      const paidSummary = currentApproval.pay_stub_email_summary || {};
+      empList.textContent = 'Paid on ' + (currentApproval.paid_at ? new Date(currentApproval.paid_at).toLocaleString() : '') + ' — Emails sent: ' + (paidSummary.sent || 0) + ', skipped: ' + (paidSummary.skipped || 0) + ', failed: ' + (paidSummary.failed || 0);
       break;
     default:
       section.style.display = 'none';
@@ -10847,6 +10896,34 @@ async function finalizeTsPeriodApproval() {
     showToast(data.message || 'Period finalized', r.ok ? 'success' : 'danger');
     if (r.ok) loadTimesheetDashboard();
   } catch(e) { showToast('Network error', 'danger'); }
+}
+
+/** Mark pay period as paid and email pay stubs */
+async function markPayPeriodPaid() {
+  const dateFrom = document.getElementById('tsPeriodDateFrom')?.value || '';
+  const dateTo = document.getElementById('tsPeriodDateTo')?.value || '';
+  if (!dateFrom || !dateTo) {
+    showToast('Please select a date range first.', 'danger');
+    return;
+  }
+  if (!confirm('📧 Email pay stubs to all employees in this period and mark it as paid? This action cannot be undone.')) return;
+  try {
+    const r = await fetch(BACKEND_URL + '/api/timesheet/pay_period/mark_paid', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, date_from: dateFrom, date_to: dateTo })
+    });
+    const data = await r.json();
+    if (!r.ok) { showToast('❌ ' + (data.message || 'Failed'), 'danger'); return; }
+    let msg = data.message;
+    if (data.skipped && data.skipped.length > 0) {
+      msg += ' Skipped: ' + data.skipped.map(s => s.user_name + ' (' + s.reason + ')').join(', ');
+    }
+    if (data.failed && data.failed.length > 0) {
+      msg += ' Failed: ' + data.failed.map(f => f.user_name + ' - ' + (f.error || 'unknown')).join(', ');
+    }
+    showToast('✅ ' + msg, 'success');
+    loadTimesheetDashboard();
+  } catch(e) { showToast('❌ Network error', 'danger'); }
 }
 
 /** Owner unlocks a locked period */

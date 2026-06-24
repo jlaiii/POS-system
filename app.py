@@ -1105,6 +1105,7 @@ def get_users():
             'banned_reason': user_data.get('banned_reason', ''),
             'pay_rate': user_data.get('pay_rate', None),
             'scheduled_start': user_data.get('scheduled_start', None),
+            'email': user_data.get('email', ''),
             'totp_enabled': user_data.get('totp_enabled', False),
             'pin_reset_notification': user_data.get('pin_reset_notification', None),
             'force_pin_change': user_data.get('force_pin_change', False),
@@ -2501,6 +2502,13 @@ def add_user():
     else:
         new_user_data['scheduled_start'] = None
 
+    # Store email if provided
+    email = data.get('email', '').strip()
+    if email and '@' in email and '.' in email:
+        new_user_data['email'] = email
+    else:
+        new_user_data['email'] = ''
+
     users[new_user_id] = new_user_data
     save_json_data(USERS_FILE, users)
     log_activity('add_user', admin_pin, admin_user['role'] if admin_user else 'unknown',
@@ -2638,6 +2646,49 @@ def update_user_scheduled_start():
         'message': 'Scheduled start time updated successfully.',
         'user_id': user_id,
         'scheduled_start': users[user_id]['scheduled_start']
+    })
+
+
+@app.route('/api/users/update_email', methods=['POST'])
+def update_user_email():
+    """Update email address for an existing user."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+    user_id = data.get('userId')
+    email = (data.get('email') or '').strip()
+
+    # Verify caller has manage_users permission
+    if not check_perm(admin_pin, "manage_users"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    if not user_id:
+        return jsonify({'message': 'User ID is required.'}), 400
+
+    users = load_json_data(USERS_FILE)
+
+    if user_id not in users:
+        return jsonify({'message': 'User not found.'}), 404
+
+    admin_user = users.get(admin_pin, {})
+
+    # Validate email format
+    if email and ('@' not in email or '.' not in email):
+        return jsonify({'message': 'Invalid email address format.'}), 400
+
+    old_email = users[user_id].get('email', '')
+    users[user_id]['email'] = email
+
+    save_json_data(USERS_FILE, users)
+
+    log_activity('update_email', admin_pin, admin_user.get('role', 'unknown'),
+                 {'status': 'success', 'target_user_id': user_id,
+                  'old_email': old_email, 'new_email': email,
+                  'user_name': users[user_id].get('name', 'Unknown')})
+
+    return jsonify({
+        'message': 'Email address updated successfully.',
+        'user_id': user_id,
+        'email': email
     })
 
 
@@ -10459,6 +10510,281 @@ def timesheet_approval_finalize():
             })
 
     return jsonify({'message': 'No pending approval found for this date range.'}), 404
+
+
+@app.route('/api/timesheet/pay_period/mark_paid', methods=['POST'])
+def timesheet_mark_paid():
+    """Auto-email pay stub PDFs to all employees when admin marks a pay period as paid."""
+    import smtplib
+    from email.mime.text import MIMEText
+    from email.mime.multipart import MIMEMultipart
+
+    data = request.json
+    admin_pin = data.get('adminPin')
+
+    if not check_perm(admin_pin, "view_timesheet"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    date_from = (data.get('date_from') or '').strip()
+    date_to = (data.get('date_to') or '').strip()
+
+    if not date_from or not date_to:
+        return jsonify({'message': 'date_from and date_to are required.'}), 400
+
+    # Validate email config
+    email_config = load_json_data(EMAIL_CONFIG_FILE)
+    if not isinstance(email_config, dict):
+        email_config = {"server": "", "port": 587, "username": "", "password": "", "from_addr": "", "use_tls": True, "enabled": False}
+    if not email_config.get('enabled'):
+        return jsonify({'message': 'Email sending is not configured. Go to Admin → Email Settings to set up SMTP.'}), 400
+    if not target_approval:
+        return jsonify({'message': 'No finalized approval found for this date range.'}), 400
+
+    current_status = target_approval.get('status', 'unknown')
+    if current_status != 'approved':
+        return jsonify({'message': f'Pay period must be in "approved" status first (current: {current_status}). Finalize the approval before marking as paid.'}), 400
+
+    users = load_json_data(USERS_FILE)
+    shift_log = load_json_data(SHIFT_FILE)
+    admin_user = users.get(admin_pin, {})
+    admin_name = admin_user.get('name', 'Admin')
+    pay_rate_global = admin_user.get('pay_rate') or 0
+
+    # Get all employees who worked during this period
+    def shift_in_range(entry):
+        clock_in_str = entry.get('clock_in_time', '')
+        if not clock_in_str:
+            return False
+        try:
+            dt = datetime.fromisoformat(clock_in_str)
+        except (ValueError, TypeError):
+            return False
+        if date_from:
+            try:
+                df = datetime.fromisoformat(date_from)
+                if dt < df:
+                    return False
+            except ValueError:
+                pass
+        if date_to:
+            try:
+                if 'T' not in date_to:
+                    dt_to = datetime.fromisoformat(date_to + 'T23:59:59')
+                else:
+                    dt_to = datetime.fromisoformat(date_to)
+                if dt > dt_to:
+                    return False
+            except ValueError:
+                pass
+        return True
+
+    # Group shifts by user
+    employee_shifts = {}
+    for entry in shift_log:
+        uid = entry.get('user_id', '')
+        if not uid or uid not in users:
+            continue
+        if not shift_in_range(entry):
+            continue
+        if uid not in employee_shifts:
+            employee_shifts[uid] = []
+        employee_shifts[uid].append(entry)
+
+    if not employee_shifts:
+        return jsonify({'message': 'No employees with shifts found in this pay period.'}), 400
+
+    # Generate and email pay stub for each employee with an email
+    sent = []
+    skipped = []
+    failed = []
+
+    smtp_server = email_config.get('server', '')
+    smtp_port = int(email_config.get('port', 587))
+    use_tls = email_config.get('use_tls', True)
+    smtp_username = email_config.get('username', '')
+    smtp_password = email_config.get('password', '')
+
+    for uid in employee_shifts:
+        user_data = users.get(uid, {})
+        user_email = user_data.get('email', '').strip()
+        user_name = user_data.get('name', 'Unknown')
+        user_pay_rate = user_data.get('pay_rate') or 0
+
+        if not user_email or '@' not in user_email:
+            skipped.append({'user_id': uid, 'user_name': user_name, 'reason': 'No email address set'})
+            continue
+
+        # Calculate pay period data for this employee (simplified from pay_stub_pdf)
+        user_shifts = employee_shifts[uid]
+        user_shifts.sort(key=lambda x: x.get('clock_in_time', ''))
+
+        total_paid_hours = 0.0
+        total_duration_hours = 0.0
+        total_break_hours = 0.0
+        for s in user_shifts:
+            dur = s.get('duration_hours', 0)
+            paid = s.get('paid_hours', dur)
+            total_duration_hours += dur
+            total_paid_hours += paid
+            total_break_hours += s.get('break_hours', 0)
+        total_paid_hours = round(total_paid_hours, 2)
+
+        gross_pay = 0.0
+        gross_has_rate = False
+        for s in user_shifts:
+            sp = s.get('paid_hours', s.get('duration_hours', 0))
+            sr = s.get('pay_rate') or user_pay_rate
+            if s.get('pay_rate'):
+                gross_has_rate = True
+            gross_pay += sp * sr
+        gross_pay = round(gross_pay, 2) if (user_pay_rate > 0 or gross_has_rate) else 0
+        eff_rate = round(gross_pay / total_paid_hours, 2) if (user_pay_rate > 0 or gross_has_rate) and total_paid_hours > 0 else user_pay_rate
+
+        # Build shift rows
+        shift_rows = ''
+        for s in user_shifts:
+            ci = s.get('clock_in_time', '—')
+            co = s.get('clock_out_time', '—')
+            dur = s.get('duration_hours', 0)
+            paid = s.get('paid_hours', dur)
+            bk = s.get('break_hours', 0)
+            try:
+                d = datetime.fromisoformat(ci)
+                date_str = d.strftime('%a %b %d')
+                in_str = d.strftime('%I:%M %p').lstrip('0')
+            except (ValueError, TypeError):
+                date_str = ci
+                in_str = ci
+            try:
+                if co:
+                    d_out = datetime.fromisoformat(co)
+                    out_str = d_out.strftime('%I:%M %p').lstrip('0')
+                else:
+                    out_str = '—'
+            except (ValueError, TypeError):
+                out_str = co or '—'
+            shift_rows += f'<tr><td>{date_str}</td><td>{in_str}</td><td>{out_str}</td><td style="text-align:right;">{dur:.2f}</td><td style="text-align:right;">{paid:.2f}</td><td style="text-align:right;">{bk:.2f}</td></tr>'
+
+        if not shift_rows:
+            shift_rows = '<tr><td colspan="6" style="text-align:center;color:#999;">No shifts in this period.</td></tr>'
+
+        period_label = f"{date_from} to {date_to}"
+        now_str = datetime.now().strftime('%Y-%m-%d %H:%M')
+        gross_pay_str = f'${gross_pay:,.2f}' if (user_pay_rate > 0 or gross_has_rate) else '$0.00'
+        rate_display = f'${eff_rate:.2f}/hr' if (user_pay_rate > 0 or gross_has_rate) else 'Not set'
+        rate_row = ''
+        if user_pay_rate > 0 or gross_has_rate:
+            rate_row = f'<tr><td>Effective Rate</td><td style="text-align:right;">{rate_display}</td></tr>'
+        safe_name = user_name
+        safe_id = uid
+
+        pay_stub_html = f'''<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Pay Stub — {safe_name}</title>
+<style>
+  * {{ box-sizing: border-box; }}
+  body {{ font-family: 'Segoe UI', Arial, sans-serif; font-size: 10pt; color: #222; line-height: 1.5; margin: 0; padding: 20px; }}
+  h1 {{ font-size: 20pt; margin: 0 0 4px; color: #1a1a2e; text-align: center; }}
+  .period {{ text-align: center; color: #888; font-size: 10pt; margin-bottom: 16px; }}
+  .info-box {{ display: flex; justify-content: space-between; margin-bottom: 16px; padding: 12px 14px; background: #f5f5fa; border-radius: 6px; }}
+  .info-box .lbl {{ color: #888; font-size: 8pt; text-transform: uppercase; }}
+  .info-box .val {{ font-weight: 600; font-size: 11pt; color: #1a1a2e; }}
+  table {{ width: 100%; border-collapse: collapse; margin-bottom: 16px; }}
+  th {{ background: #1a1a2e; color: #fff; padding: 7px 8px; text-align: left; font-size: 8pt; text-transform: uppercase; }}
+  td {{ padding: 6px 8px; border-bottom: 1px solid #ddd; font-size: 9pt; }}
+  tr:nth-child(even) {{ background: #f8f8fc; }}
+  .grand {{ font-weight: 700; font-size: 10pt; border-top: 2px solid #1a1a2e; color: #1a1a2e; }}
+  .footer {{ margin-top: 30px; font-size: 8pt; color: #aaa; text-align: center; }}
+</style>
+</head>
+<body>
+<h1>Pay Stub</h1>
+<div class="period">Pay Period: {period_label}</div>
+<div class="info-box">
+  <div><div class="lbl">Employee</div><div class="val">{safe_name}</div></div>
+  <div><div class="lbl">ID</div><div class="val">{safe_id}</div></div>
+  <div><div class="lbl">Rate</div><div class="val">{rate_display}</div></div>
+  <div><div class="lbl">Generated</div><div class="val">{now_str}</div></div>
+</div>
+<h3 style="font-size:11pt;color:#1a1a2e;margin:16px 0 8px;">Shift Details</h3>
+<table>
+<thead><tr><th>Date</th><th>In</th><th>Out</th><th style="text-align:right;">Dur (h)</th><th style="text-align:right;">Paid (h)</th><th style="text-align:right;">Break (h)</th></tr></thead>
+<tbody>{shift_rows}</tbody>
+</table>
+<div style="margin-top:12px;">
+<table>
+  <tr><td>Total Break Hours</td><td style="text-align:right;">{total_break_hours:.2f}</td></tr>
+  <tr><td>Total Paid Hours</td><td style="text-align:right;">{total_paid_hours:.2f}</td></tr>
+  {rate_row}
+  <tr class="grand"><td>Gross Pay</td><td style="text-align:right;">{gross_pay_str}</td></tr>
+</table>
+</div>
+<div class="footer">POS System — Pay stub for informational purposes only.</div>
+</body>
+</html>'''
+
+        # Send email
+        try:
+            msg = MIMEMultipart('alternative')
+            msg['Subject'] = f'Your Pay Stub — {period_label}'
+            msg['From'] = email_config.get('from_addr', '')
+            msg['To'] = user_email
+            msg.attach(MIMEText(f'Your pay stub for period {period_label} is attached.\n\nGross Pay: {gross_pay_str}\nTotal Paid Hours: {total_paid_hours:.2f}\n\nThank you!', 'plain'))
+            msg.attach(MIMEText(pay_stub_html, 'html'))
+
+            server = smtplib.SMTP(smtp_server, smtp_port)
+            server.ehlo()
+            if use_tls:
+                server.starttls()
+                server.ehlo()
+            if smtp_username and smtp_password:
+                server.login(smtp_username, smtp_password)
+            server.send_message(msg)
+            server.quit()
+
+            sent.append({'user_id': uid, 'user_name': user_name, 'email': user_email})
+        except smtplib.SMTPAuthenticationError:
+            failed.append({'user_id': uid, 'user_name': user_name, 'email': user_email, 'error': 'SMTP authentication failed'})
+        except smtplib.SMTPException as e:
+            failed.append({'user_id': uid, 'user_name': user_name, 'email': user_email, 'error': str(e)})
+        except Exception as e:
+            failed.append({'user_id': uid, 'user_name': user_name, 'email': user_email, 'error': str(e)})
+
+    # Update approval record to paid status
+    target_approval['status'] = 'paid'
+    target_approval['paid_at'] = datetime.now().isoformat()
+    target_approval['paid_by'] = admin_pin
+    target_approval['paid_by_name'] = admin_name
+    target_approval['pay_stub_email_summary'] = {
+        'sent': len(sent),
+        'skipped': len(skipped),
+        'failed': len(failed),
+        'sent_details': sent,
+        'skipped_details': skipped,
+        'failed_details': failed
+    }
+    save_approvals(approvals)
+
+    log_activity('pay_period_marked_paid', admin_pin, 'admin', {
+        'date_from': date_from,
+        'date_to': date_to,
+        'sent': len(sent),
+        'skipped': len(skipped),
+        'failed': len(failed),
+        'sent_list': [s['user_name'] for s in sent],
+        'skipped_list': [s['user_name'] for s in skipped],
+        'failed_list': [s['user_name'] for s in failed]
+    })
+
+    return jsonify({
+        'message': f'Pay period marked as paid. Emails sent: {len(sent)}, skipped: {len(skipped)}, failed: {len(failed)}.',
+        'sent': sent,
+        'skipped': skipped,
+        'failed': failed,
+        'total_employees': len(employee_shifts)
+    })
 
 
 @app.route('/api/timesheet/approval/unlock', methods=['POST'])

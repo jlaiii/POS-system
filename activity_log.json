@@ -4391,5 +4391,462 @@
             "clock_out_time": "2026-06-23T21:57:33.155648",
             "duration_hours": 0.0
         }
+    },
+    {
+        "timestamp": "2026-06-23T23:29:43.255059",
+        "type": "ticket_submitted",
+        "user_id": "9999",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "ticket_id": "TKT-001",
+            "type": "issue",
+            "subject": "Printer broken"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T23:30:01.703557",
+        "type": "ticket_responded",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "ticket_id": "TKT-001",
+            "action": "denied",
+            "reason": "test cleanup"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T23:32:03.262836",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T23:32:03.315095",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T23:32:13.994330",
+        "type": "clock_in",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee One",
+            "clock_in_time": "2026-06-23T23:32:13.994174",
+            "late_minutes": null,
+            "scheduled_start": null
+        }
+    },
+    {
+        "timestamp": "2026-06-23T23:32:18.058338",
+        "type": "clock_out",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee One",
+            "clock_in_time": "2026-06-23T23:32:13.994174",
+            "clock_out_time": "2026-06-23T23:32:18.057596",
+            "duration_hours": 0.0
+        }
+    },
+    {
+        "timestamp": "2026-06-23T23:39:02.553513",
+        "type": "login_failed",
+        "user_id": null,
+        "user_role": "unknown",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed",
+            "method": "pin",
+            "ip": "127.0.0.1",
+            "attempt": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-23T23:39:06.582086",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T23:39:10.378377",
+        "type": "admin_login",
+        "user_id": null,
+        "user_role": "unauthorized",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T23:39:14.704686",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T23:39:31.778172",
+        "type": "cash_drawer_open",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "session_id": "136457472ed707c1",
+            "opening_balance": 300.0
+        }
+    },
+    {
+        "timestamp": "2026-06-23T23:39:31.826244",
+        "type": "cash_drawer_transaction",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "session_id": "136457472ed707c1",
+            "type": "cash_in",
+            "amount": 150.0,
+            "reason": "Cash payment collected"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T23:39:31.869396",
+        "type": "cash_drawer_transaction",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "session_id": "136457472ed707c1",
+            "type": "cash_out",
+            "amount": 20.0,
+            "reason": "Customer change"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T23:39:31.922655",
+        "type": "cash_drawer_close",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "session_id": "136457472ed707c1",
+            "opening_balance": 300.0,
+            "expected_balance": 430.0,
+            "closing_balance": 430.0,
+            "difference": 0.0,
+            "variance_reason": ""
+        }
+    },
+    {
+        "timestamp": "2026-06-23T23:39:35.837153",
+        "type": "cash_drawer_open",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "session_id": "fcbe71bd5f2246ff",
+            "opening_balance": 200.0
+        }
+    },
+    {
+        "timestamp": "2026-06-23T23:39:35.896575",
+        "type": "cash_drawer_transaction",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "session_id": "fcbe71bd5f2246ff",
+            "type": "cash_in",
+            "amount": 50.0,
+            "reason": "Sale"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T23:39:35.950677",
+        "type": "cash_drawer_close",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "session_id": "fcbe71bd5f2246ff",
+            "opening_balance": 200.0,
+            "expected_balance": 250.0,
+            "closing_balance": 240.0,
+            "difference": -10.0,
+            "variance_reason": "Gave wrong change to customer"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T23:39:40.230071",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T23:39:48.843926",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T23:40:30.190638",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T23:41:31.991690",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T23:41:38.774666",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T23:42:40.866041",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T23:42:45.315543",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T23:42:57.918405",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T23:43:04.600836",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T23:43:16.958580",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T23:43:37.611241",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T23:44:03.189624",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T23:44:46.988859",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-23T23:51:12.714526",
+        "type": "tab_checkout_unauthorized",
+        "user_id": "9999",
+        "user_role": "unknown",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "denied",
+            "reason": "Missing pos_access permission",
+            "table_number": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-23T23:51:12.729071",
+        "type": "tab_checkout",
+        "user_id": "1234",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "table_number": 1,
+            "order_count": 2,
+            "total": 36.06,
+            "payment": "Cash"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T00:07:13.798748",
+        "type": "submit_order",
+        "user_id": null,
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 58,
+            "subtotal": 5.0,
+            "tax_amount": 0.0,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 5.0,
+            "payment_method": "Cash",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-24T00:07:18.457217",
+        "type": "refund_order",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 58,
+            "reason": "Reliability test",
+            "refunded_by_name": "Owner",
+            "order_total": 5.0,
+            "inventory_restored": []
+        }
+    },
+    {
+        "timestamp": "2026-06-24T00:55:41.637592",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T00:55:43.808705",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
     }
 ]

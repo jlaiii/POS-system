@@ -121,6 +121,42 @@
             "variance_reason": "",
             "total_cash_in": 0.0,
             "total_cash_out": 0.0
+        },
+        {
+            "id": "136457472ed707c1",
+            "opened_at": "2026-06-23T23:39:31.777581",
+            "opened_by": "1111",
+            "opened_by_name": "Owner",
+            "opening_balance": 300.0,
+            "closed_at": "2026-06-23T23:39:31.921901",
+            "closed_by": "1111",
+            "closed_by_name": "Owner",
+            "closing_balance": 430.0,
+            "expected_balance": 430.0,
+            "difference": 0.0,
+            "notes": "End of shift reconciliation",
+            "status": "closed",
+            "variance_reason": "",
+            "total_cash_in": 150.0,
+            "total_cash_out": 20.0
+        },
+        {
+            "id": "fcbe71bd5f2246ff",
+            "opened_at": "2026-06-23T23:39:35.836682",
+            "opened_by": "1111",
+            "opened_by_name": "Owner",
+            "opening_balance": 200.0,
+            "closed_at": "2026-06-23T23:39:35.950117",
+            "closed_by": "1111",
+            "closed_by_name": "Owner",
+            "closing_balance": 240.0,
+            "expected_balance": 250.0,
+            "difference": -10.0,
+            "notes": "End of shift",
+            "status": "closed",
+            "variance_reason": "Gave wrong change to customer",
+            "total_cash_in": 50.0,
+            "total_cash_out": 0.0
         }
     ],
     "transactions": [
@@ -197,6 +233,39 @@
             "amount": 50.0,
             "reason": "Test drop",
             "created_at": "2026-06-23T18:09:44.228656",
+            "created_by": "1111",
+            "created_by_name": "Owner",
+            "related_order_id": null
+        },
+        {
+            "id": "31491f3796293747",
+            "session_id": "136457472ed707c1",
+            "type": "cash_in",
+            "amount": 150.0,
+            "reason": "Cash payment collected",
+            "created_at": "2026-06-23T23:39:31.825758",
+            "created_by": "1111",
+            "created_by_name": "Owner",
+            "related_order_id": null
+        },
+        {
+            "id": "7c796b9dd2b6bf78",
+            "session_id": "136457472ed707c1",
+            "type": "cash_out",
+            "amount": 20.0,
+            "reason": "Customer change",
+            "created_at": "2026-06-23T23:39:31.868861",
+            "created_by": "1111",
+            "created_by_name": "Owner",
+            "related_order_id": null
+        },
+        {
+            "id": "8a50205e4094dfdd",
+            "session_id": "fcbe71bd5f2246ff",
+            "type": "cash_in",
+            "amount": 50.0,
+            "reason": "Sale",
+            "created_at": "2026-06-23T23:39:35.895651",
             "created_by": "1111",
             "created_by_name": "Owner",
             "related_order_id": null

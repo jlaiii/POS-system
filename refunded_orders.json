@@ -291,5 +291,45 @@
         "reason": "No reason provided",
         "refunded_at": "2026-06-23T19:22:28.343724",
         "refunded_by": "1111"
+    },
+    {
+        "order_id": 58,
+        "original_order": {
+            "order_id": 58,
+            "status": "refunded",
+            "claimed_by": null,
+            "claimed_at": null,
+            "completed_at": null,
+            "date": "2026-06-24T00:07:13.795857",
+            "user": null,
+            "payment": "Cash",
+            "payment_splits": null,
+            "items": [
+                {
+                    "id": 1,
+                    "name": "Test Item",
+                    "price": 5.0,
+                    "quantity": 1
+                }
+            ],
+            "subtotal": 5.0,
+            "tax_amount": 0.0,
+            "tip_amount": 0.0,
+            "service_charge_amount": 0.0,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 5.0,
+            "notes": "",
+            "item_notes": {},
+            "table_number": null,
+            "delivery_address": null,
+            "customer_email": "",
+            "refund_reason": "Reliability test",
+            "refunded_at": "2026-06-24T00:07:18.453978",
+            "refunded_by": "1111"
+        },
+        "reason": "Reliability test",
+        "refunded_at": "2026-06-24T00:07:18.453978",
+        "refunded_by": "1111"
     }
 ]
