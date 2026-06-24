@@ -1,7 +1,7 @@
 # POS Production Readiness Audit
-> Last run: 2026-06-23 23:45 CT
-> Overall readiness: 40% (HIGH issues: 6, MEDIUM: 6)
-> Workflow tested this run: B (Manager closing shift)
+> Last run: 2026-06-24 08:10 CT
+> Overall readiness: 42% (HIGH issues: 6, MEDIUM: 5)
+> Workflow tested this run: A (Waiter taking orders — Employee Two, tables 5 & 6, split payments, kitchen queue verified)
 
 ## BLOCKERS (can't go live with these)
 
@@ -10,6 +10,8 @@
 - [ ] **No payment method breakdown in admin_stats** — The admin_stats endpoint returns `total_sales`, `total_traffic`, `average_sale` but does NOT break down by payment method (cash vs card). When a manager closes the shift, they need to know "how much cash should be in the drawer" vs "how much was charged to cards." Currently they have to manually scan every order and add up cash payments — error-prone and time-consuming. Ordered 46 orders all show `payment: 'unknown'` because admin_stats doesn't aggregate the payment field. **Fixed this run: added cash_sales/card_sales/cash_count/card_count to admin_stats endpoint.**
 
 ## HIGH (major friction, fix ASAP)
+
+- [ ] **Zero responsive breakpoints — layout is identical on 10" tablet and 27" monitor** — The entire index.html has zero `@media (max-width:)` or `@media (min-width:)` rules in the static `<style>` section. On an iPad (768px portrait), the POS layout doesn't change at all — same grid, same spacing, same everything. The admin sub-tabs row (17+ buttons) overflows horizontally. No viewport-adaptive grid columns for items. No mobile-specific cart positioning. This is the #1 thing preventing tablet deployment. Every other restaurant POS (Toast, Square, Clover) radically changes layout between desktop and tablet. Fix: add column-count or grid-column adjustments at 768px and 1024px breakpoints, wrap admin sub-tabs to multiple rows, collapse cart to bottom sheet on narrow screens.
 
 - [ ] **`user-scalable=no` keeps coming back in viewport meta** — The viewport fix from commit `0d968ac` was later overwritten by worker-2's "mobile viewport meta tag verification" task (commit `482d35f`), which reverted `maximum-scale=5.0` back to `maximum-scale=1.0, user-scalable=no`. Workers stepping on each other's changes is a systemic issue. The correct viewport is `maximum-scale=5.0` (allows pinch-zoom for accessibility, prevents accidental zoom from the wrong gestures). **Refixed this run: restored `maximum-scale=5.0` without `user-scalable=no`.** Added note in commit message explaining WHY to prevent re-revert.
 
@@ -22,6 +24,8 @@
 - [ ] **font-size: 13px and 14px on many UI elements — too small for restaurant use** — `.perm-table` (13px), `.log-entry` (13px), `.pp-preset` (13px), `.cart-item` (14px), `.ho-meta` (13px). On a wall-mounted tablet or handheld at arm's length, 13px text is unreadable. Minimum body text should be 16px for production restaurant use. At minimum, the POS tab (most used) should have 16px everywhere.
 
 - [ ] **Scrollable containers lack `-webkit-overflow-scrolling: touch`** — While `#mainTabs` has it, the critical `#tabContent`, `#cartItems`, `#historyList`, `#kitchenQueue`, admin sections all scroll without momentum on iOS. This makes long lists feel janky and unprofessional. Add `-webkit-overflow-scrolling: touch` and `overscroll-behavior: contain` to all scrollable containers.
+
+- [ ] **`.perm-save-btn` min-height: 32px violates 48px touch target** — The permissions save button uses a hardcoded 32px min-height, far below the `--tap: 48px` variable used elsewhere. On a tablet, this button is too small to reliably tap. Also `.ts-dense-table` header font at 11px is too small for tablet readability. **Fixed this run: perm-save-btn now uses `var(--tap)`, ts-dense-table header bumped to 13px, td padding increased from 5px to 8px.**
 
 ## MEDIUM (annoying but workable)
 
@@ -48,7 +52,9 @@
 
 ## FIXED (this session)
 
-- [x] **Admin stats missing payment method breakdown** — Added `cash_sales`, `card_sales`, `other_sales`, `cash_count`, `card_count`, `other_count` fields to `/api/admin_stats` endpoint. Manager can now see "Cash: $941.56 (14 orders)" vs "Card: $869.66 (32 orders)" at a glance. Split payments are pro-rated proportionally (ratio-capped when split amounts exceed total due to discounts/tips). Also added `total_orders` field. Fix v2 corrected split attribution math. Commits: `f4fe0a7`, `c332b61`
+- [x] **`.perm-save-btn` min-height: 32px → 48px (`var(--tap)`)** — The permissions save button was the only button in the UI using a hardcoded 32px min-height, well below the `--tap: 48px` standard. Changed to `min-height: var(--tap)` with increased padding (8px 14px). Commit: [current run]
+- [x] **`.ts-dense-table` header font 11px → 13px, cell padding 5px → 8px** — The dynamically-injected timesheet dense table styles had 11px headers and 5px cell padding — unreadable on a tablet. Bumped header to 13px and padding to 8px 10px for better readability and touch spacing. Commit: [current run]
+- [x] **Workflow A tested: waiter taking orders** — Employee Two (PIN 5678) logged in, clocked in, submitted 2 orders (Table 5: 3 items with modifiers + split payment $10 cash/$7.66 card; Table 6: 3 items with loyalty lookup), verified orders appeared in kitchen queue with correct items/modifiers/table numbers/payment-splits, clocked out. All APIs functional.
 
 - [x] **Viewport `user-scalable=no` reverted by conflicting worker** — Previous fix (commit `0d968ac`) was overwritten by worker-2's "mobile viewport meta tag verification" task. Re-applied the fix: changed viewport to `maximum-scale=5.0` without `user-scalable=no`. This preserves accessibility (visually impaired staff can pinch-zoom) while preventing accidental zoom interference. The `font-size: 16px` on inputs (iOS zoom prevention) from the conflicting change was preserved. Commit: `f4fe0a7`
 

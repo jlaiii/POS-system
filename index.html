@@ -125,7 +125,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 .perm-table th, .perm-table td { padding: 8px 6px; text-align: center; border-bottom: 1px solid var(--border); }
 .perm-table th { color: var(--text2); font-size: 11px; white-space: nowrap; }
 .perm-table td:first-child { text-align: left; font-weight: 600; }
-.perm-save-btn { font-size: 12px; padding: 6px 12px; min-height: 32px; }
+.perm-save-btn { font-size: 12px; padding: 8px 14px; min-height: var(--tap); }
 
 /* ── INVENTORY BADGES ── */
 .inv-badge {
@@ -11087,10 +11087,10 @@ async function unlockTsPeriod() {
   style.id = styleId;
   style.textContent = `
     .ts-dense-table { width:100%; border-collapse:collapse; font-size:13px; }
-    .ts-dense-table th { text-align:left; padding:6px 8px; background:var(--card-alt); color:var(--text2); font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:0.3px; border-bottom:2px solid var(--border); white-space:nowrap; }
+    .ts-dense-table th { text-align:left; padding:8px 10px; background:var(--card-alt); color:var(--text2); font-weight:600; font-size:13px; text-transform:uppercase; letter-spacing:0.3px; border-bottom:2px solid var(--border); white-space:nowrap; }
     .ts-dense-table th:hover { color:var(--accent); }
     @media (hover: hover) { .ts-dense-table th:hover { color:var(--accent); } }
-    .ts-dense-table td { padding:5px 8px; border-bottom:1px solid var(--border); vertical-align:middle; white-space:nowrap; }
+    .ts-dense-table td { padding:8px 10px; border-bottom:1px solid var(--border); vertical-align:middle; white-space:nowrap; }
     .ts-dense-table tbody tr:hover { background:var(--card-alt); }
     @media (hover: hover) { .ts-dense-table tbody tr:hover { background:var(--card-alt); } }
     .badge-status { display:inline-block; margin-left:2px; font-size:12px; cursor:help; }
