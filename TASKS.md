@@ -426,7 +426,7 @@ New `tickets.json` data store. Each ticket:
 |||
 |||- [x] worker-2 **MEDIUM: Proper PWA icons + iOS meta tags** — Added 192x192 and 512x512 PNG icons (POS-themed fork+plate design in brand colors). Updated manifest.json with proper PNG icon entries alongside the SVG fallback. Added apple-mobile-web-app-capable, apple-mobile-web-app-status-bar-style (black-translucent), and apple-mobile-web-app-title meta tags to index.html head. Added apple-touch-icon link tags for both icon sizes. Enhanced sw.js to v3 with network-first navigation, cache-first static assets (icons, manifest), offline fallback to offline.html. Created offline.html with dark-theme offline notification page. Python syntax verified, manifest JSON valid, PNG icons confirmed at correct sizes. [worker-2]|
 |||
-|||- [~] worker-1 **MEDIUM: 2FA frontend setup UI — QR scan + enable flow missing**
+|||- [x] worker-1 **MEDIUM: 2FA frontend setup UI — QR scan + enable flow missing** — Added 3-step setup modal: (1) QR code display + secret key from `/api/auth/2fa/setup`, (2) 6-digit TOTP verification via `/api/auth/2fa/verify`, (3) backup codes display with "save these" warning. Header button "🔐 Setup 2FA" (or "🔒 2FA On" when enabled) for all logged-in users. Already-enabled state shows informational message without API call. Enter key auto-submits verify. Session state updated on success. Dark theme, touch-friendly. [worker-1]
 
 ## Production Readiness & Mobile Optimization (NEW — June 2026)
 
