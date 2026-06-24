@@ -250,10 +250,17 @@ def init_db():
         CREATE TABLE IF NOT EXISTS loyalty_points (
             phone TEXT PRIMARY KEY,
             name TEXT,
+            email TEXT DEFAULT '',
+            notes TEXT DEFAULT '',
+            address TEXT DEFAULT '',
             points INTEGER DEFAULT 0,
             total_earned INTEGER DEFAULT 0,
-            total_spent INTEGER DEFAULT 0,
-            last_visit TEXT
+            total_redeemed INTEGER DEFAULT 0,
+            total_spent REAL DEFAULT 0,
+            total_orders INTEGER DEFAULT 0,
+            last_visit TEXT,
+            created_at TEXT,
+            history TEXT DEFAULT '[]'
         )
     """)
 
@@ -521,6 +528,43 @@ def init_db():
 
     conn.commit()
     cursor.close()
+
+    # Run schema migrations for existing tables (adds missing columns)
+    _migrate_schemas()
+
+
+def _migrate_schemas():
+    """
+    Schema migration helper: adds missing columns to existing tables.
+    This handles the case where the CREATE TABLE IF NOT EXISTS already exists
+    but new columns were added to the schema definition in a later deploy.
+
+    Each migration is a (table, column_name, column_def) tuple.
+    Migrations are idempotent — they check if the column exists before adding it.
+    """
+    migrations = [
+        # loyalty_points: added email, notes, address, total_redeemed,
+        # total_orders, created_at, history in a schema update
+        ('loyalty_points', 'email', 'TEXT DEFAULT ""'),
+        ('loyalty_points', 'notes', 'TEXT DEFAULT ""'),
+        ('loyalty_points', 'address', 'TEXT DEFAULT ""'),
+        ('loyalty_points', 'total_redeemed', 'INTEGER DEFAULT 0'),
+        ('loyalty_points', 'total_orders', 'INTEGER DEFAULT 0'),
+        ('loyalty_points', 'created_at', 'TEXT'),
+        ('loyalty_points', 'history', 'TEXT DEFAULT "[]"'),
+    ]
+
+    for table, column, col_def in migrations:
+        try:
+            # Check if column already exists
+            rows = query(f"PRAGMA table_info(\"{table}\")")
+            existing_cols = [r['name'] for r in rows]
+            if column not in existing_cols:
+                execute(f"ALTER TABLE \"{table}\" ADD COLUMN \"{column}\" {col_def}")
+                print(f"  ℹ️  Added column {table}.{column}")
+        except Exception:
+            # Table might not exist yet — that's fine, CREATE TABLE will handle it
+            pass
 
 
 # ── Utility ───────────────────────────────────────────────────────────────
