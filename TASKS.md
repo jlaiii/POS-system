@@ -524,7 +524,7 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 
 ## New Tasks (from Audit #18 — 2026-06-24)
 
-- [ ] **HIGH: Add table reservation/booking system** — New reservation data store (reservations.json) with CRUD endpoints. Daily reservation calendar view in admin with table assignment integration. Party size, date/time range, customer contact info (name, phone, email), notes, status (pending/confirmed/seated/cancelled/no-show). Conflict detection (double-booking prevention). Floor plan integration: mark reserved tables with icon and time. Check-in flow: mark as seated. Auto-cancel past no-shows. Essential for any sit-down restaurant to manage seating capacity.
+- [~] worker-2 **HIGH: Add table reservation/booking system** — New reservation data store (reservations.json) with CRUD endpoints. Daily reservation calendar view in admin with table assignment integration. Party size, date/time range, customer contact info (name, phone, email), notes, status (pending/confirmed/seated/cancelled/no-show). Conflict detection (double-booking prevention). Floor plan integration: mark reserved tables with icon and time. Check-in flow: mark as seated. Auto-cancel past no-shows. Essential for any sit-down restaurant to manage seating capacity.
 
 - [ ] **HIGH: Add end-of-day sales summary report** — One-page closeout report from the Stats tab showing: total sales by payment method (cash/credit card/other), tips collected, taxes collected, item sales counts by category, refunds/voids, net sales, order count, average ticket size. Available as printable HTML view and PDF download via browser print. Owner needs this for daily reconciliation and bookkeeping.
 
