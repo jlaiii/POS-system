@@ -1,7 +1,13 @@
 # POS Security Tasks
-> Last run: 2026-06-24 16:45 UTC
+> Last run: 2026-06-24 18:00 UTC
 
 ## CRITICAL — LOGIN & AUTH SECURITY (check every run)
+
+### CRITICAL: Logout does not invalidate session tokens — FIXED this run
+- [x] **Invalidate session tokens on logout** — The `/api/logout` endpoint never removed sessions from `active_user_sessions`. After a user clicked "Logout", their session token remained valid indefinitely (until 8h expiry). Anyone with a stolen/intercepted token could continue using it after the user thought they were logged out.
+  - Backend: `/api/logout` now calls `logout_session()` when a `sessionToken` is provided, or removes ALL sessions for the user when no token is given.
+  - Frontend: `doLogout()` now sends `sessionToken: currentUser.sessionToken` with the logout request.
+  - Verified: session token returns 403 "Invalid session token." after logout.
 
 ### CRITICAL: Debug mode enabled in production
 - [x] **Disable debug mode** — `socketio.run(app, debug=True)` at line 8730 (original). Exposes Werkzeug debugger with remote code execution. Changed to `debug=False, allow_unsafe_werkzeug=False`.
@@ -83,6 +89,10 @@
 - [ ] **Upgrade password hashing** — `hash_password()` uses SHA-256 with random salt. Not GPU-resistant. Should use bcrypt or argon2 for proper password hashing. Not critical since passwords are only for owner login (PINs are the main auth method).
 
 ## COMPLETED (this session)
+
+### Run: 2026-06-24 18:00 UTC
+
+- [x] **Invalidate session tokens on logout** — CRITICAL: The `/api/logout` endpoint never invalidated session tokens in `active_user_sessions`. After logout, tokens remained valid until 8h expiry. Fixed backend to call `logout_session()` (or clear all sessions if no token provided), and frontend to send `sessionToken` in logout request. Verified: old token returns 403 after logout.
 
 ### Run: 2026-06-24 16:45 UTC
 

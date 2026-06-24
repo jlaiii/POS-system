@@ -6567,7 +6567,7 @@ async function doLogout() {
     try {
       await fetch(BACKEND_URL + '/api/logout', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: currentUser.id, userRole: currentUser.role })
+        body: JSON.stringify({ userId: currentUser.id, userRole: currentUser.role, sessionToken: currentUser.sessionToken || '' })
       });
     } catch(e) {}
   }

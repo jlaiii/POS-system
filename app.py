@@ -2570,8 +2570,21 @@ def logout():
     data = request.json
     user_id = data.get('userId')
     user_role = data.get('userRole')
+    session_token = data.get('sessionToken', '')  # Optional, for proper session invalidation
 
     log_activity('logout', user_id, user_role)
+
+    # Invalidate the user's session token(s)
+    if session_token:
+        # Specific session logout — invalidate just this token
+        logout_session(user_id, session_token)
+    else:
+        # No token provided — invalidate ALL sessions for this user (complete logout)
+        # This ensures that even if the token is stolen, logout will terminate all sessions
+        sessions = active_user_sessions.get(user_id, {})
+        tokens_to_remove = list(sessions.keys())
+        for token in tokens_to_remove:
+            del sessions[token]
 
     # If the user was an admin, log their work duration
     if user_id in active_admin_sessions:
