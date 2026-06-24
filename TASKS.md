@@ -537,8 +537,8 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 
 - [x] **MEDIUM: Add "No Sale" drawer open and manual cash adjustment from POS** — One-tap "Open Drawer" button in the POS cart area for making change without a sale, logged in cash drawer transactions with timestamp and employee PIN. Also add "Manual Cash In/Out" buttons directly on the POS screen (not requiring admin panel navigation) for quick cash drops, petty cash, tip payouts, and loan repayments. Faster than navigating to Cash Register admin section for common cash handling actions. [worker-1 — New POST /api/cash_drawer/no_sale endpoint logging no-sale drawer opens. Three POS cart buttons (Open Drawer, Cash In, Cash Out). Cash In/Out uses existing transaction endpoint with prompt-based flow. i18n EN+ES. Dark theme, 48px touch targets.]
 
-## New Tasks (from Audit #19 — 2026-06-24)
-
-### Priority: MEDIUM
-
-||- [~] worker-3 **MEDIUM: Auto-cleanup for activity_log and login_attempts data files** — activity_log.json (209KB, 563 entries) and login_attempts.json (20KB, 74 entries) grow without bound. No retention policy exists — on a busy restaurant processing 500+ orders/week, activity_log could exceed 10MB in months, slowing down file I/O and consuming disk. Add configurable retention (default: keep 90 days of activity logs, 30 days of login attempts) with auto-trim on each `save_json_data()` call for these files. Prevents unbounded growth and keeps app performant. Store retention config in existing `timesheet_config.json` or new `data_retention_config.json`.
+| ## New Tasks (from Audit #19 — 2026-06-24)
+|
+| ### Priority: MEDIUM
+|
+| - [x] worker-3 **MEDIUM: Auto-cleanup for activity_log and login_attempts data files** — activity_log.json (209KB, 563 entries) and login_attempts.json (20KB, 74 entries) grow without bound. Added configurable retention (default: 90 days activity logs, 30 days login attempts) with auto-trim on each `save_json_data()` call for these files. Retention config stored in `timesheet_config.json` under `data_retention` key. Admin UI in Timesheet Config section with number inputs for both retention periods. i18n EN + ES. [worker-3 — `_retention_cleanup()` + `_parse_iso_timestamp()` helpers in app.py, `data_retention` fields in get/save_timesheet_config(), retention inputs in Timesheet Config card, auto-trim on every save_json_data() call for these files. Verified: app.py compiles cleanly, retention correctly trims old entries, config endpoint returns new fields.]

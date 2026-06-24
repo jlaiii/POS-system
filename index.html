@@ -1131,7 +1131,23 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
                 </div>
                 <button class="accent" onclick="saveTimesheetConfig()" style="min-height:40px;padding:8px 16px;font-size:13px;">💾 Save Config</button>
                 <span id="tsConfigStatus" style="font-size:12px;color:#4caf50;display:none;">✅ Saved</span>
-              </div>
+                </div>
+                <!-- Data Retention Section -->
+                <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px;" id="dataRetentionSection">
+                <h5 style="margin:0 0 6px 0;font-size:13px;color:var(--accent);">🗄️ <span data-i18n="admin.retention.title">Data Retention</span></h5>
+                <p style="font-size:11px;color:var(--text2);margin:0 0 8px 0;"><span data-i18n="admin.retention.desc">Auto-cleanup old records to prevent unbounded file growth. 0 = keep forever.</span></p>
+                <div class="form-row" style="gap:12px;flex-wrap:wrap;align-items:end;">
+                <div>
+                  <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:2px;"><span data-i18n="admin.retention.activity_log">Keep activity logs (days)</span></label>
+                  <input type="number" id="retentionActivityLog" value="90" min="0" max="3650" step="1" style="width:100px;min-height:40px;font-size:14px;" inputmode="numeric" pattern="[0-9]*" title="How many days to keep activity log entries (0 = forever)">
+                </div>
+                <div>
+                  <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:2px;"><span data-i18n="admin.retention.login_attempts">Keep login attempts (days)</span></label>
+                  <input type="number" id="retentionLoginAttempts" value="30" min="0" max="3650" step="1" style="width:100px;min-height:40px;font-size:14px;" inputmode="numeric" pattern="[0-9]*" title="How many days to keep login attempt records (0 = forever)">
+                </div>
+                <span id="retentionStatus" style="font-size:12px;color:#4caf50;display:none;">✅ <span data-i18n="admin.retention.saved">Retention settings saved!</span></span>
+                </div>
+                </div>
             </div>
           </div>
           <!-- Missing clock-out alert banner -->
@@ -3856,6 +3872,12 @@ const L10N = {
     'pos.cash_out_prompt': 'Enter Cash Out amount ($):',
     'pos.amount_invalid': 'Invalid amount. Enter a positive number.',
     'pos.reason_prompt': 'Enter reason:',
+    // Data retention
+    'admin.retention.title': '🗄️ Data Retention',
+    'admin.retention.desc': 'Auto-cleanup old records to prevent unbounded file growth. 0 = keep forever.',
+    'admin.retention.activity_log': 'Keep activity logs (days)',
+    'admin.retention.login_attempts': 'Keep login attempts (days)',
+    'admin.retention.saved': 'Retention settings saved!',
   },
   es: {
     'app.title': '🍽️ Sistema POS',
@@ -4617,6 +4639,12 @@ const L10N = {
     'pos.cash_out_prompt': 'Ingrese monto de salida ($):',
     'pos.amount_invalid': 'Monto inválido. Ingrese un número positivo.',
     'pos.reason_prompt': 'Ingrese motivo:',
+    // Data retention
+    'admin.retention.title': '🗄️ Retención de Datos',
+    'admin.retention.desc': 'Limpieza automática de registros antiguos. 0 = conservar siempre.',
+    'admin.retention.activity_log': 'Conservar registros (días)',
+    'admin.retention.login_attempts': 'Conservar intentos de inicio (días)',
+    'admin.retention.saved': '¡Configuración de retención guardada!',
   }
 };
 
@@ -10861,6 +10889,10 @@ async function loadTimesheetConfig() {
     document.getElementById('tsConfigWeeklyOT').value = config.overtime_weekly_threshold || 40;
     document.getElementById('tsConfigLateGrace').value = config.late_grace_minutes || 5;
     document.getElementById('tsConfigAutoApprove').value = config.auto_approve_threshold_days !== undefined ? config.auto_approve_threshold_days : 14;
+    // Data retention fields
+    const retention = config.data_retention || {};
+    document.getElementById('retentionActivityLog').value = retention.activity_log_days !== undefined ? retention.activity_log_days : 90;
+    document.getElementById('retentionLoginAttempts').value = retention.login_attempts_days !== undefined ? retention.login_attempts_days : 30;
   } catch(e) {}
 }
 
@@ -10869,7 +10901,11 @@ async function saveTimesheetConfig() {
     overtime_daily_threshold: parseFloat(document.getElementById('tsConfigDailyOT').value) || 8,
     overtime_weekly_threshold: parseFloat(document.getElementById('tsConfigWeeklyOT').value) || 40,
     late_grace_minutes: parseInt(document.getElementById('tsConfigLateGrace').value) || 5,
-    auto_approve_threshold_days: parseInt(document.getElementById('tsConfigAutoApprove').value) || 14
+    auto_approve_threshold_days: parseInt(document.getElementById('tsConfigAutoApprove').value) || 14,
+    data_retention: {
+      activity_log_days: parseInt(document.getElementById('retentionActivityLog').value) || 90,
+      login_attempts_days: parseInt(document.getElementById('retentionLoginAttempts').value) || 30
+    }
   };
   try {
     const r = await fetch(BACKEND_URL + '/api/timesheet/config', {

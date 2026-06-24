@@ -407,12 +407,56 @@ def _data_guardian_check(filepath, data):
     return True
 
 
+def _retention_cleanup(filepath, data):
+    """Trim old entries from activity_log.json and login_attempts.json
+    based on configured retention days in timesheet_config.json.
+    Returns trimmed data (or original data if no trimming needed)."""
+    basename = os.path.basename(filepath)
+    if basename not in (ACTIVITY_LOG_FILE, LOGIN_ATTEMPTS_FILE):
+        return data
+    if not isinstance(data, list) or len(data) == 0:
+        return data
+
+    # Load retention config
+    try:
+        config = get_timesheet_config()
+        retention = config.get('data_retention', {})
+        if basename == ACTIVITY_LOG_FILE:
+            retention_days = int(retention.get('activity_log_days', 90))
+        else:
+            retention_days = int(retention.get('login_attempts_days', 30))
+    except Exception:
+        return data  # Don't block writes on config errors
+
+    if retention_days <= 0:
+        return data  # 0 or negative = keep forever
+
+    cutoff = datetime.now() - timedelta(days=retention_days)
+    before = len(data)
+    data = [entry for entry in data if isinstance(entry, dict) and 'timestamp' in entry and _parse_iso_timestamp(entry['timestamp'], cutoff)]
+    after = len(data)
+    if after < before:
+        print(f"[RETENTION] Trimmed {basename}: {before} → {after} entries (retention: {retention_days}d)")
+    return data
+
+
+def _parse_iso_timestamp(ts_str, cutoff):
+    """Parse an ISO timestamp string and return True if it's on or after the cutoff."""
+    try:
+        ts = datetime.fromisoformat(ts_str)
+        return ts >= cutoff
+    except (ValueError, TypeError):
+        return True  # keep entries with unparseable timestamps (don't lose data)
+
+
 def save_json_data(filepath, data):
     dirname = os.path.dirname(filepath)
     if dirname:
         os.makedirs(dirname, exist_ok=True)
     if not _data_guardian_check(filepath, data):
         return  # Block the write — data would be dangerously small
+    # Auto-trim old entries for activity/log retention-managed files
+    data = _retention_cleanup(filepath, data)
     # Thread-safe write: prevent concurrent save_json_data from interleaving
     with _file_io_lock:
         # Make file writable if it's read-only, then restore to 0600 after
@@ -866,6 +910,10 @@ def get_timesheet_config():
             'host': '',
             'path': '',
             'ssh_key': ''
+        },
+        'data_retention': {
+            'activity_log_days': 90,     # keep activity logs for 90 days
+            'login_attempts_days': 30    # keep login attempts for 30 days
         }
     }
     try:
@@ -894,6 +942,10 @@ def save_timesheet_config(config):
             'host': '',
             'path': '',
             'ssh_key': ''
+        },
+        'data_retention': {
+            'activity_log_days': 90,
+            'login_attempts_days': 30
         }
     }
     for k, v in defaults.items():
