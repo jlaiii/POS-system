@@ -9219,6 +9219,8 @@ async function submitOrder() {
     }
     const result = await r.json();
     showToast(t('toast.order_submitted'), 'success');
+    // Haptic feedback on order submit
+    if (navigator.vibrate) { try { navigator.vibrate(50); } catch(e){} }
     // Show low stock warnings if any
     if (result.low_stock_warnings && result.low_stock_warnings.length > 0) {
       const outOfStock = result.low_stock_warnings.filter(w => w.status === 'out_of_stock');
@@ -16994,7 +16996,8 @@ async function kioskPay() {
     });
     if (!r.ok) { const d = await r.json(); showToast(d.message || 'Failed', 'danger'); btn.disabled = false; btn.textContent = '💵 Pay Now'; return; }
     const result = await r.json();
-    
+    // Haptic feedback on order submit (kiosk mode)
+    if (navigator.vibrate) { try { navigator.vibrate(50); } catch(e){} }
     // Show thank you screen
     document.querySelector('.kiosk-content').classList.add('hidden');
     document.getElementById('kioskThankYou').classList.add('active');
