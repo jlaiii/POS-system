@@ -272,24 +272,24 @@ for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMES
             elif f == ITEMS_FILE:
                 json.dump({
                     "Foods": [
-                        {"name": "Hamburger - Normal", "price": 6, "barcode": "", "image_url": ""},
-                        {"name": "Hamburger - All the Fixings", "price": 8, "barcode": "", "image_url": ""},
-                        {"name": "Hotdog - Loaded", "price": 7, "barcode": "", "image_url": ""},
-                        {"name": "Hotdog - Plain", "price": 5, "barcode": "", "image_url": ""},
-                        {"name": "Taco - Beef & Cheese", "price": 7, "barcode": "", "image_url": ""},
-                        {"name": "Taco - Chicken with Salsa", "price": 7, "barcode": "", "image_url": ""}
+                        {"name": "Hamburger - Normal", "price": 6, "barcode": "", "image_url": "static/images/hamburger-normal.svg", "description": "Juicy quarter-pound beef patty with crisp lettuce, ripe tomato, and fresh onion on a toasted sesame seed bun.", "dietary_tags": []},
+                        {"name": "Hamburger - All the Fixings", "price": 8, "barcode": "", "image_url": "static/images/hamburger-all-the-fixings.svg", "description": "Fully loaded quarter-pound burger with melted cheddar, crispy bacon, lettuce, tomato, pickles, and grilled onions.", "dietary_tags": []},
+                        {"name": "Hotdog - Loaded", "price": 7, "barcode": "", "image_url": "static/images/hotdog-loaded.svg", "description": "All-beef frankfurter piled high with spicy chili, shredded cheddar cheese, diced onions, and pickled jalapeños.", "dietary_tags": ["spicy"]},
+                        {"name": "Hotdog - Plain", "price": 5, "barcode": "", "image_url": "static/images/hotdog-plain.svg", "description": "Classic all-beef frankfurter served in a warm, steamed poppy seed bun. Simple and satisfying.", "dietary_tags": []},
+                        {"name": "Taco - Beef & Cheese", "price": 7, "barcode": "", "image_url": "static/images/taco-beef-&-cheese.svg", "description": "Crispy corn shell filled with seasoned ground beef, melted cheddar, shredded lettuce, and diced tomatoes.", "dietary_tags": ["gluten_free"]},
+                        {"name": "Taco - Chicken with Salsa", "price": 7, "barcode": "", "image_url": "static/images/taco-chicken-with-salsa.svg", "description": "Soft flour tortilla loaded with seasoned shredded chicken, fresh pico de gallo, sour cream, and sliced avocado.", "dietary_tags": []}
                     ],
                     "Drinks": [
-                        {"name": "Lemonade", "price": 3, "barcode": "", "image_url": ""},
-                        {"name": "Coke", "price": 3, "barcode": "", "image_url": ""},
-                        {"name": "Water Bottle", "price": 2, "barcode": "", "image_url": ""}
+                        {"name": "Lemonade", "price": 3, "barcode": "", "image_url": "static/images/lemonade.svg", "description": "Refreshing freshly squeezed lemonade made with real lemons and a touch of cane sugar. Served over ice.", "dietary_tags": ["vegan", "gluten_free", "vegetarian"]},
+                        {"name": "Coke", "price": 3, "barcode": "4901234567890", "image_url": "static/images/coke.svg", "description": "Ice-cold Coca-Cola served in a chilled fountain cup or classic glass bottle. The real thing.", "dietary_tags": ["vegan", "gluten_free"]},
+                        {"name": "Water Bottle", "price": 2, "barcode": "", "image_url": "static/images/water-bottle.svg", "description": "Pure natural spring water sourced from mountain aquifers. 16 oz bottle, perfectly chilled.", "dietary_tags": ["vegan", "gluten_free", "vegetarian", "low_carb", "sugar_free"]}
                     ],
                     "Snacks": [
-                        {"name": "Raspia (Fruit Slush)", "price": 4, "barcode": "", "image_url": ""},
-                        {"name": "Chips (Large Bag)", "price": 3, "barcode": "", "image_url": ""},
-                        {"name": "Chocolate Bar", "price": 2, "barcode": "", "image_url": ""},
-                        {"name": "Mixed Nuts (Small Pack)", "price": 4, "barcode": "", "image_url": ""},
-                        {"name": "Granola Bar", "price": 2, "barcode": "", "image_url": ""}
+                        {"name": "Raspia (Fruit Slush)", "price": 4, "barcode": "", "image_url": "static/images/raspia-fruit-slush.svg", "description": "Refreshing frozen fruit slushie blended with real raspberry, mango, and passionfruit purée. A customer favorite!", "dietary_tags": ["vegan", "gluten_free", "vegetarian"]},
+                        {"name": "Chips (Large Bag)", "price": 3, "barcode": "", "image_url": "static/images/chips-large-bag.svg", "description": "Generous share-size bag of golden, crispy potato chips. Lightly salted and cooked to perfection.", "dietary_tags": ["vegan", "gluten_free", "vegetarian"]},
+                        {"name": "Chocolate Bar", "price": 2, "barcode": "", "image_url": "static/images/chocolate-bar.svg", "description": "Rich and creamy milk chocolate bar made with premium Belgian cocoa. The perfect sweet treat.", "dietary_tags": ["vegetarian"]},
+                        {"name": "Mixed Nuts (Small Pack)", "price": 4, "barcode": "", "image_url": "static/images/mixed-nuts-small-pack.svg", "description": "Roasted and salted premium mixed nuts: almonds, cashews, pecans, and peanuts. Protein-packed snack.", "dietary_tags": ["vegan", "gluten_free", "vegetarian", "low_carb"]},
+                        {"name": "Granola Bar", "price": 2, "barcode": "", "image_url": "static/images/granola-bar.svg", "description": "Hearty oats-and-honey granola bar with dried cranberries and pumpkin seeds. Great for a quick energy boost.", "dietary_tags": ["vegetarian"]}
                     ]
                 }, file, indent=4)  # Initialize with default items
             elif f == TAX_CONFIG_FILE:
@@ -4773,7 +4773,7 @@ def add_item():
                 nutrition[key] = round(float(val), 1)
             except (ValueError, TypeError):
                 pass
-    items_data[category].append({"name": name, "price": price, "barcode": data.get('barcode', ''), "image_url": data.get('image_url', ''), "course": data.get('course', 'main'), "active": True, "dietary_tags": data.get('dietary_tags', []), "nutritional_info": nutrition if nutrition else {}})
+    items_data[category].append({"name": name, "price": price, "barcode": data.get('barcode', ''), "image_url": data.get('image_url', ''), "description": data.get('description', ''), "course": data.get('course', 'main'), "active": True, "dietary_tags": data.get('dietary_tags', []), "nutritional_info": nutrition if nutrition else {}})
     save_json_data(ITEMS_FILE, items_data)
     backup_menu()  # Auto-backup after successful save
     
@@ -4851,7 +4851,7 @@ def edit_item():
                 old_barcode = items_data[old_category][i].get('barcode', '')
                 old_course = item.get('course', 'main')
                 old_active = item.get('active', True)
-                items_data[new_category].append({"name": new_name, "price": new_price, "barcode": data.get('barcode', old_barcode), "image_url": data.get('image_url', old_image_url), "course": data.get('course', old_course), "active": old_active, "dietary_tags": data.get('dietary_tags', item.get('dietary_tags', [])), "nutritional_info": data.get('nutritional_info', item.get('nutritional_info', {}))})
+                items_data[new_category].append({"name": new_name, "price": new_price, "barcode": data.get('barcode', old_barcode), "image_url": data.get('image_url', old_image_url), "description": data.get('description', item.get('description', '')), "course": data.get('course', old_course), "active": old_active, "dietary_tags": data.get('dietary_tags', item.get('dietary_tags', [])), "nutritional_info": data.get('nutritional_info', item.get('nutritional_info', {}))})
             else:  # Only name/price/barcode changing within same category
                 items_data[old_category][i]["name"] = new_name
                 items_data[old_category][i]["price"] = new_price
@@ -4863,6 +4863,8 @@ def edit_item():
                     items_data[old_category][i]["course"] = data.get('course', 'main')
                 if 'dietary_tags' in data:
                     items_data[old_category][i]["dietary_tags"] = data.get('dietary_tags', [])
+                if 'description' in data:
+                    items_data[old_category][i]["description"] = data.get('description', '')
                 if 'nutritional_info' in data:
                     items_data[old_category][i]["nutritional_info"] = data.get('nutritional_info', {})
             break

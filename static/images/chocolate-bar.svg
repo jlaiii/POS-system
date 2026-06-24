@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#5d4037;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#795548;stop-opacity:1" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  <rect width="400" height="300" rx="16" fill="url(#bg)"/>
+  <text x="200" y="80" text-anchor="middle" font-size="80" filter="url(#shadow)">🍫</text>
+  <text x="200" y="170" text-anchor="middle" font-family="system-ui, sans-serif" font-size="20" font-weight="bold" fill="white" letter-spacing="0.5">Chocolate Bar</text>
+  <line x1="120" y1="195" x2="280" y2="195" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+  <text x="200" y="230" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14" fill="rgba(255,255,255,0.7)">Tap to view details</text>
+  <rect x="140" y="252" width="120" height="30" rx="15" fill="rgba(255,255,255,0.2)"/>
+  <text x="200" y="272" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" font-weight="bold" fill="white">🍽️ Menu Item</text>
+</svg>
