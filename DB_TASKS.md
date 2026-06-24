@@ -64,7 +64,7 @@
 - [x] **Initial setup** — Created DB_TASKS.md, db.py, migrations/, and first migration script (users)
 - [x] **migrate_users.py** — Migrated 6 users from users.json to SQLite. Verified row count matches. Idempotency tested. Commit: 0df93e1
 - [x] **migrate_shift_log.py** — Migrated 16 shifts from shift_log.json to SQLite. All fields preserved (edits JSON, breaks JSON, late tracking). Idempotency tested. Commit: 12e292b
-- [x] **migrate_activity_log.py** — Migrated 377 events from activity_log.json to SQLite. All fields preserved (details JSON). Idempotency tested. Commit: <PENDING>
+- [x] **migrate_activity_log.py** — Migrated 377 events from activity_log.json to SQLite. All fields preserved (details JSON). Idempotency tested. Commit: 35c9bad
 - [x] **Add `use_database` flag** — Added `use_database: false` to timesheet_config.json for feature-gated endpoint refactoring
 
 ## ROLLBACK PLAN (always keep current)
