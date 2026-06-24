@@ -14530,6 +14530,15 @@ def serve_tablet():
     return send_from_directory(app.static_folder, 'tablet.html')
 
 
+@app.route('/kitchen')
+def serve_kitchen():
+    """Serve the standalone lightweight kitchen display page.
+    A fraction of the size of the full POS page (~200 lines vs 19K lines),
+    designed for cheap kitchen tablets. Polls /api/kitchen/queue every 8s.
+    """
+    return send_from_directory(app.static_folder, 'kitchen.html')
+
+
 @app.route('/api/restaurant/info', methods=['GET'])
 def get_restaurant_info():
     """Return restaurant configuration info (name, hours, wifi) for tablet display."""

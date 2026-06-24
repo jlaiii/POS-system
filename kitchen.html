@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<title>🔪 Kitchen Display</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#1a1a2e;--card:#16213e;--accent:#e94560;--text:#eee;--text2:#a0a0b0;--border:#2a2a4e;--radius:12px}
+html,body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:16px;min-height:100vh}
+#app{display:flex;flex-direction:column;min-height:100vh}
+#header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--card);flex-wrap:wrap;gap:8px;border-bottom:3px solid var(--accent)}
+#header .h-title{font-size:22px;font-weight:700;color:var(--accent)}
+#header .h-clock{font-size:18px;font-weight:600;min-width:80px;text-align:right}
+#header .h-actions{display:flex;gap:6px;align-items:center}
+#cookInfo{display:flex;align-items:center;gap:6px;font-size:14px;color:var(--text2)}
+#cookInfo input{padding:4px 8px;font-size:14px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);width:100px;min-height:36px}
+#cookInfo input:focus{outline:2px solid var(--accent)}
+#cookInfo .cook-name{color:#5bc0de;font-weight:600}
+#stats{display:flex;gap:20px;padding:8px 16px;background:var(--bg);flex-wrap:wrap;font-size:15px;font-weight:600}
+#stats span{color:var(--text2)}
+#stats .st-pending{color:#f0ad4e}
+#stats .st-preparing{color:#5bc0de}
+#stats .st-done{color:#2ecc71}
+#offlineBanner{display:none;padding:8px 16px;background:#e94560;color:#fff;font-weight:600;text-align:center;font-size:14px;animation:pulseW 1.5s ease-in-out infinite}
+#offlineBanner.active{display:block}
+@keyframes pulseW{0%,100%{opacity:1}50%{opacity:0.7}}
+#queue{flex:1;padding:10px;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;display:grid;grid-template-columns:1fr;gap:10px;align-content:start}
+@media(min-width:768px){#queue{grid-template-columns:1fr 1fr}}
+.card{background:var(--card);border-radius:var(--radius);padding:16px;border-left:6px solid #f0ad4e;display:flex;flex-direction:column;gap:10px;transition:border-color .3s,box-shadow .3s}
+.card.wa{border-left-color:#f39c12;box-shadow:0 0 12px rgba(243,156,18,.3)}
+.card.cr{border-left-color:#e74c3c;box-shadow:0 0 20px rgba(231,76,60,.4);animation:cp 2s ease-in-out infinite}
+@keyframes cp{0%,100%{box-shadow:0 0 20px rgba(231,76,60,.4)}50%{box-shadow:0 0 30px rgba(231,76,60,.7)}}
+.card.pr{border-left-color:#5bc0de}
+.card.ct{cursor:pointer}
+.card.ct:active{transform:scale(.98);opacity:.85}
+.card .ch{display:flex;align-items:center;justify-content:space-between}
+.card .ci{font-size:2em;font-weight:800;color:var(--accent)}
+.card .cti{font-size:1em;color:var(--text2);font-weight:600}
+.cti.wa{color:#f39c12;font-weight:800}
+.cti.cr{color:#e74c3c;font-weight:900;animation:ap 1.5s ease-in-out infinite}
+@keyframes ap{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.7;transform:scale(1.05)}}
+.card .cb{font-size:.9em;font-weight:700;padding:4px 12px;border-radius:20px;display:inline-block;width:fit-content}
+.cb.pe{background:#f0ad4e33;color:#f0ad4e}
+.cb.pp{background:#5bc0de33;color:#5bc0de}
+.cb.pr{background:#e74c3c33;color:#e74c3c;animation:bp 1s ease-in-out infinite}
+@keyframes bp{0%,100%{opacity:1}50%{opacity:.6}}
+.card .items{display:flex;flex-direction:column;gap:3px}
+.card .item{font-size:1.1em;font-weight:600;display:flex;gap:6px;flex-wrap:wrap;align-items:baseline}
+.card .item .qty{color:var(--accent);font-weight:700}
+.card .item .mod{font-size:13px;color:#f39c12;font-weight:400;padding-left:6px}
+.card .notes{font-size:.9em;color:#f39c12;font-style:italic;background:#f39c1215;padding:6px 10px;border-radius:6px}
+.card .pay{font-size:.85em;color:var(--text2)}
+.card .act{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.card .act button{font-size:.95em}
+.btn-cl{background:#27ae60;color:#fff;font-weight:700;padding:12px 24px;min-height:48px;flex:1;border:none;border-radius:var(--radius);cursor:pointer;touch-action:manipulation}
+.btn-dn{background:#2980b9;color:#fff;font-weight:700;padding:12px 24px;min-height:48px;flex:1;border:none;border-radius:var(--radius);cursor:pointer;touch-action:manipulation}
+.btn-cx{background:transparent;color:#e74c3c;border:1px solid #e74c3c;padding:6px 14px;min-height:36px;border-radius:var(--radius);cursor:pointer;touch-action:manipulation}
+.btn-fs{background:transparent;color:var(--text2);border:1px solid var(--border);padding:6px 10px;min-height:36px;border-radius:6px;cursor:pointer;font-size:16px;touch-action:manipulation}
+.byline{color:#5bc0de;font-size:.95em;font-weight:600;font-style:italic}
+.empty{text-align:center;color:var(--text2);font-size:1.2em;padding:50px 20px;grid-column:1/-1}
+#loading{display:none;align-items:center;gap:6px;padding:6px 16px;color:var(--text2);font-size:13px}
+#loading.active{display:flex}
+.spin{width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.toast{position:fixed;top:20px;right:20px;padding:12px 24px;color:#fff;border-radius:var(--radius);font-weight:600;z-index:9999;animation:fadeIn .3s;max-width:90vw}
+.toast.danger{background:#c0392b}.toast.success{background:#27ae60}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="header">
+    <span class="h-title">🔪 Kitchen Display</span>
+    <div id="cookInfo">
+      <span id="cookLabel">👨‍🍳</span>
+      <input type="password" id="pinInput" placeholder="PIN" maxlength="8" inputmode="numeric" autocomplete="off">
+      <button class="btn-fs" onclick="setCookPin()" title="Set PIN">✓</button>
+      <span class="cook-name" id="cookName"></span>
+    </div>
+    <div class="h-actions">
+      <span class="h-clock" id="clockDisplay"></span>
+      <button class="btn-fs" onclick="toggleFullscreen()" title="Fullscreen">⛶</button>
+    </div>
+  </div>
+  <div id="stats">
+    <span>🟡 Pending <span class="st-pending" id="stPending">0</span></span>
+    <span>🟠 Preparing <span class="st-preparing" id="stPreparing">0</span></span>
+    <span>✅ Done Today <span class="st-done" id="stDone">0</span></span>
+  </div>
+  <div id="offlineBanner">⚠️ Connection issue — updating every 8s</div>
+  <div id="loading"><div class="spin"></div> Refreshing...</div>
+  <div id="queue"><div class="empty">No orders — stand by 🍳</div></div>
+</div>
+<script>
+const BACKEND_URL = (()=>{try{return localStorage.getItem('pos_backend_url')||window.location.origin}catch(e){return window.location.origin}})();
+let cookId = localStorage.getItem('kitchen_cook_id')||'';
+let cookName = localStorage.getItem('kitchen_cook_name')||'';
+let prevOrderIds = new Set();
+let pollTimer = null;
+let clockTimer = null;
+let timeUpdater = null;
+let prevQueue = [];
+
+document.getElementById('pinInput').value = '';
+if(cookId){document.getElementById('cookName').textContent = cookName||cookId;document.getElementById('pinInput').style.display='none'}
+else{document.getElementById('cookName').textContent=''}
+
+function setCookPin(){
+  const pin = document.getElementById('pinInput').value.trim();
+  if(!pin||pin.length<4){showToast('Enter a valid 4-8 digit PIN','danger');return}
+  fetch(BACKEND_URL+'/api/users',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({adminPin:pin})})
+  .then(r=>r.json()).then(data=>{
+    if(data.error){showToast('Invalid PIN: '+data.error,'danger');return}
+    const user = data.users?.[pin];
+    if(!user){showToast('User not found','danger');return}
+    if(user.role==='cook'||user.role==='admin'||user.role==='owner'){
+      cookId=pin;cookName=user.name||pin;
+      localStorage.setItem('kitchen_cook_id',cookId);
+      localStorage.setItem('kitchen_cook_name',cookName);
+      document.getElementById('cookName').textContent=cookName;
+      document.getElementById('pinInput').style.display='none';
+      showToast('👨‍🍳 Cook: '+cookName,'success');
+    }else{showToast('Cook or admin PIN required','danger')}
+  }).catch(()=>showToast('Network error','danger'));
+}
+
+function escHtml(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+function timeSince(dateStr){
+  if(!dateStr)return '';const then=new Date(dateStr),now=new Date(),diff=now-then;
+  if(diff<0)return 'just now';const sec=Math.floor(diff/1000);
+  if(sec<60)return sec+'s ago';const min=Math.floor(sec/60);
+  if(min<60)return min+'m ago';const hr=Math.floor(min/60);
+  return hr+'h '+(min%60)+'m ago';
+}
+function showToast(msg,type){const t=document.createElement('div');t.className='toast '+(type||'');t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3000)}
+
+function updateClock(){
+  document.getElementById('clockDisplay').textContent=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+}
+function toggleFullscreen(){
+  if(!document.fullscreenElement){document.documentElement.requestFullscreen().catch(()=>{})}
+  else{document.exitFullscreen()}
+}
+
+async function loadKitchen(){
+  const loading=document.getElementById('loading');
+  loading.classList.add('active');
+  try{
+    const [qr,sr]=await Promise.all([
+      fetch(BACKEND_URL+'/api/kitchen/queue'),
+      fetch(BACKEND_URL+'/api/kitchen/stats')
+    ]);
+    let orders=[];
+    if(qr.ok){const d=await qr.json();orders=d.queue||d.orders||d||[];if(Array.isArray(d))orders=d;
+      const newIds=new Set();
+      let hasNew=false;
+      orders.forEach(o=>{const oid=String(o.id||o.order_id||'');newIds.add(oid);if(prevOrderIds.size>0&&!prevOrderIds.has(oid))hasNew=true});
+      prevOrderIds=newIds;
+      if(hasNew)playSound();
+      renderQueue(orders);
+      document.getElementById('offlineBanner').classList.remove('active');
+    }else{document.getElementById('offlineBanner').classList.add('active')}
+    if(sr.ok){const s=await sr.json();
+      document.getElementById('stPending').textContent=s.pending||0;
+      document.getElementById('stPreparing').textContent=s.preparing||0;
+      document.getElementById('stDone').textContent=s.done_today||0;
+    }
+  }catch(e){document.getElementById('offlineBanner').classList.add('active')}
+  loading.classList.remove('active');
+}
+
+function renderQueue(orders){
+  const container=document.getElementById('queue');
+  if(!orders||orders.length===0){container.innerHTML='<div class="empty">No orders — stand by 🍳</div>';startTimeUpdater();return}
+  const sorted=[...orders].sort((a,b)=>(a.created_at||a.date||'').localeCompare(b.created_at||b.date||''));
+  const groups={},noTable=[];
+  sorted.forEach(o=>{const tbl=o.table_number;if(tbl!==null&&tbl!==undefined&&tbl!==''){const k=String(tbl).trim();if(!groups[k])groups[k]=[];groups[k].push(o)}else noTable.push(o)});
+  let html='';
+  Object.keys(groups).sort((a,b)=>parseInt(a)-parseInt(b)||a.localeCompare(b)).forEach(tbl=>{
+    const g=groups[tbl];
+    html+='<div style="background:var(--card);border-radius:var(--radius);overflow:hidden;border:1px solid var(--border)">'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--accent);color:#fff;font-weight:700;font-size:1.2em;cursor:pointer;user-select:none" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display===\'none\'?\'\':\'none\'">'+
+      '<span>🍽️ Table '+escHtml(String(tbl))+' ('+g.length+')</span>'+
+      '<span style="font-size:.7em;opacity:.85">'+g.length+'</span></div>'+
+      '<div class="tg-body" style="display:flex;flex-direction:column;gap:6px;padding:8px">'+
+      g.map(o=>renderCard(o,true)).join('')+'</div></div>';
+  });
+  noTable.forEach(o=>{html+=renderCard(o,false)});
+  container.innerHTML=html;
+  startTimeUpdater();
+}
+
+function renderCard(o,inGroup){
+  const oid=o.id||o.order_id||'?',status=(o.status||'pending').toLowerCase(),items=o.items||[];
+  const notes=o.notes||'',createdAt=o.created_at||o.date||'';
+  const claimedBy=o.claimed_by||'',cookN=o.claimed_by_name||claimedBy;
+  let ageMin=-1,ageCl='',isPri=false;
+  if(createdAt){const then=new Date(createdAt);ageMin=Math.floor((new Date()-then)/60000);if(ageMin>=10){ageCl='cr';isPri=true}else if(ageMin>=5){ageCl='wa'}}
+  const cardCl=isPri?'cr':ageCl==='wa'?'wa':'';
+  const pendingTap=status==='pending'?'ct':'';
+  const paySplit=o.payment_splits;const pay=paySplit&&paySplit.length>1?paySplit.map(s=>s.method+' $'+parseFloat(s.amount).toFixed(2)).join(' + '):(o.payment||'N/A');
+  let badge='';
+  if(isPri&&status==='pending'){badge='<span class="cb pr">🚨 PRIORITY</span>'}
+  else if(status==='preparing'){badge='<span class="cb pp">🟠 '+(cookN?escHtml(cookN):'Preparing')+'</span>'}
+  else{badge='<span class="cb pe">🟡 Pending</span>'}
+  const timeH=createdAt?'<span class="cti '+ageCl+'" data-t="'+createdAt+'">'+timeSince(createdAt)+'</span>':'';
+  const itemsH=items.map(it=>{
+    const qty=it.qty||it.quantity||1;const qtyD=qty>1?' <span class="qty">x'+qty+'</span>':'';
+    const modD=it.modifiers&&it.modifiers.length>0?'<span class="mod">'+it.modifiers.map(m=>escHtml(m.option)).join(', ')+'</span>':'';
+    let ch='';
+    if(it.is_combo&&it.child_items&&it.child_items.length>0){
+      ch='<div style="margin-top:3px;padding-left:6px;border-left:2px solid #e94560;font-size:13px;color:var(--text2)">'+
+        it.child_items.map(ci=>'<div style="padding:1px 0">🍱 '+escHtml(ci.name)+' <span class="qty">x'+(ci.qty||1)+'</span></div>').join('')+'</div>';}
+    return '<div class="item">'+escHtml(it.name||it.item_name||'?')+qtyD+modD+'</div>'+ch;
+  }).join('');
+  const itemNotes=[];items.forEach((it,i)=>{if(it.note)itemNotes.push(escHtml(it.name||'Item '+(i+1))+': '+escHtml(it.note))});
+  const notesH=(notes||itemNotes.length>0)?'<div class="notes">📝 '+escHtml(notes)+((notes&&itemNotes.length>0)?' | ':'')+itemNotes.join(' | ')+'</div>':'';
+  let acts='';
+  if(status==='pending'){acts='<button class="btn-cl" onclick="event.stopPropagation();claimOrder('+oid+')">✅ Claim</button>'}
+  else if(status==='preparing'){if(claimedBy===cookId){acts='<button class="btn-dn" onclick="event.stopPropagation();completeOrder('+oid+')">✅ Done</button>'}else{acts='<span class="byline">👨‍🍳 '+escHtml(cookN||claimedBy)+'</span>'}}
+  acts+='<button class="btn-cx" onclick="event.stopPropagation();cancelOrder('+oid+')">✕ Cancel</button>';
+  const cardClick=status==='pending'?' onclick="claimOrder('+oid+')"':'';
+  const tblBad=(!inGroup&&o.table_number)?'<span style="font-size:.7em;background:var(--accent);color:#fff;padding:2px 10px;border-radius:12px;margin-left:8px;vertical-align:middle">🍽️ '+escHtml(String(o.table_number))+'</span>':'';
+  return '<div class="card '+status+' '+cardCl+' '+pendingTap+'"'+cardClick+'>'+
+    '<div class="ch"><span class="ci">#'+escHtml(String(oid))+tblBad+'</span>'+timeH+'</div>'+
+    badge+(isPri&&status==='pending'?'<div style="color:#e74c3c;font-weight:700;font-size:.9em">⏰ Waiting '+ageMin+' min</div>':'')+
+    '<div class="items">'+itemsH+'</div>'+notesH+'<div class="pay">💳 '+escHtml(pay)+'</div>'+
+    '<div class="act">'+acts+'</div></div>';
+}
+
+function startTimeUpdater(){
+  if(timeUpdater)clearInterval(timeUpdater);
+  timeUpdater=setInterval(()=>{
+    const now=new Date();
+    document.querySelectorAll('.cti[data-t]').forEach(el=>{
+      const t=el.getAttribute('data-t'),age=Math.floor((now-new Date(t))/60000);
+      el.textContent=timeSince(t);
+      if(age>=10){el.className='cti cr'}else if(age>=5){el.className='cti wa'}
+    });
+  },10000);
+}
+
+async function claimOrder(id){
+  if(!cookId){showToast('Enter your PIN first','danger');document.getElementById('pinInput').focus();return}
+  try{
+    const r=await fetch(BACKEND_URL+'/api/kitchen/claim',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:id,cook_id:cookId})});
+    const d=await r.json();
+    if(d.error){showToast(d.error,'danger')}else{showToast('Order #'+id+' claimed ✅','success');loadKitchen()}
+  }catch(e){showToast('Network error','danger')}
+}
+async function completeOrder(id){
+  if(!cookId){showToast('Enter your PIN first','danger');return}
+  try{
+    const r=await fetch(BACKEND_URL+'/api/kitchen/complete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:id,cook_id:cookId})});
+    const d=await r.json();
+    if(d.error){showToast(d.error,'danger')}else{showToast('Order #'+id+' done ✅','success');loadKitchen()}
+  }catch(e){showToast('Network error','danger')}
+}
+async function cancelOrder(id){
+  if(!confirm('Cancel order #'+id+'?'))return;
+  if(!cookId){showToast('Enter your PIN first','danger');return}
+  try{
+    const r=await fetch(BACKEND_URL+'/api/kitchen/cancel',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:id,cook_id:cookId})});
+    const d=await r.json();
+    if(d.error){showToast(d.error,'danger')}else{showToast('Order #'+id+' cancelled','success');loadKitchen()}
+  }catch(e){showToast('Network error','danger')}
+}
+
+function playSound(){
+  try{
+    const cfg=JSON.parse(localStorage.getItem('kitchen_sound'))||{enabled:true,volume:0.25};
+    if(!cfg.enabled)return;
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    const vol=Math.max(0.05,Math.min(0.8,cfg.volume));
+    [440,554,659].forEach((f,i)=>{const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.type='square';o.frequency.setValueAtTime(f,ctx.currentTime+i*0.15);g.gain.setValueAtTime(vol,ctx.currentTime+i*0.15);g.gain.exponentialRampToValueAtTime(0.01,ctx.currentTime+i*0.15+0.25);o.start(ctx.currentTime+i*0.15);o.stop(ctx.currentTime+i*0.15+0.25)});
+  }catch(e){}
+}
+
+// Init
+updateClock();clockTimer=setInterval(updateClock,1000);
+loadKitchen();pollTimer=setInterval(loadKitchen,8000);
+
+// Re-try PIN autocomplete if previously set but server returned fresh data
+if(cookId&&cookName){document.getElementById('cookName').textContent=cookName}
+</script>
+</body>
+</html>
