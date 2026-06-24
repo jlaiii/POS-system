@@ -11308,7 +11308,8 @@ async function loadTableAdmin() {
   const list = document.getElementById('tablesList');
   list.innerHTML = '<div class="empty-state">' + t('loading') + '</div>';
   try {
-    const r = await fetch(BACKEND_URL + '/api/tables');
+    const pin = currentUser ? encodeURIComponent(currentUser.id) : '';
+    const r = await fetch(BACKEND_URL + '/api/tables' + (pin ? '?adminPin=' + pin : ''));
     if (!r.ok) { list.innerHTML = '<div class="empty-state">Failed to load</div>'; return; }
     const tables = await r.json();
     const entries = Object.entries(tables);
@@ -11385,7 +11386,8 @@ async function viewTableTab(tableNumber) {
   document.getElementById('tableTabActions').innerHTML = '<button class="outline" onclick="closeTableTab()">Close</button>';
   overlay.classList.add('active');
   try {
-    const r = await fetch(BACKEND_URL + '/api/tables/tab/' + tableNumber);
+    const pin = currentUser ? encodeURIComponent(currentUser.id) : '';
+    const r = await fetch(BACKEND_URL + '/api/tables/tab/' + tableNumber + '?adminPin=' + pin);
     if (!r.ok) { document.getElementById('tableTabContent').innerHTML = '<div class="empty-state">Failed to load tab</div>'; return; }
     const data = await r.json();
     if (data.order_count === 0) {
@@ -11507,7 +11509,8 @@ async function viewTableTabHistory(tableNumber) {
   document.getElementById('tableTabHistoryContent').innerHTML = '<div class="empty-state">Loading history...</div>';
   document.getElementById('tableTabHistoryOverlay').classList.add('active');
   try {
-    const r = await fetch(BACKEND_URL + '/api/tables/tab/' + tableNumber + '/history');
+    const pin = currentUser ? encodeURIComponent(currentUser.id) : '';
+    const r = await fetch(BACKEND_URL + '/api/tables/tab/' + tableNumber + '/history?adminPin=' + pin);
     if (!r.ok) { document.getElementById('tableTabHistoryContent').innerHTML = '<div class="empty-state">Failed to load history</div>'; return; }
     const data = await r.json();
     if (data.order_count === 0) {
@@ -12511,7 +12514,8 @@ async function loadTableSelector() {
   const sel = document.getElementById('tableSelect');
   if (!sel) return;
   try {
-    const r = await fetch(BACKEND_URL + '/api/tables');
+    const pin = currentUser ? encodeURIComponent(currentUser.id) : '';
+    const r = await fetch(BACKEND_URL + '/api/tables' + (pin ? '?adminPin=' + pin : ''));
     if (!r.ok) return;
     const tables = await r.json();
     const entries = Object.entries(tables);
@@ -12576,7 +12580,8 @@ async function loadTableStatusDashboard() {
   if (!grid) return;
   grid.innerHTML = '<div class="empty-state">Loading floor plan...</div>';
   try {
-    const r = await fetch(BACKEND_URL + '/api/tables');
+    const pin = currentUser ? encodeURIComponent(currentUser.id) : '';
+    const r = await fetch(BACKEND_URL + '/api/tables' + (pin ? '?adminPin=' + pin : ''));
     if (!r.ok) { grid.innerHTML = '<div class="empty-state">Failed to load</div>'; return; }
     const tables = await r.json();
     const entries = Object.entries(tables);
@@ -12616,7 +12621,8 @@ async function showTableDetail(tableNumber) {
   overlay.classList.add('active');
   
   try {
-    const r = await fetch(BACKEND_URL + '/api/tables/tab/' + tableNumber + '/detail');
+    const pin = currentUser ? encodeURIComponent(currentUser.id) : '';
+    const r = await fetch(BACKEND_URL + '/api/tables/tab/' + tableNumber + '/detail?adminPin=' + pin);
     if (!r.ok) {
       document.getElementById('tableTabContent').innerHTML = '<div class="empty-state">Failed to load table details</div>';
       return;

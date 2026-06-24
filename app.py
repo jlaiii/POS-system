@@ -8803,7 +8803,12 @@ def pickup_display_collected():
 
 @app.route('/api/tables', methods=['GET'])
 def get_tables():
-    """Returns all tables with their assignments, running tab info, and derived status."""
+    """Returns all tables with their assignments, running tab info, and derived status.
+    If adminPin query param is provided with pos_access permission, includes financial data.
+    Without auth, returns only public-safe table layout info (no order totals)."""
+    admin_pin = request.args.get('adminPin', '')
+    is_authenticated = bool(admin_pin and check_perm(admin_pin, "pos_access"))
+
     tables = load_json_data(TABLES_FILE)
     orders = load_json_data(ORDERS_FILE)
     
@@ -8845,7 +8850,7 @@ def get_tables():
         if ds == 'needs_bussing' or ds == 'empty':
             completed_unpaid = [o for o in orders if o.get('table_number') == int(table_num) and o.get('status') == 'completed']
         
-        result[table_num] = {
+        entry = {
             'number': tdata.get('number'),
             'name': tdata.get('name', f"Table {table_num}"),
             'tablet_id': tdata.get('tablet_id', ''),
@@ -8853,11 +8858,21 @@ def get_tables():
             'raw_status': tdata.get('status', 'available'),
             'created_at': tdata.get('created_at', ''),
             'last_bussed_at': tdata.get('last_bussed_at'),
-            'tab_total': round(tab_total, 2),
-            'tab_order_count': len(table_orders),
-            'tab_items_count': tab_items_count,
-            'completed_count': len(completed_unpaid) if completed_unpaid else 0
         }
+        # Only include financial data if authenticated with pos_access
+        if is_authenticated:
+            entry['tab_total'] = round(tab_total, 2)
+            entry['tab_order_count'] = len(table_orders)
+            entry['tab_items_count'] = tab_items_count
+            entry['completed_count'] = len(completed_unpaid) if completed_unpaid else 0
+        else:
+            # Public-safe defaults — no order data leaked
+            entry['tab_total'] = 0.0
+            entry['tab_order_count'] = 0
+            entry['tab_items_count'] = 0
+            entry['completed_count'] = 0
+        
+        result[table_num] = entry
     return jsonify(result)
 
 
@@ -8967,7 +8982,11 @@ def mark_table_bussed():
 
 @app.route('/api/tables/tab/<int:table_number>/detail', methods=['GET'])
 def get_table_detail(table_number):
-    """Returns full table detail with all orders (not just active)."""
+    """Returns full table detail with all orders (not just active). Requires pos_access permission."""
+    admin_pin = request.args.get('adminPin', '')
+    _, err_response = check_get_auth(admin_pin, "pos_access")
+    if err_response:
+        return err_response
     orders = load_json_data(ORDERS_FILE)
     table_orders = [o for o in orders if o.get('table_number') == table_number]
     table_orders.sort(key=lambda o: o.get('date', ''))
@@ -9018,7 +9037,11 @@ def get_table_detail(table_number):
 
 @app.route('/api/tables/tab/<int:table_number>', methods=['GET'])
 def get_table_tab(table_number):
-    """Returns the running tab for a table — all unpaid orders with their totals."""
+    """Returns the running tab for a table — all unpaid orders with their totals. Requires pos_access permission."""
+    admin_pin = request.args.get('adminPin', '')
+    _, err_response = check_get_auth(admin_pin, "pos_access")
+    if err_response:
+        return err_response
     orders = load_json_data(ORDERS_FILE)
     table_orders = [o for o in orders if o.get('table_number') == table_number and o.get('status') in ('pending', 'preparing')]
     
@@ -9197,7 +9220,11 @@ def transfer_table_orders():
 
 @app.route('/api/tables/tab/<int:table_number>/history', methods=['GET'])
 def get_table_tab_history(table_number):
-    """Returns completed/cancelled orders for a table (tab history)."""
+    """Returns completed/cancelled orders for a table (tab history). Requires pos_access permission."""
+    admin_pin = request.args.get('adminPin', '')
+    _, err_response = check_get_auth(admin_pin, "pos_access")
+    if err_response:
+        return err_response
     orders = load_json_data(ORDERS_FILE)
     table_orders = [o for o in orders if o.get('table_number') == table_number and o.get('status') in ('completed', 'cancelled')]
     

@@ -1,5 +1,5 @@
 # POS Security Tasks
-> Last run: 2026-06-23 23:30 UTC
+> Last run: 2026-06-24 03:50 UTC
 
 ## CRITICAL — LOGIN & AUTH SECURITY (check every run)
 
@@ -59,17 +59,11 @@
 ### MEDIUM: App runs as root
 - [ ] **Run as non-root user** — All processes run as root. Any compromised endpoint gives full system access.
 
-### MEDIUM: users.json file permissions hardened
-- [x] **Restrict file permissions on sensitive files** — Changed users.json, login_attempts.json, security_config.json, known_ips.json, shift_log.json, activity_log.json, security_events.json, email_config.json, delivery_addresses.json, orders.json, cleared_orders.json from 644 to 600. Prevents other system users from reading employee PINs, shift data, and customer info.
-
 ### MEDIUM: No app.secret_key configured
 - [ ] **Set Flask secret_key** — No `app.secret_key` is configured anywhere. While the app doesn't use Flask sessions (uses PIN-based auth), future session implementations need this. Should load from environment variable.
 
 ### MEDIUM: Kitchen/display endpoints still unauthenticated
 - [ ] **Add optional API key auth for kitchen/drivethrough/pickup displays** — `/api/kitchen/queue`, `/api/kitchen/stats`, `/api/kitchen/order/<id>`, `/api/drivethrough/*`, `/api/customer-display/*`, `/api/pickup-display/*` have no auth. These are intentionally public for displays, but should have an optional shared-secret API key mechanism to prevent network snooping in multi-tenant deployments.
-
-### MEDIUM: Unauthenticated table read endpoints expose order data
-- [ ] **Add optional shared-secret auth to table GET endpoints** — `/api/tables`, `/api/tables/tab/<int:table_number>`, `/api/tables/tab/<int:table_number>/history` have no auth and expose table assignments, active orders, and tab history. Need at minimum a session token or shared-secret key.
 
 ## LOW — POLISH
 
@@ -96,8 +90,9 @@
 - [x] **Add reusable check_get_auth() helper** — Created a centralized `check_get_auth(admin_pin, permission)` function for GET endpoint authentication, reducing code duplication and ensuring consistent auth patterns.
 - [x] **Harden file permissions** — Changed 11 sensitive JSON files from 644 (world-readable) to 600 (owner-only). Includes users.json (PINs), shift_log.json (employee data), activity_log.json (audit trail), orders.json, delivery_addresses.json, and others.
 
-## COMPLETED (this run) — 2026-06-23 23:30
-- [x] **Add POS access auth to tab checkout endpoint** — `/api/tables/tab/<int:table_number>/checkout` had zero auth: anyone could close out all orders at any table. Added `check_perm(user_id, "pos_access")` check. Tested: invalid PIN → 403, valid PIN → proceeds. Logs unauthorized attempts.
+## COMPLETED (this run) — 2026-06-24 03:50
+- [x] **Add auth to all table GET endpoints (4 endpoints)** — `/api/tables`, `/api/tables/tab/<table_number>/detail`, `/api/tables/tab/<table_number>`, `/api/tables/tab/<table_number>/history` all had zero authentication and leaked full order data (items, prices, totals, payment info). Added: `/api/tables` uses conditional auth (strips financial data without adminPin), other three require `pos_access` permission via `check_get_auth()`. Updated 6 frontend fetch calls to pass `currentUser.id`. Tested: no auth → 401, valid Pin → full data. Commit: This run.
+- [x] **Harden file permissions on remaining JSON files** — Set 600 on users.json, inventory.json, items.json, refunded_orders.json, activity_log.json, login_attempts.json, security_config.json, security_events.json, loyalty_points.json, timesheet_config.json, pos.db and 12+ other JSON files. Prevents other system users from reading employee PINs, customer data, and order data.
 
 ## WATCHLIST (monitor, don't fix yet)
 - Multi-tenant: No business_id scoping on data access — will be a problem when multi-tenant is deployed
