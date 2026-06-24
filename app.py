@@ -151,6 +151,7 @@ TIMESHEET_CONFIG_FILE = 'timesheet_config.json'  # Timesheet configuration (over
 TICKETS_FILE = 'tickets.json'  # Employee self-service tickets/requests
 APPROVALS_FILE = 'timesheet_approvals.json'  # Timesheet pay period approvals
 RESTAURANT_CONFIG_FILE = 'restaurant_config.json'  # Restaurant info for tablet display (name, hours, wifi)
+SCHEDULE_FILE = 'schedule.json'  # Shift schedule builder — weekly shift assignments
 PRINTER_CONFIG_FILE = 'printer_config.json'  # Thermal printer configuration (IP, port, enabled)
 KITCHEN_SOUND_FILE = 'kitchen_sound_config.json'  # Kitchen display sound configuration (enabled, volume)
 LOGIN_ATTEMPTS_FILE = 'login_attempts.json'  # Persistent login attempt records (user_id, ip, timestamp, success, user_agent)
@@ -15138,6 +15139,279 @@ def system_restore():
         'restored_count': restored_count,
         'errors': errors,
         'safety_backup': safety_path
+    })
+
+
+# ─── Schedule Builder Endpoints ─────────────────────────────────
+# Weekly shift schedule grid — manager assigns shifts, compares vs actual
+
+@app.route('/api/schedule/get', methods=['POST'])
+def schedule_get():
+    """Get scheduled shifts for a date range."""
+    data = request.json or {}
+    admin_pin = data.get('adminPin', '')
+    if not check_perm(admin_pin, "view_timesheet"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    schedule = load_json_data(SCHEDULE_FILE)
+    if not isinstance(schedule, dict) or 'shifts' not in schedule:
+        schedule = {'shifts': []}
+
+    date_from = (data.get('date_from') or '').strip()
+    date_to = (data.get('date_to') or '').strip()
+
+    if date_from:
+        try:
+            datetime.fromisoformat(date_from)
+        except ValueError:
+            return jsonify({'message': 'Invalid date_from format.'}), 400
+    if date_to:
+        try:
+            datetime.fromisoformat(date_to)
+        except ValueError:
+            return jsonify({'message': 'Invalid date_to format.'}), 400
+
+    # Filter shifts by date range
+    filtered = []
+    for shift in schedule.get('shifts', []):
+        shift_date = shift.get('date', '')
+        if date_from and shift_date < date_from:
+            continue
+        if date_to and shift_date > date_to:
+            continue
+        filtered.append(shift)
+
+    return jsonify({'shifts': filtered})
+
+
+@app.route('/api/schedule/set', methods=['POST'])
+def schedule_set():
+    """Create or update a scheduled shift."""
+    data = request.json or {}
+    admin_pin = data.get('adminPin', '')
+    if not check_perm(admin_pin, "view_timesheet"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    date = (data.get('date') or '').strip()
+    start_time = (data.get('start_time') or '').strip()
+    end_time = (data.get('end_time') or '').strip()
+    user_id = (data.get('user_id') or '').strip()
+    user_name = (data.get('user_name') or '').strip()
+    shift_id = (data.get('id') or '').strip()  # If provided, update existing
+
+    # Validate
+    if not date or not start_time or not end_time or not user_id:
+        return jsonify({'message': 'date, start_time, end_time, and user_id are required.'}), 400
+
+    try:
+        datetime.fromisoformat(date)
+    except ValueError:
+        return jsonify({'message': 'Invalid date format. Use YYYY-MM-DD.'}), 400
+
+    if not re.match(r'^\d{2}:\d{2}$', start_time):
+        return jsonify({'message': 'Invalid start_time format. Use HH:MM.'}), 400
+    if not re.match(r'^\d{2}:\d{2}$', end_time):
+        return jsonify({'message': 'Invalid end_time format. Use HH:MM.'}), 400
+
+    # Load schedule
+    schedule = load_json_data(SCHEDULE_FILE)
+    if not isinstance(schedule, dict) or 'shifts' not in schedule:
+        schedule = {'shifts': []}
+
+    if shift_id:
+        # Update existing
+        updated = False
+        for i, s in enumerate(schedule['shifts']):
+            if s.get('id') == shift_id:
+                schedule['shifts'][i] = {
+                    'id': shift_id,
+                    'date': date,
+                    'start_time': start_time,
+                    'end_time': end_time,
+                    'user_id': user_id,
+                    'user_name': user_name or s.get('user_name', '')
+                }
+                updated = True
+                break
+        if not updated:
+            return jsonify({'message': f'Shift {shift_id} not found.'}), 404
+    else:
+        # Create new
+        shift_id = f"sched_{int(datetime.now().timestamp())}_{len(schedule['shifts'])}"
+        schedule['shifts'].append({
+            'id': shift_id,
+            'date': date,
+            'start_time': start_time,
+            'end_time': end_time,
+            'user_id': user_id,
+            'user_name': user_name
+        })
+
+    save_json_data(SCHEDULE_FILE, schedule)
+    return jsonify({'message': 'Shift saved.', 'id': shift_id, 'shifts': schedule['shifts']})
+
+
+@app.route('/api/schedule/delete', methods=['POST'])
+def schedule_delete():
+    """Delete a scheduled shift by id."""
+    data = request.json or {}
+    admin_pin = data.get('adminPin', '')
+    if not check_perm(admin_pin, "view_timesheet"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    shift_id = (data.get('id') or '').strip()
+    if not shift_id:
+        return jsonify({'message': 'Shift id is required.'}), 400
+
+    schedule = load_json_data(SCHEDULE_FILE)
+    if not isinstance(schedule, dict) or 'shifts' not in schedule:
+        return jsonify({'message': 'No shifts found.'}), 404
+
+    removed = False
+    schedule['shifts'] = [s for s in schedule['shifts'] if s.get('id') != shift_id]
+    if len(schedule['shifts']) < len(load_json_data(SCHEDULE_FILE).get('shifts', [])) if isinstance(load_json_data(SCHEDULE_FILE), dict) else True:
+        removed = True
+
+    if not removed:
+        return jsonify({'message': f'Shift {shift_id} not found.'}), 404
+
+    save_json_data(SCHEDULE_FILE, schedule)
+    return jsonify({'message': 'Shift deleted.', 'shifts': schedule['shifts']})
+
+
+@app.route('/api/schedule/compare', methods=['POST'])
+def schedule_compare():
+    """Compare scheduled shifts vs actual clock-ins for a date range."""
+    data = request.json or {}
+    admin_pin = data.get('adminPin', '')
+    if not check_perm(admin_pin, "view_timesheet"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    date_from = (data.get('date_from') or '').strip()
+    date_to = (data.get('date_to') or '').strip()
+
+    if not date_from or not date_to:
+        # Default to current week (Mon-Sun)
+        today = datetime.now()
+        monday = today - timedelta(days=today.weekday())
+        sunday = monday + timedelta(days=6)
+        date_from = monday.strftime('%Y-%m-%d')
+        date_to = sunday.strftime('%Y-%m-%d')
+
+    try:
+        dt_from = datetime.fromisoformat(date_from)
+        dt_to = datetime.fromisoformat(date_to)
+    except ValueError:
+        return jsonify({'message': 'Invalid date format.'}), 400
+
+    # Load scheduled shifts
+    schedule = load_json_data(SCHEDULE_FILE)
+    if not isinstance(schedule, dict) or 'shifts' not in schedule:
+        schedule = {'shifts': []}
+
+    scheduled_shifts = [s for s in schedule['shifts'] if date_from <= s.get('date', '') <= date_to]
+
+    # Load actual clock-ins from shift_log
+    shift_log = load_json_data(SHIFT_FILE)
+
+    # Group scheduled by user_id
+    from collections import defaultdict
+    scheduled_by_user = defaultdict(list)
+    for s in scheduled_shifts:
+        scheduled_by_user[s['user_id']].append(s)
+
+    # Group actual by user_id
+    actual_by_user = defaultdict(list)
+    for entry in shift_log:
+        uid = entry.get('user_id', '')
+        clock_in = entry.get('clock_in_time', '')
+        clock_out = entry.get('clock_out_time', '')
+        # Check if shift falls within range
+        if clock_in:
+            try:
+                ci = datetime.fromisoformat(clock_in)
+                if dt_from <= ci <= dt_to + timedelta(days=1):
+                    actual_by_user[uid].append(entry)
+            except (ValueError, TypeError):
+                pass
+
+    # Build comparison
+    users = load_json_data(USERS_FILE)
+    comparison = []
+    for uid in set(list(scheduled_by_user.keys()) + list(actual_by_user.keys())):
+        user_data = users.get(uid, {})
+        user_name = user_data.get('name', uid)
+        sched_shifts = scheduled_by_user.get(uid, [])
+        actual_shifts = actual_by_user.get(uid, [])
+
+        # Calculate scheduled hours
+        sched_hours = 0
+        for s in sched_shifts:
+            try:
+                sh, sm = map(int, s['start_time'].split(':'))
+                eh, em = map(int, s['end_time'].split(':'))
+                sched_hours += max(0, (eh * 60 + em) - (sh * 60)) / 60.0
+            except (ValueError, KeyError):
+                pass
+
+        # Calculate actual hours
+        actual_hours = 0
+        for a in actual_shifts:
+            try:
+                ci = datetime.fromisoformat(a.get('clock_in_time', ''))
+                co = datetime.fromisoformat(a.get('clock_out_time', '')) if a.get('clock_out_time') else None
+                if co:
+                    dur = (co - ci).total_seconds() / 3600
+                    # Subtract break hours
+                    break_hours = 0
+                    for br in a.get('breaks', []):
+                        if br.get('start') and br.get('end'):
+                            try:
+                                bs = datetime.fromisoformat(br['start'])
+                                be = datetime.fromisoformat(br['end'])
+                                break_hours += (be - bs).total_seconds() / 3600
+                            except (ValueError, TypeError):
+                                pass
+                    actual_hours += max(0, dur - break_hours)
+            except (ValueError, TypeError):
+                pass
+
+        # Count no-show days (days with schedule but no clock-in)
+        sched_dates = set(s['date'] for s in sched_shifts)
+        actual_dates = set()
+        for a in actual_shifts:
+            ci = a.get('clock_in_time', '')
+            if ci:
+                try:
+                    actual_dates.add(datetime.fromisoformat(ci).strftime('%Y-%m-%d'))
+                except (ValueError, TypeError):
+                    pass
+        no_show_dates = sorted(sched_dates - actual_dates)
+
+        # Count late days from actual shifts
+        late_count = sum(1 for a in actual_shifts if a.get('late_minutes', 0) or 0 > 0)
+
+        comparison.append({
+            'user_id': uid,
+            'user_name': user_name,
+            'scheduled_hours': round(sched_hours, 2),
+            'actual_hours': round(actual_hours, 2),
+            'variance_hours': round(actual_hours - sched_hours, 2),
+            'scheduled_shifts': len(sched_shifts),
+            'actual_shifts': len(actual_shifts),
+            'no_show_dates': no_show_dates,
+            'late_count': late_count,
+            'scheduled_details': sched_shifts,
+            'actual_details': actual_shifts
+        })
+
+    # Sort by user_name
+    comparison.sort(key=lambda x: x['user_name'].lower())
+
+    return jsonify({
+        'date_from': date_from,
+        'date_to': date_to,
+        'comparison': comparison
     })
 
 

@@ -701,6 +701,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
         <button onclick="switchAdminSection('servicecharge')" id="asServicecharge">🔧 Service Charge</button>
         <button onclick="switchAdminSection('combos')" id="asCombos">🍱 Combos</button>
         <button onclick="switchAdminSection('tickets')" id="asTickets" data-i18n="admin.tickets">📋 Tickets</button>
+        <button onclick="switchAdminSection('schedule')" id="asSchedule">📅 Schedule</button>
         <button onclick="switchAdminSection('security')" id="asSecurity">🛡️ Security</button>
         <button onclick="switchAdminSection('backup')" id="asBackup">💾 Backup</button>
       </div>
@@ -1856,6 +1857,64 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
             <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
               <span id="backupLastBackup" style="font-size:13px;color:var(--text2);">⏳ Last backup: checking...</span>
               <button class="outline" onclick="checkBackupStatus()" style="min-height:40px;padding:8px 16px;font-size:13px;">🔄 Check Status</button>
+            </div>
+          </div>
+        </div>
+        <!-- Schedule Builder -->
+        <div id="secSchedule" class="admin-section">
+          <h3 style="margin:0 0 12px 0;">📅 Shift Schedule Builder</h3>
+          <p style="color:var(--text2);margin-bottom:16px;font-size:14px;" data-i18n="schedule.desc">Weekly schedule grid where manager assigns shifts. Compare scheduled vs actual hours to catch no-shows.</p>
+
+          <!-- Week Navigator -->
+          <div class="card" style="margin-bottom:16px;padding:12px 16px;">
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+              <button class="accent" onclick="scheduleNavigate(-1)" style="min-height:44px;padding:8px 14px;font-size:16px;" aria-label="Previous week">◀</button>
+              <h4 id="scheduleWeekTitle" style="margin:0;font-size:16px;min-width:240px;text-align:center;">Week of ...</h4>
+              <button class="accent" onclick="scheduleNavigate(1)" style="min-height:44px;padding:8px 14px;font-size:16px;" aria-label="Next week">▶</button>
+              <button class="outline" onclick="scheduleGoToday()" style="min-height:44px;padding:8px 16px;font-size:13px;">📅 This Week</button>
+            </div>
+          </div>
+
+          <!-- Add Shift Form -->
+          <div class="card" style="margin-bottom:16px;padding:12px 16px;">
+            <h4 style="margin:0 0 10px 0;font-size:15px;" data-i18n="schedule.add_shift">➕ Add Scheduled Shift</h4>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
+              <div style="min-width:140px;flex:1;">
+                <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;" data-i18n="schedule.employee">Employee</label>
+                <select id="schedEmployee" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;">
+                  <option value="" data-i18n="schedule.select_employee">Select employee...</option>
+                </select>
+              </div>
+              <div style="min-width:130px;flex:1;">
+                <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;" data-i18n="schedule.day">Day</label>
+                <select id="schedDay" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;">
+                </select>
+              </div>
+              <div style="min-width:90px;flex:0.8;">
+                <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;" data-i18n="schedule.start_time">Start</label>
+                <input type="time" id="schedStartTime" value="09:00" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;"/>
+              </div>
+              <div style="min-width:90px;flex:0.8;">
+                <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;" data-i18n="schedule.end_time">End</label>
+                <input type="time" id="schedEndTime" value="17:00" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;"/>
+              </div>
+              <button class="accent" onclick="scheduleAddShift()" style="min-height:44px;padding:8px 20px;font-size:14px;" data-i18n="schedule.add_btn">➕ Add</button>
+            </div>
+            <span id="scheduleAddStatus" style="font-size:13px;margin-top:6px;display:block;"></span>
+          </div>
+
+          <!-- Schedule Grid -->
+          <div id="scheduleGridContainer">
+            <div class="empty-state" data-i18n="schedule.loading">Loading schedule...</div>
+          </div>
+
+          <!-- Scheduled vs Actual Comparison -->
+          <div class="card" style="margin-top:16px;padding:12px 16px;">
+            <h4 style="margin:0 0 10px 0;font-size:15px;" data-i18n="schedule.comparison">📊 Scheduled vs Actual Hours</h4>
+            <p style="font-size:13px;color:var(--text2);margin-bottom:8px;" data-i18n="schedule.comparison_desc">Compare planned shifts against actual clock-in data for this week. Identify no-shows and late arrivals.</p>
+            <button class="accent" onclick="scheduleLoadComparison()" style="min-height:44px;padding:8px 20px;font-size:14px;" data-i18n="schedule.compare_btn">🔄 Load Comparison</button>
+            <div id="scheduleComparisonResults" style="margin-top:12px;">
+              <div class="empty-state" data-i18n="schedule.press_compare">Press "Load Comparison" to see results.</div>
             </div>
           </div>
         </div>
@@ -3033,6 +3092,23 @@ const L10N = {
     'idle.disabled': 'Disabled',
     'idle.timeout_label': 'Timeout:',
     'idle.minutes': 'minutes',
+    // Schedule Builder
+    'schedule.desc': 'Weekly schedule grid where manager assigns shifts. Compare scheduled vs actual hours to catch no-shows.',
+    'schedule.add_shift': '➕ Add Scheduled Shift',
+    'schedule.employee': 'Employee',
+    'schedule.select_employee': 'Select employee...',
+    'schedule.day': 'Day',
+    'schedule.start_time': 'Start',
+    'schedule.end_time': 'End',
+    'schedule.add_btn': '➕ Add',
+    'schedule.loading': 'Loading schedule...',
+    'schedule.comparison': '📊 Scheduled vs Actual Hours',
+    'schedule.comparison_desc': 'Compare planned shifts against actual clock-in data for this week. Identify no-shows and late arrivals.',
+    'schedule.compare_btn': '🔄 Load Comparison',
+    'schedule.press_compare': 'Press "Load Comparison" to see results.',
+    'schedule.total_scheduled': 'Total Scheduled',
+    'schedule.total_actual': 'Total Actual',
+    'schedule.total_variance': 'Total Variance',
   },
   es: {
     'app.title': '🍽️ Sistema POS',
@@ -3679,6 +3755,23 @@ const L10N = {
     'idle.disabled': 'Desactivado',
     'idle.timeout_label': 'Tiempo límite:',
     'idle.minutes': 'minutos',
+    // Schedule Builder
+    'schedule.desc': 'Cuadrícula semanal donde el gerente asigna turnos. Compara horas programadas vs reales para detectar ausencias.',
+    'schedule.add_shift': '➕ Agregar Turno Programado',
+    'schedule.employee': 'Empleado',
+    'schedule.select_employee': 'Seleccionar empleado...',
+    'schedule.day': 'Día',
+    'schedule.start_time': 'Inicio',
+    'schedule.end_time': 'Fin',
+    'schedule.add_btn': '➕ Agregar',
+    'schedule.loading': 'Cargando horario...',
+    'schedule.comparison': '📊 Programado vs Horas Reales',
+    'schedule.comparison_desc': 'Compara turnos planificados contra datos de entrada reales para esta semana. Identifica ausencias y llegadas tarde.',
+    'schedule.compare_btn': '🔄 Cargar Comparación',
+    'schedule.press_compare': 'Presiona "Cargar Comparación" para ver resultados.',
+    'schedule.total_scheduled': 'Total Programado',
+    'schedule.total_actual': 'Total Real',
+    'schedule.total_variance': 'Variación Total',
   }
 };
 
@@ -8828,6 +8921,7 @@ function switchAdminSection(sec) {
   else if (sec === 'security') loadSecurityDashboard();
   else if (sec === 'backup') checkBackupStatus();
   else if (sec === 'kitchensound') loadKitchenSoundConfigAdmin();
+  else if (sec === 'schedule') loadSchedule();
 }
 
 // ═══════════ TIMESHEET CONFIG ═══════════
@@ -16645,6 +16739,258 @@ async function submitChangePin() {
     errorEl.textContent = 'Cannot connect to server. Check your connection.';
     errorEl.style.display = '';
   }
+}
+
+// ═══════════ SCHEDULE BUILDER ═══════════
+
+/** Current week offset (0 = this week, 1 = next week, -1 = last week) */
+let _scheduleWeekOffset = 0;
+
+function _scheduleGetWeekRange(offset) {
+  const today = new Date();
+  const dayOfWeek = today.getDay();
+  const diffToMon = (dayOfWeek === 0 ? -6 : 1 - dayOfWeek);
+  const monday = new Date(today);
+  monday.setDate(today.getDate() + diffToMon + (offset * 7));
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  const fmt = d => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  const dayNames = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    days.push({ label: dayNames[i], date: fmt(d), jsDate: d });
+  }
+  return { monday, sunday, days, mondayStr: fmt(monday), sundayStr: fmt(sunday) };
+}
+
+function _scheduleUpdateWeekTitle() {
+  const r = _scheduleGetWeekRange(_scheduleWeekOffset);
+  document.getElementById('scheduleWeekTitle').textContent = '📅 Week of ' + r.mondayStr + ' — ' + r.sundayStr;
+  // Update day selector options
+  const sel = document.getElementById('schedDay');
+  sel.innerHTML = '';
+  r.days.forEach(d => {
+    const opt = document.createElement('option');
+    opt.value = d.date;
+    opt.textContent = d.label + ' ' + d.date;
+    sel.appendChild(opt);
+  });
+}
+
+/** Load the schedule for the current week view */
+async function loadSchedule() {
+  _scheduleUpdateWeekTitle();
+  const r = _scheduleGetWeekRange(_scheduleWeekOffset);
+  const container = document.getElementById('scheduleGridContainer');
+  container.innerHTML = '<div class="empty-state">Loading schedule...</div>';
+
+  try {
+    // Load employees for the dropdown
+    const usersResp = await fetchJSON(BACKEND_URL + '/api/users', { adminPin: currentUser?.id || '' }, 'GET');
+    if (usersResp && usersResp.data) {
+      const select = document.getElementById('schedEmployee');
+      select.innerHTML = '<option value="">' + t('schedule.select_employee') + '</option>';
+      Object.keys(usersResp.data).forEach(uid => {
+        const u = usersResp.data[uid];
+        if (u.role !== 'owner' && !u.banned) {
+          const opt = document.createElement('option');
+          opt.value = uid;
+          opt.textContent = u.name + ' (#' + uid + ')';
+          select.appendChild(opt);
+        }
+      });
+    }
+
+    // Fetch scheduled shifts for this week
+    const resp = await fetchJSON(BACKEND_URL + '/api/schedule/get', {
+      adminPin: currentUser?.id || '',
+      date_from: r.mondayStr,
+      date_to: r.sundayStr
+    });
+    const shifts = resp?.data?.shifts || [];
+    _scheduleRenderGrid(shifts, r);
+  } catch (e) {
+    container.innerHTML = '<div class="empty-state" style="color:var(--accent);">⚠️ Error loading schedule: ' + (e.message || 'Network error') + '</div>';
+  }
+}
+
+function _scheduleRenderGrid(shifts, range) {
+  const container = document.getElementById('scheduleGridContainer');
+  if (!shifts || shifts.length === 0) {
+    container.innerHTML = '<div class="empty-state">No shifts scheduled for this week. Use the form above to add shifts.</div>';
+    return;
+  }
+
+  let html = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;">';
+  range.days.forEach(day => {
+    const dayShifts = shifts.filter(s => s.date === day.date);
+    html += '<div class="card" style="padding:10px;">';
+    html += '<h5 style="margin:0 0 6px 0;font-size:14px;color:var(--accent);">' + day.label + '<br><span style="font-size:12px;color:var(--text2);font-weight:400;">' + day.date + '</span></h5>';
+    if (dayShifts.length === 0) {
+      html += '<div style="font-size:12px;color:var(--text2);padding:6px 0;">— No shifts —</div>';
+    } else {
+      dayShifts.sort((a, b) => a.start_time.localeCompare(b.start_time));
+      dayShifts.forEach(s => {
+        const name = s.user_name || 'User #' + s.user_id;
+        html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--border);font-size:13px;">';
+        html += '<span><strong>' + escHtml(name) + '</strong><br><span style="color:var(--text2);font-size:11px;">' + s.start_time + ' → ' + s.end_time + '</span></span>';
+        html += '<button class="ghost" onclick="scheduleDeleteShift(\'' + s.id + '\')" style="color:var(--accent);min-height:36px;padding:2px 8px;font-size:14px;" title="Delete shift">✕</button>';
+        html += '</div>';
+      });
+    }
+    html += '</div>';
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function scheduleNavigate(direction) {
+  _scheduleWeekOffset += direction;
+  loadSchedule();
+}
+
+function scheduleGoToday() {
+  _scheduleWeekOffset = 0;
+  loadSchedule();
+}
+
+async function scheduleAddShift() {
+  const statusEl = document.getElementById('scheduleAddStatus');
+  const userId = document.getElementById('schedEmployee').value;
+  const date = document.getElementById('schedDay').value;
+  const startTime = document.getElementById('schedStartTime').value;
+  const endTime = document.getElementById('schedEndTime').value;
+
+  if (!userId || !date || !startTime || !endTime) {
+    statusEl.textContent = '❌ Please fill all fields.';
+    statusEl.style.color = 'var(--accent)';
+    return;
+  }
+
+  // Get employee name
+  const userName = document.getElementById('schedEmployee').selectedOptions[0]?.textContent || '';
+
+  statusEl.textContent = '⏳ Saving...';
+  statusEl.style.color = 'var(--text2)';
+
+  try {
+    const resp = await fetchJSON(BACKEND_URL + '/api/schedule/set', {
+      adminPin: currentUser?.id || '',
+      date: date,
+      start_time: startTime,
+      end_time: endTime,
+      user_id: userId,
+      user_name: userName.replace(/\s*\(#\d+\)$/, '')  // Clean up the name from "Name (#1234)" format
+    });
+
+    if (resp?.ok) {
+      statusEl.textContent = '✅ Shift added!';
+      statusEl.style.color = '#4caf50';
+      // Reset start/end to defaults
+      document.getElementById('schedStartTime').value = '09:00';
+      document.getElementById('schedEndTime').value = '17:00';
+      // Reload the grid
+      loadSchedule();
+      setTimeout(() => { statusEl.textContent = ''; }, 3000);
+    } else {
+      statusEl.textContent = '❌ ' + (resp?.data?.message || 'Save failed');
+      statusEl.style.color = 'var(--accent)';
+    }
+  } catch (e) {
+    statusEl.textContent = '❌ Network error: ' + (e.message || '');
+    statusEl.style.color = 'var(--accent)';
+  }
+}
+
+async function scheduleDeleteShift(shiftId) {
+  if (!confirm('Delete this scheduled shift?')) return;
+  try {
+    const resp = await fetchJSON(BACKEND_URL + '/api/schedule/delete', {
+      adminPin: currentUser?.id || '',
+      id: shiftId
+    });
+    if (resp?.ok) {
+      showToast('Shift deleted.', 'success');
+      loadSchedule();
+    } else {
+      showToast('Failed to delete shift.', 'danger');
+    }
+  } catch (e) {
+    showToast(t('toast.network_error'), 'danger');
+  }
+}
+
+async function scheduleLoadComparison() {
+  const container = document.getElementById('scheduleComparisonResults');
+  container.innerHTML = '<div class="empty-state">⏳ Loading...</div>';
+
+  const r = _scheduleGetWeekRange(_scheduleWeekOffset);
+
+  try {
+    const resp = await fetchJSON(BACKEND_URL + '/api/schedule/compare', {
+      adminPin: currentUser?.id || '',
+      date_from: r.mondayStr,
+      date_to: r.sundayStr
+    });
+
+    const data = resp?.data;
+    if (!data || !data.comparison) {
+      container.innerHTML = '<div class="empty-state">No comparison data available.</div>';
+      return;
+    }
+
+    _scheduleRenderComparison(data, container);
+  } catch (e) {
+    container.innerHTML = '<div class="empty-state" style="color:var(--accent);">⚠️ Error: ' + (e.message || '') + '</div>';
+  }
+}
+
+function _scheduleRenderComparison(data, container) {
+  const comp = data.comparison;
+  if (comp.length === 0) {
+    container.innerHTML = '<div class="empty-state">No scheduled shifts or clock-ins for this period.</div>';
+    return;
+  }
+
+  let html = '<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;margin-top:12px;">';
+  html += '<table style="width:100%;border-collapse:collapse;font-size:14px;">';
+  html += '<thead><tr style="background:var(--card-alt);">';
+  html += '<th style="padding:10px 8px;text-align:left;">Employee</th>';
+  html += '<th style="padding:10px 8px;text-align:center;">Scheduled</th>';
+  html += '<th style="padding:10px 8px;text-align:center;">Actual</th>';
+  html += '<th style="padding:10px 8px;text-align:center;">Variance</th>';
+  html += '<th style="padding:10px 8px;text-align:center;">No-Show Days</th>';
+  html += '<th style="padding:10px 8px;text-align:center;">Late</th>';
+  html += '</tr></thead><tbody>';
+
+  comp.forEach(c => {
+    const varClass = c.variance_hours < -1 ? 'color:var(--accent);font-weight:700;' : (c.variance_hours > 1 ? 'color:#4caf50;font-weight:700;' : '');
+    const noShows = c.no_show_dates?.length || 0;
+    const lateCount = c.late_count || 0;
+    html += '<tr style="border-bottom:1px solid var(--border);">';
+    html += '<td style="padding:8px;font-weight:600;">' + escHtml(c.user_name) + '</td>';
+    html += '<td style="padding:8px;text-align:center;">' + c.scheduled_hours + 'h</td>';
+    html += '<td style="padding:8px;text-align:center;">' + c.actual_hours + 'h</td>';
+    html += '<td style="padding:8px;text-align:center;' + varClass + '">' + (c.variance_hours >= 0 ? '+' : '') + c.variance_hours + 'h</td>';
+    html += '<td style="padding:8px;text-align:center;">' + (noShows > 0 ? '<span style="color:var(--accent);font-weight:700;">⚠️ ' + noShows + '</span>' : '<span style="color:#4caf50;">✅ 0</span>') + '</td>';
+    html += '<td style="padding:8px;text-align:center;">' + (lateCount > 0 ? '<span style="color:#f39c12;">🕐 ' + lateCount + '</span>' : '<span style="color:#4caf50;">-</span>') + '</td>';
+    html += '</tr>';
+  });
+  html += '</tbody></table></div>';
+
+  // Summary
+  const totalSched = comp.reduce((s, c) => s + c.scheduled_hours, 0);
+  const totalActual = comp.reduce((s, c) => s + c.actual_hours, 0);
+  const totalVariance = totalActual - totalSched;
+  html += '<div style="margin-top:12px;padding:10px 14px;background:var(--card-alt);border-radius:6px;display:flex;gap:20px;flex-wrap:wrap;font-size:14px;">';
+  html += '<span>📋 <strong>' + t('schedule.total_scheduled') + ':</strong> ' + totalSched.toFixed(1) + 'h</span>';
+  html += '<span>⏱️ <strong>' + t('schedule.total_actual') + ':</strong> ' + totalActual.toFixed(1) + 'h</span>';
+  html += '<span style="color:' + (totalVariance < -1 ? 'var(--accent)' : (totalVariance > 1 ? '#4caf50' : 'var(--text2)')) + ';">📊 <strong>' + t('schedule.total_variance') + ':</strong> ' + (totalVariance >= 0 ? '+' : '') + totalVariance.toFixed(1) + 'h</span>';
+  html += '</div>';
+
+  container.innerHTML = html;
 }
 
 </script>
