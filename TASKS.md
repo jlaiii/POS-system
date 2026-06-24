@@ -736,10 +736,11 @@ Super admin PIN is separate from any business PIN. Super admin can create busine
 
 ## Reliability — Auto-Discovered Issues (NEW — June 2026)
 
-> The Reliability Bot has identified that Flask crashes repeatedly (3 times in 75min on 2026-06-23). Uses Flask's built-in Werkzeug dev server (`socketio.run(app, debug=False, port=5000, allow_unsafe_werkzeug=False)` at line 9581) which is known to silently stop serving under load or extended uptime. Production deployment requires a real WSGI server.
+> The Reliability Bot has identified that Flask/server crashes repeatedly — 6 occurrences since 2026-06-23, including after the gunicorn+gevent migration. Root cause still unknown: no crash logs, no OOM, no sys.exit found. Gunicorn+gevent master process is completely gone when it dies, suggesting it's being killed externally (OOM killer? signal from systemd? Hermes agent restart?). Last verified running at 03:02 UTC, found dead at 03:07 UTC — only 5 minutes of uptime this time.
 
 ### Priority: HIGH
 - [x] worker-1 **Migrate Flask to gunicorn + eventlet for production stability** — Replaced `socketio.run()` dev server with production-grade gunicorn+eventlet. Added `async_mode='eventlet'` to SocketIO constructor. Created `scripts/run_gunicorn.sh` with configurable port/workers. Updated `scripts/run_flask.sh` auto-restart wrapper to use gunicorn. Verified: server starts, responds 200 on root and API endpoints. No more Werkzeug dev server crashes.
+- [ ] **Investigate recurring gunicorn process death (6 occurrences)** — Despite gunicorn+gevent migration, the server still dies repeatedly (6 times in ~16 hours). No crash logs, no OOM, no sys.exit in gunicorn or Flask code. Process is completely gone (no zombie, no core dump). Check: (1) systemd OOM killer logs (`journalctl -u systemd-oomd`), (2) Hermes agent process management (is it killing child processes?), (3) gunicorn's own ARBX/graceful shutdown signals, (4) socketio/SIGPIPE from disconnected clients. Add process monitoring: write PID file and check it every 30s from cron. If root cause found, fix it; if not, add a systemd unit with `Restart=always` and `RestartSec=5` so crashes auto-recover without the Reliability Bot. [worker-1 or worker-2]
 
 ### Priority: MEDIUM
 - [ ] **Add health-check endpoint monitoring** — The Reliability Bot checks `/api/health` every 5min, but there's no proper monitoring alert. Add an external uptime monitor (e.g., cron calling a webhook on failure) so crashes are caught faster than the next bot cycle.
