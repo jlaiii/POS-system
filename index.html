@@ -332,6 +332,29 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 .lock-pin-input:focus { border-color: var(--accent); outline: none; }
 .lock-error { font-size: 14px; color: #e74c3c; min-height: 20px; }
 
+/* ═══════════ PAGE TRANSITIONS ═══════════ */
+@keyframes slideInRight {
+  from { transform: translateX(30px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+@keyframes slideInLeft {
+  from { transform: translateX(-30px); opacity: 0.5; }
+  to { transform: translateX(0); opacity: 1; }
+}
+@keyframes fadeInOverlay {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.tab-enter-right { animation: slideInRight 150ms ease-out forwards; }
+.tab-enter-left { animation: slideInLeft 150ms ease-out forwards; }
+
+/* Modal fade-in on open */
+.modal-overlay.active {
+  animation: fadeInOverlay 150ms ease-out forwards;
+}
+
+/* ── RESPONSIVE BREAKPOINTS ── */
+
 #mainTabs {
   display: flex; gap: 0; border-bottom: 2px solid var(--border);
   background: var(--card); overflow-x: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
@@ -6231,7 +6254,7 @@ function showApp() {
     showKitchenView();
   } else {
     hideKitchenView();
-    switchMainTab('pos');
+    switchMainTab('pos', true);
   }
   // Apply language after UI is set up
   switchLanguage(currentLang);
@@ -6265,43 +6288,61 @@ function showApp() {
 }
 
 // ═══════════ MAIN TABS ═══════════
-function switchMainTab(tab) {
+const TAB_ORDER = ['pos', 'history', 'admin', 'requests', 'mypay'];
+let _lastTab = 'pos';  // Track last tab for animation direction
+function switchMainTab(tab, skipAnim) {
+  // Determine direction from tab order
+  const prevIdx = TAB_ORDER.indexOf(_lastTab);
+  const nextIdx = TAB_ORDER.indexOf(tab);
+  const direction = (nextIdx > prevIdx) ? 'right' : (nextIdx < prevIdx) ? 'left' : null;
+  const sameTab = tab === _lastTab;
+  skipAnim = skipAnim || direction === null;
+  // Hiding old tab — don't animate out, just show active class logic
   document.querySelectorAll('#mainTabs button').forEach(b => b.classList.remove('active'));
   document.getElementById('mainTab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
-  document.getElementById('posTab').classList.remove('active');
-  document.getElementById('historyTab').classList.remove('active');
-  document.getElementById('adminTab').classList.remove('active');
-  document.getElementById('requestsTab').classList.remove('active');
-  document.getElementById('myPayTab').classList.remove('active');
+  ['posTab','historyTab','adminTab','requestsTab','myPayTab'].forEach(id => {
+    document.getElementById(id).classList.remove('active');
+  });
+  // Show new tab with optional animation (never animate same-tab clicks)
+  const newTabId = tab === 'pos' ? 'posTab'
+    : tab === 'history' ? 'historyTab'
+    : tab === 'admin' ? 'adminTab'
+    : tab === 'requests' ? 'requestsTab'
+    : 'myPayTab';
+  const newTab = document.getElementById(newTabId);
+  if (!skipAnim && !sameTab) {
+    newTab.classList.add(direction === 'right' ? 'tab-enter-right' : 'tab-enter-left');
+    // Clean up animation class after it completes
+    newTab.addEventListener('animationend', function cleanup() {
+      this.classList.remove('tab-enter-right', 'tab-enter-left');
+      this.removeEventListener('animationend', cleanup);
+    });
+  }
+  newTab.classList.add('active');
+  _lastTab = tab;
+  // Tab-specific logic
   if (tab === 'pos') {
-    composedSince = null; // Reset composition timer for new POS session
+    composedSince = null;
     stopMyPayAutoRefresh();
-    document.getElementById('posTab').classList.add('active');
     loadItems();
     loadTableSelector();
-    loadRecentOrders();  // Load recent orders quick-access
-    // Auto-focus search input when switching to POS tab
+    loadRecentOrders();
     setTimeout(() => {
       const searchInput = document.getElementById('itemSearchInput');
       if (searchInput) searchInput.focus();
     }, 100);
   } else if (tab === 'history') {
     stopMyPayAutoRefresh();
-    document.getElementById('historyTab').classList.add('active');
     loadOrderHistory();
   } else if (tab === 'admin') {
     stopMyPayAutoRefresh();
-    document.getElementById('adminTab').classList.add('active');
     loadAdminStats();
     switchAdminSection('stats');
   } else if (tab === 'requests') {
     stopMyPayAutoRefresh();
-    document.getElementById('requestsTab').classList.add('active');
-    // Mark all responses as read and show alert banners
     markReadAndShowAlerts();
     loadMyTickets();
   } else if (tab === 'mypay') {
-    document.getElementById('myPayTab').classList.add('active');
     loadMyPay();
     startMyPayAutoRefresh();
   }
@@ -15079,7 +15120,7 @@ function openPayReviewTicket(periodStart, periodEnd) {
   }
 
   // Switch to Requests tab
-  switchTab('requests');
+  switchMainTab('requests');
 
   // Set the type to pay_review (hidden option, select it programmatically)
   const typeSelect = document.getElementById('requestType');
@@ -15176,7 +15217,7 @@ function hideKitchenView() {
   document.getElementById('tabContent').style.display = '';
   // Re-show the appropriate tab
   if (currentUser && currentUser.role !== 'cook') {
-    switchMainTab('pos');
+    switchMainTab('pos', true);
   }
 }
 

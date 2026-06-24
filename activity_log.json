@@ -6759,5 +6759,44 @@
             "category": "Test",
             "name": "Test Nutrition Item"
         }
+    },
+    {
+        "timestamp": "2026-06-24T15:47:17.830052",
+        "type": "login_failed",
+        "user_id": null,
+        "user_role": "unknown",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "failed",
+            "method": "pin",
+            "ip": "127.0.0.1",
+            "attempt": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-24T15:47:17.851205",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T15:47:31.456041",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
     }
 ]
