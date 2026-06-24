@@ -353,7 +353,7 @@ New `tickets.json` data store. Each ticket:
 
 ### Priority: MEDIUM
 
-- [ ] **Year-to-date (YTD) earnings card** — Summary card at top of My Pay showing YTD gross pay, YTD hours, average hours/week, average hourly rate.
+- [~] worker-2 **Year-to-date (YTD) earnings card** — Summary card at top of My Pay showing YTD gross pay, YTD hours, average hours/week, average hourly rate.
 - [ ] **Multi-rate support** — Per-shift or per-role pay rate override.
 - [ ] **Pay stub email delivery** — Auto-email pay stub PDF to employee when admin marks a pay period as "paid".
 - [ ] **Tip tracking in My Pay** — Aggregate tip data per pay period.
