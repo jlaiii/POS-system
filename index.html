@@ -429,6 +429,32 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 }
 #catTabs button.active { background: var(--accent); color: #fff; }
 
+/* ── ALLERGEN FILTER BAR ── */
+.allergen-filter-bar {
+  margin: 6px 0 4px;
+}
+.allergen-filter-toggle {
+  background: var(--card); color: var(--text2); font-size: 13px;
+  padding: 6px 14px; border-radius: 16px; min-height: 36px; cursor: pointer;
+  border: 2px solid transparent; transition: all 0.2s;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.allergen-filter-toggle:hover { border-color: var(--accent); color: var(--text); }
+.allergen-filter-toggle.active { border-color: var(--accent); background: var(--accent); color: #fff; }
+.filter-count { background: var(--accent); color: #fff; font-size: 11px; border-radius: 10px; padding: 0 6px; min-width: 18px; text-align: center; }
+.allergen-filter-toggle.active .filter-count { background: #fff; color: var(--accent); }
+.allergen-filter-chips {
+  display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px;
+  padding: 8px; background: var(--card); border-radius: var(--radius);
+}
+.allergen-chip {
+  background: var(--bg); color: var(--text2); border: 2px solid var(--border);
+  border-radius: 20px; padding: 6px 14px; font-size: 13px; min-height: 36px;
+  cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 4px;
+}
+.allergen-chip:hover { border-color: var(--accent); color: var(--text); }
+.allergen-chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
 /* ── SKELETON SCREEN LOADERS ── */
 @keyframes shimmer {
   0% { background-position: -400px 0; }
@@ -608,6 +634,10 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
       </div>
       <div id="catTabs"></div>
       <div id="posMain">
+        <div id="allergenFilter" class="allergen-filter-bar">
+          <button id="allergenFilterToggle" class="allergen-filter-toggle" onclick="toggleAllergenFilter()" data-i18n="item.allergen_filter" title="Toggle allergen filter">🥜 <span class="filter-label" data-i18n="item.allergen_filter">Allergens</span> <span id="allergenFilterCount" class="filter-count" style="display:none;"></span></button>
+          <div id="allergenFilterChips" class="allergen-filter-chips" style="display:none;"></div>
+        </div>
         <div id="itemGrid" aria-live="polite" aria-atomic="false"></div>
         <div id="cart">
           <div id="cartHeader">
@@ -3468,6 +3498,13 @@ const L10N = {
     'schedule.total_variance': 'Total Variance',
     'mandatory2fa.banner': 'Your account requires two-factor authentication — set it up now to access admin features.',
     'mandatory2fa.enabled': 'Require 2FA for all admin accounts',
+    // Allergen filter
+    'item.allergen_filter': '🥜 Allergens',
+    'item.allergen_filter_active': '🥜 {count} allergen filter(s)',
+    'item.allergen_chip_all': 'Show All',
+    'item.allergen_hide': 'Hide items with:',
+    'item.allergen_filter_off': 'Allergen filter off',
+    'item.allergen_filter_on': 'Filtering {count} allergen(s)',
   },
   es: {
     'app.title': '🍽️ Sistema POS',
@@ -4164,6 +4201,13 @@ const L10N = {
     'schedule.total_variance': 'Variación Total',
     'mandatory2fa.banner': 'Tu cuenta requiere autenticación de dos factores — configúrala ahora para acceder a funciones de administración.',
     'mandatory2fa.enabled': 'Requerir 2FA para todas las cuentas de administrador',
+    // Allergen filter
+    'item.allergen_filter': '🥜 Alérgenos',
+    'item.allergen_filter_active': '🥜 {count} filtro(s)',
+    'item.allergen_chip_all': 'Mostrar Todo',
+    'item.allergen_hide': 'Ocultar artículos con:',
+    'item.allergen_filter_off': 'Filtro de alérgenos desactivado',
+    'item.allergen_filter_on': 'Filtrando {count} alérgeno(s)',
   }
 };
 
@@ -4279,6 +4323,13 @@ let chartPayment = null;
 let chartTrends = null;
 let chartDaily = null;
 let composedSince = null; // ISO timestamp when waiter started composing current cart (for staleness check)
+
+// ═══════════ ALLERGEN FILTER STATE ═══════════
+let activeAllergenFilters = new Set(); // Set of dietary tag names to HIDE
+let allergenFilterExpanded = false;
+
+// Map of dietary tag names to emoji icons (same as in item management)
+const ALLERGEN_ICONS = {'Vegetarian':'🌿','Vegan':'🥦','Gluten-Free':'🌾','Spicy':'🌶️','Nuts':'🥜','Dairy':'🥛','Eggs':'🥚','Seafood':'🦐','Soy':'🫘','Organic':'🌱','Halal':'☪️','Kosher':'✡️','Sugar-Free':'🍃','Low-Carb':'🥬'};
 
 // ═══════════ INVENTORY STATE ═══════════
 let inventoryData = {}; // { item_name: { stock, low_stock_threshold } }
@@ -4449,12 +4500,14 @@ window.addEventListener('DOMContentLoaded', () => {
     searchInput.addEventListener('input', () => {
       itemSearchTerm = searchInput.value;
       renderItems();
+      if (allergenFilterExpanded) renderAllergenChips();
     });
     searchInput.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         searchInput.value = '';
         itemSearchTerm = '';
         renderItems();
+        if (allergenFilterExpanded) renderAllergenChips();
         searchInput.blur();
       }
     });
@@ -7910,9 +7963,123 @@ function renderCategories() {
       if (searchInput) { searchInput.value = ''; itemSearchTerm = ''; }
       renderCategories(); 
       renderItems(); 
+      // Re-render allergen chips if filter panel is open
+      if (allergenFilterExpanded) renderAllergenChips();
     };
     container.appendChild(btn);
   });
+}
+
+// ═══════════ ALLERGEN FILTER ═══════════
+
+/** Collect all dietary tags present in the currently visible items */
+function getAllergensInCurrentView() {
+  const tags = new Set();
+  if (currentCategory === '🍱 Combos') return tags;
+  const items = itemsData[currentCategory] || [];
+  items.forEach(item => {
+    if (item.active === false) return;
+    (item.dietary_tags || []).forEach(t => tags.add(t));
+  });
+  // Also check search results if searching
+  const term = itemSearchTerm.trim().toLowerCase();
+  if (term) {
+    Object.keys(itemsData).forEach(cat => {
+      (itemsData[cat] || []).forEach(item => {
+        if (item.active === false) return;
+        if (item.name.toLowerCase().includes(term)) {
+          (item.dietary_tags || []).forEach(t => tags.add(t));
+        }
+      });
+    });
+  }
+  return tags;
+}
+
+/** Toggle the allergen filter panel open/closed */
+function toggleAllergenFilter() {
+  allergenFilterExpanded = !allergenFilterExpanded;
+  const chips = document.getElementById('allergenFilterChips');
+  const toggle = document.getElementById('allergenFilterToggle');
+  if (allergenFilterExpanded) {
+    renderAllergenChips();
+    chips.style.display = 'flex';
+    toggle.classList.add('active');
+  } else {
+    chips.style.display = 'none';
+    if (activeAllergenFilters.size === 0) toggle.classList.remove('active');
+  }
+}
+
+/** Render the allergen chip toggles based on items in current view */
+function renderAllergenChips() {
+  const container = document.getElementById('allergenFilterChips');
+  const tags = getAllergensInCurrentView();
+  const sortedTags = [...tags].sort();
+  
+  let html = '<div style="font-size:12px;color:var(--text2);margin-bottom:4px;width:100%;" data-i18n="item.allergen_hide">' + t('item.allergen_hide') + '</div>';
+  
+  // "Show All" chip to clear filters
+  const allActive = activeAllergenFilters.size === 0;
+  html += `<button class="allergen-chip${allActive ? ' active' : ''}" onclick="clearAllergenFilters()" style="font-weight:600;">✕ ${t('item.allergen_chip_all')}</button>`;
+  
+  sortedTags.forEach(tag => {
+    const icon = ALLERGEN_ICONS[tag] || '🏷️';
+    const isActive = activeAllergenFilters.has(tag);
+    html += `<button class="allergen-chip${isActive ? ' active' : ''}" onclick="toggleAllergenChip('${escJs(tag)}')">${icon} ${escHtml(tag)}</button>`;
+  });
+  
+  if (sortedTags.length === 0) {
+    html += '<span style="font-size:13px;color:var(--text2);" data-i18n="item.no_items">' + t('item.no_items') + '</span>';
+  }
+  
+  container.innerHTML = html;
+  updateAllergenFilterBadge();
+}
+
+/** Toggle a single allergen chip */
+function toggleAllergenChip(tag) {
+  if (activeAllergenFilters.has(tag)) {
+    activeAllergenFilters.delete(tag);
+  } else {
+    activeAllergenFilters.add(tag);
+  }
+  renderAllergenChips();
+  renderItems();
+  updateAllergenFilterBadge();
+}
+
+/** Clear all active allergen filters */
+function clearAllergenFilters() {
+  activeAllergenFilters.clear();
+  renderAllergenChips();
+  renderItems();
+  updateAllergenFilterBadge();
+}
+
+/** Update the toggle button badge showing active filter count */
+function updateAllergenFilterBadge() {
+  const count = activeAllergenFilters.size;
+  const badge = document.getElementById('allergenFilterCount');
+  const toggle = document.getElementById('allergenFilterToggle');
+  if (count > 0) {
+    badge.textContent = count;
+    badge.style.display = 'inline';
+    toggle.classList.add('active');
+  } else {
+    badge.style.display = 'none';
+    if (!allergenFilterExpanded) toggle.classList.remove('active');
+  }
+}
+
+/** Check if an item is filtered out by active allergen filters */
+function isItemFilteredByAllergens(item) {
+  if (activeAllergenFilters.size === 0) return false;
+  const tags = item.dietary_tags || [];
+  for (const t of tags) {
+    if (activeAllergenFilters.has(t)) return true;
+  }
+  return false;
 }
 
 function renderItems() {
@@ -7951,12 +8118,18 @@ function renderItems() {
       (itemsData[cat] || []).forEach(item => {
         if (item.active === false) return;
         if (item.name.toLowerCase().includes(term)) {
-          results.push({ ...item, _category: cat });
+          if (!isItemFilteredByAllergens(item)) {
+            results.push({ ...item, _category: cat });
+          }
         }
       });
     });
     if (results.length === 0) {
-      grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;">' + t('item.search_no_results', {query: escHtml(itemSearchTerm.trim())}) + '</div>';
+      if (activeAllergenFilters.size > 0 && itemSearchTerm.trim()) {
+        grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;">🥜 ' + t('item.allergen_filter_on', {count: activeAllergenFilters.size}) + ': ' + escHtml(itemSearchTerm.trim()) + '</div>';
+      } else {
+        grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;">' + t('item.search_no_results', {query: escHtml(itemSearchTerm.trim())}) + '</div>';
+      }
       return;
     }
     // Highlight the matching term
@@ -8013,6 +8186,7 @@ function renderItems() {
     }
     items.forEach(item => {
       if (item.active === false) return;
+      if (isItemFilteredByAllergens(item)) return;
       const inv = inventoryData[item.name] || {};
       const stock = inv.stock !== undefined ? inv.stock : null;
       const threshold = inv.low_stock_threshold || 10;
@@ -8053,6 +8227,10 @@ function renderItems() {
       card.onclick = () => { if (stock !== null && stock <= 0) { showToast(t('toast.item_out_of_stock'), 'danger'); return; } addToCart(item.name, effectivePrice, currentCategory); };
       grid.appendChild(card);
     });
+    // Show message if all items hidden by allergen filter
+    if (grid.children.length === 0 && activeAllergenFilters.size > 0) {
+      grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;">🥜 ' + t('item.allergen_filter_on', {count: activeAllergenFilters.size}) + '</div>';
+    }
   }
 }
 
