@@ -475,7 +475,7 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 
 ### Priority: MEDIUM — Missing Production Features
 
-- [ ] **Printer integration (ESC/POS thermal printers)** — Most restaurants use Epson TM-T88 or similar thermal receipt printers. Add optional printer support via `/api/print/receipt` endpoint that formats a receipt as ESC/POS commands and sends to a printer IP. Configurable printer IP in admin. Fallback: generate a clean HTML receipt for browser printing. Without printer support, the system can't print physical receipts — a dealbreaker for most restaurants.
+- [~] worker-3 **Printer integration (ESC/POS thermal printers)** — Most restaurants use Epson TM-T88 or similar thermal receipt printers. Add optional printer support via `/api/print/receipt` endpoint that formats a receipt as ESC/POS commands and sends to a printer IP. Configurable printer IP in admin. Fallback: generate a clean HTML receipt for browser printing. Without printer support, the system can't print physical receipts — a dealbreaker for most restaurants.
 
 - [ ] **Sound alerts for kitchen display** — Kitchen display already has a 3-note alarm. Verify it works on tablets (requires user gesture to unlock audio on iOS/Safari). Add a "first interaction" screen that enables audio: "Tap anywhere to enable kitchen alerts." Check volume levels — should be audible in a noisy kitchen but not deafening. Configurable sound on/off and volume in admin.
 
