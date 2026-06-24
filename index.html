@@ -820,6 +820,20 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
             </div>
           </div>
           <div id="itemMgmtList"><div class="empty-state">Loading items...</div></div>
+          <!-- CSV Import/Export -->
+          <div class="card" style="margin-top:12px;">
+            <h4 style="margin-bottom:8px;">📊 Bulk CSV Import/Export</h4>
+            <p style="color:var(--text2);font-size:13px;margin-bottom:10px;">Import or export menu items in bulk using CSV format. Columns: category, name, price, description, image_url, dietary_tags (semicolon-separated), barcode. Category and name are required.</p>
+            <div class="form-row" style="flex-wrap:wrap;gap:10px;">
+              <button class="outline" onclick="exportItemsCSV()" style="font-size:13px;min-height:44px;padding:8px 16px;">📥 Export CSV</button>
+              <label class="accent" style="font-size:13px;min-height:44px;padding:8px 16px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;border-radius:8px;" data-i18n="admin.csv.import_btn">
+                📤 Import CSV
+                <input type="file" accept=".csv" id="csvImportFile" style="display:none;" onchange="handleCSVImportFile(this)">
+              </label>
+              <button class="ghost" onclick="downloadCSVTemplate()" style="font-size:13px;min-height:44px;padding:8px 16px;">📋 Download Template</button>
+            </div>
+            <div id="csvImportPreview" style="display:none;margin-top:12px;"></div>
+          </div>
         </div>
         <!-- Tax Config -->
         <div id="secTax" class="admin-section">
@@ -2752,6 +2766,15 @@ const L10N = {
     'admin.categories.delete_confirm': 'Delete category "{name}"? This cannot be undone.',
     'admin.categories.delete_blocked': 'Delete items first',
     'admin.categories.name_required': 'Category name is required',
+    'admin.csv.import_btn': '📤 Import CSV',
+    'admin.csv.import_success': 'CSV import complete! Created {created}, Updated {updated}.',
+    'admin.csv.import_error': 'CSV import failed: {msg}',
+    'admin.csv.export_fail': 'CSV export failed',
+    'admin.csv.invalid_file': 'Please select a .csv file',
+    'admin.csv.preview_title': 'Preview — {count} rows found',
+    'admin.csv.confirm_import': 'Confirm Import',
+    'admin.csv.template_downloaded': 'CSV template downloaded',
+    'admin.csv.errors_found': '{n} error(s) in CSV:',
     'item.search': '🔍 Search items...',
     'item.search_no_results': 'No items match "{query}"',
     'item.image_url': 'Image URL',
@@ -3389,6 +3412,15 @@ const L10N = {
     'admin.categories.delete_confirm': '¿Eliminar categoría "{name}"? Esto no se puede deshacer.',
     'admin.categories.delete_blocked': 'Elimine artículos primero',
     'admin.categories.name_required': 'El nombre de categoría es obligatorio',
+    'admin.csv.import_btn': '📤 Importar CSV',
+    'admin.csv.import_success': '¡Importación CSV completa! Creados {created}, Actualizados {updated}.',
+    'admin.csv.import_error': 'Error al importar CSV: {msg}',
+    'admin.csv.export_fail': 'Error al exportar CSV',
+    'admin.csv.invalid_file': 'Seleccione un archivo .csv',
+    'admin.csv.preview_title': 'Vista previa — {count} filas encontradas',
+    'admin.csv.confirm_import': 'Confirmar Importación',
+    'admin.csv.template_downloaded': 'Plantilla CSV descargada',
+    'admin.csv.errors_found': '{n} error(es) en el CSV:',
     'item.search': '🔍 Buscar artículos...',
     'item.search_no_results': 'Ningún artículo coincide con "{query}"',
     'item.image_url': 'URL de imagen',
@@ -9685,6 +9717,159 @@ async function toggleItemVisibility(cat, name) {
     loadItemMgmt();
     loadItems();
   } catch(e) { showToast(t('toast.network_error'), 'danger'); }
+}
+
+// ═══════════ CSV ITEM IMPORT/EXPORT ═══════════
+
+function downloadCSVTemplate() {
+  const csv = 'category,name,price,description,image_url,dietary_tags,barcode\nFoods,Hamburger,5.99,Classic beef patty with lettuce and tomato,,,123456789\nDrinks,Coke,2.50,,,,\nSnacks,Chips,3.25,,\n';
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'menu_import_template.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast(t('admin.csv.template_downloaded'), 'success');
+}
+
+async function exportItemsCSV() {
+  try {
+    const r = await fetch(BACKEND_URL + '/api/items/csv_export');
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const csv = await r.text();
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'menu_items_export.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch(e) {
+    showToast(t('admin.csv.export_fail'), 'danger');
+  }
+}
+
+function handleCSVImportFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (!file.name.toLowerCase().endsWith('.csv')) {
+    showToast(t('admin.csv.invalid_file'), 'danger');
+    input.value = '';
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const csvText = e.target.result;
+    showCSVPreview(csvText);
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+
+function showCSVPreview(csvText) {
+  const preview = document.getElementById('csvImportPreview');
+  preview.style.display = 'block';
+  
+  // Parse CSV to count rows and show first few
+  const lines = csvText.split('\n').filter(l => l.trim());
+  const header = lines[0] || '';
+  const dataLines = lines.slice(1).filter(l => l.trim());
+  const columns = header.split(',').map(c => c.trim());
+  const rowCount = dataLines.length;
+  
+  let html = '<div class="card" style="background:var(--card);">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">';
+  html += '<strong>' + t('admin.csv.preview_title', {count: rowCount}) + '</strong>';
+  html += '<div style="display:flex;gap:8px;">';
+  html += '<button class="success" onclick="confirmCSVImport()" style="font-size:13px;min-height:44px;padding:8px 16px;">✅ ' + t('admin.csv.confirm_import') + '</button>';
+  html += '<button class="ghost" onclick="cancelCSVImport()" style="font-size:13px;min-height:44px;padding:8px 16px;">✕ Cancel</button>';
+  html += '</div></div>';
+  
+  // Show column info
+  html += '<div style="font-size:12px;color:var(--text2);margin-bottom:8px;">Columns: ' + escHtml(columns.join(', ')) + '</div>';
+  
+  // Show first 5 data rows as preview
+  if (dataLines.length > 0) {
+    html += '<div style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;font-size:12px;">';
+    html += '<table style="width:100%;border-collapse:collapse;">';
+    html += '<thead><tr style="background:var(--bg);">';
+    columns.forEach(col => {
+      html += '<th style="padding:4px 8px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;">' + escHtml(col) + '</th>';
+    });
+    html += '</tr></thead><tbody>';
+    const previewRows = dataLines.slice(0, 5);
+    previewRows.forEach(line => {
+      const vals = line.split(',').map(v => v.trim());
+      html += '<tr>';
+      columns.forEach((col, ci) => {
+        html += '<td style="padding:4px 8px;border-bottom:1px solid var(--border);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escHtml(vals[ci] || '') + '</td>';
+      });
+      html += '</tr>';
+    });
+    if (dataLines.length > 5) {
+      html += '<tr><td colspan="' + columns.length + '" style="padding:6px 8px;text-align:center;color:var(--text2);font-style:italic;">... and ' + (dataLines.length - 5) + ' more rows</td></tr>';
+    }
+    html += '</tbody></table></div>';
+  } else {
+    html += '<div class="empty-state" style="padding:12px;">No data rows found</div>';
+  }
+  
+  html += '</div>';
+  preview.innerHTML = html;
+  // Store CSV text for confirmation
+  preview.dataset.csvText = csvText;
+}
+
+function cancelCSVImport() {
+  const preview = document.getElementById('csvImportPreview');
+  preview.style.display = 'none';
+  preview.innerHTML = '';
+  delete preview.dataset.csvText;
+}
+
+async function confirmCSVImport() {
+  const preview = document.getElementById('csvImportPreview');
+  const csvText = preview.dataset.csvText;
+  if (!csvText) return;
+  
+  const confirmBtn = preview.querySelector('.success');
+  if (confirmBtn) confirmBtn.disabled = true;
+  
+  try {
+    const r = await fetch(BACKEND_URL + '/api/items/csv_import', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, csv_text: csvText })
+    });
+    const d = await r.json();
+    if (!r.ok) {
+      showToast(t('admin.csv.import_error', {msg: d.message || 'Unknown error'}), 'danger');
+      if (confirmBtn) confirmBtn.disabled = false;
+      return;
+    }
+    // Show success with any errors
+    let msg = t('admin.csv.import_success', {created: d.created, updated: d.updated});
+    if (d.errors && d.errors.length > 0) {
+      msg += ' ' + t('admin.csv.errors_found', {n: d.errors.length});
+      // Show errors in preview
+      let errHtml = '<div class="card" style="margin-top:8px;border-left:3px solid #e74c3c;">';
+      errHtml += '<strong style="color:#e74c3c;font-size:13px;">' + t('admin.csv.errors_found', {n: d.errors.length}) + '</strong>';
+      errHtml += '<ul style="margin:4px 0 0 16px;font-size:12px;color:var(--text2);">';
+      d.errors.forEach(err => { errHtml += '<li>' + escHtml(err) + '</li>'; });
+      errHtml += '</ul></div>';
+      preview.innerHTML = errHtml;
+    } else {
+      preview.style.display = 'none';
+      preview.innerHTML = '';
+      delete preview.dataset.csvText;
+    }
+    showToast(msg, 'success');
+    loadItemMgmt();
+    loadItems();
+  } catch(e) {
+    showToast(t('admin.csv.import_error', {msg: e.message || 'Network error'}), 'danger');
+    if (confirmBtn) confirmBtn.disabled = false;
+  }
 }
 
 // ═══════════ MODIFIER ADMIN EDITOR ═══════════

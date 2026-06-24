@@ -6043,5 +6043,92 @@
             "category": "Foods",
             "name": "\ud83e\udd16 Robot Burger \ud83c\udf54"
         }
+    },
+    {
+        "timestamp": "2026-06-24T08:54:11.116916",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T08:54:12.226072",
+        "type": "clock_in",
+        "user_id": "9999",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "user_name": "Test2FA",
+            "clock_in_time": "2026-06-24T08:54:12.225862",
+            "late_minutes": null,
+            "scheduled_start": "09:00"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T08:54:21.885555",
+        "type": "clock_out",
+        "user_id": "9999",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "user_name": "Test2FA",
+            "clock_in_time": "2026-06-24T08:54:12.225862",
+            "clock_out_time": "2026-06-24T08:54:21.884196",
+            "duration_hours": 0.0
+        }
+    },
+    {
+        "timestamp": "2026-06-24T09:11:56.226026",
+        "type": "csv_import",
+        "user_id": "2222",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "success",
+            "created": 3,
+            "updated": 0,
+            "errors": []
+        }
+    },
+    {
+        "timestamp": "2026-06-24T09:12:01.898588",
+        "type": "csv_import",
+        "user_id": "2222",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "success",
+            "created": 1,
+            "updated": 1,
+            "errors": []
+        }
+    },
+    {
+        "timestamp": "2026-06-24T09:12:07.737699",
+        "type": "csv_import",
+        "user_id": "2222",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "success",
+            "created": 0,
+            "updated": 0,
+            "errors": [
+                "Row 2: missing name",
+                "Row 3: missing category",
+                "Row 4: invalid price 'invalid'"
+            ]
+        }
     }
 ]

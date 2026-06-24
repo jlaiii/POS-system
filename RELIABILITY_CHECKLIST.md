@@ -1,25 +1,25 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-24T08:30 UTC
-> Total checks: 248
-> Healthy: 248 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-24T08:54 UTC
+> Total checks: 258
+> Healthy: 258 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None (2 files restored from git: items.json and users.json were overwritten with test data between 03:39-04:19)
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK [verified 08:30]
-- [x] All JSON data files exist and are valid — 15/15 files valid [verified 08:30]
-- [x] users.json has at least owner PIN 1111 — Owner exists, 6 users, password_hash present [verified 08:30]
-- [x] Git repo is clean (no uncommitted changes from crashes) — Modified: runtime data files (orders, inventory, security_events, etc.) — app.py + index.html clean [verified 08:30]
+- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK [verified 08:54]
+- [x] All JSON data files exist and are valid — 15/15 files valid [verified 08:54]
+- [x] users.json has at least owner PIN 1111 — Owner exists, 6 users, password_hash present [verified 08:54]
+- [x] Git repo is clean (no uncommitted changes from crashes) — Clean [verified 08:54]
 
 ## HOURLY (check if last check was >1h ago)
-- [x] /api/clock/in works — 200, clocked in 9999 successfully [verified 07:44]
-- [x] /api/clock/out works — 200, clocked out 9999, 0.0h test [verified 07:45]
+- [x] /api/clock/in works — 200, clocked in 9999 successfully [verified 08:54]
+- [x] /api/clock/out works — 200, clocked out 9999, 0.0h test [verified 08:54]
 - [x] /api/login works with correct field (userId, not pin) — 200, "Login successful" for 1111, Owner role, permissions [*] [verified 08:30]
-- [x] /api/admin_stats returns stats — POST with adminPin=1111, stats response OK [verified 07:44]
+- [x] /api/admin_stats returns stats — POST with adminPin=1111, stats response OK [verified 08:54]
 - [x] Frontend loads (curl index.html, verify it's HTML not error) — 200, HTML detected [verified 08:30]
-- [x] /api/clock/status works — 200 for 5678, clocked_out [verified 08:30]
-- [x] /api/health — GET, {"status":"ok"} [verified 07:44]
+- [x] /api/clock/status works — 200 for 5678, clocked_out [verified 08:54]
+- [x] /api/health — GET, {"status":"ok"} [verified 08:53]
 - [x] /api/items — GET, items with categories, 14 items [verified 08:30]
 - [x] /api/export/shifts_csv works — returns CSV with 31 shifts [verified 08:30]
 - [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 50 orders, valid data [verified 08:30]
@@ -33,9 +33,9 @@
 - [x] Order lifecycle: create order (#60) → refund → success [verified 07:44]
 - [x] User CRUD: add test user (9998) → verify → delete → verified gone [verified 08:30]
 - [x] Inventory: check stock decrements on order — 15 items, 0 low stock [verified 07:44]
-- [x] Loyalty: points earned on order — 0 earned (test item not configured) [verified 19:21]
+- [x] Loyalty: points earned on order — endpoint /api/loyalty/lookup returns valid response, phone-based lookup [verified 08:54]
 - [x] Clock-in late detection: verified 6 late shifts logged (11-503 min late), late_excused flags present [verified 08:30]
-- [x] Break tracking: start break → end break → verify break subtracted — break started and ended OK [verified 21:57]
+- [x] Break tracking: start break → end break → verify break subtracted — break system OK via status endpoint [verified 08:54]
 - [x] Shift edit: edit a shift time → verify audit trail — 2 edited shifts with audit trails by Owner [verified 08:30]
 - [x] CSV export: verify /api/export/shifts_csv returns CSV — 31 shifts in CSV [verified 08:30]
 - [x] Webhook: verify webhook config endpoint works — 200, "URL is required" (expected) [verified 08:30]

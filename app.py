@@ -3809,6 +3809,157 @@ def get_items():
     return jsonify(items)
 
 
+@app.route('/api/items/csv_export', methods=['GET'])
+def items_csv_export():
+    """Export all menu items as CSV."""
+    import csv, io
+    from flask import Response
+    items_data = load_json_data(ITEMS_FILE)
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(['category', 'name', 'price', 'description', 'image_url', 'dietary_tags', 'barcode'])
+    for cat, items in items_data.items():
+        for item in items:
+            description = item.get('description', '')
+            dietary_tags = ';'.join(item.get('dietary_tags', []))
+            writer.writerow([
+                cat,
+                item.get('name', ''),
+                item.get('price', 0),
+                description,
+                item.get('image_url', ''),
+                dietary_tags,
+                item.get('barcode', '')
+            ])
+    csv_content = output.getvalue()
+    output.close()
+    return Response(
+        csv_content,
+        mimetype='text/csv',
+        headers={'Content-Disposition': 'attachment; filename=menu_items_export.csv'}
+    )
+
+
+@app.route('/api/items/csv_import', methods=['POST'])
+def items_csv_import():
+    """Import menu items from CSV text."""
+    import csv, io
+    admin_pin = None
+    csv_text = ''
+    if request.is_json:
+        admin_pin = request.json.get('adminPin')
+        csv_text = request.json.get('csv_text', '')
+    elif request.form:
+        admin_pin = request.form.get('adminPin')
+        csv_text = request.form.get('csv_text', '')
+
+    if not check_perm(admin_pin, 'manage_items'):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    if not csv_text.strip():
+        return jsonify({'message': 'CSV text is empty.'}), 400
+
+    items_data = load_json_data(ITEMS_FILE)
+    reader = csv.DictReader(io.StringIO(csv_text))
+    
+    # Validate header
+    required_cols = {'category', 'name', 'price'}
+    if not required_cols.issubset(reader.fieldnames or []):
+        return jsonify({
+            'message': 'CSV must contain columns: category, name, price (others optional)',
+            'received_columns': reader.fieldnames
+        }), 400
+
+    created = 0
+    updated = 0
+    errors = []
+    row_num = 1  # header is row 1
+
+    for row in reader:
+        row_num += 1
+        try:
+            category = (row.get('category') or '').strip()
+            name = (row.get('name') or '').strip()
+            price_str = (row.get('price') or '').strip()
+            if not category:
+                errors.append(f"Row {row_num}: missing category")
+                continue
+            if not name:
+                errors.append(f"Row {row_num}: missing name")
+                continue
+            if not price_str:
+                errors.append(f"Row {row_num}: missing price")
+                continue
+            try:
+                price = float(price_str)
+                if price <= 0:
+                    errors.append(f"Row {row_num}: price must be positive, got '{price_str}'")
+                    continue
+            except ValueError:
+                errors.append(f"Row {row_num}: invalid price '{price_str}'")
+                continue
+
+            description = (row.get('description') or '').strip()
+            image_url = (row.get('image_url') or '').strip()
+            barcode = (row.get('barcode') or '').strip()
+            dietary_tags_raw = (row.get('dietary_tags') or '').strip()
+            dietary_tags = [t.strip() for t in dietary_tags_raw.split(';') if t.strip()] if dietary_tags_raw else []
+
+            # Ensure category exists
+            if category not in items_data:
+                items_data[category] = []
+
+            # Check if item already exists (by name, case-insensitive, within category)
+            found = False
+            for existing in items_data[category]:
+                if existing['name'].lower() == name.lower():
+                    # Update existing item fields (preserving non-CSV fields like modifiers, active, course)
+                    existing['price'] = price
+                    existing['description'] = description
+                    if image_url:
+                        existing['image_url'] = image_url
+                    if barcode:
+                        existing['barcode'] = barcode
+                    if dietary_tags:
+                        existing['dietary_tags'] = dietary_tags
+                    updated += 1
+                    found = True
+                    break
+            if not found:
+                items_data[category].append({
+                    'name': name,
+                    'price': price,
+                    'description': description,
+                    'image_url': image_url,
+                    'barcode': barcode,
+                    'dietary_tags': dietary_tags,
+                    'course': 'main',
+                    'active': True
+                })
+                created += 1
+        except Exception as e:
+            errors.append(f"Row {row_num}: {str(e)}")
+
+    save_json_data(ITEMS_FILE, items_data)
+    backup_menu()
+    
+    admin_user = load_json_data(USERS_FILE).get(admin_pin, {}) if admin_pin else {}
+    admin_role = admin_user.get('role', 'unknown') if admin_user else 'unknown'
+    log_activity('csv_import', admin_pin or 'unknown', admin_role, {
+        'status': 'success',
+        'created': created,
+        'updated': updated,
+        'errors': errors
+    })
+
+    return jsonify({
+        'message': f'Import complete. Created {created}, Updated {updated}.',
+        'created': created,
+        'updated': updated,
+        'errors': errors
+    })
+
+
 def verify_admin(admin_pin):
     users = load_json_data(USERS_FILE)
     for uid, u_data in users.items():
