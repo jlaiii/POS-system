@@ -178,7 +178,7 @@ Use Python `pyotp` (pure Python, no C extensions, `pip install pyotp qrcode`):
 
 ### Priority: LOW
 
-^- [~] worker-3 **Email/SMS recovery option** — If backup codes are all used AND admin isn't available, user can request email recovery (if email is set in profile). Sends a one-time 6-digit code to email, valid for 10 minutes. Email config already exists from receipt delivery feature. This is a "I'm locked out at 2am and the owner isn't awake" safety net.
+^- [x] worker-3 **Email/SMS recovery option** — If backup codes are all used AND admin isn't available, user can request email recovery (if email is set in profile). Sends a one-time 6-digit code to email, valid for 10 minutes. Email config already exists from receipt delivery feature. This is a "I'm locked out at 2am and the owner isn't awake" safety net. [worker-3 — New POST /api/auth/2fa/request_email_recovery and POST /api/auth/2fa/verify_email_recovery endpoints. Email recovery section in 2FA login UI with request code + verify code flow. i18n EN+ES. Rate-limited (60s per request send, shared 5-attempt 15min lock with TOTP/backup). Requires email configured on user account and SMTP configured in admin.]
 
 - [ ] **Mandatory 2FA for admin/owner roles** — Configurable toggle: "Require 2FA for all admin accounts." If enabled, any admin without 2FA gets a persistent banner: "⚠️ Your account requires 2FA — set it up now." Blocks access to admin features until 2FA is enabled. Owner can exempt specific admins. This prevents the "boss's account gets hacked because they never set up 2FA" scenario.
 

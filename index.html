@@ -478,6 +478,17 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
       <input type="text" id="twofaBackupInput" placeholder="e.g. XXXX-XXXX" maxlength="12" class="twofa-backup-input" autocomplete="off" onkeydown="if(event.key==='Enter')submitBackupCode()" aria-label="Backup code">
       <button onclick="submitBackupCode()" class="twofa-backup-submit">Verify Backup Code</button>
       <button class="twofa-back" id="twofaBackToTotpBtn" onclick="backToTOTP()">← Back to Authenticator Code</button>
+      <div class="twofa-backup-link" id="twofaEmailRecoveryLink" onclick="showEmailRecoveryInput()" style="margin-top:8px;"></div>
+    </div>
+    <!-- Email recovery section (hidden by default) -->
+    <div id="twofaEmailRecoverySection" style="display:none;flex-direction:column;align-items:center;gap:16px;width:100%;">
+      <div class="twofa-header" id="twofaEmailRecoveryHeader">📧 Email Recovery</div>
+      <div class="twofa-sub" id="twofaEmailRecoverySub">Enter the 6-digit code sent to your email</div>
+      <input type="text" id="twofaEmailRecoveryInput" placeholder="000000" maxlength="6" class="twofa-backup-input" autocomplete="off" inputmode="numeric" pattern="[0-9]*" onkeydown="if(event.key==='Enter')submitEmailRecovery()" aria-label="Email recovery code">
+      <button onclick="requestEmailRecoveryCode()" id="twofaEmailRecoveryRequestBtn" class="twofa-backup-submit">📧 Email Me a Code</button>
+      <button onclick="submitEmailRecovery()" id="twofaEmailRecoveryVerifyBtn" class="twofa-backup-submit" style="display:none;">Verify Code</button>
+      <div id="twofaEmailRecoveryStatus" style="font-size:13px;color:var(--text2);text-align:center;"></div>
+      <button class="twofa-back" id="twofaEmailRecoveryBackBtn" onclick="backFromEmailRecovery()">← Back to Backup Codes</button>
     </div>
   </div>
 
@@ -2974,6 +2985,19 @@ const L10N = {
     'twofa.locked': 'Too many failed attempts. Account locked for 15 minutes.',
     'twofa.success': 'Login successful!',
     'twofa.code_required': 'Please enter the 6-digit verification code.',
+    'twofa.email_recovery': '📧 Email me a recovery code',
+    'twofa.email_recovery_header': '📧 Email Recovery',
+    'twofa.email_recovery_sub': 'Enter the 6-digit code sent to your email',
+    'twofa.email_recovery_btn': '📧 Email Me a Code',
+    'twofa.email_recovery_verify_btn': 'Verify Code',
+    'twofa.email_recovery_sent': 'Recovery code sent! Check your email.',
+    'twofa.email_recovery_failed': 'Failed to send recovery code. Contact admin.',
+    'twofa.email_recovery_no_email': 'No email configured for this account.',
+    'twofa.email_recovery_back': '← Back to Backup Codes',
+    'twofa.email_recovery_success': 'Login successful via email recovery!',
+    'twofa.email_recovery_code_sent_to': 'Recovery code sent to {email}',
+    'twofa.email_recovery_please_wait': 'Please wait {seconds} seconds before requesting another code.',
+    'twofa.email_recovery_invalid': 'Invalid recovery code.',
     'twofa.enabled': '🔒 2FA Enabled',
     'twofa.not_setup': '🔓 2FA Not Set Up',
     'twofa.disable_btn': '🔒 Disable 2FA',
@@ -3637,6 +3661,19 @@ const L10N = {
     'twofa.locked': 'Demasiados intentos fallidos. Cuenta bloqueada por 15 minutos.',
     'twofa.success': '¡Inicio de sesión exitoso!',
     'twofa.code_required': 'Por favor ingrese el código de verificación de 6 dígitos.',
+    'twofa.email_recovery': '📧 Enviarme un código de recuperación',
+    'twofa.email_recovery_header': '📧 Recuperación por Correo',
+    'twofa.email_recovery_sub': 'Ingrese el código de 6 dígitos enviado a su correo',
+    'twofa.email_recovery_btn': '📧 Enviarme un Código',
+    'twofa.email_recovery_verify_btn': 'Verificar Código',
+    'twofa.email_recovery_sent': '¡Código de recuperación enviado! Revise su correo.',
+    'twofa.email_recovery_failed': 'Error al enviar código. Contacte al administrador.',
+    'twofa.email_recovery_no_email': 'No hay correo configurado para esta cuenta.',
+    'twofa.email_recovery_back': '← Volver a Códigos de Respaldo',
+    'twofa.email_recovery_success': '¡Inicio de sesión exitoso por recuperación de correo!',
+    'twofa.email_recovery_code_sent_to': 'Código enviado a {email}',
+    'twofa.email_recovery_please_wait': 'Espere {seconds} segundos antes de solicitar otro código.',
+    'twofa.email_recovery_invalid': 'Código de recuperación inválido.',
     'twofa.enabled': '🔒 2FA Activada',
     'twofa.not_setup': '🔓 2FA No Configurada',
     'twofa.disable_btn': '🔒 Desactivar 2FA',
@@ -4199,6 +4236,10 @@ function show2FAInput(userId, userName) {
   document.getElementById('login2faMode').style.display = 'flex';
   document.getElementById('loginSubtitle').textContent = t('twofa.header');
   document.getElementById('twofaSub').textContent = t('twofa.sub') + ' (' + twofaUserName + ')';
+  // Reset all sub-sections
+  document.getElementById('twofaTotpSection').style.display = '';
+  document.getElementById('twofaBackupSection').style.display = 'none';
+  document.getElementById('twofaEmailRecoverySection').style.display = 'none';
   // Set backup code link and section text
   document.getElementById('twofaBackupLink').textContent = t('twofa.backup_code_link');
   document.getElementById('twofaBackupHeader').textContent = t('twofa.backup_header');
@@ -4206,6 +4247,8 @@ function show2FAInput(userId, userName) {
   document.getElementById('twofaBackupInput').placeholder = t('twofa.backup_input_placeholder');
   document.querySelector('.twofa-backup-submit').textContent = t('twofa.verify_backup_btn');
   document.getElementById('twofaBackToTotpBtn').textContent = t('twofa.back_to_totp');
+  // Set email recovery link
+  document.getElementById('twofaEmailRecoveryLink').textContent = t('twofa.email_recovery');
   document.getElementById('loginError').textContent = '';
   // Clear and focus first digit
   for (let i = 0; i < 6; i++) {
@@ -4220,10 +4263,15 @@ function cancel2FA() {
   document.getElementById('login2faMode').style.display = 'none';
   document.getElementById('loginModeToggle').style.display = '';
   document.getElementById('loginSubtitle').textContent = t('login.subtitle');
-  // Reset backup code view
+  // Reset all sub-views
   document.getElementById('twofaTotpSection').style.display = '';
   document.getElementById('twofaBackupSection').style.display = 'none';
   document.getElementById('twofaBackupInput').value = '';
+  document.getElementById('twofaEmailRecoverySection').style.display = 'none';
+  document.getElementById('twofaEmailRecoveryInput').value = '';
+  document.getElementById('twofaEmailRecoveryStatus').textContent = '';
+  document.getElementById('twofaEmailRecoveryVerifyBtn').style.display = 'none';
+  document.getElementById('twofaEmailRecoveryRequestBtn').style.display = '';
   // Return to PIN or owner mode
   if (loginMode === 'pin') {
     document.getElementById('loginPinMode').style.display = 'block';
@@ -4304,6 +4352,126 @@ async function submitBackupCode() {
   } finally {
     submitBtn.disabled = false;
     submitBtn.textContent = t('twofa.verify_backup_btn') || 'Verify Backup Code';
+  }
+}
+
+/* ───── Email Recovery Code Functions ───── */
+
+function showEmailRecoveryInput() {
+  // Set up the email recovery section
+  document.getElementById('twofaBackupSection').style.display = 'none';
+  document.getElementById('twofaEmailRecoverySection').style.display = 'flex';
+  document.getElementById('twofaEmailRecoveryInput').value = '';
+  document.getElementById('twofaEmailRecoveryStatus').textContent = '';
+  document.getElementById('twofaEmailRecoveryVerifyBtn').style.display = 'none';
+  document.getElementById('twofaEmailRecoveryRequestBtn').style.display = '';
+  document.getElementById('loginError').textContent = '';
+  // Set i18n
+  document.getElementById('twofaEmailRecoveryHeader').textContent = t('twofa.email_recovery_header');
+  document.getElementById('twofaEmailRecoverySub').textContent = t('twofa.email_recovery_sub');
+  document.getElementById('twofaEmailRecoveryRequestBtn').textContent = t('twofa.email_recovery_btn');
+  document.getElementById('twofaEmailRecoveryVerifyBtn').textContent = t('twofa.email_recovery_verify_btn');
+  document.getElementById('twofaEmailRecoveryBackBtn').textContent = t('twofa.email_recovery_back');
+  document.getElementById('twofaEmailRecoveryInput').placeholder = '000000';
+  setTimeout(() => document.getElementById('twofaEmailRecoveryInput').focus(), 100);
+}
+
+function backFromEmailRecovery() {
+  document.getElementById('twofaEmailRecoverySection').style.display = 'none';
+  document.getElementById('twofaEmailRecoveryInput').value = '';
+  document.getElementById('twofaEmailRecoveryStatus').textContent = '';
+  document.getElementById('twofaEmailRecoveryVerifyBtn').style.display = 'none';
+  document.getElementById('twofaEmailRecoveryRequestBtn').style.display = '';
+  document.getElementById('loginError').textContent = '';
+  document.getElementById('twofaBackupSection').style.display = 'flex';
+  setTimeout(() => document.getElementById('twofaBackupInput').focus(), 100);
+}
+
+async function requestEmailRecoveryCode() {
+  const statusEl = document.getElementById('twofaEmailRecoveryStatus');
+  const requestBtn = document.getElementById('twofaEmailRecoveryRequestBtn');
+  const verifyBtn = document.getElementById('twofaEmailRecoveryVerifyBtn');
+
+  statusEl.textContent = '';
+  requestBtn.disabled = true;
+  requestBtn.textContent = t('twofa.verifying') || 'Sending...';
+
+  try {
+    const r = await fetch(BACKEND_URL + '/api/auth/2fa/request_email_recovery', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: twofaUserId })
+    });
+    const data = await r.json();
+
+    if (r.ok) {
+      statusEl.textContent = t('twofa.email_recovery_sent') || 'Recovery code sent! Check your email.';
+      statusEl.style.color = 'var(--accent)';
+      // Show verify button, hide request button
+      requestBtn.style.display = 'none';
+      verifyBtn.style.display = '';
+      setTimeout(() => document.getElementById('twofaEmailRecoveryInput').focus(), 100);
+    } else if (r.status === 429) {
+      statusEl.textContent = data.message || t('twofa.email_recovery_please_wait', { seconds: '60' });
+      statusEl.style.color = '#e74c3c';
+    } else {
+      statusEl.textContent = data.message || t('twofa.email_recovery_failed');
+      statusEl.style.color = '#e74c3c';
+    }
+  } catch (e) {
+    statusEl.textContent = t('login.error');
+    statusEl.style.color = '#e74c3c';
+  } finally {
+    requestBtn.disabled = false;
+    requestBtn.textContent = t('twofa.email_recovery_btn') || '📧 Email Me a Code';
+  }
+}
+
+async function submitEmailRecovery() {
+  const code = document.getElementById('twofaEmailRecoveryInput').value.trim();
+  if (!code || code.length !== 6) {
+    document.getElementById('loginError').textContent = t('twofa.code_required');
+    return;
+  }
+
+  document.getElementById('loginError').textContent = '';
+  const verifyBtn = document.getElementById('twofaEmailRecoveryVerifyBtn');
+  verifyBtn.disabled = true;
+  verifyBtn.textContent = t('twofa.verifying') || 'Verifying...';
+
+  try {
+    const r = await fetch(BACKEND_URL + '/api/auth/2fa/verify_email_recovery', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: twofaUserId, code })
+    });
+    const data = await r.json();
+
+    if (r.ok) {
+      // Login successful
+      document.getElementById('login2faMode').style.display = 'none';
+      document.getElementById('loginModeToggle').style.display = '';
+      currentUser = { id: twofaUserId, name: data.user, role: data.role, permissions: data.permissions || [], totp_enabled: true };
+      sessionStorage.setItem('pos_userId', twofaUserId);
+      sessionStorage.setItem('pos_userRole', data.role);
+      sessionStorage.setItem('pos_userName', data.user);
+      sessionStorage.setItem('pos_permissions', JSON.stringify(data.permissions || []));
+      sessionStorage.setItem('pos_totp_enabled', '1');
+      document.getElementById('twofaEmailRecoverySection').style.display = 'none';
+      document.getElementById('twofaEmailRecoveryInput').value = '';
+      document.getElementById('twofaEmailRecoveryStatus').textContent = '';
+      twofaUserId = null;
+      twofaUserName = null;
+      showToast(t('twofa.email_recovery_success') || 'Login successful via email recovery!', 'success', 5000);
+      showApp();
+    } else if (data.locked) {
+      document.getElementById('loginError').textContent = t('twofa.locked');
+    } else {
+      document.getElementById('loginError').textContent = data.message || t('twofa.email_recovery_invalid');
+    }
+  } catch (e) {
+    document.getElementById('loginError').textContent = t('login.error');
+  } finally {
+    verifyBtn.disabled = false;
+    verifyBtn.textContent = t('twofa.email_recovery_verify_btn') || 'Verify Code';
   }
 }
 

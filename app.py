@@ -2932,6 +2932,235 @@ def twofa_backup_login():
     return jsonify(response_data)
 
 
+# In-memory store for email recovery codes: {user_id: {'code', 'expires', 'sent_at'}}
+email_recovery_codes = {}
+
+
+@app.route('/api/auth/2fa/request_email_recovery', methods=['POST'])
+def twofa_request_email_recovery():
+    """Send a 6-digit recovery code to the user's email.
+    Only usable when backup codes are exhausted.
+    Rate-limited: max 1 request per 60 seconds per user."""
+    data = request.json
+    user_id = str(data.get('userId', ''))
+
+    if not user_id:
+        return jsonify({'message': 'User ID is required.'}), 400
+
+    now = datetime.now()
+
+    # Rate limit: 1 request per 60 seconds per user
+    if user_id in email_recovery_codes:
+        last_sent = email_recovery_codes[user_id].get('sent_at')
+        if last_sent and (now - last_sent).total_seconds() < 60:
+            remaining = int(60 - (now - last_sent).total_seconds())
+            return jsonify({'message': f'Please wait {remaining} seconds before requesting another code.'}), 429
+
+    users = load_json_data(USERS_FILE)
+    if user_id not in users:
+        return jsonify({'message': 'User not found.'}), 404
+
+    user_data = upgrade_user(users[user_id])
+
+    # Check 2FA is enabled
+    if not user_data.get('totp_enabled', False):
+        return jsonify({'message': '2FA is not enabled for this user.'}), 400
+
+    # Check user has email
+    user_email = user_data.get('email', '').strip()
+    if not user_email or '@' not in user_email:
+        return jsonify({'message': 'No email address configured for this account. Contact admin.'}), 400
+
+    # Generate 6-digit code
+    import random
+    recovery_code = str(random.randint(100000, 999999))
+
+    # Store in memory (10 min expiry)
+    email_recovery_codes[user_id] = {
+        'code': recovery_code,
+        'expires': now + timedelta(minutes=10),
+        'sent_at': now
+    }
+
+    # Send email with recovery code
+    import smtplib
+    from email.mime.text import MIMEText
+
+    email_config = load_json_data(EMAIL_CONFIG_FILE)
+    if not isinstance(email_config, dict):
+        email_config = {"server": "", "port": 587, "username": "", "password": "", "from_addr": "", "use_tls": True, "enabled": False}
+
+    if not email_config.get('enabled') or not email_config.get('server') or not email_config.get('from_addr'):
+        del email_recovery_codes[user_id]
+        return jsonify({'message': 'Email sending is not configured. Contact admin.'}), 400
+
+    try:
+        msg = MIMEText(
+            f'Your POS System account recovery code is: {recovery_code}\n\n'
+            f'This code is valid for 10 minutes. Use it to log in to your POS account.\n\n'
+            f'If you did not request this code, please ignore this email.',
+            'plain'
+        )
+        msg['Subject'] = 'POS System — Account Recovery Code'
+        msg['From'] = email_config.get('from_addr', '')
+        msg['To'] = user_email
+
+        smtp_server = email_config.get('server', '')
+        smtp_port = int(email_config.get('port', 587))
+        use_tls = email_config.get('use_tls', True)
+        smtp_username = email_config.get('username', '')
+        smtp_password = email_config.get('password', '')
+
+        server = smtplib.SMTP(smtp_server, smtp_port)
+        server.ehlo()
+        if use_tls:
+            server.starttls()
+            server.ehlo()
+        if smtp_username and smtp_password:
+            server.login(smtp_username, smtp_password)
+        server.send_message(msg)
+        server.quit()
+
+        log_activity('email_recovery_code_sent', user_id, user_data.get('role', 'unknown'), {
+            'email': user_email
+        })
+
+        return jsonify({'message': f'Recovery code sent to {user_email}'})
+    except smtplib.SMTPAuthenticationError:
+        del email_recovery_codes[user_id]
+        return jsonify({'message': 'SMTP authentication failed. Contact admin.'}), 400
+    except smtplib.SMTPException as e:
+        del email_recovery_codes[user_id]
+        return jsonify({'message': f'Failed to send email: {str(e)}'}), 400
+    except Exception as e:
+        del email_recovery_codes[user_id]
+        return jsonify({'message': f'Failed to send recovery code: {str(e)}'}), 500
+
+
+@app.route('/api/auth/2fa/verify_email_recovery', methods=['POST'])
+def twofa_verify_email_recovery():
+    """Verify an email recovery code and issue a session.
+    Rate-limited via the shared twofa_failed_attempts tracker."""
+    data = request.json
+    user_id = str(data.get('userId', ''))
+    code = data.get('code', '').strip()
+
+    if not user_id or not code:
+        return jsonify({'message': 'User ID and recovery code are required.'}), 400
+
+    if not code.isdigit() or len(code) != 6:
+        return jsonify({'message': 'Invalid code format. Must be 6 digits.'}), 400
+
+    now = datetime.now()
+
+    # --- Rate limit check (shared with TOTP/backup) ---
+    if user_id in twofa_failed_attempts:
+        attempt = twofa_failed_attempts[user_id]
+        if attempt.get('lock_until') and now < attempt['lock_until']:
+            remaining_seconds = int((attempt['lock_until'] - now).total_seconds())
+            log_activity('2fa_login_rate_limited', user_id, 'unknown', {'reason': 'email_recovery_locked', 'remaining_seconds': remaining_seconds})
+            return jsonify({
+                'message': f'Too many failed attempts. Account locked for {remaining_seconds} more seconds.',
+                'locked': True,
+                'retry_after': remaining_seconds
+            }), 429
+        if attempt.get('window_start') and (now - attempt['window_start']).total_seconds() > 60:
+            attempt['count'] = 0
+            attempt['window_start'] = now
+
+    # Check stored code
+    stored = email_recovery_codes.get(user_id)
+    if not stored:
+        return jsonify({'message': 'No recovery code requested. Please request a new code.'}), 400
+
+    if now > stored['expires']:
+        del email_recovery_codes[user_id]
+        return jsonify({'message': 'Recovery code expired. Please request a new code.'}), 400
+
+    if stored['code'] != code:
+        # Increment failed attempts
+        if user_id not in twofa_failed_attempts:
+            twofa_failed_attempts[user_id] = {'count': 0, 'lock_until': None, 'window_start': now}
+        attempt = twofa_failed_attempts[user_id]
+        attempt['count'] += 1
+        if attempt['window_start'] is None:
+            attempt['window_start'] = now
+
+        log_activity('2fa_login_failed', user_id, 'unknown',
+                     {'status': 'invalid_email_recovery_code', 'attempt': attempt['count']})
+        record_login_attempt(user_id, False, 'email_recovery', None, {'reason': 'invalid_recovery_code', 'attempt': attempt['count']})
+
+        if attempt['count'] >= 5:
+            attempt['lock_until'] = now + timedelta(minutes=15)
+            log_activity('2fa_login_locked', user_id, 'unknown',
+                         {'status': 'account_locked_15min_email_recovery', 'attempts': attempt['count']})
+            return jsonify({
+                'message': 'Too many failed attempts. Account locked for 15 minutes.',
+                'locked': True,
+                'retry_after': 900
+            }), 429
+
+        remaining = 5 - attempt['count']
+        return jsonify({
+            'message': f'Invalid recovery code. {remaining} attempt(s) remaining.',
+            'remaining_attempts': remaining
+        }), 401
+
+    # --- Code is valid ---
+    del email_recovery_codes[user_id]
+    if user_id in twofa_failed_attempts:
+        del twofa_failed_attempts[user_id]
+
+    users = load_json_data(USERS_FILE)
+    user_data = upgrade_user(users[user_id])
+    users[user_id] = user_data
+    save_json_data(USERS_FILE, users)
+
+    log_activity('2fa_login_success', user_id, user_data.get('role', 'unknown'),
+                 {'status': 'email_recovery_success', 'user_name': user_data['name']})
+    record_login_attempt(user_id, True, 'email_recovery', None, {'status': 'success'})
+
+    if user_data['role'] in ('admin', 'owner'):
+        active_admin_sessions[user_id] = datetime.now()
+
+    user_agent = request.headers.get('User-Agent', '')
+    client_ip = get_client_ip()
+    session_token = create_user_session(user_id, user_data['name'], user_data['role'], client_ip, user_agent)
+
+    response_data = {
+        'message': 'Login successful (email recovery)',
+        'user': user_data['name'],
+        'role': user_data['role'],
+        'permissions': user_data.get('permissions', []),
+        'totp_enabled': True,
+        'session_token': session_token,
+        'recovery_login': True
+    }
+
+    # Check for PIN reset notification
+    if user_data.get('pin_reset_notification'):
+        notif = user_data['pin_reset_notification']
+        response_data['pin_reset_info'] = {
+            'message': f'⚠️ Your PIN was reset by {notif.get("reset_by_name", "Unknown")} on {notif.get("reset_at", "unknown")}. Reason: {notif.get("reason", "Not provided")}. Use your new PIN.',
+            'reset_by': notif.get('reset_by_name', 'Unknown'),
+            'reset_at': notif.get('reset_at', ''),
+            'reason': notif.get('reason', '')
+        }
+        users[user_id]['pin_reset_notification'] = None
+        save_json_data(USERS_FILE, users)
+
+    if user_data.get('force_pin_change', False):
+        response_data['force_pin_change_required'] = True
+        users[user_id]['force_pin_change'] = False
+        save_json_data(USERS_FILE, users)
+
+    try:
+        check_anomalies_after_login(user_id, user_data['name'], get_client_ip())
+    except Exception:
+        pass
+    return jsonify(response_data)
+
+
 @app.route('/api/add_user', methods=['POST'])
 def add_user():
     data = request.json
