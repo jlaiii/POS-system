@@ -6104,6 +6104,14 @@ def employee_my_pay():
     def get_paid_hours(s):
         return s.get('paid_hours', s.get('duration_hours', 0))
 
+    # Load orders for tip aggregation
+    orders_data = load_json_data(ORDERS_FILE)
+    user_orders = [o for o in orders_data if o.get('user') == user_id]
+
+    # Helper to get tip from an order safely
+    def get_tip(o):
+        return float(o.get('tip_amount') or 0)
+
     # --- Current Period (this week) ---
     current_shifts = []
     current_period_hours = 0.0
@@ -6166,6 +6174,24 @@ def employee_my_pay():
     current_period_hours = round(current_period_hours, 2)
     estimated_gross = round(current_period_hours * pay_rate_val, 2) if has_pay_rate else None
 
+    # Aggregate tips for current period from orders
+    current_period_tips = 0.0
+    current_tip_count = 0
+    for o in user_orders:
+        odate = o.get('date', '')
+        if not odate:
+            continue
+        try:
+            odt = datetime.fromisoformat(odate)
+        except (ValueError, TypeError):
+            continue
+        if monday <= odt <= sunday:
+            tip = get_tip(o)
+            if tip > 0:
+                current_period_tips += tip
+                current_tip_count += 1
+    current_period_tips = round(current_period_tips, 2)
+
     current_period = {
         'start_date': monday.strftime('%Y-%m-%d'),
         'end_date': sunday.strftime('%Y-%m-%d'),
@@ -6176,6 +6202,8 @@ def employee_my_pay():
         'shift_count': len(current_shifts),
         'is_clocked_in': is_clocked_in,
         'active_shift_hours': active_shift_hours,
+        'tips': current_period_tips,
+        'tip_count': current_tip_count,
         'shifts': current_shifts
     }
 
@@ -6202,6 +6230,8 @@ def employee_my_pay():
                 'pay_rate': pay_rate_val if has_pay_rate else None,
                 'has_pay_rate': has_pay_rate,
                 'estimated_gross': 0.0,
+                'tips': 0.0,
+                'tip_count': 0,
                 'shifts': []
             }
         paid = get_paid_hours(s)
@@ -6217,6 +6247,7 @@ def employee_my_pay():
         })
 
     # Round hours and calculate gross for each period using per-shift rates
+    # Also aggregate tips from orders for each period
     for wk in week_map.values():
         wk['hours'] = round(wk['hours'], 2)
         wk_gross = 0.0
@@ -6231,6 +6262,31 @@ def employee_my_pay():
         # Effective rate for this period
         wk_rate = round(wk_gross / wk['hours'], 2) if wk_has_rate and wk['hours'] > 0 else pay_rate_val
         wk['pay_rate'] = wk_rate if wk_has_rate else (pay_rate_val if has_pay_rate else None)
+
+        # Aggregate tips from orders for this period
+        try:
+            ws = datetime.strptime(wk['start_date'], '%Y-%m-%d')
+            we = datetime.strptime(wk['end_date'], '%Y-%m-%d') + timedelta(hours=23, minutes=59, seconds=59)
+        except (ValueError, TypeError):
+            ws = we = None
+        if ws and we:
+            wk_tips = 0.0
+            wk_tip_count = 0
+            for o in user_orders:
+                odate = o.get('date', '')
+                if not odate:
+                    continue
+                try:
+                    odt = datetime.fromisoformat(odate)
+                except (ValueError, TypeError):
+                    continue
+                if ws <= odt <= we:
+                    tip = get_tip(o)
+                    if tip > 0:
+                        wk_tips += tip
+                        wk_tip_count += 1
+            wk['tips'] = round(wk_tips, 2)
+            wk['tip_count'] = wk_tip_count
 
     # Sort periods newest first, exclude current week (already in current_period)
     current_week_key = monday.strftime('%Y-%m-%d')
@@ -6279,6 +6335,24 @@ def employee_my_pay():
     else:
         avg_hourly_rate = None
 
+    # Aggregate YTD tips from orders
+    ytd_tips = 0.0
+    ytd_tip_count = 0
+    for o in user_orders:
+        odate = o.get('date', '')
+        if not odate:
+            continue
+        try:
+            odt = datetime.fromisoformat(odate)
+        except (ValueError, TypeError):
+            continue
+        if odt >= ytd_start:
+            tip = get_tip(o)
+            if tip > 0:
+                ytd_tips += tip
+                ytd_tip_count += 1
+    ytd_tips = round(ytd_tips, 2)
+
     ytd = {
         'hours': ytd_hours,
         'gross_pay': ytd_gross,
@@ -6286,7 +6360,9 @@ def employee_my_pay():
         'shift_count': ytd_shift_count,
         'pay_rate': pay_rate_val if has_pay_rate else None,
         'avg_hours_per_week': avg_hours_per_week,
-        'avg_hourly_rate': avg_hourly_rate
+        'avg_hourly_rate': avg_hourly_rate,
+        'tips': ytd_tips,
+        'tip_count': ytd_tip_count
     }
 
     return jsonify({
