@@ -176,7 +176,6 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 .emp-perf-table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .emp-perf-table th { color: var(--text2); font-size: 12px; text-align: left; padding: 10px 8px; border-bottom: 2px solid var(--border); white-space: nowrap; }
 .emp-perf-table td { padding: 10px 8px; border-bottom: 1px solid var(--border); }
-.emp-perf-table tr:hover td { background: var(--hover); }
 @media (hover: hover) { .emp-perf-table tr:hover td { background: var(--hover); } }
 .emp-perf-table .num { text-align: right; font-variant-numeric: tabular-nums; }
 .emp-perf-table .rank { color: var(--text2); font-size: 12px; width: 30px; text-align: center; }
@@ -228,7 +227,6 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 #login2faMode .twofa-digit:focus { border-color: var(--accent); outline: none; }
 #login2faMode .twofa-digit.filled { border-color: var(--accent); }
 #login2faMode .twofa-back { margin-top: 8px; font-size: 14px; color: var(--text2); cursor: pointer; background: none; border: none; }
-#login2faMode .twofa-back:hover { color: var(--text); }
 @media (hover: hover) { #login2faMode .twofa-back:hover { color: var(--text); } }
 
 /* ── 2FA Backup Code Link & Section ── */
@@ -237,7 +235,6 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
   background: none; border: none; text-decoration: underline;
   padding: 8px 4px; min-height: 40px; display: inline-block;
 }
-#login2faMode .twofa-backup-link:hover { color: #ff6b7a; }
 @media (hover: hover) { #login2faMode .twofa-backup-link:hover { color: #ff6b7a; } }
 .twofa-backup-input {
   font-size: 20px; padding: 14px 16px; width: 280px; max-width: 90%;
@@ -250,7 +247,6 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
   font-size: 20px; padding: 14px 48px; min-height: 56px;
   border: none; border-radius: 8px; background: var(--accent); color: #fff; cursor: pointer;
 }
-.twofa-backup-submit:hover { opacity: 0.9; }
 @media (hover: hover) { .twofa-backup-submit:hover { opacity: 0.9; } }
 
 /* ── 2FA SETUP MODAL ── */
@@ -299,11 +295,9 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 #topBar .offline-badge.visible { display: inline-flex; }
 #topBar .offline-badge.syncing { background: #3498db; animation: pulse-badge 1s infinite; }
 #clockBtn.clocked-in { background: #2ecc71; color: #fff; border-color: #2ecc71; animation: none; }
-#clockBtn.clocked-in:hover { background: #27ae60; }
 @media (hover: hover) { #clockBtn.clocked-in:hover { background: #27ae60; } }
 #clockBtn.late-clock-in { animation: pulse-late 1s ease-in-out 3; border-color: #e74c3c !important; box-shadow: 0 0 15px rgba(231,76,60,0.5); }
 #breakBtn.on-break { background: #f39c12; color: #fff; border-color: #f39c12; }
-#breakBtn.on-break:hover { background: #e67e22; }
 @media (hover: hover) { #breakBtn.on-break:hover { background: #e67e22; } }
 @keyframes pulse-badge {
   0%, 100% { opacity: 1; }
@@ -329,7 +323,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 .idle-countdown-num { font-size: 72px; font-weight: 900; color: var(--accent); line-height: 1; }
 .idle-countdown-label { font-size: 20px; color: var(--text); text-align: center; max-width: 360px; }
 .idle-cancel-btn { font-size: 18px; padding: 14px 36px; min-height: 56px; background: var(--card); color: var(--text); border: 2px solid var(--accent); border-radius: var(--radius); cursor: pointer; font-weight: 600; }
-.idle-cancel-btn:hover { background: var(--accent); color: #fff; }
+@media (hover: hover) { .idle-cancel-btn:hover { background: var(--accent); color: #fff; } }
 .lock-title { font-size: 28px; color: var(--text); font-weight: 700; }
 .lock-sub { font-size: 16px; color: var(--text2); text-align: center; }
 .lock-pin-input { font-size: 32px; letter-spacing: 12px; text-align: center; width: 240px; min-height: 60px; border: 2px solid var(--border); border-radius: var(--radius); background: var(--bg); color: var(--text); padding: 8px 16px; font-weight: 700; }
@@ -393,7 +387,6 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
   min-height: 48px;
   transition: background 0.15s;
 }
-.recent-orders-header:hover { background: var(--hover); }
 @media (hover: hover) { .recent-orders-header:hover { background: var(--hover); } }
 .recent-orders-title { flex: 1; font-weight: 600; font-size: 14px; }
 .recent-orders-count { font-size: 12px; color: var(--text2); }
@@ -415,7 +408,6 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
   transition: background 0.12s;
 }
 .recent-order-item:last-child { border-bottom: none; }
-.recent-order-item:hover { background: var(--hover); }
 @media (hover: hover) { .recent-order-item:hover { background: var(--hover); } }
 .recent-order-num { font-weight: 700; font-size: 15px; min-width: 48px; }
 .recent-order-info { flex: 1; min-width: 0; }
@@ -437,7 +429,6 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
   cursor: pointer;
   transition: all 0.15s;
 }
-.recent-order-reload:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
 @media (hover: hover) { .recent-order-reload:hover { background: var(--accent); color: #fff; border-color: var(--accent); } }
 .recent-orders-empty {
   padding: 20px;
@@ -466,7 +457,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
   border: 2px solid transparent; transition: all 0.2s;
   display: inline-flex; align-items: center; gap: 6px;
 }
-.allergen-filter-toggle:hover { border-color: var(--accent); color: var(--text); }
+@media (hover: hover) { .allergen-filter-toggle:hover { border-color: var(--accent); color: var(--text); } }
 .allergen-filter-toggle.active { border-color: var(--accent); background: var(--accent); color: #fff; }
 .filter-count { background: var(--accent); color: #fff; font-size: 11px; border-radius: 10px; padding: 0 6px; min-width: 18px; text-align: center; }
 .allergen-filter-toggle.active .filter-count { background: #fff; color: var(--accent); }
@@ -479,7 +470,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
   border-radius: 20px; padding: 6px 14px; font-size: 13px; min-height: 36px;
   cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 4px;
 }
-.allergen-chip:hover { border-color: var(--accent); color: var(--text); }
+@media (hover: hover) { .allergen-chip:hover { border-color: var(--accent); color: var(--text); } }
 .allergen-chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
 
 /* ── SKELETON SCREEN LOADERS ── */
@@ -13202,10 +13193,8 @@ async function unlockTsPeriod() {
   style.textContent = `
     .ts-dense-table { width:100%; border-collapse:collapse; font-size:13px; }
     .ts-dense-table th { text-align:left; padding:8px 10px; background:var(--card-alt); color:var(--text2); font-weight:600; font-size:13px; text-transform:uppercase; letter-spacing:0.3px; border-bottom:2px solid var(--border); white-space:nowrap; }
-    .ts-dense-table th:hover { color:var(--accent); }
     @media (hover: hover) { .ts-dense-table th:hover { color:var(--accent); } }
     .ts-dense-table td { padding:8px 10px; border-bottom:1px solid var(--border); vertical-align:middle; white-space:nowrap; }
-    .ts-dense-table tbody tr:hover { background:var(--card-alt); }
     @media (hover: hover) { .ts-dense-table tbody tr:hover { background:var(--card-alt); } }
     .badge-status { display:inline-block; margin-left:2px; font-size:12px; cursor:help; }
     .ts-dense-table td:last-child { text-align:center; }
