@@ -13716,7 +13716,7 @@ if __name__ == '__main__':
     # socketio.run(app, debug=False, port=5000, allow_unsafe_werkzeug=False)
     #
     # The socketio object is the WSGI application that wraps the Flask app.
-    # When running under gunicorn with eventlet worker, SocketIO handles
-    # both HTTP and WebSocket transparently via async_mode='eventlet'.
+    # When running under gunicorn with gevent worker, SocketIO handles
+    # both HTTP and WebSocket transparently via async_mode='gevent'.
 
     socketio.run(app, debug=False, port=5000, allow_unsafe_werkzeug=False)

@@ -7,7 +7,7 @@
 #   PORT=5000  (default)
 #   WORKERS=1  (default, must be 1 for SocketIO)
 
-set -euo pipefail
+set -uo pipefail
 
 cd /root/pos-system-work || exit 1
 
@@ -24,12 +24,14 @@ python3 -c "import gunicorn" 2>/dev/null || { echo "gunicorn not installed"; exi
 
 while true; do
     echo "[$(date -u +'%Y-%m-%dT%H:%M:%S')] Starting POS System (gunicorn+gevent, port ${PORT})..."
+    echo "[$(date -u +'%Y-%m-%dT%H:%M:%S')] PID file: /tmp/pos-system.pid"
     gunicorn \
         -k gevent \
         -w "${WORKERS}" \
         --bind "0.0.0.0:${PORT}" \
         --worker-connections 1000 \
         --timeout 120 \
+        --pid /tmp/pos-system.pid \
         --access-logfile - \
         --error-logfile - \
         --capture-output \
