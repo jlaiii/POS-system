@@ -14,6 +14,7 @@ import base64
 import threading
 import urllib.request
 import urllib.error
+import socket
 from collections import defaultdict, Counter
 import pyotp
 import qrcode
@@ -127,6 +128,7 @@ TIMESHEET_CONFIG_FILE = 'timesheet_config.json'  # Timesheet configuration (over
 TICKETS_FILE = 'tickets.json'  # Employee self-service tickets/requests
 APPROVALS_FILE = 'timesheet_approvals.json'  # Timesheet pay period approvals
 RESTAURANT_CONFIG_FILE = 'restaurant_config.json'  # Restaurant info for tablet display (name, hours, wifi)
+PRINTER_CONFIG_FILE = 'printer_config.json'  # Thermal printer configuration (IP, port, enabled)
 LOGIN_ATTEMPTS_FILE = 'login_attempts.json'  # Persistent login attempt records (user_id, ip, timestamp, success, user_agent)
 SECURITY_EVENTS_FILE = 'security_events.json'  # Security events/incidents log
 SECURITY_CONFIG_FILE = 'security_config.json'  # Security config (blocked IPs, thresholds)
@@ -229,7 +231,7 @@ def backup_menu():
 
 
 # Ensure JSON files exist and are initialized correctly
-for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE, INVENTORY_FILE, REFUNDED_ORDERS_FILE, FAVORITES_FILE, LOYALTY_FILE, SCHEDULED_PRICING_FILE, WASTE_FILE, DELIVERY_ADDRESSES_FILE, WEBHOOKS_FILE, TABLE_ADS_FILE, CASH_DRAWER_FILE, COMBOS_FILE, SERVICE_CHARGE_FILE, EMAIL_CONFIG_FILE, SHIFT_FILE, TICKETS_FILE, APPROVALS_FILE, RESTAURANT_CONFIG_FILE]:
+for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE, INVENTORY_FILE, REFUNDED_ORDERS_FILE, FAVORITES_FILE, LOYALTY_FILE, SCHEDULED_PRICING_FILE, WASTE_FILE, DELIVERY_ADDRESSES_FILE, WEBHOOKS_FILE, TABLE_ADS_FILE, CASH_DRAWER_FILE, COMBOS_FILE, SERVICE_CHARGE_FILE, EMAIL_CONFIG_FILE, SHIFT_FILE, TICKETS_FILE, APPROVALS_FILE, RESTAURANT_CONFIG_FILE, PRINTER_CONFIG_FILE]:
     if not os.path.exists(f):
         with open(f, 'w') as file:
             if f == USERS_FILE:
@@ -295,6 +297,8 @@ for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMES
                 json.dump({"server": "", "port": 587, "username": "", "password": "", "from_addr": "", "use_tls": True, "enabled": False}, file, indent=4)  # Initialize email config
             elif f == RESTAURANT_CONFIG_FILE:
                 json.dump({"name": "Our Restaurant", "hours_today": "Mon-Fri: 11:00 AM - 10:00 PM", "wifi_name": "Guest WiFi", "wifi_password": ""}, file, indent=4)  # Initialize restaurant config
+            elif f == PRINTER_CONFIG_FILE:
+                json.dump({"enabled": False, "printer_ip": "", "printer_port": 9100, "printer_type": "network", "receipt_header": "🍽️ POS System", "receipt_footer": "Thank you!", "characters_per_line": 42}, file, indent=4)  # Initialize printer config
             else:
                 json.dump([], file)  # Initialize orders.json and cleared_orders.json as empty lists
 
@@ -4779,6 +4783,362 @@ def test_email():
         return jsonify({'message': f'SMTP error: {str(e)}'}), 400
     except Exception as e:
         return jsonify({'message': f'Failed to send test email: {str(e)}'}), 500
+
+
+# --- Printer Configuration & ESC/POS Thermal Printing ---
+
+@app.route('/api/printer/config', methods=['POST'])
+def get_printer_config():
+    """Get printer configuration. Requires manage_orders permission."""
+    data = request.json or {}
+    admin_pin = data.get('adminPin', '')
+    _, err_response = check_get_auth(admin_pin, "manage_orders")
+    if err_response:
+        return err_response
+    config = load_json_data(PRINTER_CONFIG_FILE)
+    if not isinstance(config, dict):
+        config = {"enabled": False, "printer_ip": "", "printer_port": 9100, "printer_type": "network", "receipt_header": "🍽️ POS System", "receipt_footer": "Thank you!", "characters_per_line": 42}
+    return jsonify(config)
+
+
+@app.route('/api/printer/config/save', methods=['POST'])
+def save_printer_config():
+    """Save printer configuration. Requires manage_orders permission."""
+    data = request.json or {}
+    admin_pin = data.get('adminPin', '')
+    users = load_json_data(USERS_FILE)
+    if admin_pin not in users:
+        return jsonify({'message': 'Invalid user'}), 403
+    user_info = users.get(admin_pin, {})
+    perms = user_info.get('permissions', [])
+    if '*' not in perms and 'manage_orders' not in perms:
+        return jsonify({'message': 'Permission denied'}), 403
+
+    config = load_json_data(PRINTER_CONFIG_FILE)
+    if not isinstance(config, dict):
+        config = {}
+    if 'enabled' in data:
+        config['enabled'] = bool(data['enabled'])
+    if 'printer_ip' in data:
+        config['printer_ip'] = str(data['printer_ip']).strip()
+    if 'printer_port' in data:
+        config['printer_port'] = int(data['printer_port'])
+    if 'receipt_header' in data:
+        config['receipt_header'] = str(data['receipt_header']).strip()
+    if 'receipt_footer' in data:
+        config['receipt_footer'] = str(data['receipt_footer']).strip()
+    if 'characters_per_line' in data:
+        config['characters_per_line'] = int(data['characters_per_line'])
+
+    save_json_data(PRINTER_CONFIG_FILE, config)
+    log_activity('save_printer_config', admin_pin, user_info.get('role', 'user'), {})
+    return jsonify({'message': 'Printer configuration saved'})
+
+
+def _escpos_center(text, width=42):
+    """Center text for ESC/POS receipt by padding with spaces."""
+    text = text.strip()
+    if len(text) >= width:
+        return text[:width]
+    padding = width - len(text)
+    left = padding // 2
+    return ' ' * left + text
+
+
+def _escpos_left_right(left_text, right_text, width=42):
+    """Format left/right aligned text for receipt."""
+    left_text = str(left_text).strip()
+    right_text = str(right_text).strip()
+    if len(left_text) + len(right_text) >= width:
+        # Truncate left to fit
+        max_left = width - len(right_text) - 1
+        if max_left > 0:
+            left_text = left_text[:max_left]
+        else:
+            left_text = ''
+    padding = width - len(left_text) - len(right_text)
+    return left_text + ' ' * padding + right_text
+
+
+def _escpos_receipt_bytes(order, config):
+    """
+    Generate ESC/POS byte string for a receipt.
+    Uses raw TCP protocol (Epson TM-T88, Star, etc. on port 9100).
+    """
+    width = config.get('characters_per_line', 42)
+    header = config.get('receipt_header', '🍽️ POS System')
+    footer = config.get('receipt_footer', 'Thank you!')
+
+    items = order.get('items', [])
+    date_str = order.get('date', '')
+    try:
+        dt = datetime.fromisoformat(date_str) if date_str else datetime.now()
+        formatted_date = dt.strftime('%Y-%m-%d %I:%M %p')
+    except:
+        formatted_date = date_str
+
+    subtotal = float(order.get('subtotal', 0))
+    tax = float(order.get('tax_amount', 0))
+    tip = float(order.get('tip_amount', 0))
+    service_charge = float(order.get('service_charge_amount', 0))
+    discount = float(order.get('discount_amount', 0))
+    total = float(order.get('total', 0))
+    payment = order.get('payment', 'N/A')
+    user = order.get('user', '—')
+    order_id = order.get('order_id', '')
+
+    # ESC/POS commands
+    ESC = b'\x1b'
+    GS = b'\x1d'
+    LF = b'\x0a'
+    INIT = ESC + b'@'         # Initialize printer
+    BOLD_ON = ESC + b'E\x01'
+    BOLD_OFF = ESC + b'E\x00'
+    CENTER = ESC + b'a\x01'
+    LEFT = ESC + b'a\x00'
+    CUT = GS + b'V\x00'       # Full cut
+
+    lines = []
+
+    # Header
+    lines.append(INIT)
+    lines.append(CENTER + BOLD_ON)
+    lines.append(header.encode('ascii', errors='replace') + LF)
+    lines.append(BOLD_OFF + LEFT)
+    lines.append(('-' * width).encode() + LF)
+
+    # Order info
+    lines.append(f'Date: {formatted_date}'.encode() + LF)
+    lines.append(f'Order #{order_id}'.encode() + LF)
+    lines.append(f'Payment: {payment}'.encode() + LF)
+    lines.append(f'Cashier: {user}'.encode() + LF)
+    lines.append(('-' * width).encode() + LF)
+
+    # Items
+    for item in items:
+        name = item.get('name', '')
+        qty = int(item.get('qty', 1))
+        price = float(item.get('price', 0))
+        item_total = price * qty
+        line = f'{name} x{qty}'.encode('ascii', errors='replace')
+        lines.append(line + LF)
+        # Right-align price
+        price_str = f'${item_total:.2f}'
+        pad = width - len(price_str)
+        lines.append(b' ' * pad + price_str.encode() + LF)
+        # Notes if any
+        note = item.get('note', '')
+        if note:
+            lines.append(b'  ' + ('📝 ' + note).encode('ascii', errors='replace') + LF)
+        # Modifiers if any
+        mods = item.get('modifiers', [])
+        for m in mods:
+            opt = m.get('option', '')
+            if opt:
+                lines.append(b'    - ' + opt.encode('ascii', errors='replace') + LF)
+
+    lines.append(('-' * width).encode() + LF)
+
+    # Totals
+    lines.append(_escpos_left_right('Subtotal', f'${subtotal:.2f}', width).encode() + LF)
+    if tax > 0:
+        lines.append(_escpos_left_right('Tax', f'${tax:.2f}', width).encode() + LF)
+    if discount > 0:
+        lines.append(_escpos_left_right('Discount', f'-${discount:.2f}', width).encode() + LF)
+    if service_charge > 0:
+        lines.append(_escpos_left_right('Service Charge', f'+${service_charge:.2f}', width).encode() + LF)
+    if tip > 0:
+        lines.append(_escpos_left_right('Tip', f'+${tip:.2f}', width).encode() + LF)
+
+    # Total (bold)
+    lines.append(BOLD_ON)
+    lines.append(_escpos_left_right('TOTAL', f'${total:.2f}', width).encode() + LF)
+    lines.append(BOLD_OFF)
+
+    lines.append(('-' * width).encode() + LF)
+
+    # Footer
+    lines.append(CENTER)
+    lines.append(footer.encode('ascii', errors='replace') + LF)
+    lines.append('Have a great day!'.encode() + LF)
+
+    # Cut
+    lines.append(LF * 3)
+    lines.append(CUT)
+
+    return b''.join(lines)
+
+
+@app.route('/api/print/receipt', methods=['POST'])
+def print_receipt_thermal():
+    """
+    Print a receipt to the configured network thermal printer via ESC/POS.
+    Falls back to HTML receipt if printer not configured or unreachable.
+    """
+    data = request.json or {}
+    admin_pin = data.get('adminPin', '')
+    order_id = data.get('order_id')
+
+    if not admin_pin:
+        return jsonify({'message': 'Authentication required'}), 403
+    if not order_id:
+        return jsonify({'message': 'Order ID required'}), 400
+
+    users = load_json_data(USERS_FILE)
+    if admin_pin not in users:
+        return jsonify({'message': 'Invalid user'}), 403
+
+    # Find the order
+    all_orders = load_json_data(ORDERS_FILE) + load_json_data(CLEARED_ORDERS_FILE)
+    order = None
+    for o in all_orders:
+        if o.get('order_id') == order_id:
+            order = o
+            break
+    if not order:
+        return jsonify({'message': 'Order not found'}), 404
+
+    # Load printer config
+    printer_config = load_json_data(PRINTER_CONFIG_FILE)
+    if not isinstance(printer_config, dict):
+        printer_config = {"enabled": False, "printer_ip": "", "printer_port": 9100}
+
+    ip = printer_config.get('printer_ip', '').strip()
+    port = int(printer_config.get('printer_port', 9100))
+    enabled = printer_config.get('enabled', False)
+
+    # If printer is not enabled or no IP configured, return HTML fallback
+    if not enabled or not ip:
+        return jsonify({
+            'message': 'No printer configured. Use browser print instead.',
+            'html_fallback': True,
+            'print_html': _generate_print_html(order)
+        }), 200
+
+    # Try to send to thermal printer via TCP
+    try:
+        receipt_bytes = _escpos_receipt_bytes(order, printer_config)
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(5)  # 5 second timeout
+        sock.connect((ip, port))
+        sock.sendall(receipt_bytes)
+        sock.close()
+
+        log_activity('print_receipt_thermal', admin_pin, users.get(admin_pin, {}).get('role', 'user'), {
+            'order_id': order_id,
+            'printer_ip': ip
+        })
+        return jsonify({'message': 'Receipt sent to printer!'})
+    except socket.timeout:
+        return jsonify({'message': f'Printer at {ip}:{port} not responding (timeout). Check IP and network.',
+                        'html_fallback': True,
+                        'print_html': _generate_print_html(order)}), 200
+    except socket.gaierror:
+        return jsonify({'message': f'Invalid printer address: {ip}. Check IP configuration.',
+                        'html_fallback': True,
+                        'print_html': _generate_print_html(order)}), 200
+    except ConnectionRefusedError:
+        return jsonify({'message': f'Connection refused by printer at {ip}:{port}. Is the printer on?',
+                        'html_fallback': True,
+                        'print_html': _generate_print_html(order)}), 200
+    except Exception as e:
+        return jsonify({'message': f'Printer error: {str(e)}. Use browser print instead.',
+                        'html_fallback': True,
+                        'print_html': _generate_print_html(order)}), 200
+
+
+def _generate_print_html(order):
+    """Generate a clean print-friendly HTML receipt for browser printing."""
+    items = order.get('items', [])
+    date_str = order.get('date', '')
+    try:
+        dt = datetime.fromisoformat(date_str) if date_str else datetime.now()
+        formatted_date = dt.strftime('%Y-%m-%d %I:%M %p')
+    except:
+        formatted_date = date_str
+
+    item_rows = ''.join(
+        f'<tr><td style="padding:4px 8px;text-align:left;">{item.get("name","")} x{item.get("qty",1)}</td>'
+        f'<td style="padding:4px 8px;text-align:right;">${float(item.get("price",0))*int(item.get("qty",1)):.2f}</td></tr>'
+        for item in items
+    )
+
+    subtotal = float(order.get('subtotal', 0))
+    tax = float(order.get('tax_amount', 0))
+    tip = float(order.get('tip_amount', 0))
+    service_charge = float(order.get('service_charge_amount', 0))
+    discount = float(order.get('discount_amount', 0))
+    total = float(order.get('total', 0))
+    payment = order.get('payment', 'N/A')
+    user = order.get('user', '—')
+    order_id = order.get('order_id', '')
+
+    discount_line = ''
+    if discount > 0:
+        discount_line = f'<tr><td style="padding:2px 8px;text-align:left;">Discount ({order.get("discount_code","")})</td><td style="padding:2px 8px;text-align:right;">−${discount:.2f}</td></tr>'
+
+    service_charge_line = ''
+    if service_charge > 0:
+        service_charge_line = f'<tr><td style="padding:2px 8px;text-align:left;">Service Charge</td><td style="padding:2px 8px;text-align:right;">+${service_charge:.2f}</td></tr>'
+
+    tip_line = ''
+    if tip > 0:
+        tip_line = f'<tr><td style="padding:2px 8px;text-align:left;">Tip</td><td style="padding:2px 8px;text-align:right;">+${tip:.2f}</td></tr>'
+
+    html = f'''<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>Receipt #{order_id}</title>
+<style>
+  body {{ font-family: 'Courier New', monospace; margin: 0; padding: 20px; max-width: 360px; margin: auto; }}
+  h2 {{ text-align: center; margin: 0 0 4px; }}
+  .info {{ text-align: center; color: #555; font-size: 12px; margin: 2px 0; }}
+  table {{ width: 100%; border-collapse: collapse; }}
+  hr {{ border: none; border-top: 1px dashed #999; margin: 8px 0; }}
+  .total {{ font-weight: bold; font-size: 15px; }}
+  .footer {{ text-align: center; color: #555; font-size: 12px; margin-top: 12px; }}
+</style>
+</head>
+<body>
+  <h2>🍽️ POS System</h2>
+  <div class="info">{formatted_date}</div>
+  <div class="info">Order #{order_id}</div>
+  <div class="info">Payment: {payment}</div>
+  <div class="info">Cashier: {user}</div>
+  <hr>
+  <table>{item_rows}</table>
+  <hr>
+  <table>
+    <tr><td style="padding:2px 8px;">Subtotal</td><td style="padding:2px 8px;text-align:right;">${subtotal:.2f}</td></tr>'''
+    if tax > 0:
+        html += f'<tr><td style="padding:2px 8px;">Tax</td><td style="padding:2px 8px;text-align:right;">${tax:.2f}</td></tr>'
+    html += discount_line + service_charge_line + tip_line
+    html += f'''
+    <tr class="total"><td style="padding:6px 8px;border-top:1px solid #555;">TOTAL</td><td style="padding:6px 8px;text-align:right;border-top:1px solid #555;">${total:.2f}</td></tr>
+  </table>
+  <hr>
+  <div class="footer">Thank you for your business!<br>Have a great day 🎉</div>
+</body>
+</html>'''
+    return html
+
+
+@app.route('/api/print/receipt_html/<int:order_id>', methods=['GET'])
+def get_print_html(order_id):
+    """Return a print-friendly HTML receipt for browser printing."""
+    admin_pin = request.args.get('adminPin', '')
+    _, err_response = check_get_auth(admin_pin, "manage_orders")
+    if err_response:
+        return err_response
+    all_orders = load_json_data(ORDERS_FILE) + load_json_data(CLEARED_ORDERS_FILE)
+    order = None
+    for o in all_orders:
+        if o.get('order_id') == order_id:
+            order = o
+            break
+    if not order:
+        return jsonify({'message': 'Order not found'}), 404
+    html = _generate_print_html(order)
+    return html, 200, {'Content-Type': 'text/html; charset=utf-8'}
 
 
 # --- Refund / Void Order Endpoint ---

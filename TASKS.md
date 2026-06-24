@@ -475,7 +475,7 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 
 ### Priority: MEDIUM — Missing Production Features
 
-- [~] worker-3 **Printer integration (ESC/POS thermal printers)** — Most restaurants use Epson TM-T88 or similar thermal receipt printers. Add optional printer support via `/api/print/receipt` endpoint that formats a receipt as ESC/POS commands and sends to a printer IP. Configurable printer IP in admin. Fallback: generate a clean HTML receipt for browser printing. Without printer support, the system can't print physical receipts — a dealbreaker for most restaurants.
+- [x] worker-3 **Printer integration (ESC/POS thermal printers)** — Added `/api/print/receipt` endpoint generating ESC/POS byte commands for network thermal printers (Epson TM-T88, etc.) via TCP port 9100. `_escpos_receipt_bytes()` function formats receipt with header, items, notes/modifiers, totals, bold TOTAL, and cut command. Printer config in admin UI (`/api/printer/config` + `/api/printer/config/save`): IP, port, enabled toggle, header/footer text, characters per line. Frontend: 🖨️ thermal print button in order history and receipt overlay, browser print fallback when printer unreachable. HTML receipt fallback via `_generate_print_html()` and `/api/print/receipt_html/<id>` endpoint. Full i18n EN+ES. Permission-gated (manage_items). Dark theme, touch-friendly.
 
 - [ ] **Sound alerts for kitchen display** — Kitchen display already has a 3-note alarm. Verify it works on tablets (requires user gesture to unlock audio on iOS/Safari). Add a "first interaction" screen that enables audio: "Tap anywhere to enable kitchen alerts." Check volume levels — should be audible in a noisy kitchen but not deafening. Configurable sound on/off and volume in admin.
 

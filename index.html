@@ -1642,6 +1642,7 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
         <button onclick="switchAdminSection('waste')" id="asWaste" data-i18n="admin.waste">🗑️ Waste</button>
         <button onclick="switchAdminSection('webhooks')" id="asWebhooks" data-i18n="admin.webhooks">🔗 Webhooks</button>
         <button onclick="switchAdminSection('email')" id="asEmail" data-i18n="admin.email">📧 Email</button>
+        <button onclick="switchAdminSection('printer')" id="asPrinter" data-i18n="admin.printer">🖨️ Printer</button>
         <button onclick="switchAdminSection('ads')" id="asAds" data-i18n="admin.ads">📺 Ads</button>
         <button onclick="switchAdminSection('categories')" id="asCategories" data-i18n="admin.categories">📁 Categories</button>
         <button onclick="switchAdminSection('cashdrawer')" id="asCashdrawer">💰 Cash Drawer</button>
@@ -2177,6 +2178,50 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
               <button class="outline" onclick="testEmailConfig()" id="emailTestBtn" style="min-height:44px;border-color:#4fc3f7;color:#4fc3f7;">📧 Test Email</button>
             </div>
             <div id="emailConfigStatus" style="margin-top:8px;font-size:13px;color:var(--text2);"></div>
+          </div>
+        </div>
+        <!-- Printer Configuration -->
+        <div id="secPrinter" class="admin-section">
+          <h3 data-i18n="admin.printer.title">🖨️ Thermal Printer Settings</h3>
+          <p style="color:var(--text2);margin-bottom:16px;font-size:14px;" data-i18n="admin.printer.desc">Configure a network ESC/POS thermal receipt printer (Epson TM-T88, Star SP700, etc.).</p>
+          <div class="card" style="margin-bottom:12px;">
+            <div class="form-row" style="flex-wrap:wrap;gap:8px;">
+              <div style="flex:1;min-width:200px;">
+                <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:2px;" data-i18n="admin.printer.enabled">Printer Enabled</label>
+                <select id="printerEnabled" style="min-height:44px;">
+                  <option value="false" data-i18n="admin.no">No</option>
+                  <option value="true" data-i18n="admin.yes">Yes</option>
+                </select>
+              </div>
+              <div style="flex:2;min-width:180px;">
+                <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:2px;" data-i18n="admin.printer.ip">Printer IP Address</label>
+                <input type="text" id="printerIp" placeholder="192.168.1.100" style="width:100%;"/>
+              </div>
+              <div style="flex:0 0 90px;">
+                <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:2px;" data-i18n="admin.printer.port">Port</label>
+                <input type="number" id="printerPort" value="9100" min="1" max="65535" style="width:100%;" inputmode="numeric" pattern="[0-9]*" />
+              </div>
+            </div>
+            <div class="form-row" style="flex-wrap:wrap;gap:8px;margin-top:6px;">
+              <div style="flex:1;min-width:160px;">
+                <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:2px;" data-i18n="admin.printer.header">Receipt Header</label>
+                <input type="text" id="receiptHeader" value="🍽️ POS System" style="width:100%;"/>
+              </div>
+              <div style="flex:1;min-width:160px;">
+                <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:2px;" data-i18n="admin.printer.footer">Receipt Footer</label>
+                <input type="text" id="receiptFooter" value="Thank you!" style="width:100%;"/>
+              </div>
+              <div style="flex:0 0 110px;">
+                <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:2px;" data-i18n="admin.printer.chars_per_line">Chars/Line</label>
+                <input type="number" id="printerCharsPerLine" value="42" min="32" max="64" style="width:100%;" inputmode="numeric" pattern="[0-9]*" />
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+              <button class="accent" onclick="savePrinterConfig()" style="min-height:44px;" data-i18n="admin.email.save_btn">💾 Save Printer Settings</button>
+              <button class="outline" onclick="loadPrinterConfig()" style="min-height:44px;" data-i18n="admin.email.load_btn">🔄 Refresh</button>
+              <button class="outline" onclick="testPrinter()" style="min-height:44px;border-color:#e67e22;color:#e67e22;" data-i18n="admin.printer.test">🖨️ Test Print</button>
+            </div>
+            <div style="margin-top:12px;font-size:13px;color:var(--text2);" data-i18n="admin.printer.test_desc">Send a test receipt to verify the printer is working.</div>
           </div>
         </div>
         <!-- Table-side Ads -->
@@ -2799,6 +2844,7 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
     <div id="receiptContent"></div>
     <div id="receiptActions">
       <button class="print-btn" onclick="printReceipt()" data-i18n="receipt.print">🖨️ Print</button>
+      <button class="print-btn" onclick="printThermalFromOverlay()" style="background:#e67e22;" data-i18n="receipt.print_thermal">🖨️ Thermal</button>
       <button class="print-btn" onclick="emailCurrentReceipt()" style="background:#4fc3f7;" data-i18n="receipt.email">📧 Email</button>
       <button class="close-btn" onclick="closeReceipt()" data-i18n="receipt.close">Close</button>
     </div>
@@ -3237,6 +3283,28 @@ const L10N = {
     'receipt.order_notes': '📝 Order Notes:',
     'receipt.cashier': 'Cashier:',
     'receipt.payment': 'Payment:',
+    'receipt.print_thermal': '🖨️ Thermal',
+    'receipt.print_thermal_sent': 'Receipt sent to printer!',
+    'receipt.print_thermal_fail': 'Printer not available. Using browser print.',
+    'receipt.print_browser': '🖨️ Browser Print',
+    'admin.printer': '🖨️ Printer',
+    'admin.printer.title': '🖨️ Thermal Printer Settings',
+    'admin.printer.desc': 'Configure a network ESC/POS thermal receipt printer (Epson TM-T88, Star SP700, etc.).',
+    'admin.printer.enabled': 'Printer Enabled',
+    'admin.printer.ip': 'Printer IP Address',
+    'admin.printer.port': 'Printer Port',
+    'admin.printer.header': 'Receipt Header',
+    'admin.printer.footer': 'Receipt Footer',
+    'admin.printer.chars_per_line': 'Characters Per Line',
+    'admin.printer.saved': 'Printer configuration saved!',
+    'admin.printer.test': '🖨️ Test Print',
+    'admin.printer.test_desc': 'Send a test receipt to verify the printer is working.',
+    'admin.printer.test_sending': 'Sending test page...',
+    'admin.printer.test_sent': 'Test page sent to printer!',
+    'admin.printer.test_failed': 'Test print failed: ',
+    'history.print_thermal': '🖨️ Thermal',
+    'toast.printer_not_configured': 'No printer configured. Configure in Admin → Printer settings.',
+    'toast.printer_error': 'Printer error. Using browser print.',
     'toast.cart_empty': 'Cart is empty!',
     'toast.cart_already_empty': 'Cart already empty',
     'toast.order_submitted': 'Order submitted!',
@@ -3800,6 +3868,28 @@ const L10N = {
     'receipt.order_notes': '📝 Notas del pedido:',
     'receipt.cashier': 'Cajero:',
     'receipt.payment': 'Pago:',
+    'receipt.print_thermal': '🖨️ Térmica',
+    'receipt.print_thermal_sent': '¡Recibo enviado a la impresora!',
+    'receipt.print_thermal_fail': 'Impresora no disponible. Usando impresión del navegador.',
+    'receipt.print_browser': '🖨️ Navegador',
+    'admin.printer': '🖨️ Impresora',
+    'admin.printer.title': '🖨️ Configuración de Impresora Térmica',
+    'admin.printer.desc': 'Configure una impresora de red ESC/POS (Epson TM-T88, Star SP700, etc.).',
+    'admin.printer.enabled': 'Impresora Habilitada',
+    'admin.printer.ip': 'Dirección IP',
+    'admin.printer.port': 'Puerto',
+    'admin.printer.header': 'Encabezado del Recibo',
+    'admin.printer.footer': 'Pie del Recibo',
+    'admin.printer.chars_per_line': 'Caracteres por Línea',
+    'admin.printer.saved': '¡Configuración de impresora guardada!',
+    'admin.printer.test': '🖨️ Prueba',
+    'admin.printer.test_desc': 'Envíe un recibo de prueba para verificar la impresora.',
+    'admin.printer.test_sending': 'Enviando página de prueba...',
+    'admin.printer.test_sent': '¡Página de prueba enviada a la impresora!',
+    'admin.printer.test_failed': 'Prueba falló: ',
+    'history.print_thermal': '🖨️ Térmica',
+    'toast.printer_not_configured': 'Impresora no configurada. Configure en Admin → Impresora.',
+    'toast.printer_error': 'Error de impresora. Usando navegador.',
     'toast.cart_empty': '¡Carrito vacío!',
     'toast.cart_already_empty': 'Carrito ya vacío',
     'toast.order_submitted': '¡Pedido enviado!',
@@ -5822,6 +5912,7 @@ function showApp() {
     'asWaste': perms.includes('manage_items'),  // Waste tracking uses manage_items permission
     'asWebhooks': perms.includes('manage_items'),  // Webhook integration uses manage_items permission
     'asEmail': perms.includes('manage_items'),  // Email settings uses manage_items permission
+    'asPrinter': perms.includes('manage_items'),  // Printer settings uses manage_items permission
     'asAds': perms.includes('manage_items'),  // Table-side ads uses manage_items permission
     'asCategories': perms.includes('manage_items'),  // Category management uses manage_items permission
   };
@@ -8780,7 +8871,7 @@ async function loadOrderHistory() {
           <span><strong>#${orderNum}</strong> — ${dt}${statusBadge}</span>
           <span class="ho-total">$${total}</span>
         </div>
-        <div class="ho-meta">${t('history.payment')} ${escHtml(paymentDisplay)} | ${t('history.user')} ${escHtml(o.user || 'N/A')}${hasTax ? ' | ' + t('history.tax') + ': $' + parseFloat(o.tax_amount).toFixed(2) : ''}${hasServiceCharge ? ' | 🔧 +$' + parseFloat(o.service_charge_amount).toFixed(2) : ''}${hasTip ? ' | 💬 ' + t('receipt.tip') + ': $' + parseFloat(o.tip_amount).toFixed(2) : ''}${o.table_number ? ' | 🪪 Table #' + o.table_number : ''}${hasDelivery ? ' | 📮 ' + escHtml(formatDeliveryAddress(deliveryAddr)) : ''}${orderNotes ? ' | 📝 ' + t('history.notes') : ''}${refundReasonStr} <button class="ghost" onclick="event.stopPropagation();reorderFromHistory(${JSON.stringify(items).replace(/\"/g, '&quot;')})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#2ecc71;" title="${t('history.reorder')}">🔄</button>${!isRefunded ? `<button class="ghost" onclick="event.stopPropagation();refireOrderItem(${o.order_id}, null, this)" style="font-size:12px;padding:4px 8px;min-height:28px;color:#f39c12;" title="${t('history.refire_all')}">🔁 All</button>` : ''} <button class="ghost" onclick="event.stopPropagation();printHistoryReceipt(${JSON.stringify(o).replace(/\"/g, '&quot;')}, ${orderNum})" style="font-size:12px;padding:4px 8px;min-height:28px;color:var(--accent);">🖨️</button> <button class="ghost" onclick="event.stopPropagation();emailHistoryReceipt(${o.order_id})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#4fc3f7;" title="${t('history.email_receipt')}">📧</button>${canRefund && !isRefunded ? \`<button class="ghost" onclick="event.stopPropagation();showRefundOverlay({order_id: ${o.order_id}, total: '${total}', date: '${(o.date || '').replace(/'/g, "\\'")}', payment: '${(o.payment || '').replace(/'/g, "\\'")}', user: '${(o.user || '').replace(/'/g, "\\'")}', orderNum: ${orderNum}, items: ${JSON.stringify(items).replace(/\\"/g, '&quot;')}})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#e74c3c;">↩️</button>\` : ''}${isCompleted && !isReadyForPickup && !isCollected ? \`<button class="ghost" onclick="event.stopPropagation();markOrderReadyForPickup(${o.order_id})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#f39c12;">📋 Ready</button>\` : ''}</div>
+        <div class="ho-meta">${t('history.payment')} ${escHtml(paymentDisplay)} | ${t('history.user')} ${escHtml(o.user || 'N/A')}${hasTax ? ' | ' + t('history.tax') + ': $' + parseFloat(o.tax_amount).toFixed(2) : ''}${hasServiceCharge ? ' | 🔧 +$' + parseFloat(o.service_charge_amount).toFixed(2) : ''}${hasTip ? ' | 💬 ' + t('receipt.tip') + ': $' + parseFloat(o.tip_amount).toFixed(2) : ''}${o.table_number ? ' | 🪪 Table #' + o.table_number : ''}${hasDelivery ? ' | 📮 ' + escHtml(formatDeliveryAddress(deliveryAddr)) : ''}${orderNotes ? ' | 📝 ' + t('history.notes') : ''}${refundReasonStr} <button class="ghost" onclick="event.stopPropagation();reorderFromHistory(${JSON.stringify(items).replace(/\"/g, '&quot;')})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#2ecc71;" title="${t('history.reorder')}">🔄</button>${!isRefunded ? `<button class="ghost" onclick="event.stopPropagation();refireOrderItem(${o.order_id}, null, this)" style="font-size:12px;padding:4px 8px;min-height:28px;color:#f39c12;" title="${t('history.refire_all')}">🔁 All</button>` : ''} <button class="ghost" onclick="event.stopPropagation();printHistoryReceipt(${JSON.stringify(o).replace(/\"/g, '&quot;')}, ${orderNum})" style="font-size:12px;padding:4px 8px;min-height:28px;color:var(--accent);">🖨️</button> <button class="ghost" onclick="event.stopPropagation();printThermalReceipt(this.dataset.orderId)" style="font-size:12px;padding:4px 8px;min-height:28px;color:#e67e22;" title="${t('receipt.print_thermal')}" data-order-id="${o.order_id}">🖨️</button> <button class="ghost" onclick="event.stopPropagation();emailHistoryReceipt(${o.order_id})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#4fc3f7;" title="${t('history.email_receipt')}">📧</button>${canRefund && !isRefunded ? \`<button class="ghost" onclick="event.stopPropagation();showRefundOverlay({order_id: ${o.order_id}, total: '${total}', date: '${(o.date || '').replace(/'/g, "\\'")}', payment: '${(o.payment || '').replace(/'/g, "\\'")}', user: '${(o.user || '').replace(/'/g, "\\'")}', orderNum: ${orderNum}, items: ${JSON.stringify(items).replace(/\\"/g, '&quot;')}})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#e74c3c;">↩️</button>\` : ''}${isCompleted && !isReadyForPickup && !isCollected ? \`<button class="ghost" onclick="event.stopPropagation();markOrderReadyForPickup(${o.order_id})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#f39c12;">📋 Ready</button>\` : ''}</div>
         <div class="ho-details">
           ${items.map((it, idx) => { const refundedItem = (o.refunded_items || []).find(ri => ri.item_index === idx); const isRefundedItem = !!refundedItem; const canRefire = !isRefundedItem; return \`<div class="ho-item"\${isRefundedItem ? ' style="opacity:0.6;"' : ''}><span\${isRefundedItem ? ' style="text-decoration:line-through;"' : ''}>\${isRefundedItem ? '↩️ ' : ''}\${escHtml(it.name)} x\${it.qty||1}\${it.note ? '<br/><span style="color:var(--text2);font-size:12px;padding-left:12px;">📝 ' + escHtml(it.note) + '</span>' : ''}\${it.modifiers && it.modifiers.length > 0 ? '<br/><span style="color:#f39c12;font-size:12px;padding-left:12px;">⚙️ ' + it.modifiers.map(m => escHtml(m.option)).join(' · ') + '</span>' : ''}\${isRefundedItem ? '<br/><span style="color:#e74c3c;font-size:11px;padding-left:12px;">↩️ Refunded</span>' : ''}</span><span\${isRefundedItem ? ' style="text-decoration:line-through;"' : ''}>\$\${((it.price||0)*(it.qty||1)).toFixed(2)}\${canRefire ? \` <button class="ghost" onclick="event.stopPropagation();refireOrderItem(${o.order_id}, [${idx}], this)" style="font-size:11px;padding:2px 6px;min-height:24px;color:#f39c12;" title="\${t('history.refire')}">🔁</button>\` : ''}</span></div>\`;}).join('')}
           ${hasTax ? \`
@@ -14004,6 +14095,109 @@ async function sendEmailReceipt(orderId, email) {
     showToast('Network error sending email', 'danger');
   }
 }
+
+
+// ═══════════ THERMAL PRINTER ═══════════
+
+/** Print a receipt to thermal printer from order history */
+async function printThermalReceipt(orderId) {
+  if (!currentUser) { showToast(t('login_required', 'Please log in first.'), 'warning'); return; }
+  try {
+    const r = await fetch(BACKEND_URL + '/api/print/receipt', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, order_id: orderId })
+    });
+    const data = await r.json();
+    if (!r.ok) { showToast(data.message || 'Print failed', 'danger'); return; }
+    if (data.html_fallback && data.print_html) {
+      // No printer configured or printer error — open browser print instead
+      const printWin = window.open('', '_blank');
+      if (printWin) {
+        printWin.document.write(data.print_html);
+        printWin.document.close();
+        printWin.focus();
+        setTimeout(() => { try { printWin.print(); } catch(e) {} }, 500);
+      }
+      showToast(data.message || t('toast.printer_not_configured'), 'warning');
+    } else {
+      showToast(data.message || t('receipt.print_thermal_sent'), 'success');
+    }
+  } catch(e) {
+    showToast(t('network_error'), 'danger');
+  }
+}
+
+/** Print the currently displayed receipt to thermal printer */
+async function printThermalFromOverlay() {
+  if (!lastReceiptData || !lastReceiptData.order_id) {
+    showToast('No receipt to print', 'warning');
+    return;
+  }
+  await printThermalReceipt(lastReceiptData.order_id);
+}
+
+/** Load printer config from backend */
+async function loadPrinterConfig() {
+  try {
+    const r = await fetch(BACKEND_URL + '/api/printer/config', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id })
+    });
+    if (!r.ok) { return; }
+    const config = await r.json();
+    document.getElementById('printerEnabled').checked = config.enabled || false;
+    document.getElementById('printerIp').value = config.printer_ip || '';
+    document.getElementById('printerPort').value = config.printer_port || 9100;
+    document.getElementById('receiptHeader').value = config.receipt_header || '🍽️ POS System';
+    document.getElementById('receiptFooter').value = config.receipt_footer || 'Thank you!';
+    document.getElementById('printerCharsPerLine').value = config.characters_per_line || 42;
+  } catch(e) { /* silent */ }
+}
+
+/** Save printer config to backend */
+async function savePrinterConfig() {
+  if (!currentUser) { showToast(t('login_required', 'Please log in first.'), 'warning'); return; }
+  const config = {
+    enabled: document.getElementById('printerEnabled').checked,
+    printer_ip: document.getElementById('printerIp').value.trim(),
+    printer_port: parseInt(document.getElementById('printerPort').value) || 9100,
+    receipt_header: document.getElementById('receiptHeader').value.trim(),
+    receipt_footer: document.getElementById('receiptFooter').value.trim(),
+    characters_per_line: parseInt(document.getElementById('printerCharsPerLine').value) || 42
+  };
+  try {
+    const r = await fetch(BACKEND_URL + '/api/printer/config/save', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, ...config })
+    });
+    const data = await r.json();
+    if (!r.ok) { showToast(data.message || 'Failed to save', 'danger'); return; }
+    showToast(t('admin.printer.saved'), 'success');
+  } catch(e) {
+    showToast(t('network_error'), 'danger');
+  }
+}
+
+/** Send a test receipt to the thermal printer */
+async function testPrinter() {
+  if (!currentUser) { showToast(t('login_required', 'Please log in first.'), 'warning'); return; }
+  showToast(t('admin.printer.test_sending'), 'info');
+  try {
+    const r = await fetch(BACKEND_URL + '/api/print/receipt', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, order_id: 0 })
+    });
+    const data = await r.json();
+    if (data.html_fallback) {
+      showToast(data.message || t('admin.printer.test_failed'), 'warning');
+    } else {
+      showToast(t('admin.printer.test_sent'), 'success');
+    }
+  } catch(e) {
+    showToast(t('network_error'), 'danger');
+  }
+}
+
 
 /** Load SMTP config from backend */
 async function loadEmailConfig() {

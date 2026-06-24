@@ -1,0 +1,9 @@
+{
+    "enabled": true,
+    "printer_ip": "192.168.1.100",
+    "printer_port": 9100,
+    "printer_type": "network",
+    "receipt_header": "\ud83c\udf7d\ufe0f POS System",
+    "receipt_footer": "Thank you!",
+    "characters_per_line": 42
+}
