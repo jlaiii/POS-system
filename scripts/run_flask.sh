@@ -1,6 +1,6 @@
 #!/bin/bash
 # POS System Flask Launcher with auto-restart
-# Now uses gunicorn + eventlet for production stability.
+# Now uses gunicorn + gevent for production stability.
 # Used by reliability bot and cron jobs to keep the POS running.
 #
 # Environment:
@@ -19,13 +19,13 @@ restart_count=0
 first_restart_time=0
 
 # Verify required packages
-python3 -c "import eventlet" 2>/dev/null || { echo "eventlet not installed"; exit 1; }
+python3 -c "import gevent" 2>/dev/null || { echo "gevent not installed"; exit 1; }
 python3 -c "import gunicorn" 2>/dev/null || { echo "gunicorn not installed"; exit 1; }
 
 while true; do
-    echo "[$(date -u +'%Y-%m-%dT%H:%M:%S')] Starting POS System (gunicorn+eventlet, port ${PORT})..."
+    echo "[$(date -u +'%Y-%m-%dT%H:%M:%S')] Starting POS System (gunicorn+gevent, port ${PORT})..."
     gunicorn \
-        -k eventlet \
+        -k gevent \
         -w "${WORKERS}" \
         --bind "0.0.0.0:${PORT}" \
         --worker-connections 1000 \
