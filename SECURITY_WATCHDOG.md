@@ -1,10 +1,11 @@
 # POS Security Watchdog
 
-> Last run: 2026-06-24T08:58:51 UTC
+> Last run: 2026-06-24T10:32:07 UTC
 > Total events tracked: 13 (SEC-001 → SEC-013)
 > Active blocks: 0 IPs
 > Unresolved alerts: 11 (SEC-001, SEC-003, SEC-005, SEC-006, SEC-007, SEC-008, SEC-009, SEC-010, SEC-011, SEC-012, SEC-013)
 > Run result: SILENT — nothing new to report
+
 ## Current Run Findings
 
 ### 🔴 CRITICAL (0)
@@ -16,42 +17,44 @@ None.
 ### 🟡 MEDIUM (0)
 None — all pre-existing issues unchanged.
 
-### ℹ️ Activity Summary (08:42–08:58 UTC, ~16m window)
+### ℹ️ Activity Summary (09:48–10:32 UTC, ~44m window)
 
-**Minimal activity — benign development/testing by Owner.**
+**Minimal activity — Test2FA quick clock test, nothing else.**
 
 | Time | Event | Detail |
 |------|-------|--------|
-| 08:54:11 | admin_login — Owner (1111) | Normal-hours login from 127.0.0.1 via curl |
-| 08:54:12 | clock_in — Test2FA (9999) | Clock-in from 127.0.0.1 (scheduled 09:00, not late) |
-| 08:54:21 | clock_out — Test2FA (9999) | Clock-out from 127.0.0.1 (duration 0.0h — test) |
+| 10:03:28 | clock_in — Test2FA (9999) | Clocked in from 127.0.0.1 (python-requests) |
+| 10:03:29 | clock_out — Test2FA (9999) | Clocked out 1 second later. Recorded late=63min (scheduled 09:00). |
 
-**Pattern: Quick test of clock-in/out by Test2FA after Owner admin login. All from localhost. No anomalies.**
+**Pattern:** Very quiet window. Only Test2FA tested clock-in/out at 10:03. No orders, no cash drawer, no imports. No activity from Owner or Manager.
 
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: 0 IPs with 5+ failed logins. 0 users with 5+ failed attempts. No credential stuffing.
 - **Failed logins last 5 min**: 0
-- **Failed logins since last run**: 0
-- **Successful-after-failure**: No new patterns. Last failure was 9+ hours ago (23:39 UTC).
-- **Account enumeration**: 0 probes for non-existent PINs. Total in file history: 3 (all from 127.0.0.1, last at 23:39 on June 23).
-- **Off-hours**: Current time ~08:58 UTC — well within normal hours (off-hours 22:00-06:00).
-- **Known IPs**: Unchanged since last run. 6 users tracked. No new IPs.
-- **login_attempts.json**: 55 entries (unchanged since last run). 3 failures total in file history (all historical). No new login attempts recorded since 08:30.
+- **Failed logins since last run**: 0 (still 3 total failures in file, all historical from June 23)
+- **Successful-after-failure**: No new patterns.
+- **Account enumeration**: 0 probes for non-existent PINs.
+- **Off-hours**: Current time ~10:32 UTC — well within normal hours (off-hours 22:00-06:00).
+- **Known IPs**: Unchanged. 6 users tracked. No new IPs.
+- **login_attempts.json**: 56 entries (0 new since last run). 3 failures total (all historical).
+- **Active sessions**: Server responding on port 5000. No stale session indicators.
+- **New logins this window**: 0.
 
 ### 🔒 Security Config
 - security_config.json: Unchanged. Auto_block_threshold=5. Blocked IPs empty.
-- users.json: Unchanged since Owner added/deleted Reliability Tester at 08:31. Owner 2FA still NOT enabled (SEC-001/SEC-013).
-- timesheet_config.json: use_database=false. pos.db exists (225KB) but not in active use.
+- users.json: Unchanged. Owner 2FA still NOT enabled (SEC-001/SEC-013).
+- timesheet_config.json: use_database=false. Unchanged.
 - No configuration sabotage detected.
 
 ### 💰 Financial Check
-- No new orders this window.
-- No refunds, tips, discounts, or cash drawer changes.
+- No new orders this window (total still 59).
+- No cash drawer activity (last ops at 09:41 — Owner test).
+- No refunds, tips, or discounts.
 - All clear.
 
 ### 📂 File Integrity
-- All 42 JSON files parseable. No corruption.
-- No suspicious files (.php, .pl, .exe, .sh, .bat) found.
+- All 37 JSON files parseable. No corruption.
+- No suspicious files (.php, .pl, .exe, .bat) found.
 - Owner account (1111) present, active, not banned — unchanged.
 - All data files present and valid.
 
@@ -77,14 +80,15 @@ None.
 None.
 
 ## System State
-- **Current time**: 2026-06-24T08:58:51 UTC — normal hours (off-hours window 22:00-06:00)
-- **Activity log**: 461 entries (3 new since last run: admin_login, clock_in, clock_out). No truncation.
-- **New login attempts this window**: 0 (no new records in login_attempts.json)
+- **Current time**: 2026-06-24T10:32:07 UTC — normal hours (off-hours window 22:00-06:00)
+- **Activity log**: 472 entries (2 new since last run: clock_in + clock_out for Test2FA). No truncation.
+- **New login attempts this window**: 0
 - **Failed logins this window**: 0
-- **Known IPs**: 127.0.0.1 (6 users) + 203.0.113.42 and 192.168.1.50 (user 9999 Test2FA only). No new IPs.
+- **Known IPs**: Unchanged. No new IPs.
 - **Blocked IPs**: 0
 - **Config changes**: None this window.
-- **File integrity**: All 42 JSON files parseable. No suspicious files. SQLite pos.db exists (225KB, use_database=false).
-- **Users**: 6 accounts. Owner 2FA NOT enabled (SEC-001/SEC-013). Employee One + Test2FA have 2FA. Employee Two, Manager, Carlos no 2FA.
+- **File integrity**: All 37 JSON files parseable. No suspicious files.
+- **Users**: 6 accounts. Owner 2FA still NOT enabled (SEC-001/SEC-013).
 - **Security events**: 13 tracked. 2 resolved (SEC-002, SEC-004). 11 unresolved.
-- **Last 4-hour summary**: Not yet due (16m since last run). Will send at next aligned 4-hour window.
+- **Server**: Responding on port 5000.
+- **Next 4-hour summary**: Not due yet (1h34m since last summary at 08:58).

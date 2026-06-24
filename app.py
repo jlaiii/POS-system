@@ -1564,6 +1564,10 @@ def login():
                         'totp_enabled': u_data.get('totp_enabled', False),
                         'session_token': session_token
                     }
+                    # Mandatory 2FA check for admin/owner
+                    must_setup, _, _ = check_mandatory_2fa_for_user(uid)
+                    if must_setup:
+                        response_data['must_setup_2fa'] = True
                     if pin_reset_info:
                         response_data['pin_reset_info'] = pin_reset_info
                     if force_change_required:
@@ -1650,6 +1654,10 @@ def login():
                 'totp_enabled': user_info.get('totp_enabled', False),
                 'session_token': session_token
             }
+            # Mandatory 2FA check for admin/owner
+            must_setup, _, _ = check_mandatory_2fa_for_user(user_id)
+            if must_setup:
+                response_data['must_setup_2fa'] = True
             try:
                 check_anomalies_after_login(user_id, user_info['name'], client_ip)
             except Exception:
@@ -1731,6 +1739,10 @@ def login():
                 'totp_enabled': user_info.get('totp_enabled', False),
                 'session_token': session_token
             }
+            # Mandatory 2FA check for admin/owner
+            must_setup, _, _ = check_mandatory_2fa_for_user(user_id)
+            if must_setup:
+                response_data['must_setup_2fa'] = True
             if pin_reset_info:
                 response_data['pin_reset_info'] = pin_reset_info
             if force_change_required:
@@ -2534,6 +2546,139 @@ def logout():
         save_json_data(TIMESHEET_FILE, timesheet_data)
 
     return jsonify({'message': 'Logout successful'})
+
+
+# ── Mandatory 2FA Config ──────────────────────────────────────────────────
+# Stored in security_config.json:
+#   'require_2fa_for_admins': bool (default false)
+#   '2fa_exempted_users': list of user IDs (default [])
+
+
+def get_mandatory_2fa_config():
+    """Load mandatory 2FA config from security_config.json with defaults."""
+    config = load_json_data(SECURITY_CONFIG_FILE)
+    if not isinstance(config, dict):
+        config = {}
+    return {
+        'require_2fa_for_admins': config.get('require_2fa_for_admins', False),
+        'exempted_users': config.get('exempted_users', [])
+    }
+
+
+def save_mandatory_2fa_config(req_config):
+    """Save mandatory 2FA config to security_config.json."""
+    config = load_json_data(SECURITY_CONFIG_FILE)
+    if not isinstance(config, dict):
+        config = {}
+    config['require_2fa_for_admins'] = req_config.get('require_2fa_for_admins', False)
+    config['exempted_users'] = req_config.get('exempted_users', [])
+    save_json_data(SECURITY_CONFIG_FILE, config)
+    return config
+
+
+def check_mandatory_2fa_for_user(user_id):
+    """Check if a user (admin/owner) is required to have 2FA but doesn't.
+    Returns: (must_setup: bool, mandatory: bool, exempted: bool)
+    """
+    m2fa = get_mandatory_2fa_config()
+    if not m2fa.get('require_2fa_for_admins', False):
+        return False, False, False  # not mandatory
+
+    users = load_json_data(USERS_FILE)
+    user_data = users.get(str(user_id))
+    if not user_data:
+        return False, False, False
+
+    role = user_data.get('role', 'user')
+    if role not in ('admin', 'owner'):
+        return False, False, False  # only applies to admin/owner
+
+    # Check exemption
+    exempted_users = m2fa.get('exempted_users', [])
+    if str(user_id) in exempted_users:
+        return False, True, True  # exempted
+
+    # Check if they already have 2FA
+    if user_data.get('totp_enabled', False):
+        return False, True, False  # already set up
+
+    # Must set up 2FA
+    return True, True, False
+
+
+@app.route('/api/auth/2fa/mandatory_config', methods=['GET'])
+def get_2fa_mandatory_config():
+    """GET mandatory 2FA config — requires manage_users or owner."""
+    admin_pin = request.args.get('adminPin', '')
+    if not admin_pin or not check_perm(admin_pin, 'manage_users'):
+        return jsonify({'message': 'Permission denied.'}), 403
+
+    cfg = get_mandatory_2fa_config()
+    # Also attach the full list of admin/owner users with their 2FA status for UI convenience
+    users = load_json_data(USERS_FILE)
+    user_list = []
+    for uid, u_data in users.items():
+        u_data = upgrade_user(u_data)
+        if u_data.get('role') in ('admin', 'owner'):
+            user_list.append({
+                'id': uid,
+                'name': u_data.get('name', 'Unknown'),
+                'role': u_data.get('role', 'user'),
+                'totp_enabled': u_data.get('totp_enabled', False),
+                'exempted': uid in cfg.get('exempted_users', [])
+            })
+    user_list.sort(key=lambda x: (0 if x['role'] == 'owner' else 1, x['name']))
+    return jsonify({
+        'require_2fa_for_admins': cfg.get('require_2fa_for_admins', False),
+        'exempted_users': cfg.get('exempted_users', []),
+        'admin_users': user_list
+    })
+
+
+@app.route('/api/auth/2fa/mandatory_config', methods=['POST'])
+def set_2fa_mandatory_config():
+    """POST mandatory 2FA config — requires owner or manage_users."""
+    data = request.json
+    admin_pin = str(data.get('adminPin', ''))
+    if not admin_pin or not check_perm(admin_pin, 'manage_users'):
+        return jsonify({'message': 'Permission denied.'}), 403
+
+    # Owner-only: only owner can set mandatory mode
+    users = load_json_data(USERS_FILE)
+    admin_user = users.get(admin_pin)
+    if not admin_user or admin_user.get('role') not in ('owner',):
+        # Check if owner via permissions
+        if not check_perm(admin_pin, 'manage_users'):
+            return jsonify({'message': 'Only the owner can change mandatory 2FA settings.'}), 403
+
+    require_val = data.get('require_2fa_for_admins', False)
+    exempted = data.get('exempted_users', [])
+
+    save_mandatory_2fa_config({
+        'require_2fa_for_admins': require_val,
+        'exempted_users': exempted
+    })
+
+    log_activity('2fa_mandatory_config', admin_pin, admin_user['role'] if admin_user else 'admin',
+                 {'require_2fa_for_admins': require_val, 'exempted_users': exempted})
+
+    return jsonify({'message': 'Mandatory 2FA configuration saved.', 'require_2fa_for_admins': require_val})
+
+
+@app.route('/api/auth/2fa/check_mandatory', methods=['POST'])
+def check_2fa_mandatory():
+    """Check if the current user must set up 2FA."""
+    data = request.json
+    user_id = str(data.get('userId', ''))
+    if not user_id:
+        return jsonify({'message': 'User ID required.'}), 400
+
+    must_setup, mandatory, exempted = check_mandatory_2fa_for_user(user_id)
+    return jsonify({
+        'must_setup_2fa': must_setup,
+        'mandatory': mandatory,
+        'exempted': exempted
+    })
 
 
 @app.route('/api/auth/2fa/setup', methods=['POST'])

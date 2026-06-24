@@ -617,5 +617,16 @@
         "details": {
             "status": "success"
         }
+    },
+    {
+        "user_id": "1111",
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-24T11:11:03.383947",
+        "success": true,
+        "user_agent": "Werkzeug/3.1.8",
+        "method": "pin",
+        "details": {
+            "status": "success"
+        }
     }
 ]

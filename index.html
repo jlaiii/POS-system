@@ -522,6 +522,11 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
     <button onclick="switchMainTab('mypay')" id="mainTabMypay" data-i18n="tab.mypay">💰 My Pay</button>
   </div>
 
+  <!-- Mandatory 2FA Warning Banner -->
+  <div id="mandatory2faBanner" style="display:none;background:linear-gradient(135deg,#e74c3c 0%,#c0392b 100%);color:#fff;padding:10px 16px;text-align:center;font-size:14px;font-weight:600;cursor:pointer;" onclick="showTwofaSetup()" title="Click to set up 2FA now">
+    ⚠️ <span data-i18n="mandatory2fa.banner">Your account requires two-factor authentication — set it up now to access admin features.</span> 🔐 Click to set up
+  </div>
+
   <div id="tabContent">
     <!-- POS TAB -->
     <div id="posTab" class="active">
@@ -1813,6 +1818,25 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
             <div style="display:flex;gap:8px;align-items:center;margin-top:4px;">
               <button class="accent" onclick="saveRateLimitConfig()" style="min-height:40px;padding:8px 20px;font-size:13px;">💾 Save Rate Limits</button>
               <span id="rateLimitStatus" style="font-size:13px;color:#4caf50;display:none;"></span>
+            </div>
+          </div>
+          <!-- Mandatory 2FA Config -->
+          <div class="card" style="padding:12px;margin-top:12px;">
+            <h4 style="margin:0 0 8px 0;font-size:14px;">🔒 Mandatory 2FA for Admins</h4>
+            <p style="font-size:12px;color:var(--text2);margin:0 0 8px 0;">Require all admin/owner accounts to have two-factor authentication enabled. Affected users will see a persistent banner and cannot access admin features until they set up 2FA. Owner can exempt specific admins.</p>
+            <div class="form-row" style="gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px;">
+              <label style="display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer;min-height:44px;">
+                <input type="checkbox" id="mandatory2faToggle" style="width:20px;height:20px;accent-color:var(--accent);"> <span data-i18n="mandatory2fa.enabled">Require 2FA for all admin accounts</span>
+              </label>
+            </div>
+            <!-- Admin list with exemption toggles -->
+            <div id="mandatory2faAdminList" style="margin-bottom:8px;display:none;">
+              <p style="font-size:12px;color:var(--text2);margin:0 0 6px 0;">Toggle exemption per user (exempted users are not required to have 2FA):</p>
+              <div id="mandatory2faUsers" style="display:flex;flex-direction:column;gap:4px;max-height:250px;overflow-y:auto;-webkit-overflow-scrolling:touch;"></div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;margin-top:4px;">
+              <button class="accent" onclick="saveMandatory2faConfig()" style="min-height:40px;padding:8px 20px;font-size:13px;">💾 Save Mandatory 2FA Config</button>
+              <span id="mandatory2faStatus" style="font-size:13px;color:#4caf50;display:none;"></span>
             </div>
           </div>
           <!-- Idle Timeout Config -->
@@ -3133,6 +3157,8 @@ const L10N = {
     'schedule.total_scheduled': 'Total Scheduled',
     'schedule.total_actual': 'Total Actual',
     'schedule.total_variance': 'Total Variance',
+    'mandatory2fa.banner': 'Your account requires two-factor authentication — set it up now to access admin features.',
+    'mandatory2fa.enabled': 'Require 2FA for all admin accounts',
   },
   es: {
     'app.title': '🍽️ Sistema POS',
@@ -3809,6 +3835,8 @@ const L10N = {
     'schedule.total_scheduled': 'Total Programado',
     'schedule.total_actual': 'Total Real',
     'schedule.total_variance': 'Variación Total',
+    'mandatory2fa.banner': 'Tu cuenta requiere autenticación de dos factores — configúrala ahora para acceder a funciones de administración.',
+    'mandatory2fa.enabled': 'Requerir 2FA para todas las cuentas de administrador',
   }
 };
 
@@ -4069,6 +4097,10 @@ window.addEventListener('DOMContentLoaded', () => {
       totp_enabled: savedTotp === '1',
       sessionToken: savedSessionToken || ''
     };
+    const savedMustSetup = sessionStorage.getItem('pos_must_setup_2fa');
+    if (savedMustSetup === '1') {
+      currentUser.must_setup_2fa = true;
+    }
     showApp();
   }
   // Detect and set language
@@ -4206,6 +4238,13 @@ async function doLogin(userId) {
     if (data.session_token) {
       sessionStorage.setItem('pos_sessionToken', data.session_token);
       currentUser.sessionToken = data.session_token;
+    }
+    // Mandatory 2FA flag
+    if (data.must_setup_2fa) {
+      currentUser.must_setup_2fa = true;
+      sessionStorage.setItem('pos_must_setup_2fa', '1');
+    } else {
+      sessionStorage.removeItem('pos_must_setup_2fa');
     }
     pinValue = '';
     renderPinDisplay();
@@ -5717,6 +5756,13 @@ function showApp() {
   const isOwner = role === 'owner';
   const isAdmin = role === 'admin' || isOwner;
   
+  // Mandatory 2FA banner
+  const mustSetup2fa = currentUser.must_setup_2fa || false;
+  const banner = document.getElementById('mandatory2faBanner');
+  if (banner) {
+    banner.style.display = mustSetup2fa ? 'block' : 'none';
+  }
+  
   // Main tabs
   document.getElementById('mainTabAdmin').style.display = isAdmin ? '' : 'none';
   document.getElementById('mainTabKitchen').style.display = (isAdmin || perms.includes('kitchen_access')) ? '' : 'none';
@@ -6611,6 +6657,7 @@ async function loadSecurityDashboard() {
     loadDiscordWebhookConfig();
     loadSecurityAlertConfig();
     loadRateLimitConfig();
+    loadMandatory2faConfig();
   } catch (e) {
     showToast(t('toast.network_error') + ' loading security dashboard.', 'danger');
   }
@@ -9052,6 +9099,13 @@ async function confirmRefund() {
 
 // ═══════════ ADMIN ═══════════
 function switchAdminSection(sec) {
+  // Block admin sections if 2FA is mandatory but not set up
+  // Allow 'security' section so they can configure 2FA
+  if (sec !== 'security' && currentUser && currentUser.must_setup_2fa) {
+    showToast('⚠️ Your account requires two-factor authentication. Set it up in the Security section first.', 'warning', 6000);
+    switchAdminSection('security');
+    return;
+  }
   document.querySelectorAll('#adminSubTabs button').forEach(b => b.classList.remove('active'));
   const btn = document.getElementById('as' + sec.charAt(0).toUpperCase() + sec.slice(1));
   if (btn) btn.classList.add('active');
@@ -10879,6 +10933,91 @@ async function saveRateLimitConfig() {
     }
   } catch(e) {
     showToast(t('toast.network_error') + ' saving rate limit config.', 'danger');
+  }
+}
+
+// ═══════════ MANDATORY 2FA ═══════════
+
+/** Load mandatory 2FA config from backend and populate the form */
+async function loadMandatory2faConfig() {
+  const adminPin = localStorage.getItem('adminPin');
+  if (!adminPin) return;
+  try {
+    const r = await fetch(BACKEND_URL + '/api/auth/2fa/mandatory_config?adminPin=' + encodeURIComponent(adminPin));
+    if (!r.ok) return;
+    const data = await r.json();
+    const toggle = document.getElementById('mandatory2faToggle');
+    if (toggle) toggle.checked = data.require_2fa_for_admins === true;
+
+    const listDiv = document.getElementById('mandatory2faUsers');
+    const container = document.getElementById('mandatory2faAdminList');
+    if (!listDiv || !container) return;
+    listDiv.innerHTML = '';
+    if (data.admin_users && data.admin_users.length > 0) {
+      container.style.display = data.require_2fa_for_admins ? 'block' : 'none';
+      data.admin_users.forEach(u => {
+        const row = document.createElement('label');
+        row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:var(--radius);background:var(--card);cursor:pointer;min-height:44px;font-size:13px;';
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.checked = u.exempted === true;
+        cb.dataset.uid = u.id;
+        cb.style.cssText = 'width:18px;height:18px;accent-color:var(--accent);';
+        const statusIcon = u.totp_enabled ? '🔒' : '🔓';
+        const roleLabel = u.role === 'owner' ? '👑 ' : '';
+        row.appendChild(cb);
+        row.appendChild(document.createTextNode(roleLabel + u.name + ' (' + u.id + ') ' + statusIcon + ' ' + (u.totp_enabled ? '2FA On' : 'No 2FA')));
+        if (u.role === 'owner') {
+          const ownerBadge = document.createElement('span');
+          ownerBadge.style.cssText = 'font-size:10px;background:rgba(231,76,60,0.2);color:#e74c3c;padding:2px 6px;border-radius:4px;margin-left:4px;';
+          ownerBadge.textContent = 'OWNER';
+          row.appendChild(ownerBadge);
+        }
+        listDiv.appendChild(row);
+      });
+    } else {
+      container.style.display = 'none';
+    }
+  } catch(e) {
+    // silent fail
+  }
+}
+
+/** Save mandatory 2FA config */
+async function saveMandatory2faConfig() {
+  const adminPin = localStorage.getItem('adminPin');
+  if (!adminPin) return showToast(t('toast.auth_required'), 'danger');
+  const toggle = document.getElementById('mandatory2faToggle');
+  if (!toggle) return;
+  const requireVal = toggle.checked;
+
+  // Collect exempted users from checkboxes
+  const exempted = [];
+  const rows = document.querySelectorAll('#mandatory2faUsers label input[type="checkbox"]');
+  rows.forEach(cb => {
+    if (cb.checked && cb.dataset.uid) {
+      exempted.push(cb.dataset.uid);
+    }
+  });
+
+  try {
+    const r = await fetch(BACKEND_URL + '/api/auth/2fa/mandatory_config', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ adminPin, require_2fa_for_admins: requireVal, exempted_users: exempted })
+    });
+    const data = await r.json();
+    if (r.ok) {
+      showToast('✅ ' + (data.message || 'Mandatory 2FA config saved.'), 'success');
+      const status = document.getElementById('mandatory2faStatus');
+      if (status) { status.textContent = '✅ Saved'; status.style.display = 'inline'; setTimeout(() => status.style.display = 'none', 3000); }
+    } else {
+      showToast(data.message || 'Failed to save mandatory 2FA config.', 'danger');
+    }
+    // Reload config to reflect changes
+    loadMandatory2faConfig();
+  } catch(e) {
+    showToast(t('toast.network_error') + ' saving mandatory 2FA config.', 'danger');
   }
 }
 
@@ -16774,10 +16913,15 @@ async function twofaSubmitVerify() {
     // Update stored user state
     if (window.currentUser) {
       window.currentUser.totp_enabled = true;
+      window.currentUser.must_setup_2fa = false;
       sessionStorage.setItem('pos_totp_enabled', '1');
+      sessionStorage.removeItem('pos_must_setup_2fa');
     }
     // Update header button
     updateTwofaButton();
+    // Hide mandatory 2FA banner if visible
+    const banner = document.getElementById('mandatory2faBanner');
+    if (banner) banner.style.display = 'none';
 
     showToast('✅ 2FA enabled successfully!', 'success');
   } catch (e) {

@@ -6211,5 +6211,111 @@
             "difference": 0.0,
             "variance_reason": ""
         }
+    },
+    {
+        "timestamp": "2026-06-24T10:03:28.531231",
+        "type": "clock_in",
+        "user_id": "9999",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "user_name": "Test2FA",
+            "clock_in_time": "2026-06-24T10:03:28.529651",
+            "late_minutes": 63,
+            "scheduled_start": "09:00"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T10:03:29.837691",
+        "type": "clock_out",
+        "user_id": "9999",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "user_name": "Test2FA",
+            "clock_in_time": "2026-06-24T10:03:28.529651",
+            "clock_out_time": "2026-06-24T10:03:29.836792",
+            "duration_hours": 0.0
+        }
+    },
+    {
+        "timestamp": "2026-06-24T11:10:55.552399",
+        "type": "2fa_mandatory_config",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "require_2fa_for_admins": true,
+            "exempted_users": []
+        }
+    },
+    {
+        "timestamp": "2026-06-24T11:11:03.341511",
+        "type": "2fa_mandatory_config",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "require_2fa_for_admins": true,
+            "exempted_users": []
+        }
+    },
+    {
+        "timestamp": "2026-06-24T11:11:03.355047",
+        "type": "2fa_mandatory_config",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "require_2fa_for_admins": true,
+            "exempted_users": [
+                "1111"
+            ]
+        }
+    },
+    {
+        "timestamp": "2026-06-24T11:11:03.366157",
+        "type": "2fa_mandatory_config",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "require_2fa_for_admins": true,
+            "exempted_users": []
+        }
+    },
+    {
+        "timestamp": "2026-06-24T11:11:03.375635",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T11:11:03.387307",
+        "type": "2fa_mandatory_config",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "require_2fa_for_admins": false,
+            "exempted_users": []
+        }
     }
 ]

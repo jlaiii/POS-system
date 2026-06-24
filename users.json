@@ -48,7 +48,8 @@
         "pin_reset_notification": null,
         "force_pin_change": false,
         "temp_pin": null,
-        "temp_pin_expiry": null
+        "temp_pin_expiry": null,
+        "email": "employee@example.com"
     },
     "5678": {
         "name": "Employee Two",
@@ -96,33 +97,5 @@
         "permissions": [
             "pos_access"
         ]
-    },
-    "9999": {
-        "name": "Test2FA",
-        "role": "user",
-        "permissions": [],
-        "banned": false,
-        "password_hash": "",
-        "password_salt": "",
-        "username": "",
-        "pay_rate": 15.0,
-        "scheduled_start": "09:00",
-        "totp_secret": "TESTFAKESECRET123",
-        "totp_enabled": true,
-        "totp_backup_codes": [
-            "fc4940ddade0f67169039503058558b9c4055fda68d9f93d8863f4f2e00573ff",
-            "b4ac7265bee4a66a076a2bbccaa99ea81ab394d4b5e835a1acd44ca8c2e980af",
-            "71d65e0ea54e0d5a164c9e154142d6926a93559e66e4e09bddb55d785bff65d7",
-            "a2c2ff3d2acb745fa652161ceb9edfd4639024ab2dab6b1b42fcb494f33052aa",
-            "39f317e94343d9a9ead8b77d7181c591338ca1be548122615ed8d21f20809be8",
-            "cdd3db889a6891fc9f9650582dfb5efb9025ec14a9fdf755df50e83d51419aff",
-            "7fdb4f4f67761cde51b1391cf87045ed6fc556b6e9a1fd25729430800d0efced",
-            "6183ac353ef6ab9fce2c67cd4eeacd9e3f4ac8f3968425d46c3074e966cd70e1"
-        ],
-        "totp_setup_at": "2026-06-23T14:00:00",
-        "pin_reset_notification": null,
-        "force_pin_change": false,
-        "temp_pin": null,
-        "temp_pin_expiry": null
     }
 }

@@ -37,5 +37,7 @@
             "LOW": "none",
             "MEDIUM": "digest"
         }
-    }
+    },
+    "require_2fa_for_admins": false,
+    "exempted_users": []
 }
