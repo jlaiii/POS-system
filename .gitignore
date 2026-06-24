@@ -23,3 +23,4 @@ pos.db
 timesheet_approvals.json
 tickets.json
 .data_baseline.json
+pos-system.pid

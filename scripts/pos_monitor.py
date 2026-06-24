@@ -21,7 +21,7 @@ import time
 import json
 from datetime import datetime
 
-PID_FILE = '/tmp/pos-system.pid'
+PID_FILE = '/root/pos-system-work/pos-system.pid'
 WORK_DIR = '/root/pos-system-work'
 FLASK_SCRIPT = os.path.join(WORK_DIR, 'scripts/run_flask.sh')
 PORT = 5000
@@ -39,6 +39,28 @@ def read_pid():
             return int(f.read().strip())
     except (ValueError, OSError):
         return None
+
+
+def read_cmdline(pid):
+    """Read the command line of a process given its PID."""
+    try:
+        with open(f'/proc/{pid}/cmdline', 'rb') as f:
+            raw = f.read()
+            return raw.replace(b'\x00', b' ').decode('utf-8', errors='replace')
+    except (OSError, IOError):
+        return ''
+
+
+def is_gunicorn_process(pid):
+    """Check if the given PID is running gunicorn (not Flask dev server)."""
+    cmdline = read_cmdline(pid)
+    return 'gunicorn' in cmdline
+
+
+def is_flask_dev_server(pid):
+    """Check if the given PID is a Flask dev server (app.run or socketio.run)."""
+    cmdline = read_cmdline(pid)
+    return 'app.run' in cmdline or 'socketio.run' in cmdline
 
 
 def is_process_alive(pid):
@@ -110,6 +132,40 @@ def try_flask_restart():
         return False
 
 
+def find_process_on_port(port):
+    """Find any process listening on the given port. Returns (pid, cmdline) or None."""
+    try:
+        import socket
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.settimeout(1)
+            if s.connect_ex(('127.0.0.1', port)) == 0:
+                # Port is open; find who via /proc
+                for p in os.listdir('/proc'):
+                    if not p.isdigit():
+                        continue
+                    try:
+                        with open(f'/proc/{p}/cmdline', 'rb') as f:
+                            raw = f.read()
+                        if not raw:
+                            continue
+                        cmd = raw.replace(b'\x00', b' ').decode('utf-8', errors='replace')
+                        # Check if this process has the port open
+                        fd_link = f'/proc/{p}/fd'
+                        if os.path.isdir(fd_link):
+                            for fd in os.listdir(fd_link):
+                                try:
+                                    link = os.readlink(f'{fd_link}/{fd}')
+                                    if f':{port}' in link:
+                                        return (int(p), cmd)
+                                except (OSError, IOError):
+                                    pass
+                    except (OSError, IOError):
+                        pass
+    except Exception:
+        pass
+    return None
+
+
 def main():
     quiet = '--quiet' in sys.argv
     do_fix = '--fix' in sys.argv
@@ -125,26 +181,65 @@ def main():
             log("No PID file found.")
         log(f"Port {PORT}: {'OPEN' if port_open else 'CLOSED'}")
 
-    # Case 1: Process alive AND port open — healthy
-    if alive and port_open:
+    # Extra check: if process is alive, verify it's gunicorn
+    wrong_process = False
+    if alive and not is_gunicorn_process(pid):
+        if is_flask_dev_server(pid):
+            log(f"WARNING: PID {pid} is a Flask DEV SERVER, not gunicorn!")
+            wrong_process = True
+        else:
+            log(f"WARNING: PID {pid} is not gunicorn (unknown process)")
+            wrong_process = True
+
+    # If port is open but no PID file or wrong process, find the offender
+    if port_open and (not pid or wrong_process):
+        found = find_process_on_port(PORT)
+        if found:
+            other_pid, other_cmd = found
+            if other_pid != pid:
+                log(f"Port {PORT} owned by PID {other_pid} (not our tracked process): {other_cmd[:120]}")
+
+    # Case 1: Process alive AND gunicorn AND port open — healthy
+    if alive and port_open and not wrong_process:
         if not quiet:
-            log("POS System is healthy.")
+            log("POS System is healthy (gunicorn).")
         return 0
 
-    # Case 2: Process alive but port not open — unusual, but let it be
+    # Case 2: Process alive but port not open — unusual
     if alive and not port_open:
         log(f"WARNING: PID {pid} exists but port {PORT} is not open. Process may be starting or stuck.")
         return 0
 
-    # Case 3: Process dead
-    if not port_open:
-        log(f"POS System is DOWN (PID {pid}, port {PORT}).")
+    # Case 3: Process dead or wrong — need remediation
+    if wrong_process:
+        log("Wrong process type detected (Flask dev server instead of gunicorn).")
+
+    if not port_open or wrong_process:
+        if not port_open:
+            log(f"POS System is DOWN (PID {pid}, port {PORT}).")
+        else:
+            log(f"POS System has wrong process on port {PORT}.")
 
         if not do_fix:
             log("Use --fix to attempt restart.")
             return 1
 
         log("Attempting restart...")
+
+        # Kill any process holding the port (Flask dev server)
+        if wrong_process or (port_open and not pid):
+            found = find_process_on_port(PORT)
+            if found:
+                other_pid, other_cmd = found
+                log(f"Killing PID {other_pid} ({other_cmd[:80]}...)")
+                try:
+                    os.kill(other_pid, 15)  # SIGTERM
+                    time.sleep(2)
+                    if is_process_alive(other_pid):
+                        os.kill(other_pid, 9)  # SIGKILL
+                        time.sleep(1)
+                except ProcessLookupError:
+                    pass
 
         # Try systemd first
         if try_systemd_restart():
@@ -160,6 +255,11 @@ def main():
     # Case 4: Port open but no PID file — port is claimed but we don't own it
     if port_open and not pid:
         log(f"Port {PORT} is open but no PID file. Another process may be using it.")
+        if not quiet:
+            found = find_process_on_port(PORT)
+            if found:
+                other_pid, other_cmd = found
+                log(f"  Process on port: PID {other_pid} — {other_cmd[:100]}")
         return 0
 
     return 0
