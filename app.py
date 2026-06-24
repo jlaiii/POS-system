@@ -14886,6 +14886,74 @@ def tablet_dismiss_call():
     return jsonify({'message': 'Call not found.'}), 404
 
 
+@app.route('/api/tablet/order-status', methods=['POST'])
+def tablet_order_status():
+    """Public endpoint for the tablet to check order status for its table.
+    No auth required — only returns non-sensitive public data (item names, statuses, no prices/financials)."""
+    data = request.json or {}
+    table_number = data.get('table_number')
+    if not table_number:
+        return jsonify({'orders': [], 'has_active': False, 'has_ready': False, 'estimated_wait': 0, 'count': 0})
+
+    try:
+        orders = load_json_data(ORDERS_FILE)
+        table_number = int(table_number)
+        table_orders = [o for o in orders if o.get('table_number') == table_number]
+
+        # Sort by date ascending
+        table_orders.sort(key=lambda o: o.get('date', ''))
+
+        # Build public-safe order list (no prices, no totals)
+        result_orders = []
+        has_active = False
+        has_ready = False
+        for o in table_orders:
+            status = o.get('status', '')
+            if status in ('pending', 'preparing', 'completed'):
+                if status in ('pending', 'preparing'):
+                    has_active = True
+                if status == 'completed':
+                    has_ready = True
+                # Filter out combo child items for clean display
+                display_items = [i for i in o.get('items', []) if not i.get('is_combo_child')]
+                result_orders.append({
+                    'order_id': o.get('order_id'),
+                    'status': status,
+                    'date': o.get('date'),
+                    'notes': o.get('notes', ''),
+                    'items': [{'name': i.get('name'), 'qty': i.get('qty', 1)} for i in display_items]
+                })
+
+        # Estimate wait time based on kitchen queue
+        estimated_wait = 0
+        if has_active:
+            all_active = [o for o in orders if o.get('status') in ('pending', 'preparing')]
+            # Count orders ahead of this table's first pending order in the queue
+            first_pending_date = None
+            for o in table_orders:
+                if o.get('status') in ('pending', 'preparing'):
+                    first_pending_date = o.get('date', '')
+                    break
+            orders_ahead = 0
+            if first_pending_date:
+                for o in all_active:
+                    o_date = o.get('date', '')
+                    if o.get('table_number') != table_number and o_date < first_pending_date:
+                        orders_ahead += 1
+            # Rough estimate: ~5 min per order ahead, minimum 5 min
+            estimated_wait = max(5, orders_ahead * 5 + 5)
+
+        return jsonify({
+            'orders': result_orders,
+            'has_active': has_active,
+            'has_ready': has_ready,
+            'estimated_wait': estimated_wait,
+            'count': len(result_orders)
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 # ══════════════════════════════════════════════════
 # Category Management API
 # ══════════════════════════════════════════════════

@@ -533,7 +533,7 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 
 ### Priority: MEDIUM
 
-- [~] worker-2 **MEDIUM: Add customer-facing table-side order status display on tablet** — After order submission, the table tablet (/tablet page) transitions from ad/menu mode to an order tracking screen showing: order items, status badges (pending → preparing → ready → collected), estimated wait time, and a "ready" animation when the kitchen marks the order complete. Auto-return to ad/menu mode after the order is collected. Reduces customer "is it ready?" questions and improves dining experience.
+- [x] worker-2 **MEDIUM: Add customer-facing table-side order status display on tablet** — After order submission, the table tablet (/tablet page) transitions from ad/menu mode to an order tracking screen showing: order items, status badges (pending → preparing → ready → collected), estimated wait time, and a "ready" animation when the kitchen marks the order complete. Auto-return to ad/menu mode after the order is collected. Reduces customer "is it ready?" questions and improves dining experience.
 
 |- [ ] **MEDIUM: Add "No Sale" drawer open and manual cash adjustment from POS** — One-tap "Open Drawer" button in the POS cart area for making change without a sale, logged in cash drawer transactions with timestamp and employee PIN. Also add "Manual Cash In/Out" buttons directly on the POS screen (not requiring admin panel navigation) for quick cash drops, petty cash, tip payouts, and loan repayments. Faster than navigating to Cash Register admin section for common cash handling actions.
 

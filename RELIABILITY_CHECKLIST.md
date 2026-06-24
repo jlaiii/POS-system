@@ -1,33 +1,32 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-24T19:39 UTC
-> Total checks: 352
-> Healthy: 352 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-24T20:31 UTC
+> Total checks: 358
+> Healthy: 358 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK [verified 19:39]
-- [x] All JSON data files exist and are valid — all required JSON files valid, parseable [verified 19:39]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, username='jayadmin') present, 5 users total [verified 19:39]
-- [x] Git repo is clean (no uncommitted changes from crashes) — 8 modified files (RELIABILITY_CHECKLIST.md, SECURITY_WATCHDOG.md, activity_log.json, login_attempts.json, order_counter.json, orders.json, refunded_orders.json — operational updates by workers, expected) [verified 19:39]
+- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK [verified 20:31]
+- [x] All JSON data files exist and are valid — all required JSON files valid, parseable [verified 20:31]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, username='jayadmin') present, 5 users total [verified 20:31]
+- [x] Git repo is clean (no uncommitted changes from crashes) — 2 modified files (SECURITY_WATCHDOG.md, activity_log.json — operational updates by workers, expected) [verified 20:31]
 
 ## HOURLY (check if last check was >1h ago)
-- [x] /api/health — {"status":"ok"} (GET) [verified 19:17]
-- [x] Frontend loads — 200, HTML OK [verified 19:17]
-- [x] /api/items returns items — GET, items across categories (Foods, Drinks, Snacks) [verified 19:17]
-- [x] /api/admin_shifts returns shifts — POST, 36 shifts returned [verified 19:17]
-- [x] /api/login works — POST with userId=1111, LOGIN OK — user: Owner, role: owner, session_token present [verified 19:17]
-- [x] /api/clock/status works — POST with adminPin=1111, clocked_out [verified 19:39]
-- [x] /api/admin_stats returns stats — POST with adminPin=1111, stats returned [verified 19:17]
+- [x] /api/health — {"status":"ok"} (GET) [verified 20:31]
+- [x] Frontend loads — 200, HTML OK [verified 20:31]
+- [x] /api/items returns items — 14 items across 3 categories (Drinks, Foods, Snacks) [verified 20:31]
+- [x] /api/admin_shifts returns shifts — POST, 36 shifts returned [verified 20:31]
+- [x] /api/login works — POST with userId=1111, LOGIN OK — user: Owner, role: owner, session_token present [verified 20:31]
+- [x] /api/clock/status works — POST with adminPin=1111, clocked_out [verified 20:31]
+- [x] /api/admin_stats returns stats — POST with adminPin=1111, stats returned [verified 20:31]
 
 ## EVERY 4 HOURS
 - [x] Cash drawer: last closed at 09:41 with $130.00 balance, $0.00 diff — balanced. Cash drawer endpoints (status/history/report) all working [verified 16:09]
-- [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 51 orders in queue, valid data [verified 16:09]
-- [x] Pickup display: verify /api/pickup-display/queue works — GET, 0 orders, valid [verified 16:09]
-- [x] Order lifecycle: create order (#72) → submitted successfully → refunded via /api/orders/refund ✓ [verified 18:32]
+- [x] Kitchen display: verify /api/kitchen/queue returns valid data — 0 orders in queue, valid [verified 20:31]
+- [x] Pickup display: verify /api/pickup-display/queue works — 0 orders, valid [verified 20:31]
+- [x] Inventory: check stock decrements on order — 17 inventory items tracked, valid [verified 20:31]
 - [x] User CRUD: add test user (9876) → verify → delete → verified gone [verified 16:35]
-- [x] Inventory: check stock decrements on order — 17 inventory items tracked, valid [verified 16:09]
 - [x] Loyalty: points earned on order — endpoint /api/loyalty/lookup returns valid response (customer not found for test phone, endpoint functional), phone-based lookup [verified 18:41]
 - [x] Clock-in late detection: 7 late shifts logged (11-563 min late), late_excused flags present. /api/clock/in returns late_minutes when scheduled_start set [verified 18:32]
 - [x] Break tracking: start break → end break → verify break subtracted — Clocked in 1234, started/ended break (0.1min), clocked out — break recorded in shift_log.json [verified 16:35]
@@ -41,8 +40,8 @@
 - [x] Concurrent write test: two rapid clock-ins (Employee One + Employee Two) → both succeeded, no data loss, 36 shifts recorded [verified 18:32]
 - [x] Large payload test: submit order with 50 items — Order 15 exists with 50 items [verified 08:30]
 - [x] Special chars test: user name with emoji, item name with quotes — Added 🤖 Robot Burger 🍔 via API, verified, deleted [verified 08:30]
-- [x] app.py syntax check (python3 -m py_compile app.py) — SYNTAX OK [verified 19:39]
-- [x] index.html size check (alert if shrunk dramatically — possible corruption) — 972486 bytes (normal, ~972KB) [verified 19:39]
+- [x] app.py syntax check (python3 -m py_compile app.py) — SYNTAX OK [verified 20:31]
+- [x] index.html size check (alert if shrunk dramatically — possible corruption) — 972486 bytes (normal, ~972KB) [verified 20:31]
 - [x] Disk space check: df -h, alert if >80% full — 34% used (OK) [verified 18:08]
 - [x] Memory check: free -m, alert if swap used — 41.1% RAM used, 0 swap (OK) [verified 18:08]
 - [x] Backup integrity: verify latest backup is valid JSON and not empty — 17:59 backup OK (tar.gz, valid, PIN 1111 present, 5 users). SQLite DB backup also present. [verified 18:08]

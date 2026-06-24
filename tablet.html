@@ -1041,6 +1041,274 @@ body {
   }
 }
 
+/* ---- Order Tracking Overlay ---- */
+#orderTrackingOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: var(--bg);
+  display: none;
+  flex-direction: column;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding: 20px 20px 80px;
+}
+#orderTrackingOverlay.show {
+  display: flex;
+}
+
+.tracking-header {
+  text-align: center;
+  padding: 12px 0 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  margin-bottom: 16px;
+  flex-shrink: 0;
+}
+.tracking-header h2 {
+  font-size: clamp(26px, 4vw, 42px);
+  font-weight: 700;
+  color: var(--accent);
+}
+.tracking-table-badge {
+  display: inline-block;
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid rgba(255,255,255,0.1);
+  padding: 6px 20px;
+  border-radius: 40px;
+  font-size: clamp(16px, 2vw, 22px);
+  font-weight: 600;
+  margin-top: 6px;
+}
+
+.tracking-order-card {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 12px;
+  border: 1px solid rgba(255,255,255,0.06);
+  transition: border-color 0.5s;
+}
+.tracking-order-card.status-completed {
+  border-color: #2ecc71;
+  box-shadow: 0 0 20px rgba(46,204,113,0.15);
+}
+.tracking-order-card.status-preparing {
+  border-color: #f39c12;
+}
+.tracking-order-card.status-pending {
+  border-color: rgba(255,255,255,0.06);
+}
+
+.tracking-order-id {
+  font-size: clamp(14px, 1.6vw, 18px);
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.tracking-status-badge {
+  display: inline-block;
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-size: clamp(12px, 1.3vw, 15px);
+  font-weight: 700;
+  white-space: nowrap;
+}
+.tracking-status-badge.pending {
+  background: rgba(255,255,255,0.1);
+  color: var(--text2);
+}
+.tracking-status-badge.preparing {
+  background: rgba(243,156,18,0.2);
+  color: #f39c12;
+}
+.tracking-status-badge.completed {
+  background: rgba(46,204,113,0.2);
+  color: #2ecc71;
+}
+
+.tracking-item-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 0;
+  font-size: clamp(14px, 1.5vw, 17px);
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.tracking-item-row:last-child {
+  border-bottom: none;
+}
+.tracking-item-qty {
+  color: var(--accent);
+  font-weight: 700;
+  margin-right: 8px;
+}
+.tracking-item-name {
+  color: var(--text);
+  flex: 1;
+}
+.tracking-order-notes {
+  font-size: clamp(12px, 1.2vw, 14px);
+  color: var(--text2);
+  font-style: italic;
+  margin-top: 4px;
+  padding: 4px 8px;
+  background: rgba(255,255,255,0.03);
+  border-radius: 6px;
+}
+
+.tracking-status-bar {
+  text-align: center;
+  padding: 16px 0;
+  flex-shrink: 0;
+}
+.tracking-status-step {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 6px 0;
+  font-size: clamp(16px, 2vw, 22px);
+  color: var(--text2);
+  transition: color 0.5s, opacity 0.5s;
+}
+.tracking-status-step.active {
+  color: var(--accent);
+  font-weight: 700;
+}
+.tracking-status-step.done {
+  color: #2ecc71;
+}
+.tracking-status-step .step-icon {
+  font-size: clamp(20px, 2.5vw, 28px);
+}
+.tracking-status-step .step-check {
+  display: none;
+  color: #2ecc71;
+}
+.tracking-status-step.done .step-check {
+  display: inline;
+}
+.tracking-status-step.done .step-icon {
+  display: none;
+}
+
+.tracking-estimated {
+  text-align: center;
+  font-size: clamp(16px, 2vw, 22px);
+  color: var(--text2);
+  padding: 8px 0;
+  flex-shrink: 0;
+}
+
+.tracking-progress-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 12px 0;
+  flex-shrink: 0;
+}
+.tracking-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.1);
+  transition: background 0.4s, transform 0.3s;
+}
+.tracking-dot.active {
+  background: var(--accent);
+  transform: scale(1.3);
+}
+.tracking-dot.done {
+  background: #2ecc71;
+}
+
+/* Ready celebration overlay */
+#readyCelebrationOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  background: rgba(26,26,46,0.95);
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: readyFadeIn 0.5s ease-out;
+}
+#readyCelebrationOverlay.show {
+  display: flex;
+}
+@keyframes readyFadeIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.ready-emoji {
+  font-size: clamp(80px, 20vw, 160px);
+  animation: readyBounce 1s ease infinite;
+}
+@keyframes readyBounce {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-20px) scale(1.1); }
+}
+.ready-title {
+  font-size: clamp(36px, 6vw, 64px);
+  font-weight: 700;
+  color: #2ecc71;
+  margin: 16px 0 8px;
+}
+.ready-subtitle {
+  font-size: clamp(18px, 3vw, 28px);
+  color: var(--text2);
+  margin-bottom: 24px;
+}
+.ready-btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 60px;
+  padding: 16px 48px;
+  font-size: clamp(18px, 2.5vw, 26px);
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+  min-height: 60px;
+  min-width: 200px;
+  transition: transform 0.15s, box-shadow 0.15s;
+  box-shadow: 0 4px 20px rgba(233,69,96,0.4);
+}
+.ready-btn:active {
+  transform: scale(0.95);
+  box-shadow: 0 2px 10px rgba(233,69,96,0.3);
+}
+
+/* Confetti particles for ready celebration */
+.ready-confetti {
+  position: fixed;
+  pointer-events: none;
+  z-index: 96;
+  font-size: 24px;
+  animation: confettiFall linear forwards;
+}
+@keyframes confettiFall {
+  0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+
+.tracking-no-orders {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text2);
+  font-size: clamp(18px, 2.5vw, 24px);
+}
+
 /* ---- Screensaver Dim Overlay ---- */
 #screensaverOverlay {
   position: fixed;
@@ -1164,6 +1432,45 @@ body {
   <button class="countdown-cancel" id="countdownCancelBtn" data-i18n="stay">✕ Stay</button>
 </div>
 
+<!-- Order Tracking Overlay -->
+<div id="orderTrackingOverlay">
+  <div class="tracking-header">
+    <h2><span data-i18n="your_order">🍽️ Your Order</span></h2>
+    <span class="tracking-table-badge" id="trackingTableBadge">🍽️ Table --</span>
+  </div>
+  <div id="trackingItems"></div>
+  <div class="tracking-progress-dots" id="trackingProgressDots">
+    <span class="tracking-dot done" id="dotReceived"></span>
+    <span class="tracking-dot" id="dotPreparing"></span>
+    <span class="tracking-dot" id="dotReady"></span>
+  </div>
+  <div class="tracking-status-bar" id="trackingStatusBar">
+    <div class="tracking-status-step done" id="stepReceived">
+      <span class="step-icon">📝</span><span class="step-check">✅</span> <span data-i18n="order_received">Order Received</span>
+    </div>
+    <div class="tracking-status-step" id="stepPreparing">
+      <span class="step-icon">👨‍🍳</span><span class="step-check">✅</span> <span data-i18n="being_prepared">Being Prepared</span>
+    </div>
+    <div class="tracking-status-step" id="stepReady">
+      <span class="step-icon">🎉</span><span class="step-check">✅</span> <span data-i18n="ready_to_serve">Ready to Serve</span>
+    </div>
+  </div>
+  <div class="tracking-estimated" id="trackingEstimated">
+    ⏱️ <span data-i18n="estimated_wait">Estimated wait</span>: <strong id="trackingWaitMinutes">~5 min</strong>
+  </div>
+  <div id="trackingNoOrders" class="tracking-no-orders" style="display:none;" data-i18n="tracking_no_orders">
+    No active orders for this table.
+  </div>
+</div>
+
+<!-- Ready Celebration Overlay -->
+<div id="readyCelebrationOverlay">
+  <div class="ready-emoji">🎉</div>
+  <div class="ready-title" data-i18n="order_ready_title">Your Order is Ready!</div>
+  <div class="ready-subtitle" data-i18n="order_ready_subtitle">A server will bring it to you shortly. 🍽️</div>
+  <button class="ready-btn" onclick="dismissReady()" data-i18n="ready_ok">👍 OK</button>
+</div>
+
 <!-- Screensaver Dim Overlay -->
 <div id="screensaverOverlay" onclick="clickWakeScreensaver()">
   <div class="ss-clock" id="screensaverClock"></div>
@@ -1267,6 +1574,21 @@ const L10N = {
     'nutrition_carbs': 'carbs',
     'nutrition_fat': 'fat',
     'touch_to_wake': '👆 Touch to wake',
+    // Order tracking
+    'your_order': '🍽️ Your Order',
+    'order_received': 'Order Received',
+    'being_prepared': 'Being Prepared',
+    'ready_to_serve': 'Ready to Serve',
+    'estimated_wait': 'Estimated wait',
+    'tracking_no_orders': 'No active orders for this table.',
+    'order_ready_title': 'Your Order is Ready!',
+    'order_ready_subtitle': 'A server will bring it to you shortly. 🍽️',
+    'ready_ok': '👍 OK',
+    'tracking_order_num': 'Order #',
+    'tracking_minutes': '~{min} min',
+    'waiting_kitchen': 'Waiting for kitchen...',
+    'order_note': 'Note:',
+    'no_table_set': 'No table set — scanning disabled',
   },
   es: {
     'no_ads': 'No hay anuncios',
@@ -1311,6 +1633,21 @@ const L10N = {
     'nutrition_carbs': 'carboh.',
     'nutrition_fat': 'grasa',
     'touch_to_wake': '👆 Tocar para activar',
+    // Order tracking
+    'your_order': '🍽️ Su Pedido',
+    'order_received': 'Pedido Recibido',
+    'being_prepared': 'En Preparación',
+    'ready_to_serve': 'Listo para Servir',
+    'estimated_wait': 'Tiempo estimado',
+    'tracking_no_orders': 'No hay pedidos activos para esta mesa.',
+    'order_ready_title': '¡Su Pedido está Listo!',
+    'order_ready_subtitle': 'Un mesero lo traerá en breve. 🍽️',
+    'ready_ok': '👍 OK',
+    'tracking_order_num': 'Pedido #',
+    'tracking_minutes': '~{min} min',
+    'waiting_kitchen': 'Esperando la cocina...',
+    'order_note': 'Nota:',
+    'no_table_set': 'Sin mesa — escaneo desactivado',
   }
 };
 
@@ -2009,6 +2346,250 @@ function handleDeviceMotion(event) {
   }
 }
 
+// ═══════════ ORDER TRACKING ═══════════
+
+let trackingPollTimer = null;
+let trackingReadyShown = false;    // Did we show the celebration for current batch?
+let trackingPrevReady = false;     // Was has_ready true last poll?
+let trackingPrevActive = false;    // Was has_active true last poll?
+let trackingDismissedAt = null;    // When ready was dismissed (for auto-return cooldown)
+const TRACKING_POLL_MS = 5000;     // Poll every 5 seconds
+const AUTO_RETURN_AFTER_COLLECTED = 45000; // 45s after dismissal, return to ads
+
+/** Get the table number from URL params */
+function getTableNumber() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get('table') || null;
+}
+
+/** Start polling for order status updates */
+function startTrackingPolling() {
+  stopTrackingPolling();
+  trackingPollTimer = setInterval(pollOrderStatus, TRACKING_POLL_MS);
+  // Also poll immediately
+  pollOrderStatus();
+}
+
+/** Stop polling for order status */
+function stopTrackingPolling() {
+  if (trackingPollTimer) {
+    clearInterval(trackingPollTimer);
+    trackingPollTimer = null;
+  }
+}
+
+/** Poll backend for current order status for this table */
+async function pollOrderStatus() {
+  const tableNum = getTableNumber();
+  if (!tableNum) return;
+
+  try {
+    const r = await fetch(BACKEND + '/api/tablet/order-status', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ table_number: tableNum })
+    });
+    if (!r.ok) throw new Error('Fetch failed');
+    const data = await r.json();
+
+    // Update tracking view
+    updateTrackingView(data);
+  } catch (e) {
+    // Silently retry on next poll
+  }
+}
+
+/** Update the order tracking view based on poll data */
+function updateTrackingView(data) {
+  const overlay = document.getElementById('orderTrackingOverlay');
+  const trackingItems = document.getElementById('trackingItems');
+  const trackingNoOrders = document.getElementById('trackingNoOrders');
+  const trackingEstimated = document.getElementById('trackingEstimated');
+  const trackingWaitMinutes = document.getElementById('trackingWaitMinutes');
+  const readyOverlay = document.getElementById('readyCelebrationOverlay');
+
+  const hasActive = data.has_active || false;
+  const hasReady = data.has_ready || false;
+  const orders = data.orders || [];
+  const estimatedWait = data.estimated_wait || 0;
+
+  // Update table badge
+  const tableNum = getTableNumber();
+  if (tableNum) {
+    document.getElementById('trackingTableBadge').textContent = t('table_label_dynamic', { table: tableNum });
+  }
+
+  // --- Determine state transitions ---
+
+  // Just became ready (wasn't ready before, but is now)
+  if (hasReady && !trackingPrevReady && hasActive === false && trackingPrevActive === true) {
+    // Transition: all active → all ready → show celebration
+    showReadyCelebration();
+  }
+  // Back to no orders
+  if (!hasActive && !hasReady && orders.length === 0) {
+    hideTrackingView();
+    return;
+  }
+
+  // Store previous state
+  trackingPrevActive = hasActive;
+  trackingPrevReady = hasReady;
+
+  // Show tracking overlay
+  if (!overlay.classList.contains('show')) {
+    overlay.classList.add('show');
+    // Hide other views
+    document.getElementById('adContainer').style.display = 'none';
+    document.getElementById('viewMenuBtn').style.display = 'none';
+    document.getElementById('menuView').classList.remove('show');
+  }
+
+  // Render order cards
+  if (orders.length === 0) {
+    trackingItems.innerHTML = '';
+    trackingNoOrders.style.display = 'block';
+    trackingEstimated.style.display = 'none';
+  } else {
+    trackingNoOrders.style.display = 'none';
+    trackingEstimated.style.display = 'block';
+
+    trackingItems.innerHTML = orders.map(o => {
+      const status = o.status || 'pending';
+      const itemsHtml = (o.items || []).map(item =>
+        `<div class="tracking-item-row">
+          <span><span class="tracking-item-qty">${item.qty}x</span><span class="tracking-item-name">${escHtml(item.name)}</span></span>
+        </div>`
+      ).join('');
+
+      const notesHtml = o.notes ? `<div class="tracking-order-notes">📝 ${t('order_note')} ${escHtml(o.notes)}</div>` : '';
+
+      // Status badge
+      let statusText = t('order_received');
+      let statusClass = 'pending';
+      if (status === 'preparing') {
+        statusText = t('being_prepared');
+        statusClass = 'preparing';
+      } else if (status === 'completed') {
+        statusText = t('ready_to_serve');
+        statusClass = 'completed';
+      }
+
+      return `<div class="tracking-order-card status-${statusClass}">
+        <div class="tracking-order-id">
+          ${t('tracking_order_num')}${o.order_id}
+          <span class="tracking-status-badge ${statusClass}">${statusText}</span>
+        </div>
+        ${itemsHtml}
+        ${notesHtml}
+      </div>`;
+    }).join('');
+  }
+
+  // Update progress dots + status steps
+  const allActive = hasActive;
+  const allReady = hasReady && !hasActive;
+
+  // Dot 1 (Received) is always done
+  document.getElementById('dotReceived').className = 'tracking-dot done';
+  // Dot 2 (Preparing)
+  const dot2 = document.getElementById('dotPreparing');
+  dot2.className = 'tracking-dot' + (allActive ? ' active' : '') + (allReady || allActive ? ' done' : '');
+  // Dot 3 (Ready)
+  const dot3 = document.getElementById('dotReady');
+  dot3.className = 'tracking-dot' + (allReady ? ' done active' : '');
+
+  // Step status
+  const stepPrep = document.getElementById('stepPreparing');
+  const stepReady = document.getElementById('stepReady');
+  stepPrep.className = 'tracking-status-step' + (allActive ? ' active' : '') + (allActive || allReady ? ' done' : '');
+  stepReady.className = 'tracking-status-step' + (allReady ? ' done active' : '');
+
+  // Update estimated wait
+  if (hasActive) {
+    trackingWaitMinutes.innerHTML = t('tracking_minutes', { min: estimatedWait });
+  } else if (hasReady) {
+    trackingWaitMinutes.innerHTML = '✅ ' + t('ready_to_serve');
+  } else {
+    trackingWaitMinutes.innerHTML = '⏳ ' + t('waiting_kitchen');
+  }
+}
+
+/** Show the ready celebration overlay with confetti */
+function showReadyCelebration() {
+  const overlay = document.getElementById('readyCelebrationOverlay');
+  if (overlay.classList.contains('show')) return;
+
+  overlay.classList.add('show');
+  trackingReadyShown = true;
+
+  // Vibrate on supported devices
+  if (navigator.vibrate) {
+    navigator.vibrate([100, 50, 100, 50, 200]);
+  }
+
+  // Launch confetti particles
+  launchConfetti();
+}
+
+/** Launch confetti particles for celebration */
+function launchConfetti() {
+  const emojis = ['🎉', '🎊', '✨', '🍽️', '⭐', '🌟', '🥳', '🎈'];
+  for (let i = 0; i < 20; i++) {
+    const el = document.createElement('div');
+    el.className = 'ready-confetti';
+    el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+    el.style.left = Math.random() * 100 + 'vw';
+    el.style.fontSize = (16 + Math.random() * 24) + 'px';
+    el.style.animationDuration = (2 + Math.random() * 3) + 's';
+    el.style.animationDelay = (Math.random() * 2) + 's';
+    document.body.appendChild(el);
+    // Remove after animation
+    setTimeout(() => el.remove(), 5000);
+  }
+}
+
+/** Dismiss the ready celebration overlay */
+function dismissReady() {
+  document.getElementById('readyCelebrationOverlay').classList.remove('show');
+  trackingDismissedAt = Date.now();
+
+  // After cooldown, return to ads
+  setTimeout(() => {
+    // Check if still no active orders
+    hideTrackingView();
+  }, AUTO_RETURN_AFTER_COLLECTED);
+}
+
+/** Hide tracking view and return to ads */
+function hideTrackingView() {
+  const overlay = document.getElementById('orderTrackingOverlay');
+  const readyOverlay = document.getElementById('readyCelebrationOverlay');
+
+  overlay.classList.remove('show');
+  readyOverlay.classList.remove('show');
+
+  // Reset tracking state
+  trackingPrevActive = false;
+  trackingPrevReady = false;
+  trackingReadyShown = false;
+  trackingDismissedAt = null;
+
+  // Restore ad/menu view
+  document.getElementById('adContainer').style.display = 'flex';
+  document.getElementById('viewMenuBtn').style.display = 'block';
+
+  // Resume ad rotation
+  const interval = adsData.interval || 10;
+  if (rotateTimer) clearInterval(rotateTimer);
+  rotateTimer = setInterval(() => {
+    nextAd();
+  }, interval * 1000);
+
+  // Re-apply translations
+  applyTranslations();
+}
+
 // ---- Event listeners ----
 document.getElementById('viewMenuBtn').addEventListener('click', () => {
   showMenuView();
@@ -2216,6 +2797,25 @@ document.addEventListener('DOMContentLoaded', () => {
       callBtn.classList.remove('called');
     }, 4000);
   });
+
+  // ═══ Start order tracking polling ═══
+  startTrackingPolling();
+
+  // ═══ SocketIO listeners for real-time order updates ═══
+  if (tabletSocket) {
+    tabletSocket.on('kitchen_update', () => {
+      // Kitchen queue changed — immediately check order status
+      pollOrderStatus();
+    });
+    tabletSocket.on('food_ready', (data) => {
+      // Check if this food_ready is for our table
+      const ourTable = getTableNumber();
+      if (ourTable && data && String(data.table_number) === String(ourTable)) {
+        // Immediately poll to update tracking view
+        pollOrderStatus();
+      }
+    });
+  }
 });
 </script>
 </body>
