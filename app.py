@@ -1041,8 +1041,19 @@ def handle_tablet_call_server(data):
     """Tablet customer pressed 'Call Server' — notify all staff clients."""
     table_number = data.get('table_number', 'Unknown')
     timestamp = datetime.now().isoformat()
-    socketio.emit('server_call', {'table_number': table_number, 'timestamp': timestamp})
+    call_id = str(uuid.uuid4())[:8]
+    active_calls.append({
+        'id': call_id,
+        'table_number': table_number,
+        'timestamp': timestamp,
+        'dismissed': False
+    })
+    socketio.emit('server_call', {'table_number': table_number, 'timestamp': timestamp, 'call_id': call_id})
 
+# In-memory storage for active server calls from tablets
+# Each call: {id, table_number, timestamp, dismissed}
+active_calls = []  # list of call records
+import uuid
 
 # In-memory storage for active admin sessions (for timesheet calculation)
 active_admin_sessions = {}  # {admin_id: login_time}
@@ -14554,8 +14565,48 @@ def tablet_call_server():
     data = request.json or {}
     table_number = data.get('table_number', 'Unknown')
     timestamp = datetime.now().isoformat()
-    socketio.emit('server_call', {'table_number': table_number, 'timestamp': timestamp, 'source': 'rest'})
-    return jsonify({'status': 'ok', 'table_number': table_number})
+    call_id = str(uuid.uuid4())[:8]
+    active_calls.append({
+        'id': call_id,
+        'table_number': table_number,
+        'timestamp': timestamp,
+        'dismissed': False
+    })
+    socketio.emit('server_call', {'table_number': table_number, 'timestamp': timestamp, 'source': 'rest', 'call_id': call_id})
+    return jsonify({'status': 'ok', 'table_number': table_number, 'call_id': call_id})
+
+
+@app.route('/api/tablet/active-calls', methods=['POST'])
+def tablet_active_calls():
+    """Return active (non-dismissed) call-server requests."""
+    # Filter out dismissed calls older than 1 hour
+    now = datetime.now()
+    fresh = []
+    for c in active_calls:
+        if not c['dismissed']:
+            try:
+                ct = datetime.fromisoformat(c['timestamp'])
+                if (now - ct).total_seconds() < 3600:
+                    fresh.append(c)
+            except:
+                fresh.append(c)
+    # Sort most recent first
+    fresh.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
+    return jsonify({'calls': fresh, 'count': len(fresh)})
+
+
+@app.route('/api/tablet/dismiss-call', methods=['POST'])
+def tablet_dismiss_call():
+    """Dismiss a call-server request."""
+    data = request.json or {}
+    call_id = data.get('call_id')
+    if not call_id:
+        return jsonify({'message': 'call_id is required.'}), 400
+    for c in active_calls:
+        if c['id'] == call_id:
+            c['dismissed'] = True
+            return jsonify({'status': 'ok', 'message': 'Call dismissed.'})
+    return jsonify({'message': 'Call not found.'}), 404
 
 
 # ══════════════════════════════════════════════════

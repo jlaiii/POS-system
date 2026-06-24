@@ -614,7 +614,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
   </div>
 
   <div id="mainTabs">
-    <button onclick="switchMainTab('pos')" id="mainTabPos" class="active" data-i18n="tab.pos">🛒 POS</button>
+    <button onclick="switchMainTab('pos')" id="mainTabPos" class="active" data-i18n="tab.pos">🛒 POS <span id="callServerBadge" class="badge" style="display:none;background:#f39c12;color:#fff;border-radius:10px;padding:2px 8px;font-size:11px;font-weight:700;margin-left:4px;vertical-align:middle;">0</span></button>
     <button onclick="switchMainTab('history')" id="mainTabHistory" data-i18n="tab.history">📋 History <span id="foodReadyBadge" class="badge" style="display:none;background:#e94560;color:#fff;border-radius:10px;padding:2px 8px;font-size:11px;font-weight:700;margin-left:4px;vertical-align:middle;">0</span></button>
     <button onclick="switchMainTab('admin')" id="mainTabAdmin" style="display:none;" data-i18n="tab.admin">⚙️ Admin</button>
     <button onclick="showKitchenView()" id="mainTabKitchen" style="display:none;" data-i18n="tab.kitchen">🔪 Kitchen</button>
@@ -2442,6 +2442,19 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
   </div>
 </div>
 
+<!-- ═══════════ CALL SERVER NOTIFICATION OVERLAY ═══════════ -->
+<div id="callServerOverlay" class="modal-overlay" role="dialog" aria-modal="true" aria-label="Call server notification">
+  <div class="modal-box" style="max-width:400px;">
+    <h3 data-i18n="callserver.title">📞 Customer Needs Assistance</h3>
+    <div id="callServerContent" style="margin:16px 0;">
+      <div id="callServerList"></div>
+    </div>
+    <div class="modal-actions" id="callServerActions">
+      <button class="outline" onclick="dismissAllCalls()" id="callServerDismissAllBtn" data-i18n="callserver.dismiss">✅ Dismiss All</button>
+    </div>
+  </div>
+</div>
+
 <!-- ═══════════ TABLE TAB OVERLAY ═══════════ -->
 <div id="tableTabOverlay" class="modal-overlay" role="dialog" aria-modal="true" aria-label="Table tab">
   <div class="modal-box" style="max-width:500px;max-height:80vh;overflow-y:auto;">
@@ -3544,6 +3557,14 @@ const L10N = {
     'item.nutrition_protein': 'protein',
     'item.nutrition_carbs': 'carbs',
     'item.nutrition_fat': 'fat',
+    // Call Server notification
+    'callserver.title': '📞 Customer Needs Assistance',
+    'callserver.table': 'Table {number} is calling for service!',
+    'callserver.at': 'at {time}',
+    'callserver.dismiss': '✅ Dismiss',
+    'callserver.gototable': '🪑 Go to Table',
+    'callserver.badge': '📞 {count} call(s)',
+    'callserver.no_calls': 'No pending calls',
   },
   es: {
     'app.title': '🍽️ Sistema POS',
@@ -4254,6 +4275,14 @@ const L10N = {
     'item.nutrition_protein': 'proteína',
     'item.nutrition_carbs': 'carboh.',
     'item.nutrition_fat': 'grasa',
+    // Call Server notification
+    'callserver.title': '📞 Cliente Necesita Ayuda',
+    'callserver.table': '¡Mesa {number} está llamando!',
+    'callserver.at': 'a las {time}',
+    'callserver.dismiss': '✅ Descartar',
+    'callserver.gototable': '🪑 Ir a Mesa',
+    'callserver.badge': '📞 {count} llamada(s)',
+    'callserver.no_calls': 'Sin llamadas pendientes',
   }
 };
 
@@ -4498,7 +4527,13 @@ function initSocketIO() {
     // ── Tablet call server notification ──
     socket.on('server_call', (data) => {
       const tableNum = data && data.table_number ? data.table_number : 'Unknown';
-      showToast('📞 Table ' + tableNum + ' is calling for service!', 'warning', 10000);
+      const callId = data && data.call_id ? data.call_id : null;
+      const timestamp = data && data.timestamp ? data.timestamp : new Date().toISOString();
+      // Add to pending calls
+      if (callId) {
+        pendingServerCalls.push({ id: callId, table_number: tableNum, timestamp: timestamp });
+      }
+      showCallServerPopup(tableNum, callId, timestamp);
     });
 
     // ── Food ready notification for waiters ──
@@ -4535,6 +4570,184 @@ function initSocketIO() {
   } catch(e) {
     socketEnabled = false;
   }
+}
+
+// ── Call server notification state ──
+let pendingServerCalls = [];  // Array of {id, table_number, timestamp}
+
+/** Update the call server badge on the POS tab */
+function updateCallServerBadge() {
+  const badge = document.getElementById('callServerBadge');
+  if (!badge) return;
+  const count = pendingServerCalls.length;
+  if (count > 0) {
+    badge.textContent = count;
+    badge.style.display = 'inline';
+    badge.style.animation = 'none';
+    badge.offsetHeight;
+    badge.style.animation = 'foodReadyPulse 0.5s ease 3';
+  } else {
+    badge.style.display = 'none';
+    badge.textContent = '0';
+  }
+}
+
+/** Format an ISO timestamp for display */
+function formatCallTime(isoStr) {
+  try {
+    const d = new Date(isoStr);
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  } catch(e) {
+    return isoStr;
+  }
+}
+
+/** Show the call server popup notification */
+function showCallServerPopup(tableNum, callId, timestamp) {
+  // Update badge
+  updateCallServerBadge();
+
+  // Play a notification sound (reuse food ready sound)
+  playNotificationSound();
+  // Vibrate on supported devices
+  if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+
+  // Show toast as secondary notification
+  showToast(t('callserver.table', {number: tableNum}), 'warning', 8000);
+
+  // Show the modal overlay with latest call info
+  showCallServerOverlay();
+}
+
+/** Open the call server overlay showing all pending calls */
+function showCallServerOverlay() {
+  const overlay = document.getElementById('callServerOverlay');
+  const list = document.getElementById('callServerList');
+  if (!overlay || !list) return;
+  if (pendingServerCalls.length === 0) {
+    list.innerHTML = '<div class="empty-state" style="padding:20px;text-align:center;color:var(--text2);">' + t('callserver.no_calls') + '</div>';
+    overlay.classList.add('active');
+    return;
+  }
+  let html = '';
+  // Group by table number, keep most recent per table
+  const byTable = {};
+  pendingServerCalls.forEach(c => {
+    if (!byTable[c.table_number] || c.timestamp > byTable[c.table_number].timestamp) {
+      byTable[c.table_number] = c;
+    }
+  });
+  const sorted = Object.values(byTable).sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
+  sorted.forEach(c => {
+    const timeStr = formatCallTime(c.timestamp);
+    html += '<div class="call-server-card" style="background:var(--card);border-radius:12px;padding:14px 16px;margin-bottom:10px;border-left:4px solid var(--accent);display:flex;flex-direction:column;gap:8px;">';
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;">';
+    html += '<strong style="font-size:18px;">📞 ' + t('callserver.table', {number: c.table_number}) + '</strong>';
+    html += '<span style="font-size:12px;color:var(--text2);">' + t('callserver.at', {time: timeStr}) + '</span>';
+    html += '</div>';
+    html += '<div style="display:flex;gap:8px;justify-content:flex-end;">';
+    html += '<button class="outline" onclick="dismissCall(\'' + c.id + '\')" style="min-height:44px;padding:8px 16px;font-size:14px;" data-i18n="callserver.dismiss">✅ ' + t('callserver.dismiss') + '</button>';
+    html += '<button onclick="goToTableFromCall(\'' + c.id + '\')" style="background:var(--accent);color:#fff;border:none;border-radius:var(--radius);min-height:44px;padding:8px 16px;font-size:14px;font-weight:600;cursor:pointer;" data-i18n="callserver.gototable">🪑 ' + t('callserver.gototable') + '</button>';
+    html += '</div></div>';
+  });
+  list.innerHTML = html;
+  overlay.classList.add('active');
+}
+
+/** Dismiss a single call */
+async function dismissCall(callId) {
+  try {
+    await fetch(BACKEND_URL + '/api/tablet/dismiss-call', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ call_id: callId })
+    });
+  } catch(e) {}
+  // Remove from local queue
+  pendingServerCalls = pendingServerCalls.filter(c => c.id !== callId);
+  updateCallServerBadge();
+  // Re-render or close
+  if (pendingServerCalls.length === 0) {
+    closeCallServerOverlay();
+  } else {
+    showCallServerOverlay();
+  }
+}
+
+/** Dismiss all pending calls */
+async function dismissAllCalls() {
+  const ids = [...new Set(pendingServerCalls.map(c => c.id))];
+  for (const id of ids) {
+    try {
+      await fetch(BACKEND_URL + '/api/tablet/dismiss-call', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ call_id: id })
+      });
+    } catch(e) {}
+  }
+  pendingServerCalls = [];
+  updateCallServerBadge();
+  closeCallServerOverlay();
+}
+
+/** Close the call server overlay */
+function closeCallServerOverlay() {
+  document.getElementById('callServerOverlay').classList.remove('active');
+}
+
+/** Go to the table that called, then dismiss the call */
+function goToTableFromCall(callId) {
+  // Find the call
+  const call = pendingServerCalls.find(c => c.id === callId);
+  if (!call) return;
+  // Dismiss it first
+  dismissCall(callId);
+  closeCallServerOverlay();
+  // Switch to POS tab and select the table
+  switchMainTab('pos');
+  const tableSelect = document.getElementById('tableSelect');
+  if (tableSelect) {
+    const opt = [...tableSelect.options].find(o => o.value === String(call.table_number));
+    if (opt) {
+      tableSelect.value = call.table_number;
+      tableSelect.dispatchEvent(new Event('change'));
+    }
+  }
+}
+
+/** Sync pending calls from server (polling fallback) */
+async function syncPendingCalls() {
+  try {
+    const r = await fetch(BACKEND_URL + '/api/tablet/active-calls', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    if (!r.ok) return;
+    const d = await r.json();
+    if (d && d.calls && d.calls.length > 0) {
+      // Merge with local calls — add new ones
+      const existingIds = new Set(pendingServerCalls.map(c => c.id));
+      let changed = false;
+      d.calls.forEach(c => {
+        if (!existingIds.has(c.id)) {
+          pendingServerCalls.push({ id: c.id, table_number: c.table_number, timestamp: c.timestamp });
+          changed = true;
+        }
+      });
+      if (changed) {
+        updateCallServerBadge();
+        // Auto-show if not already showing
+        const overlay = document.getElementById('callServerOverlay');
+        if (!overlay || !overlay.classList.contains('active')) {
+          // Only toast for new calls via polling
+          showToast(t('callserver.table', {number: d.calls[0].table_number}), 'warning', 8000);
+          playNotificationSound();
+          if (navigator.vibrate) navigator.vibrate(100);
+        }
+      }
+    }
+  } catch(e) {}
 }
 
 // ═══════════ INIT ═══════════
@@ -6313,6 +6526,10 @@ function showApp() {
   // Start idle timeout timer
   loadIdleTimeoutConfig();
   startIdleTimer();
+  // Sync pending call server calls on startup and poll every 15s
+  syncPendingCalls();
+  if (window._callServerPollTimer) clearInterval(window._callServerPollTimer);
+  window._callServerPollTimer = setInterval(() => syncPendingCalls(), 15000);
   // Bind activity event listeners for idle reset
   const activityEvents = ['mousemove', 'touchstart', 'click', 'keydown', 'scroll'];
   // Remove old listeners if any (by replacing with the same named function)
