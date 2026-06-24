@@ -360,7 +360,7 @@ New `tickets.json` data store. Each ticket:
 
 ### Priority: LOW
 
-- [ ] **Direct deposit info display** — Read-only display of employee's direct deposit details.
+- [~] worker-2 **Direct deposit info display** — Read-only display of employee's direct deposit details.
 - [ ] **Pay comparison charts** — Bar chart in My Pay showing period-by-period gross pay for last 6 periods.
 - [ ] **Tax withholding estimator** — Optional W-4 based tax estimates.
 
