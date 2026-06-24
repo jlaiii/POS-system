@@ -2020,6 +2020,61 @@ def security_test_discord_webhook():
         return jsonify({'message': 'Failed to send test message. Check the webhook URL.'}), 500
 
 
+# ══════════════════════════════════════════════
+# Idle Timeout Config
+# ══════════════════════════════════════════════
+
+IDLE_TIMEOUT_CONFIG_FILE = 'idle_timeout_config.json'
+
+def get_idle_timeout_config():
+    """Get idle timeout config with defaults."""
+    config = load_json_data(IDLE_TIMEOUT_CONFIG_FILE)
+    if isinstance(config, dict):
+        if 'timeout_minutes' not in config:
+            config['timeout_minutes'] = 5
+        if 'enabled' not in config:
+            config['enabled'] = True
+        return config
+    return {'timeout_minutes': 5, 'enabled': True}
+
+def save_idle_timeout_config(config):
+    """Save idle timeout config to file."""
+    save_json_data(IDLE_TIMEOUT_CONFIG_FILE, config)
+
+@app.route('/api/idle_timeout/config', methods=['GET'])
+def idle_timeout_get_config():
+    """GET idle timeout config. No auth required (read-only, non-sensitive)."""
+    return jsonify(get_idle_timeout_config())
+
+@app.route('/api/idle_timeout/config', methods=['POST'])
+def idle_timeout_save_config():
+    """Save idle timeout config. Requires manage_users permission.
+    POST body: { adminPin, timeout_minutes (1-30), enabled (bool) }
+    """
+    data = request.json or {}
+    admin_pin = data.get('adminPin', '')
+    if not admin_pin:
+        return jsonify({'message': 'Authentication required.'}), 401
+    if not check_perm(admin_pin, "manage_users"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    timeout_minutes = data.get('timeout_minutes', 5)
+    try:
+        timeout_minutes = int(timeout_minutes)
+        if timeout_minutes < 1 or timeout_minutes > 30:
+            return jsonify({'message': 'Timeout must be between 1 and 30 minutes.'}), 400
+    except (ValueError, TypeError):
+        return jsonify({'message': 'Invalid timeout value.'}), 400
+
+    enabled = data.get('enabled', True)
+    config = {'timeout_minutes': timeout_minutes, 'enabled': bool(enabled)}
+    save_idle_timeout_config(config)
+    log_activity('idle_timeout_config', admin_pin,
+                 load_json_data(USERS_FILE).get(admin_pin, {}).get('name', 'unknown'),
+                 {'timeout_minutes': timeout_minutes, 'enabled': enabled})
+    return jsonify({'message': 'Idle timeout config saved.', 'config': config})
+
+
 # Owner credentials management
 @app.route('/api/owner/credentials', methods=['POST'])
 def owner_credentials():

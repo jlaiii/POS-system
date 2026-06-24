@@ -286,6 +286,24 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
   50% { box-shadow: 0 0 25px rgba(231,76,60,0.8); background: #e74c3c; }
 }
 
+/* ═══════════ IDLE TIMEOUT OVERLAYS ═══════════ */
+#idleCountdownOverlay, #lockOverlay {
+  display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.85); z-index: 10001;
+  flex-direction: column; align-items: center; justify-content: center;
+  gap: 20px; padding: 32px;
+}
+#idleCountdownOverlay.active, #lockOverlay.active { display: flex; }
+.idle-countdown-num { font-size: 72px; font-weight: 900; color: var(--accent); line-height: 1; }
+.idle-countdown-label { font-size: 20px; color: var(--text); text-align: center; max-width: 360px; }
+.idle-cancel-btn { font-size: 18px; padding: 14px 36px; min-height: 56px; background: var(--card); color: var(--text); border: 2px solid var(--accent); border-radius: var(--radius); cursor: pointer; font-weight: 600; }
+.idle-cancel-btn:hover { background: var(--accent); color: #fff; }
+.lock-title { font-size: 28px; color: var(--text); font-weight: 700; }
+.lock-sub { font-size: 16px; color: var(--text2); text-align: center; }
+.lock-pin-input { font-size: 32px; letter-spacing: 12px; text-align: center; width: 240px; min-height: 60px; border: 2px solid var(--border); border-radius: var(--radius); background: var(--bg); color: var(--text); padding: 8px 16px; font-weight: 700; }
+.lock-pin-input:focus { border-color: var(--accent); outline: none; }
+.lock-error { font-size: 14px; color: #e74c3c; min-height: 20px; }
+
 #mainTabs {
   display: flex; gap: 0; border-bottom: 2px solid var(--border);
   background: var(--card); overflow-x: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
@@ -2624,6 +2642,24 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
               <button class="danger" onclick="clearDiscordWebhook()" style="min-height:40px;padding:8px 16px;font-size:13px;" title="Remove webhook URL">✕ Remove</button>
             </div>
           </div>
+          <!-- Idle Timeout Config -->
+          <div class="card" style="padding:12px;margin-top:12px;">
+            <h4 style="margin:0 0 8px 0;font-size:14px;">⏰ Idle Timeout & Auto-Lock</h4>
+            <p style="font-size:12px;color:var(--text2);margin:0 0 8px 0;">Automatically lock the POS after a period of inactivity. The user must re-enter their PIN to resume.</p>
+            <div class="form-row" style="gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px;">
+              <label style="display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer;min-height:44px;">
+                <input type="checkbox" id="idleTimeoutEnabled" checked style="width:20px;height:20px;accent-color:var(--accent);"> <span data-i18n="idle.enabled">Enabled</span>
+              </label>
+            </div>
+            <div class="form-row" style="gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px;">
+              <label style="font-size:14px;color:var(--text2);min-height:44px;display:flex;align-items:center;gap:8px;" data-i18n="idle.timeout_label">Timeout: </label>
+              <input type="number" id="idleTimeoutMinutes" value="5" min="1" max="30" style="width:80px;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;text-align:center;min-height:40px;">
+              <span style="font-size:14px;color:var(--text2);" data-i18n="idle.minutes">minutes</span>
+              <span style="font-size:12px;color:var(--text2);">(1-30)</span>
+              <button class="accent" onclick="saveIdleTimeoutConfig()" style="min-height:40px;padding:8px 20px;font-size:13px;">💾 Save</button>
+              <span id="idleTimeoutStatus" style="font-size:13px;color:#4caf50;display:none;"></span>
+            </div>
+          </div>
         </div>
         <!-- System Backup & Restore -->
         <div id="secBackup" class="admin-section">
@@ -3069,6 +3105,22 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
       <button class="accent" onclick="confirmClockOut()" style="font-size:16px;padding:12px 24px;min-height:48px;">✅ Clock Out</button>
     </div>
   </div>
+</div>
+
+<!-- ═══════════ IDLE COUNTDOWN OVERLAY ═══════════ -->
+<div id="idleCountdownOverlay">
+  <div class="idle-countdown-num" id="idleCountdownNum">30</div>
+  <div class="idle-countdown-label" data-i18n="idle.countdown">Locking in 30 seconds... tap to stay.</div>
+  <button class="idle-cancel-btn" onclick="cancelIdleCountdown()" data-i18n="idle.stay">✕ Stay</button>
+</div>
+
+<!-- ═══════════ LOCK OVERLAY ═══════════ -->
+<div id="lockOverlay">
+  <div class="lock-title">🔒 <span data-i18n="idle.locked_title">Session Locked</span></div>
+  <div class="lock-sub" data-i18n="idle.locked_sub">Enter your PIN to unlock</div>
+  <input type="password" id="lockPinInput" class="lock-pin-input" maxlength="8" inputmode="numeric" pattern="[0-9]*" autocomplete="off" onkeydown="onLockPinKeydown(event)">
+  <div class="lock-error" id="lockErrorMsg"></div>
+  <button class="accent" onclick="unlockApp()" style="font-size:18px;padding:14px 36px;min-height:56px;border:none;border-radius:var(--radius);background:var(--accent);color:#fff;font-weight:700;cursor:pointer;" data-i18n="idle.unlock">Unlock</button>
 </div>
 
 <!-- ═══════════ ITEM MODIFIER OVERLAY ═══════════ -->
@@ -3756,6 +3808,16 @@ const L10N = {
     'history.refiring_all': 'Re-firing all items to kitchen...',
     'history.refire_failed': 'Failed to re-fire items',
     'history.refire_success': 'Items re-fired to kitchen!',
+    // Idle timeout
+    'idle.countdown': 'Locking in {seconds} seconds... tap to stay.',
+    'idle.stay': '✕ Stay',
+    'idle.locked_title': 'Session Locked',
+    'idle.locked_sub': 'Enter your PIN to unlock',
+    'idle.unlock': 'Unlock',
+    'idle.enabled': 'Enabled',
+    'idle.disabled': 'Disabled',
+    'idle.timeout_label': 'Timeout:',
+    'idle.minutes': 'minutes',
   },
   es: {
     'app.title': '🍽️ Sistema POS',
@@ -4350,6 +4412,16 @@ const L10N = {
     'history.refiring_all': 'Re-enviando todos los artículos a cocina...',
     'history.refire_failed': 'Error al re-enviar artículos',
     'history.refire_success': '¡Artículos re-enviados a cocina!',
+    // Idle timeout
+    'idle.countdown': 'Bloqueando en {seconds} segundos... toque para continuar.',
+    'idle.stay': '✕ Permanecer',
+    'idle.locked_title': 'Sesión Bloqueada',
+    'idle.locked_sub': 'Ingrese su PIN para desbloquear',
+    'idle.unlock': 'Desbloquear',
+    'idle.enabled': 'Activado',
+    'idle.disabled': 'Desactivado',
+    'idle.timeout_label': 'Tiempo límite:',
+    'idle.minutes': 'minutos',
   }
 };
 
@@ -5233,6 +5305,8 @@ async function confirmClockOut() {
       showToast(toastMsg + noteSuffix, 'success');
       if (clockTimer) { clearInterval(clockTimer); clockTimer = null; }
       checkClockStatus();
+      // Auto-logout after clock-out (end of shift)
+      setTimeout(() => doLogout(), 1500);
     } else {
       showToast(data.message || 'Error', 'error');
     }
@@ -5960,9 +6034,150 @@ async function doLogout() {
   appliedDiscount = null;
   stopKitchenPolling();
   hideKitchenView();
+  stopIdleTimer();
   document.getElementById('appScreen').classList.remove('active');
   document.getElementById('loginScreen').style.display = 'flex';
   document.getElementById('pinDisplay').textContent = '----';
+}
+
+// ═══════════ IDLE TIMEOUT ═══════════
+
+let idleTimeoutTimer = null;
+let idleCountdownTimer = null;
+let IDLE_TIMEOUT_MINUTES = 5;
+let IDLE_TIMEOUT_ENABLED = true;
+
+function loadIdleTimeoutConfig() {
+  // Load config from backend (non-critical, best-effort)
+  fetch(BACKEND_URL + '/api/idle_timeout/config')
+    .then(r => r.json())
+    .then(config => {
+      if (config) {
+        IDLE_TIMEOUT_MINUTES = parseInt(config.timeout_minutes) || 5;
+        IDLE_TIMEOUT_ENABLED = config.enabled !== false;
+        // Sync admin UI if open
+        const el = document.getElementById('idleTimeoutMinutes');
+        if (el) el.value = IDLE_TIMEOUT_MINUTES;
+        const cb = document.getElementById('idleTimeoutEnabled');
+        if (cb) cb.checked = IDLE_TIMEOUT_ENABLED;
+      }
+    })
+    .catch(() => {}); // Silently fail — use defaults
+}
+
+function startIdleTimer() {
+  stopIdleTimer();
+  if (!IDLE_TIMEOUT_ENABLED || !currentUser) return;
+  const seconds = Math.max((IDLE_TIMEOUT_MINUTES * 60) - 30, 30);
+  idleTimeoutTimer = setTimeout(showIdleCountdown, seconds * 1000);
+}
+
+function stopIdleTimer() {
+  clearTimeout(idleTimeoutTimer);
+  clearInterval(idleCountdownTimer);
+  idleTimeoutTimer = null;
+  idleCountdownTimer = null;
+  hideIdleCountdown();
+}
+
+function resetIdleTimer() {
+  // Don't reset if lock screen is active (already locked) or countdown is showing
+  if (document.getElementById('lockOverlay').classList.contains('active')) return;
+  if (document.getElementById('idleCountdownOverlay').classList.contains('active')) return;
+  startIdleTimer();
+}
+
+function showIdleCountdown() {
+  if (!currentUser) return;
+  let countdown = 30;
+  const overlay = document.getElementById('idleCountdownOverlay');
+  const numEl = document.getElementById('idleCountdownNum');
+  overlay.classList.add('active');
+  numEl.textContent = countdown;
+  clearInterval(idleCountdownTimer);
+  idleCountdownTimer = setInterval(() => {
+    countdown--;
+    numEl.textContent = countdown;
+    if (countdown <= 0) {
+      clearInterval(idleCountdownTimer);
+      idleCountdownTimer = null;
+      overlay.classList.remove('active');
+      lockApp();
+    }
+  }, 1000);
+}
+
+function hideIdleCountdown() {
+  document.getElementById('idleCountdownOverlay').classList.remove('active');
+  clearInterval(idleCountdownTimer);
+  idleCountdownTimer = null;
+}
+
+function cancelIdleCountdown() {
+  hideIdleCountdown();
+  startIdleTimer();
+}
+
+function lockApp() {
+  const overlay = document.getElementById('lockOverlay');
+  overlay.classList.add('active');
+  const input = document.getElementById('lockPinInput');
+  input.value = '';
+  document.getElementById('lockErrorMsg').textContent = '';
+  setTimeout(() => input.focus(), 100);
+}
+
+function onLockPinKeydown(e) {
+  if (e.key === 'Enter') {
+    unlockApp();
+  }
+}
+
+function unlockApp() {
+  const pin = document.getElementById('lockPinInput').value.trim();
+  const errorEl = document.getElementById('lockErrorMsg');
+  if (!pin || pin.length < 4) {
+    errorEl.textContent = 'Please enter a 4-8 digit PIN';
+    return;
+  }
+  // PIN matches current user's ID? Unlock.
+  if (currentUser && pin === currentUser.id) {
+    document.getElementById('lockOverlay').classList.remove('active');
+    errorEl.textContent = '';
+    startIdleTimer();
+  } else {
+    errorEl.textContent = 'Wrong PIN — please use your own PIN to unlock';
+    document.getElementById('lockPinInput').value = '';
+    setTimeout(() => document.getElementById('lockPinInput').focus(), 100);
+  }
+}
+
+async function saveIdleTimeoutConfig() {
+  if (!currentUser) return;
+  const minutes = parseInt(document.getElementById('idleTimeoutMinutes').value) || 5;
+  const enabled = document.getElementById('idleTimeoutEnabled').checked;
+  const clamped = Math.max(1, Math.min(30, minutes));
+  document.getElementById('idleTimeoutMinutes').value = clamped;
+  try {
+    const r = await fetch(BACKEND_URL + '/api/idle_timeout/config', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, timeout_minutes: clamped, enabled: enabled })
+    });
+    const data = await r.json();
+    if (r.ok) {
+      IDLE_TIMEOUT_MINUTES = clamped;
+      IDLE_TIMEOUT_ENABLED = enabled;
+      const statusEl = document.getElementById('idleTimeoutStatus');
+      statusEl.textContent = '✅ Saved';
+      statusEl.style.display = '';
+      setTimeout(() => { statusEl.style.display = 'none'; }, 3000);
+      startIdleTimer();
+    } else {
+      showToast(data.message || 'Error saving config', 'error');
+    }
+  } catch(e) {
+    showToast('Network error', 'error');
+  }
 }
 
 function showApp() {
@@ -6062,6 +6277,17 @@ function showApp() {
   if (currentUser && currentUser.sessionToken) {
     window._sessionTouchTimer = setInterval(() => touchSession(), 300000);
   }
+  // Start idle timeout timer
+  loadIdleTimeoutConfig();
+  startIdleTimer();
+  // Bind activity event listeners for idle reset
+  const activityEvents = ['mousemove', 'touchstart', 'click', 'keydown', 'scroll'];
+  // Remove old listeners if any (by replacing with the same named function)
+  if (window._idleActivityHandler) {
+    activityEvents.forEach(ev => document.removeEventListener(ev, window._idleActivityHandler));
+  }
+  window._idleActivityHandler = function() { resetIdleTimer(); };
+  activityEvents.forEach(ev => document.addEventListener(ev, window._idleActivityHandler, { passive: true }));
 }
 
 // ═══════════ MAIN TABS ═══════════
