@@ -271,11 +271,11 @@ Use Python `pyotp` (pure Python, no C extensions, `pip install pyotp qrcode`):
 
 ### Priority: LOW
 
-- [ ] **Point-in-time recovery (WAL archive)** — SQLite WAL (Write-Ahead Log) mode enables point-in-time recovery. Configure `PRAGMA journal_mode=WAL` and periodically archive WAL files. Combined with full backups, this allows restoring to any point in time, not just hourly snapshots. More complex but essential for financial data (orders, payments).
+- [-] worker-1 **Point-in-time recovery (WAL archive)** — Cancelled: system is still JSON-only (pre-migration) — WAL applies post-migration only.
 
 - [x] worker-2 **Automated restore test** — Weekly cron: pick a random backup, restore it to a temp location, verify key metrics (table count, row count, recent order exists), report results. "Restore test: backup from June 20 restored successfully — 14 tables, 2,847 rows, all checks passed." Catches backup corruption before you need it. Delete temp DB after test. [worker-2 — Created scripts/test_restore.py with SQLite and JSON mode, integrity checks (quick_check/integrity_check/foreign_key_check), table count verification (expects 24), row counting across all tables, key table data checks (users, shift_log, activity_log, items), recent order verification, --quiet/--dry-run/--backup modes. Registered as weekly cron: "0 7 * * 1" (Mondays 7am), no_agent=true, silent on success, Discord delivery on failure.]
 
-- [ ] **Database migration to PostgreSQL (future)** — If the restaurant scales to multiple locations or needs concurrent write access, upgrade path from SQLite to PostgreSQL. `scripts/migrate_sqlite_to_pg.py` using pgloader or manual export/import. Keep this as a documented option, not an immediate task.
+- [-] worker-1 **Database migration to PostgreSQL (future)** — Cancelled: system is JSON-only and will migrate to SQLite first. PostgreSQL is a future consideration only.
 
 ## Employee Self-Service Portal — Tickets, Requests & Issues (NEW — June 2026)
 
@@ -323,7 +323,7 @@ New `tickets.json` data store. Each ticket:
 
 ### Priority: LOW
 
-||- [ ] **Issue/bug ticket triage labels** — Admin can tag issue tickets: "POS bug", "hardware", "menu error", "customer complaint", "other".
+||- [~] worker-1 **Issue/bug ticket triage labels** — Admin can tag issue tickets: "POS bug", "hardware", "menu error", "customer complaint", "other".
 - [ ] **Ticket response templates** — Admin can save common response notes as templates.
 - [ ] **Employee feedback analytics** — Aggregate feedback tickets by category over time.
 - [ ] **Auto-approve for low-risk time-off** — Configurable rule: auto-approve time-off if requested >2 weeks in advance AND no other approvals for same date.
