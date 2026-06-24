@@ -1,6 +1,6 @@
 # POS Database Migration Tasks
-> Last run: 2026-06-24 18:xx UTC
-> Current phase: Phase 2 — Migration Scripts (5/24 complete)
+> Last run: 2026-06-24 20:xx UTC
+> Current phase: Phase 2 — Migration Scripts (6/24 complete)
 
 ## Phase 1: Schema Design
 - [x] Design all SQLite table schemas (users, shift_log, orders, items, inventory, etc.)
@@ -14,7 +14,7 @@
 - [x] Write migrate_activity_log.py — activity_log table migration (377 rows verified ✓)
 - [x] Write migrate_items.py — items table migration (14 rows verified ✓)
 - [x] Write migrate_inventory.py — inventory table migration (16 rows verified ✓)
-- [ ] Write migrate_loyalty_points.py — loyalty_points table migration
+- [x] Write migrate_loyalty_points.py — loyalty_points table migration (2 records verified ✓)
 - [ ] Write migrate_orders.py — orders table migration
 - [ ] Write migrate_combos.py — combos table migration
 - [ ] Write migrate_favorites.py — favorites table migration
@@ -68,6 +68,7 @@
 - [x] **Add `use_database` flag** — Added `use_database: false` to timesheet_config.json for feature-gated endpoint refactoring
 - [x] **migrate_items.py** — Migrated 14 items from items.json to SQLite. Flattened 3 categories (Foods, Drinks, Snacks) into category column. Modifiers JSON preserved. Idempotency tested. Commit: 95e8124
 - [x] **migrate_inventory.py** — Migrated 16 inventory items from inventory.json to SQLite. Mapped 'low_stock_threshold' to 'threshold' column. Idempotency tested. Commit: 7d5ee21
+- [x] **migrate_loyalty_points.py** — Migrated 2 loyalty points records from loyalty_points.json to SQLite. Extended schema with 7 fields (email, notes, address, total_redeemed, total_orders, created_at, history). Added schema migration helper in db.py for forward-compatible column additions. Commit: 9b576e3
 
 ## ROLLBACK PLAN (always keep current)
 How to revert to JSON mode if DB breaks:
@@ -86,7 +87,7 @@ How to revert to JSON mode if DB breaks:
 | activity_log.json | activity_log | array | 377 | ✓ |
 | items.json | items | dict (key=category) | 14 items | ✓ |
 || inventory.json | inventory | dict (key=item_name) | 16 | ✓ |
-| loyalty_points.json | loyalty_points | dict (key=phone) | 0 | |
+|| loyalty_points.json | loyalty_points | dict (key=phone) | 2 | ✓ |
 | orders.json | orders | array | 0 | |
 | cleared_orders.json | cleared_orders | array | 0 | |
 | combos.json | combos | object {combos:[]} | 0 | |
@@ -207,10 +208,17 @@ CREATE TABLE IF NOT EXISTS inventory (
 CREATE TABLE IF NOT EXISTS loyalty_points (
     phone TEXT PRIMARY KEY,
     name TEXT,
+    email TEXT DEFAULT '',
+    notes TEXT DEFAULT '',
+    address TEXT DEFAULT '',
     points INTEGER DEFAULT 0,
     total_earned INTEGER DEFAULT 0,
-    total_spent INTEGER DEFAULT 0,
-    last_visit TEXT
+    total_redeemed INTEGER DEFAULT 0,
+    total_spent REAL DEFAULT 0,
+    total_orders INTEGER DEFAULT 0,
+    last_visit TEXT,
+    created_at TEXT,
+    history TEXT DEFAULT '[]'
 );
 ```
 
