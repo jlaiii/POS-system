@@ -386,6 +386,38 @@ body {
   line-height: 1.4;
 }
 .menu-item-card { position: relative; }
+
+.menu-item-card .qr-btn {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: rgba(0,0,0,0.5);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.15);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+  transition: background 0.2s, transform 0.15s;
+  touch-action: manipulation;
+  min-height: 36px;
+  min-width: 36px;
+  line-height: 1;
+}
+.menu-item-card .qr-btn:active {
+  transform: scale(0.9);
+  background: var(--accent);
+}
+.light-theme .menu-item-card .qr-btn {
+  background: rgba(255,255,255,0.7);
+  color: #333;
+  border-color: rgba(0,0,0,0.1);
+}
 .sale-badge {
   position: absolute; top: 8px; right: 8px;
   background: #e94560; color: #fff;
@@ -600,6 +632,65 @@ body {
   flex-wrap: wrap;
   justify-content: center;
 }
+
+/* QR Code Popup */
+#qrPopupOverlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,0.7);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+#qrPopupOverlay.show { display: flex; }
+#qrPopupContent {
+  background: var(--card);
+  border-radius: 20px;
+  padding: 28px 32px;
+  max-width: 360px;
+  width: 90vw;
+  text-align: center;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+#qrPopupContent img {
+  width: 240px;
+  height: 240px;
+  display: block;
+  margin: 12px auto;
+  border-radius: 12px;
+  background: #fff;
+  padding: 8px;
+}
+#qrPopupContent .qr-item-name {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+#qrPopupContent .qr-instruction {
+  font-size: 14px;
+  color: var(--text2);
+  margin-bottom: 8px;
+}
+#qrPopupContent .qr-close-btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 14px 32px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+  min-height: 48px;
+  min-width: 120px;
+  margin-top: 8px;
+  transition: opacity 0.2s;
+}
+#qrPopupContent .qr-close-btn:active { opacity: 0.7; }
+.light-theme #qrPopupContent { border-color: rgba(0,0,0,0.1); }
 
 .detail-badge {
   background: var(--card);
@@ -996,6 +1087,16 @@ body {
   </div>
 </div>
 
+<!-- QR Code Popup Overlay -->
+<div id="qrPopupOverlay" onclick="closeQrPopup(event)">
+  <div id="qrPopupContent">
+    <div class="qr-item-name" id="qrItemName"></div>
+    <div class="qr-instruction" data-i18n="qr_scan_order">📱 Scan to order this item</div>
+    <img id="qrCodeImg" src="" alt="QR Code"/>
+    <button class="qr-close-btn" onclick="closeQrPopup(event)" data-i18n="qr_close">✕ Close</button>
+  </div>
+</div>
+
 <div id="orderActiveOverlay">
   <h1>🍽️ <span data-i18n="order_in_progress">Order in Progress</span></h1>
   <p><span data-i18n="order_active_msg">Your table has an active order.</span><br/><span data-i18n="order_active_msg2">Please wait while we prepare your items.</span></p>
@@ -1039,6 +1140,7 @@ const IDLE_TIMEOUT = 45000; // 45s idle → show countdown
 const COUNTDOWN_SECONDS = 5; // 5s countdown before auto-return
 let detailCategoryItems = []; // Items in current category for navigation
 let detailCurrentIdx = 0; // Current index in detailCategoryItems
+let onlineOrderingBaseUrl = ''; // Base URL for online ordering (QR codes)
 
 // Dietary tag icon mapping
 const DIETARY_ICONS = {
@@ -1084,6 +1186,9 @@ const L10N = {
     'lang_name': 'EN',
     'lang_other': 'ES',
     'unknown_table': 'Unknown',
+    'qr_order_this': '📱 Order This',
+    'qr_scan_order': '📱 Scan to order this item',
+    'qr_close': '✕ Close',
   },
   es: {
     'no_ads': 'No hay anuncios',
@@ -1118,6 +1223,9 @@ const L10N = {
     'lang_name': 'ES',
     'lang_other': 'EN',
     'unknown_table': 'Desconocida',
+    'qr_order_this': '📱 Ordenar Esto',
+    'qr_scan_order': '📱 Escanea para pedir este artículo',
+    'qr_close': '✕ Cerrar',
   }
 };
 
@@ -1338,6 +1446,7 @@ function renderItems() {
     }
     return '<div class="menu-item-card" onclick="showItemDetail(\'' + escJs(item.name) + '\')">' +
       (item.image_url ? '<img src="' + escHtml(item.image_url) + '" alt="' + escHtml(item.name) + '" loading="lazy"/>' : '') +
+      '<button class="qr-btn" onclick="event.stopPropagation();showQrPopup(\'' + escJs(item.name) + '\')" title="' + t('qr_order_this') + '">📱</button>' +
       saleBadgeHtml +
       '<div class="item-name">' + escHtml(item.name) + '</div>' +
       priceHtml +
@@ -1508,6 +1617,28 @@ function closeItemDetail(e) {
   document.getElementById('itemDetailOverlay').classList.remove('show');
   detailCategoryItems = [];
   detailCurrentIdx = 0;
+  resetIdleTimer();
+}
+
+// ---- QR Code Popup ----
+function showQrPopup(itemName) {
+  const item = findItemByName(itemName);
+  if (!item) return;
+
+  // Build the URL for ordering this item
+  const baseUrl = onlineOrderingBaseUrl || window.location.origin;
+  const orderUrl = baseUrl + '/order?item=' + encodeURIComponent(item.name);
+
+  // Show popup with QR code
+  document.getElementById('qrItemName').textContent = '📱 ' + item.name;
+  document.getElementById('qrCodeImg').src = 'https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=' + encodeURIComponent(orderUrl);
+  document.getElementById('qrPopupOverlay').classList.add('show');
+  resetIdleTimer();
+}
+
+function closeQrPopup(e) {
+  if (e && e.target !== e.currentTarget) return; // Only close when clicking backdrop
+  document.getElementById('qrPopupOverlay').classList.remove('show');
   resetIdleTimer();
 }
 
@@ -1754,8 +1885,14 @@ async function loadRestaurantInfo() {
       if (config.wifi_password) wifiStr += ' 🔑 ' + config.wifi_password;
     }
     document.getElementById('wifiInfo').textContent = wifiStr;
+    // Set online ordering base URL for QR codes
+    if (config.online_ordering_base_url) {
+      onlineOrderingBaseUrl = config.online_ordering_base_url;
+    } else {
+      onlineOrderingBaseUrl = window.location.origin;
+    }
   } catch (e) {
-    // Keep defaults
+    onlineOrderingBaseUrl = window.location.origin;
   }
 }
 
