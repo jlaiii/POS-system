@@ -735,7 +735,7 @@ Super admin PIN is separate from any business PIN. Super admin can create busine
 
 ### Priority: HIGH
 
-- [ ] **Fix deployment: gunicorn not running, Flask dev servers in use** — The gunicorn migration (marked [x] at line 745) is NOT actually deployed. The system is running on two Flask dev server instances (ports 5000 and 5996) instead of gunicorn. The systemd service `pos-system.service` is **disabled** and **inactive (dead)**. The `pos_monitor.py` cron tries to fix but falls back to `run_flask.sh` which uses gunicorn, yet the running PIDs show `python3 -c "from app import app; app.run(...)"` — suggesting the Hermes agent or another script starts Flask directly. Fix: (1) Enable + start systemd service, (2) identify what's starting the Flask dev servers and disable it, (3) verify gunicorn is the only process on port 5000, (4) update pos_monitor.py to report gunicorn health correctly.
+- [~] worker-2 **Fix deployment: gunicorn not running, Flask dev servers in use** — The gunicorn migration (marked [x] at line 745) is NOT actually deployed. The system is running on two Flask dev server instances (ports 5000 and 5996) instead of gunicorn. The systemd service `pos-system.service` is **disabled** and **inactive (dead)**. The `pos_monitor.py` cron tries to fix but falls back to `run_flask.sh` which uses gunicorn, yet the running PIDs show `python3 -c "from app import app; app.run(...)"` — suggesting the Hermes agent or another script starts Flask directly. Fix: (1) Enable + start systemd service, (2) identify what's starting the Flask dev servers and disable it, (3) verify gunicorn is the only process on port 5000, (4) update pos_monitor.py to report gunicorn health correctly.
 
 ### Priority: MEDIUM
 
