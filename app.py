@@ -6186,12 +6186,28 @@ def employee_my_pay():
     ytd_hours = round(ytd_hours, 2)
     ytd_gross = round(ytd_hours * pay_rate_val, 2) if has_pay_rate else None
 
+    # Calculate average hours per week YTD
+    days_since_jan1 = (now.date() - ytd_start.date()).days
+    num_weeks_ytd = max(1, round(days_since_jan1 / 7, 1)) if days_since_jan1 > 0 else 1
+    avg_hours_per_week = round(ytd_hours / num_weeks_ytd, 1) if ytd_hours > 0 else 0
+
+    # Average hourly rate (effective or base)
+    if has_pay_rate and ytd_hours > 0:
+        avg_hourly_rate = round(ytd_gross / ytd_hours, 2) if ytd_gross else pay_rate_val
+        avg_hourly_rate = max(avg_hourly_rate, pay_rate_val)  # floor at pay_rate
+    elif has_pay_rate:
+        avg_hourly_rate = pay_rate_val
+    else:
+        avg_hourly_rate = None
+
     ytd = {
         'hours': ytd_hours,
         'gross_pay': ytd_gross,
         'has_pay_rate': has_pay_rate,
         'shift_count': ytd_shift_count,
-        'pay_rate': pay_rate_val if has_pay_rate else None
+        'pay_rate': pay_rate_val if has_pay_rate else None,
+        'avg_hours_per_week': avg_hours_per_week,
+        'avg_hourly_rate': avg_hourly_rate
     }
 
     return jsonify({

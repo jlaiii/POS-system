@@ -2580,6 +2580,14 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
           <div style="font-size:12px;color:var(--text2);margin-top:4px;" data-i18n="mypay.gross_pay">Gross Pay</div>
         </div>
         <div style="flex:1;min-width:100px;text-align:center;padding:12px;background:var(--card-alt);border-radius:8px;">
+          <div style="font-size:24px;font-weight:700;color:var(--text);" id="myPayYtdAvgHrs">0</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:4px;" data-i18n="mypay.avg_hrs_week">Avg hrs/week</div>
+        </div>
+        <div style="flex:1;min-width:100px;text-align:center;padding:12px;background:var(--card-alt);border-radius:8px;">
+          <div style="font-size:24px;font-weight:700;color:var(--text);" id="myPayYtdAvgRate">$0.00/hr</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:4px;" data-i18n="mypay.avg_rate">Avg Rate</div>
+        </div>
+        <div style="flex:1;min-width:100px;text-align:center;padding:12px;background:var(--card-alt);border-radius:8px;">
           <div style="font-size:24px;font-weight:700;color:var(--text);" id="myPayYtdShifts">0</div>
           <div style="font-size:12px;color:var(--text2);margin-top:4px;" data-i18n="mypay.total_shifts">Shifts</div>
         </div>
@@ -3478,6 +3486,8 @@ const L10N = {
     'mypay.ytd_title': '📅 Year-to-Date',
     'mypay.total_hours': 'Total Hours',
     'mypay.gross_pay': 'Gross Pay',
+    'mypay.avg_hrs_week': 'Avg hrs/week',
+    'mypay.avg_rate': 'Avg Rate',
     'mypay.total_shifts': 'Shifts',
     'mypay.current_title': '⏱️ Current Period',
     'mypay.hours': 'Hours',
@@ -4025,6 +4035,8 @@ const L10N = {
     'mypay.ytd_title': '📅 Año Hasta la Fecha',
     'mypay.total_hours': 'Horas Totales',
     'mypay.gross_pay': 'Pago Bruto',
+    'mypay.avg_hrs_week': 'Prom. hrs/sem',
+    'mypay.avg_rate': 'Tarifa Prom.',
     'mypay.total_shifts': 'Turnos',
     'mypay.current_title': '⏱️ Período Actual',
     'mypay.hours': 'Horas',
@@ -12272,6 +12284,17 @@ function renderMyPay(data) {
   const ytd = data.ytd || {};
   document.getElementById('myPayYtdHoursValue').textContent = ytd.hours != null ? ytd.hours.toFixed(1) : '0';
   document.getElementById('myPayYtdGross').textContent = ytd.has_pay_rate && ytd.gross_pay != null ? '$' + ytd.gross_pay.toFixed(2) : '—';
+  document.getElementById('myPayYtdAvgHrs').textContent = ytd.avg_hours_per_week != null ? ytd.avg_hours_per_week.toFixed(1) : '—';
+  const avgRateEl = document.getElementById('myPayYtdAvgRate');
+  if (avgRateEl) {
+    if (ytd.avg_hourly_rate != null) {
+      avgRateEl.textContent = '$' + ytd.avg_hourly_rate.toFixed(2) + '/hr';
+      avgRateEl.style.color = 'var(--text)';
+    } else {
+      avgRateEl.textContent = '—';
+      avgRateEl.style.color = 'var(--text2)';
+    }
+  }
   document.getElementById('myPayYtdShifts').textContent = ytd.shift_count || 0;
 
   // --- Current Period ---
