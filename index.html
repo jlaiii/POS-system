@@ -535,6 +535,13 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 .inv-health-card.inv-warning { border-left: 4px solid #ffaa00; }
 .inv-health-card.inv-ok { border-left: 4px solid #44cc44; }
 
+/* Backup health card in stats grid */
+.backup-health-card { cursor: default; }
+.backup-health-card.backup-green { border-left: 4px solid #44cc44; }
+.backup-health-card.backup-yellow { border-left: 4px solid #ffaa00; }
+.backup-health-card.backup-red { border-left: 4px solid #ff4444; }
+.backup-health-card .stat-val { font-size: 22px; }
+
 /* Low-stock collapsible section */
 .low-stock-header {
   display: flex; align-items: center; gap: 10px;
@@ -3036,7 +3043,7 @@ function showSkeletonScreen(elemId, layout) {
   } else if (layout === 'stats') {
     // Stats grid skeleton — stat cards
     html = '<div class="skeleton-stats-grid">';
-    for (var i = 0; i < 4; i++) {
+    for (var i = 0; i < 10; i++) {
       html += '<div class="skeleton-stat-card">'
         + '<div class="skeleton skeleton-line" style="width:40%;height:12px;"></div>'
         + '<div class="skeleton skeleton-line" style="width:60%;height:22px;"></div>'
@@ -3204,6 +3211,13 @@ const L10N = {
     'admin.stats.low_stock_list': 'Low-Stock Items',
     'admin.stats.no_low_stock': 'No low-stock items',
     'admin.stats.view_inventory': 'Go to Inventory →',
+    'admin.stats.backup_health': 'Backup Health',
+    'admin.stats.backup_count': 'backups',
+    'admin.stats.backup_latest': 'Latest backup',
+    'admin.stats.backup_total_size': 'Total size',
+    'admin.stats.backup_none': 'No backups',
+    'admin.stats.backup_goto': 'Go to Backup →',
+    'admin.stats.backup_never': 'never',
     'admin.stats.end_of_day': '📋 End of Day Summary',
     'admin.stats.end_of_day_title': '📋 End of Day Sales Summary',
     'admin.stats.eod_report_date': 'Report generated:',
@@ -3949,6 +3963,13 @@ const L10N = {
     'admin.stats.low_stock_list': 'Artículos con Stock Bajo',
     'admin.stats.no_low_stock': 'Sin artículos con stock bajo',
     'admin.stats.view_inventory': 'Ir a Inventario →',
+    'admin.stats.backup_health': 'Salud de Copias',
+    'admin.stats.backup_count': 'copias',
+    'admin.stats.backup_latest': 'Última copia',
+    'admin.stats.backup_total_size': 'Tamaño total',
+    'admin.stats.backup_none': 'Sin copias',
+    'admin.stats.backup_goto': 'Ir a Copias →',
+    'admin.stats.backup_never': 'nunca',
     'admin.stats.end_of_day': '📋 Resumen de Fin de Día',
     'admin.stats.end_of_day_title': '📋 Resumen de Ventas del Día',
     'admin.stats.eod_report_date': 'Informe generado:',
@@ -10890,6 +10911,7 @@ async function loadAdminStats() {
       <div class="stat-card"><div class="stat-val">$${parseFloat(s.weekly_sales||0).toFixed(2)}</div><div class="stat-lbl">${t('admin.stats.weekly_sales')}</div></div>
       <div class="stat-card"><div class="stat-val">$${parseFloat(s.monthly_sales||0).toFixed(2)}</div><div class="stat-lbl">${t('admin.stats.monthly_sales')}</div></div>
       <div class="stat-card inv-health-card${(s.out_of_stock_count||0) > 0 ? ' inv-critical' : (s.low_stock_count||0) > 0 ? ' inv-warning' : ' inv-ok'}"><div class="stat-val">${(s.out_of_stock_count||0) > 0 ? '🚫 ' : (s.low_stock_count||0) > 0 ? '⚠️ ' : '✅ '}${(s.out_of_stock_count||0) + (s.low_stock_count||0)}</div><div class="stat-lbl">${t('admin.stats.inventory_health')}<br><span style="font-size:12px;color:var(--text2);">${(s.out_of_stock_count||0) > 0 ? (s.out_of_stock_count + ' ' + t('admin.stats.out_of_stock') + ', ') : ''}${(s.low_stock_count||0)} ${t('admin.stats.low_stock')}</span></div></div>
+      <div class="stat-card backup-health-card backup-${s.backup_health || 'red'}"><div class="stat-val">${s.backup_health === 'green' ? '🟢 ' : s.backup_health === 'yellow' ? '🟡 ' : '🔴 '}${s.backup_count || 0}</div><div class="stat-lbl">${t('admin.stats.backup_health')}<br><span style="font-size:12px;color:var(--text2);" onclick="switchAdminSection('backup')">${s.backup_count > 0 ? s.backup_count + ' ' + t('admin.stats.backup_count') + ' · ' + (s.latest_backup_ts ? new Date(s.latest_backup_ts).toLocaleString() : t('admin.stats.backup_never')) + ' · ' + s.backup_total_size_hr : t('admin.stats.backup_none')} · <a style="color:var(--accent);text-decoration:underline;cursor:pointer;">${t('admin.stats.backup_goto')}</a></span></div></div>
     `;
 
     // Render low-stock items collapsible section

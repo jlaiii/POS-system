@@ -7083,6 +7083,62 @@ def admin_stats():
         low_stock_items = []
     # --- End inventory health ---
 
+    # --- Backup health scan ---
+    try:
+        backup_dir = os.path.join('backups', 'json')
+        backup_archives = []
+        backup_total_size = 0
+        if os.path.isdir(backup_dir):
+            for fname in sorted(os.listdir(backup_dir)):
+                if fname.endswith('.tar.gz'):
+                    fpath = os.path.join(backup_dir, fname)
+                    try:
+                        size = os.path.getsize(fpath)
+                        backup_total_size += size
+                        # Parse timestamp from filename (YYYY-MM-DD_HH-MM-SS.tar.gz)
+                        ts_str = fname.replace('.tar.gz', '')
+                        ts = datetime.strptime(ts_str, '%Y-%m-%d_%H-%M-%S')
+                        backup_archives.append((ts, fname, size))
+                    except (ValueError, OSError):
+                        pass
+        backup_archives.sort(key=lambda x: x[0])
+        backup_count = len(backup_archives)
+        latest_backup_ts = backup_archives[-1][0] if backup_archives else None
+        latest_backup_size = backup_archives[-1][2] if backup_archives else 0
+        # Determine health status
+        if not backup_archives:
+            backup_health = 'red'
+            backup_health_label = 'No backups exist'
+        else:
+            hours_since = (datetime.now() - latest_backup_ts).total_seconds() / 3600
+            if hours_since > 24:
+                backup_health = 'red'
+                backup_health_label = f'Stale ({int(hours_since)}h since last backup)'
+            elif hours_since > 6:
+                backup_health = 'yellow'
+                backup_health_label = f'Aging ({int(hours_since)}h since last backup)'
+            else:
+                backup_health = 'green'
+                backup_health_label = f'Healthy ({int(hours_since)}h ago)'
+        # Human-readable total size
+        def fmt_size(sz):
+            for unit in ['B', 'KB', 'MB', 'GB']:
+                if sz < 1024:
+                    return f'{sz:.1f} {unit}'
+                sz /= 1024
+            return f'{sz:.1f} TB'
+        backup_total_size_hr = fmt_size(backup_total_size)
+        latest_backup_size_hr = fmt_size(latest_backup_size)
+    except Exception:
+        backup_count = 0
+        backup_health = 'red'
+        backup_health_label = 'Error scanning backups'
+        latest_backup_ts = None
+        backup_total_size_hr = '0 B'
+        backup_total_size = 0
+        latest_backup_size_hr = '0 B'
+    # --- End backup health ---
+
     # --- Date range filtering ---
     date_from = data.get('date_from', '').strip()
     date_to = data.get('date_to', '').strip()
@@ -7196,7 +7252,15 @@ def admin_stats():
         'out_of_stock_count': out_of_stock_count,
         'low_stock_items': low_stock_items,
         'raw_orders': orders,
-        'raw_cleared_orders': cleared_orders
+        'raw_cleared_orders': cleared_orders,
+        # Backup health
+        'backup_count': backup_count,
+        'backup_health': backup_health,
+        'backup_health_label': backup_health_label,
+        'latest_backup_ts': latest_backup_ts.isoformat() if latest_backup_ts else None,
+        'backup_total_size': backup_total_size,
+        'backup_total_size_hr': backup_total_size_hr,
+        'latest_backup_size_hr': latest_backup_size_hr
     }
     return jsonify({'message': 'Admin data retrieved', 'stats': stats})
 
