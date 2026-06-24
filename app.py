@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, send_file
 from flask_cors import CORS
 from flask_socketio import SocketIO, emit, join_room, leave_room
 import json
@@ -20,6 +20,8 @@ import qrcode
 import html as _html
 import re
 from functools import wraps
+import zipfile
+import io
 
 app = Flask(__name__, static_folder='.', static_url_path='')
 CORS(app)  # Enable CORS for all origins
@@ -13733,6 +13735,205 @@ def platform_stats():
 
 # In-memory platform super admin sessions
 platform_sessions = {}
+
+
+# ── System Backup & Restore ──────────────────────────────────────────────
+
+# Files to EXCLUDE from system backup (non-data files)
+BACKUP_EXCLUDE = {
+    'package.json', 'package-lock.json', 'manifest.json',
+    'known_ips.json',  # runtime tracking, not critical data
+}
+
+def _get_data_files():
+    """Return list of JSON data files in project root to include in backup."""
+    root = app.static_folder  # project root
+    files = []
+    for f in sorted(os.listdir(root)):
+        if f.endswith('.json') and f not in BACKUP_EXCLUDE:
+            full = os.path.join(root, f)
+            if os.path.isfile(full):
+                files.append(full)
+    # Also include global platform data if it exists
+    global_dir = os.path.join(root, GLOCAL_DIR)
+    if os.path.isdir(global_dir):
+        for f in sorted(os.listdir(global_dir)):
+            if f.endswith('.json'):
+                full = os.path.join(global_dir, f)
+                if os.path.isfile(full):
+                    files.append(full)
+    return files
+
+
+@app.route('/api/system/backup', methods=['POST'])
+def system_backup():
+    """Create and download a zip archive of all JSON data files."""
+    data = request.get_json(silent=True) or {}
+    admin_pin = data.get('adminPin', '')
+    user_id = data.get('userId', '')
+
+    # Permission check
+    if not user_id or not check_perm(user_id, 'manage_users'):
+        return jsonify({'message': 'Permission denied.', 'code': 'no_perm'}), 403
+
+    try:
+        buffer = io.BytesIO()
+        root = app.static_folder
+        with zipfile.ZipFile(buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
+            for full_path in _get_data_files():
+                # Store relative to project root for clean archive structure
+                rel_path = os.path.relpath(full_path, root)
+                zf.write(full_path, arcname=rel_path)
+
+        buffer.seek(0)
+        timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        return send_file(
+            buffer,
+            mimetype='application/zip',
+            as_attachment=True,
+            download_name=f'pos-backup_{timestamp}.zip'
+        )
+    except Exception as e:
+        return jsonify({'message': f'Backup failed: {str(e)}', 'code': 'backup_error'}), 500
+
+
+@app.route('/api/system/backup/status', methods=['POST'])
+def system_backup_status():
+    """Return info about existing backups: latest timestamp, count, total size."""
+    data = request.get_json(silent=True) or {}
+    user_id = data.get('userId', '')
+    if not user_id or not check_perm(user_id, 'manage_users'):
+        return jsonify({'message': 'Permission denied.', 'code': 'no_perm'}), 403
+
+    root = app.static_folder
+    backup_base = os.path.join(root, 'backups', 'json')
+    backups_info = []
+
+    if os.path.isdir(backup_base):
+        for entry in sorted(os.listdir(backup_base)):
+            full = os.path.join(backup_base, entry)
+            if os.path.isfile(full) and (entry.endswith('.zip') or entry.endswith('.tar.gz')):
+                size = os.path.getsize(full)
+                mtime = datetime.fromtimestamp(os.path.getmtime(full))
+                backups_info.append({
+                    'filename': entry,
+                    'size': size,
+                    'size_hr': f'{size/1024:.1f} KB' if size < 1024*1024 else f'{size/(1024*1024):.1f} MB',
+                    'modified': mtime.isoformat()
+                })
+
+    total_size = sum(b['size'] for b in backups_info)
+    total_size_hr = f'{total_size/1024:.1f} KB' if total_size < 1024*1024 else f'{total_size/(1024*1024):.1f} MB'
+
+    return jsonify({
+        'total_backups': len(backups_info),
+        'total_size': total_size_hr,
+        'last_backup': backups_info[-1]['filename'] if backups_info else None,
+        'last_backup_time': backups_info[-1]['modified'] if backups_info else None,
+        'backups': backups_info[-10:]  # last 10 for quick view
+    })
+
+
+@app.route('/api/system/restore', methods=['POST'])
+def system_restore():
+    """Upload a backup zip and restore all JSON data files.
+    Creates a safety backup of current data before restoring.
+    """
+    admin_pin = request.form.get('adminPin', '')
+    user_id = request.form.get('userId', '')
+    reason = request.form.get('reason', 'System restore from backup')
+
+    # Permission check
+    if not user_id or not check_perm(user_id, 'manage_users'):
+        return jsonify({'message': 'Permission denied.', 'code': 'no_perm'}), 403
+
+    if 'backup' not in request.files:
+        return jsonify({'message': 'No backup file provided.', 'code': 'no_file'}), 400
+
+    uploaded = request.files['backup']
+    if uploaded.filename == '':
+        return jsonify({'message': 'Empty filename.', 'code': 'no_file'}), 400
+
+    root = app.static_folder
+
+    # Step 1: Create a safety backup of current data before restoring
+    safety_dir = os.path.join(root, 'backups', 'pre_restore_safety')
+    os.makedirs(safety_dir, exist_ok=True)
+    safety_ts = datetime.now().strftime('%Y%m%d_%H%M%S')
+    safety_path = os.path.join(safety_dir, f'pre_restore_{safety_ts}.zip')
+
+    try:
+        with zipfile.ZipFile(safety_path, 'w', zipfile.ZIP_DEFLATED) as zf:
+            for full_path in _get_data_files():
+                rel_path = os.path.relpath(full_path, root)
+                zf.write(full_path, arcname=rel_path)
+    except Exception as e:
+        return jsonify({'message': f'Failed to create safety backup: {str(e)}', 'code': 'safety_error'}), 500
+
+    # Step 2: Extract uploaded zip and replace files
+    restored_count = 0
+    errors = []
+    try:
+        with zipfile.ZipFile(uploaded, 'r') as zf:
+            # First pass: validate all files are JSON
+            names = zf.namelist()
+            for name in names:
+                if not name.endswith('.json'):
+                    errors.append(f'Skipping non-JSON file: {name}')
+                    continue
+                # Security: prevent path traversal
+                clean_name = os.path.normpath(name)
+                if clean_name.startswith('..') or clean_name.startswith('/'):
+                    errors.append(f'Invalid path: {name}')
+                    continue
+
+            # Second pass: write files
+            for name in names:
+                if not name.endswith('.json'):
+                    continue
+                clean_name = os.path.normpath(name)
+                if clean_name.startswith('..') or clean_name.startswith('/'):
+                    continue
+
+                target = os.path.join(root, clean_name)
+                # Ensure target directory exists
+                os.makedirs(os.path.dirname(target), exist_ok=True)
+
+                try:
+                    content = zf.read(name)
+                    # Validate JSON content
+                    json.loads(content)
+                    with open(target, 'wb') as f:
+                        f.write(content)
+                    restored_count += 1
+                except json.JSONDecodeError:
+                    errors.append(f'Invalid JSON, skipped: {name}')
+                except Exception as e:
+                    errors.append(f'Failed to write {name}: {str(e)}')
+    except zipfile.BadZipFile:
+        return jsonify({'message': 'Invalid zip file.', 'code': 'bad_zip'}), 400
+    except Exception as e:
+        return jsonify({'message': f'Restore failed: {str(e)}', 'code': 'restore_error'}), 500
+
+    # Step 3: Activity logging
+    try:
+        log_activity('system_restore', user_id, {
+            'restored_count': restored_count,
+            'errors': errors,
+            'safety_backup': safety_path,
+            'reason': reason,
+            'filename': uploaded.filename
+        })
+    except Exception:
+        pass  # Don't fail the restore if logging fails
+
+    return jsonify({
+        'message': f'Restored {restored_count} files from backup.',
+        'code': 'restore_success',
+        'restored_count': restored_count,
+        'errors': errors,
+        'safety_backup': safety_path
+    })
 
 
 if __name__ == '__main__':

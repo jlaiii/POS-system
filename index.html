@@ -1632,6 +1632,7 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
         <button onclick="switchAdminSection('combos')" id="asCombos">🍱 Combos</button>
         <button onclick="switchAdminSection('tickets')" id="asTickets" data-i18n="admin.tickets">📋 Tickets</button>
         <button onclick="switchAdminSection('security')" id="asSecurity">🛡️ Security</button>
+        <button onclick="switchAdminSection('backup')" id="asBackup">💾 Backup</button>
       </div>
       <div id="adminContent">
         <!-- Stats -->
@@ -2533,6 +2534,43 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
               <button class="accent" onclick="saveDiscordWebhook()" style="min-height:40px;padding:8px 20px;font-size:13px;">💾 Save</button>
               <button class="ghost" onclick="testDiscordWebhook()" style="min-height:40px;padding:8px 16px;font-size:13px;">📨 Test</button>
               <button class="danger" onclick="clearDiscordWebhook()" style="min-height:40px;padding:8px 16px;font-size:13px;" title="Remove webhook URL">✕ Remove</button>
+            </div>
+          </div>
+        </div>
+        <!-- System Backup & Restore -->
+        <div id="secBackup" class="admin-section">
+          <h3>💾 System Backup & Restore</h3>
+          <p style="color:var(--text2);margin-bottom:16px;font-size:14px;">Download a full system backup or restore from a previous backup file. A safety backup is automatically created before any restore.</p>
+
+          <!-- Download Backup -->
+          <div class="card" style="margin-bottom:12px;">
+            <h4 style="margin-bottom:8px;">📥 Download Backup</h4>
+            <p style="font-size:13px;color:var(--text2);margin-bottom:12px;">Download a zip archive of all JSON data files (users, orders, items, shifts, configs, etc.).</p>
+            <button class="accent" onclick="downloadSystemBackup()" id="downloadBackupBtn" style="min-height:48px;padding:12px 24px;font-size:15px;">
+              📥 Download Backup
+            </button>
+            <div id="backupDownloadStatus" style="margin-top:8px;font-size:13px;color:var(--text2);"></div>
+          </div>
+
+          <!-- Restore from Backup -->
+          <div class="card" style="margin-bottom:12px;">
+            <h4 style="margin-bottom:8px;">📤 Restore from Backup</h4>
+            <p style="font-size:13px;color:var(--text2);margin-bottom:8px;">Upload a previously downloaded backup zip to restore system data. Current data will be safety-backed up first.</p>
+            <div class="form-row" style="flex-wrap:wrap;gap:8px;align-items:center;">
+              <input type="file" id="restoreFileInput" accept=".zip" style="flex:2;min-width:200px;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;"/>
+              <input type="text" id="restoreReason" placeholder="Reason for restore (required)" style="flex:2;min-width:180px;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;"/>
+              <button class="danger" onclick="restoreSystemBackup()" id="restoreBackupBtn" style="min-height:48px;padding:12px 24px;font-size:15px;">⚠️ Restore</button>
+            </div>
+            <div id="restoreStatus" style="margin-top:8px;font-size:13px;color:var(--text2);"></div>
+          </div>
+
+          <!-- Scheduled Backup Status -->
+          <div class="card" style="padding:12px;">
+            <h4 style="margin:0 0 8px 0;font-size:14px;">🔄 Scheduled Backup</h4>
+            <p style="font-size:13px;color:var(--text2);margin:0 0 8px 0;">An automated backup runs hourly via the backup cron job. Backups are stored in <code>backups/json/</code> with retention: hourly (24h), daily (7d), weekly (4w), monthly (12m).</p>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+              <span id="backupLastBackup" style="font-size:13px;color:var(--text2);">⏳ Last backup: checking...</span>
+              <button class="outline" onclick="checkBackupStatus()" style="min-height:40px;padding:8px 16px;font-size:13px;">🔄 Check Status</button>
             </div>
           </div>
         </div>
@@ -9077,6 +9115,7 @@ function switchAdminSection(sec) {
   else if (sec === 'combos') loadCombos();
   else if (sec === 'tickets') loadTicketQueue();
   else if (sec === 'security') loadSecurityDashboard();
+  else if (sec === 'backup') checkBackupStatus();
 }
 
 // ═══════════ TIMESHEET CONFIG ═══════════
@@ -10450,6 +10489,169 @@ async function clearDiscordWebhook() {
     showToast('Network error clearing webhook.', 'danger');
   }
 }
+
+// ═══════════ SYSTEM BACKUP & RESTORE ═══════════
+
+/** Download a full system backup zip */
+async function downloadSystemBackup() {
+  const btn = document.getElementById('downloadBackupBtn');
+  const status = document.getElementById('backupDownloadStatus');
+  const userId = localStorage.getItem('userId') || localStorage.getItem('adminUser');
+  const adminPin = localStorage.getItem('adminPin');
+  if (!adminPin) { showToast('Authentication required.', 'danger'); return; }
+  if (!userId) { showToast('User ID not found. Please log in again.', 'danger'); return; }
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Creating backup...';
+  status.textContent = '';
+  status.style.color = 'var(--text2)';
+
+  try {
+    const r = await fetch(BACKEND_URL + '/api/system/backup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin, userId })
+    });
+
+    if (!r.ok) {
+      let msg = 'Backup failed.';
+      try { const d = await r.json(); msg = d.message || msg; } catch(e) {}
+      status.textContent = '❌ ' + msg;
+      status.style.color = '#e74c3c';
+      return;
+    }
+
+    // Get filename from Content-Disposition header
+    const disposition = r.headers.get('Content-Disposition') || '';
+    const match = disposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+    const filename = match ? match[1].replace(/['"]/g, '') : 'pos-backup.zip';
+
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    status.textContent = '✅ Backup downloaded: ' + filename;
+    status.style.color = '#4caf50';
+    showToast('✅ System backup downloaded successfully!', 'success');
+  } catch(e) {
+    status.textContent = '❌ Network error: ' + e.message;
+    status.style.color = '#e74c3c';
+    showToast('Network error downloading backup.', 'danger');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '📥 Download Backup';
+  }
+}
+
+/** Upload and restore from a backup zip */
+async function restoreSystemBackup() {
+  const fileInput = document.getElementById('restoreFileInput');
+  const reasonInput = document.getElementById('restoreReason');
+  const status = document.getElementById('restoreStatus');
+  const userId = localStorage.getItem('userId') || localStorage.getItem('adminUser');
+  const adminPin = localStorage.getItem('adminPin');
+
+  if (!adminPin) { showToast('Authentication required.', 'danger'); return; }
+  if (!userId) { showToast('User ID not found.', 'danger'); return; }
+
+  if (!fileInput.files || fileInput.files.length === 0) {
+    status.textContent = '❌ Please select a backup file to restore.';
+    status.style.color = '#e74c3c';
+    return;
+  }
+
+  const reason = reasonInput.value.trim();
+  if (!reason) {
+    status.textContent = '❌ Please provide a reason for the restore.';
+    status.style.color = '#e74c3c';
+    return;
+  }
+
+  if (!confirm('⚠️ RESTORE will replace ALL current data with the contents of the backup file. A safety backup of current data will be saved. Are you sure?')) return;
+  if (!confirm('🔴 FINAL WARNING: This will overwrite users, orders, items, shifts, and all other data. This cannot be undone. Proceed?')) return;
+
+  const btn = document.getElementById('restoreBackupBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Restoring...';
+  status.textContent = '';
+  status.style.color = 'var(--text2)';
+
+  try {
+    const formData = new FormData();
+    formData.append('backup', fileInput.files[0]);
+    formData.append('adminPin', adminPin);
+    formData.append('userId', userId);
+    formData.append('reason', reason);
+
+    const r = await fetch(BACKEND_URL + '/api/system/restore', {
+      method: 'POST',
+      body: formData
+    });
+
+    const data = await r.json();
+
+    if (r.ok) {
+      status.style.color = '#4caf50';
+      const errorInfo = data.errors && data.errors.length ? ' Warnings: ' + data.errors.join('; ') : '';
+      status.innerHTML = '✅ Restored ' + data.restored_count + ' files. Safety backup saved. You may want to refresh the page.' + errorInfo;
+      showToast('✅ System restored from backup (' + data.restored_count + ' files)!', 'success');
+      fileInput.value = '';
+      reasonInput.value = '';
+    } else {
+      status.textContent = '❌ ' + (data.message || 'Restore failed.');
+      status.style.color = '#e74c3c';
+      showToast(data.message || 'Restore failed.', 'danger');
+    }
+  } catch(e) {
+    status.textContent = '❌ Network error: ' + e.message;
+    status.style.color = '#e74c3c';
+    showToast('Network error during restore.', 'danger');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '⚠️ Restore';
+  }
+}
+
+/** Check last backup status from the backups directory */
+async function checkBackupStatus() {
+  const statusEl = document.getElementById('backupLastBackup');
+  statusEl.textContent = '⏳ Checking...';
+
+  try {
+    // Fetch the latest backup info from a simple endpoint or directory listing
+    const r = await fetch(BACKEND_URL + '/api/system/backup/status', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        adminPin: localStorage.getItem('adminPin') || '',
+        userId: localStorage.getItem('userId') || localStorage.getItem('adminUser') || ''
+      })
+    });
+    if (!r.ok) {
+      statusEl.textContent = '❌ Could not check backup status.';
+      statusEl.style.color = '#e74c3c';
+      return;
+    }
+    const data = await r.json();
+    if (data.last_backup) {
+      statusEl.textContent = '📦 Last backup: ' + data.last_backup + ' (' + data.total_backups + ' total backups, ' + data.total_size + ')';
+      statusEl.style.color = 'var(--text2)';
+    } else {
+      statusEl.textContent = 'ℹ️ No backups found yet. Hourly backups run automatically.';
+      statusEl.style.color = 'var(--text2)';
+    }
+  } catch(e) {
+    statusEl.textContent = '❌ Network error checking backup status.';
+    statusEl.style.color = '#e74c3c';
+  }
+}
+
 
 /** Show the force clock-out modal */
 function showForceClockoutModal() {
