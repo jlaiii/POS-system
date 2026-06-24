@@ -6317,5 +6317,35 @@
             "require_2fa_for_admins": false,
             "exempted_users": []
         }
+    },
+    {
+        "timestamp": "2026-06-24T11:35:45.527986",
+        "type": "bulk_reset_pin",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "success",
+            "count": 4,
+            "users": {
+                "1234": {
+                    "name": "Employee One",
+                    "role": "user"
+                },
+                "5678": {
+                    "name": "Employee Two",
+                    "role": "user"
+                },
+                "2222": {
+                    "name": "Manager",
+                    "role": "admin"
+                },
+                "123456": {
+                    "name": "Carlos",
+                    "role": "user"
+                }
+            }
+        }
     }
 ]

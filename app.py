@@ -4239,6 +4239,80 @@ def generate_temp_pin():
     })
 
 
+@app.route('/api/users/bulk_reset_pin', methods=['POST'])
+def bulk_reset_pin():
+    """Owner/admin generates new temporary PINs for all clocked-out employees.
+    Useful at shift change for high-turnover environments.
+    Requires manage_users permission.
+    Logs to activity_log. Returns dict of {user_id: {name, temp_pin, expiry}}."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+
+    # Verify caller has manage_users permission
+    if not check_perm(admin_pin, "manage_users"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    users = load_json_data(USERS_FILE)
+
+    admin_user = users.get(admin_pin, {})
+    if not admin_user:
+        return jsonify({'message': 'Admin user not found.'}), 404
+
+    # Determine who is currently clocked in
+    clocked_in_ids = set(active_shifts.keys())
+
+    results = {}
+    errors = []
+    now = datetime.now()
+    expiry = (now + timedelta(hours=1)).isoformat()
+
+    for user_id, user_data in users.items():
+        user_data = upgrade_user(user_data)
+
+        # Skip if this user is currently clocked in
+        if user_id in clocked_in_ids:
+            continue
+
+        # Skip owner user — owner should not get bulk-reset
+        if user_data.get('role') == 'owner':
+            continue
+
+        # Generate a random 6-digit temp PIN
+        temp_pin = str(secrets.randbelow(900000) + 100000)
+
+        user_data['temp_pin'] = temp_pin
+        user_data['temp_pin_expiry'] = expiry
+        users[user_id] = user_data
+
+        results[user_id] = {
+            'name': user_data.get('name', 'Unknown'),
+            'temp_pin': temp_pin,
+            'expiry': expiry,
+            'role': user_data.get('role', 'user')
+        }
+
+    if not results:
+        return jsonify({
+            'message': 'No clocked-out employees found to reset.',
+            'results': {},
+            'errors': errors
+        }), 200
+
+    save_json_data(USERS_FILE, users)
+
+    log_activity('bulk_reset_pin', admin_pin, admin_user.get('role', 'unknown'),
+                 {'status': 'success', 'count': len(results),
+                  'users': {uid: {'name': r['name'], 'role': r['role']} for uid, r in results.items()}})
+
+    return jsonify({
+        'message': f'Bulk PIN reset complete. {len(results)} employees received new temporary PINs.',
+        'results': results,
+        'errors': errors,
+        'expiry': expiry,
+        'count': len(results)
+    })
+
+
 # ══════════════════════════════════════════════
 # Session Management Endpoints
 # ══════════════════════════════════════════════

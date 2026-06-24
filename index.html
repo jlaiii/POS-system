@@ -763,6 +763,9 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
               <button class="accent" onclick="addUser()">Add</button>
             </div>
           </div>
+          <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+            <button class="danger" onclick="bulkResetPins()" style="font-size:13px;padding:10px 20px;min-height:44px;" title="Reset PINs for all clocked-out employees">🔄 Bulk Reset PINs</button>
+          </div>
           <div id="userList"><div class="empty-state">Loading users...</div></div>
         </div>
         <!-- Items -->
@@ -3045,6 +3048,12 @@ const L10N = {
     'user.temp_pin_share': 'Temporary PIN: {tempPin}\n\nShare this with the employee. It expires in 1 hour and can only be used once.\n\nAfter login, the employee should set a new PIN.',
     'user.failed_attempts': 'failed login attempt(s)',
     'user.clear_lockout_btn': '🔓 Clear Lockout',
+    'user.bulk_reset_pin': '🔄 Bulk Reset PINs',
+    'user.bulk_reset_pin_confirm': 'This will reset PINs for ALL employees who are currently CLOCKED OUT. Each will get a unique temporary PIN valid for 1 hour. Continue?',
+    'user.bulk_reset_pin_result': 'Bulk PIN reset complete!',
+    'user.bulk_reset_pin_detail': '{name}: 🔑 {pin}',
+    'user.bulk_reset_pin_none': 'No clocked-out employees found to reset.',
+    'user.bulk_reset_pin_print': '🖨️ Print Slips',
     'tab.requests': '📋 Requests',
     'requests.title': '📋 Requests & Tickets',
     'requests.subtitle': 'Submit time-off requests, report issues, or send feedback',
@@ -3723,6 +3732,12 @@ const L10N = {
     'user.temp_pin_share': 'PIN temporal: {tempPin}\n\nCompártalo con el empleado. Expira en 1 hora y solo se puede usar una vez.\n\nDespués de iniciar sesión, el empleado debe establecer un nuevo PIN.',
     'user.failed_attempts': 'intento(s) de inicio de sesión fallido(s)',
     'user.clear_lockout_btn': '🔓 Desbloquear',
+    'user.bulk_reset_pin': '🔄 Restablecer PINs Masivo',
+    'user.bulk_reset_pin_confirm': 'Esto restablecerá los PINs de TODOS los empleados que NO están en turno. Cada uno recibirá un PIN temporal único válido por 1 hora. ¿Continuar?',
+    'user.bulk_reset_pin_result': '¡Restablecimiento masivo de PINs completado!',
+    'user.bulk_reset_pin_detail': '{name}: 🔑 {pin}',
+    'user.bulk_reset_pin_none': 'No se encontraron empleados fuera de turno para restablecer.',
+    'user.bulk_reset_pin_print': '🖨️ Imprimir Comprobantes',
     'tab.requests': '📋 Solicitudes',
     'requests.title': '📋 Solicitudes y Tickets',
     'requests.subtitle': 'Envíe solicitudes de tiempo libre, reporte problemas o envíe comentarios',
@@ -9994,6 +10009,44 @@ async function generateTempPin(userId) {
     // Show the temp PIN in an alert so the admin can share it
     alert(t('user.temp_pin_share', { tempPin: d.temp_pin }));
     showToast(t('user.temp_pin_success', { name, tempPin: d.temp_pin }), 'success');
+    loadUsers();
+  } catch(e) { showToast(t('toast.network_error'), 'danger'); }
+}
+
+async function bulkResetPins() {
+  if (!confirm(t('user.bulk_reset_pin_confirm'))) return;
+  try {
+    const r = await fetch(BACKEND_URL + '/api/users/bulk_reset_pin', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id })
+    });
+    const d = await r.json();
+    if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
+    if (!d.results || Object.keys(d.results).length === 0) {
+      showToast(t('user.bulk_reset_pin_none'), 'info');
+      return;
+    }
+    // Build result modal
+    const overlay = document.getElementById('genericModalOverlay');
+    const box = document.getElementById('genericModalBox');
+    let html = '<h3 style="margin-bottom:12px;">' + t('user.bulk_reset_pin_result') + '</h3>';
+    const entries = Object.entries(d.results);
+    html += entries.map(([id, u]) => {
+      return '<div style="padding:10px 14px;margin:8px 0;background:var(--card);border-radius:8px;border-left:4px solid var(--accent);">'
+        + '<div style="font-weight:600;font-size:15px;">' + escHtml(u.name) + ' <span style="color:var(--text2);font-size:12px;font-weight:400;">(ID: ' + escHtml(id) + ')</span></div>'
+        + '<div style="font-size:20px;font-weight:700;color:var(--accent);margin-top:6px;">🔑 ' + escHtml(u.temp_pin) + '</div>'
+        + '<div style="font-size:12px;color:var(--text2);margin-top:2px;">Role: ' + escHtml(u.role || 'user') + '</div>'
+        + '</div>';
+    }).join('');
+    html += '<div style="margin-top:12px;font-size:12px;color:var(--text2);padding:8px;background:var(--bg);border-radius:6px;">';
+    html += 'PINs expire at ' + escHtml(d.expiry) + '. Each can only be used once.</div>';
+    html += '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;">';
+    html += '<button class="accent" onclick="window.print()" style="min-height:44px;">' + t('user.bulk_reset_pin_print') + '</button>';
+    html += '<button class="outline" onclick="document.getElementById(\'genericModalOverlay\').classList.remove(\'active\');" style="min-height:44px;">✅ ' + t('common.close') + '</button>';
+    html += '</div>';
+    box.innerHTML = html;
+    overlay.classList.add('active');
+    showToast(d.message || t('user.bulk_reset_pin_result'), 'success');
     loadUsers();
   } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }

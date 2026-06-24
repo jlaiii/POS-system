@@ -1,6 +1,6 @@
 # POS Security Watchdog
 
-> Last run: 2026-06-24T10:32:07 UTC
+> Last run: 2026-06-24T11:20:22 UTC
 > Total events tracked: 13 (SEC-001 → SEC-013)
 > Active blocks: 0 IPs
 > Unresolved alerts: 11 (SEC-001, SEC-003, SEC-005, SEC-006, SEC-007, SEC-008, SEC-009, SEC-010, SEC-011, SEC-012, SEC-013)
@@ -17,16 +17,20 @@ None.
 ### 🟡 MEDIUM (0)
 None — all pre-existing issues unchanged.
 
-### ℹ️ Activity Summary (09:48–10:32 UTC, ~44m window)
+### ℹ️ Activity Summary (10:32–11:20 UTC, ~48m window)
 
-**Minimal activity — Test2FA quick clock test, nothing else.**
+**Minimal activity — Owner tested 2FA mandatory config endpoint, then logged in.**
 
 | Time | Event | Detail |
 |------|-------|--------|
-| 10:03:28 | clock_in — Test2FA (9999) | Clocked in from 127.0.0.1 (python-requests) |
-| 10:03:29 | clock_out — Test2FA (9999) | Clocked out 1 second later. Recorded late=63min (scheduled 09:00). |
+| 11:10:55 | 2fa_mandatory_config — Owner (1111) | Set require_2fa_for_admins=true, exempted=[] |
+| 11:11:03 | 2fa_mandatory_config — Owner (1111) | Set require_2fa_for_admins=true, exempted=[] |
+| 11:11:03 | 2fa_mandatory_config — Owner (1111) | Set require_2fa_for_admins=true, exempted=[1111] |
+| 11:11:03 | 2fa_mandatory_config — Owner (1111) | Set require_2fa_for_admins=true, exempted=[] |
+| 11:11:03 | login — Owner (1111) | Successful login from 127.0.0.1 (Werkzeug) |
+| 11:11:03 | 2fa_mandatory_config — Owner (1111) | Set require_2fa_for_admins=false, exempted=[] |
 
-**Pattern:** Very quiet window. Only Test2FA tested clock-in/out at 10:03. No orders, no cash drawer, no imports. No activity from Owner or Manager.
+**Pattern:** Owner tested the 2FA mandatory config feature, toggling it on/off in rapid succession. Config left at default (require_2fa_for_admins=false). Normal testing activity.
 
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: 0 IPs with 5+ failed logins. 0 users with 5+ failed attempts. No credential stuffing.
@@ -34,29 +38,30 @@ None — all pre-existing issues unchanged.
 - **Failed logins since last run**: 0 (still 3 total failures in file, all historical from June 23)
 - **Successful-after-failure**: No new patterns.
 - **Account enumeration**: 0 probes for non-existent PINs.
-- **Off-hours**: Current time ~10:32 UTC — well within normal hours (off-hours 22:00-06:00).
-- **Known IPs**: Unchanged. 6 users tracked. No new IPs.
-- **login_attempts.json**: 56 entries (0 new since last run). 3 failures total (all historical).
+- **Off-hours**: Current time ~11:20 UTC — well within normal hours (off-hours 22:00-06:00).
+- **Known IPs**: Unchanged. Note: user 9999 (Test2FA) has entries in known_ips.json + shift_log.json but does NOT exist in users.json — orphan data from deleted test account. Not a security issue (can't authenticate).
+- **login_attempts.json**: 63 entries (7 new since last run: 1x Owner successful + 6x user 9999 from 3 IPs at 07:57, all "2fa_required"). 3 failures total (all historical).
 - **Active sessions**: Server responding on port 5000. No stale session indicators.
-- **New logins this window**: 0.
+- **New logins this window**: 1 (Owner at 11:11).
 
 ### 🔒 Security Config
-- security_config.json: Unchanged. Auto_block_threshold=5. Blocked IPs empty.
-- users.json: Unchanged. Owner 2FA still NOT enabled (SEC-001/SEC-013).
+- security_config.json: Modified at 11:11:03 by Owner. Back to original state (require_2fa_for_admins=false). Auto_block_threshold=5 unchanged. Blocked IPs empty.
+- users.json: Unchanged. Owner 2FA still NOT enabled (SEC-001/SEC-013). User 9999 does not exist.
 - timesheet_config.json: use_database=false. Unchanged.
-- No configuration sabotage detected.
+- No configuration sabotage detected — Owner legitimately testing.
 
 ### 💰 Financial Check
-- No new orders this window (total still 59).
-- No cash drawer activity (last ops at 09:41 — Owner test).
+- No new orders this window (total still 59, last order at 08:29 UTC).
+- No cash drawer activity (last session at 09:41 — Owner test).
 - No refunds, tips, or discounts.
 - All clear.
 
 ### 📂 File Integrity
-- All 37 JSON files parseable. No corruption.
+- All JSON files parseable. No corruption.
 - No suspicious files (.php, .pl, .exe, .bat) found.
 - Owner account (1111) present, active, not banned — unchanged.
 - All data files present and valid.
+- **Orphan data note**: User 9999 (Test2FA) exists in known_ips.json (3 IPs tracked) and shift_log.json (multiple shifts with pay_rate=15.0) but NOT in users.json. This account was removed from users but cleanup data remains in other files. Low priority cleanup item.
 
 ## Active Blocks
 None.
@@ -80,15 +85,15 @@ None.
 None.
 
 ## System State
-- **Current time**: 2026-06-24T10:32:07 UTC — normal hours (off-hours window 22:00-06:00)
-- **Activity log**: 472 entries (2 new since last run: clock_in + clock_out for Test2FA). No truncation.
-- **New login attempts this window**: 0
+- **Current time**: 2026-06-24T11:20:22 UTC — normal hours (off-hours window 22:00-06:00)
+- **Activity log**: 478 entries (6 new since last run: 5× 2fa_mandatory_config + 1× login for Owner). No truncation.
+- **New login attempts this window**: 1 (Owner successful)
 - **Failed logins this window**: 0
 - **Known IPs**: Unchanged. No new IPs.
 - **Blocked IPs**: 0
-- **Config changes**: None this window.
-- **File integrity**: All 37 JSON files parseable. No suspicious files.
-- **Users**: 6 accounts. Owner 2FA still NOT enabled (SEC-001/SEC-013).
+- **Config changes**: Owner tested require_2fa_for_admins toggling (5 calls), left at false — normal operation.
+- **File integrity**: All JSON files parseable. No suspicious files. Orphan 9999 data noted.
+- **Users**: 5 accounts in users.json. Owner 2FA still NOT enabled (SEC-001/SEC-013). Account 9999 (Test2FA) exists in shift_log + known_ips but not users.json.
 - **Security events**: 13 tracked. 2 resolved (SEC-002, SEC-004). 11 unresolved.
 - **Server**: Responding on port 5000.
-- **Next 4-hour summary**: Not due yet (1h34m since last summary at 08:58).
+- **Next 4-hour summary**: Not due yet (last summary at 08:58, next ~12:58 UTC).
