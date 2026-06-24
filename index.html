@@ -445,6 +445,15 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
   font-size: 12px; font-weight: 600; padding: 2px 10px;
   border-radius: 10px; text-align: center; width: 100%;
 }
+.sale-badge {
+  position: absolute; top: 8px; right: 8px;
+  background: #e94560; color: #fff;
+  font-size: 11px; font-weight: 700;
+  padding: 3px 8px; border-radius: 8px;
+  white-space: nowrap; z-index: 2;
+  line-height: 1.4;
+}
+.item-card { position: relative; }
 .course-badge {
   display: inline-block; vertical-align: middle; font-size: 16px;
   margin-left: 4px; cursor: help;
@@ -7056,9 +7065,12 @@ function renderItems() {
       }
       let effectivePrice = item.price;
       let priceHtml = '<div class="item-price">$' + item.price.toFixed(2) + '</div>';
+      let saleBadgeHtml = '';
       if (scheduledPricing && scheduledPricing[item.name]) {
         effectivePrice = scheduledPricing[item.name].discounted_price;
         priceHtml = '<div class="item-price" style="color:#2ecc71;">' + t('item.scheduled_price', {price: effectivePrice.toFixed(2)}) + ' <span style="text-decoration:line-through;color:var(--text2);font-size:12px;">$' + item.price.toFixed(2) + '</span></div>';
+        const label = scheduledPricing[item.name].discount_label || 'SALE';
+        saleBadgeHtml = '<div class="sale-badge">⚡ ' + escHtml(label) + '</div>';
       }
       const displayName = item.name.replace(re, '<mark style="background:#e9456033;color:var(--accent);border-radius:3px;padding:0 2px;">$1</mark>');
       const hasModifiers = item.modifiers && item.modifiers.groups && item.modifiers.groups.length > 0;
@@ -7071,6 +7083,7 @@ function renderItems() {
       const courseBadge = course === 'appetizer' ? '<span class="course-badge appetizer" title="Appetizer — 5 min prep">🥗</span>' : (course === 'dessert' ? '<span class="course-badge dessert" title="Dessert — after mains">🍰</span>' : '');
       card.innerHTML = `
         <div class="item-category-label">${escHtml(item._category)}</div>
+        ${saleBadgeHtml}
         ${imgHtml}
         <div class="item-name">${displayName}${modBadge}${courseBadge}</div>
         ${priceHtml}
@@ -7103,9 +7116,12 @@ function renderItems() {
       }
       let effectivePrice = item.price;
       let priceHtml = '<div class="item-price">$' + item.price.toFixed(2) + '</div>';
+      let saleBadgeHtml = '';
       if (scheduledPricing && scheduledPricing[item.name]) {
         effectivePrice = scheduledPricing[item.name].discounted_price;
         priceHtml = '<div class="item-price" style="color:#2ecc71;">' + t('item.scheduled_price', {price: effectivePrice.toFixed(2)}) + ' <span style="text-decoration:line-through;color:var(--text2);font-size:12px;">$' + item.price.toFixed(2) + '</span></div>';
+        const label = scheduledPricing[item.name].discount_label || 'SALE';
+        saleBadgeHtml = '<div class="sale-badge">⚡ ' + escHtml(label) + '</div>';
       }
       const card = document.createElement('div');
       card.className = 'item-card' + stockClass;
@@ -7116,6 +7132,7 @@ function renderItems() {
       const course = item.course || 'main';
       const courseBadge = course === 'appetizer' ? '<span class="course-badge appetizer" title="Appetizer — 5 min prep">🥗</span>' : (course === 'dessert' ? '<span class="course-badge dessert" title="Dessert — after mains">🍰</span>' : '');
       card.innerHTML = `
+        ${saleBadgeHtml}
         ${imgHtml}
         <div class="item-name">${escHtml(item.name)}${modBadge}${courseBadge}</div>
         ${priceHtml}

@@ -385,6 +385,23 @@ body {
   color: var(--text2);
   line-height: 1.4;
 }
+.menu-item-card { position: relative; }
+.sale-badge {
+  position: absolute; top: 8px; right: 8px;
+  background: #e94560; color: #fff;
+  font-size: 11px; font-weight: 700;
+  padding: 4px 8px; border-radius: 8px;
+  white-space: nowrap; z-index: 2;
+  line-height: 1.4;
+}
+.menu-item-card .item-price-sale {
+  color: #2ecc71 !important;
+}
+.menu-item-card .item-price-original {
+  text-decoration: line-through;
+  color: var(--text2);
+  font-size: clamp(12px, 1.2vw, 16px);
+}
 
 /* Item detail overlay */
 #itemDetailOverlay {
@@ -1014,6 +1031,7 @@ let menuItemsData = {};
 let categories = [];
 let activeCategory = '';
 let combosData = [];
+let scheduledPricing = null; // { item_name: { original_price, discounted_price, discount_label, category } }
 let idleTimer = null;
 let countdownTimer = null;
 let countdownValue = 5;
@@ -1229,14 +1247,26 @@ function escHtml(str) {
     .replace(/\"/g, '&quot;')
     .replace(/'/g, '&#39;');
 }
+function escJs(s) {
+  return s.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"');
+}
 
 // ---- Menu functions ----
 async function fetchMenuItems() {
   document.getElementById('noItemsMsg').textContent = t('loading_menu');
   try {
-    const r = await fetch(BACKEND + '/api/items');
-    if (!r.ok) throw new Error('Fetch failed');
-    menuItemsData = await r.json();
+    const [itemsRes, pricingRes] = await Promise.all([
+      fetch(BACKEND + '/api/items'),
+      fetch(BACKEND + '/api/scheduled_pricing/active')
+    ]);
+    if (!itemsRes.ok) throw new Error('Fetch failed');
+    menuItemsData = await itemsRes.json();
+    if (pricingRes.ok) {
+      const pricingData = await pricingRes.json();
+      scheduledPricing = pricingData.pricing_map || {};
+    } else {
+      scheduledPricing = null;
+    }
     // Build category list (exclude empty categories)
     categories = Object.keys(menuItemsData).filter(cat => {
       return Array.isArray(menuItemsData[cat]) && menuItemsData[cat].length > 0;
@@ -1248,6 +1278,7 @@ async function fetchMenuItems() {
     renderItems();
   } catch (e) {
     document.getElementById('noItemsMsg').textContent = t('could_not_load_menu');
+    scheduledPricing = null;
   }
   applyTranslations();
 }
@@ -1294,14 +1325,25 @@ function renderItems() {
     return;
   }
 
-  grid.innerHTML = items.map(item => `
-    <div class="menu-item-card" onclick="showItemDetail('${escHtml(item.name)}')">
-      ${item.image_url ? `<img src="${escHtml(item.image_url)}" alt="${escHtml(item.name)}" loading="lazy"/>` : ''}
-      <div class="item-name">${escHtml(item.name)}</div>
-      <div class="item-price">$${parseFloat(item.price).toFixed(2)}</div>
-      ${item.description ? `<div class="item-desc">${escHtml(item.description)}</div>` : ''}
-    </div>
-  `).join('');
+  grid.innerHTML = items.map(item => {
+    const pricing = scheduledPricing && scheduledPricing[item.name];
+    const priceVal = parseFloat(item.price);
+    let saleBadgeHtml = '';
+    let priceHtml = '<div class="item-price">$' + priceVal.toFixed(2) + '</div>';
+    if (pricing) {
+      const discPrice = pricing.discounted_price;
+      const label = pricing.discount_label || 'SALE';
+      saleBadgeHtml = '<div class="sale-badge">⚡ ' + escHtml(label) + '</div>';
+      priceHtml = '<div class="item-price item-price-sale">$' + discPrice.toFixed(2) + ' <span class="item-price-original">$' + priceVal.toFixed(2) + '</span></div>';
+    }
+    return '<div class="menu-item-card" onclick="showItemDetail(\'' + escJs(item.name) + '\')">' +
+      (item.image_url ? '<img src="' + escHtml(item.image_url) + '" alt="' + escHtml(item.name) + '" loading="lazy"/>' : '') +
+      saleBadgeHtml +
+      '<div class="item-name">' + escHtml(item.name) + '</div>' +
+      priceHtml +
+      (item.description ? '<div class="item-desc">' + escHtml(item.description) + '</div>' : '') +
+    '</div>';
+  }).join('');
   applyTranslations();
 }
 
@@ -1377,7 +1419,17 @@ function renderItemDetail(item) {
   document.getElementById('detailImg').src = item.image_url || '';
   document.getElementById('detailImg').style.display = item.image_url ? 'block' : 'none';
   document.getElementById('detailName').textContent = item.name;
-  document.getElementById('detailPrice').textContent = '$' + parseFloat(item.price).toFixed(2);
+
+  // Price with scheduled pricing
+  const pricing = scheduledPricing && scheduledPricing[item.name];
+  const origPrice = parseFloat(item.price);
+  if (pricing) {
+    const discPrice = pricing.discounted_price;
+    const label = pricing.discount_label || 'SALE';
+    document.getElementById('detailPrice').innerHTML = '<span style="color:#2ecc71;font-size:28px;">$' + discPrice.toFixed(2) + '</span> <span style="text-decoration:line-through;color:var(--text2);font-size:18px;">$' + origPrice.toFixed(2) + '</span> <span class="sale-badge" style="position:static;display:inline-block;margin-left:8px;font-size:14px;">⚡ ' + escHtml(label) + '</span>';
+  } else {
+    document.getElementById('detailPrice').textContent = '$' + origPrice.toFixed(2);
+  }
   document.getElementById('detailDesc').textContent = item.description || '';
 
   // Dietary badges
