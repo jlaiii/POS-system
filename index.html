@@ -429,6 +429,62 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 }
 #catTabs button.active { background: var(--accent); color: #fff; }
 
+/* ── SKELETON SCREEN LOADERS ── */
+@keyframes shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--card) 25%, var(--hover) 50%, var(--card) 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: 8px;
+}
+.skeleton-card {
+  height: 120px;
+  border-radius: var(--radius);
+  margin-bottom: 0;
+}
+.skeleton-line {
+  height: 14px;
+  margin-bottom: 10px;
+  border-radius: 6px;
+  width: 100%;
+}
+.skeleton-line.short { width: 60%; }
+.skeleton-line.tiny { width: 35%; height: 12px; }
+.skeleton-thumb {
+  width: 48px; height: 48px; border-radius: 8px; flex-shrink: 0;
+}
+.skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+  padding: 12px 0;
+}
+.skeleton-list { display: flex; flex-direction: column; gap: 14px; padding: 8px 0; }
+.skeleton-row {
+  display: flex; align-items: center; gap: 14px;
+  background: var(--card); border-radius: var(--radius); padding: 16px;
+}
+.skeleton-row .skeleton-line:last-child { margin-bottom: 0; }
+.skeleton-table-row {
+  display: flex; gap: 16px; padding: 16px; background: var(--card);
+  border-radius: var(--radius); align-items: flex-start;
+}
+.skeleton-col { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+/* Stats card skeleton */
+.skeleton-stats-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px; padding: 8px 0;
+}
+.skeleton-stat-card {
+  height: 90px; border-radius: var(--radius); padding: 16px;
+  display: flex; flex-direction: column; justify-content: space-between;
+  background: var(--card);
+}
+.skeleton-stat-card .skeleton-line { margin-bottom: 0; }
+
 </style>
 <link rel="stylesheet" href="style.css" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="style.css"></noscript>
@@ -681,7 +737,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
         <input type="date" id="historyDateTo" onchange="loadOrderHistory()" data-i18n-placeholder="history.filter_date_to" aria-label="Order history date to"/>
         <button class="ghost" onclick="document.getElementById('historyDateFrom').value='';document.getElementById('historyDateTo').value='';loadOrderHistory();" data-i18n="history.clear">✕ Clear</button>
       </div>
-      <div id="historyList" aria-live="polite"><div class="empty-state" data-i18n="history.loading">Loading orders...</div></div>
+      <div id="historyList" aria-live="polite"><div class="skeleton-list"><div class="skeleton-row"><div class="skeleton skeleton-thumb"></div><div style="flex:1;display:flex;flex-direction:column;gap:6px;"><div class="skeleton skeleton-line" style="width:45%;"></div><div class="skeleton skeleton-line" style="width:75%;"></div><div class="skeleton skeleton-line tiny"></div></div><div class="skeleton" style="width:60px;height:28px;border-radius:14px;flex-shrink:0;"></div></div><div class="skeleton-row"><div class="skeleton skeleton-thumb"></div><div style="flex:1;display:flex;flex-direction:column;gap:6px;"><div class="skeleton skeleton-line" style="width:50%;"></div><div class="skeleton skeleton-line" style="width:65%;"></div><div class="skeleton skeleton-line tiny"></div></div><div class="skeleton" style="width:60px;height:28px;border-radius:14px;flex-shrink:0;"></div></div></div></div>
     </div>
 
     <!-- ADMIN TAB -->
@@ -730,7 +786,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
             <input type="date" id="statsDateTo" onchange="loadAdminStats()" style="flex:1;min-width:130px;" aria-label="Stats date to"/>
             <button class="ghost" onclick="document.getElementById('statsDateFrom').value='';document.getElementById('statsDateTo').value='';loadAdminStats();" style="font-size:13px;padding:8px 12px;min-height:36px;">✕ Clear</button>
           </div>
-          <div class="stats-grid" id="statsGrid"><div class="empty-state">Loading stats...</div></div>
+          <div class="stats-grid" id="statsGrid"><div class="skeleton-stats-grid"><div class="skeleton-stat-card"><div class="skeleton skeleton-line" style="width:40%;height:12px;"></div><div class="skeleton skeleton-line" style="width:60%;height:22px;"></div><div class="skeleton skeleton-line tiny"></div></div><div class="skeleton-stat-card"><div class="skeleton skeleton-line" style="width:50%;height:12px;"></div><div class="skeleton skeleton-line" style="width:45%;height:22px;"></div><div class="skeleton skeleton-line tiny"></div></div></div></div>
           <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
             <button class="accent" onclick="exportOrdersCSV()" style="font-size:14px;padding:12px 20px;min-height:48px;">📥 Export Orders (CSV)</button>
           </div>
@@ -2518,6 +2574,83 @@ function hideContentLoading(elemId) {
 }
 function isLoadingContent(elemId) {
   return _loadingCounter[elemId] > 0;
+}
+
+/** Show animated skeleton placeholders instead of "Loading..." text */
+function showSkeletonScreen(elemId, layout) {
+  var el = document.getElementById(elemId);
+  if (!el) return;
+  if (!_loadingCounter[elemId]) _loadingCounter[elemId] = 0;
+  _loadingCounter[elemId]++;
+  if (_loadingCounter[elemId] > 1) return;
+  layout = layout || 'grid';
+  var html = '';
+  if (layout === 'grid') {
+    // Item grid skeleton — cards with image placeholder + 3 lines
+    html = '<div class="skeleton-grid">';
+    for (var i = 0; i < 8; i++) {
+      html += '<div class="skeleton-card" style="background:var(--card);padding:14px;display:flex;flex-direction:column;gap:8px;">'
+        + '<div class="skeleton" style="height:80px;width:100%;border-radius:8px;"></div>'
+        + '<div class="skeleton skeleton-line" style="width:80%;"></div>'
+        + '<div class="skeleton skeleton-line short"></div>'
+        + '<div class="skeleton skeleton-line tiny"></div>'
+        + '</div>';
+    }
+    html += '</div>';
+  } else if (layout === 'list') {
+    // Order history / list skeleton — rows with thumb + lines
+    html = '<div class="skeleton-list">';
+    for (var i = 0; i < 5; i++) {
+      html += '<div class="skeleton-row">'
+        + '<div class="skeleton skeleton-thumb"></div>'
+        + '<div style="flex:1;display:flex;flex-direction:column;gap:6px;">'
+        + '<div class="skeleton skeleton-line" style="width:45%;"></div>'
+        + '<div class="skeleton skeleton-line" style="width:75%;"></div>'
+        + '<div class="skeleton skeleton-line tiny"></div>'
+        + '</div>'
+        + '<div class="skeleton" style="width:60px;height:28px;border-radius:14px;flex-shrink:0;"></div>'
+        + '</div>';
+    }
+    html += '</div>';
+  } else if (layout === 'table') {
+    // Timesheet/pay period table skeleton — rows of columns
+    html = '<div class="skeleton-list">';
+    for (var i = 0; i < 4; i++) {
+      html += '<div class="skeleton-table-row">'
+        + '<div class="skeleton-col">'
+        + '<div class="skeleton skeleton-line" style="width:50%;"></div>'
+        + '<div class="skeleton skeleton-line tiny"></div>'
+        + '</div>'
+        + '<div class="skeleton-col">'
+        + '<div class="skeleton skeleton-line" style="width:35%;"></div>'
+        + '<div class="skeleton skeleton-line tiny"></div>'
+        + '</div>'
+        + '<div class="skeleton-col">'
+        + '<div class="skeleton skeleton-line" style="width:40%;"></div>'
+        + '<div class="skeleton skeleton-line tiny"></div>'
+        + '</div>'
+        + '<div class="skeleton-col" style="flex:0 0 70px;">'
+        + '<div class="skeleton" style="width:60px;height:28px;border-radius:14px;"></div>'
+        + '</div>'
+        + '</div>';
+    }
+    html += '</div>';
+  } else if (layout === 'stats') {
+    // Stats grid skeleton — stat cards
+    html = '<div class="skeleton-stats-grid">';
+    for (var i = 0; i < 4; i++) {
+      html += '<div class="skeleton-stat-card">'
+        + '<div class="skeleton skeleton-line" style="width:40%;height:12px;"></div>'
+        + '<div class="skeleton skeleton-line" style="width:60%;height:22px;"></div>'
+        + '<div class="skeleton skeleton-line tiny"></div>'
+        + '</div>';
+    }
+    html += '</div>';
+  }
+  el.innerHTML = html;
+}
+function hideSkeletonScreen(elemId) {
+  hideContentLoading(elemId);
 }
 
 /** Escape HTML special chars for safe insertion */
@@ -7377,7 +7510,7 @@ async function removeIpFromAllowlist(ip) {
 
 // ═══════════ POS TAB ═══════════
 async function loadItems() {
-  showContentLoading('itemGrid');
+  showSkeletonScreen('itemGrid', 'grid');
   try {
     const [itemsRes, invRes, pricingRes] = await Promise.all([
       fetch(BACKEND_URL + '/api/items'),
@@ -9091,7 +9224,7 @@ function clearDiscountForm() {
 // ═══════════ ORDER HISTORY ═══════════
 async function loadOrderHistory() {
   const list = document.getElementById('historyList');
-  showContentLoading('historyList');
+  showSkeletonScreen('historyList', 'list');
   try {
     // Build request body with optional date range
     const body = { adminPin: currentUser.id };
@@ -9564,7 +9697,7 @@ function switchTimesheetSubTab(subtab) {
 
 async function loadAdminStats() {
   const grid = document.getElementById('statsGrid');
-  showContentLoading('statsGrid');
+  showSkeletonScreen('statsGrid', 'stats');
   try {
     const body = { adminPin: currentUser.id };
     const dateFrom = document.getElementById('statsDateFrom').value;
@@ -10987,7 +11120,8 @@ let _tsDashboardSortDir = -1; // -1 = desc, 1 = asc
 async function loadTimesheetDashboard() {
   const container = document.getElementById('tsDashboardBody');
   if (!container) return;
-  container.innerHTML = '<div class="empty-state">' + t('loading') + '</div>';
+  container.innerHTML = '';
+  showSkeletonScreen('tsDashboardBody', 'table');
 
   try {
     const params = { adminPin: currentUser.id };
