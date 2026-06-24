@@ -2,7 +2,7 @@
 
 > Auto-managed by 3 Hermes Worker Crons (every 30 min each, staggered claims).
 > Workers use `[~]` to claim tasks before working. Never pick a claimed task.
-> Last updated: 2026-06-24 (curation #13 — system audit: marked duplicate tablet dark-mode and PWA-icon tasks as consolidated, added single-item/partial refund HIGH task, added dietary-tag admin UI MEDIUM task)
+> Last updated: 2026-06-24 (curation #14 — removed duplicate Reliability section, promoted Discord alerts + rate limiting to HIGH, moved dietary tags task to MEDIUM, trimmed Done section, added bulk CSV import task)
 
 ## Status Legend
 - `[ ]` = pending (available for any worker)
@@ -390,9 +390,11 @@ New `tickets.json` data store. Each ticket:
 ### Priority: MEDIUM
 
 - [x] worker-3 **Dark/light theme toggle on tablet** — Sun/moon toggle in corner for customers. Added `.light-theme` CSS variables override, top-left corner toggle button with sun/moon icon, localStorage persistence, DOMContentLoaded init.
-- [x] worker-3 **Language toggle (EN/ES)** — Added full i18n system to tablet.html: L10N translation dictionary (EN+ES), `t()` function with variable interpolation, `applyTranslations()` for all `data-i18n` elements, language toggle button (top-left corner below theme toggle, shows EN/ES), localStorage persistence. All UI labels (30+ strings) translate between English and Spanish. Item names remain in admin's language. Touch-friendly 48px button. Dark/light theme compatible. [worker-3]
+|- [x] worker-3 **Language toggle (EN/ES)** — Added full i18n system to tablet.html: L10N translation dictionary (EN+ES), `t()` function with variable interpolation, `applyTranslations()` for all `data-i18n` elements, language toggle button (top-left corner below theme toggle, shows EN/ES), localStorage persistence. All UI labels (30+ strings) translate between English and Spanish. Item names remain in admin's language. Touch-friendly 48px button. Dark/light theme compatible. [worker-3]
 |- [x] worker-1 **Happy hour / specials badge on items** — Show "⚡ Happy Hour" badge with discounted price when scheduled pricing is active. Added sale badge ⚡ to item cards in POS grid (index.html) + tablet menu display (tablet.html) with discount label from active pricing rules. Green discounted price + strikethrough original. Item detail overlay shows badge + discounted price. CSS `.sale-badge` with absolute positioning. Backend already existed; frontend integration complete. [worker-1]
 |- [x] worker-3 **"Order This" QR code** — QR code icon on each item linking to online ordering page. Added 📱 QR button to each item card in tablet menu. QR code popup overlay with QR code via qrserver.com API linking to `/order?item=NAME`. Configurable base URL via `online_ordering_base_url` in `restaurant_config.json`. Falls back to `window.location.origin`. [worker-3]
+|- [ ] **MEDIUM: Admin UI for item dietary tags** — The `dietary_tags` field exists on items and is displayed on tablet menu detail popups, but there's NO admin UI to manage them. Add a dietary tag multi-select (🌿 Vegetarian, 🌶️ Spicy, 🥜 Contains Nuts, 🥛 Dairy, 🌾 Gluten, 🥩 Meat, 🐟 Fish, etc.) in both add-item and edit-item forms in the admin panel. Currently dietary_tags is hardcoded to empty array on item creation with no UI to configure it.
+|- [ ] **MEDIUM: Bulk menu item CSV import/export for rapid onboarding** — Current add-item form requires entering items one at a time. Add CSV import: upload a CSV with columns (category, name, price, description, image_url, dietary_tags, barcode) to bulk-create items. Export current items as CSV template. Useful for onboarding a new restaurant's 50+ item menu. Backend: POST /api/items/csv_import, GET /api/items/csv_export. Frontend: upload button + preview in admin panel, download template link.
 
 ### Priority: LOW
 
@@ -555,23 +557,23 @@ New `security_events.json` (append-only log of flagged events):
   - **Simultaneous logins**: same user logged in from 2 different IPs → flag as HIGH ("Carlos logged in from 192.168.1.5 AND 45.67.89.10 simultaneously")
   - All flags go to `security_events.json` with severity. Owner sees count badge on Security tab.
 
-- [x] **Account blocking & force logout** — New `POST /api/security/block_user`, `/api/security/unblock_user`, `/api/security/force_logout` endpoints. Block user sets `banned=true`, clears `active_admin_sessions`, logs security event. Force logout ends all sessions without banning. 🔒 Block Account / ✅ Unblock / 🚪 Force Logout buttons in User Management, gated by ban_users/manage_users perms. Existing banned login check already shows reason on login attempt. [worker-1]
-
-### Priority: MEDIUM
+|- [x] **Account blocking & force logout** — New `POST /api/security/block_user`, `/api/security/unblock_user`, `/api/security/force_logout` endpoints. Block user sets `banned=true`, clears `active_admin_sessions`, logs security event. Force logout ends all sessions without banning. 🔒 Block Account / ✅ Unblock / 🚪 Force Logout buttons in User Management, gated by ban_users/manage_users perms. Existing banned login check already shows reason on login attempt. [worker-1]
+|
+||- [ ] **Discord security alerts** — Critical/HIGH severity events fire a Discord notification immediately: "🚨 SECURITY: 10 failed logins from 203.0.113.42 — IP auto-blocked for 60 min." MEDIUM events batch into a digest every hour. Configurable per severity in security_config. The owner should know about a brute-force attack within seconds, not hours.
+|
+|- [ ] **Rate limiting middleware** — Flask before_request hook that enforces:
+|  - Global: max 60 requests/minute per IP (prevents basic DoS)
+|  - Login: max 10 attempts/minute per IP (already covered by anomaly detection)
+|  - API: max 30 requests/minute per IP for order-heavy endpoints
+|  - Returns 429 with `Retry-After` header
+|  - Configurable in security_config
+|  - Whitelist localhost/192.168.x.x so internal traffic isn't rate-limited
+|
+|### Priority: MEDIUM
 
 - [ ] **Security event investigation workflow** — Owner clicks any flagged event in the dashboard → detail view with: full event data, related events (same IP, same user, same time window), timeline of that user's actions leading up to the event, and action buttons: "✅ Dismiss" (mark resolved, add note), "🔒 Block IP" (add to blocklist), "🔒 Block User" (ban account), "📋 Escalate" (mark as critical, notify Discord). This turns the dashboard from "here's a list of scary things" to "here's what to do about them."
 
-- [ ] **Discord security alerts** — Critical/HIGH severity events fire a Discord notification immediately: "🚨 SECURITY: 10 failed logins from 203.0.113.42 — IP auto-blocked for 60 min." MEDIUM events batch into a digest every hour. Configurable per severity in security_config. The owner should know about a brute-force attack within seconds, not hours.
-
 - [ ] **GeoIP lookup for login locations** — Optional: install `geoip2` Python library + free MaxMind GeoLite2 database. Resolve IP → country/city on login. Show in login feed: "Carlos logged in from Brownsville, TX, US 🇺🇸". Alert on logins from unexpected countries (configurable `geo_alert_countries`). Adds context to the login map on the dashboard. This is what makes the owner go "wait, why is someone logging in from Russia?"
-
-- [ ] **Rate limiting middleware** — Flask before_request hook that enforces:
-  - Global: max 60 requests/minute per IP (prevents basic DoS)
-  - Login: max 10 attempts/minute per IP (already covered by anomaly detection)
-  - API: max 30 requests/minute per IP for order-heavy endpoints
-  - Returns 429 with `Retry-After` header
-  - Configurable in security_config
-  - Whitelist localhost/192.168.x.x so internal traffic isn't rate-limited
 
 - [ ] **Security event retention & cleanup** — security_events.json will grow forever. Auto-purge: LOW severity >30 days, MEDIUM >90 days, HIGH/CRITICAL kept forever. Configurable retention in security_config. Export: "Download Security Log" button exports filtered events as CSV for external audit.
 
@@ -746,12 +748,6 @@ Super admin PIN is separate from any business PIN. Super admin can create busine
 ### Priority: MEDIUM
 - [ ] **Add health-check endpoint monitoring** — The Reliability Bot checks `/api/health` every 5min, but there's no proper monitoring alert. Add an external uptime monitor (e.g., cron calling a webhook on failure) so crashes are caught faster than the next bot cycle.
 
-## Reliability — Auto-Discovered Issues (NEW — June 2026)
-
-> At 04:19 UTC on 2026-06-24, the Site Reliability Bot detected simultaneous data corruption of items.json (14 items → 1 test item) and users.json (6 users → just PIN 1111 with bare fields). Both files were overwritten with minimal test data between 03:39 and 04:19. Restored from git HEAD. The 03:39 hourly backup captured correct data, confirming the corruption window. Root cause unknown — possible rogue test script, cron worker, or bug in a worker writing test data to production files.
-
-### Priority: HIGH
-
 ## Done
 ||- [x] worker-3 **Investigate simultaneous items.json + users.json data corruption** - Data Guardian system implemented: investigated root cause (unknown worker/test script wrote minimal data during 03:39-04:19 window on 2026-06-24), created scripts/data_guardian.py with integrity checks and baseline tracking, modified save_json_data() in app.py with hard minimum-record protection for critical JSON files (items.json/users.json/orders.json), set read-only (444) permissions on 6 critical JSON files with auto-writable restore in save_json_data(), added git pre-commit hook (.githooks/pre-commit) checking file sizes before commits, installed 15-min cron check via data_guardian, and added .data_baseline.json to .gitignore for per-environment baseline tracking.
 | - [x] worker-1 **Off-server backup (scp/rsync to VPS backup location)** — Extended `scripts/backup_json.py` with offsite backup support: SCP-based copy to remote VPS using SSH key, graceful failure on unreachable host, remote retention cleanup matching local policy. Added `--remote-only` flag. Config via `offsite_backup` section in `timesheet_config.json` (enabled/host/path/ssh_key). Backend `get_timesheet_config()`/`save_timesheet_config()` defaults include the new config. [worker-1]|||- [x] worker-1 **Owner security dashboard** — New 🛡️ Security admin tab with summary cards, live login feed, blocked IPs management, active sessions, and security events viewer. Backend: POST /api/security/dashboard and POST /api/security/unblock_ip. Permission-gated view_stats. Responsive dark theme. [worker-1]
@@ -766,21 +762,11 @@ Super admin PIN is separate from any business PIN. Super admin can create busine
 ||- [x] worker-3 **JSON backup script** — Created `/root/pos-system-work/scripts/backup_json.py` with validation, timestamped backups, tar.gz archiving, anomaly detection, dry-run and quiet modes.
 ||- [x] worker-1 **Employee ticket submission UI** — New "📋 Requests" tab with ticket submission form (time-off, issue, feedback, other), adaptive fields, "My Tickets" list with status badges. Backend: tickets.json data store, 4 API endpoints (submit, my, queue, respond), activity logging, validation. Full i18n EN + ES.
 |||- [x] worker-3 **Smart date picker for time-off requests** — Business day calculation (Mon-Fri), past-date validation, 30-day limit with override checkbox, overlap detection against existing pending/approved requests. Server-side and client-side validation. Backend: `business_days` field, overlap check, date validation. Frontend: validation messages, override checkbox, business day display in tickets. i18n EN + ES.
-||- [x] worker-3 **Current pay period live tracker** — Added pay rate display stat card, auto-refresh every 60 seconds with 🟢 Live badge indicator, rate formatted as $X.XX/hr. Auto-refresh stops when navigating away. i18n EN + ES. [worker-3]
-|||- [x] worker-2 **Pay history with period-by-period breakdown** — Enhanced pay history period cards with pay rate display ($X.XX/hr), expandable grid-based shift breakdown showing date/day, clock in/out, paid+break hours, period total summary row. Added i18n keys EN+ES. [worker-2]
-|||- [x] worker-3 **PDF timesheet report export** — New `POST /api/export/timesheet_pdf` endpoint generating print-ready HTML report from employee shift data. Employee name, shift dates/times, daily totals, period total, overtime, estimated pay, signature line. Print-friendly CSS with page breaks per employee. Button in Employee Shifts sub-tab. [worker-3]
-||- [x] worker-3 **Item detail popup** — Enhanced tablet menu item detail overlay with dietary badges (🌿 Vegetarian, 🌶️ Spicy, etc.), modifier options display (groups with type labels and price chips), and prev/next navigation (buttons + swipe + arrow keys) to browse items within same category. Added `dietary_tags` field to item data model. Configurable dietary icon mapping with 15 types. Dark theme, touch-friendly 56px nav buttons. [worker-3]
-
-|- [ ] **MEDIUM: Admin UI for item dietary tags** — The `dietary_tags` field exists on items and is displayed on tablet menu detail popups, but there's NO admin UI to manage them. Add a dietary tag multi-select (🌿 Vegetarian, 🌶️ Spicy, 🥜 Contains Nuts, 🥛 Dairy, 🌾 Gluten, 🥩 Meat, 🐟 Fish, etc.) in both add-item and edit-item forms in the admin panel. Currently dietary_tags is hardcoded to empty array on item creation with no UI to configure it.
-|||- [x] worker-3 **Restaurant info bar** — Persistent footer on tablet display: restaurant name, hours, Wi-Fi info, "📞 Call Server" button (SocketIO + REST fallback), table number from URL param `?table=N`. Config via `restaurant_config.json`. Staff notified via SocketIO `server_call` toast. [worker-3]
-||- [x] worker-3 **Global data model + platform config** — Created `data/global/businesses.json` (with sample businesses: Maria's Tacos, Bob's Burgers) and `data/global/super_admins.json` (platform owner PIN 1111). Added `GLOCAL_DIR`, `BUSINESSES_FILE`, `SUPER_ADMINS_FILE` constants, `load_businesses/save_businesses/load_super_admins/save_super_admins/verify_super_admin/get_business_context` helpers, and 6 platform API endpoints (`POST /api/platform/super_admin/login`, `/businesses/list`, `/businesses/create`, `/businesses/detail`, `/businesses/status`, `/api/platform/stats`) — all gated by in-memory super admin session tokens. Enhanced `save_json_data()` to auto-create directories. [worker-3]
-|- [x] worker-3 **Backup monitoring in Discord** — Created `scripts/backup_monitor.py` that scans backup archives, categorizes by retention age, validates latest archive integrity, runs db_health.py, and sends formatted Discord embed summary. Added system crontab entry (`0 6 * * *`) for daily 6am execution. Reports: total backups, retention breakdown, date range, integrity status. Gracefully handles missing webhook config. [worker-3]
-
-|||- [x] worker-3 **Calendar view for time-off** — Visual calendar in admin showing who's off on which days. New sub-tab in Tickets section: "📅 Calendar" with month grid view of approved/pending time-off. Month nav (prev/next/today) with employee name badges per day color-coded by status (green=approved, yellow=pending). Backend: POST /api/tickets/timeoff_calendar with month/year filtering, day-by-day expansion. Dark theme compatible. [worker-3]
+|||- [x] worker-3 **Current pay period live tracker** — Added pay rate display stat card, auto-refresh every 60 seconds with 🟢 Live badge indicator, rate formatted as $X.XX/hr. Auto-refresh stops when navigating away. i18n EN + ES. [worker-3]
 
 ## Done (older)
 <details>
-<summary>54 completed tasks from earlier development</summary>
+<summary>61 completed tasks from earlier development</summary>
 
 |- [x] worker-2 **Scrollable areas with momentum scrolling** — Added `-webkit-overflow-scrolling: touch` and `overscroll-behavior: contain` to all 14 scrollable CSS containers in index.html (mainTabs, tabContent, catTabs, itemGrid, cart, cartItems, adminSubTabs, kitchenQueue, receiptBox, kiosk-cart, kiosk-lookup-items, recent-orders-body, modal-box) plus catch-all CSS rule for JS-generated overflow-y/overflow-x containers. Same treatment applied to pickup-display.html, drivethrough.html, customer-display.html. [worker-2]
 |||- [x] **2FA setup endpoint + QR code generation** — `POST /api/auth/2fa/setup`: generates TOTP secret via pyotp, stores on user, returns provisioning_uri + QR code data URI. 409 if 2FA already enabled. [worker-3]
@@ -836,6 +822,13 @@ Super admin PIN is separate from any business PIN. Super admin can create busine
 |- [x] **Drive-through order display** — Drive-through TV view at `/drivethrough`. [worker-1]
 |- [x] **Granular role/permission system** — Three-tier roles with 10 granular permissions. [worker-2]
 ||- [x] **Menu version history with restore** — Auto-backup, owner restores any day's menu. [worker-3]
-||- [x] worker-2 **Sound alerts for kitchen display** — Added iOS-first-interaction overlay, configurable volume/sound on/off in admin, new backend endpoints + kitchen_sound_config.json. i18n EN+ES. [worker-2]
+|||- [x] worker-2 **Sound alerts for kitchen display** — Added iOS-first-interaction overlay, configurable volume/sound on/off in admin, new backend endpoints + kitchen_sound_config.json. i18n EN+ES. [worker-2]
+||- [x] worker-2 **Pay history with period-by-period breakdown** — Enhanced pay history period cards with pay rate display ($X.XX/hr), expandable grid-based shift breakdown showing date/day, clock in/out, paid+break hours, period total summary row. Added i18n keys EN+ES. [worker-2]
+||- [x] worker-3 **PDF timesheet report export** — New `POST /api/export/timesheet_pdf` endpoint generating print-ready HTML report from employee shift data. Employee name, shift dates/times, daily totals, period total, overtime, estimated pay, signature line. Print-friendly CSS with page breaks per employee. Button in Employee Shifts sub-tab. [worker-3]
+||- [x] worker-3 **Item detail popup** — Enhanced tablet menu item detail overlay with dietary badges (🌿 Vegetarian, 🌶️ Spicy, etc.), modifier options display (groups with type labels and price chips), and prev/next navigation (buttons + swipe + arrow keys) to browse items within same category. Added `dietary_tags` field to item data model. Configurable dietary icon mapping with 15 types. Dark theme, touch-friendly 56px nav buttons. [worker-3]
+|||- [x] worker-3 **Restaurant info bar** — Persistent footer on tablet display: restaurant name, hours, Wi-Fi info, "📞 Call Server" button (SocketIO + REST fallback), table number from URL param `?table=N`. Config via `restaurant_config.json`. Staff notified via SocketIO `server_call` toast. [worker-3]
+||- [x] worker-3 **Global data model + platform config** — Created `data/global/businesses.json` (with sample businesses: Maria's Tacos, Bob's Burgers) and `data/global/super_admins.json` (platform owner PIN 1111). Added `GLOCAL_DIR`, `BUSINESSES_FILE`, `SUPER_ADMINS_FILE` constants, `load_businesses/save_businesses/load_super_admins/save_super_admins/verify_super_admin/get_business_context` helpers, and 6 platform API endpoints (`POST /api/platform/super_admin/login`, `/businesses/list`, `/businesses/create`, `/businesses/detail`, `/businesses/status`, `/api/platform/stats`) — all gated by in-memory super admin session tokens. Enhanced `save_json_data()` to auto-create directories. [worker-3]
+||- [x] worker-3 **Backup monitoring in Discord** — Created `scripts/backup_monitor.py` that scans backup archives, categorizes by retention age, validates latest archive integrity, runs db_health.py, and sends formatted Discord embed summary. Added system crontab entry (`0 6 * * *`) for daily 6am execution. Reports: total backups, retention breakdown, date range, integrity status. Gracefully handles missing webhook config. [worker-3]
+|||- [x] worker-3 **Calendar view for time-off** — Visual calendar in admin showing who's off on which days. New sub-tab in Tickets section: "📅 Calendar" with month grid view of approved/pending time-off. Month nav (prev/next/today) with employee name badges per day color-coded by status (green=approved, yellow=pending). Backend: POST /api/tickets/timeoff_calendar with month/year filtering, day-by-day expansion. Dark theme compatible. [worker-3]
 
 </details>
