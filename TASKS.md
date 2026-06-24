@@ -389,7 +389,7 @@ New `tickets.json` data store. Each ticket:
 
 ### Priority: MEDIUM
 
-- [ ] **Dark/light theme toggle on tablet** — Sun/moon toggle in corner for customers.
+- [~] worker-3 **Dark/light theme toggle on tablet** — Sun/moon toggle in corner for customers.
 - [ ] **Language toggle (EN/ES)** — UI labels translate, item names remain in admin's language.
 - [ ] **Happy hour / specials badge on items** — Show "⚡ Happy Hour" badge with discounted price when scheduled pricing is active.
 - [ ] **"Order This" QR code** — QR code icon on each item linking to online ordering page.
