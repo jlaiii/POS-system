@@ -1,5 +1,5 @@
 # POS Security Tasks
-> Last run: 2026-06-24 12:45 UTC
+> Last run: 2026-06-24 16:45 UTC
 
 ## CRITICAL — LOGIN & AUTH SECURITY (check every run)
 
@@ -57,7 +57,7 @@
 - [x] **Restrict CORS** — `CORS(app)` changed from wildcard to allowed origins (localhost:5000, localhost:3000, 192.168.*, 10.*). SocketIO `cors_allowed_origins` changed from `"*"` to specific domains. Prevents unauthorized cross-origin requests from unknown origins.
 
 ### MEDIUM: Error pages may leak stack traces
-- [ ] **Custom error handlers** — Flask's default error handler may leak stack traces in debug mode. Add `@app.errorhandler(500)` and `@app.errorhandler(404)` handlers that return JSON without stack traces. NOTE: debug mode already disabled.
+- [x] **Add custom 404/500 JSON error handlers** — Flask's default error handlers return HTML with stack traces. Added `@app.errorhandler(404)` and `@app.errorhandler(500)` that return JSON without stack traces or paths. Verified: 404 → `{"message":"Endpoint not found."}` with 200 OK? Actually 404 with JSON body. 500 handler registered for unhandled exceptions.
 
 ### MEDIUM: App runs as root
 - [ ] **Run as non-root user** — All processes run as root. Any compromised endpoint gives full system access.
@@ -76,21 +76,22 @@
 
 ## LOW — POLISH
 
-### LOW: Password complexity minimum is only 6 chars
-- [ ] **Strengthen password policy** — Line 781 (original): `if len(password) < 6` — minimum is 6 characters for owner password. Should be 8+ with mixed case and numbers.
+### LOW: Password complexity — strengthened (FIXED this run)
+- [x] **Enforce 8+ char, mixed case + number** — Changed minimum from 6 to 8 chars. Added requirement for uppercase, lowercase, and a number. Applied on `/api/owner/credentials` endpoint. Verified: 7-char rejected, no-uppercase rejected, no-number rejected, 10-char mixed-case with number accepted.
 
 ### LOW: SHA-256 used for password hashing (should be bcrypt/argon2)
 - [ ] **Upgrade password hashing** — `hash_password()` uses SHA-256 with random salt. Not GPU-resistant. Should use bcrypt or argon2 for proper password hashing. Not critical since passwords are only for owner login (PINs are the main auth method).
 
 ## COMPLETED (this session)
 
-### Run: 2026-06-24 12:45 UTC
+### Run: 2026-06-24 16:45 UTC
 
-- [x] **Add tiered auth to /api/orders/lookup** — CRITICAL: Unauthenticated full data leak. Fixed with kiosk-safe mode for unauthenticated requests, full data for authenticated.
-- [x] **Block weak PINs in change_pin, reset_pin, add_user** — HIGH: Changed from warning to rejection for 21 common guessable patterns.
-- [x] **Thread-safe file writes in save_json_data** — MEDIUM: Added threading.RLock to prevent race conditions corrupting JSON data files.
+- [x] **Remove stale owner_pin from security_config.json** — The field `owner_pin: "1111"` was stored in `security_config.json` but never read by app.py. This was a latent credential exposure — the owner's PIN sitting in a config file. Removed. Verified: `owner_pin` no longer in config keys.
+- [x] **Add custom 404/500 JSON error handlers** — MEDIUM: Flask's default handlers leak stack traces and file paths. Added `@app.errorhandler(404)` and `@app.errorhandler(500)` that return `{message}` JSON instead of HTML. Verified: `GET /api/nonexistent` → `{"message":"Endpoint not found."}` 404.
+- [x] **Strengthen owner password policy** — LOW: Changed minimum length from 6 to 8. Added requirements for uppercase, lowercase, and a digit on `/api/owner/credentials`. Verified: short, no-upper, and no-number passwords all rejected with specific error messages.
 
 ## WATCHLIST (monitor, don't fix yet)
 
-- SEC-001/SEC-013: 2FA persistence bug — suspected race condition; threading lock added this run. Monitor next 2 runs to confirm.
+- SEC-001/SEC-013: 2FA persistence bug — suspected race condition; threading lock added in previous run. Confirmed in this run that the `twofa_verify()` code flow is correct (loads users.json → modifies in memory → saves). Monitor next 2-3 runs to confirm fix.
 - User 9999 login attempts at ~07:56 UTC on 2026-06-24: 20 rapid attempts from 127.0.0.1 + 203.0.113.42 + 192.168.1.50. User 9999 does NOT currently exist in users.json. The attempts all returned "2fa_required" which suggests 9999 MAY have existed briefly and was deleted. Verify no credential stuffing succeeded. Consider adding endpoint to clean up phantom users.
+- security_config.json had stale `owner_pin: "1111"` field — removed this run. No code references to it were found in app.py. Was likely a leftover from an earlier design.

@@ -2528,8 +2528,10 @@ def owner_credentials():
 
     if not username or not password:
         return jsonify({'message': 'Username and password required'}), 400
-    if len(password) < 6:
-        return jsonify({'message': 'Password must be at least 6 characters'}), 400
+    if len(password) < 8:
+        return jsonify({'message': 'Password must be at least 8 characters'}), 400
+    if not re.search(r'[A-Z]', password) or not re.search(r'[a-z]', password) or not re.search(r'[0-9]', password):
+        return jsonify({'message': 'Password must contain uppercase, lowercase, and a number.'}), 400
     if len(username) < 3:
         return jsonify({'message': 'Username must be at least 3 characters'}), 400
 
@@ -16525,6 +16527,19 @@ def schedule_compare():
         'comparison': comparison
     })
 
+
+# ── Custom Error Handlers ──────────────────────────────────────────────────
+# Prevents stack trace leakage in production error responses.
+
+@app.errorhandler(404)
+def not_found(error):
+    """Return JSON for 404 instead of HTML page that may leak paths."""
+    return jsonify({'message': 'Endpoint not found.'}), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    """Return JSON for 500 instead of stack trace."""
+    return jsonify({'message': 'Internal server error.'}), 500
 
 # Start the hourly security digest timer (works on import, including gunicorn)
 start_security_digest_timer()
