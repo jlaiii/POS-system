@@ -5300,7 +5300,8 @@ def clock_out():
         'scheduled_start': shift.get('scheduled_start'),
         'late_minutes': shift.get('late_minutes'),
         'late_excused': shift.get('late_excused', False),
-        'late_note': shift.get('late_note')
+        'late_note': shift.get('late_note'),
+        'pay_rate': user_data.get('pay_rate')  # Capture rate at clock-out time
     }
 
     # Store optional notes from employee
@@ -5426,9 +5427,10 @@ def clock_edit():
 
     new_clock_in_str = data.get('new_clock_in')
     new_clock_out_str = data.get('new_clock_out')
+    new_pay_rate = data.get('new_pay_rate')
 
-    if not new_clock_in_str and not new_clock_out_str:
-        return jsonify({'message': 'Provide at least one of new_clock_in or new_clock_out.'}), 400
+    if not new_clock_in_str and not new_clock_out_str and new_pay_rate is None:
+        return jsonify({'message': 'Provide at least one of new_clock_in, new_clock_out, or new_pay_rate.'}), 400
 
     changes = {}
     old_clock_in = shift.get('clock_in_time')
@@ -5449,6 +5451,18 @@ def clock_edit():
             return jsonify({'message': 'Invalid new_clock_out format. Use ISO format (e.g. 2026-06-23T17:00:00).'}), 400
         changes['clock_out_time'] = {'old': old_clock_out, 'new': new_clock_out_str}
         shift['clock_out_time'] = new_clock_out_str
+
+    # Handle pay_rate change
+    if new_pay_rate is not None:
+        try:
+            new_rate = float(new_pay_rate)
+            if new_rate < 0:
+                return jsonify({'message': 'Pay rate cannot be negative.'}), 400
+            old_rate = shift.get('pay_rate')
+            changes['pay_rate'] = {'old': old_rate, 'new': new_rate}
+            shift['pay_rate'] = new_rate
+        except (ValueError, TypeError):
+            return jsonify({'message': 'Invalid new_pay_rate. Must be a number.'}), 400
 
     # Recalculate duration
     try:
@@ -6061,7 +6075,8 @@ def employee_my_pay():
                 'duration_hours': s.get('duration_hours', 0),
                 'paid_hours': paid,
                 'break_hours': s.get('break_hours', 0),
-                'active': False
+                'active': False,
+                'pay_rate': s.get('pay_rate')  # Per-shift rate override
             })
             current_period_hours += paid
 
@@ -6093,7 +6108,8 @@ def employee_my_pay():
             'duration_hours': active_duration,
             'paid_hours': active_paid,
             'break_hours': active_break_hours,
-            'active': True
+            'active': True,
+            'pay_rate': pay_rate_val if has_pay_rate else None  # Current rate for active shift
         })
 
     current_period_hours = round(current_period_hours, 2)
@@ -6145,13 +6161,25 @@ def employee_my_pay():
             'clock_out_time': s.get('clock_out_time', ''),
             'duration_hours': s.get('duration_hours', 0),
             'paid_hours': paid,
-            'break_hours': s.get('break_hours', 0)
+            'break_hours': s.get('break_hours', 0),
+            'pay_rate': s.get('pay_rate')  # Per-shift rate override
         })
 
-    # Round hours and calculate gross for each period
+    # Round hours and calculate gross for each period using per-shift rates
     for wk in week_map.values():
         wk['hours'] = round(wk['hours'], 2)
-        wk['estimated_gross'] = round(wk['hours'] * pay_rate_val, 2) if has_pay_rate else None
+        wk_gross = 0.0
+        wk_has_rate = False
+        for shift in wk['shifts']:
+            srate = shift.get('pay_rate') or pay_rate_val or 0
+            if srate > 0:
+                wk_has_rate = True
+            wk_gross += shift.get('paid_hours', 0) * srate
+        wk['estimated_gross'] = round(wk_gross, 2) if wk_has_rate else None
+        wk['has_pay_rate'] = wk_has_rate
+        # Effective rate for this period
+        wk_rate = round(wk_gross / wk['hours'], 2) if wk_has_rate and wk['hours'] > 0 else pay_rate_val
+        wk['pay_rate'] = wk_rate if wk_has_rate else (pay_rate_val if has_pay_rate else None)
 
     # Sort periods newest first, exclude current week (already in current_period)
     current_week_key = monday.strftime('%Y-%m-%d')
@@ -6282,7 +6310,18 @@ def employee_pay_stub_pdf():
         total_break_hours += s.get('break_hours', 0)
 
     total_paid_hours = round(total_paid_hours, 2)
-    gross_pay = round(total_paid_hours * pay_rate, 2) if has_pay_rate else 0
+    # Calculate gross pay using per-shift rates
+    gross_pay = 0.0
+    gross_has_rate = False
+    for s in user_shifts:
+        sp = s.get('paid_hours', s.get('duration_hours', 0))
+        sr = s.get('pay_rate') or pay_rate
+        if s.get('pay_rate'):
+            gross_has_rate = True
+        gross_pay += sp * sr
+    gross_pay = round(gross_pay, 2) if (has_pay_rate or gross_has_rate) else 0
+    # Effective rate for display
+    eff_rate = round(gross_pay / total_paid_hours, 2) if (has_pay_rate or gross_has_rate) and total_paid_hours > 0 else pay_rate
 
     # YTD calculations
     now = datetime.now()
@@ -6330,7 +6369,26 @@ def employee_pay_stub_pdf():
         ytd_hours += active_paid
         ytd_shift_count += 1
         ytd_hours = round(ytd_hours, 2)
-        ytd_gross = round(ytd_hours * pay_rate, 2) if has_pay_rate else 0
+        # Recalculate YTD gross with per-shift rates
+        ytd_gross = 0.0
+        ytd_has_rate = False
+        for s in shift_log:
+            if s.get('user_id') != user_id:
+                continue
+            ck = s.get('clock_in_time', '')
+            if not ck:
+                continue
+            try:
+                dt = datetime.fromisoformat(ck)
+            except (ValueError, TypeError):
+                continue
+            if dt >= ytd_start:
+                sp = s.get('paid_hours', s.get('duration_hours', 0))
+                sr = s.get('pay_rate') or pay_rate
+                if s.get('pay_rate'):
+                    ytd_has_rate = True
+                ytd_gross += sp * sr
+        ytd_gross = round(ytd_gross, 2) if (has_pay_rate or ytd_has_rate) else 0
 
     period_label = f"{week_start.strftime('%Y-%m-%d')} to {week_end.strftime('%Y-%m-%d')}"
     now_str = datetime.now().strftime('%Y-%m-%d %H:%M')
@@ -6373,11 +6431,11 @@ def employee_pay_stub_pdf():
 
     # Pre-compute strings to avoid f-string expression limitations
     pay_rate_row = ''
-    if has_pay_rate:
-        pay_rate_row = f'<tr><td class="total-label">Pay Rate</td><td class="right total-value pay-rate">${pay_rate:.2f}/hr</td></tr>'
-    gross_pay_str = f'${gross_pay:,.2f}' if has_pay_rate else '$0.00'
-    ytd_gross_str = f'${ytd_gross:,.2f}' if has_pay_rate else '$0.00'
-    rate_display = f'${pay_rate:.2f}/hr' if has_pay_rate else 'Not set'
+    if has_pay_rate or gross_has_rate:
+        pay_rate_row = f'<tr><td class="total-label">Pay Rate</td><td class="right total-value pay-rate">${eff_rate:.2f}/hr</td></tr>'
+    gross_pay_str = f'${gross_pay:,.2f}' if (has_pay_rate or gross_has_rate) else '$0.00'
+    ytd_gross_str = f'${ytd_gross:,.2f}' if (has_pay_rate or ytd_has_rate) else '$0.00'
+    rate_display = f'${eff_rate:.2f}/hr' if (has_pay_rate or gross_has_rate) else 'Not set'
     safe_name = _html.escape(user_name)
     safe_id = _html.escape(user_id)
 
@@ -10043,7 +10101,8 @@ def timesheet_pay_period():
             'active': entry.get('active', False),
             'late_minutes': entry.get('late_minutes'),
             'late_excused': entry.get('late_excused', False),
-            'late_note': entry.get('late_note')
+            'late_note': entry.get('late_note'),
+            'pay_rate': entry.get('pay_rate')  # Per-shift pay rate override
         })
 
     # Calculate weekly overtime: group completed shifts by ISO week
@@ -10086,11 +10145,25 @@ def timesheet_pay_period():
                 week_ots.append(round(wh - OT_WEEKLY, 2))
         overtime_hours = round(sum(week_ots), 2)
 
-        # Pay rate from user profile
-        pay_rate = users.get(uid, {}).get('pay_rate', None)
-        has_pay_rate = pay_rate is not None and pay_rate > 0
-        pay_rate = pay_rate or 0
-        estimated_pay = round(total_hours * pay_rate, 2) if has_pay_rate else None
+        # Pay rate from user profile (default)
+        default_pay_rate = users.get(uid, {}).get('pay_rate', None)
+        has_any_rate = default_pay_rate is not None and default_pay_rate > 0
+
+        # Calculate estimated pay using per-shift pay_rate overrides
+        # If a shift has its own pay_rate, use that; otherwise use the user's default rate
+        estimated_pay = None
+        per_shift_earnings = 0.0
+        for s in shifts_sorted:
+            shift_hours = s.get('paid_hours', s.get('duration_hours', 0))
+            shift_rate = s.get('pay_rate') or default_pay_rate or 0
+            if shift_rate > 0:
+                has_any_rate = True
+            per_shift_earnings += shift_hours * shift_rate
+        if has_any_rate:
+            estimated_pay = round(per_shift_earnings, 2)
+
+        # Effective rate (weighted average for display)
+        effective_rate = round(per_shift_earnings / total_hours, 2) if has_any_rate and total_hours > 0 else (default_pay_rate or 0)
 
         # Sort shifts by clock_in_time
         shifts_sorted = sorted(ud['shifts'], key=lambda s: s.get('clock_in_time', ''))
@@ -10118,7 +10191,8 @@ def timesheet_pay_period():
                 'day_total_hours': round(day_total, 2),
                 'edited': s.get('edited', False),
                 'notes': s.get('notes', ''),
-                'late_note': s.get('late_note', '')
+                'late_note': s.get('late_note', ''),
+                'pay_rate': s.get('pay_rate')  # Per-shift pay rate override
             })
 
         results.append({
@@ -10127,8 +10201,9 @@ def timesheet_pay_period():
             'total_hours': total_hours,
             'shift_count': ud['shift_count'],
             'overtime_hours': overtime_hours,
-            'pay_rate': pay_rate,
-            'has_pay_rate': has_pay_rate,
+            'pay_rate': default_pay_rate,
+            'effective_pay_rate': effective_rate,
+            'has_pay_rate': has_any_rate,
             'estimated_pay': estimated_pay,
             'shifts': shifts_with_ot
         })
@@ -10650,13 +10725,26 @@ def export_pay_period_csv():
                 week_ots.append(round(wh - OT_WEEKLY, 2))
         overtime_hours = round(sum(week_ots), 2)
         pay_rate = users.get(uid, {}).get('pay_rate', 0) or 0
-        estimated_pay = round(total_hours * pay_rate, 2) if pay_rate > 0 else 0
+        # Calculate per-shift earnings for accurate multi-rate support
+        shift_earnings = 0.0
+        has_shift_rate = False
+        for entry in filtered_shifts:
+            if entry.get('user_id') == uid:
+                sh = entry.get('paid_hours', entry.get('duration_hours', 0))
+                sr = entry.get('pay_rate') or pay_rate
+                if entry.get('pay_rate'):
+                    has_shift_rate = True
+                shift_earnings += sh * sr
+        estimated_pay = round(shift_earnings, 2) if (pay_rate > 0 or has_shift_rate) else 0
+        display_rate = pay_rate
+        if has_shift_rate and total_hours > 0:
+            display_rate = round(shift_earnings / total_hours, 2)
         rows.append({
             'Employee Name': ud['user_name'],
             'User ID': uid,
             'Total Hours': total_hours,
             'Overtime Hours': overtime_hours,
-            'Pay Rate': pay_rate,
+            'Pay Rate': display_rate,
             'Estimated Pay': estimated_pay,
             'Shift Count': ud['shift_count']
         })
@@ -10798,12 +10886,25 @@ def export_pay_period_pdf():
                 week_ots.append(round(wh - OT_WEEKLY, 2))
         overtime_hours = round(sum(week_ots), 2)
         pay_rate = users.get(uid, {}).get('pay_rate', 0) or 0
-        estimated_pay = round(total_hours * pay_rate, 2) if pay_rate > 0 else 0
+        # Calculate per-shift earnings for accurate multi-rate support
+        shift_earnings = 0.0
+        has_shift_rate = False
+        for shift_entry in ud['shifts']:
+            sh = shift_entry.get('paid_hours', shift_entry.get('duration_hours', 0))
+            sr = shift_entry.get('pay_rate') or pay_rate
+            if shift_entry.get('pay_rate'):
+                has_shift_rate = True
+            shift_earnings += sh * sr
+        estimated_pay = round(shift_earnings, 2) if (pay_rate > 0 or has_shift_rate) else 0
+        # Display effective rate
+        display_rate = pay_rate
+        if has_shift_rate and total_hours > 0:
+            display_rate = round(shift_earnings / total_hours, 2)
         grand_total_hours += total_hours
         grand_total_pay += estimated_pay
         grand_total_ot += overtime_hours
         ot_str = f'<span class="ot">{overtime_hours:.2f}</span>' if overtime_hours > 0 else '0.00'
-        html += f"<tr><td>{ud['user_name']} ({uid})</td><td>{total_hours:.2f}</td><td>{ot_str}</td><td>${pay_rate:.2f}</td><td>${estimated_pay:.2f}</td><td>{ud['shift_count']}</td></tr>"
+        html += f"<tr><td>{ud['user_name']} ({uid})</td><td>{total_hours:.2f}</td><td>{ot_str}</td><td>${display_rate:.2f}</td><td>${estimated_pay:.2f}</td><td>{ud['shift_count']}</td></tr>"
 
     html += f"""</tbody>
 <tfoot>

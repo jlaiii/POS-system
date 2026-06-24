@@ -10373,7 +10373,16 @@ function renderTsDashboard(container, employees, approvalData, params) {
     html += '<div class="pp-card-meta">';
     html += '<div class="pp-stat"><div class="pp-stat-value" style="font-size:18px;">' + emp.total_hours.toFixed(1) + '</div><div class="pp-stat-label">Hours</div></div>';
     html += '<div class="pp-stat"><div class="pp-stat-value ' + (hasOT ? 'orange' : 'green') + '" style="font-size:18px;">' + emp.overtime_hours.toFixed(1) + '</div><div class="pp-stat-label">OT</div></div>';
-    html += '<div class="pp-stat"><div class="pp-stat-value" style="font-size:18px;">' + (emp.pay_rate > 0 ? '$' + emp.pay_rate.toFixed(2) : '—') + '</div><div class="pp-stat-label">Rate</div></div>';
+    // Rate display: show effective rate if multi-rate, else base rate
+    let rateDisplay = '—';
+    if (emp.effective_pay_rate && emp.effective_pay_rate > 0) {
+      const hasMultiRate = emp.effective_pay_rate > 0 && emp.pay_rate > 0 && Math.abs(emp.effective_pay_rate - emp.pay_rate) > 0.01;
+      rateDisplay = '$' + emp.effective_pay_rate.toFixed(2);
+      if (hasMultiRate) rateDisplay += '<span style="font-size:10px;color:var(--accent);margin-left:4px;" title="Multi-rate effective avg">★</span>';
+    } else if (emp.pay_rate > 0) {
+      rateDisplay = '$' + emp.pay_rate.toFixed(2);
+    }
+    html += '<div class="pp-stat"><div class="pp-stat-value" style="font-size:18px;">' + rateDisplay + '</div><div class="pp-stat-label">Rate</div></div>';
     html += '<div class="pp-stat"><div class="pp-stat-value gold" style="font-size:18px;">' + payDisplay + '</div><div class="pp-stat-label">Gross Pay</div></div>';
     if (lateShifts > 0) {
       html += '<div class="pp-stat"><div class="pp-stat-value" style="color:#e74c3c;font-size:18px;">' + lateShifts + '</div><div class="pp-stat-label">Late</div></div>';
@@ -10399,6 +10408,7 @@ function renderTsDashboard(container, employees, approvalData, params) {
     html += '<th onclick="sortTsShiftTable(\'' + emp.user_id + '\',\'hours\')" style="cursor:pointer;">Hours ▲▼</th>';
     html += '<th>Break</th>';
     html += '<th>Paid</th>';
+    html += '<th>Rate</th>';
     html += '<th>Status</th>';
     html += '<th>Notes</th>';
     html += '</tr></thead><tbody>';
@@ -10434,6 +10444,14 @@ function renderTsDashboard(container, employees, approvalData, params) {
       html += '<td data-sort="' + (s.duration_hours || 0) + '">' + (s.duration_hours || 0).toFixed(2) + '</td>';
       html += '<td>' + breakStr + '</td>';
       html += '<td style="font-weight:600;">' + paidStr + '</td>';
+      // Per-shift rate display
+      const sRate = s.pay_rate;
+      const defaultRate = emp.pay_rate || 0;
+      const hasOverride = sRate && sRate > 0 && Math.abs(sRate - defaultRate) > 0.01;
+      const rateStr = sRate && sRate > 0
+        ? '$' + parseFloat(sRate).toFixed(2) + (hasOverride ? '<span style="font-size:10px;color:var(--accent);margin-left:2px;" title="Override">★</span>' : '')
+        : (defaultRate > 0 ? '$' + defaultRate.toFixed(2) : '—');
+      html += '<td style="font-size:12px;">' + rateStr + '</td>';
       html += '<td style="white-space:nowrap;">' + badges + '</td>';
       html += '<td>' + noteHtml + '</td>';
       html += '</tr>';
@@ -12366,10 +12384,11 @@ function renderMyPay(data) {
     html += '    </div>';
     html += '  </div>';
     html += '  <div id="payPeriodDetails_' + period.start_date + '" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">';
-    html += '    <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:6px;font-size:12px;color:var(--text2);padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.08);margin-bottom:4px;font-weight:600;">';
+    html += '    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:6px;font-size:12px;color:var(--text2);padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.08);margin-bottom:4px;font-weight:600;">';
     html += '      <span>Date</span>';
     html += '      <span>In — Out</span>';
     html += '      <span>Hours</span>';
+    html += '      <span>Rate</span>';
     html += '      <span>Status</span>';
     html += '    </div>';
     (period.shifts || []).forEach(function(s) {
@@ -12385,18 +12404,22 @@ function renderMyPay(data) {
       const paid = (s.paid_hours || 0).toFixed(1);
       const breaks = s.break_hours > 0 ? ' (' + s.break_hours.toFixed(1) + 'h brk)' : '';
       const isActive = !s.clock_out_time;
-      html += '    <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:6px;font-size:13px;padding:6px 0;color:var(--text2);border-bottom:1px solid rgba(255,255,255,0.04);align-items:center;">';
+      const sRate = s.pay_rate;
+      const sRateStr = sRate && sRate > 0 ? '$' + parseFloat(sRate).toFixed(2) + '/hr' : (period.pay_rate ? '$' + period.pay_rate.toFixed(2) + '/hr' : '—');
+      html += '    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:6px;font-size:13px;padding:6px 0;color:var(--text2);border-bottom:1px solid rgba(255,255,255,0.04);align-items:center;">';
       html += '      <span style="color:var(--text);">' + dayName + ' ' + dateStr + '</span>';
       html += '      <span>' + inStr + ' — ' + outStr + '</span>';
       html += '      <span>' + paid + 'h paid' + breaks + '</span>';
+      html += '      <span style="font-size:12px;">' + sRateStr + '</span>';
       html += '      <span>' + (isActive ? '<span style="color:#f39c12;">⬤ Active</span>' : '<span style="color:#2ecc71;">⬤ Done</span>') + '</span>';
       html += '    </div>';
     });
     // Period summary row
-    html += '    <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:6px;font-size:13px;padding:8px 0 2px 0;color:var(--text);border-top:1px solid rgba(255,255,255,0.08);margin-top:4px;font-weight:600;">';
+    html += '    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:6px;font-size:13px;padding:8px 0 2px 0;color:var(--text);border-top:1px solid rgba(255,255,255,0.08);margin-top:4px;font-weight:600;">';
     html += '      <span>' + (t('mypay.period_total') || 'Period Total') + '</span>';
     html += '      <span></span>';
     html += '      <span>' + hoursStr + 'h</span>';
+    html += '      <span></span>';
     html += '      <span style="color:#2ecc71;">' + grossStr + '</span>';
     html += '    </div>';
     html += '  </div>';
@@ -15144,7 +15167,8 @@ function openShiftEditModal(shiftIndex) {
     document.getElementById('shiftEditCurrentTimes').innerHTML =
       'Clock In: <strong>' + new Date(shift.clock_in_time).toLocaleString() + '</strong><br>' +
       'Clock Out: <strong>' + (shift.clock_out_time ? new Date(shift.clock_out_time).toLocaleString() : '—') + '</strong><br>' +
-      'Duration: <strong>' + shift.duration_hours + ' hrs</strong>';
+      'Duration: <strong>' + shift.duration_hours + ' hrs</strong>' +
+      (shift.pay_rate ? '<br>Pay Rate: <strong>$' + parseFloat(shift.pay_rate).toFixed(2) + '/hr</strong>' : '');
 
     // Pre-fill datetime-local inputs with current values (in local YYYY-MM-DDTHH:MM format)
     try {
@@ -15157,6 +15181,8 @@ function openShiftEditModal(shiftIndex) {
         document.getElementById('shiftEditClockOut').value = co.toISOString().slice(0, 16);
       }
     } catch(e) {}
+    // Pre-fill pay rate
+    document.getElementById('shiftEditPayRate').value = shift.pay_rate || '';
 
     overlay.classList.add('active');
   })
@@ -15179,6 +15205,7 @@ async function submitShiftEdit() {
 
   const clockInInput = document.getElementById('shiftEditClockIn').value;
   const clockOutInput = document.getElementById('shiftEditClockOut').value;
+  const payRateInput = document.getElementById('shiftEditPayRate').value;
 
   const params = {
     adminPin: currentUser.id,
@@ -15193,9 +15220,12 @@ async function submitShiftEdit() {
   if (clockOutInput) {
     params.new_clock_out = new Date(clockOutInput).toISOString();
   }
+  if (payRateInput) {
+    params.new_pay_rate = parseFloat(payRateInput);
+  }
 
-  if (!params.new_clock_in && !params.new_clock_out) {
-    errDiv.textContent = 'Please provide at least one new time or cancel.';
+  if (!params.new_clock_in && !params.new_clock_out && params.new_pay_rate === undefined) {
+    errDiv.textContent = 'Please provide at least one new time, a pay rate change, or cancel.';
     errDiv.style.display = 'block';
     return;
   }
@@ -15224,6 +15254,7 @@ async function submitShiftEdit() {
 /** Close shift edit modal */
 function closeShiftEdit() {
   document.getElementById('shiftEditOverlay').classList.remove('active');
+  document.getElementById('shiftEditPayRate').value = '';
   _editingShiftIndex = -1;
 }
 
@@ -15431,6 +15462,11 @@ async function submitChangePin() {
         <label for="shiftEditClockOut" style="font-size:13px;color:var(--text2);font-weight:600;">New Clock-Out Time</label>
         <input type="datetime-local" id="shiftEditClockOut" style="width:100%;min-height:44px;font-size:14px;margin-top:4px;padding:8px;border-radius:6px;border:1px solid var(--border);background:var(--input-bg);color:var(--text);">
         <div style="font-size:12px;color:var(--text2);margin-top:4px;">Leave empty to keep current time</div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <label for="shiftEditPayRate" style="font-size:13px;color:var(--text2);font-weight:600;">Pay Rate Override <span style="font-size:11px;color:var(--text2);font-weight:400;">(leave empty to keep current)</span></label>
+        <input type="number" step="0.01" min="0" id="shiftEditPayRate" style="width:100%;min-height:44px;font-size:14px;margin-top:4px;padding:8px;border-radius:6px;border:1px solid var(--border);background:var(--input-bg);color:var(--text);" placeholder="E.g. 18.50">
+        <div style="font-size:12px;color:var(--text2);margin-top:4px;">Per-shift rate override — leave empty to keep user's base rate</div>
       </div>
       <div style="margin-bottom:12px;">
         <label for="shiftEditReason" style="font-size:13px;color:var(--text2);font-weight:600;">Reason for Edit <span style="color:var(--accent);">*</span></label>
