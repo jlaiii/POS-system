@@ -449,8 +449,8 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 
   <!-- Owner username+password mode -->
   <div id="loginOwnerMode" style="display:none;flex-direction:column;align-items:center;gap:12px;">
-    <input type="text" id="ownerUsername" placeholder="Username" autocomplete="username" style="font-size:18px;padding:12px;width:260px;border-radius:var(--radius);background:var(--card);color:var(--text);border:2px solid var(--border);text-align:center;">
-    <input type="password" id="ownerPassword" placeholder="Password" autocomplete="current-password" style="font-size:18px;padding:12px;width:260px;border-radius:var(--radius);background:var(--card);color:var(--text);border:2px solid var(--border);text-align:center;">
+    <input type="text" id="ownerUsername" placeholder="Username" autocomplete="username" style="font-size:18px;padding:12px;width:260px;border-radius:var(--radius);background:var(--card);color:var(--text);border:2px solid var(--border);text-align:center;" aria-label="Owner username">
+    <input type="password" id="ownerPassword" placeholder="Password" autocomplete="current-password" style="font-size:18px;padding:12px;width:260px;border-radius:var(--radius);background:var(--card);color:var(--text);border:2px solid var(--border);text-align:center;" aria-label="Owner password">
     <button onclick="ownerLogin()" style="font-size:20px;padding:14px 48px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);cursor:pointer;font-weight:700;min-height:56px;">Sign In</button>
   </div>
 
@@ -461,12 +461,12 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
       <div class="twofa-header">🔐 Two-Factor Authentication</div>
       <div class="twofa-sub" id="twofaSub">Enter the 6-digit code from your authenticator app</div>
       <div class="twofa-code-row" id="twofaCodeRow">
-        <input type="text" class="twofa-digit" id="twofaD0" maxlength="1" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code">
-        <input type="text" class="twofa-digit" id="twofaD1" maxlength="1" inputmode="numeric" pattern="[0-9]*">
-        <input type="text" class="twofa-digit" id="twofaD2" maxlength="1" inputmode="numeric" pattern="[0-9]*">
-        <input type="text" class="twofa-digit" id="twofaD3" maxlength="1" inputmode="numeric" pattern="[0-9]*">
-        <input type="text" class="twofa-digit" id="twofaD4" maxlength="1" inputmode="numeric" pattern="[0-9]*">
-        <input type="text" class="twofa-digit" id="twofaD5" maxlength="1" inputmode="numeric" pattern="[0-9]*">
+        <input type="text" class="twofa-digit" id="twofaD0" maxlength="1" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" aria-label="TOTP code digit 1">
+        <input type="text" class="twofa-digit" id="twofaD1" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="TOTP code digit 2">
+        <input type="text" class="twofa-digit" id="twofaD2" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="TOTP code digit 3">
+        <input type="text" class="twofa-digit" id="twofaD3" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="TOTP code digit 4">
+        <input type="text" class="twofa-digit" id="twofaD4" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="TOTP code digit 5">
+        <input type="text" class="twofa-digit" id="twofaD5" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="TOTP code digit 6">
       </div>
       <button class="twofa-back" onclick="cancel2FA()">← Back to Login</button>
       <div class="twofa-backup-link" id="twofaBackupLink" onclick="showBackupCodeInput()"></div>
@@ -475,7 +475,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
     <div id="twofaBackupSection" style="display:none;flex-direction:column;align-items:center;gap:16px;width:100%;">
       <div class="twofa-header" id="twofaBackupHeader">🔑 Use Backup Code</div>
       <div class="twofa-sub" id="twofaBackupSub">Enter one of your 8-digit backup codes</div>
-      <input type="text" id="twofaBackupInput" placeholder="e.g. XXXX-XXXX" maxlength="12" class="twofa-backup-input" autocomplete="off" onkeydown="if(event.key==='Enter')submitBackupCode()">
+      <input type="text" id="twofaBackupInput" placeholder="e.g. XXXX-XXXX" maxlength="12" class="twofa-backup-input" autocomplete="off" onkeydown="if(event.key==='Enter')submitBackupCode()" aria-label="Backup code">
       <button onclick="submitBackupCode()" class="twofa-backup-submit">Verify Backup Code</button>
       <button class="twofa-back" id="twofaBackToTotpBtn" onclick="backToTOTP()">← Back to Authenticator Code</button>
     </div>
@@ -516,13 +516,13 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
     <div id="posTab" class="active">
       <div id="barcodeScanner">
         <div class="barcode-input-row">
-          <input type="text" id="barcodeInput" placeholder="Scan barcode..." autofocus inputmode="numeric" data-i18n-placeholder="barcode.placeholder"/>
+          <input type="text" id="barcodeInput" placeholder="Scan barcode..." autofocus inputmode="numeric" data-i18n-placeholder="barcode.placeholder" aria-label="Barcode scanner input"/>
           <button class="barcode-scan-btn" onclick="scanBarcodeCamera()" title="Scan with camera" data-i18n="barcode.camera_btn">📷</button>
           <button class="barcode-clear-btn" onclick="clearBarcodeInput()" title="Clear">✕</button>
         </div>
         <div id="barcodeStatus"></div>
       </div>
-      <div id="itemSearchRow"><input type="text" id="itemSearchInput" placeholder="🔍 Search items..." data-i18n-placeholder="item.search" autocomplete="off"/></div>
+      <div id="itemSearchRow"><input type="text" id="itemSearchInput" placeholder="🔍 Search items..." data-i18n-placeholder="item.search" autocomplete="off" aria-label="Search menu items"/></div>
       <!-- RECENT ORDERS quick-access (collapsible) -->
       <div id="recentOrdersSection" class="recent-orders-wrap" style="display:none;">
         <div class="recent-orders-header" onclick="toggleRecentOrders()">
@@ -536,27 +536,27 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
       </div>
       <div id="catTabs"></div>
       <div id="posMain">
-        <div id="itemGrid"></div>
+        <div id="itemGrid" aria-live="polite" aria-atomic="false"></div>
         <div id="cart">
           <div id="cartHeader">
             <h3 data-i18n="cart.title">🧾 Cart</h3>
             <button id="cartToggle" onclick="toggleCartExpand()" title="Expand cart" data-i18n-title="cart.expand">⬆</button>
           </div>
-          <div id="cartItems"><div class="empty-state" data-i18n="cart.empty">Cart is empty</div></div>
+          <div id="cartItems" aria-live="polite" aria-atomic="false"><div class="empty-state" data-i18n="cart.empty">Cart is empty</div></div>
           <div id="discountRow" style="display:none;margin-top:4px;">
             <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
-              <input type="text" id="couponInput" placeholder="Coupon code" style="flex:1;min-width:100px;padding:10px 12px;font-size:14px;text-transform:uppercase;" maxlength="20" data-i18n-placeholder="cart.coupon"/>
+              <input type="text" id="couponInput" placeholder="Coupon code" style="flex:1;min-width:100px;padding:10px 12px;font-size:14px;text-transform:uppercase;" maxlength="20" data-i18n-placeholder="cart.coupon" aria-label="Coupon code"/>
               <button class="outline" onclick="applyDiscount()" style="font-size:13px;padding:8px 14px;min-height:40px;" data-i18n="cart.apply">Apply</button>
             </div>
             <div id="discountStatus" style="font-size:13px;margin-top:4px;"></div>
           </div>
           <div id="orderNotesRow" style="display:none;margin-top:4px;">
-            <textarea id="orderNotesInput" placeholder="Order notes / special instructions..." style="width:100%;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:14px;padding:10px 12px;min-height:48px;resize:vertical;font-family:inherit;" rows="2" maxlength="500" data-i18n-placeholder="cart.notes"></textarea>
+            <textarea id="orderNotesInput" placeholder="Order notes / special instructions..." style="width:100%;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:14px;padding:10px 12px;min-height:48px;resize:vertical;font-family:inherit;" rows="2" maxlength="500" data-i18n-placeholder="cart.notes" aria-label="Order notes"></textarea>
           </div>
           <div id="tableRow" style="display:none;margin-top:4px;">
             <div style="display:flex;gap:8px;align-items:center;">
               <span style="color:var(--text2);font-size:13px;white-space:nowrap;">🪑 Table:</span>
-              <select id="tableSelect" style="flex:1;padding:8px 10px;font-size:14px;min-height:40px;">
+              <select id="tableSelect" style="flex:1;padding:8px 10px;font-size:14px;min-height:40px;" aria-label="Select table">
                 <option value="">No table</option>
               </select>
             </div>
@@ -589,13 +589,13 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
             </div>
             <div id="deliveryForm" style="display:none;background:var(--card);border-radius:8px;padding:10px;margin-top:4px;">
               <div style="display:flex;flex-direction:column;gap:8px;">
-                <input type="text" id="delStreet" placeholder="Street address" style="flex:1;min-height:44px;font-size:14px;padding:8px 12px;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);" maxlength="200" data-i18n-placeholder="delivery.street"/>
+                <input type="text" id="delStreet" placeholder="Street address" style="flex:1;min-height:44px;font-size:14px;padding:8px 12px;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);" maxlength="200" data-i18n-placeholder="delivery.street" aria-label="Delivery street address"/>
                 <div style="display:flex;gap:6px;flex-wrap:wrap;">
-                  <input type="text" id="delCity" placeholder="City" style="flex:2;min-width:100px;min-height:44px;font-size:14px;padding:8px 12px;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);" maxlength="100" data-i18n-placeholder="delivery.city"/>
-                  <input type="text" id="delState" placeholder="State" style="flex:1;min-width:70px;min-height:44px;font-size:14px;padding:8px 12px;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);" maxlength="50" data-i18n-placeholder="delivery.state"/>
-                  <input type="text" id="delZip" placeholder="ZIP code" style="flex:1;min-width:80px;min-height:44px;font-size:14px;padding:8px 12px;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);" maxlength="20" data-i18n-placeholder="delivery.zip"/>
+                  <input type="text" id="delCity" placeholder="City" style="flex:2;min-width:100px;min-height:44px;font-size:14px;padding:8px 12px;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);" maxlength="100" data-i18n-placeholder="delivery.city" aria-label="Delivery city"/>
+                  <input type="text" id="delState" placeholder="State" style="flex:1;min-width:70px;min-height:44px;font-size:14px;padding:8px 12px;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);" maxlength="50" data-i18n-placeholder="delivery.state" aria-label="Delivery state"/>
+                  <input type="text" id="delZip" placeholder="ZIP code" style="flex:1;min-width:80px;min-height:44px;font-size:14px;padding:8px 12px;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);" maxlength="20" data-i18n-placeholder="delivery.zip" aria-label="Delivery ZIP code"/>
                 </div>
-                <textarea id="delInstructions" placeholder="Delivery instructions (gate code, landmark, etc.)" style="width:100%;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:14px;padding:10px 12px;min-height:44px;resize:vertical;font-family:inherit;" rows="1" maxlength="300" data-i18n-placeholder="delivery.instructions"></textarea>
+                <textarea id="delInstructions" placeholder="Delivery instructions (gate code, landmark, etc.)" style="width:100%;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:14px;padding:10px 12px;min-height:44px;resize:vertical;font-family:inherit;" rows="1" maxlength="300" data-i18n-placeholder="delivery.instructions" aria-label="Delivery instructions"></textarea>
                 <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
                   <button class="outline" onclick="saveDeliveryAddress()" style="font-size:12px;padding:6px 12px;min-height:40px;border-color:#4fc3f7;color:#4fc3f7;" data-i18n="delivery.save">💾 Save for reuse</button>
                   <span id="deliverySaveStatus" style="font-size:12px;color:var(--text2);"></span>
@@ -606,7 +606,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
           <div id="loyaltyRow" style="display:none;margin-top:6px;">
             <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:4px;">
               <span style="color:var(--text2);font-size:13px;font-weight:600;white-space:nowrap;">⭐ Loyalty:</span>
-              <input type="tel" id="loyaltyPhone" placeholder="Customer phone" style="flex:1;min-width:120px;min-height:44px;font-size:14px;padding:8px 12px;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);" maxlength="20" inputmode="tel"/>
+              <input type="tel" id="loyaltyPhone" placeholder="Customer phone" style="flex:1;min-width:120px;min-height:44px;font-size:14px;padding:8px 12px;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);" maxlength="20" inputmode="tel" aria-label="Customer phone number"/>
               <button class="outline" onclick="loyaltyLookup()" style="font-size:13px;padding:8px 14px;min-height:44px;border-color:#f39c12;color:#f39c12;">🔍 Lookup</button>
               <button class="outline" onclick="loyaltyShowRegister()" style="font-size:13px;padding:8px 14px;min-height:44px;border-color:#2ecc71;color:#2ecc71;">➕ Register</button>
             </div>
@@ -621,7 +621,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
             </div>
             <div id="loyaltyRegisterForm" style="display:none;background:var(--card);border-radius:8px;padding:10px;margin-top:4px;">
               <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
-                <input type="text" id="loyaltyRegName" placeholder="Customer name" style="flex:1;min-width:120px;min-height:44px;font-size:14px;padding:8px 12px;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);" maxlength="50"/>
+                <input type="text" id="loyaltyRegName" placeholder="Customer name" style="flex:1;min-width:120px;min-height:44px;font-size:14px;padding:8px 12px;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);" maxlength="50" aria-label="Customer name for loyalty registration"/>
                 <button class="accent" onclick="loyaltyRegister()" style="font-size:13px;padding:8px 14px;min-height:44px;">✅ Save</button>
                 <button class="ghost" onclick="loyaltyCancelRegister()" style="font-size:13px;padding:8px 14px;min-height:44px;">✕ Cancel</button>
               </div>
@@ -631,7 +631,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
           <div id="emailRow" style="margin-top:6px;">
             <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
               <span style="color:var(--text2);font-size:13px;font-weight:600;white-space:nowrap;">📧 Email:</span>
-              <input type="email" id="customerEmail" placeholder="Email receipt to customer" style="flex:1;min-width:140px;min-height:44px;font-size:14px;padding:8px 12px;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);" maxlength="100" inputmode="email" data-i18n-placeholder="cart.email_placeholder"/>
+              <input type="email" id="customerEmail" placeholder="Email receipt to customer" style="flex:1;min-width:140px;min-height:44px;font-size:14px;padding:8px 12px;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);" maxlength="100" inputmode="email" data-i18n-placeholder="cart.email_placeholder" aria-label="Customer email for receipt"/>
             </div>
           </div>
           <div id="cartTotal">Total: $0.00</div>
@@ -660,12 +660,12 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
     <!-- HISTORY TAB -->
     <div id="historyTab">
       <div id="historyFilter">
-        <input type="date" id="historyDateFrom" onchange="loadOrderHistory()" data-i18n-placeholder="history.filter_date_from"/>
+        <input type="date" id="historyDateFrom" onchange="loadOrderHistory()" data-i18n-placeholder="history.filter_date_from" aria-label="Order history date from"/>
         <span style="color:var(--text2);align-self:center;">→</span>
-        <input type="date" id="historyDateTo" onchange="loadOrderHistory()" data-i18n-placeholder="history.filter_date_to"/>
+        <input type="date" id="historyDateTo" onchange="loadOrderHistory()" data-i18n-placeholder="history.filter_date_to" aria-label="Order history date to"/>
         <button class="ghost" onclick="document.getElementById('historyDateFrom').value='';document.getElementById('historyDateTo').value='';loadOrderHistory();" data-i18n="history.clear">✕ Clear</button>
       </div>
-      <div id="historyList"><div class="empty-state" data-i18n="history.loading">Loading orders...</div></div>
+      <div id="historyList" aria-live="polite"><div class="empty-state" data-i18n="history.loading">Loading orders...</div></div>
     </div>
 
     <!-- ADMIN TAB -->
@@ -708,9 +708,9 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
         <!-- Stats -->
         <div id="secStats" class="admin-section active">
           <div class="stats-filter" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center;">
-            <input type="date" id="statsDateFrom" onchange="loadAdminStats()" style="flex:1;min-width:130px;"/>
-            <span style="color:var(--text2);">→</span>
-            <input type="date" id="statsDateTo" onchange="loadAdminStats()" style="flex:1;min-width:130px;"/>
+            <input type="date" id="statsDateFrom" onchange="loadAdminStats()" style="flex:1;min-width:130px;" aria-label="Stats date from"/>
+            <span style="color:var(--text2);align-self:center;">→</span>
+            <input type="date" id="statsDateTo" onchange="loadAdminStats()" style="flex:1;min-width:130px;" aria-label="Stats date to"/>
             <button class="ghost" onclick="document.getElementById('statsDateFrom').value='';document.getElementById('statsDateTo').value='';loadAdminStats();" style="font-size:13px;padding:8px 12px;min-height:36px;">✕ Clear</button>
           </div>
           <div class="stats-grid" id="statsGrid"><div class="empty-state">Loading stats...</div></div>
@@ -976,9 +976,9 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
             </div>
             <div class="form-row" style="gap:8px;flex-wrap:wrap;align-items:center;">
               <label style="font-size:13px;color:var(--text2);">📅 From:</label>
-              <input type="date" id="tsPeriodDateFrom" style="max-width:160px;min-height:40px;font-size:14px;">
-              <label style="font-size:13px;color:var(--text2);">To:</label>
-              <input type="date" id="tsPeriodDateTo" style="max-width:160px;min-height:40px;font-size:14px;">
+              <input type="date" id="tsPeriodDateFrom" style="max-width:160px;min-height:40px;font-size:14px;" aria-label="Pay period date from"/>
+              <label style="font-size:13px;color:var(--text2);">→ To:</label>
+              <input type="date" id="tsPeriodDateTo" style="max-width:160px;min-height:40px;font-size:14px;" aria-label="Pay period date to"/>
               <button class="accent" onclick="loadTimesheetDashboard()" style="min-height:40px;padding:8px 18px;font-size:14px;">🔍 Filter</button>
               <button class="outline" onclick="document.getElementById('tsPeriodDateFrom').value='';document.getElementById('tsPeriodDateTo').value='';loadTimesheetDashboard()" style="min-height:40px;padding:8px 16px;font-size:13px;">✕ Clear</button>
             </div>
@@ -1604,10 +1604,10 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 
             <!-- Month navigation -->
             <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
-              <button class="accent" onclick="calendarPrevMonth()" style="min-height:44px;padding:8px 16px;font-size:16px;">◀</button>
+              <button class="accent" onclick="calendarPrevMonth()" style="min-height:44px;padding:8px 16px;font-size:16px;" aria-label="Previous month">◀</button>
               <h4 id="calendarMonthTitle" style="margin:0;font-size:20px;min-width:220px;text-align:center;">June 2026</h4>
-              <button class="accent" onclick="calendarNextMonth()" style="min-height:44px;padding:8px 16px;font-size:16px;">▶</button>
-              <button onclick="calendarGoToday()" style="min-height:44px;padding:8px 16px;font-size:13px;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);cursor:pointer;">📅 Today</button>
+              <button class="accent" onclick="calendarNextMonth()" style="min-height:44px;padding:8px 16px;font-size:16px;" aria-label="Next month">▶</button>
+              <button onclick="calendarGoToday()" style="min-height:44px;padding:8px 16px;font-size:13px;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);cursor:pointer;" aria-label="Go to today">📅 Today</button>
             </div>
 
             <!-- Calendar grid -->
@@ -1874,23 +1874,23 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
     <div class="card" style="margin-bottom:16px;">
       <h4 style="margin-bottom:12px;" data-i18n="requests.new">🆕 New Request</h4>
       <div class="form-row" style="flex-wrap:wrap;gap:8px;margin-bottom:8px;">
-        <select id="requestType" style="flex:1;min-width:160px;" onchange="onRequestTypeChange()">
+        <select id="requestType" style="flex:1;min-width:160px;" onchange="onRequestTypeChange()" aria-label="Request type">
           <option value="time_off" data-i18n="requests.type.time_off">🕐 Time Off Request</option>
           <option value="issue" data-i18n="requests.type.issue">🐛 Report Issue</option>
           <option value="feedback" data-i18n="requests.type.feedback">💬 Feedback / Suggestion</option>
           <option value="pay_review" style="display:none;" data-i18n="requests.type.pay_review">💰 Pay Review</option>
           <option value="other" data-i18n="requests.type.other">📝 Other</option>
         </select>
-        <select id="requestPriority" style="flex:1;min-width:120px;display:none;">
+        <select id="requestPriority" style="flex:1;min-width:120px;display:none;" aria-label="Request priority">
           <option value="normal" data-i18n="requests.priority.normal">🔵 Normal</option>
           <option value="urgent" data-i18n="requests.priority.urgent">🔴 Urgent</option>
           <option value="low" data-i18n="requests.priority.low">🟢 Low</option>
         </select>
       </div>
       <div id="requestDateRow" style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
-        <input type="date" id="requestDateFrom" style="flex:1;min-width:130px;" onchange="onRequestDateChange()"/>
+        <input type="date" id="requestDateFrom" style="flex:1;min-width:130px;" onchange="onRequestDateChange()" aria-label="Request date from"/>
         <span style="color:var(--text2);display:flex;align-items:center;">→</span>
-        <input type="date" id="requestDateTo" style="flex:1;min-width:130px;" onchange="onRequestDateChange()"/>
+        <input type="date" id="requestDateTo" style="flex:1;min-width:130px;" onchange="onRequestDateChange()" aria-label="Request date to"/>
         <span id="requestDaysBadge" style="display:none;background:var(--accent);color:#fff;padding:8px 14px;border-radius:var(--radius);font-size:14px;font-weight:600;white-space:nowrap;align-items:center;"></span>
       </div>
       <div id="requestValidationMsg" style="font-size:13px;margin-bottom:8px;padding:6px 10px;border-radius:var(--radius);display:block;"></div>
@@ -1916,12 +1916,12 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
             <option value="6" data-i18n="requests.recurring_sunday">Sunday</option>
           </select>
           <span style="color:var(--text2);font-size:13px;" data-i18n="requests.recurring_until">Repeat until</span>
-          <input type="date" id="requestRecurringUntil" style="flex:1;min-width:130px;" onchange="onRequestRecurringChange()"/>
+          <input type="date" id="requestRecurringUntil" style="flex:1;min-width:130px;" onchange="onRequestRecurringChange()" aria-label="Repeat until date"/>
           <span id="requestRecurringCount" style="display:none;background:var(--accent);color:#fff;padding:6px 12px;border-radius:var(--radius);font-size:13px;font-weight:600;white-space:nowrap;"></span>
         </div>
       </div>
-      <input type="text" id="requestSubject" placeholder="Subject" style="margin-bottom:8px;"/>
-      <textarea id="requestDescription" placeholder="Description..." style="width:100%;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:14px;padding:10px 12px;min-height:80px;resize:vertical;font-family:inherit;margin-bottom:8px;" rows="3" maxlength="2000"></textarea>
+      <input type="text" id="requestSubject" placeholder="Subject" style="margin-bottom:8px;" aria-label="Request subject"/>
+      <textarea id="requestDescription" placeholder="Description..." style="width:100%;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:14px;padding:10px 12px;min-height:80px;resize:vertical;font-family:inherit;margin-bottom:8px;" rows="3" maxlength="2000" aria-label="Request description"></textarea>
       <button class="accent" onclick="submitTicket()" style="width:100%;min-height:48px;" data-i18n="requests.submit">✅ Submit Request</button>
     </div>
 
@@ -2052,7 +2052,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
     <span class="kh-clock" id="kitchenClock"></span>
     <div class="kh-actions">
       <button class="ghost" onclick="toggleFullscreen()" title="Fullscreen" style="font-size:18px;padding:8px 12px;min-height:40px;">⛶</button>
-      <button class="ghost" id="kitchenBackBtn" style="display:none;" onclick="hideKitchenView()" data-i18n="kitchen.back">← Back to POS</button>
+      <button class="ghost" id="kitchenBackBtn" style="display:none;" onclick="hideKitchenView()" data-i18n="kitchen.back" aria-label="Back to POS from kitchen">← Back to POS</button>
       <button class="ghost logout-btn" onclick="doLogout()" data-i18n="logout">🚪 Logout</button>
     </div>
   </div>
@@ -2068,7 +2068,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 </div>
 
 <!-- ═══════════ RECEIPT OVERLAY ═══════════ -->
-<div id="receiptOverlay">
+<div id="receiptOverlay" role="dialog" aria-modal="true" aria-label="Receipt">
   <div id="receiptBox">
     <div id="receiptContent"></div>
     <div id="receiptActions">
@@ -2081,7 +2081,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 </div>
 
 <!-- ═══════════ TABLE TAB OVERLAY ═══════════ -->
-<div id="tableTabOverlay" class="modal-overlay">
+<div id="tableTabOverlay" class="modal-overlay" role="dialog" aria-modal="true" aria-label="Table tab">
   <div class="modal-box" style="max-width:500px;max-height:80vh;overflow-y:auto;">
     <h3 id="tableTabTitle">🪑 Table Tab</h3>
     <div id="tableTabContent"><div class="empty-state">Loading...</div></div>
@@ -2092,7 +2092,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 </div>
 
 <!-- ═══════════ TABLE TAB HISTORY OVERLAY ═══════════ -->
-<div id="tableTabHistoryOverlay" class="modal-overlay">
+<div id="tableTabHistoryOverlay" class="modal-overlay" role="dialog" aria-modal="true" aria-label="Table tab history">
   <div class="modal-box" style="max-width:550px;max-height:80vh;overflow-y:auto;">
     <h3 id="tableTabHistoryTitle">🪑 Table Tab History</h3>
     <div id="tableTabHistoryContent"><div class="empty-state">Loading...</div></div>
@@ -2103,13 +2103,13 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 </div>
 
 <!-- ═══════════ GENERIC MODAL OVERLAY ═══════════ -->
-<div id="genericModalOverlay" class="modal-overlay">
+<div id="genericModalOverlay" class="modal-overlay" role="dialog" aria-modal="true" aria-label="Modal dialog">
   <div class="modal-box" id="genericModalBox" style="max-width:500px;max-height:80vh;overflow-y:auto;">
   </div>
 </div>
 
 <!-- ═══════════ KIOSK MODE OVERLAY ═══════════ -->
-<div id="kioskOverlay">
+<div id="kioskOverlay" role="dialog" aria-modal="true" aria-label="Kiosk mode">
   <!-- Mode switch tabs -->
   <div class="kiosk-mode-tabs">
     <button class="active" id="kioskModeTabNew" onclick="switchKioskMode('new')">🆕 New Order</button>
@@ -2206,7 +2206,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 </div>
 
 <!-- ═══════════ FAVORITES OVERLAY ═══════════ -->
-<div id="favoritesOverlay" class="modal-overlay">
+<div id="favoritesOverlay" class="modal-overlay" role="dialog" aria-modal="true" aria-label="Favorites">
   <div class="modal-box" style="max-width:500px;max-height:80vh;overflow-y:auto;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
       <h3 style="margin:0;" data-i18n="favorites.title">⭐ My Favorites</h3>
@@ -2220,7 +2220,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 </div>
 
 <!-- ═══════════ SAVE FAVORITE DIALOG ═══════════ -->
-<div id="saveFavoriteOverlay" class="modal-overlay">
+<div id="saveFavoriteOverlay" class="modal-overlay" role="dialog" aria-modal="true" aria-label="Save favorite">
   <div class="modal-box" style="max-width:400px;">
     <h3 style="margin-bottom:12px;" data-i18n="favorites.save_title">⭐ Save as Favorite</h3>
     <p style="color:var(--text2);margin-bottom:12px;font-size:14px;" data-i18n="favorites.save_desc">Save your current cart items as a favorite combo for quick ordering.</p>
@@ -2233,7 +2233,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 </div>
 
 <!-- ═══════════ REFUND OVERLAY ═══════════ -->
-<div id="refundOverlay" class="modal-overlay">
+<div id="refundOverlay" class="modal-overlay" role="dialog" aria-modal="true" aria-label="Refund items">
   <div class="modal-box" style="max-width:550px;max-height:85vh;overflow-y:auto;">
     <h3 id="refundTitle" style="margin-bottom:12px;">↩️ Refund Items</h3>
     <div id="refundOrderSummary" style="background:var(--bg);padding:12px;border-radius:8px;margin-bottom:12px;"></div>
@@ -2243,7 +2243,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
     </div>
     <div style="margin-bottom:12px;">
       <label style="display:block;color:var(--text2);font-size:14px;margin-bottom:4px;" data-i18n="history.refund_reason_placeholder">Reason for refund:</label>
-      <textarea id="refundReasonInput" rows="3" style="width:100%;padding:12px;border-radius:8px;background:var(--bg);border:2px solid var(--border);color:var(--text);font-size:16px;resize:vertical;" placeholder="Enter reason for refund..."></textarea>
+      <textarea id="refundReasonInput" rows="3" style="width:100%;padding:12px;border-radius:8px;background:var(--bg);border:2px solid var(--border);color:var(--text);font-size:16px;resize:vertical;" placeholder="Enter reason for refund..." aria-label="Refund reason"></textarea>
     </div>
     <div id="refundItemTotal" style="margin-bottom:12px;display:none;">
       <strong data-i18n="history.refund_selected_total">Selected refund total:</strong> $<span id="refundSelectedTotal">0.00</span>
@@ -2256,11 +2256,11 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 </div>
 
 <!-- ═══════════ CLOCK-OUT NOTES OVERLAY ═══════════ -->
-<div id="clockOutNotesOverlay" class="modal-overlay">
+<div id="clockOutNotesOverlay" class="modal-overlay" role="dialog" aria-modal="true" aria-label="Clock out notes">
   <div class="modal-box" style="max-width:450px;">
     <h3 style="margin-bottom:8px;">⏰ Clock Out</h3>
     <p style="color:var(--text2);margin-bottom:12px;font-size:14px;">Add optional notes about your shift (e.g., "covered closing duties", "stayed late for deep clean").</p>
-    <textarea id="clockOutNotesInput" rows="3" style="width:100%;padding:12px;border-radius:8px;background:var(--bg);border:2px solid var(--border);color:var(--text);font-size:15px;resize:vertical;" placeholder="Shift notes (optional)..."></textarea>
+    <textarea id="clockOutNotesInput" rows="3" style="width:100%;padding:12px;border-radius:8px;background:var(--bg);border:2px solid var(--border);color:var(--text);font-size:15px;resize:vertical;" placeholder="Shift notes (optional)..." aria-label="Shift notes for clock out"></textarea>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;">
       <button class="ghost" onclick="closeClockOutNotes()" style="font-size:16px;padding:12px 24px;min-height:48px;">Cancel</button>
       <button class="accent" onclick="confirmClockOut()" style="font-size:16px;padding:12px 24px;min-height:48px;">✅ Clock Out</button>
@@ -2269,23 +2269,23 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 </div>
 
 <!-- ═══════════ IDLE COUNTDOWN OVERLAY ═══════════ -->
-<div id="idleCountdownOverlay">
+<div id="idleCountdownOverlay" role="dialog" aria-modal="true" aria-label="Idle timeout warning">
   <div class="idle-countdown-num" id="idleCountdownNum">30</div>
   <div class="idle-countdown-label" data-i18n="idle.countdown">Locking in 30 seconds... tap to stay.</div>
   <button class="idle-cancel-btn" onclick="cancelIdleCountdown()" data-i18n="idle.stay">✕ Stay</button>
 </div>
 
 <!-- ═══════════ LOCK OVERLAY ═══════════ -->
-<div id="lockOverlay">
+<div id="lockOverlay" role="dialog" aria-modal="true" aria-label="Screen locked">
   <div class="lock-title">🔒 <span data-i18n="idle.locked_title">Session Locked</span></div>
   <div class="lock-sub" data-i18n="idle.locked_sub">Enter your PIN to unlock</div>
-  <input type="password" id="lockPinInput" class="lock-pin-input" maxlength="8" inputmode="numeric" pattern="[0-9]*" autocomplete="off" onkeydown="onLockPinKeydown(event)">
+  <input type="password" id="lockPinInput" class="lock-pin-input" maxlength="8" inputmode="numeric" pattern="[0-9]*" autocomplete="off" onkeydown="onLockPinKeydown(event)" aria-label="Enter PIN to unlock">
   <div class="lock-error" id="lockErrorMsg"></div>
   <button class="accent" onclick="unlockApp()" style="font-size:18px;padding:14px 36px;min-height:56px;border:none;border-radius:var(--radius);background:var(--accent);color:#fff;font-weight:700;cursor:pointer;" data-i18n="idle.unlock">Unlock</button>
 </div>
 
 <!-- ═══════════ ITEM MODIFIER OVERLAY ═══════════ -->
-<div id="modifierOverlay" class="modal-overlay">
+<div id="modifierOverlay" class="modal-overlay" role="dialog" aria-modal="true" aria-label="Item modifier">
   <div class="modal-box" style="max-width:500px;max-height:80vh;overflow-y:auto;">
     <h3 id="modifierTitle" style="margin-bottom:12px;">✏️ Customize Item</h3>
     <div id="modifierContent" style="margin-bottom:12px;"></div>
@@ -2298,7 +2298,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 </div>
 
 <!-- ═══════════ MODIFIER EDITOR OVERLAY (ADMIN) ═══════════ -->
-<div id="modifierEditorOverlay" class="modal-overlay">
+<div id="modifierEditorOverlay" class="modal-overlay" role="dialog" aria-modal="true" aria-label="Modifier editor">
   <div class="modal-box" style="max-width:600px;max-height:85vh;overflow-y:auto;">
     <h3 id="modifierEditorTitle" style="margin-bottom:12px;">⚙️ Edit Item Modifiers</h3>
     <p style="color:var(--text2);font-size:14px;margin-bottom:12px;">Define modifier groups with options. Each group can be "single" (radio, choose one) or "multiple" (checkboxes, choose many). Options can have a price adjustment.</p>
@@ -14454,6 +14454,7 @@ function showToast(msg, type, duration) {
   if (existing) existing.remove();
   const toast = document.createElement('div');
   toast.className = 'toast';
+  toast.setAttribute('role', 'alert');
   if (type === 'danger') {
     toast.style.background = '#c0392b';
   } else if (type === 'warning') {
@@ -14463,7 +14464,7 @@ function showToast(msg, type, duration) {
   }
   toast.textContent = msg;
   document.body.appendChild(toast);
-  setTimeout(() => toast.remove(), duration || 2500);
+  setTimeout(() => toast.remove(), duration || 3500);
 }
 
 // ═══════════ TAX CONFIG ═══════════
@@ -16637,7 +16638,7 @@ async function submitChangePin() {
 </div>
 
 <!-- ═══════════ 2FA SETUP MODAL ═══════════ -->
-<div id="twofaSetupOverlay" class="modal-overlay">
+<div id="twofaSetupOverlay" class="modal-overlay" role="dialog" aria-modal="true" aria-label="Two-factor authentication setup">
   <div class="modal-box" style="max-width:480px;max-height:90vh;overflow-y:auto;">
     <h3 style="margin-bottom:4px;">🔐 Two-Factor Authentication</h3>
     <p style="font-size:13px;color:var(--text2);margin:0 0 8px 0;" id="twofaSetupDesc">Add an extra layer of security to your account.</p>
@@ -16660,7 +16661,7 @@ async function submitChangePin() {
     <!-- Step 2: Verify Code -->
     <div id="twofaSetupStep2" class="twofa-step">
       <p style="font-size:14px;color:var(--text2);text-align:center;margin:0;">Enter the 6-digit verification code from your authenticator app:</p>
-      <input type="text" id="twofaVerifyInput" class="twofa-verify-input" maxlength="6" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="000000">
+      <input type="text" id="twofaVerifyInput" class="twofa-verify-input" maxlength="6" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="000000" aria-label="Enter 6-digit verification code">
       <div id="twofaVerifyError" style="color:var(--accent);font-size:13px;display:none;"></div>
       <div id="twofaVerifyLoading" style="font-size:13px;color:var(--text2);display:none;">Verifying...</div>
       <div style="display:flex;gap:8px;width:100%;">
@@ -16732,9 +16733,9 @@ async function submitChangePin() {
       <button class="ghost" onclick="closeUserTimeline()" style="font-size:24px;padding:4px 12px;min-height:44px;line-height:1;">✕</button>
     </div>
     <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
-      <input type="date" id="tlDateFrom" style="max-width:160px;min-height:44px;font-size:14px;" />
-      <input type="date" id="tlDateTo" style="max-width:160px;min-height:44px;font-size:14px;" />
-      <select id="tlTypeFilter" style="max-width:200px;min-height:44px;font-size:14px;">
+      <input type="date" id="tlDateFrom" style="max-width:160px;min-height:44px;font-size:14px;" aria-label="Timeline date from"/>
+      <input type="date" id="tlDateTo" style="max-width:160px;min-height:44px;font-size:14px;" aria-label="Timeline date to"/>
+      <select id="tlTypeFilter" style="max-width:200px;min-height:44px;font-size:14px;" aria-label="Timeline event type filter">
         <option value="">All Events</option>
       </select>
       <button class="outline" onclick="refreshUserTimeline()" style="min-height:44px;font-size:14px;padding:8px 16px;">🔍 Filter</button>
