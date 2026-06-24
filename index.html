@@ -911,6 +911,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
                 <label for="logTypeFilter">🔧 Action</label>
                 <select id="logTypeFilter" style="min-width:140px;">
                   <option value="">All actions</option>
+                  <option value="__prefix__:2fa_">🔐 2FA Events</option>
                 </select>
               </div>
               <div class="log-filter-group">
@@ -10501,14 +10502,29 @@ async function loadActivityLog() {
     }
 
     if (logs.length === 0) { list.innerHTML = '<div class="empty-state">No activity matches filters</div>'; return; }
-    list.innerHTML = logs.map(l => `
-      <div class="log-entry">
+    list.innerHTML = logs.map(l => {
+      // Determine type-specific icon/color for 2FA events
+      let typeIcon = '';
+      const t = l.type || '';
+      if (t.startsWith('2fa_')) {
+        if (t === '2fa_setup') typeIcon = '🔐';
+        else if (t === '2fa_disabled' || t === '2fa_disabled_by_admin') typeIcon = '🔓';
+        else if (t === '2fa_backup_code_used') typeIcon = '🔑';
+        else if (t === '2fa_login_success') typeIcon = '✅';
+        else if (t === '2fa_login_failed') typeIcon = '❌';
+        else if (t === '2fa_rate_limited') typeIcon = '⏳';
+        else if (t === '2fa_backup_regenerated') typeIcon = '🔄';
+        else if (t === '2fa_setup_initiated') typeIcon = '🔐';
+        else typeIcon = '🔐';
+      }
+      return `
+      <div class="log-entry${t.startsWith('2fa_') ? ' log-entry-2fa' : ''}">
         <span class="log-time">${new Date(l.timestamp).toLocaleString()}</span>
-        <span class="log-type">[${escHtml(l.type)}]</span>
+        <span class="log-type">${typeIcon ? typeIcon + ' ' : ''}[${escHtml(t)}]</span>
         ${escHtml(l.user_id)} (${escHtml(l.user_role)})
         ${l.details && Object.keys(l.details).length ? ' — ' + escHtml(JSON.stringify(l.details)) : ''}
-      </div>
-    `).join('');
+      </div>`;
+    }).join('');
   } catch(e) { list.innerHTML = '<div class="empty-state val-err">⚠️ ' + t('network_error') + '</div>'; }
   finally { hideContentLoading('activityLogList'); }
 }

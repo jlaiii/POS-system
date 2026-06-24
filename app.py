@@ -2786,7 +2786,7 @@ def twofa_verify():
     users[user_id] = user_data
     save_json_data(USERS_FILE, users)
 
-    log_activity('2fa_verify_success', user_id, user_data.get('role', 'unknown'),
+    log_activity('2fa_setup', user_id, user_data.get('role', 'unknown'),
                  {'status': 'enabled', 'backup_codes_count': len(backup_codes)})
 
     return jsonify({
@@ -2821,7 +2821,7 @@ def twofa_verify_login():
         # Check if currently locked
         if attempt.get('lock_until') and now < attempt['lock_until']:
             remaining_seconds = int((attempt['lock_until'] - now).total_seconds())
-            log_activity('2fa_login_rate_limited', user_id, 'unknown', {'reason': 'account_locked', 'remaining_seconds': remaining_seconds})
+            log_activity('2fa_rate_limited', user_id, 'unknown', {'reason': 'account_locked', 'remaining_seconds': remaining_seconds})
             return jsonify({
                 'message': f'Too many failed attempts. Account locked for {remaining_seconds} more seconds.',
                 'locked': True,
@@ -2951,7 +2951,7 @@ def twofa_backup_login():
         attempt = twofa_failed_attempts[user_id]
         if attempt.get('lock_until') and now < attempt['lock_until']:
             remaining_seconds = int((attempt['lock_until'] - now).total_seconds())
-            log_activity('2fa_login_rate_limited', user_id, 'unknown', {'reason': 'backup_code_locked', 'remaining_seconds': remaining_seconds})
+            log_activity('2fa_rate_limited', user_id, 'unknown', {'reason': 'backup_code_locked', 'remaining_seconds': remaining_seconds})
             return jsonify({
                 'message': f'Too many failed attempts. Account locked for {remaining_seconds} more seconds.',
                 'locked': True,
@@ -3203,7 +3203,7 @@ def twofa_verify_email_recovery():
         attempt = twofa_failed_attempts[user_id]
         if attempt.get('lock_until') and now < attempt['lock_until']:
             remaining_seconds = int((attempt['lock_until'] - now).total_seconds())
-            log_activity('2fa_login_rate_limited', user_id, 'unknown', {'reason': 'email_recovery_locked', 'remaining_seconds': remaining_seconds})
+            log_activity('2fa_rate_limited', user_id, 'unknown', {'reason': 'email_recovery_locked', 'remaining_seconds': remaining_seconds})
             return jsonify({
                 'message': f'Too many failed attempts. Account locked for {remaining_seconds} more seconds.',
                 'locked': True,
@@ -3759,6 +3759,10 @@ def disable_user_2fa():
                   'target_user_role': target_user.get('role', 'unknown'),
                   'reason': reason.strip(),
                   'old_values': old_values})
+    log_activity('2fa_disabled', user_id, target_user.get('role', 'unknown'),
+                 {'status': 'disabled_by_admin', 'admin_pin': admin_pin,
+                  'admin_name': admin_user.get('name', 'Unknown'),
+                  'reason': reason.strip()})
 
     return jsonify({
         'message': f'2FA disabled for user {target_user.get("name", user_id)}.',
@@ -8717,8 +8721,13 @@ def activity_log():
         filtered = [log for log in filtered
                     if user_filter in log.get('user_id', '').lower()]
     if type_filter:
-        filtered = [log for log in filtered
-                    if log.get('type', '') == type_filter]
+        if type_filter.startswith('__prefix__:'):
+            prefix = type_filter.split(':', 1)[1]
+            filtered = [log for log in filtered
+                        if log.get('type', '').startswith(prefix)]
+        else:
+            filtered = [log for log in filtered
+                        if log.get('type', '') == type_filter]
     if date_from:
         try:
             dt_from = datetime.fromisoformat(date_from)
