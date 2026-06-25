@@ -6168,6 +6168,39 @@ def sync_orders():
         if uid and str(uid) not in users:
             return jsonify({'message': f'Invalid user: {uid} does not exist'}), 403
 
+    # ── Item validation for all orders (prevents ghost data) ──
+    PRICE_TOLERANCE = 0.50
+    valid_items_map = {}
+    raw_items = load_json_data(ITEMS_FILE)
+    for cat_items in raw_items.values():
+        if isinstance(cat_items, list):
+            for item in cat_items:
+                if isinstance(item, dict) and item.get('name'):
+                    valid_items_map[item['name']] = float(item.get('price', 0))
+    valid_combos = {}
+    raw_combos = load_json_data(COMBOS_FILE)
+    for c in raw_combos.get('combos', []):
+        if isinstance(c, dict) and c.get('name'):
+            valid_combos[c['name']] = float(c.get('combo_price', 0))
+
+    for order_data in orders:
+        items = order_data.get('items', [])
+        if not items:
+            return jsonify({'message': f'Synced order ({order_data.get("local_id", "unknown")}) must contain at least one item.'}), 400
+        for idx, item in enumerate(items):
+            item_name = item.get('name', '')
+            item_price = float(item.get('price', 0))
+            if item.get('is_combo'):
+                if item_name not in valid_combos:
+                    return jsonify({'message': f'Synced order item #{idx + 1} (\'{item_name}\'): unknown combo.'}), 400
+                if abs(item_price - valid_combos[item_name]) > PRICE_TOLERANCE:
+                    return jsonify({'message': f'Synced order item #{idx + 1} (\'{item_name}\'): price ${item_price:.2f} does not match combo price ${valid_combos[item_name]:.2f}.'}), 400
+            else:
+                if item_name not in valid_items_map:
+                    return jsonify({'message': f'Synced order item #{idx + 1} (\'{item_name}\'): not found on the menu.'}), 400
+                if abs(item_price - valid_items_map[item_name]) > PRICE_TOLERANCE:
+                    return jsonify({'message': f'Synced order item #{idx + 1} (\'{item_name}\'): price ${item_price:.2f} does not match menu price ${valid_items_map[item_name]:.2f}.'}), 400
+
     results = []
     orders_data = load_json_data(ORDERS_FILE)
     counter_data = load_json_data(ORDER_COUNTER_FILE)
