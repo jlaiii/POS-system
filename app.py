@@ -5316,7 +5316,8 @@ def submit_order():
         'item_notes': data.get('item_notes', {}),  # Per-item notes {index: note_string}
         'table_number': data.get('table_number'),  # Table number for table management
         'delivery_address': data.get('delivery_address'),  # Delivery address info
-        'customer_email': data.get('customer_email', '')  # Email for digital receipt delivery
+        'customer_email': data.get('customer_email', ''),  # Email for digital receipt delivery
+        'priority': data.get('priority', None)  # 'rush' or null for normal priority
     }
     orders = load_json_data(ORDERS_FILE)
 
@@ -5681,7 +5682,8 @@ def sync_orders():
             'notes': order_data.get('notes', ''),
             'item_notes': order_data.get('item_notes', {}),
             'table_number': order_data.get('table_number'),
-            'delivery_address': order_data.get('delivery_address')
+            'delivery_address': order_data.get('delivery_address'),
+            'priority': order_data.get('priority', None)
         }
         orders_data.append(order_details)
 

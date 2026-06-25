@@ -799,6 +799,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
           <div class="payment-methods" id="paymentMethods"></div>
           <div id="cartActions">
             <button class="accent" onclick="openReviewModal()" data-i18n="cart.submit">✅ Submit Order</button>
+            <button class="outline" id="rushToggleBtn" onclick="toggleRush()" style="flex:1;min-width:80px;font-size:13px;border-color:#e74c3c;color:#e74c3c;min-height:48px;font-weight:600;" data-i18n="cart.rush" data-i18n-title="cart.rush_desc">🚨 Rush</button>
             <button class="danger" onclick="clearCart()" data-i18n="cart.clear">🗑️ Clear</button>
           </div>
           <div id="posCashActions" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">
@@ -3140,6 +3141,9 @@ const L10N = {
     'cart.custom_tip': 'Custom',
     'cart.discount': 'Discount',
     'cart.submit': '✅ Submit Order',
+    'cart.rush': '🚨 Rush',
+    'cart.rush_on': '🚨 Rush ON',
+    'cart.rush_desc': 'Flag this order as urgent for the kitchen',
     'cart.clear': '🗑️ Clear',
     'cart.each': 'each',
     'cart.item_note': 'Item note...',
@@ -3393,6 +3397,8 @@ const L10N = {
     'kitchen.done': '✅ Done',
     'kitchen.cancel': 'Cancel',
     'kitchen.table_group': 'Table {num} — {count} order(s)',
+    'kitchen.rush_badge': '🚨 RUSH',
+    'kitchen.rush_waiting': 'Rush — waiting {minutes} min',
     'lang.switch': 'Español',
     'users.add_title': '➕ Add User',
     'items.add_title': '➕ Add Item',
@@ -3908,6 +3914,9 @@ const L10N = {
     'cart.custom_tip': 'Personalizado',
     'cart.discount': 'Descuento',
     'cart.submit': '✅ Enviar pedido',
+    'cart.rush': '🚨 Urgente',
+    'cart.rush_on': '🚨 Urgente ON',
+    'cart.rush_desc': 'Marcar este pedido como urgente para la cocina',
     'cart.clear': '🗑️ Limpiar',
     'cart.each': 'cada uno',
     'cart.item_note': 'Nota del artículo...',
@@ -4152,6 +4161,8 @@ const L10N = {
     'kitchen.done': '✅ Listo',
     'kitchen.cancel': 'Cancelar',
     'kitchen.table_group': 'Mesa {num} — {count} pedido(s)',
+    'kitchen.rush_badge': '🚨 URGENTE',
+    'kitchen.rush_waiting': 'Urgente — esperando {minutes} min',
     'lang.switch': 'English',
     'users.add_title': '➕ Agregar usuario',
     'items.add_title': '➕ Agregar artículo',
@@ -4755,6 +4766,7 @@ let taxConfig = null; // { global_tax_rate, category_tax_rates, item_tax_overrid
 let appliedDiscount = null; // { code, type, value, discount_amount, description }
 let scheduledPricing = null; // { item_name: { original_price, discounted_price, discount_label, category } }
 let popularItems = new Set(); // Set of item names that are most popular (for "🔥 Most Popular" badge)
+let orderIsRush = false; // Tracks whether current cart order is marked as rush/urgent
 let loyaltyCustomerPhone = ''; // Currently tracked loyalty customer phone
 let loyaltyCustomerData = null; // { phone, name, points, total_earned, ... }
 let chartPayment = null;
@@ -9534,7 +9546,8 @@ function openReviewModal() {
     customerEmail: document.getElementById('customerEmail').value.trim(),
     tableNumber: document.getElementById('tableSelect') ? document.getElementById('tableSelect').value : '',
     payment: '',
-    paymentSplits: paymentSplits.filter(s => s.amount > 0)
+    paymentSplits: paymentSplits.filter(s => s.amount > 0),
+    isRush: orderIsRush
   };
 
   // Build payment display text
@@ -9609,6 +9622,7 @@ function renderReviewModal() {
   let metaParts = [];
   if (reviewData.tableNumber) metaParts.push('🪑 Table ' + reviewData.tableNumber);
   if (reviewData.customerEmail) metaParts.push('📧 ' + reviewData.customerEmail);
+  if (reviewData.isRush) metaParts.push('<span style="padding:4px 10px;background:#e74c3c;color:#fff;border-radius:6px;font-weight:700;">🚨 RUSH</span>');
   metaEl.innerHTML = metaParts.map(m => '<span style="padding:4px 10px;background:var(--card-bg);border-radius:6px;">' + m + '</span>').join('');
 }
 
@@ -9693,7 +9707,8 @@ async function confirmOrder() {
         customer_phone: loyaltyCustomerPhone || '',
         delivery_address: getDeliveryAddress(),
         customer_email: document.getElementById('customerEmail').value.trim(),
-        composed_since: composedSince || null
+        composed_since: composedSince || null,
+        priority: orderIsRush ? 'rush' : null
       })
     });
     if (!r.ok) {
@@ -9990,6 +10005,23 @@ async function submitOrder() {
   }
 }
 
+/* ── Rush Order Toggle ── */
+function toggleRush() {
+  orderIsRush = !orderIsRush;
+  const btn = document.getElementById('rushToggleBtn');
+  if (orderIsRush) {
+    btn.style.background = '#e74c3c';
+    btn.style.color = '#fff';
+    btn.style.borderColor = '#e74c3c';
+    btn.textContent = '🚨 Rush ON';
+  } else {
+    btn.style.background = 'transparent';
+    btn.style.color = '#e74c3c';
+    btn.style.borderColor = '#e74c3c';
+    btn.textContent = t('cart.rush') || '🚨 Rush';
+  }
+}
+
 /* ── Cart Expand/Collapse Toggle ── */
 let cartExpanded = false;
 function toggleCartExpand() {
@@ -10011,6 +10043,10 @@ function toggleCartExpand() {
 
 async function clearCart() {
   if (cart.length === 0) { showToast(t('toast.cart_already_empty'), 'danger'); return; }
+  // Reset rush toggle
+  orderIsRush = false;
+  const rushBtn = document.getElementById('rushToggleBtn');
+  if (rushBtn) { rushBtn.style.background = 'transparent'; rushBtn.style.color = '#e74c3c'; rushBtn.style.borderColor = '#e74c3c'; rushBtn.textContent = t('cart.rush') || '🚨 Rush'; }
   const total = cart.reduce((s, i) => s + i.price * i.qty, 0);
   try {
     await fetch(BACKEND_URL + '/api/clear_order', {
@@ -16588,10 +16624,16 @@ function renderKitchenOrderCard(o, inGroup) {
   }
 
   const cardAgeClass = isPriority ? 'card-age-critical' : (ageClass === 'age-warning' ? 'card-age-warning' : '');
+  // Rush order override: if order has priority === 'rush', always show rush styling regardless of age
+  const isRushOrder = o.priority === 'rush';
+  const rushClass = isRushOrder ? 'card-rush' : '';
+  const finalCardClass = isRushOrder ? 'card-rush' : cardAgeClass;
   const pendingTapClass = status === 'pending' ? 'card-pending-tap' : '';
 
   let statusBadge = '';
-  if (isPriority && status === 'pending') {
+  if (isRushOrder) {
+    statusBadge = '<span class="koc-badge rush-badge">🚨 RUSH</span>';
+  } else if (isPriority && status === 'pending') {
     statusBadge = '<span class="koc-badge priority">🚨 PRIORITY</span>';
   } else if (status === 'preparing') {
     statusBadge = '<span class="koc-badge preparing">🟠 ' + (cookName ? escHtml(cookName) : t('kitchen.preparing')) + '</span>';
@@ -16682,13 +16724,14 @@ function renderKitchenOrderCard(o, inGroup) {
     ? '<span style="font-size:0.7em;background:var(--accent);color:#fff;padding:2px 10px;border-radius:12px;margin-left:8px;vertical-align:middle;">🍽️ ' + escHtml(String(o.table_number)) + '</span>'
     : '';
 
-  return '<div class="kitchen-order-card ' + statusClass + ' ' + cardAgeClass + ' ' + pendingTapClass + '"' + cardClick + '>' +
+  return '<div class="kitchen-order-card ' + statusClass + ' ' + finalCardClass + ' ' + pendingTapClass + '"' + cardClick + '>' +
     '<div class="koc-header">' +
       '<span class="koc-id">#' + escHtml(String(oid)) + tableBadge + '</span>' +
       timeHtml +
     '</div>' +
     statusBadge +
-    (isPriority && status === 'pending' ? '<div style="color:#e74c3c;font-weight:700;font-size:0.95em;">⏰ Waiting ' + ageMinutes + ' min</div>' : '') +
+    (isRushOrder ? '<div style="color:#e74c3c;font-weight:700;font-size:0.95em;">🚨 ' + (t('kitchen.rush_waiting', {minutes: ageMinutes < 0 ? '?' : ageMinutes}) || 'Rush — waiting ' + (ageMinutes < 0 ? '?' : ageMinutes) + ' min') + '</div>' : '') +
+    (isPriority && status === 'pending' && !isRushOrder ? '<div style="color:#e74c3c;font-weight:700;font-size:0.95em;">⏰ Waiting ' + ageMinutes + ' min</div>' : '') +
     '<div class="koc-items">' + itemsHtml + '</div>' +
     notesHtml +
     '<div class="koc-payment">💳 ' + escHtml(payment) + '</div>' +

@@ -491,6 +491,31 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
 }
 .kitchen-order-card.card-pending-tap { cursor: pointer; }
 .kitchen-order-card.card-pending-tap:active { transform: scale(0.98); opacity: 0.85; }
+/* Rush order card — overrides normal aging with pulsing red border */
+.kitchen-order-card.card-rush {
+  border-left-color: #e74c3c;
+  border-left-width: 6px;
+  box-shadow: 0 0 25px rgba(231,76,60,0.5);
+  animation: cardRushPulse 1s ease-in-out infinite;
+}
+@keyframes cardRushPulse {
+  0%, 100% { box-shadow: 0 0 25px rgba(231,76,60,0.5); transform: scale(1); }
+  50% { box-shadow: 0 0 40px rgba(231,76,60,0.8); transform: scale(1.01); }
+}
+.koc-badge.rush-badge {
+  background: #e74c3c;
+  color: #fff;
+  font-weight: 900;
+  font-size: 0.95em;
+  padding: 4px 14px;
+  border-radius: 20px;
+  animation: rushBadgePulse 0.8s ease-in-out infinite;
+  display: inline-block;
+}
+@keyframes rushBadgePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
 @keyframes cardCriticalPulse {
   0%, 100% { box-shadow: 0 0 20px rgba(231,76,60,0.4); }
   50% { box-shadow: 0 0 30px rgba(231,76,60,0.7); }
