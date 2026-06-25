@@ -5552,6 +5552,32 @@ window.addEventListener('DOMContentLoaded', () => {
     if (savedMustSetup === '1') {
       currentUser.must_setup_2fa = true;
     }
+    // Re-check mandatory 2FA from server for existing sessions
+    // (in case config was changed after user logged in)
+    (async () => {
+      try {
+        const r = await fetch(BACKEND_URL + '/api/auth/2fa/check_mandatory', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({userId: savedId})
+        });
+        if (r.ok) {
+          const d = await r.json();
+          if (d.must_setup_2fa) {
+            currentUser.must_setup_2fa = true;
+            sessionStorage.setItem('pos_must_setup_2fa', '1');
+          } else {
+            currentUser.must_setup_2fa = false;
+            sessionStorage.removeItem('pos_must_setup_2fa');
+          }
+          // Re-render mandatory 2FA banner
+          const banner = document.getElementById('mandatory2faBanner');
+          if (banner) {
+            banner.style.display = currentUser.must_setup_2fa ? 'block' : 'none';
+          }
+        }
+      } catch(e) {}
+    })();
     showApp();
   }
   // Detect and set language

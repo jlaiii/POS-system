@@ -57,8 +57,8 @@
 ### HIGH: TOTP secrets stored in plaintext in users.json
 - [ ] **Protect TOTP secrets** — `totp_secret` is stored in plaintext in users.json. MITIGATED: file permissions now enforced to 0600 (owner-only). For stronger protection, encrypt TOTP secrets at rest with a server-side key.
 
-### HIGH: require_2fa_for_admins is disabled by default
-- [ ] **Enable mandatory 2FA for admin accounts** — `security_config.json` has `require_2fa_for_admins: false`. Admin accounts (including the owner) are NOT forced to use 2FA. Should default to `true` for admin/owner roles, or at minimum send a Discord alert when an admin without 2FA logs in.
+### HIGH: require_2fa_for_admins is disabled by default (RESOLVED)
+- [x] **Enable mandatory 2FA for admin accounts** — `security_config.json` has `require_2fa_for_admins: false`. Admin accounts (including the owner) are NOT forced to use 2FA. Should default to `true` for admin/owner roles, or at minimum send a Discord alert when an admin without 2FA logs in. **[RESOLVED by worker-1 on 2026-06-25: set require_2fa_for_admins=true, added session-restore re-check so existing logged-in sessions detect the change]**
 
 ### HIGH: Existing weak PINs in active use
 - [ ] **Force PIN change for users with weak PINs** — The system now blocks new weak PINs (1111, 1234, 2222, 123456, etc.) but existing users with these PINs were never forced to change. Currently: Owner(1111), Employee One(1234), Manager(2222), Carlos(123456) all have weak PINs.

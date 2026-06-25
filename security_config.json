@@ -37,6 +37,6 @@
             "MEDIUM": "digest"
         }
     },
-    "require_2fa_for_admins": false,
+    "require_2fa_for_admins": true,
     "exempted_users": []
 }
