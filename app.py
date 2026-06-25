@@ -2069,6 +2069,46 @@ def security_dashboard():
     })
 
 
+@app.route('/api/security/resolve_event', methods=['POST'])
+def security_resolve_event():
+    """Mark a security event as resolved with a note. Requires manage_users permission."""
+    data = request.json or {}
+    admin_pin = data.get('adminPin', '')
+    event_id = data.get('event_id', '').strip()
+    resolution = data.get('resolution', '').strip()
+
+    if not admin_pin:
+        return jsonify({'message': 'Authentication required.'}), 401
+    if not check_perm(admin_pin, "manage_users"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+    if not event_id:
+        return jsonify({'message': 'Event ID is required.'}), 400
+    if not resolution:
+        return jsonify({'message': 'Resolution note is required.'}), 400
+
+    events = load_json_data(SECURITY_EVENTS_FILE)
+    if not isinstance(events, list):
+        return jsonify({'message': 'No security events found.'}), 404
+
+    found = False
+    for e in events:
+        if e.get('id') == event_id:
+            if e.get('status') == 'resolved':
+                return jsonify({'message': f'Event {event_id} is already resolved.'}), 409
+            e['status'] = 'resolved'
+            e['resolved_at'] = datetime.now().isoformat()
+            e['resolution'] = resolution
+            found = True
+            break
+
+    if not found:
+        return jsonify({'message': f'Event {event_id} not found.'}), 404
+
+    save_json_data(SECURITY_EVENTS_FILE, events)
+    log_activity(admin_pin, 'security_event_resolved', f'Resolved {event_id}: {resolution}')
+    return jsonify({'message': f'Event {event_id} resolved.', 'event': e}), 200
+
+
 @app.route('/api/security/blocklist/add', methods=['POST'])
 def security_blocklist_add():
     """Add an IP to the blocklist. Requires manage_users permission.
