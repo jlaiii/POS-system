@@ -765,6 +765,33 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
   padding: 16px;
 }
 #kioskOverlay .kiosk-pay-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+#kioskOverlay .kiosk-actions {
+  width: 100%; max-width: 700px;
+  display: flex; gap: 12px; margin-top: 12px;
+}
+#kioskOverlay .kiosk-actions .kiosk-cancel-btn,
+#kioskOverlay .kiosk-actions .kiosk-startover-btn {
+  flex: 1; min-height: 56px;
+  font-size: 22px; font-weight: 600; border-radius: 12px;
+  cursor: pointer; padding: 12px; border: 2px solid; transition: all 0.2s;
+  background: transparent;
+}
+#kioskOverlay .kiosk-actions .kiosk-cancel-btn {
+  color: #e74c3c; border-color: #e74c3c;
+}
+#kioskOverlay .kiosk-actions .kiosk-startover-btn {
+  color: #f39c12; border-color: #f39c12;
+}
+@media (hover: hover) {
+  #kioskOverlay .kiosk-actions .kiosk-cancel-btn:hover { background: #e74c3c; color: #fff; }
+  #kioskOverlay .kiosk-actions .kiosk-startover-btn:hover { background: #f39c12; color: #fff; }
+}
+#kioskOverlay .kiosk-actions .kiosk-cancel-btn:active { background: #c0392b; color: #fff; }
+#kioskOverlay .kiosk-actions .kiosk-startover-btn:active { background: #e67e22; color: #fff; }
+@media (max-width: 600px) {
+  #kioskOverlay .kiosk-actions { flex-direction: column; }
+  #kioskOverlay .kiosk-actions button { font-size: 18px; min-height: 48px; }
+}
 #kioskOverlay .kiosk-thankyou {
   display: none;
   text-align: center; padding: 60px 20px;

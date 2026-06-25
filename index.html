@@ -3399,6 +3399,10 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
       <div class="kiosk-pay-btns" id="kioskPaymentMethods"></div>
     </div>
     <button class="kiosk-pay-btn" id="kioskPayBtn" onclick="kioskPay()">💵 Pay Now</button>
+    <div class="kiosk-actions">
+      <button class="kiosk-cancel-btn" onclick="kioskCancelOrder()" data-i18n="kiosk.cancel_order">🗑️ Cancel Order</button>
+      <button class="kiosk-startover-btn" onclick="kioskStartOver()" data-i18n="kiosk.start_over">🔄 Start Over</button>
+    </div>
   </div>
 
   <!-- LOOKUP MODE (find existing order) -->
@@ -3447,6 +3451,10 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
         <div class="kiosk-pay-btns" id="kioskLookupPayMethods"></div>
       </div>
       <button class="kiosk-pay-btn" id="kioskLookupPayBtn" onclick="kioskLookupPay()">💵 Pay Now</button>
+      <div class="kiosk-actions">
+        <button class="kiosk-cancel-btn" onclick="kioskCancelOrder()" data-i18n="kiosk.cancel_order">🗑️ Cancel Order</button>
+        <button class="kiosk-startover-btn" onclick="kioskStartOver()" data-i18n="kiosk.start_over">🔄 Start Over</button>
+      </div>
       <button class="kiosk-lookup-back" onclick="kioskLookupBack()">← Search Again</button>
     </div>
   </div>
@@ -4108,6 +4116,13 @@ const L10N = {
     'toast.item_out_of_stock': 'Item out of stock',
     'toast.fill_all_fields': 'Fill all fields correctly',
     'toast.select_payment': 'Please select a payment method',
+    'kiosk.cancel_order': '🗑️ Cancel Order',
+    'kiosk.start_over': '🔄 Start Over',
+    'kiosk.confirm_cancel': 'Are you sure you want to cancel this order? All items will be removed.',
+    'kiosk.confirm_startover': 'Start a new order? Your current cart will be cleared.',
+    'kiosk.order_cancelled': 'Order cancelled',
+    'kiosk.cart_cleared': 'Cart cleared — start adding items!',
+    'kiosk.cancel_title': 'Cancel Order',
     'admin.enter_manager_pin': 'Enter manager PIN to approve:',
     'toast.approval_required': 'Manager approval required for this order',
     'toast.approval_granted': '✅ Approved!',
@@ -5069,6 +5084,13 @@ const L10N = {
     'toast.item_out_of_stock': 'Artículo agotado',
     'toast.fill_all_fields': 'Complete todos los campos correctamente',
     'toast.select_payment': 'Seleccione un método de pago',
+    'kiosk.cancel_order': '🗑️ Cancelar Pedido',
+    'kiosk.start_over': '🔄 Empezar de Nuevo',
+    'kiosk.confirm_cancel': '¿Está seguro de cancelar este pedido? Todos los artículos se eliminarán.',
+    'kiosk.confirm_startover': '¿Empezar un nuevo pedido? Su carrito actual se borrará.',
+    'kiosk.order_cancelled': 'Pedido cancelado',
+    'kiosk.cart_cleared': 'Carrito borrado — ¡empiece a añadir artículos!',
+    'kiosk.cancel_title': 'Cancelar Pedido',
     'admin.enter_manager_pin': 'Ingrese PIN del gerente para aprobar:',
     'toast.approval_required': 'Se requiere aprobación del gerente para esta orden',
     'toast.approval_granted': '✅ ¡Aprobado!',
@@ -20330,6 +20352,44 @@ async function kioskPay() {
     btn.disabled = false;
     btn.textContent = '💵 Pay Now';
   }
+}
+
+function kioskCancelOrder() {
+  const msg = t('kiosk.confirm_cancel');
+  if (!confirm(msg)) return;
+  // Clear cart
+  cart = [];
+  appliedDiscount = null;
+  document.getElementById('orderNotesInput').value = '';
+  kioskTipAmount = 0;
+  kioskTipPercent = 0;
+  paymentSplits = [];
+  renderCart();
+  showToast(t('kiosk.order_cancelled'), 'info');
+  exitKioskMode();
+}
+
+function kioskStartOver() {
+  const msg = t('kiosk.confirm_startover');
+  if (!confirm(msg)) return;
+  // Clear cart but stay in kiosk mode
+  cart = [];
+  appliedDiscount = null;
+  document.getElementById('orderNotesInput').value = '';
+  kioskTipAmount = 0;
+  kioskTipPercent = 0;
+  paymentSplits = [];
+  renderCart();
+  // Re-render kiosk cart view
+  renderKioskCart();
+  renderKioskPaymentMethods();
+  renderKioskTotals();
+  // Reset tip selection
+  document.querySelectorAll('#kioskNewOrderView .kiosk-tip .tip-btns button').forEach(b => b.classList.remove('selected'));
+  const noTipBtn = document.querySelector('#kioskNewOrderView .tip-0');
+  if (noTipBtn) noTipBtn.classList.add('selected');
+  document.getElementById('kioskCustomTip').style.display = 'none';
+  showToast(t('kiosk.cart_cleared'), 'info');
 }
 
 // ═══════════ KIOSK LOOKUP MODE ═══════════
