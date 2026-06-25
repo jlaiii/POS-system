@@ -9485,5 +9485,910 @@
             "name": "Jay (Platform Owner)",
             "ip": "127.0.0.1"
         }
+    },
+    {
+        "timestamp": "2026-06-25T11:37:33.441395",
+        "type": "loyalty_register",
+        "user_id": "unknown",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "customer_phone": "555-BDAY",
+            "customer_name": "Birthday Person",
+            "has_birthday": true,
+            "has_anniversary": false
+        }
+    },
+    {
+        "timestamp": "2026-06-25T11:37:33.457511",
+        "type": "loyalty_profile_update",
+        "user_id": "9999",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "customer_phone": "555-BDAY",
+            "customer_name": "Birthday Person",
+            "changes": {
+                "anniversary": {
+                    "old": "",
+                    "new": "2026-12-25"
+                }
+            }
+        }
+    },
+    {
+        "timestamp": "2026-06-25T11:37:33.473697",
+        "type": "loyalty_register",
+        "user_id": "unknown",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "customer_phone": "555-NORMAL",
+            "customer_name": "Normal Person",
+            "has_birthday": false,
+            "has_anniversary": false
+        }
+    },
+    {
+        "timestamp": "2026-06-25T11:38:17.187780",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T11:38:29.773348",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T11:38:36.458684",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T11:38:46.866114",
+        "type": "submit_order",
+        "user_id": null,
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 83,
+            "subtotal": 3.5,
+            "tax_amount": 0.29,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 3.79,
+            "payment_method": {
+                "method": "cash",
+                "amount": 5
+            },
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-25T12:06:18.642801",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T12:06:39.691041",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T12:06:58.091519",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T12:09:36.543109",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Python-urllib/3.11",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T12:36:13.294157",
+        "type": "submit_order",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "order_id": 84,
+            "subtotal": 294.8,
+            "tax_amount": 24.3,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 372.16,
+            "payment_method": "Cash",
+            "item_count": 50
+        }
+    },
+    {
+        "timestamp": "2026-06-25T12:36:27.445388",
+        "type": "add_item",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "category": "Snacks",
+            "name": "Test \"Special\" \ud83c\udf89 Item",
+            "price": 5.99
+        }
+    },
+    {
+        "timestamp": "2026-06-25T12:36:33.315412",
+        "type": "refund_order",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 84,
+            "reason": "Reliability bot 50-item test cleanup",
+            "refunded_by_name": "Owner",
+            "order_total": 372.16,
+            "inventory_restored": [
+                "Hamburger - Normal x1",
+                "Coke x1",
+                "French Toast x1",
+                "Caesar Salad x1",
+                "Chips (Large Bag) x1",
+                "Hamburger - Normal x1",
+                "Coke x1",
+                "French Toast x1",
+                "Caesar Salad x1",
+                "Chips (Large Bag) x1",
+                "Hamburger - Normal x1",
+                "Coke x1",
+                "French Toast x1",
+                "Caesar Salad x1",
+                "Chips (Large Bag) x1",
+                "Hamburger - Normal x1",
+                "Coke x1",
+                "French Toast x1",
+                "Caesar Salad x1",
+                "Chips (Large Bag) x1",
+                "Hamburger - Normal x1",
+                "Coke x1",
+                "French Toast x1",
+                "Caesar Salad x1",
+                "Chips (Large Bag) x1",
+                "Hamburger - Normal x1",
+                "Coke x1",
+                "French Toast x1",
+                "Caesar Salad x1",
+                "Chips (Large Bag) x1",
+                "Hamburger - Normal x1",
+                "Coke x1",
+                "French Toast x1",
+                "Caesar Salad x1",
+                "Chips (Large Bag) x1",
+                "Hamburger - Normal x1",
+                "Coke x1",
+                "French Toast x1",
+                "Caesar Salad x1",
+                "Chips (Large Bag) x1",
+                "Hamburger - Normal x1",
+                "Coke x1",
+                "French Toast x1",
+                "Caesar Salad x1",
+                "Chips (Large Bag) x1",
+                "Hamburger - Normal x1",
+                "Coke x1",
+                "French Toast x1",
+                "Caesar Salad x1",
+                "Chips (Large Bag) x1"
+            ]
+        }
+    },
+    {
+        "timestamp": "2026-06-25T12:36:34.401309",
+        "type": "edit_item",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed",
+            "reason": "Missing data",
+            "item_data": {
+                "adminPin": "1111",
+                "name": "Test \"Special\" \ud83c\udf89 Item",
+                "remove": true
+            }
+        }
+    },
+    {
+        "timestamp": "2026-06-25T12:37:05.336610",
+        "type": "shift_edited",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "shift_index": 40,
+            "user_id": "123456",
+            "user_name": "Carlos",
+            "changes": {
+                "clock_in_time": {
+                    "old": "2026-06-25T08:34:40.768823",
+                    "new": "2026-06-25T08:34:00"
+                },
+                "late_minutes": {
+                    "old": 35,
+                    "new": null
+                },
+                "late_excused": {
+                    "old": false,
+                    "new": false
+                }
+            },
+            "reason": "Reliability bot test - adjusting clock_in by 40s for audit trail verification"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T12:37:09.267011",
+        "type": "shift_edited",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "shift_index": 40,
+            "user_id": "123456",
+            "user_name": "Carlos",
+            "changes": {
+                "clock_in_time": {
+                    "old": "2026-06-25T08:34:00",
+                    "new": "2026-06-25T08:34:40.768823"
+                }
+            },
+            "reason": "Reliability bot test - reverting edit"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T12:37:43.247015",
+        "type": "edit_item",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "failed",
+            "reason": "Missing data",
+            "item_data": {
+                "adminPin": "1111",
+                "name": "Test \"Special\" \ud83c\udf89 Item",
+                "remove": true
+            }
+        }
+    },
+    {
+        "timestamp": "2026-06-25T12:37:51.656905",
+        "type": "delete_item",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed",
+            "reason": "Missing data",
+            "item_data": {
+                "adminPin": "1111",
+                "oldCategory": "Snacks",
+                "oldName": "Test \"Special\" \ud83c\udf89 Item"
+            }
+        }
+    },
+    {
+        "timestamp": "2026-06-25T12:37:56.703759",
+        "type": "delete_item",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed",
+            "reason": "Item not found",
+            "item_data": {
+                "adminPin": "1111",
+                "category": "Snacks",
+                "name": "Test \"Special\" \ud83c\udf89 Item"
+            }
+        }
+    },
+    {
+        "timestamp": "2026-06-25T13:35:41.309536",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T13:35:42.401549",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T13:35:48.807754",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T13:35:49.889028",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T14:05:34.871111",
+        "type": "waitlist_added",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "waitlist_id": "WL-001",
+            "customer_name": "Test Customer",
+            "party_size": 3,
+            "estimated_wait": 0
+        }
+    },
+    {
+        "timestamp": "2026-06-25T14:05:37.337278",
+        "type": "waitlist_cancelled",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "entry_id": "WL-001",
+            "customer_name": "Test Customer",
+            "reason": "Test cleanup"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T14:14:12.601309",
+        "type": "1111",
+        "user_id": "security_event_resolved",
+        "user_role": "Resolved SEC-TEST: Test resolution successful",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {}
+    },
+    {
+        "timestamp": "2026-06-25T14:18:06.823766",
+        "type": "add_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "added_user_id": "9998",
+            "added_user_name": "Test User SRE",
+            "added_user_role": "user"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T14:18:06.843282",
+        "type": "delete_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "failed",
+            "reason": "Missing user ID to delete"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T14:18:12.675396",
+        "type": "delete_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "deleted_user_id": "9998",
+            "deleted_user_name": "Test User SRE",
+            "deleted_user_role": "user"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T14:25:22.625531",
+        "type": "login_failed",
+        "user_id": "9999",
+        "user_role": "unknown",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed",
+            "method": "pin",
+            "ip": "127.0.0.1",
+            "attempt": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-25T14:28:40.083601",
+        "type": "login",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "2fa_required",
+            "method": "pin",
+            "user_name": "Employee One",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T14:28:49.888833",
+        "type": "login",
+        "user_id": "123456",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Carlos",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T14:30:12.453938",
+        "type": "login",
+        "user_id": "123456",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Carlos",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T14:36:48.057138",
+        "type": "login",
+        "user_id": "123456",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Python-urllib/3.11",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Carlos",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T14:36:48.083667",
+        "type": "login",
+        "user_id": "123456",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Python-urllib/3.11",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Carlos",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T14:36:48.111474",
+        "type": "pin_changed",
+        "user_id": "987654",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Python-urllib/3.11",
+        "details": {
+            "old_user_id": "123456",
+            "new_user_id": "987654",
+            "user_name": "Carlos",
+            "totp_verified": false
+        }
+    },
+    {
+        "timestamp": "2026-06-25T14:36:48.133126",
+        "type": "pin_change_failed",
+        "user_id": "987654",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Python-urllib/3.11",
+        "details": {
+            "status": "guessable_pin",
+            "user_name": "Carlos"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T14:36:58.765232",
+        "type": "login_failed",
+        "user_id": "123456",
+        "user_role": "unknown",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Python-urllib/3.11",
+        "details": {
+            "status": "failed",
+            "method": "pin",
+            "ip": "127.0.0.1",
+            "attempt": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-25T14:36:58.784510",
+        "type": "login_failed",
+        "user_id": "123456",
+        "user_role": "unknown",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Python-urllib/3.11",
+        "details": {
+            "status": "failed",
+            "method": "pin",
+            "ip": "127.0.0.1",
+            "attempt": 2
+        }
+    },
+    {
+        "timestamp": "2026-06-25T14:37:18.549305",
+        "type": "login",
+        "user_id": "987654",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Python-urllib/3.11",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Carlos",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T14:37:18.568118",
+        "type": "login",
+        "user_id": "987654",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Python-urllib/3.11",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Carlos",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T14:37:18.588206",
+        "type": "pin_changed",
+        "user_id": "7392",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Python-urllib/3.11",
+        "details": {
+            "old_user_id": "987654",
+            "new_user_id": "7392",
+            "user_name": "Carlos",
+            "totp_verified": false
+        }
+    },
+    {
+        "timestamp": "2026-06-25T14:37:18.608963",
+        "type": "pin_changed",
+        "user_id": "987654",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Python-urllib/3.11",
+        "details": {
+            "old_user_id": "7392",
+            "new_user_id": "987654",
+            "user_name": "Carlos",
+            "totp_verified": false
+        }
+    },
+    {
+        "timestamp": "2026-06-25T14:40:42.222148",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T14:40:53.376765",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T14:40:59.579592",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:08:05.741811",
+        "type": "submit_order",
+        "user_id": "1111",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 85,
+            "subtotal": 8.99,
+            "tax_amount": 0.74,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 11.35,
+            "payment_method": "Cash",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:08:41.007768",
+        "type": "submit_order",
+        "user_id": "1111",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 86,
+            "subtotal": 8.99,
+            "tax_amount": 0.74,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 11.35,
+            "payment_method": "Cash",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:08:56.339739",
+        "type": "submit_order",
+        "user_id": "1111",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 87,
+            "subtotal": 8.99,
+            "tax_amount": 0.74,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 11.35,
+            "payment_method": "Cash",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:09:23.078343",
+        "type": "submit_order",
+        "user_id": "1111",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 88,
+            "subtotal": 8.99,
+            "tax_amount": 0.74,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 9.73,
+            "payment_method": "Cash",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:09:31.985587",
+        "type": "submit_order",
+        "user_id": "1111",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 89,
+            "subtotal": 8.99,
+            "tax_amount": 0.74,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 9.73,
+            "payment_method": "Cash",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:10:21.583751",
+        "type": "submit_order",
+        "user_id": "1111",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 90,
+            "subtotal": 8.99,
+            "tax_amount": 0.74,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 9.73,
+            "payment_method": "Cash",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:21:29.406707",
+        "type": "feedback_received",
+        "user_id": "customer",
+        "user_role": "public",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "feedback_id": 1,
+            "rating": 5,
+            "alert": "\ud83c\udf1f 5-star glowing review received",
+            "order_id": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:21:29.428824",
+        "type": "feedback_responded",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "feedback_id": 1,
+            "response_note": "Thanks for the review!",
+            "create_ticket": false
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:21:29.442339",
+        "type": "feedback_responded",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "feedback_id": 2,
+            "response_note": "",
+            "create_ticket": true
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:21:29.458615",
+        "type": "ticket_created_from_feedback",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "ticket_id": "TKT-001",
+            "feedback_id": 2
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:21:35.210533",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:21:40.391694",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "success"
+        }
     }
 ]

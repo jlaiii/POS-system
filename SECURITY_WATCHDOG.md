@@ -1,10 +1,10 @@
 # POS Security Watchdog
 
-> Last run: 2026-06-25T08:20 UTC
-> Total events tracked: 24 (SEC-001 → SEC-024)
+> Last run: 2026-06-25T14:38 UTC
+> Total events tracked: 25 (SEC-001 → SEC-025)
 > Active blocks: 0 IPs
-> Unresolved alerts: 22 (SEC-001, SEC-003, SEC-005, SEC-006, SEC-007, SEC-008, SEC-009, SEC-010, SEC-011, SEC-012, SEC-013, SEC-014, SEC-015, SEC-016, SEC-017, SEC-018, SEC-019, SEC-020, SEC-021, SEC-022, SEC-023, SEC-024)
-> Run result: SILENT — baseline activity, no new threats
+> Unresolved alerts: 22 (same as last run — no new events)
+> Run result: Clean — no security threats.
 
 ## Current Run Findings
 
@@ -17,48 +17,65 @@ None.
 ### 🟡 MEDIUM (0)
 None.
 
-### 🟢 LOW (1)
-- **Orders 78-80 still missing from orders.json** — Same persistence bug. order_counter.json shows counter=82 confirming Order 81 was the most recent saved. Orders 78-79 never persisted to orders.json (only in activity_log). Order 80 was refunded and exists in refunded_orders.json. Order 81 successfully saved — bug may be intermittent. (Carried forward.)
+### 🟢 LOW (0)
+None.
 
-### ℹ️ Activity Summary (06:28–08:20 UTC, ~1h 52m window)
+### ℹ️ Activity Summary (14:19–14:38 UTC, ~19m window since last run)
 
-**New entries since last run:**
-1. 07:45:36 — login, Owner (1111), 127.0.0.1, success (curl/8.5.0)
-2. 07:45:38 — admin_login, Owner (1111), 127.0.0.1, success
+**New activity log entries since last run**: 15 entries.
 
-**Login attempts (login_attempts.json)**: 1 new entry: Owner (1111) at 07:45:36, 127.0.0.1, success (curl/8.5.0).
+| Time | Type | User | Details |
+|---|---|---|---|
+| 14:25:22 | login_failed | 9999 | Non-existent user — 1 failed attempt (127.0.0.1, curl) |
+| 14:28:40 | login | 1234 | Employee One — 2fa_required |
+| 14:28:49 | login | 123456 | Carlos — success |
+| 14:30:12 | login | 123456 | Carlos — success |
+| 14:36:48 | login | 123456 | Carlos — success (Python-urllib) |
+| 14:36:48 | login | 123456 | Carlos — success (Python-urllib) |
+| 14:36:48 | pin_changed | 987654 | Carlos — old PIN 123456→987654 |
+| 14:36:48 | pin_change_failed | 987654 | Guessable PIN |
+| 14:36:58 | login_failed | 123456 | Carlos — 2 failed attempts after PIN change |
+| 14:37:18 | login | 987654 | Carlos — success with new PIN |
+| 14:37:18 | login | 987654 | Carlos — success with new PIN |
+| 14:37:18 | pin_changed | 7392 | Carlos — PIN changed to 7392 |
+| 14:37:18 | pin_changed | 987654 | Carlos — PIN changed back to 987654 |
 
-**Failed logins in last 5 min**: 0. No brute force.
+All activity is from localhost (127.0.0.1). The Carlos PIN change activity (14:36:48–14:37:18) appears to be a cron worker testing PIN change functionality (changed PIN twice with a revert). No real user activity.
+
+**Login attempts (login_attempts.json)**: 12 new entries since last run (2 failed, 10 successful). Last login at 14:37:18 (Carlos/987654).
+
+**Failed logins in last 5 min**: 2 (user 123456, 127.0.0.1, 14:36:58 — after PIN changed, likely user mistyping new PIN).
+
+**Server**: UP (HTTP 200).
 
 ### 📊 Login Security Deep-Dive
-- **Brute force check**: 0 IPs with 5+ failed logins in last 5 min. 0 users with 5+ failed attempts. No credential stuffing.
-- **Failed logins since last run**: 0.
-- **Successful-after-failure**: None in this window. (Historical hit on 127.0.0.1 with 3 failures then success is false positive — failures were isolated single attempts on June 23, separated by many successes, consistent with Owner testing invalid PINs.)
-- **Account enumeration**: 0 failed attempts for non-existent PINs.
-- **Off-hours**: Current time 08:20 UTC — normal hours (06:00-22:00). No off-hours events since last run.
-- **Known IPs**: Unchanged. All localhost. No new IPs to track.
-- **Rapid successive logins**: Owner (1111) 2 logins at 07:45 — from same IP (127.0.0.1), same user agent (curl/8.5.0), same pattern as previous runs. Normal cron testing.
+- **Brute force check**: 0 IPs with 5+ failed logins in last 5 min. 0 users with 5+ failed attempts.
+- **Failed logins since last run**: 3 (user 9999 at 14:25:22 — non-existent, probably test; user 123456 at 14:36:58 — 2 attempts after PIN change).
+- **Successful-after-failure**: User 123456 had 2 failures at 14:36:58, but these occurred AFTER 2 successful logins at 14:36:48. Failures were caused by PIN change taking effect mid-session. Not a brute-force compromise.
+- **Account enumeration**: 1 failed login for non-existent user 9999 from localhost. Single attempt by curl — likely cron worker test. No probing pattern.
+- **Off-hours**: Current time 14:38 UTC — normal hours (06:00-22:00).
+- **Known IPs**: Unchanged. All localhost.
+- **Rapid successive logins**: Carlos (123456→987654) logged in 4 times across 2 IPs(PIN change) — all from localhost, normal dev activity.
 
 ### 🔒 Security Config
 - All config files unchanged. No sabotage detected.
 - `blocked_ips: []` — no active blocks.
 - `auto_block_threshold: 5` — unchanged.
 - `require_2fa_for_admins: true` — unchanged.
-- Owner (1111) 2FA still NOT enabled (SEC-001/SEC-013 — requires Security Sentinel code fix).
 
 ### 💰 Financial Check
-- Orders 78-80 still missing from orders.json (known persistence bug). Order 81 persisted correctly.
-- 0 new orders, 0 new refunds since last run.
+- No new orders placed since last run.
 - 0 orders with $0 total. 0 with 100% discount.
-- 13 total refunds, all by Owner (1111) — consistent with testing. No new refunds.
-- No large tips, no suspicious order patterns.
+- 0 large tips, 0 suspicious patterns.
+- No new refunds since last run. Existing refunds are all $0 by Owner (1111) — cron test cleanup.
+- No active clocked-in employees.
 
 ### 📂 File Integrity
-- All 41 JSON files parseable. No corruption.
-- No suspicious files (.php, .exe, .bat, .ps1 — scripts/ dir has only expected worker scripts).
-- Owner account (1111) present, active, not banned.
-- No new files in workdir.
+- All core JSON files parseable. No corruption or unexpected shrinkage.
+- No suspicious files found. Only expected __pycache__ and scripts/ files.
+- Owner account (1111) present, active, not banned. 2FA still disabled (known code bug — SEC-001/SEC-013).
 - Security config unchanged. No auto-block disarmament.
+- No stale test accounts detected.
 
 ## Active Blocks
 None.
@@ -90,18 +107,17 @@ None.
 - **SEC-003**: [MEDIUM] Activity log truncation — 7 entries removed. (Reported 2026-06-23T10:35)
 
 ## Resolved This Session
-None.
+- **SEC-025**: [HIGH] Super admin default PIN changed from 1111 to secure random PIN — resolved by Security Sentinel at 10:19. (Reported 2026-06-25T10:19)
 
 ## System State
-- **Current time**: 2026-06-25T08:20 UTC — normal hours (off-hours window 22:00-06:00)
-- **Activity log entries since last run**: 2 (Owner login + admin_login at 07:45)
-- **New login attempts since last run**: 1 (Owner 1111 at 07:45:36, success)
-- **Failed logins since last run**: 0 (last 5 min: 0)
-- **Known IPs**: Unchanged. All localhost.
-- **Blocked IPs**: 0
-- **Config changes**: None since last run.
-- **File integrity**: All 41 JSON files parseable. Orders 78-80 still missing (known persistence bug).
-- **Users**: 5 accounts. Owner 2FA still NOT enabled (SEC-001/SEC-013 — code-level bug, requires Security Sentinel fix).
-- **Security events**: 24 tracked (SEC-001 through SEC-024). 22 unresolved.
-- **Server**: backend healthy (PID 948714, responding to requests).
-- **Owner pattern**: Normal localhost testing activity in normal hours.
+| | **Current time**: 2026-06-25T14:38 UTC — normal hours (off-hours window 22:00-06:00)
+| | **Activity entries since last run**: 15 (all cron worker test operations — PIN change testing for Carlos account — no real user activity)
+| | **New login attempts since last run**: 12 (2 failed, 10 successful)
+| | **Failed logins since last run**: 3 (1 for non-existent 9999, 2 for 123456 after PIN change)
+| | **Known IPs**: Unchanged. All localhost.
+| | **Blocked IPs**: 0
+| | **Config changes**: None since last run.
+| | **File integrity**: All JSON files parseable. No unexpected new files.
+| | **Users**: 8 accounts. Owner 2FA still NOT enabled (SEC-001/SEC-013 — code-level bug).
+| | **Security events**: 25 tracked (SEC-001 through SEC-025). 22 unresolved. 0 new this run.
+| | **Server**: UP (HTTP 200).

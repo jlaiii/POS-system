@@ -1,6 +1,6 @@
 {
     "enabled": true,
-    "threshold": 8,
+    "threshold": 6,
     "percentage": 18.0,
     "label": "Auto-Gratuity (18%)"
 }

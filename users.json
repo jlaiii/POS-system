@@ -76,22 +76,6 @@
         "temp_pin": null,
         "temp_pin_expiry": null
     },
-    "123456": {
-        "name": "Carlos",
-        "role": "user",
-        "permissions": [
-            "pos_access"
-        ],
-        "pay_rate": null,
-        "totp_secret": null,
-        "totp_enabled": false,
-        "totp_backup_codes": [],
-        "totp_setup_at": null,
-        "pin_reset_notification": null,
-        "force_pin_change": true,
-        "temp_pin": null,
-        "temp_pin_expiry": null
-    },
     "5678": {
         "name": "Employee Two",
         "role": "user",
@@ -155,5 +139,22 @@
         "email": "",
         "pto_balance": 0.0,
         "pto_log": []
+    },
+    "987654": {
+        "name": "Carlos",
+        "role": "user",
+        "permissions": [
+            "pos_access"
+        ],
+        "pay_rate": null,
+        "totp_secret": null,
+        "totp_enabled": false,
+        "totp_backup_codes": [],
+        "totp_setup_at": null,
+        "pin_reset_notification": null,
+        "force_pin_change": true,
+        "temp_pin": null,
+        "temp_pin_expiry": null,
+        "scheduled_start": null
     }
 }

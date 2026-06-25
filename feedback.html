@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Customer Feedback</title>
+<style>
+  :root {
+    --bg: #1a1a2e;
+    --card: #16213e;
+    --accent: #e94560;
+    --text: #e0e0e0;
+    --muted: #a0a0b0;
+    --success: #2ecc71;
+    --warning: #f39c12;
+    --star-active: #f1c40f;
+    --star-inactive: #555;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .container {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 40px 30px;
+    max-width: 480px;
+    width: 100%;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    text-align: center;
+  }
+  h1 { font-size: 24px; margin-bottom: 8px; color: #fff; }
+  .subtitle { font-size: 14px; color: var(--muted); margin-bottom: 30px; }
+  .stars {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 30px;
+    font-size: 48px;
+    cursor: pointer;
+    user-select: none;
+    direction: rtl;
+  }
+  .stars .star {
+    transition: transform 0.15s, color 0.15s;
+    color: var(--star-inactive);
+    touch-action: manipulation;
+    min-width: 56px;
+    min-height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+  }
+  .stars .star:hover,
+  .stars .star.active,
+  .stars .star.active ~ .star {
+    color: var(--star-active);
+  }
+  .stars .star:hover {
+    transform: scale(1.2);
+  }
+  .stars .star:hover ~ .star {
+    color: var(--star-inactive);
+  }
+  .rating-label {
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 20px;
+    min-height: 20px;
+  }
+  textarea {
+    width: 100%;
+    background: #0f3460;
+    border: 1px solid #1a3a6e;
+    border-radius: 8px;
+    color: var(--text);
+    padding: 14px;
+    font-size: 16px;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 100px;
+    margin-bottom: 20px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  textarea:focus {
+    border-color: var(--accent);
+  }
+  textarea::placeholder {
+    color: #666;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 52px;
+    padding: 12px 32px;
+    border: none;
+    border-radius: 8px;
+    font-size: 17px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    touch-action: manipulation;
+    width: 100%;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+  }
+  .btn-primary:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .btn-primary:not(:disabled):hover {
+    opacity: 0.9;
+  }
+  .success-screen { display: none; }
+  .success-screen .check {
+    font-size: 72px;
+    margin-bottom: 16px;
+    animation: popIn 0.4s ease;
+  }
+  .success-screen h2 {
+    font-size: 22px;
+    margin-bottom: 8px;
+    color: var(--success);
+  }
+  .success-screen p {
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  @keyframes popIn {
+    0% { transform: scale(0); opacity: 0; }
+    60% { transform: scale(1.15); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .error-msg {
+    background: rgba(233,69,96,0.15);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    margin-bottom: 16px;
+    display: none;
+  }
+  .order-info {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 20px;
+    padding: 8px 12px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 6px;
+    display: none;
+  }
+  @media (max-width: 480px) {
+    .container { padding: 30px 20px; }
+    .stars { font-size: 40px; gap: 8px; }
+    h1 { font-size: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container" id="formView">
+  <h1 data-i18n="feedback.title">How was your experience?</h1>
+  <div class="subtitle" data-i18n="feedback.subtitle">We value your opinion — tap a star to rate us</div>
+
+  <div class="order-info" id="orderInfo"></div>
+  <div class="error-msg" id="errorMsg"></div>
+
+  <div class="stars" id="starContainer">
+    <span class="star" data-rating="5">★</span>
+    <span class="star" data-rating="4">★</span>
+    <span class="star" data-rating="3">★</span>
+    <span class="star" data-rating="2">★</span>
+    <span class="star" data-rating="1">★</span>
+  </div>
+
+  <div class="rating-label" id="ratingLabel" data-i18n="feedback.tap_star">Tap a star to rate</div>
+
+  <textarea id="commentInput" placeholder="Tell us more (optional)..." data-i18n-placeholder="feedback.placeholder"></textarea>
+
+  <button class="btn btn-primary" id="submitBtn" disabled onclick="submitFeedback()" data-i18n="feedback.submit">Submit Feedback</button>
+</div>
+
+<div class="container success-screen" id="successView">
+  <div class="check">✅</div>
+  <h2 data-i18n="feedback.thank_you">Thank You!</h2>
+  <p data-i18n="feedback.thank_you_msg">Your feedback helps us improve. We appreciate your time!</p>
+</div>
+
+<script>
+// ── i18n ──
+const L10N = {
+  'en': {
+    'feedback.title': 'How was your experience?',
+    'feedback.subtitle': 'We value your opinion — tap a star to rate us',
+    'feedback.tap_star': 'Tap a star to rate',
+    'feedback.placeholder': 'Tell us more (optional)...',
+    'feedback.submit': 'Submit Feedback',
+    'feedback.rating_1': 'Very Poor',
+    'feedback.rating_2': 'Poor',
+    'feedback.rating_3': 'Average',
+    'feedback.rating_4': 'Good',
+    'feedback.rating_5': 'Excellent!',
+    'feedback.thank_you': 'Thank You!',
+    'feedback.thank_you_msg': 'Your feedback helps us improve. We appreciate your time!',
+    'feedback.error_required': 'Please select a rating.',
+    'feedback.submitting': 'Submitting...',
+    'feedback.order_ref': 'Order #{{id}}',
+    'feedback.table': 'Table {{name}}'
+  },
+  'es': {
+    'feedback.title': '¿Cómo fue tu experiencia?',
+    'feedback.subtitle': 'Valoramos tu opinión — toca una estrella para calificarnos',
+    'feedback.tap_star': 'Toca una estrella para calificar',
+    'feedback.placeholder': 'Cuéntanos más (opcional)...',
+    'feedback.submit': 'Enviar Comentario',
+    'feedback.rating_1': 'Muy Malo',
+    'feedback.rating_2': 'Malo',
+    'feedback.rating_3': 'Regular',
+    'feedback.rating_4': 'Bueno',
+    'feedback.rating_5': '¡Excelente!',
+    'feedback.thank_you': '¡Gracias!',
+    'feedback.thank_you_msg': 'Tus comentarios nos ayudan a mejorar. ¡Apreciamos tu tiempo!',
+    'feedback.error_required': 'Por favor selecciona una calificación.',
+    'feedback.submitting': 'Enviando...',
+    'feedback.order_ref': 'Orden #{{id}}',
+    'feedback.table': 'Mesa {{name}}'
+  }
+};
+
+let currentLang = localStorage.getItem('feedback_lang') || 'en';
+let selectedRating = 0;
+
+function t(key, vars) {
+  let text = (L10N[currentLang] && L10N[currentLang][key]) || (L10N['en'] && L10N['en'][key]) || key;
+  if (vars) {
+    for (const [k, v] of Object.entries(vars)) {
+      text = text.replace('{{' + k + '}}', v);
+    }
+  }
+  return text;
+}
+
+function applyTranslations() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    el.textContent = t(el.getAttribute('data-i18n'));
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    el.placeholder = t(el.getAttribute('data-i18n-placeholder'));
+  });
+}
+
+// ── Stars ──
+function initStars() {
+  const stars = document.querySelectorAll('.star');
+  stars.forEach(star => {
+    star.addEventListener('click', function(e) {
+      e.preventDefault();
+      selectedRating = parseInt(this.getAttribute('data-rating'));
+      updateStars(selectedRating);
+      document.getElementById('submitBtn').disabled = false;
+      const labels = {1: t('feedback.rating_1'), 2: t('feedback.rating_2'), 3: t('feedback.rating_3'), 4: t('feedback.rating_4'), 5: t('feedback.rating_5')};
+      document.getElementById('ratingLabel').textContent = labels[selectedRating] || '';
+    });
+    star.addEventListener('touchstart', function(e) {
+      // Prevent double-fire on mobile
+    }, {passive: true});
+  });
+}
+
+function updateStars(rating) {
+  const stars = document.querySelectorAll('.star');
+  stars.forEach(s => {
+    const r = parseInt(s.getAttribute('data-rating'));
+    s.classList.toggle('active', r <= rating);
+  });
+}
+
+// ── Submit ──
+async function submitFeedback() {
+  if (!selectedRating) {
+    const errEl = document.getElementById('errorMsg');
+    errEl.textContent = t('feedback.error_required');
+    errEl.style.display = 'block';
+    return;
+  }
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = t('feedback.submitting');
+
+  const params = new URLSearchParams(window.location.search);
+  const orderId = params.get('order') || null;
+  const tableName = params.get('table') || null;
+
+  try {
+    const resp = await fetch('/api/feedback/submit', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        rating: selectedRating,
+        comment: document.getElementById('commentInput').value.trim(),
+        order_id: orderId,
+        table: tableName
+      })
+    });
+    const data = await resp.json();
+    if (resp.ok) {
+      document.getElementById('formView').style.display = 'none';
+      document.getElementById('successView').style.display = 'block';
+    } else {
+      throw new Error(data.message || 'Submission failed');
+    }
+  } catch (e) {
+    const errEl = document.getElementById('errorMsg');
+    errEl.textContent = e.message || 'Network error';
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = t('feedback.submit');
+  }
+}
+
+// ── Init ──
+document.addEventListener('DOMContentLoaded', function() {
+  initStars();
+  applyTranslations();
+
+  // Show order info if provided
+  const params = new URLSearchParams(window.location.search);
+  const orderId = params.get('order');
+  const tableName = params.get('table');
+  const orderInfoEl = document.getElementById('orderInfo');
+  const parts = [];
+  if (orderId) parts.push(t('feedback.order_ref', {id: orderId}));
+  if (tableName) parts.push(t('feedback.table', {name: tableName}));
+  if (parts.length) {
+    orderInfoEl.textContent = parts.join(' — ');
+    orderInfoEl.style.display = 'block';
+  }
+});
+</script>
+</body>
+</html>

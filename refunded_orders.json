@@ -543,5 +543,846 @@
         "reason": "Reliability test refund",
         "refunded_at": "2026-06-25T04:55:55.249925",
         "refunded_by": "1111"
+    },
+    {
+        "order_id": 84,
+        "original_order": {
+            "order_id": 84,
+            "status": "refunded",
+            "claimed_by": null,
+            "claimed_at": null,
+            "completed_at": null,
+            "date": "2026-06-25T12:36:13.288656",
+            "user": "1234",
+            "payment": "Cash",
+            "payment_splits": null,
+            "items": [
+                {
+                    "name": "Hamburger - Normal",
+                    "price": 6,
+                    "qty": 1,
+                    "category": "Foods",
+                    "course_send_at": "2026-06-25T12:36:13.288716",
+                    "course_fired": true
+                },
+                {
+                    "name": "Coke",
+                    "price": 3,
+                    "qty": 1,
+                    "category": "Drinks",
+                    "course_send_at": "2026-06-25T12:36:13.288716",
+                    "course_fired": true
+                },
+                {
+                    "name": "French Toast",
+                    "price": 9.49,
+                    "qty": 1,
+                    "category": "Breakfast",
+                    "course_send_at": "2026-06-25T12:36:13.288716",
+                    "course_fired": true
+                },
+                {
+                    "name": "Caesar Salad",
+                    "price": 7.99,
+                    "qty": 1,
+                    "category": "Salads",
+                    "course_send_at": "2026-06-25T12:36:13.288716",
+                    "course_fired": true
+                },
+                {
+                    "name": "Chips (Large Bag)",
+                    "price": 3,
+                    "qty": 1,
+                    "category": "Snacks",
+                    "course_send_at": "2026-06-25T12:36:13.288716",
+                    "course_fired": true
+                },
+                {
+                    "name": "Hamburger - Normal",
+                    "price": 6,
+                    "qty": 1,
+                    "category": "Foods",
+                    "course_send_at": "2026-06-25T12:36:13.288716",
+                    "course_fired": true
+                },
+                {
+                    "name": "Coke",
+                    "price": 3,
+                    "qty": 1,
+                    "category": "Drinks",
+                    "course_send_at": "2026-06-25T12:36:13.288716",
+                    "course_fired": true
+                },
+                {
+                    "name": "French Toast",
+                    "price": 9.49,
+                    "qty": 1,
+                    "category": "Breakfast",
+                    "course_send_at": "2026-06-25T12:36:13.288716",
+                    "course_fired": true
+                },
+                {
+                    "name": "Caesar Salad",
+                    "price": 7.99,
+                    "qty": 1,
+                    "category": "Salads",
+                    "course_send_at": "2026-06-25T12:36:13.288716",
+                    "course_fired": true
+                },
+                {
+                    "name": "Chips (Large Bag)",
+                    "price": 3,
+                    "qty": 1,
+                    "category": "Snacks",
+                    "course_send_at": "2026-06-25T12:36:13.288716",
+                    "course_fired": true
+                },
+                {
+                    "name": "Hamburger - Normal",
+                    "price": 6,
+                    "qty": 1,
+                    "category": "Foods",
+                    "course_send_at": "2026-06-25T12:36:13.288716",
+                    "course_fired": true
+                },
+                {
+                    "name": "Coke",
+                    "price": 3,
+                    "qty": 1,
+                    "category": "Drinks",
+                    "course_send_at": "2026-06-25T12:36:13.288716",
+                    "course_fired": true
+                },
+                {
+                    "name": "French Toast",
+                    "price": 9.49,
+                    "qty": 1,
+                    "category": "Breakfast",
+                    "course_send_at": "2026-06-25T12:36:13.288716",
+                    "course_fired": true
+                },
+                {
+                    "name": "Caesar Salad",
+                    "price": 7.99,
+                    "qty": 1,
+                    "category": "Salads",
+                    "course_send_at": "2026-06-25T12:36:13.288716",
+                    "course_fired": true
+                },
+                {
+                    "name": "Chips (Large Bag)",
+                    "price": 3,
+                    "qty": 1,
+                    "category": "Snacks",
+                    "course_send_at": "2026-06-25T12:36:13.288716",
+                    "course_fired": true
+                },
+                {
+                    "name": "Hamburger - Normal",
+                    "price": 6,
+                    "qty": 1,
+                    "category": "Foods",
+                    "course_send_at": "2026-06-25T12:36:13.288716",
+                    "course_fired": true
+                },
+                {
+                    "name": "Coke",
+                    "price": 3,
+                    "qty": 1,
+                    "category": "Drinks",
+                    "course_send_at": "2026-06-25T12:36:13.288716",
+                    "course_fired": true
+                },
+                {
+                    "name": "French Toast",
+                    "price": 9.49,
+                    "qty": 1,
+                    "category": "Breakfast",
+                    "course_send_at": "2026-06-25T12:36:13.288716",
+                    "course_fired": true
+                },
+                {
+                    "name": "Caesar Salad",
+                    "price": 7.99,
+                    "qty": 1,
+                    "category": "Salads",
+                    "course_send_at": "2026-06-25T12:36:13.288716",
+                    "course_fired": true
+                },
+                {
+                    "name": "Chips (Large Bag)",
+                    "price": 3,
+                    "qty": 1,
+                    "category": "Snacks",
+                    "course_send_at": "2026-06-25T12:36:13.288716",
+                    "course_fired": true
+                },
+                {
+                    "name": "Hamburger - Normal",
+                    "price": 6,
+                    "qty": 1,
+                    "category": "Foods",
+                    "course_send_at": "2026-06-25T12:36:13.288716",
+                    "course_fired": true
+                },
+                {
+                    "name": "Coke",
+                    "price": 3,
+                    "qty": 1,
+                    "category": "Drinks",
+                    "course_send_at": "2026-06-25T12:36:13.288716",
+                    "course_fired": true
+                },
+                {
+                    "name": "French Toast",
+                    "price": 9.49,
+                    "qty": 1,
+                    "category": "Breakfast",
+                    "course_send_at": "2026-06-25T12:36:13.288716",
+                    "course_fired": true
+                },
+                {
+                    "name": "Caesar Salad",
+                    "price": 7.99,
+                    "qty": 1,
+                    "category": "Salads",
+                    "course_send_at": "2026-06-25T12:36:13.288716",
+                    "course_fired": true
+                },
+                {
+                    "name": "Chips (Large Bag)",
+                    "price": 3,
+                    "qty": 1,
+                    "category": "Snacks",
+                    "course_send_at": "2026-06-25T12:36:13.288716",
+                    "course_fired": true
+                },
+                {
+                    "name": "Hamburger - Normal",
+                    "price": 6,
+                    "qty": 1,
+                    "category": "Foods",
+                    "course_send_at": "2026-06-25T12:36:13.288716",
+                    "course_fired": true
+                },
+                {
+                    "name": "Coke",
+                    "price": 3,
+                    "qty": 1,
+                    "category": "Drinks",
+                    "course_send_at": "2026-06-25T12:36:13.288716",
+                    "course_fired": true
+                },
+                {
+                    "name": "French Toast",
+                    "price": 9.49,
+                    "qty": 1,
+                    "category": "Breakfast",
+                    "course_send_at": "2026-06-25T12:36:13.288716",
+                    "course_fired": true
+                },
+                {
+                    "name": "Caesar Salad",
+                    "price": 7.99,
+                    "qty": 1,
+                    "category": "Salads",
+                    "course_send_at": "2026-06-25T12:36:13.288716",
+                    "course_fired": true
+                },
+                {
+                    "name": "Chips (Large Bag)",
+                    "price": 3,
+                    "qty": 1,
+                    "category": "Snacks",
+                    "course_send_at": "2026-06-25T12:36:13.288716",
+                    "course_fired": true
+                },
+                {
+                    "name": "Hamburger - Normal",
+                    "price": 6,
+                    "qty": 1,
+                    "category": "Foods",
+                    "course_send_at": "2026-06-25T12:36:13.288716",
+                    "course_fired": true
+                },
+                {
+                    "name": "Coke",
+                    "price": 3,
+                    "qty": 1,
+                    "category": "Drinks",
+                    "course_send_at": "2026-06-25T12:36:13.288716",
+                    "course_fired": true
+                },
+                {
+                    "name": "French Toast",
+                    "price": 9.49,
+                    "qty": 1,
+                    "category": "Breakfast",
+                    "course_send_at": "2026-06-25T12:36:13.288716",
+                    "course_fired": true
+                },
+                {
+                    "name": "Caesar Salad",
+                    "price": 7.99,
+                    "qty": 1,
+                    "category": "Salads",
+                    "course_send_at": "2026-06-25T12:36:13.288716",
+                    "course_fired": true
+                },
+                {
+                    "name": "Chips (Large Bag)",
+                    "price": 3,
+                    "qty": 1,
+                    "category": "Snacks",
+                    "course_send_at": "2026-06-25T12:36:13.288716",
+                    "course_fired": true
+                },
+                {
+                    "name": "Hamburger - Normal",
+                    "price": 6,
+                    "qty": 1,
+                    "category": "Foods",
+                    "course_send_at": "2026-06-25T12:36:13.288716",
+                    "course_fired": true
+                },
+                {
+                    "name": "Coke",
+                    "price": 3,
+                    "qty": 1,
+                    "category": "Drinks",
+                    "course_send_at": "2026-06-25T12:36:13.288716",
+                    "course_fired": true
+                },
+                {
+                    "name": "French Toast",
+                    "price": 9.49,
+                    "qty": 1,
+                    "category": "Breakfast",
+                    "course_send_at": "2026-06-25T12:36:13.288716",
+                    "course_fired": true
+                },
+                {
+                    "name": "Caesar Salad",
+                    "price": 7.99,
+                    "qty": 1,
+                    "category": "Salads",
+                    "course_send_at": "2026-06-25T12:36:13.288716",
+                    "course_fired": true
+                },
+                {
+                    "name": "Chips (Large Bag)",
+                    "price": 3,
+                    "qty": 1,
+                    "category": "Snacks",
+                    "course_send_at": "2026-06-25T12:36:13.288716",
+                    "course_fired": true
+                },
+                {
+                    "name": "Hamburger - Normal",
+                    "price": 6,
+                    "qty": 1,
+                    "category": "Foods",
+                    "course_send_at": "2026-06-25T12:36:13.288716",
+                    "course_fired": true
+                },
+                {
+                    "name": "Coke",
+                    "price": 3,
+                    "qty": 1,
+                    "category": "Drinks",
+                    "course_send_at": "2026-06-25T12:36:13.288716",
+                    "course_fired": true
+                },
+                {
+                    "name": "French Toast",
+                    "price": 9.49,
+                    "qty": 1,
+                    "category": "Breakfast",
+                    "course_send_at": "2026-06-25T12:36:13.288716",
+                    "course_fired": true
+                },
+                {
+                    "name": "Caesar Salad",
+                    "price": 7.99,
+                    "qty": 1,
+                    "category": "Salads",
+                    "course_send_at": "2026-06-25T12:36:13.288716",
+                    "course_fired": true
+                },
+                {
+                    "name": "Chips (Large Bag)",
+                    "price": 3,
+                    "qty": 1,
+                    "category": "Snacks",
+                    "course_send_at": "2026-06-25T12:36:13.288716",
+                    "course_fired": true
+                },
+                {
+                    "name": "Hamburger - Normal",
+                    "price": 6,
+                    "qty": 1,
+                    "category": "Foods",
+                    "course_send_at": "2026-06-25T12:36:13.288716",
+                    "course_fired": true
+                },
+                {
+                    "name": "Coke",
+                    "price": 3,
+                    "qty": 1,
+                    "category": "Drinks",
+                    "course_send_at": "2026-06-25T12:36:13.288716",
+                    "course_fired": true
+                },
+                {
+                    "name": "French Toast",
+                    "price": 9.49,
+                    "qty": 1,
+                    "category": "Breakfast",
+                    "course_send_at": "2026-06-25T12:36:13.288716",
+                    "course_fired": true
+                },
+                {
+                    "name": "Caesar Salad",
+                    "price": 7.99,
+                    "qty": 1,
+                    "category": "Salads",
+                    "course_send_at": "2026-06-25T12:36:13.288716",
+                    "course_fired": true
+                },
+                {
+                    "name": "Chips (Large Bag)",
+                    "price": 3,
+                    "qty": 1,
+                    "category": "Snacks",
+                    "course_send_at": "2026-06-25T12:36:13.288716",
+                    "course_fired": true
+                }
+            ],
+            "subtotal": 294.8,
+            "tax_amount": 24.3,
+            "tip_amount": 0.0,
+            "service_charge_amount": 53.06,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "item_tax_details": [
+                {
+                    "name": "Hamburger - Normal",
+                    "category": "Foods",
+                    "qty": 1,
+                    "price": 6.0,
+                    "tax_rate": 8.25,
+                    "tax_amount": 0.49
+                },
+                {
+                    "name": "Coke",
+                    "category": "Drinks",
+                    "qty": 1,
+                    "price": 3.0,
+                    "tax_rate": 8.25,
+                    "tax_amount": 0.25
+                },
+                {
+                    "name": "French Toast",
+                    "category": "Breakfast",
+                    "qty": 1,
+                    "price": 9.49,
+                    "tax_rate": 8.25,
+                    "tax_amount": 0.78
+                },
+                {
+                    "name": "Caesar Salad",
+                    "category": "Salads",
+                    "qty": 1,
+                    "price": 7.99,
+                    "tax_rate": 8.25,
+                    "tax_amount": 0.66
+                },
+                {
+                    "name": "Chips (Large Bag)",
+                    "category": "Snacks",
+                    "qty": 1,
+                    "price": 3.0,
+                    "tax_rate": 8.25,
+                    "tax_amount": 0.25
+                },
+                {
+                    "name": "Hamburger - Normal",
+                    "category": "Foods",
+                    "qty": 1,
+                    "price": 6.0,
+                    "tax_rate": 8.25,
+                    "tax_amount": 0.49
+                },
+                {
+                    "name": "Coke",
+                    "category": "Drinks",
+                    "qty": 1,
+                    "price": 3.0,
+                    "tax_rate": 8.25,
+                    "tax_amount": 0.25
+                },
+                {
+                    "name": "French Toast",
+                    "category": "Breakfast",
+                    "qty": 1,
+                    "price": 9.49,
+                    "tax_rate": 8.25,
+                    "tax_amount": 0.78
+                },
+                {
+                    "name": "Caesar Salad",
+                    "category": "Salads",
+                    "qty": 1,
+                    "price": 7.99,
+                    "tax_rate": 8.25,
+                    "tax_amount": 0.66
+                },
+                {
+                    "name": "Chips (Large Bag)",
+                    "category": "Snacks",
+                    "qty": 1,
+                    "price": 3.0,
+                    "tax_rate": 8.25,
+                    "tax_amount": 0.25
+                },
+                {
+                    "name": "Hamburger - Normal",
+                    "category": "Foods",
+                    "qty": 1,
+                    "price": 6.0,
+                    "tax_rate": 8.25,
+                    "tax_amount": 0.49
+                },
+                {
+                    "name": "Coke",
+                    "category": "Drinks",
+                    "qty": 1,
+                    "price": 3.0,
+                    "tax_rate": 8.25,
+                    "tax_amount": 0.25
+                },
+                {
+                    "name": "French Toast",
+                    "category": "Breakfast",
+                    "qty": 1,
+                    "price": 9.49,
+                    "tax_rate": 8.25,
+                    "tax_amount": 0.78
+                },
+                {
+                    "name": "Caesar Salad",
+                    "category": "Salads",
+                    "qty": 1,
+                    "price": 7.99,
+                    "tax_rate": 8.25,
+                    "tax_amount": 0.66
+                },
+                {
+                    "name": "Chips (Large Bag)",
+                    "category": "Snacks",
+                    "qty": 1,
+                    "price": 3.0,
+                    "tax_rate": 8.25,
+                    "tax_amount": 0.25
+                },
+                {
+                    "name": "Hamburger - Normal",
+                    "category": "Foods",
+                    "qty": 1,
+                    "price": 6.0,
+                    "tax_rate": 8.25,
+                    "tax_amount": 0.49
+                },
+                {
+                    "name": "Coke",
+                    "category": "Drinks",
+                    "qty": 1,
+                    "price": 3.0,
+                    "tax_rate": 8.25,
+                    "tax_amount": 0.25
+                },
+                {
+                    "name": "French Toast",
+                    "category": "Breakfast",
+                    "qty": 1,
+                    "price": 9.49,
+                    "tax_rate": 8.25,
+                    "tax_amount": 0.78
+                },
+                {
+                    "name": "Caesar Salad",
+                    "category": "Salads",
+                    "qty": 1,
+                    "price": 7.99,
+                    "tax_rate": 8.25,
+                    "tax_amount": 0.66
+                },
+                {
+                    "name": "Chips (Large Bag)",
+                    "category": "Snacks",
+                    "qty": 1,
+                    "price": 3.0,
+                    "tax_rate": 8.25,
+                    "tax_amount": 0.25
+                },
+                {
+                    "name": "Hamburger - Normal",
+                    "category": "Foods",
+                    "qty": 1,
+                    "price": 6.0,
+                    "tax_rate": 8.25,
+                    "tax_amount": 0.49
+                },
+                {
+                    "name": "Coke",
+                    "category": "Drinks",
+                    "qty": 1,
+                    "price": 3.0,
+                    "tax_rate": 8.25,
+                    "tax_amount": 0.25
+                },
+                {
+                    "name": "French Toast",
+                    "category": "Breakfast",
+                    "qty": 1,
+                    "price": 9.49,
+                    "tax_rate": 8.25,
+                    "tax_amount": 0.78
+                },
+                {
+                    "name": "Caesar Salad",
+                    "category": "Salads",
+                    "qty": 1,
+                    "price": 7.99,
+                    "tax_rate": 8.25,
+                    "tax_amount": 0.66
+                },
+                {
+                    "name": "Chips (Large Bag)",
+                    "category": "Snacks",
+                    "qty": 1,
+                    "price": 3.0,
+                    "tax_rate": 8.25,
+                    "tax_amount": 0.25
+                },
+                {
+                    "name": "Hamburger - Normal",
+                    "category": "Foods",
+                    "qty": 1,
+                    "price": 6.0,
+                    "tax_rate": 8.25,
+                    "tax_amount": 0.49
+                },
+                {
+                    "name": "Coke",
+                    "category": "Drinks",
+                    "qty": 1,
+                    "price": 3.0,
+                    "tax_rate": 8.25,
+                    "tax_amount": 0.25
+                },
+                {
+                    "name": "French Toast",
+                    "category": "Breakfast",
+                    "qty": 1,
+                    "price": 9.49,
+                    "tax_rate": 8.25,
+                    "tax_amount": 0.78
+                },
+                {
+                    "name": "Caesar Salad",
+                    "category": "Salads",
+                    "qty": 1,
+                    "price": 7.99,
+                    "tax_rate": 8.25,
+                    "tax_amount": 0.66
+                },
+                {
+                    "name": "Chips (Large Bag)",
+                    "category": "Snacks",
+                    "qty": 1,
+                    "price": 3.0,
+                    "tax_rate": 8.25,
+                    "tax_amount": 0.25
+                },
+                {
+                    "name": "Hamburger - Normal",
+                    "category": "Foods",
+                    "qty": 1,
+                    "price": 6.0,
+                    "tax_rate": 8.25,
+                    "tax_amount": 0.49
+                },
+                {
+                    "name": "Coke",
+                    "category": "Drinks",
+                    "qty": 1,
+                    "price": 3.0,
+                    "tax_rate": 8.25,
+                    "tax_amount": 0.25
+                },
+                {
+                    "name": "French Toast",
+                    "category": "Breakfast",
+                    "qty": 1,
+                    "price": 9.49,
+                    "tax_rate": 8.25,
+                    "tax_amount": 0.78
+                },
+                {
+                    "name": "Caesar Salad",
+                    "category": "Salads",
+                    "qty": 1,
+                    "price": 7.99,
+                    "tax_rate": 8.25,
+                    "tax_amount": 0.66
+                },
+                {
+                    "name": "Chips (Large Bag)",
+                    "category": "Snacks",
+                    "qty": 1,
+                    "price": 3.0,
+                    "tax_rate": 8.25,
+                    "tax_amount": 0.25
+                },
+                {
+                    "name": "Hamburger - Normal",
+                    "category": "Foods",
+                    "qty": 1,
+                    "price": 6.0,
+                    "tax_rate": 8.25,
+                    "tax_amount": 0.49
+                },
+                {
+                    "name": "Coke",
+                    "category": "Drinks",
+                    "qty": 1,
+                    "price": 3.0,
+                    "tax_rate": 8.25,
+                    "tax_amount": 0.25
+                },
+                {
+                    "name": "French Toast",
+                    "category": "Breakfast",
+                    "qty": 1,
+                    "price": 9.49,
+                    "tax_rate": 8.25,
+                    "tax_amount": 0.78
+                },
+                {
+                    "name": "Caesar Salad",
+                    "category": "Salads",
+                    "qty": 1,
+                    "price": 7.99,
+                    "tax_rate": 8.25,
+                    "tax_amount": 0.66
+                },
+                {
+                    "name": "Chips (Large Bag)",
+                    "category": "Snacks",
+                    "qty": 1,
+                    "price": 3.0,
+                    "tax_rate": 8.25,
+                    "tax_amount": 0.25
+                },
+                {
+                    "name": "Hamburger - Normal",
+                    "category": "Foods",
+                    "qty": 1,
+                    "price": 6.0,
+                    "tax_rate": 8.25,
+                    "tax_amount": 0.49
+                },
+                {
+                    "name": "Coke",
+                    "category": "Drinks",
+                    "qty": 1,
+                    "price": 3.0,
+                    "tax_rate": 8.25,
+                    "tax_amount": 0.25
+                },
+                {
+                    "name": "French Toast",
+                    "category": "Breakfast",
+                    "qty": 1,
+                    "price": 9.49,
+                    "tax_rate": 8.25,
+                    "tax_amount": 0.78
+                },
+                {
+                    "name": "Caesar Salad",
+                    "category": "Salads",
+                    "qty": 1,
+                    "price": 7.99,
+                    "tax_rate": 8.25,
+                    "tax_amount": 0.66
+                },
+                {
+                    "name": "Chips (Large Bag)",
+                    "category": "Snacks",
+                    "qty": 1,
+                    "price": 3.0,
+                    "tax_rate": 8.25,
+                    "tax_amount": 0.25
+                },
+                {
+                    "name": "Hamburger - Normal",
+                    "category": "Foods",
+                    "qty": 1,
+                    "price": 6.0,
+                    "tax_rate": 8.25,
+                    "tax_amount": 0.49
+                },
+                {
+                    "name": "Coke",
+                    "category": "Drinks",
+                    "qty": 1,
+                    "price": 3.0,
+                    "tax_rate": 8.25,
+                    "tax_amount": 0.25
+                },
+                {
+                    "name": "French Toast",
+                    "category": "Breakfast",
+                    "qty": 1,
+                    "price": 9.49,
+                    "tax_rate": 8.25,
+                    "tax_amount": 0.78
+                },
+                {
+                    "name": "Caesar Salad",
+                    "category": "Salads",
+                    "qty": 1,
+                    "price": 7.99,
+                    "tax_rate": 8.25,
+                    "tax_amount": 0.66
+                },
+                {
+                    "name": "Chips (Large Bag)",
+                    "category": "Snacks",
+                    "qty": 1,
+                    "price": 3.0,
+                    "tax_rate": 8.25,
+                    "tax_amount": 0.25
+                }
+            ],
+            "total": 372.16,
+            "notes": "",
+            "item_notes": {},
+            "table_number": 99,
+            "delivery_address": null,
+            "customer_email": "",
+            "order_type": "dine_in",
+            "packaging_fee": 0.0,
+            "packaging_fee_label": "",
+            "priority": null,
+            "manager_approval": null,
+            "refund_reason": "Reliability bot 50-item test cleanup",
+            "refunded_at": "2026-06-25T12:36:33.308960",
+            "refunded_by": "1111"
+        },
+        "reason": "Reliability bot 50-item test cleanup",
+        "refunded_at": "2026-06-25T12:36:33.308960",
+        "refunded_by": "1111"
     }
 ]

@@ -783,6 +783,14 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
               </select>
             </div>
           </div>
+          <!-- Party Size (Guests) input for auto-gratuity -->
+          <div id="partySizeRow" style="margin-top:4px;">
+            <div style="display:flex;gap:8px;align-items:center;">
+              <span style="color:var(--text2);font-size:13px;white-space:nowrap;">👥 <span data-i18n="cart.party_size">Party Size</span>:</span>
+              <input type="number" id="partySizeInput" placeholder="Guests" min="1" max="100" value="1" style="max-width:80px;min-height:44px;font-size:16px;padding:8px;text-align:center;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);" inputmode="numeric" pattern="[0-9]*" onchange="updatePartySize()" aria-label="Number of guests"/>
+              <span id="autoGratBadge" style="display:none;font-size:12px;color:#f39c12;font-weight:600;padding:4px 8px;background:#f39c1220;border-radius:6px;">🔧 <span data-i18n="cart.auto_grat_active">Auto-Gratuity</span></span>
+            </div>
+          </div>
           <div id="tipRow" style="display:none;margin-top:6px;">
             <div style="display:flex;gap:6px;align-items:center;justify-content:space-between;margin-bottom:6px;">
               <span style="color:var(--text2);font-size:14px;font-weight:600;">💬 Tip:</span>
@@ -966,6 +974,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
         <button onclick="switchAdminSection('security')" id="asSecurity">🛡️ Security</button>
         <button onclick="switchAdminSection('backup')" id="asBackup">💾 Backup</button>
         <button onclick="switchAdminSection('giftcards')" id="asGiftcards" data-i18n="admin.giftcards">🎁 Gift Cards</button>
+        <button onclick="switchAdminSection('feedback')" id="asFeedback">📝 Feedback</button>
       </div>
       <div id="adminContent">
         <!-- Stats -->
@@ -1289,7 +1298,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
               <div class="form-row" style="gap:12px;flex-wrap:wrap;align-items:end;">
                 <div>
                   <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:2px;">Daily OT threshold (hours)</label>
-                  <input type="number" id="tsConfigDailyOT" value="8" min="1" max="24" step="0.5" style="width:100px;min-height:40px;font-size:14px;" inputmode="numeric" pattern="[0-9]*" >
+                  <input type="number" id="tsConfigDailyOT" value="6" min="1" max="24" step="0.5" style="width:100px;min-height:40px;font-size:14px;" inputmode="numeric" pattern="[0-9]*" >
                 </div>
                 <div>
                   <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:2px;">Weekly OT threshold (hours)</label>
@@ -1945,7 +1954,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
               </label>
               <div style="display:flex;align-items:center;gap:6px;">
                 <span style="font-size:14px;color:var(--text2);white-space:nowrap;">👥 Party Size Threshold:</span>
-                <input type="number" id="scThreshold" min="1" max="100" value="8" style="max-width:80px;min-height:44px;font-size:16px;padding:8px;text-align:center;" onchange="saveServiceChargeConfig()" inputmode="numeric" pattern="[0-9]*" >
+                <input type="number" id="scThreshold" min="1" max="100" value="6" style="max-width:80px;min-height:44px;font-size:16px;padding:8px;text-align:center;" onchange="saveServiceChargeConfig()" inputmode="numeric" pattern="[0-9]*" >
               </div>
               <div style="display:flex;align-items:center;gap:6px;">
                 <span style="font-size:14px;color:var(--text2);white-space:nowrap;">💯 Percentage (%):</span>
@@ -1962,10 +1971,11 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
           <div class="card" style="background:var(--bg);border:1px solid var(--border);">
             <h4 style="margin-bottom:6px;font-size:14px;color:var(--text2);">ℹ️ How it works</h4>
             <p style="font-size:13px;color:var(--text2);line-height:1.5;">
-              When the total item quantity in the cart reaches or exceeds the <strong>Party Size Threshold</strong>, 
+              When the <strong>Party Size</strong> (number of guests) reaches or exceeds the configured threshold, 
               a service charge line is automatically added to the cart at the configured <strong>Percentage</strong> of the subtotal. 
               The service charge is displayed on the cart, receipt, kiosk, and order history. 
-              It applies per-order when the condition is met.
+              A manager override button (✕) is available to remove the auto-gratuity per-order. 
+              It applies per-order when the party size condition is met.
             </p>
           </div>
         </div>
@@ -2561,6 +2571,53 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
             </div>
             <div id="gcDisableStatus" style="margin-top:8px;font-size:14px;"></div>
           </div>
+        </div>
+        <!-- Customer Feedback -->
+        <div id="secFeedback" class="admin-section">
+          <h3 style="margin:0 0 12px 0;" data-i18n="admin.feedback.title">📝 Customer Feedback</h3>
+          <p style="color:var(--text2);margin-bottom:16px;font-size:14px;" data-i18n="admin.feedback.desc">View customer ratings and comments. Respond to feedback or create follow-up tickets.</p>
+
+          <!-- Feedback Stats Card -->
+          <div class="card" style="margin-bottom:16px;padding:12px 16px;">
+            <div id="feedbackStatsBar" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+              <div class="stat-mini"><span class="stat-label" data-i18n="admin.feedback.avg_rating">⭐ Avg Rating</span><span id="fbAvgRating" class="stat-value" style="color:#f1c40f;">—</span></div>
+              <div class="stat-mini"><span class="stat-label" data-i18n="admin.feedback.total">📋 Total</span><span id="fbTotalCount" class="stat-value">0</span></div>
+              <div class="stat-mini"><span class="stat-label" data-i18n="admin.feedback.new">🆕 New</span><span id="fbNewCount" class="stat-value" style="color:var(--accent);">0</span></div>
+              <div class="stat-mini"><span class="stat-label" data-i18n="admin.feedback.today">📅 Today</span><span id="fbTodayCount" class="stat-value">0</span></div>
+              <div class="stat-mini"><span class="stat-label" data-i18n="admin.feedback.five_star">🌟 5★</span><span id="fbFiveStarCount" class="stat-value" style="color:#2ecc71;">0</span></div>
+              <div class="stat-mini"><span class="stat-label" data-i18n="admin.feedback.one_star">⚠️ 1★</span><span id="fbOneStarCount" class="stat-value" style="color:var(--accent);">0</span></div>
+            </div>
+            <!-- Rating Distribution -->
+            <div id="fbRatingDist" style="margin-top:10px;display:flex;gap:4px;align-items:center;flex-wrap:wrap;"></div>
+          </div>
+
+          <!-- Filters -->
+          <div class="card" style="margin-bottom:16px;padding:12px 16px;">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+              <select id="fbFilterRating" style="padding:8px;border-radius:8px;background:var(--bg);color:var(--text);border:1px solid var(--border);min-height:44px;flex:1;min-width:100px;" aria-label="Filter by rating">
+                <option value="" data-i18n="admin.feedback.all_ratings">All Ratings</option>
+                <option value="5">5 ★</option>
+                <option value="4">4 ★</option>
+                <option value="3">3 ★</option>
+                <option value="2">2 ★</option>
+                <option value="1">1 ★</option>
+              </select>
+              <select id="fbFilterStatus" style="padding:8px;border-radius:8px;background:var(--bg);color:var(--text);border:1px solid var(--border);min-height:44px;flex:1;min-width:100px;" aria-label="Filter by status">
+                <option value="" data-i18n="admin.feedback.all_status">All Status</option>
+                <option value="new" data-i18n="admin.feedback.status_new">🆕 New</option>
+                <option value="responded" data-i18n="admin.feedback.status_responded">✅ Responded</option>
+              </select>
+              <input type="date" id="fbFilterDateFrom" style="padding:8px;border-radius:8px;background:var(--bg);color:var(--text);border:1px solid var(--border);min-height:44px;flex:1;min-width:120px;" aria-label="Date from"/>
+              <span style="color:var(--text2);">→</span>
+              <input type="date" id="fbFilterDateTo" style="padding:8px;border-radius:8px;background:var(--bg);color:var(--text);border:1px solid var(--border);min-height:44px;flex:1;min-width:120px;" aria-label="Date to"/>
+              <button class="accent" onclick="loadFeedbackList()" style="min-height:44px;padding:8px 20px;font-size:14px;" data-i18n="admin.feedback.filter_btn">🔍 Filter</button>
+              <button class="ghost" onclick="resetFeedbackFilters()" style="min-height:44px;padding:8px 16px;font-size:13px;" data-i18n="admin.feedback.reset">✕ Reset</button>
+              <button class="accent" onclick="loadFeedbackStats()" style="min-height:44px;padding:8px 20px;font-size:14px;" data-i18n="admin.feedback.refresh">🔄 Refresh</button>
+            </div>
+          </div>
+
+          <!-- Feedback List -->
+          <div id="feedbackList" style="display:flex;flex-direction:column;gap:8px;"><div class="empty-state" data-i18n="admin.feedback.loading">Loading feedback...</div></div>
         </div>
         <!-- Waitlist / Digital Queue -->
         <div id="secWaitlist" class="admin-section">
@@ -3618,6 +3675,8 @@ const L10N = {
     'cart.clear': '🗑️ Clear',
     'cart.each': 'each',
     'cart.item_note': 'Item note...',
+    'cart.party_size': 'Party Size',
+    'cart.auto_grat_active': 'Auto-Gratuity',
     'order_type.label': '📋 Type:',
     'order_type.dine_in': 'Dine In',
     'order_type.takeout': 'Takeout',
@@ -3740,6 +3799,7 @@ const L10N = {
     'admin.stats.eod_tips': 'Tips Collected',
     'admin.stats.eod_taxes': 'Taxes Collected',
     'admin.stats.eod_discounts': 'Discounts',
+    'admin.stats.eod_service_charge': 'Service Charge',
     'admin.stats.eod_payment_methods': '💳 Payment Methods',
     'admin.stats.eod_cash': 'Cash',
     'admin.stats.eod_card': 'Card',
@@ -3997,6 +4057,7 @@ const L10N = {
     'admin.waste.logged_by': 'By',
     'admin.waste.cost': 'Cost',
     'admin.webhooks': '🔗 Webhooks',
+    'admin.sc.override_removed': '🔧 Auto-gratuity removed for this order',
     'admin.webhooks.title': '🔗 Webhook Integration',
     'admin.webhooks.desc': 'Configure webhooks to send order data to third-party delivery apps (DoorDash, UberEats, etc.) when orders are placed.',
     'admin.webhooks.add_title': '➕ Add Webhook',
@@ -4458,6 +4519,37 @@ const L10N = {
     'admin.analytics.last_week': '📅 Last Week',
     'admin.analytics.this_month': '📆 This Month',
     'admin.analytics.last_month': '📅 Last Month',
+    'admin.stats.feedback': '📝 Customer Feedback',
+    'admin.stats.feedback_none': 'No feedback yet',
+    'admin.stats.feedback_total': 'total',
+    'admin.stats.feedback_one_star': '1★ complaints',
+    'admin.feedback.title': '📝 Customer Feedback',
+    'admin.feedback.desc': 'View customer ratings and comments. Respond to feedback or create follow-up tickets.',
+    'admin.feedback.avg_rating': '⭐ Avg Rating',
+    'admin.feedback.total': '📋 Total',
+    'admin.feedback.new': '🆕 New',
+    'admin.feedback.today': '📅 Today',
+    'admin.feedback.five_star': '🌟 5★',
+    'admin.feedback.one_star': '⚠️ 1★',
+    'admin.feedback.all_ratings': 'All Ratings',
+    'admin.feedback.all_status': 'All Status',
+    'admin.feedback.status_new': '🆕 New',
+    'admin.feedback.status_responded': '✅ Responded',
+    'admin.feedback.filter_btn': '🔍 Filter',
+    'admin.feedback.reset': '✕ Reset',
+    'admin.feedback.refresh': '🔄 Refresh',
+    'admin.feedback.loading': 'Loading feedback...',
+    'admin.feedback.no_data': 'No data available.',
+    'admin.feedback.no_feedback': 'No feedback submissions yet.',
+    'admin.feedback.entries': 'entries',
+    'admin.feedback.unread': 'unread',
+    'admin.feedback.order_ref': 'Order #{{id}}',
+    'admin.feedback.table_ref': 'Table {{name}}',
+    'admin.feedback.response': 'Response',
+    'admin.feedback.respond': '💬 Respond',
+    'admin.feedback.create_ticket': '🎫 Create Ticket',
+    'admin.feedback.response_prompt': 'Enter your response note:',
+    'admin.feedback.responded': '✅ Feedback response recorded.',
   },
   es: {
     'app.title': '🍽️ Sistema POS',
@@ -4504,6 +4596,8 @@ const L10N = {
     'cart.clear': '🗑️ Limpiar',
     'cart.each': 'cada uno',
     'cart.item_note': 'Nota del artículo...',
+    'cart.party_size': 'Núm. de Comensales',
+    'cart.auto_grat_active': 'Propina Automática',
     'order_type.label': '📋 Tipo:',
     'order_type.dine_in': 'Comer Aquí',
     'order_type.takeout': 'Para Llevar',
@@ -4625,6 +4719,7 @@ const L10N = {
     'admin.stats.eod_tips': 'Propinas Recolectadas',
     'admin.stats.eod_taxes': 'Impuestos Recaudados',
     'admin.stats.eod_discounts': 'Descuentos',
+    'admin.stats.eod_service_charge': 'Cargo por Servicio',
     'admin.stats.eod_payment_methods': '💳 Métodos de Pago',
     'admin.stats.eod_cash': 'Efectivo',
     'admin.stats.eod_card': 'Tarjeta',
@@ -4882,6 +4977,7 @@ const L10N = {
     'admin.waste.logged_by': 'Por',
     'admin.waste.cost': 'Costo',
     'admin.webhooks': '🔗 Webhooks',
+    'admin.sc.override_removed': '🔧 Propina automática eliminada para este pedido',
     'admin.webhooks.title': '🔗 Integración de Webhook',
     'admin.webhooks.desc': 'Configure webhooks para enviar datos de pedidos a aplicaciones de entrega de terceros (DoorDash, UberEats, etc.) cuando se realicen pedidos.',
     'admin.webhooks.add_title': '➕ Agregar Webhook',
@@ -5343,6 +5439,37 @@ const L10N = {
     'admin.analytics.last_week': '📅 Semana Pasada',
     'admin.analytics.this_month': '📆 Este Mes',
     'admin.analytics.last_month': '📅 Mes Pasado',
+    'admin.stats.feedback': '📝 Comentarios de Clientes',
+    'admin.stats.feedback_none': 'Sin comentarios aún',
+    'admin.stats.feedback_total': 'total',
+    'admin.stats.feedback_one_star': 'quejas 1★',
+    'admin.feedback.title': '📝 Comentarios de Clientes',
+    'admin.feedback.desc': 'Ver calificaciones y comentarios de clientes. Responder o crear tickets de seguimiento.',
+    'admin.feedback.avg_rating': '⭐ Calificación Promedio',
+    'admin.feedback.total': '📋 Total',
+    'admin.feedback.new': '🆕 Nuevos',
+    'admin.feedback.today': '📅 Hoy',
+    'admin.feedback.five_star': '🌟 5★',
+    'admin.feedback.one_star': '⚠️ 1★',
+    'admin.feedback.all_ratings': 'Todas las Calificaciones',
+    'admin.feedback.all_status': 'Todos los Estados',
+    'admin.feedback.status_new': '🆕 Nuevo',
+    'admin.feedback.status_responded': '✅ Respondido',
+    'admin.feedback.filter_btn': '🔍 Filtrar',
+    'admin.feedback.reset': '✕ Restablecer',
+    'admin.feedback.refresh': '🔄 Actualizar',
+    'admin.feedback.loading': 'Cargando comentarios...',
+    'admin.feedback.no_data': 'No hay datos disponibles.',
+    'admin.feedback.no_feedback': 'Aún no hay comentarios.',
+    'admin.feedback.entries': 'entradas',
+    'admin.feedback.unread': 'no leídos',
+    'admin.feedback.order_ref': 'Orden #{{id}}',
+    'admin.feedback.table_ref': 'Mesa {{name}}',
+    'admin.feedback.response': 'Respuesta',
+    'admin.feedback.respond': '💬 Responder',
+    'admin.feedback.create_ticket': '🎫 Crear Ticket',
+    'admin.feedback.response_prompt': 'Ingrese su nota de respuesta:',
+    'admin.feedback.responded': '✅ Respuesta registrada.',
   }
 };
 
@@ -7613,6 +7740,10 @@ function showApp() {
   loadOrderTypeConfig();
   loadTableSelector();
   setupBarcodeScanner();
+  // Initialize party size input
+  const psInput = document.getElementById('partySizeInput');
+  if (psInput) { currentPartySize = parseInt(psInput.value) || 1; }
+  updatePartySize();
   if (currentUser.role === 'cook') {
     showKitchenView();
   } else {
@@ -10086,7 +10217,7 @@ function renderCart() {
     const label = (serviceChargeConfig && serviceChargeConfig.label) ? escHtml(serviceChargeConfig.label) : 'Service Charge';
     serviceChargeHtml = `<div style="display:flex;justify-content:space-between;align-items:center;color:#f39c12;font-size:14px;padding:4px 0;">
       <span>🔧 ${label}</span>
-      <span>+$${serviceChargeAmount.toFixed(2)}</span>
+      <span>+$${serviceChargeAmount.toFixed(2)} <button class="ghost" onclick="removeAutoGratuity()" style="font-size:12px;padding:2px 6px;min-height:24px;color:var(--accent);" title="Remove auto-gratuity (manager override)">✕</button></span>
     </div>`;
   }
   // Packaging fee based on order type
@@ -10856,7 +10987,9 @@ async function confirmOrder() {
         composed_since: composedSince || null,
         priority: orderIsRush ? 'rush' : null,
         course_holds: courseHolds,
-        manager_approval: managerApprovalData
+        manager_approval: managerApprovalData,
+        order_type: currentOrderType || 'dine_in',
+        party_size: currentPartySize
       })
     });
     if (!r.ok) {
@@ -11151,7 +11284,8 @@ async function submitOrder() {
       customer_email: document.getElementById('customerEmail').value.trim(),
       composed_since: composedSince || null,
       course_holds: courseHolds,
-      order_type: currentOrderType || 'dine_in'
+      order_type: currentOrderType || 'dine_in',
+      party_size: currentPartySize
     })
     });
     if (!r.ok) {
@@ -11304,6 +11438,13 @@ async function clearCart() {
     resetTip();
     clearLoyaltyCustomer();
     document.getElementById('orderNotesInput').value = '';
+    // Reset auto-gratuity state
+    serviceChargeRemoved = false;
+    currentPartySize = 1;
+    const psInput = document.getElementById('partySizeInput');
+    if (psInput) psInput.value = 1;
+    const gratBadge = document.getElementById('autoGratBadge');
+    if (gratBadge) gratBadge.style.display = 'none';
     renderCart();
     showToast(t('toast.cart_cleared'), 'success');
     // If drive-through mode is active, reset display
@@ -12572,6 +12713,7 @@ function switchAdminSection(sec) {
   else if (sec === 'kitchensound') loadKitchenSoundConfigAdmin();
   else if (sec === 'schedule') loadSchedule();
   else if (sec === 'giftcards') loadGiftCardList();
+  else if (sec === 'feedback') { loadFeedbackStats(); loadFeedbackList(); }
 }
 
 // ═══════════ TIMESHEET CONFIG ═══════════
@@ -12717,6 +12859,8 @@ async function loadAdminStats() {
       <div class="stat-card backup-health-card backup-${s.backup_health || 'red'}"><div class="stat-val">${s.backup_health === 'green' ? '🟢 ' : s.backup_health === 'yellow' ? '🟡 ' : '🔴 '}${s.backup_count || 0}</div><div class="stat-lbl">${t('admin.stats.backup_health')}<br><span style="font-size:12px;color:var(--text2);" onclick="switchAdminSection('backup')">${s.backup_count > 0 ? s.backup_count + ' ' + t('admin.stats.backup_count') + ' · ' + (s.latest_backup_ts ? new Date(s.latest_backup_ts).toLocaleString() : t('admin.stats.backup_never')) + ' · ' + s.backup_total_size_hr : t('admin.stats.backup_none')} · <a style="color:var(--accent);text-decoration:underline;cursor:pointer;">${t('admin.stats.backup_goto')}</a></span></div></div>
       <!-- Pending Orders Alert -->
       <div class="stat-card pending-card pending-${s.pending_orders_alert ? 'alert' : 'ok'}"><div class="stat-val">${s.pending_orders_alert ? '🔴 ' : '🟢 '}${s.pending_orders_count || 0}</div><div class="stat-lbl">${t('admin.stats.pending_orders')}<br><span style="font-size:12px;color:var(--text2);">${s.pending_orders_alert ? t('admin.stats.pending_alert', {count: s.pending_orders_count || 0, threshold: s.pending_orders_alert_threshold || 10}) : t('admin.stats.pending_ok', {count: s.pending_orders_count || 0})}</span></div></div>
+      <!-- Customer Feedback Card -->
+      ${renderFeedbackStatCard(s.feedback_stats)}
     `;
     // Append comp summary section if there are any comps
     const comp = s.comp_summary || {};
@@ -12875,6 +13019,7 @@ async function showEndOfDaySummary() {
         <div class="eod-stat-card"><div class="eod-stat-val">${fmt(s.tips_total)}</div><div class="eod-stat-lbl">${t('admin.stats.eod_tips')}</div></div>
         <div class="eod-stat-card"><div class="eod-stat-val">${fmt(s.taxes_total)}</div><div class="eod-stat-lbl">${t('admin.stats.eod_taxes')}</div></div>
         <div class="eod-stat-card"><div class="eod-stat-val">${fmt(s.discount_total)}</div><div class="eod-stat-lbl">${t('admin.stats.eod_discounts')}</div></div>
+        <div class="eod-stat-card"><div class="eod-stat-val" style="color:#f39c12;">${fmt(s.service_charge_total)}</div><div class="eod-stat-lbl">🔧 ${t('admin.stats.eod_service_charge')}</div></div>
       </div>
       <div class="eod-section">
         <h4>${t('admin.stats.eod_payment_methods')}</h4>
@@ -20604,8 +20749,24 @@ function formatDateTime(isoStr) {
 }
 
 // ═══════════ SERVICE CHARGE / AUTO-GRATUITY ═══════════
-let serviceChargeConfig = { enabled: true, threshold: 8, percentage: 18, label: 'Auto-Gratuity (18%)' };
+let serviceChargeConfig = { enabled: true, threshold: 6, percentage: 18, label: 'Auto-Gratuity (18%)' };
 let currentServiceChargeAmount = 0;
+let currentPartySize = 1;
+
+/** Called when party size input changes — re-renders cart to update auto-gratuity */
+function updatePartySize() {
+  const input = document.getElementById('partySizeInput');
+  if (!input) return;
+  currentPartySize = parseInt(input.value) || 1;
+  if (currentPartySize < 1) { currentPartySize = 1; input.value = 1; }
+  renderCart();
+  // Show/hide auto-gratuity badge
+  const badge = document.getElementById('autoGratBadge');
+  if (badge) {
+    const sc = calculateServiceCharge(0); // just check if enabled + threshold met
+    badge.style.display = (serviceChargeConfig.enabled !== false && currentPartySize >= (serviceChargeConfig.threshold || 999)) ? 'inline' : 'none';
+  }
+}
 
 async function loadServiceChargeConfig() {
   try {
@@ -20614,7 +20775,7 @@ async function loadServiceChargeConfig() {
     const config = await resp.json();
     serviceChargeConfig = config;
     document.getElementById('scEnabled').checked = config.enabled !== false;
-    document.getElementById('scThreshold').value = config.threshold || 8;
+    document.getElementById('scThreshold').value = config.threshold || 6;
     document.getElementById('scPercentage').value = config.percentage || 18;
     document.getElementById('scLabel').value = config.label || 'Auto-Gratuity (18%)';
   } catch(e) {
@@ -20624,7 +20785,7 @@ async function loadServiceChargeConfig() {
 
 async function saveServiceChargeConfig() {
   const enabled = document.getElementById('scEnabled').checked;
-  const threshold = parseInt(document.getElementById('scThreshold').value) || 8;
+  const threshold = parseInt(document.getElementById('scThreshold').value) || 6;
   const percentage = parseFloat(document.getElementById('scPercentage').value) || 18;
   const label = document.getElementById('scLabel').value.trim() || 'Auto-Gratuity';
   const statusEl = document.getElementById('scStatus');
@@ -20650,11 +20811,23 @@ async function saveServiceChargeConfig() {
 
 function calculateServiceCharge(subtotal) {
   if (!serviceChargeConfig || serviceChargeConfig.enabled === false) return 0;
-  const totalQty = cart.reduce((sum, item) => sum + (item.qty || 1), 0);
+  if (serviceChargeRemoved) return 0;
   const threshold = serviceChargeConfig.threshold || 999;
-  if (totalQty < threshold) return 0;
+  if (currentPartySize < threshold) return 0;
   const pct = serviceChargeConfig.percentage || 0;
   return subtotal * (pct / 100);
+}
+
+/** Manager override: remove auto-gratuity from this order */
+let serviceChargeRemoved = false;
+function removeAutoGratuity() {
+  serviceChargeRemoved = true;
+  renderCart();
+  showToast(t('admin.sc.override_removed') || '🔧 Auto-gratuity removed for this order', 'warning');
+}
+function restoreAutoGratuity() {
+  serviceChargeRemoved = false;
+  renderCart();
 }
 
 
@@ -23137,6 +23310,164 @@ async function loadGiftCardReport() {
   } catch (e) {
     content.innerHTML = '<span style="color:#e94560;">❌ ' + t('network_error') + '</span>';
   }
+}
+
+// ═══════════ CUSTOMER FEEDBACK ═══════════
+
+function renderFeedbackStatCard(fs) {
+  if (!fs || fs.total_count === 0) {
+    return '<div class="stat-card" style="border-left:3px solid var(--muted);"><div class="stat-val">📝 —</div><div class="stat-lbl">' + t('admin.stats.feedback') + '<br><span style="font-size:12px;color:var(--text2);">' + t('admin.stats.feedback_none') + '</span></div></div>';
+  }
+  const avgIcon = fs.average_rating >= 4.5 ? '🌟' : fs.average_rating >= 3 ? '⭐' : '⚠️';
+  const borderColor = fs.one_star_count > 0 ? '#e94560' : fs.average_rating >= 4 ? '#2ecc71' : '#f1c40f';
+  const alertText = fs.one_star_count > 0 ? ' · ⚠️ ' + fs.one_star_count + ' ' + t('admin.stats.feedback_one_star') : '';
+  return '<div class="stat-card" style="border-left:3px solid ' + borderColor + ';cursor:pointer;" onclick="switchAdminSection(\'feedback\')"><div class="stat-val">' + avgIcon + ' ' + fs.average_rating.toFixed(1) + '</div><div class="stat-lbl">' + t('admin.stats.feedback') + '<br><span style="font-size:12px;color:var(--text2);">' + fs.total_count + ' ' + t('admin.stats.feedback_total') + ' · 🆕 ' + fs.new_count + alertText + '</span></div></div>';
+}
+
+async function loadFeedbackStats() {
+  try {
+    const resp = await fetchJSON('/api/feedback/stats', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({adminPin: currentUser.id})
+    });
+    if (!resp || !resp.stats) return;
+    const fs = resp.stats;
+    document.getElementById('fbAvgRating').textContent = fs.total_count > 0 ? fs.average_rating.toFixed(1) + ' ★' : '—';
+    document.getElementById('fbTotalCount').textContent = fs.total_count;
+    document.getElementById('fbNewCount').textContent = fs.new_count;
+    document.getElementById('fbTodayCount').textContent = fs.today_count;
+    document.getElementById('fbFiveStarCount').textContent = fs.five_star_count;
+    document.getElementById('fbOneStarCount').textContent = fs.one_star_count;
+
+    // Rating distribution bar
+    const distEl = document.getElementById('fbRatingDist');
+    const dist = fs.rating_distribution || {};
+    const total = fs.total_count || 1;
+    const colors = {5: '#2ecc71', 4: '#27ae60', 3: '#f1c40f', 2: '#e67e22', 1: '#e94560'};
+    const labels = {5: '5★', 4: '4★', 3: '3★', 2: '2★', 1: '1★'};
+    let html = '';
+    for (let r = 5; r >= 1; r--) {
+      const count = dist[r] || 0;
+      const pct = (count / total * 100).toFixed(0);
+      html += '<div style="display:flex;align-items:center;gap:6px;margin:2px 0;flex:1;min-width:80px;"><span style="font-size:12px;color:var(--text2);min-width:28px;">' + labels[r] + '</span><div style="flex:1;height:14px;background:var(--bg);border-radius:7px;overflow:hidden;"><div style="width:' + pct + '%;height:100%;background:' + (colors[r] || '#555') + ';border-radius:7px;transition:width 0.3s;"></div></div><span style="font-size:11px;color:var(--text2);min-width:24px;text-align:right;">' + count + '</span></div>';
+    }
+    distEl.innerHTML = html;
+  } catch (e) {
+    console.error('loadFeedbackStats error:', e);
+  }
+}
+
+async function loadFeedbackList() {
+  const container = document.getElementById('feedbackList');
+  container.innerHTML = '<div class="empty-state">⏳ ' + t('loading') + '</div>';
+  try {
+    const filterRating = document.getElementById('fbFilterRating').value;
+    const filterStatus = document.getElementById('fbFilterStatus').value;
+    const filterDateFrom = document.getElementById('fbFilterDateFrom').value;
+    const filterDateTo = document.getElementById('fbFilterDateTo').value;
+    const body = {adminPin: currentUser.id};
+    if (filterRating) body.filter_rating = filterRating;
+    if (filterStatus) body.filter_status = filterStatus;
+    if (filterDateFrom) body.filter_date_from = filterDateFrom;
+    if (filterDateTo) body.filter_date_to = filterDateTo;
+
+    const resp = await fetchJSON('/api/feedback/list', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body)
+    });
+    if (!resp || !resp.feedback_list) {
+      container.innerHTML = '<div class="empty-state">' + t('admin.feedback.no_data') + '</div>';
+      return;
+    }
+    const list = resp.feedback_list;
+    if (list.length === 0) {
+      container.innerHTML = '<div class="empty-state">' + t('admin.feedback.no_feedback') + '</div>';
+      return;
+    }
+    let html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:13px;color:var(--text2);"><span>' + list.length + ' ' + t('admin.feedback.entries') + ' · 🆕 ' + (resp.unread_count || 0) + ' ' + t('admin.feedback.unread') + '</span></div>';
+    list.forEach(fb => {
+      const stars = '★'.repeat(fb.rating) + '☆'.repeat(5 - fb.rating);
+      const date = fb.created_at ? new Date(fb.created_at).toLocaleString() : '';
+      const statusIcon = fb.status === 'new' ? '🆕' : '✅';
+      const statusLabel = fb.status === 'new' ? t('admin.feedback.status_new') : t('admin.feedback.status_responded');
+      const borderColor = fb.rating <= 2 ? '3px solid #e94560' : fb.rating >= 4 ? '3px solid #2ecc71' : '3px solid #f1c40f';
+      html += '<div class="card" style="border-left:' + borderColor + ';padding:14px 16px;">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px;">';
+      html += '<div><span style="font-size:18px;color:#f1c40f;">' + stars + '</span>';
+      if (fb.customer_name) html += ' <span style="font-size:13px;color:var(--text2);">— ' + escHtml(fb.customer_name) + '</span>';
+      html += '</div>';
+      html += '<div><span class="badge" style="background:' + (fb.status === 'new' ? 'var(--accent)' : '#27ae60') + ';color:#fff;padding:3px 10px;border-radius:12px;font-size:12px;">' + statusIcon + ' ' + statusLabel + '</span></div>';
+      html += '</div>';
+      if (fb.comment) html += '<div style="margin:8px 0 6px;font-size:14px;color:var(--text);line-height:1.4;">' + escHtml(fb.comment) + '</div>';
+      html += '<div style="display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--text2);">';
+      html += '<span>🕐 ' + date + '</span>';
+      if (fb.order_id) html += '<span>🧾 ' + t('admin.feedback.order_ref', {id: fb.order_id}) + '</span>';
+      if (fb.table) html += '<span>🪑 ' + t('admin.feedback.table_ref', {name: fb.table}) + '</span>';
+      html += '</div>';
+      // Response section
+      if (fb.status === 'responded' && fb.response_note) {
+        html += '<div style="margin-top:8px;padding:8px 12px;background:var(--bg);border-radius:6px;border-left:2px solid #3498db;">';
+        html += '<div style="font-size:12px;color:#3498db;margin-bottom:2px;">💬 ' + t('admin.feedback.response') + ':</div>';
+        html += '<div style="font-size:13px;color:var(--text);">' + escHtml(fb.response_note) + '</div>';
+        html += '</div>';
+      }
+      // Action buttons for new feedback
+      if (fb.status === 'new') {
+        html += '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">';
+        html += '<button class="accent" onclick="showFeedbackRespondModal(' + fb.id + ')" style="min-height:44px;padding:8px 16px;font-size:13px;">💬 ' + t('admin.feedback.respond') + '</button>';
+        html += '<button class="outline" onclick="respondToFeedback(' + fb.id + ', true)" style="min-height:44px;padding:8px 16px;font-size:13px;border-color:#3498db;color:#3498db;">🎫 ' + t('admin.feedback.create_ticket') + '</button>';
+        html += '</div>';
+      }
+      html += '</div>';
+    });
+    container.innerHTML = html;
+  } catch (e) {
+    container.innerHTML = '<div class="empty-state val-err">⚠️ ' + t('toast.network_error') + '</div>';
+  }
+}
+
+function resetFeedbackFilters() {
+  document.getElementById('fbFilterRating').value = '';
+  document.getElementById('fbFilterStatus').value = '';
+  document.getElementById('fbFilterDateFrom').value = '';
+  document.getElementById('fbFilterDateTo').value = '';
+  loadFeedbackList();
+}
+
+async function respondToFeedback(feedbackId, createTicket) {
+  let responseNote = '';
+  if (!createTicket) {
+    responseNote = prompt(t('admin.feedback.response_prompt'), '');
+    if (responseNote === null) return;
+    responseNote = responseNote.trim();
+  }
+  try {
+    const resp = await fetchJSON('/api/feedback/respond', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        adminPin: currentUser.id,
+        feedback_id: feedbackId,
+        response_note: responseNote,
+        create_ticket: createTicket
+      })
+    });
+    if (resp) {
+      showToast(resp.message || t('admin.feedback.responded'), 'success');
+      loadFeedbackList();
+      loadFeedbackStats();
+    }
+  } catch (e) {
+    showToast(t('toast.network_error'), 'danger');
+  }
+}
+
+function showFeedbackRespondModal(feedbackId) {
+  const note = prompt(t('admin.feedback.response_prompt'), '');
+  if (note === null) return;
+  respondToFeedback(feedbackId, false, note.trim());
 }
 </script>
 

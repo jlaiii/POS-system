@@ -169,6 +169,7 @@ SECURITY_CONFIG_FILE = 'security_config.json'  # Security config (blocked IPs, t
 
 GIFT_CARDS_FILE = 'gift_cards.json'  # Gift card management (sell, redeem, balance)
 WAITLIST_FILE = 'waitlist.json'  # Walk-in customer waitlist/digital queue
+FEEDBACK_FILE = 'feedback.json'  # Customer feedback / satisfaction survey
 
 # --- Platform / Multi-Tenant Constants ---
 GLOCAL_DIR = 'data/global'  # Global platform data directory
@@ -268,7 +269,7 @@ def backup_menu():
 
 
 # Ensure JSON files exist and are initialized correctly
-for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE, INVENTORY_FILE, REFUNDED_ORDERS_FILE, FAVORITES_FILE, LOYALTY_FILE, SCHEDULED_PRICING_FILE, WASTE_FILE, DELIVERY_ADDRESSES_FILE, WEBHOOKS_FILE, TABLE_ADS_FILE, CASH_DRAWER_FILE, COMBOS_FILE, SERVICE_CHARGE_FILE, EMAIL_CONFIG_FILE, SHIFT_FILE, TICKETS_FILE, RESERVATIONS_FILE, TICKET_TEMPLATES_FILE, APPROVALS_FILE, RESTAURANT_CONFIG_FILE, PRINTER_CONFIG_FILE, GIFT_CARDS_FILE, WAITLIST_FILE]:
+for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE, INVENTORY_FILE, REFUNDED_ORDERS_FILE, FAVORITES_FILE, LOYALTY_FILE, SCHEDULED_PRICING_FILE, WASTE_FILE, DELIVERY_ADDRESSES_FILE, WEBHOOKS_FILE, TABLE_ADS_FILE, CASH_DRAWER_FILE, COMBOS_FILE, SERVICE_CHARGE_FILE, EMAIL_CONFIG_FILE, SHIFT_FILE, TICKETS_FILE, RESERVATIONS_FILE, TICKET_TEMPLATES_FILE, APPROVALS_FILE, RESTAURANT_CONFIG_FILE, PRINTER_CONFIG_FILE, GIFT_CARDS_FILE, WAITLIST_FILE, FEEDBACK_FILE]:
     if not os.path.exists(f):
         with open(f, 'w') as file:
             if f == USERS_FILE:
@@ -375,7 +376,7 @@ def load_json_data(filepath):
             if filepath == USERS_FILE and not isinstance(data, dict):
                 print(f"Warning: {filepath} is not a dictionary. Initializing as empty dict.")
                 return {}
-            if filepath in [ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, TICKETS_FILE, RESERVATIONS_FILE, HANDOFF_NOTES_FILE, WAITLIST_FILE] and not isinstance(data, list):
+            if filepath in [ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, TICKETS_FILE, RESERVATIONS_FILE, HANDOFF_NOTES_FILE, WAITLIST_FILE, FEEDBACK_FILE] and not isinstance(data, list):
                 print(f"Warning: {filepath} is not a list. Initializing as empty list.")
                 return []
             if filepath == ITEMS_FILE and not isinstance(data, dict):
@@ -5435,6 +5436,14 @@ def submit_order():
             'tax_amount': item_tax_amounts.get(idx, 0)
         })
 
+    # Accept party_size from request
+    party_size = data.get('party_size')
+    if party_size is not None:
+        try:
+            party_size = int(party_size)
+        except (ValueError, TypeError):
+            party_size = None
+
     tip_amount = float(data.get('tip_amount', 0))
     service_charge_amount = float(data.get('service_charge_amount', 0))
 
@@ -5452,11 +5461,13 @@ def submit_order():
     packaging_fee_label = ot_info.get('packaging_fee_label', '')
     packaging_fee_total = packaging_fee * len(items) if packaging_fee > 0 else 0.0
 
-    # Apply per-type service charge override if not already set by frontend
+    # Apply auto-gratuity/service charge if enabled and party size meets threshold
+    # Uses party_size (number of guests) from the global service_charge_config
     if service_charge_amount == 0 and ot_info.get('service_charge_enabled', False):
-        sc_threshold = int(ot_info.get('service_charge_threshold', 99))
-        sc_pct = float(ot_info.get('service_charge_percentage', 0))
-        if subtotal >= sc_threshold and sc_pct > 0:
+        sc_config = load_json_data(SERVICE_CHARGE_FILE)
+        sc_threshold = int(sc_config.get('threshold', 6))
+        sc_pct = float(sc_config.get('percentage', 18.0))
+        if party_size is not None and party_size >= sc_threshold and sc_pct > 0:
             service_charge_amount = round(subtotal * sc_pct / 100.0, 2)
 
     # Accept discount from frontend
@@ -5510,6 +5521,7 @@ def submit_order():
         'delivery_address': data.get('delivery_address'),  # Delivery address info
         'customer_email': data.get('customer_email', ''),  # Email for digital receipt delivery
         'order_type': order_type,  # dine_in, takeout, delivery, catering
+        'party_size': party_size,  # Number of guests (for auto-gratuity threshold)
         'packaging_fee': round(packaging_fee_total, 2),  # Per-type packaging fee total
         'packaging_fee_label': packaging_fee_label,  # Label for packaging fee
         'priority': data.get('priority', None),  # 'rush' or null for normal priority
@@ -6158,6 +6170,8 @@ def sync_orders():
             'item_notes': order_data.get('item_notes', {}),
             'table_number': order_data.get('table_number'),
             'delivery_address': order_data.get('delivery_address'),
+            'order_type': order_data.get('order_type', 'dine_in'),
+            'party_size': order_data.get('party_size'),
             'priority': order_data.get('priority', None)
         }
 
@@ -6623,6 +6637,10 @@ def get_order_receipt(order_id):
   </table>
   <hr>
   <div class="footer">Thank you for your business!<br>Have a great day 🎉</div>
+  <hr style="margin-top:12px;">
+  <div class="footer" style="font-size:11px;">📝 How was your experience?<br>
+    <a href="/feedback?order={order_id}" style="color:#e94560;text-decoration:underline;">Leave a review →</a>
+  </div>
 </body>
 </html>'''
 
@@ -6730,6 +6748,10 @@ def email_receipt():
   </table>
   <hr>
   <div class="footer">Thank you for your business!<br>Have a great day 🎉</div>
+  <hr style="margin-top:12px;">
+  <div class="footer" style="font-size:11px;">📝 How was your experience?<br>
+    <a href="/feedback?order={order_id}" style="color:#e94560;text-decoration:underline;">Leave a review →</a>
+  </div>
 </body>
 </html>'''
 
@@ -7160,6 +7182,10 @@ def _generate_print_html(order):
   </table>
   <hr>
   <div class="footer">Thank you for your business!<br>Have a great day 🎉</div>
+  <hr style="margin-top:12px;">
+  <div class="footer" style="font-size:11px;">📝 How was your experience?<br>
+    <a href="/feedback?order={order_id}" style="color:#e94560;text-decoration:underline;">Leave a review →</a>
+  </div>
 </body>
 </html>'''
     return html
@@ -7509,6 +7535,59 @@ def auto_cleanup_stale_orders():
     except Exception as e:
         print(f"Error in auto_cleanup_stale_orders: {e}")
         return {'stale_cancelled_count': 0, 'stale_cancelled_orders': []}
+
+
+def compute_feedback_stats():
+    """Compute feedback summary stats for admin dashboard.
+    Used by admin_stats() to include feedback health in the response."""
+    try:
+        feedback_list = load_json_data(FEEDBACK_FILE)
+        if not isinstance(feedback_list, list) or len(feedback_list) == 0:
+            return {
+                'total_count': 0,
+                'average_rating': 0,
+                'new_count': 0,
+                'today_count': 0,
+                'five_star_count': 0,
+                'one_star_count': 0,
+                'rating_distribution': {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
+            }
+
+        now = datetime.now()
+        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+
+        ratings = [f.get('rating', 0) for f in feedback_list if f.get('rating')]
+        avg_rating = sum(ratings) / len(ratings) if ratings else 0
+
+        rating_dist = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
+        for r in ratings:
+            if r in rating_dist:
+                rating_dist[r] += 1
+
+        today_entries = [
+            f for f in feedback_list
+            if datetime.fromisoformat(f.get('created_at', '')) >= today_start
+        ]
+
+        return {
+            'total_count': len(feedback_list),
+            'average_rating': round(avg_rating, 2),
+            'new_count': len([f for f in feedback_list if f.get('status') == 'new']),
+            'today_count': len(today_entries),
+            'five_star_count': rating_dist.get(5, 0),
+            'one_star_count': rating_dist.get(1, 0),
+            'rating_distribution': rating_dist
+        }
+    except Exception:
+        return {
+            'total_count': 0,
+            'average_rating': 0,
+            'new_count': 0,
+            'today_count': 0,
+            'five_star_count': 0,
+            'one_star_count': 0,
+            'rating_distribution': {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
+        }
 
 
 @app.route('/api/orders/bulk_cancel_stale', methods=['POST'])
@@ -8133,7 +8212,9 @@ def admin_stats():
         # Pending order alert
         'pending_orders_count': pending_count,
         'pending_orders_alert': pending_alert,
-        'pending_orders_alert_threshold': pending_alert_threshold
+        'pending_orders_alert_threshold': pending_alert_threshold,
+        # Customer feedback stats
+        'feedback_stats': compute_feedback_stats()
     }
     return jsonify({'message': 'Admin data retrieved', 'stats': stats})
 
@@ -8198,6 +8279,7 @@ def end_of_day_summary():
     tips_total = 0.0
     taxes_total = 0.0
     discount_total = 0.0
+    service_charge_total = 0.0
     order_count = 0
     net_sales = 0.0
     category_qty = {}  # category name → total quantity sold
@@ -8243,6 +8325,10 @@ def end_of_day_summary():
             pass
         try:
             discount_total += float(order.get('discount_amount', 0))
+        except (ValueError, TypeError):
+            pass
+        try:
+            service_charge_total += float(order.get('service_charge_amount', 0))
         except (ValueError, TypeError):
             pass
 
@@ -8300,6 +8386,7 @@ def end_of_day_summary():
         'tips_total': round(tips_total, 2),
         'taxes_total': round(taxes_total, 2),
         'discount_total': round(discount_total, 2),
+        'service_charge_total': round(service_charge_total, 2),
         'payment_methods': {
             'cash': {'total': round(cash_total, 2), 'count': cash_count},
             'card': {'total': round(card_total, 2), 'count': card_count},
@@ -19830,6 +19917,310 @@ def gift_card_report():
         'outstanding_liability': round(outstanding_liability, 2),
         'payment_method_breakdown': payment_methods
     })
+
+
+# ── Customer Feedback / Satisfaction Survey System ─────────────────────────
+# Lightweight feedback page for customers to rate their experience.
+# QR code on receipts links to /feedback?order=ORDER_ID.
+
+@app.route('/feedback')
+def serve_feedback_page():
+    """Serve the customer feedback/survey page."""
+    return send_from_directory(app.static_folder, 'feedback.html')
+
+
+@app.route('/api/feedback/submit', methods=['POST'])
+def submit_feedback():
+    """Submit customer feedback (public endpoint — no auth needed)."""
+    data = request.json
+    rating = data.get('rating')
+    comment = (data.get('comment') or '').strip()
+    order_id = data.get('order_id')
+    table_name = (data.get('table') or '').strip()
+    customer_name = (data.get('customer_name') or '').strip()
+
+    if not rating:
+        return jsonify({'message': 'Rating is required.'}), 400
+    try:
+        rating = int(rating)
+        if rating < 1 or rating > 5:
+            return jsonify({'message': 'Rating must be between 1 and 5.'}), 400
+    except (ValueError, TypeError):
+        return jsonify({'message': 'Rating must be a number between 1 and 5.'}), 400
+
+    feedback_list = load_json_data(FEEDBACK_FILE)
+    if not isinstance(feedback_list, list):
+        feedback_list = []
+
+    entry = {
+        'id': len(feedback_list) + 1,
+        'rating': rating,
+        'comment': comment,
+        'order_id': order_id,
+        'table': table_name,
+        'customer_name': customer_name,
+        'status': 'new',  # new, acknowledged, responded
+        'responded_by': None,
+        'responded_at': None,
+        'response_note': None,
+        'created_at': datetime.now().isoformat()
+    }
+
+    feedback_list.append(entry)
+    save_json_data(FEEDBACK_FILE, feedback_list)
+
+    # Alert for 1-star or 5-star ratings
+    if rating == 1:
+        log_activity('feedback_received', 'customer', 'public', {
+            'feedback_id': entry['id'],
+            'rating': rating,
+            'alert': '⚠️ 1-star complaint received',
+            'order_id': order_id
+        })
+    elif rating == 5:
+        log_activity('feedback_received', 'customer', 'public', {
+            'feedback_id': entry['id'],
+            'rating': rating,
+            'alert': '🌟 5-star glowing review received',
+            'order_id': order_id
+        })
+
+    return jsonify({
+        'message': 'Thank you for your feedback!',
+        'feedback': entry
+    })
+
+
+@app.route('/api/feedback/list', methods=['POST'])
+def list_feedback():
+    """Admin lists all feedback with optional filtering."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+
+    users = load_json_data(USERS_FILE)
+    if admin_pin not in users:
+        return jsonify({'message': 'User not found.'}), 404
+    if not check_perm(admin_pin, 'view_stats') and users[admin_pin].get('role') != 'owner':
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    feedback_list = load_json_data(FEEDBACK_FILE)
+    if not isinstance(feedback_list, list):
+        feedback_list = []
+
+    # Filtering
+    filter_rating = data.get('filter_rating')
+    filter_status = data.get('filter_status')
+    filter_date_from = (data.get('filter_date_from') or '').strip()
+    filter_date_to = (data.get('filter_date_to') or '').strip()
+
+    filtered = feedback_list
+    if filter_rating:
+        try:
+            filtered = [f for f in filtered if f.get('rating') == int(filter_rating)]
+        except (ValueError, TypeError):
+            pass
+    if filter_status:
+        filtered = [f for f in filtered if f.get('status') == filter_status]
+    if filter_date_from:
+        try:
+            dt_from = datetime.fromisoformat(filter_date_from)
+            filtered = [f for f in filtered if datetime.fromisoformat(f.get('created_at', '')) >= dt_from]
+        except (ValueError, KeyError):
+            pass
+    if filter_date_to:
+        try:
+            dt_to = datetime.fromisoformat(filter_date_to + 'T23:59:59')
+            filtered = [f for f in filtered if datetime.fromisoformat(f.get('created_at', '')) <= dt_to]
+        except (ValueError, KeyError):
+            pass
+
+    # Sort: newest first
+    filtered.sort(key=lambda x: x.get('created_at', ''), reverse=True)
+
+    return jsonify({
+        'message': 'Feedback list retrieved',
+        'feedback_list': filtered,
+        'total_count': len(filtered),
+        'unread_count': len([f for f in filtered if f.get('status') == 'new'])
+    })
+
+
+@app.route('/api/feedback/stats', methods=['POST'])
+def feedback_stats():
+    """Return aggregated feedback statistics for admin dashboard."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+
+    users = load_json_data(USERS_FILE)
+    if admin_pin not in users:
+        return jsonify({'message': 'User not found.'}), 404
+    if not check_perm(admin_pin, 'view_stats') and users[admin_pin].get('role') != 'owner':
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    feedback_list = load_json_data(FEEDBACK_FILE)
+    if not isinstance(feedback_list, list):
+        feedback_list = []
+
+    now = datetime.now()
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    week_ago = now - timedelta(days=7)
+    month_ago = now - timedelta(days=30)
+
+    total_count = len(feedback_list)
+    if total_count == 0:
+        return jsonify({
+            'message': 'No feedback data yet.',
+            'stats': {
+                'total_count': 0,
+                'average_rating': 0,
+                'rating_distribution': {1: 0, 2: 0, 3: 0, 4: 0, 5: 0},
+                'daily_avg': 0,
+                'weekly_avg': 0,
+                'monthly_avg': 0,
+                'new_count': 0,
+                'today_count': 0,
+                'five_star_count': 0,
+                'one_star_count': 0
+            }
+        })
+
+    ratings = [f.get('rating', 0) for f in feedback_list if f.get('rating')]
+    avg_rating = sum(ratings) / len(ratings) if ratings else 0
+
+    rating_dist = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
+    for r in ratings:
+        if r in rating_dist:
+            rating_dist[r] += 1
+
+    # Daily/weekly/monthly averages
+    today_entries = [
+        f for f in feedback_list
+        if datetime.fromisoformat(f.get('created_at', '')) >= today_start
+    ] if feedback_list else []
+    week_entries = [
+        f for f in feedback_list
+        if datetime.fromisoformat(f.get('created_at', '')) >= week_ago
+    ] if feedback_list else []
+    month_entries = [
+        f for f in feedback_list
+        if datetime.fromisoformat(f.get('created_at', '')) >= month_ago
+    ] if feedback_list else []
+
+    today_ratings = [f.get('rating', 0) for f in today_entries if f.get('rating')]
+    week_ratings = [f.get('rating', 0) for f in week_entries if f.get('rating')]
+    month_ratings = [f.get('rating', 0) for f in month_entries if f.get('rating')]
+
+    daily_avg = sum(today_ratings) / len(today_ratings) if today_ratings else 0
+    weekly_avg = sum(week_ratings) / len(week_ratings) if week_ratings else 0
+    monthly_avg = sum(month_ratings) / len(month_ratings) if month_ratings else 0
+
+    return jsonify({
+        'message': 'Feedback stats retrieved',
+        'stats': {
+            'total_count': total_count,
+            'average_rating': round(avg_rating, 2),
+            'rating_distribution': rating_dist,
+            'daily_avg': round(daily_avg, 2),
+            'weekly_avg': round(weekly_avg, 2),
+            'monthly_avg': round(monthly_avg, 2),
+            'new_count': len([f for f in feedback_list if f.get('status') == 'new']),
+            'today_count': len(today_entries),
+            'five_star_count': rating_dist.get(5, 0),
+            'one_star_count': rating_dist.get(1, 0)
+        }
+    })
+
+
+@app.route('/api/feedback/respond', methods=['POST'])
+def respond_feedback():
+    """Admin acknowledges/responds to feedback, optionally creating a ticket."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+    feedback_id = data.get('feedback_id')
+    response_note = (data.get('response_note') or '').strip()
+    create_ticket = data.get('create_ticket', False)
+
+    if not admin_pin:
+        return jsonify({'message': 'Authentication required.'}), 403
+
+    users = load_json_data(USERS_FILE)
+    if admin_pin not in users:
+        return jsonify({'message': 'User not found.'}), 404
+    if not check_perm(admin_pin, 'view_stats') and users[admin_pin].get('role') != 'owner':
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    if not feedback_id:
+        return jsonify({'message': 'Feedback ID required.'}), 400
+
+    feedback_list = load_json_data(FEEDBACK_FILE)
+    if not isinstance(feedback_list, list):
+        feedback_list = []
+
+    target = None
+    for f in feedback_list:
+        if f.get('id') == feedback_id:
+            target = f
+            break
+
+    if not target:
+        return jsonify({'message': 'Feedback entry not found.'}), 404
+
+    target['status'] = 'responded'
+    target['responded_by'] = admin_pin
+    target['responded_at'] = datetime.now().isoformat()
+    if response_note:
+        target['response_note'] = response_note
+
+    save_json_data(FEEDBACK_FILE, feedback_list)
+
+    log_activity('feedback_responded', admin_pin, users[admin_pin].get('role', 'admin'), {
+        'feedback_id': feedback_id,
+        'response_note': response_note,
+        'create_ticket': create_ticket
+    })
+
+    result = {'message': 'Feedback response recorded.', 'feedback': target}
+
+    # Optionally create a ticket in the ticket system
+    if create_ticket:
+        try:
+            ticket_subject = f"Customer Feedback Response — Rating: {target.get('rating')}★"
+            ticket_desc = f"Admin response to customer feedback #{feedback_id}.\n"
+            if target.get('comment'):
+                ticket_desc += f"Customer comment: {target['comment']}\n"
+            if response_note:
+                ticket_desc += f"Admin response: {response_note}\n"
+            ticket_desc += f"Created from feedback form."
+
+            tickets = load_json_data(TICKETS_FILE)
+            if not isinstance(tickets, list):
+                tickets = []
+            ticket_id_val = f"TKT-{len(tickets) + 1:03d}"
+            tickets.append({
+                'id': ticket_id_val,
+                'user_id': admin_pin,
+                'user_name': users[admin_pin].get('name', 'Admin'),
+                'type': 'feedback',
+                'status': 'pending',
+                'subject': ticket_subject,
+                'description': ticket_desc,
+                'created_at': datetime.now().isoformat(),
+                'responded_by': None,
+                'responded_at': None,
+                'response_note': None,
+                'priority': 'normal'
+            })
+            save_json_data(TICKETS_FILE, tickets)
+            log_activity('ticket_created_from_feedback', admin_pin, users[admin_pin].get('role', 'admin'), {
+                'ticket_id': ticket_id_val,
+                'feedback_id': feedback_id
+            })
+            result['ticket_id'] = ticket_id_val
+            result['message'] += f' Ticket #{ticket_id_val} created.'
+        except Exception as e:
+            result['ticket_warning'] = f'Could not create ticket: {str(e)}'
+
+    return jsonify(result)
 
 
 # ── Custom Error Handlers ──────────────────────────────────────────────────
