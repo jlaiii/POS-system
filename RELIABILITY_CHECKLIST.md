@@ -1,25 +1,25 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-25T21:16 UTC
-> Total checks: 578
-> Healthy: 578 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-25T22:28 UTC
+> Total checks: 579
+> Healthy: 579 | Broken: 0 | Fixed this cycle: 1
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 — 200 OK, gunicorn+gevent via scripts/run_flask.sh [verified 21:09]
-- [x] All JSON data files exist and are valid — all 14 JSON files valid, parseable (users, items, orders, cleared_orders, shift_log, inventory, combos, favorites, loyalty_points, security_events, login_attempts, known_ips, security_config, timesheet_config) [verified 21:09]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin'), 8 users total [verified 21:09]
-- [x] Git repo is clean — worker-modified data files only (RELIABILITY_CHECKLIST, SECURITY_WATCHDOG, activity_log, login_attempts, order_counter, security_events) — no crash debris [verified 21:09]
+- [x] Flask app responds on port 5000 — 200 OK, gunicorn+gevent via scripts/run_flask.sh, verified root + /api/health [verified 22:28]
+- [x] All JSON data files exist and are valid — all 14 JSON files valid, parseable [verified 22:28]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin'), 8 users total [verified 22:28]
+- [x] Git repo is clean — committed items.json formatting + inventory.json test debris cleanup (commit be3d70e), remaining changes: RELIABILITY_CHECKLIST.md, activity_log.json (worker activity only) [verified 22:28]
 
 ## HOURLY (check if last check was >1h ago)
-- [x] /api/health — {"status":"ok"} (GET) [verified 21:16]
-- [x] Frontend loads — 200, HTML OK [verified 21:09]
-- [x] /api/items returns items — GET, 5 categories with items [verified 21:09]
-- [x] /api/admin_shifts returns shifts — POST with adminPin=1111, shifts returned (0 for date range) [verified 21:09]
-- [x] /api/login works — POST with userId=1111, "Login successful", role=owner [verified 21:09]
-- [x] /api/clock/status works — POST with adminPin=1111, clocked_in: false [verified 21:09]
-- [x] /api/admin_stats returns stats — POST with adminPin=1111, all stats fields present [verified 21:09]
+- [x] /api/health — {"status":"ok"} (GET) [verified 22:28]
+- [x] Frontend loads — 200, HTML OK [verified 22:28]
+- [x] /api/items returns items — GET, 5 categories with 19 items [verified 22:28]
+- [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 43 shifts found [verified 22:28]
+- [x] /api/login works — POST with userId=1111, "Login successful", role=owner [verified 22:28]
+- [x] /api/clock/status works — POST with adminPin=1111, clocked_in: false [verified 22:28]
+- [x] /api/admin_stats returns stats — POST with adminPin=1111, all stats fields present [verified 22:28]
 
 ## EVERY 4 HOURS
 - [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 200, 8 items in queue [verified 20:13]
@@ -54,6 +54,7 @@
 - [x] **Owner username changed to 'testuser' (3rd data corruption incident)** — users.json PIN 1111 username field changed from 'jayadmin' to 'testuser', password_hash and salt also changed. Found at 16:57. Fix: restored from git HEAD. Root cause unknown — possibly a CRUD test worker that accidentally modified the owner account instead of a test user. Added to DISCOVERED — check every run during CRITICAL scan. [verified 20:13 — users.json healthy, name='Owner', username='jayadmin']
 
 ## FIXES APPLIED
+- [2026-06-25 22:28] **Flask server down (12th occurrence) + inventory test debris cleaned** — Flask not responding (000). No process on port 5000. Fix: started gunicorn+gevent via scripts/run_flask.sh. All CRITICAL and HOURLY checks passed. Also found TEST-Seasonal-Pumpkin-Latte and VFY-Seasonal-Test in inventory.json — removed and committed (be3d70e). Downtime: ~1min (detected at 22:28, restored by 22:28).
 - [2026-06-25 17:11] **Full restart test completed** — Full app restart test: killed gunicorn (PID 1229331), restarted via run_flask.sh. Gunicorn master+worker running on PIDs 1253713/1253714. All critical endpoints verified working. Single listener, no dual-bind. Downtime: ~5s.
 - [2026-06-25 12:06] **Flask server down (11th occurrence) + switched to gunicorn launcher** — Server not responding (000). Recurring pattern — no process on port 5000. Fix: killed dev server, switched to `scripts/run_flask.sh` (gunicorn+gevent with auto-restart launcher). All critical, hourly, and 12H checks passed. Now running on stable gunicorn setup with crash protection. Downtime: ~2min (including switchover).
 - [2026-06-25 10:15] **Flask server down (10th occurrence)** — Server not responding (000). Recurring pattern — no process on port 5000. Fix: started `python3 app.py` as background daemon. All critical, hourly, and selected 4H checks passed. Downtime: ~1min. Root cause still unknown — consider systemd service or run_flask.sh wrapper.
