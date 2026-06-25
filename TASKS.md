@@ -604,7 +604,7 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 
 ### Priority: MEDIUM
 
-- [ ] **Add waitlist/digital queue for walk-in customers** — Host stand tool to add parties to waitlist with party size, name, phone, estimated wait time. Auto-calculate wait times from current table occupancy. Send SMS notification when table is ready via existing email/SMS config. Check-in marking, no-show tracking, and waitlist-to-table assignment integration with existing floor plan dashboard.
+- [~] worker-1 **Add waitlist/digital queue for walk-in customers** — Host stand tool to add parties to waitlist with party size, name, phone, estimated wait time. Auto-calculate wait times from current table occupancy. Send SMS notification when table is ready via existing email/SMS config. Check-in marking, no-show tracking, and waitlist-to-table assignment integration with existing floor plan dashboard.
 
 ### Priority: LOW
 
