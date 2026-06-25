@@ -634,3 +634,22 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 - [x] worker-2 **Review and resolve 22 unresolved security events** — `security_events.json` had 24 total events, 22 unresolved (15 anomaly, 5 data_integrity, 3 access_control, 1 authentication). Created `POST /api/security/resolve_event` endpoint with permission gating. Added Resolve button with resolution note prompt in Security Dashboard event cards. Reviewed all 22 events: off-hours logins (15) were expected dev/test behavior from localhost cron workers; data_integrity issues (2FA persistence, activity log truncation, order subtotal) were historical bugs since fixed or inactive; access_control events were test block/unblock actions. All resolved with detailed notes. [worker-2]
 
 - [x] worker-3 **Restock 6 inventory items at zero stock** — `inventory.json` shows 6 items at 0 stock: Robot Burger, Test Nutrition Item, Pancakes, Bacon & Eggs, Grilled Chicken Salad, and Test "Special" Item. The low-stock alert on the admin dashboard will show a persistent red warning until resolved. Admin should either restock these items or remove them from inventory tracking if they're test items. [worker-3 — Removed 3 test items (Robot Burger, Test Nutrition Item, Test Special Item) from inventory tracking; restocked Pancakes→50, Bacon & Eggs→40, Grilled Chicken Salad→30]
+
+
+## New Tasks (from Task Generator — 2026-06-25)
+
+### Priority: HIGH
+
+- [ ] **Add auto-gratuity for large parties** — Configurable service charge auto-applied when party size exceeds configurable threshold (default: 6 guests to 18% gratuity). Configurable percentage and party size minimum in admin settings. Displayed as separate "Auto-Gratuity (X%)" line item in cart, review modal, receipt, and end-of-day summary. Manager override button to remove or adjust gratuity. Clear labeling per regulatory requirements (not a voluntary tip). Full i18n EN+ES. Essential for any full-service restaurant handling groups.
+
+- [ ] **Add customer feedback / satisfaction survey system** — QR code on printed and emailed receipts linking to a lightweight feedback page. Customers rate experience (1-5 stars) and optionally leave comments. Feedback aggregated in admin dashboard: average rating trend chart (daily/weekly/monthly), recent reviews list, response/follow-up button that creates a ticket in the existing ticket system. Low/high rating alerts (1-star complaints or 5-star glowing reviews). Helps identify service issues before they escalate to public review sites.
+
+### Priority: MEDIUM
+
+- [ ] **Add delivery driver management and tracking** — Complement existing delivery order type with driver assignment and tracking workflow. New drivers.json data store with driver name, phone, status (available/delivering/off-duty), active deliveries count. Driver checkout page: driver logs in, sees assigned deliveries, marks as picked up and delivered with timestamp. SMS notification to customer when driver is en route (reuses existing SMS config). Admin dashboard: driver status grid, delivery history per driver, delivery completion rate stats.
+
+- [ ] **Add menu item recipe / cost of goods sold (COGS) tracking** — Link each menu item to inventory components with quantities per serving (e.g., "Hamburger" = 1 bun + 1 patty + 1 lettuce + 2 tomato slices). Per-item ingredient list stored on item record. Auto-calculate item cost from current inventory unit costs. Display cost, margin %, and breakeven price in item management detail. Analytics report: menu item profitability ranking (highest/lowest margin). Alerts when ingredient price changes significantly affect margin. Enables data-driven menu pricing decisions.
+
+### Priority: LOW
+
+- [ ] **Add expense tracking and profit and loss reporting** — Record business expenses by category (supplies, utilities, repairs, marketing, labor, rent, insurance, other) with date, amount, vendor name, optional note. New expenses.json data store. Admin expense entry form with category dropdown + date picker. View expenses filtered by category/date range in admin analytics. Generate P&L statement: Revenue - COGS = Gross Profit - Expenses = Net Profit. Printable report for bookkeeping. Enables basic financial management within the POS without external accounting software.
