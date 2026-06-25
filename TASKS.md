@@ -2,7 +2,7 @@
 
 > Auto-managed by 3 Hermes Worker Crons (every 30 min each, staggered claims).
 > Workers use `[~]` to claim tasks before working. Never pick a claimed task.
-> Last updated: 2026-06-25 (audit #20 — 3 pending tasks, added rush order flag + table quick-filter)
+> Last updated: 2026-06-25 (audit #21 — 0 pending tasks — ALL DONE. Added 3 new tasks from audit findings.)
 
 ## Status Legend
 - `[ ]` = pending (available for any worker)
@@ -570,3 +570,15 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 ### Priority: LOW
 
 - [x] worker-3 **Add shift handoff notes for end-of-shift communication** — Simple note system where employees leaving a shift can leave notes for the next shift: equipment issues (ice machine down), customer situations (Table 7 complained about noise), inventory alerts (running low on salmon), VIP notes (regular customer's birthday tomorrow). New `handoff_notes.json` data store with fields: author, timestamp, note, priority (info/warning/urgent), category (equipment/customer/inventory/other). Prompt shown on clock-out if user has any unsent notes: "Any notes for the next shift?" Admin can view all handoff notes in Timesheet tab with filter by category/priority. Prevents critical information loss between shifts. [worker-3 — New POST /api/handoff_notes/save and POST /api/handoff_notes/list endpoints. Handoff note fields in clock-out modal with category+priority selectors. Admin collapsible section in Timesheet tab with category/priority/date filter. i18n ready. Dark theme. Python syntax verified, endpoints tested with real data.]
+
+## New Tasks (from Audit #21 — 2026-06-25)
+
+### Priority: HIGH
+
+- [ ] **Audit #21: Stale pending order cleanup** — 53 out of 66 orders (80%) are stuck in "pending" status (never processed by kitchen). In production, orders accumulating in pending state means lost tickets. Add a cleanup script or auto-archive mechanism: auto-cancel orders older than 24h in pending status, with configurable threshold. Add a dashboard alert when pending count exceeds a threshold (e.g., >10 pending orders). Add a "Bulk Cancel Stale Orders" admin action with date range filter. Prevents old test data from polluting real metrics and alerts staff to stuck orders.
+
+### Priority: MEDIUM
+
+- [ ] **Audit #21: Enable mandatory 2FA for admin/owner roles in production** — `security_config.json` has `require_2fa_for_admins: false`. For production deployment, this should be enabled to protect owner (1111) and manager (2222) accounts from PIN leaks. Enable the toggle, send notification to existing admins to set up 2FA, verify all admin accounts have totp_enabled=true. Currently 0/2 admin-level accounts have 2FA active.
+
+- [ ] **Audit #21: Complete SQLite migration** — Migration scripts exist (migrate_orders.py, sync_json_from_db.py) and `pos.db` exists (245KB), but the system still runs on JSON files in production. Complete the migration: switch data loading/saving to SQLite, verify all 24 tables, run integrity checks, confirm backward compatibility fallback. JSON-only will become a bottleneck as order volume grows beyond 1,000+ entries.
