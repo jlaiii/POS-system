@@ -5472,6 +5472,93 @@ def submit_order():
         'loyalty_earned': loyalty_earned
     })
 
+
+# --- Order Undo Endpoint (30s grace period) ---
+
+@app.route('/api/orders/undo', methods=['POST'])
+def undo_order():
+    """
+    Undo (void) an order within 30 seconds of submission.
+    Only the same user who submitted can undo.
+    Restores inventory and marks the order as 'undo_voided'.
+    """
+    data = request.json
+    order_id = data.get('order_id')
+    user = data.get('user')
+
+    if order_id is None:
+        return jsonify({'message': 'Order ID is required.'}), 400
+    if not user:
+        return jsonify({'message': 'User ID is required.'}), 400
+
+    orders = load_json_data(ORDERS_FILE)
+    found_order = None
+    found_idx = None
+
+    for i, order in enumerate(orders):
+        if order.get('order_id') == int(order_id):
+            if order.get('status') in ('refunded', 'voided', 'undo_voided'):
+                return jsonify({'message': f'Order #{order_id} has already been voided/refunded.'}), 400
+            found_order = order
+            found_idx = i
+            break
+
+    if not found_order:
+        return jsonify({'message': f'Order #{order_id} not found.'}), 404
+
+    # Only the user who submitted the order can undo it
+    if str(found_order.get('user', '')) != str(user):
+        return jsonify({'message': 'Only the user who submitted this order can undo it.'}), 403
+
+    # Check the 30-second grace period
+    try:
+        order_date = found_order.get('date', '')
+        order_dt = datetime.fromisoformat(order_date)
+        seconds_since = (datetime.now() - order_dt).total_seconds()
+        if seconds_since > 30:
+            return jsonify({'message': 'Undo period has expired (30 seconds). Please use refund instead.', 'expired': True}), 400
+    except (ValueError, TypeError):
+        # If we can't parse the date, still allow undo but log a warning
+        pass
+
+    # Mark as undo_voided
+    found_order['status'] = 'undo_voided'
+    found_order['undo_reason'] = 'Undone by user within 30s grace period'
+    found_order['undo_at'] = datetime.now().isoformat()
+
+    save_json_data(ORDERS_FILE, orders)
+
+    # Restore inventory (same pattern as refund)
+    inventory = load_json_data(INVENTORY_FILE)
+    restored_items = []
+    for item in found_order.get('items', []):
+        if item.get('is_combo') and item.get('child_items'):
+            for ci in item['child_items']:
+                ci_name = ci.get('name', '')
+                ci_qty = int(ci.get('qty', 1)) * int(item.get('qty', 1))
+                if ci_name in inventory:
+                    inventory[ci_name]['stock'] = inventory[ci_name].get('stock', 0) + ci_qty
+                    restored_items.append(f"{ci_name} x{ci_qty}")
+            continue
+        item_name = item.get('name', '')
+        qty = int(item.get('qty', 1))
+        if item_name in inventory:
+            inventory[item_name]['stock'] = inventory[item_name].get('stock', 0) + qty
+            restored_items.append(f"{item_name} x{qty}")
+    save_json_data(INVENTORY_FILE, inventory)
+
+    # Log activity
+    log_activity('undo_order', user, 'user', {
+        'order_id': int(order_id),
+        'inventory_restored': restored_items,
+        'order_total': found_order.get('total', 0)
+    })
+
+    return jsonify({
+        'message': f'Order #{order_id} undone successfully.',
+        'order_id': int(order_id)
+    })
+
 @app.route('/api/clear_order', methods=['POST'])
 def clear_order():
     data = request.json

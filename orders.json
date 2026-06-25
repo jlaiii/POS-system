@@ -2485,5 +2485,206 @@
         "refund_reason": "Reliability bot test \u2014 automated order lifecycle check",
         "refunded_at": "2026-06-24T18:31:50.232300",
         "refunded_by": "1111"
+    },
+    {
+        "order_id": 73,
+        "status": "refunded",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-24T23:42:55.580594",
+        "user": null,
+        "payment": "Cash",
+        "payment_splits": null,
+        "items": [
+            {
+                "id": "item_1",
+                "name": "Test Item",
+                "price": 5.99,
+                "quantity": 1
+            }
+        ],
+        "subtotal": 5.99,
+        "tax_amount": 0.0,
+        "tip_amount": 0.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 6.47,
+        "notes": "",
+        "item_notes": {},
+        "table_number": null,
+        "delivery_address": null,
+        "customer_email": "",
+        "refund_reason": "No reason provided",
+        "refunded_at": "2026-06-24T23:43:24.651171",
+        "refunded_by": "1111"
+    },
+    {
+        "order_id": 74,
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-25T00:29:14.804633",
+        "user": "5678",
+        "payment": "Split (Cash $15.00, Card $10.00)",
+        "payment_splits": [
+            {
+                "method": "Cash",
+                "amount": 15.0
+            },
+            {
+                "method": "Card",
+                "amount": 10.0
+            }
+        ],
+        "items": [
+            {
+                "name": "Hamburger - Normal",
+                "price": 6,
+                "qty": 1,
+                "modifiers": {
+                    "Size": "Large",
+                    "Extras": [
+                        "Extra Cheese",
+                        "Bacon"
+                    ]
+                }
+            },
+            {
+                "name": "Lemonade",
+                "price": 3,
+                "qty": 1
+            },
+            {
+                "name": "Chips (Large Bag)",
+                "price": 3,
+                "qty": 2
+            }
+        ],
+        "subtotal": 15.0,
+        "tax_amount": 0.0,
+        "tip_amount": 0.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 15.0,
+        "notes": "no onions on the burger",
+        "item_notes": {
+            "0": "no onions please"
+        },
+        "table_number": 5,
+        "delivery_address": null,
+        "customer_email": ""
+    },
+    {
+        "order_id": 75,
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-25T00:29:44.413332",
+        "user": "5678",
+        "payment": "Card",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Hotdog - Loaded",
+                "price": 7,
+                "qty": 1,
+                "modifiers": {
+                    "Extras": [
+                        "Extra Cheese"
+                    ]
+                }
+            },
+            {
+                "name": "Taco - Chicken with Salsa",
+                "price": 7,
+                "qty": 2
+            },
+            {
+                "name": "Coke",
+                "price": 3,
+                "qty": 2
+            }
+        ],
+        "subtotal": 24.0,
+        "tax_amount": 0.0,
+        "tip_amount": 0.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 24.0,
+        "notes": "extra napkins please",
+        "item_notes": {},
+        "table_number": 6,
+        "delivery_address": null,
+        "customer_email": ""
+    },
+    {
+        "order_id": 76,
+        "status": "undo_voided",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-25T01:34:28.702195",
+        "user": "1234",
+        "payment": "Cash",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Lemonade",
+                "price": 3,
+                "qty": 2
+            }
+        ],
+        "subtotal": 6.0,
+        "tax_amount": 0.6,
+        "tip_amount": 0.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 6.6,
+        "notes": "",
+        "item_notes": {},
+        "table_number": null,
+        "delivery_address": null,
+        "customer_email": "",
+        "undo_reason": "Undone by user within 30s grace period",
+        "undo_at": "2026-06-25T01:34:31.589280"
+    },
+    {
+        "order_id": 77,
+        "status": "undo_voided",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-25T01:34:40.875498",
+        "user": "1234",
+        "payment": "Cash",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Coke",
+                "price": 3,
+                "qty": 1
+            }
+        ],
+        "subtotal": 3.0,
+        "tax_amount": 0.3,
+        "tip_amount": 0.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 3.3,
+        "notes": "",
+        "item_notes": {},
+        "table_number": null,
+        "delivery_address": null,
+        "customer_email": "",
+        "undo_reason": "Undone by user within 30s grace period",
+        "undo_at": "2026-06-25T01:34:44.307307"
     }
 ]

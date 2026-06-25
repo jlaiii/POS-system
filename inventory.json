@@ -4,7 +4,7 @@
         "low_stock_threshold": 10
     },
     "Hotdog - Loaded": {
-        "stock": 95,
+        "stock": 94,
         "low_stock_threshold": 10
     },
     "Hamburger - All the Fixings": {
@@ -16,7 +16,7 @@
         "low_stock_threshold": 10
     },
     "Coke": {
-        "stock": 92,
+        "stock": 90,
         "low_stock_threshold": 10
     },
     "Raspia (Fruit Slush)": {
@@ -28,7 +28,7 @@
         "low_stock_threshold": 10
     },
     "Lemonade": {
-        "stock": 97,
+        "stock": 96,
         "low_stock_threshold": 10
     },
     "Chocolate Bar": {
@@ -40,7 +40,7 @@
         "low_stock_threshold": 10
     },
     "Taco - Chicken with Salsa": {
-        "stock": 97,
+        "stock": 95,
         "low_stock_threshold": 10
     },
     "Granola Bar": {
@@ -48,11 +48,11 @@
         "low_stock_threshold": 10
     },
     "Chips (Large Bag)": {
-        "stock": 97,
+        "stock": 95,
         "low_stock_threshold": 10
     },
     "Hamburger - Normal": {
-        "stock": 94,
+        "stock": 93,
         "low_stock_threshold": 10
     },
     "Water Bottle": {

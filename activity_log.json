@@ -7558,5 +7558,695 @@
         "details": {
             "status": "success"
         }
+    },
+    {
+        "timestamp": "2026-06-24T20:52:49.672395",
+        "type": "logout",
+        "user_id": "9999",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {}
+    },
+    {
+        "timestamp": "2026-06-24T20:52:57.897096",
+        "type": "login",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "2fa_required",
+            "method": "pin",
+            "user_name": "Employee One",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T20:52:58.078295",
+        "type": "logout",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {}
+    },
+    {
+        "timestamp": "2026-06-24T20:53:04.850292",
+        "type": "login",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "2fa_required",
+            "method": "pin",
+            "user_name": "Employee One",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T20:53:09.859763",
+        "type": "login",
+        "user_id": "5678",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Employee Two",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T20:53:09.875430",
+        "type": "logout",
+        "user_id": "5678",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {}
+    },
+    {
+        "timestamp": "2026-06-24T20:53:14.501614",
+        "type": "login",
+        "user_id": "2222",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Manager",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T20:53:14.519785",
+        "type": "logout",
+        "user_id": "2222",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {}
+    },
+    {
+        "timestamp": "2026-06-24T20:57:38.320641",
+        "type": "add_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed",
+            "reason": "Missing data",
+            "new_user_id": null
+        }
+    },
+    {
+        "timestamp": "2026-06-24T20:57:43.893495",
+        "type": "add_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "added_user_id": "9876",
+            "added_user_name": "TestBot9876",
+            "added_user_role": "user"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T20:57:49.989792",
+        "type": "delete_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "deleted_user_id": "9876",
+            "deleted_user_name": "TestBot9876",
+            "deleted_user_role": "user"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T20:58:14.997068",
+        "type": "shift_edited",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "shift_index": 0,
+            "user_id": "1111",
+            "user_name": "Owner",
+            "changes": {
+                "clock_in_time": {
+                    "old": "2026-06-23T01:06:13.005250",
+                    "new": "2026-06-23T01:10:00"
+                },
+                "clock_out_time": {
+                    "old": "2026-06-23T01:06:15.701921",
+                    "new": "2026-06-23T01:15:00"
+                }
+            },
+            "reason": "Reliability Bot testing audit trail 20:57"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T21:36:04.369111",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T21:36:09.082227",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T21:58:27.799931",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T22:21:00.383571",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T22:21:02.569004",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T22:21:12.414587",
+        "type": "add_item",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "category": "Foods",
+            "name": "\ud83e\udd16 Robot Burger \ud83c\udf54",
+            "price": 9.99
+        }
+    },
+    {
+        "timestamp": "2026-06-24T22:21:20.181710",
+        "type": "delete_item",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed",
+            "reason": "Missing data",
+            "item_data": {
+                "adminPin": "1111",
+                "pin": "1111",
+                "item_index": 13
+            }
+        }
+    },
+    {
+        "timestamp": "2026-06-24T22:52:08.511642",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T23:20:50.527621",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-24T23:42:55.584830",
+        "type": "submit_order",
+        "user_id": null,
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 73,
+            "subtotal": 5.99,
+            "tax_amount": 0.0,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 6.47,
+            "payment_method": "Cash",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-24T23:43:24.656179",
+        "type": "refund_order",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 73,
+            "reason": "No reason provided",
+            "refunded_by_name": "Owner",
+            "order_total": 6.47,
+            "inventory_restored": []
+        }
+    },
+    {
+        "timestamp": "2026-06-25T00:09:41.505842",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T00:09:45.350594",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T00:28:50.596580",
+        "type": "login_failed",
+        "user_id": null,
+        "user_role": "unknown",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed",
+            "method": "pin",
+            "ip": "127.0.0.1",
+            "attempt": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-25T00:28:55.551921",
+        "type": "login",
+        "user_id": "5678",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Employee Two",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T00:28:57.912090",
+        "type": "clock_in",
+        "user_id": "5678",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee Two",
+            "clock_in_time": "2026-06-25T00:28:57.911938",
+            "late_minutes": null,
+            "scheduled_start": null
+        }
+    },
+    {
+        "timestamp": "2026-06-25T00:29:14.809881",
+        "type": "submit_order",
+        "user_id": "5678",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 74,
+            "subtotal": 15.0,
+            "tax_amount": 0.0,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 15.0,
+            "payment_method": "Split (Cash $15.00, Card $10.00)",
+            "item_count": 3
+        }
+    },
+    {
+        "timestamp": "2026-06-25T00:29:44.417109",
+        "type": "submit_order",
+        "user_id": "5678",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 75,
+            "subtotal": 24.0,
+            "tax_amount": 0.0,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 24.0,
+            "payment_method": "Card",
+            "item_count": 3
+        }
+    },
+    {
+        "timestamp": "2026-06-25T00:29:46.688690",
+        "type": "clock_out",
+        "user_id": "5678",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee Two",
+            "clock_in_time": "2026-06-25T00:28:57.911938",
+            "clock_out_time": "2026-06-25T00:29:46.687344",
+            "duration_hours": 0.01
+        }
+    },
+    {
+        "timestamp": "2026-06-25T01:19:03.233811",
+        "type": "platform_login_failed",
+        "user_id": "9999",
+        "user_role": "super_admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "reason": "Invalid super admin PIN",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T01:19:03.314481",
+        "type": "platform_login_failed",
+        "user_id": "9999",
+        "user_role": "super_admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "reason": "Invalid super admin PIN",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T01:19:03.365664",
+        "type": "platform_login_failed",
+        "user_id": "9999",
+        "user_role": "super_admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "reason": "Invalid super admin PIN",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T01:19:03.428752",
+        "type": "platform_login_failed",
+        "user_id": "9999",
+        "user_role": "super_admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "reason": "Invalid super admin PIN",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T01:19:03.476582",
+        "type": "platform_login_failed",
+        "user_id": "9999",
+        "user_role": "super_admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "reason": "Invalid super admin PIN",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T01:19:03.528239",
+        "type": "platform_login_failed",
+        "user_id": "9999",
+        "user_role": "super_admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "reason": "Invalid super admin PIN",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T01:19:25.122835",
+        "type": "platform_login_failed",
+        "user_id": "9999",
+        "user_role": "super_admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "reason": "Invalid super admin PIN",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T01:19:25.143099",
+        "type": "platform_login_failed",
+        "user_id": "9999",
+        "user_role": "super_admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "reason": "Invalid super admin PIN",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T01:19:25.164176",
+        "type": "platform_login_failed",
+        "user_id": "9999",
+        "user_role": "super_admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "reason": "Invalid super admin PIN",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T01:19:25.184911",
+        "type": "platform_login_failed",
+        "user_id": "9999",
+        "user_role": "super_admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "reason": "Invalid super admin PIN",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T01:19:25.207717",
+        "type": "platform_login_failed",
+        "user_id": "9999",
+        "user_role": "super_admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "reason": "Invalid super admin PIN",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T01:19:45.928207",
+        "type": "platform_login_failed",
+        "user_id": "9999",
+        "user_role": "super_admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "reason": "Invalid super admin PIN",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T01:19:45.953138",
+        "type": "platform_login_failed",
+        "user_id": "9999",
+        "user_role": "super_admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "reason": "Invalid super admin PIN",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T01:19:45.974098",
+        "type": "platform_login_failed",
+        "user_id": "9999",
+        "user_role": "super_admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "reason": "Invalid super admin PIN",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T01:19:46.000739",
+        "type": "platform_login_failed",
+        "user_id": "9999",
+        "user_role": "super_admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "reason": "Invalid super admin PIN",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T01:19:46.022813",
+        "type": "platform_login_failed",
+        "user_id": "9999",
+        "user_role": "super_admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "reason": "Invalid super admin PIN",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T01:34:28.707129",
+        "type": "submit_order",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 76,
+            "subtotal": 6.0,
+            "tax_amount": 0.6,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 6.6,
+            "payment_method": "Cash",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-25T01:34:31.593107",
+        "type": "undo_order",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 76,
+            "inventory_restored": [
+                "Lemonade x2"
+            ],
+            "order_total": 6.6
+        }
+    },
+    {
+        "timestamp": "2026-06-25T01:34:40.879043",
+        "type": "submit_order",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 77,
+            "subtotal": 3.0,
+            "tax_amount": 0.3,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 3.3,
+            "payment_method": "Cash",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-25T01:34:44.311078",
+        "type": "undo_order",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 77,
+            "inventory_restored": [
+                "Coke x1"
+            ],
+            "order_total": 3.3
+        }
     }
 ]
