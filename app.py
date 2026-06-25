@@ -171,6 +171,7 @@ GIFT_CARDS_FILE = 'gift_cards.json'  # Gift card management (sell, redeem, balan
 WAITLIST_FILE = 'waitlist.json'  # Walk-in customer waitlist/digital queue
 FEEDBACK_FILE = 'feedback.json'  # Customer feedback / satisfaction survey
 DRIVERS_FILE = 'drivers.json'  # Delivery driver management
+EXPENSES_FILE = 'expenses.json'  # Business expense tracking
 
 # --- Platform / Multi-Tenant Constants ---
 GLOCAL_DIR = 'data/global'  # Global platform data directory
@@ -20788,6 +20789,253 @@ def respond_feedback():
             result['ticket_warning'] = f'Could not create ticket: {str(e)}'
 
     return jsonify(result)
+
+
+# ── Expense Tracking & Profit & Loss ───────────────────────────────────────
+# New expenses.json data store. Categories: supplies, utilities, repairs,
+# marketing, labor, rent, insurance, other.
+
+VALID_EXPENSE_CATEGORIES = ('supplies', 'utilities', 'repairs', 'marketing', 'labor', 'rent', 'insurance', 'other')
+
+@app.route('/api/expenses/list', methods=['POST'])
+def expenses_list():
+    """List expenses with optional date range and category filtering."""
+    data = request.json or {}
+    admin_pin = data.get('adminPin')
+    if not admin_pin:
+        return jsonify({'message': 'Admin PIN required.'}), 400
+    if not check_perm(admin_pin, 'view_stats'):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    expenses = load_json_data(EXPENSES_FILE)
+    if not isinstance(expenses, list):
+        expenses = []
+
+    filter_category = data.get('category')
+    filter_date_from = data.get('date_from')
+    filter_date_to = data.get('date_to')
+
+    filtered = expenses
+    if filter_category:
+        filtered = [e for e in filtered if e.get('category') == filter_category]
+    if filter_date_from:
+        try:
+            fd_from = datetime.fromisoformat(filter_date_from)
+            filtered = [e for e in filtered if datetime.fromisoformat(e.get('date', '')) >= fd_from]
+        except (ValueError, KeyError):
+            pass
+    if filter_date_to:
+        try:
+            fd_to = datetime.fromisoformat(filter_date_to + 'T23:59:59' if 'T' not in filter_date_to else filter_date_to)
+            filtered = [e for e in filtered if datetime.fromisoformat(e.get('date', '')) <= fd_to]
+        except (ValueError, KeyError):
+            pass
+
+    # Sort newest first
+    filtered.sort(key=lambda e: e.get('date', ''), reverse=True)
+
+    return jsonify({'message': 'Expenses retrieved', 'expenses': filtered})
+
+
+@app.route('/api/expenses/save', methods=['POST'])
+def expenses_save():
+    """Save a new expense entry."""
+    data = request.json
+    if not data:
+        return jsonify({'message': 'Request body is required.'}), 400
+
+    admin_pin = data.get('adminPin')
+    if not admin_pin:
+        return jsonify({'message': 'Admin PIN required.'}), 400
+    if not check_perm(admin_pin, 'view_stats'):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    expense_date = (data.get('date') or '').strip()
+    if not expense_date:
+        return jsonify({'message': 'Date is required.'}), 400
+
+    category = (data.get('category') or '').strip().lower()
+    if category not in VALID_EXPENSE_CATEGORIES:
+        return jsonify({'message': f'Invalid category. Must be one of: {", ".join(VALID_EXPENSE_CATEGORIES)}'}), 400
+
+    amount_str = str(data.get('amount') or '').strip()
+    try:
+        amount = float(amount_str)
+        if amount <= 0:
+            raise ValueError
+    except (ValueError, TypeError):
+        return jsonify({'message': 'Amount must be a positive number.'}), 400
+
+    vendor = (data.get('vendor') or '').strip()
+    if not vendor:
+        return jsonify({'message': 'Vendor/payee name is required.'}), 400
+
+    note = (data.get('note') or '').strip()
+
+    users_data = load_json_data(USERS_FILE)
+    user_data = users_data.get(admin_pin, {})
+    user_name = user_data.get('name', 'Unknown')
+
+    expenses = load_json_data(EXPENSES_FILE)
+    if not isinstance(expenses, list):
+        expenses = []
+
+    entry = {
+        'id': f'EXP-{len(expenses) + 1:04d}',
+        'user_id': admin_pin,
+        'user_name': user_name,
+        'date': expense_date,
+        'category': category,
+        'amount': round(amount, 2),
+        'vendor': vendor,
+        'note': note,
+        'created_at': datetime.now().isoformat()
+    }
+    expenses.append(entry)
+    save_json_data(EXPENSES_FILE, expenses)
+
+    log_activity('expense_saved', admin_pin, user_data.get('role', 'user'),
+                 {'expense_id': entry['id'], 'category': category, 'amount': round(amount, 2), 'vendor': vendor})
+
+    return jsonify({'message': 'Expense recorded!', 'expense': entry})
+
+
+@app.route('/api/expenses/delete', methods=['POST'])
+def expenses_delete():
+    """Delete an expense entry."""
+    data = request.json
+    if not data:
+        return jsonify({'message': 'Request body is required.'}), 400
+
+    admin_pin = data.get('adminPin')
+    if not admin_pin:
+        return jsonify({'message': 'Admin PIN required.'}), 400
+    if not check_perm(admin_pin, 'manage_users'):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    expense_id = (data.get('expense_id') or '').strip()
+    if not expense_id:
+        return jsonify({'message': 'Expense ID required.'}), 400
+
+    expenses = load_json_data(EXPENSES_FILE)
+    if not isinstance(expenses, list):
+        expenses = []
+
+    new_list = [e for e in expenses if e.get('id') != expense_id]
+    if len(new_list) == len(expenses):
+        return jsonify({'message': 'Expense not found.'}), 404
+
+    save_json_data(EXPENSES_FILE, new_list)
+
+    users_data = load_json_data(USERS_FILE)
+    user_data = users_data.get(admin_pin, {})
+    log_activity('expense_deleted', admin_pin, user_data.get('role', 'user'),
+                 {'expense_id': expense_id})
+
+    return jsonify({'message': 'Expense deleted.'})
+
+
+@app.route('/api/expenses/pnl', methods=['POST'])
+def expenses_pnl():
+    """Generate Profit & Loss statement for a date range.
+    Returns: revenue, cogs (cost of goods sold), gross_profit, total_expenses,
+             expenses_by_category, net_profit, order_count, etc.
+    """
+    data = request.json or {}
+    admin_pin = data.get('adminPin')
+    if not admin_pin:
+        return jsonify({'message': 'Admin PIN required.'}), 400
+    if not check_perm(admin_pin, 'view_stats'):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    date_from = (data.get('date_from') or '').strip()
+    date_to = (data.get('date_to') or '').strip()
+
+    def filter_by_date_range(records, date_field='date'):
+        filtered = records
+        if date_from:
+            try:
+                dt_from = datetime.fromisoformat(date_from)
+                filtered = [r for r in filtered if datetime.fromisoformat(r.get(date_field, '')) >= dt_from]
+            except (ValueError, KeyError):
+                pass
+        if date_to:
+            try:
+                if 'T' not in date_to:
+                    dt_to = datetime.fromisoformat(date_to + 'T23:59:59')
+                else:
+                    dt_to = datetime.fromisoformat(date_to)
+                filtered = [r for r in filtered if datetime.fromisoformat(r.get(date_field, '')) <= dt_to]
+            except (ValueError, KeyError):
+                pass
+        return filtered
+
+    # --- Revenue from orders ---
+    orders = load_json_data(ORDERS_FILE)
+    orders = filter_by_date_range(orders)
+
+    total_revenue = 0.0
+    order_count = 0
+    item_qty_sold = {}  # item_name -> total qty sold
+    for o in orders:
+        if o.get('status') in ('refunded', 'voided', 'cancelled'):
+            continue
+        try:
+            total_revenue += float(o.get('total', 0))
+            order_count += 1
+            for item in (o.get('items') or []):
+                name = item.get('name', '')
+                qty = int(item.get('qty', 1))
+                item_qty_sold[name] = item_qty_sold.get(name, 0) + qty
+        except (ValueError, TypeError):
+            pass
+
+    # --- COGS (Cost of Goods Sold) ---
+    items_data = load_json_data(ITEMS_FILE)
+    inventory_data = load_json_data(INVENTORY_FILE)
+    total_cogs = 0.0
+    for cat_name, cat_items in items_data.items():
+        for item in cat_items:
+            item_name = item.get('name', '')
+            qty_sold = item_qty_sold.get(item_name, 0)
+            if qty_sold <= 0:
+                continue
+            cost_per, _ = calculate_item_cost(item, inventory_data)
+            total_cogs += cost_per * qty_sold
+
+    gross_profit = total_revenue - total_cogs
+
+    # --- Expenses ---
+    expenses = load_json_data(EXPENSES_FILE)
+    if not isinstance(expenses, list):
+        expenses = []
+    expenses = filter_by_date_range(expenses)
+
+    total_expenses = 0.0
+    expenses_by_category = {}
+    for e in expenses:
+        amt = float(e.get('amount', 0))
+        cat = e.get('category', 'other')
+        total_expenses += amt
+        expenses_by_category[cat] = expenses_by_category.get(cat, 0.0) + amt
+
+    net_profit = gross_profit - total_expenses
+
+    return jsonify({
+        'message': 'P&L statement generated',
+        'pnl': {
+            'date_from': date_from or None,
+            'date_to': date_to or None,
+            'total_revenue': round(total_revenue, 2),
+            'order_count': order_count,
+            'total_cogs': round(total_cogs, 2),
+            'gross_profit': round(gross_profit, 2),
+            'total_expenses': round(total_expenses, 2),
+            'expenses_by_category': {k: round(v, 2) for k, v in expenses_by_category.items()},
+            'net_profit': round(net_profit, 2),
+            'is_profitable': net_profit >= 0
+        }
+    })
 
 
 # ── Custom Error Handlers ──────────────────────────────────────────────────

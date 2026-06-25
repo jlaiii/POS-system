@@ -977,6 +977,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
         <button onclick="switchAdminSection('giftcards')" id="asGiftcards" data-i18n="admin.giftcards">🎁 Gift Cards</button>
         <button onclick="switchAdminSection('feedback')" id="asFeedback">📝 Feedback</button>
         <button onclick="switchAdminSection('drivers')" id="asDrivers">🚚 Drivers</button>
+        <button onclick="switchAdminSection('expenses')" id="asExpenses" data-i18n="admin.expenses">💰 Expenses</button>
       </div>
       <div id="adminContent">
         <!-- Stats -->
@@ -2978,6 +2979,102 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
             <div class="empty-state">Loading drivers...</div>
           </div>
         </div>
+        <!-- Expense Tracking & Profit & Loss -->
+        <div id="secExpenses" class="admin-section">
+          <h3 style="margin:0 0 12px 0;" data-i18n="admin.expenses.title">💰 Expense Tracking & P&L</h3>
+          <p style="color:var(--text2);margin-bottom:16px;font-size:14px;" data-i18n="admin.expenses.desc">Record business expenses by category and view Profit & Loss reports.</p>
+
+          <!-- P&L Summary Card -->
+          <div id="pnlSummaryCard" class="card" style="margin-bottom:16px;padding:16px;display:none;">
+            <h4 style="margin:0 0 8px 0;font-size:15px;" data-i18n="admin.expenses.pnl_title">📊 Profit & Loss Statement</h4>
+            <div id="pnlPeriodLabel" style="font-size:13px;color:var(--text2);margin-bottom:12px;"></div>
+            <div id="pnlGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;"></div>
+            <div id="pnlCategoryBreakdown" style="margin-top:12px;display:none;">
+              <h5 style="margin:0 0 6px 0;font-size:13px;" data-i18n="admin.expenses.by_category">📊 By Category</h5>
+              <div id="pnlCategoryList" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+            </div>
+            <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+              <button class="accent" onclick="window.print()" style="min-height:44px;padding:8px 20px;font-size:14px;" data-i18n="admin.expenses.print">🖨️ Print Report</button>
+            </div>
+          </div>
+
+          <!-- Quick P&L Date Selector -->
+          <div class="card" style="margin-bottom:16px;padding:12px 16px;">
+            <h4 style="margin:0 0 10px 0;font-size:15px;" data-i18n="admin.expenses.pnl">📊 Profit & Loss</h4>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+              <input type="date" id="pnlDateFrom" style="flex:1;min-width:120px;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;" aria-label="P&L from date"/>
+              <span style="color:var(--text2);">→</span>
+              <input type="date" id="pnlDateTo" style="flex:1;min-width:120px;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;" aria-label="P&L to date"/>
+              <button class="accent" onclick="loadPnLReport()" style="min-height:44px;padding:8px 20px;font-size:14px;" data-i18n="admin.expenses.filter">🔍 Generate P&L</button>
+              <button class="ghost" onclick="loadPnLReport(true)" style="min-height:44px;padding:8px 16px;font-size:13px;" data-i18n="admin.expenses.pnl_all_time">📋 All Time</button>
+            </div>
+          </div>
+
+          <!-- Add Expense Form -->
+          <div class="card" style="margin-bottom:16px;padding:12px 16px;">
+            <h4 style="margin:0 0 10px 0;font-size:15px;" data-i18n="admin.expenses.add">➕ Record Expense</h4>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
+              <div style="min-width:120px;flex:1;">
+                <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;" data-i18n="admin.expenses.date">Date *</label>
+                <input type="date" id="expFormDate" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;" aria-label="Expense date"/>
+              </div>
+              <div style="min-width:130px;flex:1;">
+                <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;" data-i18n="admin.expenses.category">Category *</label>
+                <select id="expFormCategory" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;" aria-label="Expense category">
+                  <option value="supplies" data-i18n="admin.expenses.supplies">🛒 Supplies</option>
+                  <option value="utilities" data-i18n="admin.expenses.utilities">⚡ Utilities</option>
+                  <option value="repairs" data-i18n="admin.expenses.repairs">🔧 Repairs</option>
+                  <option value="marketing" data-i18n="admin.expenses.marketing">📢 Marketing</option>
+                  <option value="labor" data-i18n="admin.expenses.labor">👷 Labor</option>
+                  <option value="rent" data-i18n="admin.expenses.rent">🏢 Rent</option>
+                  <option value="insurance" data-i18n="admin.expenses.insurance">🛡️ Insurance</option>
+                  <option value="other" data-i18n="admin.expenses.other">📝 Other</option>
+                </select>
+              </div>
+              <div style="min-width:100px;flex:0.7;">
+                <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;" data-i18n="admin.expenses.amount">Amount ($) *</label>
+                <input type="number" id="expFormAmount" step="0.01" min="0.01" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;inputmode:decimal;" aria-label="Expense amount"/>
+              </div>
+              <div style="min-width:120px;flex:1;">
+                <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;" data-i18n="admin.expenses.vendor">Vendor *</label>
+                <input type="text" id="expFormVendor" placeholder="e.g. Sysco" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;" aria-label="Vendor name"/>
+              </div>
+              <div style="min-width:120px;flex:1;">
+                <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;" data-i18n="admin.expenses.note">Note</label>
+                <input type="text" id="expFormNote" placeholder="Optional note..." style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;" aria-label="Expense note"/>
+              </div>
+              <button class="accent" onclick="saveExpense()" style="min-height:44px;padding:8px 20px;font-size:14px;" data-i18n="admin.expenses.save">💰 Record Expense</button>
+            </div>
+            <span id="expFormStatus" style="font-size:13px;margin-top:6px;display:block;"></span>
+          </div>
+
+          <!-- Filters -->
+          <div class="card" style="margin-bottom:16px;padding:12px 16px;">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+              <select id="expFilterCategory" style="padding:8px;border-radius:8px;background:var(--bg);color:var(--text);border:1px solid var(--border);min-height:44px;flex:1;min-width:120px;" aria-label="Filter by category">
+                <option value="" data-i18n="admin.expenses.category">All Categories</option>
+                <option value="supplies" data-i18n="admin.expenses.supplies">🛒 Supplies</option>
+                <option value="utilities" data-i18n="admin.expenses.utilities">⚡ Utilities</option>
+                <option value="repairs" data-i18n="admin.expenses.repairs">🔧 Repairs</option>
+                <option value="marketing" data-i18n="admin.expenses.marketing">📢 Marketing</option>
+                <option value="labor" data-i18n="admin.expenses.labor">👷 Labor</option>
+                <option value="rent" data-i18n="admin.expenses.rent">🏢 Rent</option>
+                <option value="insurance" data-i18n="admin.expenses.insurance">🛡️ Insurance</option>
+                <option value="other" data-i18n="admin.expenses.other">📝 Other</option>
+              </select>
+              <input type="date" id="expFilterDateFrom" style="padding:8px;border-radius:8px;background:var(--bg);color:var(--text);border:1px solid var(--border);min-height:44px;flex:1;min-width:120px;" aria-label="Date from"/>
+              <span style="color:var(--text2);">→</span>
+              <input type="date" id="expFilterDateTo" style="padding:8px;border-radius:8px;background:var(--bg);color:var(--text);border:1px solid var(--border);min-height:44px;flex:1;min-width:120px;" aria-label="Date to"/>
+              <button class="accent" onclick="loadExpenseList()" style="min-height:44px;padding:8px 20px;font-size:14px;" data-i18n="admin.expenses.filter">🔍 Filter</button>
+              <button class="ghost" onclick="resetExpenseFilters()" style="min-height:44px;padding:8px 16px;font-size:13px;" data-i18n="admin.expenses.reset">✕ Reset</button>
+            </div>
+          </div>
+
+          <!-- Expense List -->
+          <div id="expenseList" style="display:flex;flex-direction:column;gap:6px;">
+            <div class="empty-state" data-i18n="admin.expenses.list">📋 Expense Log</div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -4628,6 +4725,47 @@ const L10N = {
     'admin.feedback.create_ticket': '🎫 Create Ticket',
     'admin.feedback.response_prompt': 'Enter your response note:',
     'admin.feedback.responded': '✅ Feedback response recorded.',
+    'admin.expenses': '💰 Expenses',
+    'admin.expenses.title': '💰 Expense Tracking & P&L',
+    'admin.expenses.desc': 'Record business expenses by category and view Profit & Loss reports.',
+    'admin.expenses.add': '➕ Record Expense',
+    'admin.expenses.date': 'Date',
+    'admin.expenses.category': 'Category',
+    'admin.expenses.amount': 'Amount ($)',
+    'admin.expenses.vendor': 'Vendor / Payee',
+    'admin.expenses.note': 'Note (optional)',
+    'admin.expenses.save': '💰 Record Expense',
+    'admin.expenses.saved': '✅ Expense recorded!',
+    'admin.expenses.supplies': '🛒 Supplies',
+    'admin.expenses.utilities': '⚡ Utilities',
+    'admin.expenses.repairs': '🔧 Repairs',
+    'admin.expenses.marketing': '📢 Marketing',
+    'admin.expenses.labor': '👷 Labor',
+    'admin.expenses.rent': '🏢 Rent',
+    'admin.expenses.insurance': '🛡️ Insurance',
+    'admin.expenses.other': '📝 Other',
+    'admin.expenses.filter': '🔍 Filter',
+    'admin.expenses.reset': '✕ Reset',
+    'admin.expenses.list': '📋 Expense Log',
+    'admin.expenses.no_expenses': 'No expenses recorded yet.',
+    'admin.expenses.delete': '🗑️ Delete',
+    'admin.expenses.deleted': 'Expense deleted.',
+    'admin.expenses.pnl': '📊 Profit & Loss',
+    'admin.expenses.pnl_title': '📊 Profit & Loss Statement',
+    'admin.expenses.pnl_period': 'Period: {from} → {to}',
+    'admin.expenses.pnl_all_time': 'All Time',
+    'admin.expenses.revenue': '💰 Total Revenue',
+    'admin.expenses.cogs': '📦 Cost of Goods Sold',
+    'admin.expenses.gross_profit': '📈 Gross Profit',
+    'admin.expenses.total_expenses': '📉 Total Expenses',
+    'admin.expenses.net_profit': '💵 Net Profit',
+    'admin.expenses.profitable': '✅ Profitable',
+    'admin.expenses.not_profitable': '❌ Not Profitable',
+    'admin.expenses.orders': 'Orders: {count}',
+    'admin.expenses.by_category': 'By Category',
+    'admin.expenses.print': '🖨️ Print Report',
+    'admin.expenses.vendor_colon': 'Vendor: {name}',
+    'admin.expenses.amount_colon': 'Amount: ${amount}',
   },
   es: {
     'app.title': '🍽️ Sistema POS',
@@ -5548,6 +5686,47 @@ const L10N = {
     'admin.feedback.create_ticket': '🎫 Crear Ticket',
     'admin.feedback.response_prompt': 'Ingrese su nota de respuesta:',
     'admin.feedback.responded': '✅ Respuesta registrada.',
+    'admin.expenses': '💰 Gastos',
+    'admin.expenses.title': '💰 Seguimiento de Gastos y G&P',
+    'admin.expenses.desc': 'Registre gastos comerciales por categoría y vea informes de Ganancias y Pérdidas.',
+    'admin.expenses.add': '➕ Registrar Gasto',
+    'admin.expenses.date': 'Fecha',
+    'admin.expenses.category': 'Categoría',
+    'admin.expenses.amount': 'Monto ($)',
+    'admin.expenses.vendor': 'Proveedor / Beneficiario',
+    'admin.expenses.note': 'Nota (opcional)',
+    'admin.expenses.save': '💰 Registrar Gasto',
+    'admin.expenses.saved': '✅ ¡Gasto registrado!',
+    'admin.expenses.supplies': '🛒 Suministros',
+    'admin.expenses.utilities': '⚡ Servicios',
+    'admin.expenses.repairs': '🔧 Reparaciones',
+    'admin.expenses.marketing': '📢 Marketing',
+    'admin.expenses.labor': '👷 Mano de Obra',
+    'admin.expenses.rent': '🏢 Alquiler',
+    'admin.expenses.insurance': '🛡️ Seguros',
+    'admin.expenses.other': '📝 Otros',
+    'admin.expenses.filter': '🔍 Filtrar',
+    'admin.expenses.reset': '✕ Restablecer',
+    'admin.expenses.list': '📋 Registro de Gastos',
+    'admin.expenses.no_expenses': 'Aún no se han registrado gastos.',
+    'admin.expenses.delete': '🗑️ Eliminar',
+    'admin.expenses.deleted': 'Gasto eliminado.',
+    'admin.expenses.pnl': '📊 Ganancias y Pérdidas',
+    'admin.expenses.pnl_title': '📊 Estado de Ganancias y Pérdidas',
+    'admin.expenses.pnl_period': 'Período: {from} → {to}',
+    'admin.expenses.pnl_all_time': 'Todo el Tiempo',
+    'admin.expenses.revenue': '💰 Ingresos Totales',
+    'admin.expenses.cogs': '📦 Costo de Ventas',
+    'admin.expenses.gross_profit': '📈 Ganancia Bruta',
+    'admin.expenses.total_expenses': '📉 Gastos Totales',
+    'admin.expenses.net_profit': '💵 Ganancia Neta',
+    'admin.expenses.profitable': '✅ Rentable',
+    'admin.expenses.not_profitable': '❌ No Rentable',
+    'admin.expenses.orders': 'Pedidos: {count}',
+    'admin.expenses.by_category': 'Por Categoría',
+    'admin.expenses.print': '🖨️ Imprimir Informe',
+    'admin.expenses.vendor_colon': 'Proveedor: {name}',
+    'admin.expenses.amount_colon': 'Monto: ${amount}',
   }
 };
 
@@ -12807,6 +12986,8 @@ function switchAdminSection(sec) {
   else if (sec === 'schedule') loadSchedule();
   else if (sec === 'giftcards') loadGiftCardList();
   else if (sec === 'feedback') { loadFeedbackStats(); loadFeedbackList(); }
+  else if (sec === 'drivers') { drvLoadDrivers(); }
+  else if (sec === 'expenses') { loadExpenseList(); loadPnLReport(true); }
 }
 
 // ═══════════ TIMESHEET CONFIG ═══════════
@@ -24019,6 +24200,202 @@ window.switchAdminSection = function(section) {
     </div>
   </div>
 </div>
+
+<!-- ═══════════ EXPENSE TRACKING JS ═══════════ -->
+<script>
+// Expense Tracking & Profit & Loss functions
+
+async function loadExpenseList() {
+  const listEl = document.getElementById('expenseList');
+  if (!listEl) return;
+  listEl.innerHTML = '<div class="empty-state">⏳ Loading expenses...</div>';
+  try {
+    const body = { adminPin: currentUser.pin || currentUser.id };
+    const cat = document.getElementById('expFilterCategory')?.value;
+    const dateFrom = document.getElementById('expFilterDateFrom')?.value;
+    const dateTo = document.getElementById('expFilterDateTo')?.value;
+    if (cat) body.category = cat;
+    if (dateFrom) body.date_from = dateFrom;
+    if (dateTo) body.date_to = dateTo;
+
+    const res = await fetchJSON(BACKEND_URL + '/api/expenses/list', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (!res || !res.expenses) {
+      listEl.innerHTML = '<div class="empty-state">❌ Failed to load expenses.</div>';
+      return;
+    }
+    const expenses = res.expenses;
+    if (expenses.length === 0) {
+      listEl.innerHTML = '<div class="empty-state" data-i18n="admin.expenses.no_expenses">📭 No expenses recorded yet.</div>';
+      return;
+    }
+    const total = expenses.reduce((s, e) => s + parseFloat(e.amount || 0), 0);
+    listEl.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding:8px 12px;background:var(--card);border-radius:8px;"><span style="font-weight:600;">' + expenses.length + ' entries</span><span style="font-weight:600;color:var(--accent);">Total: $' + total.toFixed(2) + '</span></div>' +
+      expenses.map(e => {
+        const catIcons = { supplies: '🛒', utilities: '⚡', repairs: '🔧', marketing: '📢', labor: '👷', rent: '🏢', insurance: '🛡️', other: '📝' };
+        const icon = catIcons[e.category] || '📝';
+        return '<div class="card" style="padding:10px 14px;border-left:4px solid var(--accent);">' +
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px;">' +
+            '<div style="flex:1;min-width:160px;">' +
+              '<div><strong>' + escHtml(e.vendor || '') + '</strong> <span style="color:var(--text2);font-size:13px;">' + icon + ' ' + t('admin.expenses.' + e.category) + '</span></div>' +
+              '<div style="font-size:13px;color:var(--text2);margin-top:2px;">' +
+                (e.date ? new Date(e.date + 'T00:00:00').toLocaleDateString() : '') +
+                (e.note ? ' · ' + escHtml(e.note) : '') +
+              '</div>' +
+            '</div>' +
+            '<div style="display:flex;align-items:center;gap:8px;">' +
+              '<span style="font-size:16px;font-weight:700;color:var(--accent);">$' + parseFloat(e.amount || 0).toFixed(2) + '</span>' +
+              '<button class="ghost" onclick="deleteExpense(\'' + e.id + '\')" style="min-height:36px;padding:4px 8px;font-size:12px;color:#e94560;" title="Delete">🗑️</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+  } catch (e) {
+    listEl.innerHTML = '<div class="empty-state">❌ ' + t('toast.network_error') + '</div>';
+  }
+}
+
+async function saveExpense() {
+  const statusEl = document.getElementById('expFormStatus');
+  if (!statusEl) return;
+  const date = document.getElementById('expFormDate')?.value;
+  const category = document.getElementById('expFormCategory')?.value;
+  const amount = document.getElementById('expFormAmount')?.value;
+  const vendor = document.getElementById('expFormVendor')?.value?.trim();
+  const note = document.getElementById('expFormNote')?.value?.trim();
+  if (!date) { statusEl.textContent = '❌ Date is required.'; statusEl.style.color = 'var(--accent)'; return; }
+  if (!category) { statusEl.textContent = '❌ Category is required.'; statusEl.style.color = 'var(--accent)'; return; }
+  if (!amount || parseFloat(amount) <= 0) { statusEl.textContent = '❌ Amount must be positive.'; statusEl.style.color = 'var(--accent)'; return; }
+  if (!vendor) { statusEl.textContent = '❌ Vendor is required.'; statusEl.style.color = 'var(--accent)'; return; }
+  statusEl.textContent = '⏳ Saving...';
+  statusEl.style.color = 'var(--text2)';
+  try {
+    const res = await fetchJSON(BACKEND_URL + '/api/expenses/save', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        adminPin: currentUser.pin || currentUser.id,
+        date: date,
+        category: category,
+        amount: amount,
+        vendor: vendor,
+        note: note
+      })
+    });
+    if (res && res.message) {
+      statusEl.textContent = '✅ ' + (res.message || t('admin.expenses.saved'));
+      statusEl.style.color = '#4caf50';
+      document.getElementById('expFormDate').value = '';
+      document.getElementById('expFormAmount').value = '';
+      document.getElementById('expFormVendor').value = '';
+      document.getElementById('expFormNote').value = '';
+      loadExpenseList();
+      loadPnLReport(true);
+    } else {
+      statusEl.textContent = '❌ ' + (res?.error || 'Save failed.');
+      statusEl.style.color = 'var(--accent)';
+    }
+  } catch (e) {
+    statusEl.textContent = '❌ ' + t('toast.network_error');
+    statusEl.style.color = 'var(--accent)';
+  }
+}
+
+async function deleteExpense(expenseId) {
+  if (!confirm('Delete this expense?')) return;
+  try {
+    const res = await fetchJSON(BACKEND_URL + '/api/expenses/delete', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.pin || currentUser.id, expense_id: expenseId })
+    });
+    if (res && res.message) {
+      showToast('✅ ' + (res.message || t('admin.expenses.deleted')), 'success');
+      loadExpenseList();
+      loadPnLReport(true);
+    } else {
+      showToast('❌ Delete failed.', 'danger');
+    }
+  } catch (e) {
+    showToast(t('toast.network_error'), 'danger');
+  }
+}
+
+function resetExpenseFilters() {
+  const cat = document.getElementById('expFilterCategory');
+  const df = document.getElementById('expFilterDateFrom');
+  const dt = document.getElementById('expFilterDateTo');
+  if (cat) cat.value = '';
+  if (df) df.value = '';
+  if (dt) dt.value = '';
+  loadExpenseList();
+}
+
+async function loadPnLReport(allTime) {
+  const card = document.getElementById('pnlSummaryCard');
+  const grid = document.getElementById('pnlGrid');
+  const periodLabel = document.getElementById('pnlPeriodLabel');
+  const catBreakdown = document.getElementById('pnlCategoryBreakdown');
+  const catList = document.getElementById('pnlCategoryList');
+  if (!card || !grid) return;
+
+  try {
+    const body = { adminPin: currentUser.pin || currentUser.id };
+    const dateFrom = document.getElementById('pnlDateFrom')?.value;
+    const dateTo = document.getElementById('pnlDateTo')?.value;
+    if (!allTime) {
+      if (dateFrom) body.date_from = dateFrom;
+      if (dateTo) body.date_to = dateTo;
+    }
+    // If no dates and not allTime, default to this month
+    if (!body.date_from && !body.date_to && !allTime) {
+      const now = new Date();
+      body.date_from = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+      body.date_to = now.toISOString().split('T')[0];
+      document.getElementById('pnlDateFrom').value = body.date_from;
+      document.getElementById('pnlDateTo').value = body.date_to;
+    }
+
+    const res = await fetchJSON(BACKEND_URL + '/api/expenses/pnl', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (!res || !res.pnl) {
+      card.style.display = 'none';
+      return;
+    }
+    const p = res.pnl;
+    card.style.display = 'block';
+
+    const fromStr = p.date_from ? new Date(p.date_from + 'T00:00:00').toLocaleDateString() : t('admin.expenses.pnl_all_time');
+    const toStr = p.date_to ? new Date(p.date_to + 'T00:00:00').toLocaleDateString() : '';
+    periodLabel.textContent = fromStr + (toStr ? ' → ' + toStr : '') + ' · ' + t('admin.expenses.orders', {count: p.order_count || 0});
+
+    grid.innerHTML = '' +
+      '<div class="stat-card" style="border-left:3px solid #2ecc71;"><div class="stat-val">$' + (p.total_revenue || 0).toFixed(2) + '</div><div class="stat-lbl">' + t('admin.expenses.revenue') + '</div></div>' +
+      '<div class="stat-card" style="border-left:3px solid #e67e22;"><div class="stat-val">$' + (p.total_cogs || 0).toFixed(2) + '</div><div class="stat-lbl">' + t('admin.expenses.cogs') + '</div></div>' +
+      '<div class="stat-card" style="border-left:3px solid #3498db;"><div class="stat-val">$' + (p.gross_profit || 0).toFixed(2) + '</div><div class="stat-lbl">' + t('admin.expenses.gross_profit') + '</div></div>' +
+      '<div class="stat-card" style="border-left:3px solid #e74c3c;"><div class="stat-val">$' + (p.total_expenses || 0).toFixed(2) + '</div><div class="stat-lbl">' + t('admin.expenses.total_expenses') + '</div></div>' +
+      '<div class="stat-card" style="border-left:3px solid ' + (p.is_profitable ? '#2ecc71' : '#e74c3c') + ';"><div class="stat-val">' + (p.is_profitable ? '✅ ' : '❌ ') + '$' + (p.net_profit || 0).toFixed(2) + '</div><div class="stat-lbl">' + t('admin.expenses.net_profit') + '<br><span style="font-size:12px;color:var(--text2);">' + (p.is_profitable ? t('admin.expenses.profitable') : t('admin.expenses.not_profitable')) + '</span></div></div>';
+
+    // Category breakdown
+    const cats = p.expenses_by_category || {};
+    const catKeys = Object.keys(cats);
+    if (catKeys.length > 0) {
+      catBreakdown.style.display = 'block';
+      const catIcons = { supplies: '🛒', utilities: '⚡', repairs: '🔧', marketing: '📢', labor: '👷', rent: '🏢', insurance: '🛡️', other: '📝' };
+      catList.innerHTML = catKeys.map(k => {
+        const icon = catIcons[k] || '📝';
+        return '<span style="background:var(--card-alt);padding:4px 12px;border-radius:12px;font-size:13px;">' + icon + ' ' + t('admin.expenses.' + k) + ': <strong style="color:var(--accent);">$' + (cats[k] || 0).toFixed(2) + '</strong></span>';
+      }).join('');
+    } else {
+      catBreakdown.style.display = 'none';
+    }
+  } catch (e) {
+    card.style.display = 'none';
+  }
+}
+</script>
 
 </body>
 </html>
