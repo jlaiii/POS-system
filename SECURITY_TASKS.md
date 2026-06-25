@@ -1,5 +1,5 @@
 # POS Security Tasks
-> Last run: 2026-06-25 05:18 UTC
+> Last run: 2026-06-25 10:18 UTC
 
 ## CRITICAL — LOGIN & AUTH SECURITY (check every run)
 
@@ -33,10 +33,13 @@
 ### CRITICAL: Super admin sessions have NO expiration — FIXED this run
 - [x] **Add session expiry to platform super admin sessions** — `platform_sessions` stored sessions permanently with no expiry. Added `last_active` field on creation, 8h hard max duration, 4h idle timeout in `require_super_admin()`. Expired sessions auto-cleaned. Verified.
 
+### CRITICAL: verify_super_admin() never validated the pin field — FIXED this run
+- [x] **Fix super admin authentication bypass** — `verify_super_admin(pin)` checked `if pin in supers` — this looked up the PIN as a **dict KEY** (user ID), NOT the actual `pin` field value in the user's data dict. This meant ANYONE who knew a super admin's user ID (stored in the public key "1111") could log in as that super admin regardless of the actual PIN. The `pin` field in super_admins.json was completely decorative. Fixed: now iterates over all super admin records and compares `data.get('pin')` to the submitted PIN. Verified: old PIN 1111 now correctly rejected, new PIN 634862 accepted.
+
 ## HIGH — DATA PROTECTION & COMPLIANCE
 
-### HIGH: Default super admin PIN is 1111 — OPEN
-- [ ] **Change super admin default PIN** — `data/global/super_admins.json` stores super admin PIN 1111 in plaintext. Same as the default owner PIN. Already in weak-PIN blocklist for regular users. Rate limited and session-expiry mitigated, but PIN should be changed to a strong random value.
+### HIGH: Default super admin PIN was 1111 — FIXED this run
+- [x] **Change super admin default PIN** — `data/global/super_admins.json` stored super admin PIN 1111 in plaintext. Same as the default owner PIN. Changed to cryptographically random 6-digit PIN (634862). New PIN stored in `data/global/.super_admin_pin_notice.json`.
 
 ### HIGH: PIN stored as plaintext dict key — OPEN
 - [ ] **Hash PINs** — User ID IS the PIN, stored as the dict key in users.json in plaintext. Requires architectural change: separate `user_id` (internal) from `pin_hash`. MITIGATED: files saved with 0600 permissions.
@@ -91,6 +94,17 @@
 - [x] **Verify dependency versions** — Flask 3.1.3, pyotp 2.9.0, qrcode 7.4.2, Werkzeug 3.1.8, eventlet 0.41.0. All current stable versions.
 
 ## COMPLETED (this session)
+
+### Run: 2026-06-25 10:18 UTC
+- [x] **Fix super admin authentication bypass** — CRITICAL: `verify_super_admin()` checked dict keys instead of `pin` field. Any valid super admin user ID worked as a login PIN. Fixed: now properly validates the actual `pin` field.
+- [x] **Change super admin default PIN** — HIGH: Changed from weak default 1111 to cryptographically random 6-digit PIN (634862). Old PIN invalidated. New PIN stored in notification files.
+- [x] **Fix world-readable JSON files** — MEDIUM: `inventory.json`, `printer_config.json`, `order_counter.json`, `ticket_templates.json` were 644. Fixed to 600.
+- [x] **Verify login rate limiting** — `/api/login` returns 5-attempt counter correctly. Tested with non-existent user 9999.
+- [x] **Verify super admin rate limiting** — Platform login has 5-attempt/60s window with 10min lockout.
+- [x] **Check for card data storage** — Zero hits for card_number, credit_card, cvv, track_data in both app.py and index.html.
+- [x] **Check XSS vectors** — escHtml() used consistently. No unescaped user data in innerHTML identified.
+- [x] **Check session security** — Sessions use secrets.token_hex(32), 8h active/24h idle expiry, proper logout invalidation.
+- [x] **Check debug mode** — debug=False, allow_unsafe_werkzeug=False. Confirmed.
 
 ### Run: 2026-06-25 05:18 UTC
 - [x] **Add session expiry to platform super admin sessions** — CRITICAL: Sessions never expired. Added 8h hard max + 4h idle timeout to `require_super_admin()`. Verified: invalid/expired tokens return 401.

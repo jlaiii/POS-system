@@ -9363,5 +9363,127 @@
             "user_name": "Owner",
             "ip": "127.0.0.1"
         }
+    },
+    {
+        "timestamp": "2026-06-25T10:15:27.708893",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T10:15:28.856478",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T10:15:50.066558",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T10:18:27.408053",
+        "type": "login_failed",
+        "user_id": "9999",
+        "user_role": "unknown",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed",
+            "method": "pin",
+            "ip": "127.0.0.1",
+            "attempt": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-25T10:19:12.649154",
+        "type": "platform_login",
+        "user_id": "1111",
+        "user_role": "super_admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "name": "Jay (Platform Owner)",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T10:19:12.672017",
+        "type": "platform_login_failed",
+        "user_id": "634862",
+        "user_role": "super_admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "reason": "Invalid super admin PIN",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T10:19:54.130717",
+        "type": "platform_login",
+        "user_id": "1111",
+        "user_role": "super_admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "name": "Jay (Platform Owner)",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T10:19:54.152159",
+        "type": "platform_login_failed",
+        "user_id": "634862",
+        "user_role": "super_admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "reason": "Invalid super admin PIN",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T10:20:13.204166",
+        "type": "platform_login_failed",
+        "user_id": "1111",
+        "user_role": "super_admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "reason": "Invalid super admin PIN",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T10:20:13.228461",
+        "type": "platform_login",
+        "user_id": "634862",
+        "user_role": "super_admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "name": "Jay (Platform Owner)",
+            "ip": "127.0.0.1"
+        }
     }
 ]

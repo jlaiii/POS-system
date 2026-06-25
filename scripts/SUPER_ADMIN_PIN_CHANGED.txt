@@ -1,0 +1,8 @@
+SUPER ADMIN PIN CHANGE NOTIFICATION
+====================================
+Date: 2026-06-25T10:18:58.127231
+Old PIN: 1111 (default, weak)
+New PIN: 634862
+Changed by: POS Security Sentinel
+Reason: Default super admin PIN (1111) was identical to the owner PIN and trivially guessable.
+Keep this PIN secure. The old PIN has been invalidated.

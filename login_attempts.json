@@ -1133,5 +1133,28 @@
         "details": {
             "status": "success"
         }
+    },
+    {
+        "user_id": "1111",
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-25T10:15:27.722370",
+        "success": true,
+        "user_agent": "curl/8.5.0",
+        "method": "pin",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "user_id": "9999",
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-25T10:18:27.419307",
+        "success": false,
+        "user_agent": "curl/8.5.0",
+        "method": "pin",
+        "details": {
+            "reason": "invalid_pin",
+            "attempt": 1
+        }
     }
 ]

@@ -507,8 +507,12 @@ def save_super_admins(data):
 def verify_super_admin(pin):
     """Check if a PIN belongs to a super admin. Returns the user dict or None."""
     supers = load_super_admins()
-    if pin in supers:
-        return supers[pin]
+    # 🔐 FIX: Check actual pin field, not dict key!
+    # Previously used 'pin in supers' which checked dict KEY (user ID),
+    # meaning the pin field was never actually validated — any valid user ID worked.
+    for uid, data in supers.items():
+        if str(data.get('pin', '')).strip() == str(pin).strip():
+            return data
     return None
 
 

@@ -1,0 +1,9 @@
+{
+  "message": "Super admin PIN has been reset from the default 1111 to a secure random PIN.",
+  "new_pin": "634862",
+  "updated_at": "2026-06-25T10:18:58.127107",
+  "changed_by": "POS Security Sentinel (automated)",
+  "action": "DEFAULT_PIN_CHANGED",
+  "severity": "HIGH",
+  "note": "Store this PIN securely. The old default PIN 1111 was a critical vulnerability."
+}

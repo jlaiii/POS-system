@@ -340,5 +340,19 @@
         "reported_by": "IP Blocklist Manager",
         "resolved_at": null,
         "resolution": null
+    },
+    {
+        "id": "SEC-025",
+        "created_at": "2026-06-25T10:19:08.025110",
+        "severity": "HIGH",
+        "category": "access_control",
+        "status": "resolved",
+        "summary": "Super admin default PIN changed from 1111 to secure random PIN",
+        "detail": "Super admin PIN was the default (1111), identical to the owner PIN, and trivially guessable. Changed to a cryptographically random 6-digit PIN. New PIN stored in data/global/.super_admin_pin_notice.json and scripts/SUPER_ADMIN_PIN_CHANGED.txt. Old PIN 1111 invalidated.",
+        "affected_user": "1111",
+        "affected_user_name": "Jay (Platform Owner)",
+        "reported_by": "POS Security Sentinel",
+        "resolved_at": "2026-06-25T10:19:08.025132",
+        "resolution": "Super admin PIN changed from default 1111 to secure random PIN. Rate limiting remains active as secondary mitigation."
     }
 ]
