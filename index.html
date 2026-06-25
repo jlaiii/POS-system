@@ -1151,6 +1151,22 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
                 <span id="retentionStatus" style="font-size:12px;color:#4caf50;display:none;">✅ <span data-i18n="admin.retention.saved">Retention settings saved!</span></span>
                 </div>
                 </div>
+                <!-- Comp / Employee Meal Config -->
+                <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px;" id="compConfigSection">
+                <h5 style="margin:0 0 6px 0;font-size:13px;color:var(--accent);">🍴 Comp / Employee Meal Config</h5>
+                <p style="font-size:11px;color:var(--text2);margin:0 0 8px 0;">Set limits for employee meals and daily comp cap.</p>
+                <div class="form-row" style="gap:12px;flex-wrap:wrap;align-items:end;">
+                <div>
+                  <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:2px;">Employee meal limit ($)</label>
+                  <input type="number" id="tsConfigEmpMealLimit" value="15.00" min="0" max="1000" step="0.50" style="width:100px;min-height:40px;font-size:14px;" inputmode="decimal" title="Maximum dollar amount per employee meal">
+                </div>
+                <div>
+                  <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:2px;">Daily comp cap ($)</label>
+                  <input type="number" id="tsConfigDailyCompCap" value="50.00" min="0" max="10000" step="1" style="width:100px;min-height:40px;font-size:14px;" inputmode="numeric" title="Maximum dollar amount comped per day before warning">
+                </div>
+                <span id="compConfigStatus" style="font-size:12px;color:#4caf50;display:none;">✅ Comp config saved!</span>
+                </div>
+                </div>
             </div>
           </div>
           <!-- Missing clock-out alert banner -->
@@ -3220,6 +3236,16 @@ const L10N = {
     'cart.rush': '🚨 Rush',
     'cart.rush_on': '🚨 Rush ON',
     'cart.rush_desc': 'Flag this order as urgent for the kitchen',
+    'cart.emp_meal': '🍴 Emp Meal',
+    'cart.emp_meal_on': '🍴 Emp Meal ON',
+    'cart.emp_meal_desc': 'Mark item as employee meal (logged to shift)',
+    'cart.comp': '🎁 Comp',
+    'cart.comp_on': '🎁 Comp ON',
+    'cart.comp_desc': 'Mark item as manager-authorized comp',
+    'cart.comp_reason': 'Reason for comp (required)',
+    'cart.comp_reason_placeholder': 'e.g. complaint resolution, VIP, promo...',
+    'cart.comp_limit_warning': '⚠️ Daily comp cap ${cap} — currently ${current} today',
+    'cart.emp_meal_limit_warning': '⚠️ Item exceeds meal limit of $${limit}',
     'cart.clear': '🗑️ Clear',
     'cart.each': 'each',
     'cart.item_note': 'Item note...',
@@ -3320,6 +3346,11 @@ const L10N = {
     'admin.stats.backup_total_size': 'Total size',
     'admin.stats.backup_none': 'No backups',
     'admin.stats.backup_goto': 'Go to Backup →',
+    'admin.stats.comp_items': '🍴 / 🎁 Comp / Emp Meals',
+    'admin.stats.emp_meals': 'Emp Meals',
+    'admin.stats.comps': 'Comps',
+    'admin.stats.comp_daily': 'Comp / Meal Daily Total',
+    'admin.stats.comp_weekly': 'Weekly Total',
     'admin.stats.backup_never': 'never',
     'admin.stats.end_of_day': '📋 End of Day Summary',
     'admin.stats.end_of_day_title': '📋 End of Day Sales Summary',
@@ -4041,6 +4072,16 @@ const L10N = {
     'cart.rush': '🚨 Urgente',
     'cart.rush_on': '🚨 Urgente ON',
     'cart.rush_desc': 'Marcar este pedido como urgente para la cocina',
+    'cart.emp_meal': '🍴 Comida EMP',
+    'cart.emp_meal_on': '🍴 Comida EMP ON',
+    'cart.emp_meal_desc': 'Marcar artículo como comida de empleado (registrada en turno)',
+    'cart.comp': '🎁 Comp',
+    'cart.comp_on': '🎁 Comp ON',
+    'cart.comp_desc': 'Marcar artículo como comp autorizado por gerente',
+    'cart.comp_reason': 'Razón del comp (obligatorio)',
+    'cart.comp_reason_placeholder': 'ej. queja de cliente, VIP, promoción...',
+    'cart.comp_limit_warning': '⚠️ Límite diario de comp $${cap} — actualmente ${current} hoy',
+    'cart.emp_meal_limit_warning': '⚠️ El artículo excede el límite de comida de $${limit}',
     'cart.clear': '🗑️ Limpiar',
     'cart.each': 'cada uno',
     'cart.item_note': 'Nota del artículo...',
@@ -4140,6 +4181,11 @@ const L10N = {
     'admin.stats.backup_total_size': 'Tamaño total',
     'admin.stats.backup_none': 'Sin copias',
     'admin.stats.backup_goto': 'Ir a Copias →',
+    'admin.stats.comp_items': '🍴 / 🎁 Comp / Comidas EMP',
+    'admin.stats.emp_meals': 'Comidas EMP',
+    'admin.stats.comps': 'Comps',
+    'admin.stats.comp_daily': 'Total Diario Comp/Comida',
+    'admin.stats.comp_weekly': 'Total Semanal',
     'admin.stats.backup_never': 'nunca',
     'admin.stats.end_of_day': '📋 Resumen de Fin de Día',
     'admin.stats.end_of_day_title': '📋 Resumen de Ventas del Día',
@@ -9302,6 +9348,82 @@ function getTaxRate(itemName, category) {
   return parseFloat(taxConfig.global_tax_rate || 0);
 }
 
+/** Map a cart item to the API format including comp fields */
+function mapCartItem(c) {
+  return {
+    name: c.name, price: c.price, qty: c.qty,
+    note: c.note || '', modifiers: c.modifiers || [],
+    comp_type: c.comp_type || null,
+    comp_reason: c.comp_reason || null,
+    comp_employee_id: c.comp_employee_id || null,
+    comp_employee_name: c.comp_employee_name || null
+  };
+}
+
+/** Toggle comp type on a cart item (employee_meal, comp, or null) */
+function toggleCompType(index, type) {
+  if (index < 0 || index >= cart.length) return;
+  const item = cart[index];
+  // If already set to this type, turn it off
+  if (item.comp_type === type) {
+    delete item.comp_type;
+    delete item.comp_reason;
+    delete item.comp_employee_id;
+    delete item.comp_employee_name;
+    renderCart();
+    return;
+  }
+
+  if (type === 'comp') {
+    // Show prompt for reason
+    showCompReasonPrompt(index);
+    return;
+  }
+
+  // Employee meal: set directly with current user info
+  item.comp_type = 'employee_meal';
+  item.comp_reason = '';
+  item.comp_employee_id = currentUser ? currentUser.id : '';
+  item.comp_employee_name = currentUser ? currentUser.name : '';
+  renderCart();
+  showToast('🍴 ' + escHtml(item.name) + ' ' + t('cart.emp_meal'), 'info', 2000);
+}
+
+/** Show a prompt modal for comp reason */
+function showCompReasonPrompt(index) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:9999;';
+  overlay.innerHTML = `
+    <div style="background:var(--card);padding:24px;border-radius:12px;max-width:400px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.4);">
+      <div style="font-size:18px;font-weight:700;margin-bottom:12px;">🎁 ${t('cart.comp_reason')}</div>
+      <textarea id="compReasonInput" placeholder="${t('cart.comp_reason_placeholder')}" style="width:100%;min-height:80px;padding:10px;font-size:14px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);resize:vertical;" maxlength="500"></textarea>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;">
+        <button onclick="this.closest('.modal-overlay').remove()" class="btn-sm" style="background:var(--card-alt);color:var(--text);border:1px solid var(--border);padding:10px 20px;border-radius:8px;cursor:pointer;min-height:44px;">${t('admin.cancel') || '✕ Cancel'}</button>
+        <button onclick="confirmCompReason(this, ${index})" style="background:var(--accent);color:#fff;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;min-height:44px;font-weight:600;">✅ Confirm Comp</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  setTimeout(() => document.getElementById('compReasonInput').focus(), 100);
+}
+
+/** Confirm comp reason and set the comp type */
+function confirmCompReason(btn, index) {
+  const reason = document.getElementById('compReasonInput').value.trim();
+  if (!reason) {
+    showToast(t('cart.comp_reason') + ' ' + (t('toast.required') || 'is required'), 'danger');
+    return;
+  }
+  const item = cart[index];
+  item.comp_type = 'comp';
+  item.comp_reason = reason;
+  item.comp_employee_id = currentUser ? currentUser.id : '';
+  item.comp_employee_name = currentUser ? currentUser.name : '';
+  btn.closest('.modal-overlay').remove();
+  renderCart();
+  showToast('🎁 ' + escHtml(item.name) + ' ' + t('cart.comp'), 'info', 2000);
+}
+
 function removeFromCart(index) {
   if (cart[index].qty > 1) { cart[index].qty--; }
   else { cart.splice(index, 1); }
@@ -9379,6 +9501,13 @@ function renderCart() {
       ${comboChildrenHtml}
       <div style="display:flex;gap:6px;align-items:center;">
         <input type="text" id="itemNote_${i}" value="${escJs(itemNote)}" placeholder="${t('cart.item_note')}" maxlength="200" style="flex:1;min-height:36px;padding:6px 10px;font-size:13px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);" onchange="cart[${i}].note = this.value"/>
+      </div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:2px;">
+        <button class="btn-sm ${item.comp_type === 'employee_meal' ? 'comp-btn-active' : ''}" onclick="toggleCompType(${i}, 'employee_meal')" title="${t('cart.emp_meal_desc')}" style="${item.comp_type === 'employee_meal' ? 'background:var(--accent);color:#fff;' : ''}">${item.comp_type === 'employee_meal' ? t('cart.emp_meal_on') : t('cart.emp_meal')}</button>
+        <button class="btn-sm ${item.comp_type === 'comp' ? 'comp-btn-active' : ''}" onclick="toggleCompType(${i}, 'comp')" title="${t('cart.comp_desc')}" style="${item.comp_type === 'comp' ? 'background:var(--accent);color:#fff;' : ''}">${item.comp_type === 'comp' ? t('cart.comp_on') : t('cart.comp')}</button>
+        ${item.comp_reason ? '<span style="font-size:11px;color:var(--text2);padding:4px 8px;background:var(--card-alt);border-radius:4px;">📝 ' + escHtml(item.comp_reason) + '</span>' : ''}
+        ${item.comp_type && item.comp_type !== 'employee_meal' ? '' : ''}
+        ${item.comp_type ? '<span style="font-size:11px;color:#f39c12;padding:2px 6px;background:#f39c1220;border-radius:4px;">' + (item.comp_type === 'employee_meal' ? '🍴 ' + t('cart.emp_meal') : '🎁 ' + t('cart.comp')) + '</span>' : ''}
       </div>
     </div>`;
   });
@@ -9856,9 +9985,15 @@ function renderReviewModal() {
     const noteHtml = item.note
       ? '<div style="font-size:12px;color:var(--text2);font-style:italic;">📝 ' + escapeHtml(item.note) + '</div>'
       : '';
+    let compBadgeHtml = '';
+    if (item.comp_type === 'employee_meal') {
+      compBadgeHtml = '<span style="display:inline-block;font-size:10px;background:#2ecc7133;color:#2ecc71;padding:1px 6px;border-radius:4px;margin-left:4px;font-weight:600;">🍴 EMP</span>';
+    } else if (item.comp_type === 'comp') {
+      compBadgeHtml = '<span style="display:inline-block;font-size:10px;background:#e9456033;color:#e94560;padding:1px 6px;border-radius:4px;margin-left:4px;font-weight:600;" title="' + escapeHtml(item.comp_reason || '') + '">🎁 COMP</span>';
+    }
     const card = document.createElement('div');
     card.style.cssText = 'display:flex;justify-content:space-between;align-items:flex-start;padding:8px 12px;background:var(--card-bg);border-radius:8px;border-left:3px solid var(--accent);';
-    card.innerHTML = '<div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:600;color:var(--text);">' + item.qty + '× ' + escapeHtml(item.name) + '</div>' + modHtml + noteHtml + '</div><div style="font-size:14px;font-weight:600;color:var(--text);white-space:nowrap;margin-left:10px;">$' + (item.price * item.qty).toFixed(2) + '</div>';
+    card.innerHTML = '<div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:600;color:var(--text);">' + item.qty + '× ' + escapeHtml(item.name) + compBadgeHtml + '</div>' + modHtml + noteHtml + '</div><div style="font-size:14px;font-weight:600;color:var(--text);white-space:nowrap;margin-left:10px;">$' + (item.price * item.qty).toFixed(2) + '</div>';
     itemsDiv.appendChild(card);
   });
 
@@ -9944,7 +10079,7 @@ async function confirmOrder() {
 
   // Build receipt data
   const receiptData = {
-    items: cart.map(c => ({ name: c.name, price: c.price, qty: c.qty, note: c.note || '', modifiers: c.modifiers || [] })),
+    items: cart.map(mapCartItem),
     subtotal: Math.round(subtotal * 100) / 100,
     tax_amount: Math.round(taxAmount * 100) / 100,
     tip_amount: Math.round(tipAmount * 100) / 100,
@@ -9976,7 +10111,7 @@ async function confirmOrder() {
         user: currentUser.id,
         payment: '',
         payment_splits: paymentSplits.filter(s => s.amount > 0),
-        items: cart.map(c => ({ name: c.name, price: c.price, qty: c.qty, note: c.note || '', modifiers: c.modifiers || [] })),
+        items: cart.map(mapCartItem),
         subtotal: Math.round(subtotal * 100) / 100,
         tax_amount: Math.round(taxAmount * 100) / 100,
         tip_amount: Math.round(tipAmount * 100) / 100,
@@ -10152,7 +10287,7 @@ async function submitOrder() {
   }
   // Build receipt data before clearing
   const receiptData = {
-  items: cart.map(c => ({ name: c.name, price: c.price, qty: c.qty, note: c.note || '', modifiers: c.modifiers || [] })),
+  items: cart.map(mapCartItem),
   subtotal: Math.round(subtotal * 100) / 100,
   tax_amount: Math.round(taxAmount * 100) / 100,
   tip_amount: Math.round(tipAmount * 100) / 100,
@@ -10184,7 +10319,7 @@ async function submitOrder() {
       user: currentUser.id,
       payment: '',  // backend will derive from payment_splits
       payment_splits: paymentSplits.filter(s => s.amount > 0),
-      items: cart.map(c => ({ name: c.name, price: c.price, qty: c.qty, note: c.note || '', modifiers: c.modifiers || [] })),
+      items: cart.map(mapCartItem),
       subtotal: Math.round(subtotal * 100) / 100,
       tax_amount: Math.round(taxAmount * 100) / 100,
       tip_amount: Math.round(tipAmount * 100) / 100,
@@ -11176,7 +11311,7 @@ async function loadOrderHistory() {
         </div>
         <div class="ho-meta">${t('history.payment')} ${escHtml(paymentDisplay)} | ${t('history.user')} ${escHtml(o.user || 'N/A')}${hasTax ? ' | ' + t('history.tax') + ': $' + parseFloat(o.tax_amount).toFixed(2) : ''}${hasServiceCharge ? ' | 🔧 +$' + parseFloat(o.service_charge_amount).toFixed(2) : ''}${hasTip ? ' | 💬 ' + t('receipt.tip') + ': $' + parseFloat(o.tip_amount).toFixed(2) : ''}${o.table_number ? ' | 🪪 Table #' + o.table_number : ''}${hasDelivery ? ' | 📮 ' + escHtml(formatDeliveryAddress(deliveryAddr)) : ''}${orderNotes ? ' | 📝 ' + t('history.notes') : ''}${refundReasonStr} <button class="ghost" onclick="event.stopPropagation();reorderFromHistory(${JSON.stringify(items).replace(/\"/g, '&quot;')})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#2ecc71;" title="${t('history.reorder')}">🔄</button>${!isRefunded ? `<button class="ghost" onclick="event.stopPropagation();refireOrderItem(${o.order_id}, null, this)" style="font-size:12px;padding:4px 8px;min-height:28px;color:#f39c12;" title="${t('history.refire_all')}">🔁 All</button>` : ''} <button class="ghost" onclick="event.stopPropagation();printHistoryReceipt(${JSON.stringify(o).replace(/\"/g, '&quot;')}, ${orderNum})" style="font-size:12px;padding:4px 8px;min-height:28px;color:var(--accent);">🖨️</button> <button class="ghost" onclick="event.stopPropagation();printThermalReceipt(this.dataset.orderId)" style="font-size:12px;padding:4px 8px;min-height:28px;color:#e67e22;" title="${t('receipt.print_thermal')}" data-order-id="${o.order_id}">🖨️</button> <button class="ghost" onclick="event.stopPropagation();emailHistoryReceipt(${o.order_id})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#4fc3f7;" title="${t('history.email_receipt')}">📧</button>${canRefund && !isRefunded ? \`<button class="ghost" onclick="event.stopPropagation();showRefundOverlay({order_id: ${o.order_id}, total: '${total}', date: '${(o.date || '').replace(/'/g, "\\'")}', payment: '${(o.payment || '').replace(/'/g, "\\'")}', user: '${(o.user || '').replace(/'/g, "\\'")}', orderNum: ${orderNum}, items: ${JSON.stringify(items).replace(/\\"/g, '&quot;')}})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#e74c3c;">↩️</button>\` : ''}${isCompleted && !isReadyForPickup && !isCollected ? \`<button class="ghost" onclick="event.stopPropagation();markOrderReadyForPickup(${o.order_id})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#f39c12;">📋 Ready</button>\` : ''}</div>
         <div class="ho-details">
-          ${items.map((it, idx) => { const refundedItem = (o.refunded_items || []).find(ri => ri.item_index === idx); const isRefundedItem = !!refundedItem; const canRefire = !isRefundedItem; return \`<div class="ho-item"\${isRefundedItem ? ' style="opacity:0.6;"' : ''}><span\${isRefundedItem ? ' style="text-decoration:line-through;"' : ''}>\${isRefundedItem ? '↩️ ' : ''}\${escHtml(it.name)} x\${it.qty||1}\${it.note ? '<br/><span style="color:var(--text2);font-size:12px;padding-left:12px;">📝 ' + escHtml(it.note) + '</span>' : ''}\${it.modifiers && it.modifiers.length > 0 ? '<br/><span style="color:#f39c12;font-size:12px;padding-left:12px;">⚙️ ' + it.modifiers.map(m => escHtml(m.option)).join(' · ') + '</span>' : ''}\${isRefundedItem ? '<br/><span style="color:#e74c3c;font-size:11px;padding-left:12px;">↩️ Refunded</span>' : ''}</span><span\${isRefundedItem ? ' style="text-decoration:line-through;"' : ''}>\$\${((it.price||0)*(it.qty||1)).toFixed(2)}\${canRefire ? \` <button class="ghost" onclick="event.stopPropagation();refireOrderItem(${o.order_id}, [${idx}], this)" style="font-size:11px;padding:2px 6px;min-height:24px;color:#f39c12;" title="\${t('history.refire')}">🔁</button>\` : ''}</span></div>\`;}).join('')}
+          ${items.map((it, idx) => { const refundedItem = (o.refunded_items || []).find(ri => ri.item_index === idx); const isRefundedItem = !!refundedItem; const canRefire = !isRefundedItem; const itCompType = it.comp_type; const itCompBadge = itCompType === 'employee_meal' ? '<span style=\"font-size:10px;background:#2ecc7133;color:#2ecc71;padding:1px 5px;border-radius:3px;margin-left:4px;font-weight:600;\">🍴</span>' : (itCompType === 'comp' ? '<span style=\"font-size:10px;background:#e9456033;color:#e94560;padding:1px 5px;border-radius:3px;margin-left:4px;font-weight:600;\" title=\"' + escHtml(it.comp_reason||'') + '\">🎁</span>' : ''); return \`<div class="ho-item"\${isRefundedItem ? ' style="opacity:0.6;"' : ''}><span\${isRefundedItem ? ' style="text-decoration:line-through;"' : ''}>\${isRefundedItem ? '↩️ ' : ''}\${escHtml(it.name)} x\${it.qty||1}\${itCompBadge}\${it.note ? '<br/><span style="color:var(--text2);font-size:12px;padding-left:12px;">📝 ' + escHtml(it.note) + '</span>' : ''}\${it.modifiers && it.modifiers.length > 0 ? '<br/><span style="color:#f39c12;font-size:12px;padding-left:12px;">⚙️ ' + it.modifiers.map(m => escHtml(m.option)).join(' · ') + '</span>' : ''}\${isRefundedItem ? '<br/><span style="color:#e74c3c;font-size:11px;padding-left:12px;">↩️ Refunded</span>' : ''}</span><span\${isRefundedItem ? ' style="text-decoration:line-through;"' : ''}>\$\${((it.price||0)*(it.qty||1)).toFixed(2)}\${canRefire ? \` <button class="ghost" onclick="event.stopPropagation();refireOrderItem(${o.order_id}, [${idx}], this)" style="font-size:11px;padding:2px 6px;min-height:24px;color:#f39c12;" title="\${t('history.refire')}">🔁</button>\` : ''}</span></div>\`;}).join('')}
           ${hasTax ? \`
             <div class="ho-item" style="color:var(--text2);"><span>${t('history.subtotal')}</span><span>$${parseFloat(o.subtotal || o.total || 0).toFixed(2)}</span></div>
             <div class="ho-item" style="color:var(--text2);"><span>${t('history.tax')}</span><span>$${parseFloat(o.tax_amount).toFixed(2)}</span></div>
@@ -11569,6 +11704,12 @@ async function loadTimesheetConfig() {
     const retention = config.data_retention || {};
     document.getElementById('retentionActivityLog').value = retention.activity_log_days !== undefined ? retention.activity_log_days : 90;
     document.getElementById('retentionLoginAttempts').value = retention.login_attempts_days !== undefined ? retention.login_attempts_days : 30;
+    // Comp config fields
+    const compCfg = config.comp_config || {};
+    const empMealEl = document.getElementById('tsConfigEmpMealLimit');
+    const dailyCompEl = document.getElementById('tsConfigDailyCompCap');
+    if (empMealEl) empMealEl.value = compCfg.employee_meal_limit !== undefined ? compCfg.employee_meal_limit.toFixed(2) : '15.00';
+    if (dailyCompEl) dailyCompEl.value = compCfg.daily_comp_cap !== undefined ? compCfg.daily_comp_cap.toFixed(2) : '50.00';
   } catch(e) {}
 }
 
@@ -11581,6 +11722,10 @@ async function saveTimesheetConfig() {
     data_retention: {
       activity_log_days: parseInt(document.getElementById('retentionActivityLog').value) || 90,
       login_attempts_days: parseInt(document.getElementById('retentionLoginAttempts').value) || 30
+    },
+    comp_config: {
+      employee_meal_limit: parseFloat(document.getElementById('tsConfigEmpMealLimit')?.value) || 15.0,
+      daily_comp_cap: parseFloat(document.getElementById('tsConfigDailyCompCap')?.value) || 50.0
     }
   };
   try {
@@ -11648,6 +11793,15 @@ async function loadAdminStats() {
       <div class="stat-card inv-health-card${(s.out_of_stock_count||0) > 0 ? ' inv-critical' : (s.low_stock_count||0) > 0 ? ' inv-warning' : ' inv-ok'}"><div class="stat-val">${(s.out_of_stock_count||0) > 0 ? '🚫 ' : (s.low_stock_count||0) > 0 ? '⚠️ ' : '✅ '}${(s.out_of_stock_count||0) + (s.low_stock_count||0)}</div><div class="stat-lbl">${t('admin.stats.inventory_health')}<br><span style="font-size:12px;color:var(--text2);">${(s.out_of_stock_count||0) > 0 ? (s.out_of_stock_count + ' ' + t('admin.stats.out_of_stock') + ', ') : ''}${(s.low_stock_count||0)} ${t('admin.stats.low_stock')}</span></div></div>
       <div class="stat-card backup-health-card backup-${s.backup_health || 'red'}"><div class="stat-val">${s.backup_health === 'green' ? '🟢 ' : s.backup_health === 'yellow' ? '🟡 ' : '🔴 '}${s.backup_count || 0}</div><div class="stat-lbl">${t('admin.stats.backup_health')}<br><span style="font-size:12px;color:var(--text2);" onclick="switchAdminSection('backup')">${s.backup_count > 0 ? s.backup_count + ' ' + t('admin.stats.backup_count') + ' · ' + (s.latest_backup_ts ? new Date(s.latest_backup_ts).toLocaleString() : t('admin.stats.backup_never')) + ' · ' + s.backup_total_size_hr : t('admin.stats.backup_none')} · <a style="color:var(--accent);text-decoration:underline;cursor:pointer;">${t('admin.stats.backup_goto')}</a></span></div></div>
     `;
+    // Append comp summary section if there are any comps
+    const comp = s.comp_summary || {};
+    if (comp.employee_meal_count > 0 || comp.comp_count > 0) {
+      const compHtml = \`
+        <div class="stat-card" style="border-left:3px solid #f39c12;"><div class="stat-val">🍴 \${comp.employee_meal_count||0} / 🎁 \${comp.comp_count||0}</div><div class="stat-lbl">\${t('admin.stats.comp_items')}<br><span style="font-size:12px;color:var(--text2);">\${t('admin.stats.emp_meals')}: \$\${(comp.employee_meal_total||0).toFixed(2)} · \${t('admin.stats.comps')}: \$\${(comp.comp_total||0).toFixed(2)}</span></div></div>
+        <div class="stat-card" style="border-left:3px solid #e74c3c;"><div class="stat-val">\$\${(comp.comp_daily_total||0).toFixed(2)}</div><div class="stat-lbl">\${t('admin.stats.comp_daily')}<br><span style="font-size:12px;color:var(--text2);">\${t('admin.stats.comp_weekly')}: \$\${(comp.comp_weekly_total||0).toFixed(2)}</span></div></div>
+      \`;
+      grid.innerHTML += compHtml;
+    }
 
     // Render low-stock items collapsible section
     const lowItems = s.low_stock_items || [];
@@ -16973,6 +17127,14 @@ function renderKitchenOrderCard(o, inGroup) {
     let courseBadge = '';
     const itemName = item.name || item.item_name || '';
     const itemCat = item.category || '';
+    // Comp / Employee Meal badge
+    let compBadge = '';
+    const compType = item.comp_type;
+    if (compType === 'employee_meal') {
+      compBadge = '<span class="comp-badge emp-meal" title="' + (item.comp_employee_name ? 'Employee: ' + escHtml(item.comp_employee_name) : 'Employee meal') + '" style="font-size:11px;background:#2ecc7133;color:#2ecc71;padding:1px 6px;border-radius:4px;margin-left:4px;font-weight:600;">🍴 EMP</span>';
+    } else if (compType === 'comp') {
+      compBadge = '<span class="comp-badge comp-item" title="' + (item.comp_reason ? escHtml(item.comp_reason) : 'Comp') + '" style="font-size:11px;background:#e9456033;color:#e94560;padding:1px 6px;border-radius:4px;margin-left:4px;font-weight:600;">🎁 COMP</span>';
+    }
     if (itemName && window.itemsData) {
       for (const [cat, catItems] of Object.entries(window.itemsData)) {
         if (itemCat && cat !== itemCat) continue;
@@ -16993,7 +17155,7 @@ function renderKitchenOrderCard(o, inGroup) {
         if (imgHtml || courseBadge) break;
       }
     }
-    return '<div class="koc-item">' + imgHtml + '<span>' + escHtml(item.name || item.item_name || '?') + qtyDisplay + courseBadge + '</span>' + modDisplay + comboChildrenHtml + '</div>';
+    return '<div class="koc-item">' + imgHtml + '<span>' + escHtml(item.name || item.item_name || '?') + qtyDisplay + courseBadge + compBadge + '</span>' + modDisplay + comboChildrenHtml + '</div>';
   }).join('');
 
   // Per-item notes

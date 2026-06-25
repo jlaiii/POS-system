@@ -918,6 +918,10 @@ def get_timesheet_config():
         'data_retention': {
             'activity_log_days': 90,     # keep activity logs for 90 days
             'login_attempts_days': 30    # keep login attempts for 30 days
+        },
+        'comp_config': {
+            'employee_meal_limit': 15.0,  # max $ per employee meal
+            'daily_comp_cap': 50.0        # max $ comped per day before warning
         }
     }
     try:
@@ -950,6 +954,10 @@ def save_timesheet_config(config):
         'data_retention': {
             'activity_log_days': 90,
             'login_attempts_days': 30
+        },
+        'comp_config': {
+            'employee_meal_limit': 15.0,
+            'daily_comp_cap': 50.0
         }
     }
     for k, v in defaults.items():
@@ -5451,6 +5459,25 @@ def submit_order():
             'order_id': order_id
         })
 
+    # --- Comp / Employee Meal tracking ---
+    comp_items = [item for item in items if item.get('comp_type')]
+    if comp_items:
+        comp_log = []
+        for ci in comp_items:
+            comp_log.append({
+                'item_name': ci.get('name', ''),
+                'qty': int(ci.get('qty', 1)),
+                'price': float(ci.get('price', 0)),
+                'comp_type': ci.get('comp_type'),
+                'comp_reason': ci.get('comp_reason', ''),
+                'comp_employee_id': ci.get('comp_employee_id', ''),
+                'comp_employee_name': ci.get('comp_employee_name', '')
+            })
+        log_activity(ci.get('comp_type'), data.get('user'), 'user', {
+            'order_id': order_id,
+            'items': comp_log
+        })
+
     # --- Webhooks: fire to third-party delivery integrations ---
     fire_webhooks_async(order_details)
 
@@ -7465,6 +7492,48 @@ def admin_stats():
     weekly_sales = sum(order['total'] for order in processed_orders if datetime.fromisoformat(order['date']) >= week_ago)
     monthly_sales = sum(order['total'] for order in processed_orders if datetime.fromisoformat(order['date']) >= month_ago)
 
+    # --- Comp / Employee Meal summary ---
+    comp_summary = {
+        'employee_meal_count': 0,
+        'employee_meal_total': 0.0,
+        'comp_count': 0,
+        'comp_total': 0.0,
+        'comp_weekly_total': 0.0,
+        'comp_daily_total': 0.0
+    }
+    today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    today_end = today_start + timedelta(days=1)
+    for order in orders:
+        # Process both status-filtered (processed_orders) and refunded orders
+        if order.get('status') in ('refunded', 'voided'):
+            continue
+        order_date_str = order.get('date', '')
+        try:
+            order_dt = datetime.fromisoformat(order_date_str)
+        except (ValueError, TypeError):
+            continue
+        for item in (order.get('items') or []):
+            comp_type = item.get('comp_type')
+            if not comp_type:
+                continue
+            item_total = float(item.get('price', 0)) * int(item.get('qty', 1))
+            if comp_type == 'employee_meal':
+                comp_summary['employee_meal_count'] += int(item.get('qty', 1))
+                comp_summary['employee_meal_total'] += item_total
+            elif comp_type == 'comp':
+                comp_summary['comp_count'] += int(item.get('qty', 1))
+                comp_summary['comp_total'] += item_total
+            # Daily total
+            if today_start <= order_dt < today_end:
+                comp_summary['comp_daily_total'] += item_total
+            # Weekly total
+            if order_dt >= week_ago:
+                comp_summary['comp_weekly_total'] += item_total
+    comp_summary['employee_meal_total'] = round(comp_summary['employee_meal_total'], 2)
+    comp_summary['comp_total'] = round(comp_summary['comp_total'], 2)
+    comp_summary['comp_daily_total'] = round(comp_summary['comp_daily_total'], 2)
+    comp_summary['comp_weekly_total'] = round(comp_summary['comp_weekly_total'], 2)
+
     stats = {
         'total_sales': round(total_sales, 2),
         'total_traffic': total_traffic,
@@ -7490,7 +7559,8 @@ def admin_stats():
         'latest_backup_ts': latest_backup_ts.isoformat() if latest_backup_ts else None,
         'backup_total_size': backup_total_size,
         'backup_total_size_hr': backup_total_size_hr,
-        'latest_backup_size_hr': latest_backup_size_hr
+        'latest_backup_size_hr': latest_backup_size_hr,
+        'comp_summary': comp_summary
     }
     return jsonify({'message': 'Admin data retrieved', 'stats': stats})
 
