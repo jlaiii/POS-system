@@ -2677,7 +2677,7 @@
     },
     {
         "order_id": 74,
-        "status": "pending",
+        "status": "cancelled",
         "claimed_by": null,
         "claimed_at": null,
         "completed_at": null,
@@ -2731,11 +2731,14 @@
         },
         "table_number": 5,
         "delivery_address": null,
-        "customer_email": ""
+        "customer_email": "",
+        "cancelled_at": "2026-06-25T22:40:49.198898",
+        "cancel_reason": "Abandoned test order \u2014 cancelled by System Auditor #25 cleanup",
+        "waiter_id": "system"
     },
     {
         "order_id": 75,
-        "status": "pending",
+        "status": "cancelled",
         "claimed_by": null,
         "claimed_at": null,
         "completed_at": null,
@@ -2776,7 +2779,10 @@
         "item_notes": {},
         "table_number": 6,
         "delivery_address": null,
-        "customer_email": ""
+        "customer_email": "",
+        "cancelled_at": "2026-06-25T22:40:49.198898",
+        "cancel_reason": "Abandoned test order \u2014 cancelled by System Auditor #25 cleanup",
+        "waiter_id": "system"
     },
     {
         "order_id": 76,
@@ -4074,7 +4080,7 @@
     },
     {
         "order_id": 91,
-        "status": "pending",
+        "status": "cancelled",
         "claimed_by": null,
         "claimed_at": null,
         "completed_at": null,
@@ -4118,7 +4124,10 @@
         "packaging_fee": 0.0,
         "packaging_fee_label": "",
         "priority": null,
-        "manager_approval": null
+        "manager_approval": null,
+        "cancelled_at": "2026-06-25T22:40:49.198898",
+        "cancel_reason": "Abandoned test order \u2014 cancelled by System Auditor #25 cleanup",
+        "waiter_id": "system"
     },
     {
         "order_id": 92,
@@ -4341,12 +4350,12 @@
     },
     {
         "order_id": 96,
-        "status": "pending",
+        "status": "cancelled",
         "claimed_by": null,
         "claimed_at": null,
         "completed_at": null,
         "date": "2026-06-25T17:59:47.362173",
-        "user": "9999",
+        "user": "system",
         "payment": "Cash",
         "payment_splits": null,
         "items": [
@@ -4387,16 +4396,19 @@
         "priority": null,
         "assigned_driver": null,
         "delivery_status": "pending",
-        "manager_approval": null
+        "manager_approval": null,
+        "cancelled_at": "2026-06-25T22:40:49.198898",
+        "cancel_reason": "Abandoned test order \u2014 cancelled by System Auditor #25 cleanup",
+        "waiter_id": "system"
     },
     {
         "order_id": 97,
-        "status": "pending",
+        "status": "cancelled",
         "claimed_by": null,
         "claimed_at": null,
         "completed_at": null,
         "date": "2026-06-25T18:08:02.967339",
-        "user": "9999",
+        "user": "system",
         "payment": "Cash",
         "payment_splits": null,
         "items": [
@@ -4452,16 +4464,19 @@
         "priority": null,
         "assigned_driver": null,
         "delivery_status": "pending",
-        "manager_approval": null
+        "manager_approval": null,
+        "cancelled_at": "2026-06-25T22:40:49.198898",
+        "cancel_reason": "Abandoned test order \u2014 cancelled by System Auditor #25 cleanup",
+        "waiter_id": "system"
     },
     {
         "order_id": 98,
-        "status": "pending",
+        "status": "cancelled",
         "claimed_by": null,
         "claimed_at": null,
         "completed_at": null,
         "date": "2026-06-25T18:08:30.241025",
-        "user": null,
+        "user": "system",
         "payment": "Cash",
         "payment_splits": null,
         "items": [
@@ -4502,16 +4517,19 @@
         "priority": null,
         "assigned_driver": null,
         "delivery_status": "pending",
-        "manager_approval": null
+        "manager_approval": null,
+        "cancelled_at": "2026-06-25T22:40:49.198898",
+        "cancel_reason": "Abandoned test order \u2014 cancelled by System Auditor #25 cleanup",
+        "waiter_id": "system"
     },
     {
         "order_id": 99,
-        "status": "pending",
+        "status": "cancelled",
         "claimed_by": null,
         "claimed_at": null,
         "completed_at": null,
         "date": "2026-06-25T18:08:30.267707",
-        "user": "9999",
+        "user": "system",
         "payment": "Cash",
         "payment_splits": null,
         "items": [
@@ -4552,16 +4570,19 @@
         "priority": null,
         "assigned_driver": null,
         "delivery_status": "pending",
-        "manager_approval": null
+        "manager_approval": null,
+        "cancelled_at": "2026-06-25T22:40:49.198898",
+        "cancel_reason": "Abandoned test order \u2014 cancelled by System Auditor #25 cleanup",
+        "waiter_id": "system"
     },
     {
         "order_id": 100,
-        "status": "pending",
+        "status": "cancelled",
         "claimed_by": null,
         "claimed_at": null,
         "completed_at": null,
         "date": "2026-06-25T18:08:30.294151",
-        "user": "9999",
+        "user": "system",
         "payment": "Cash",
         "payment_splits": null,
         "items": [
@@ -4617,7 +4638,10 @@
         "priority": null,
         "assigned_driver": null,
         "delivery_status": "pending",
-        "manager_approval": null
+        "manager_approval": null,
+        "cancelled_at": "2026-06-25T22:40:49.198898",
+        "cancel_reason": "Abandoned test order \u2014 cancelled by System Auditor #25 cleanup",
+        "waiter_id": "system"
     },
     {
         "order_id": 104,
