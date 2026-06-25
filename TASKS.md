@@ -599,11 +599,12 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 
 - [x] worker-3 **Add order type classification (dine-in, takeout, delivery, catering) with per-type workflows** — Categorize each order with explicit type field (dine_in/takeout/delivery/catering). Different service charge rules, packaging fees per type, tax rate overrides, and kitchen ticket formatting per type. Filter sales stats by order type for channel analysis. Quick-type selector in POS cart area with icon buttons. Essential for multi-channel restaurants that handle both dine-in and takeout in the same system.
 
+- [ ] **Add server-side tax recalculation on order submit and tax period reporting** — Enforce tax calculation on server during order submission using configured tax_config rates (global, category, item overrides) instead of trusting frontend-supplied tax_amount. Add tax period report endpoint showing gross sales, taxable sales, tax collected by rate category, exempt sales totals, and net sales — exportable as CSV/PDF for tax filing compliance.
+  > **Production Auditor (2026-06-25):** **BUMPED FROM MEDIUM TO HIGH.** The `global_tax_rate` in `tax_config.json` (currently 8.25%) is decorative — `submit_order()` takes `tax_amount` from the frontend verbatim and never validates against the configured rate. Any malformed request or frontend bug can submit orders with wrong tax. This is a data integrity AND fraud vector in a real restaurant where tax is legally required to be accurate. The server MUST recalculate tax using the configured rate(s) rather than trusting the client. The existing per-order-type `tax_rate_override` mechanism works only if the frontend sends `tax_amount == 0` — this is insufficient.
+
 ### Priority: MEDIUM
 
 - [ ] **Add waitlist/digital queue for walk-in customers** — Host stand tool to add parties to waitlist with party size, name, phone, estimated wait time. Auto-calculate wait times from current table occupancy. Send SMS notification when table is ready via existing email/SMS config. Check-in marking, no-show tracking, and waitlist-to-table assignment integration with existing floor plan dashboard.
-
-- [ ] **Add server-side tax recalculation on order submit and tax period reporting** — Enforce tax calculation on server during order submission using configured tax_config rates (global, category, item overrides) instead of trusting frontend-supplied tax_amount. Add tax period report endpoint showing gross sales, taxable sales, tax collected by rate category, exempt sales totals, and net sales — exportable as CSV/PDF for tax filing compliance.
 
 ### Priority: LOW
 

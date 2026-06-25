@@ -66,5 +66,25 @@
     "Test Nutrition Item": {
         "stock": 0,
         "low_stock_threshold": 10
+    },
+    "Pancakes": {
+        "stock": 0,
+        "low_stock_threshold": 10
+    },
+    "Bacon & Eggs": {
+        "stock": 0,
+        "low_stock_threshold": 10
+    },
+    "French Toast": {
+        "stock": 0,
+        "low_stock_threshold": 10
+    },
+    "Caesar Salad": {
+        "stock": 0,
+        "low_stock_threshold": 10
+    },
+    "Grilled Chicken Salad": {
+        "stock": 0,
+        "low_stock_threshold": 10
     }
 }

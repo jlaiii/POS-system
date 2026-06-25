@@ -1,5 +1,5 @@
 {
-    "global_tax_rate": 0.0,
+    "global_tax_rate": 8.25,
     "category_tax_rates": {},
     "item_tax_overrides": {}
 }

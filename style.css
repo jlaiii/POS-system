@@ -372,6 +372,7 @@
 .modal-overlay {
   display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
   background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 .modal-overlay.active { display: flex; }
 .modal-box {
@@ -392,7 +393,7 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
 @keyframes spin { to { transform: rotate(360deg); } }
 
 .toast {
-  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+  position: fixed; bottom: max(20px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%);
   background: var(--success); color: #fff; padding: 12px 24px;
   border-radius: 8px; font-weight: 600; z-index: 200; font-size: 15px;
   animation: fadeUp 0.3s ease;
@@ -403,6 +404,7 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
 #receiptOverlay {
   display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
   background: rgba(0,0,0,0.7); z-index: 300; align-items: center; justify-content: center;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 #receiptOverlay.active { display: flex; }
 #receiptBox {
@@ -659,7 +661,7 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
   font-size: 28px;
 }
 #kioskOverlay.active { display: flex; }

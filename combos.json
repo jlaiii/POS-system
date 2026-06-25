@@ -1,1 +1,30 @@
-{"combos":[]}
+{
+    "combos": [
+        {
+            "id": "combo_1782379846",
+            "name": "Breakfast Special",
+            "combo_price": 13.99,
+            "description": "Pancakes, bacon & eggs, and coffee",
+            "child_items": [
+                {
+                    "name": "Pancakes",
+                    "category": "Breakfast",
+                    "quantity": 1
+                },
+                {
+                    "name": "Bacon & Eggs",
+                    "category": "Breakfast",
+                    "quantity": 1
+                },
+                {
+                    "name": "Coke",
+                    "category": "Drinks",
+                    "quantity": 1
+                }
+            ],
+            "active": true,
+            "created_at": "2026-06-25T09:30:46.005782",
+            "updated_at": "2026-06-25T09:30:46.005790"
+        }
+    ]
+}

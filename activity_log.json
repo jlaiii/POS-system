@@ -9010,5 +9010,358 @@
             "payment_method": "Cash",
             "item_count": 1
         }
+    },
+    {
+        "timestamp": "2026-06-25T09:24:24.561032",
+        "type": "login_failed",
+        "user_id": null,
+        "user_role": "unknown",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed",
+            "method": "pin",
+            "ip": "127.0.0.1",
+            "attempt": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-25T09:24:32.561561",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T09:30:18.224628",
+        "type": "category_create",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "name": "Breakfast"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T09:30:18.277730",
+        "type": "category_create",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "name": "Salads"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T09:30:25.256997",
+        "type": "add_item",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "category": "Breakfast",
+            "name": "Pancakes",
+            "price": 8.99
+        }
+    },
+    {
+        "timestamp": "2026-06-25T09:30:25.294305",
+        "type": "add_item",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "category": "Breakfast",
+            "name": "Bacon & Eggs",
+            "price": 10.99
+        }
+    },
+    {
+        "timestamp": "2026-06-25T09:30:25.328554",
+        "type": "add_item",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "category": "Breakfast",
+            "name": "French Toast",
+            "price": 9.49
+        }
+    },
+    {
+        "timestamp": "2026-06-25T09:30:25.366335",
+        "type": "add_item",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "category": "Salads",
+            "name": "Caesar Salad",
+            "price": 7.99
+        }
+    },
+    {
+        "timestamp": "2026-06-25T09:30:25.409306",
+        "type": "add_item",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "category": "Salads",
+            "name": "Grilled Chicken Salad",
+            "price": 11.49
+        }
+    },
+    {
+        "timestamp": "2026-06-25T09:30:30.009712",
+        "type": "add_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "added_user_id": "3344",
+            "added_user_name": "Maria",
+            "added_user_role": "user"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T09:30:30.054776",
+        "type": "add_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "added_user_id": "5566",
+            "added_user_name": "Chef Diego",
+            "added_user_role": "cook"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T09:30:30.095433",
+        "type": "add_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "added_user_id": "7788",
+            "added_user_name": "Manager Sarah",
+            "added_user_role": "admin"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T09:30:33.939752",
+        "type": "update_scheduled_start",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "target_user_id": "3344",
+            "old_scheduled_start": null,
+            "new_scheduled_start": null,
+            "user_name": "Maria"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T09:30:33.977473",
+        "type": "update_scheduled_start",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "target_user_id": "5566",
+            "old_scheduled_start": null,
+            "new_scheduled_start": null,
+            "user_name": "Chef Diego"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T09:30:34.023636",
+        "type": "update_scheduled_start",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "target_user_id": "7788",
+            "old_scheduled_start": null,
+            "new_scheduled_start": null,
+            "user_name": "Manager Sarah"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T09:30:37.090512",
+        "type": "update_tax_config",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "new_config": {
+                "global_tax_rate": 8.25,
+                "category_tax_rates": {},
+                "item_tax_overrides": {}
+            }
+        }
+    },
+    {
+        "timestamp": "2026-06-25T09:30:40.108038",
+        "type": "manage_discount",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "action": "add",
+            "code": "WELCOME10",
+            "type": "percent",
+            "value": 10.0
+        }
+    },
+    {
+        "timestamp": "2026-06-25T09:30:46.005796",
+        "type": "combo_create",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "combo_id": "combo_1782379846",
+            "name": "Breakfast Special",
+            "price": 13.99
+        }
+    },
+    {
+        "timestamp": "2026-06-25T09:30:57.307417",
+        "type": "update_scheduled_start",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "target_user_id": "3344",
+            "old_scheduled_start": null,
+            "new_scheduled_start": null,
+            "user_name": "Maria"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T09:30:57.354802",
+        "type": "update_scheduled_start",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "target_user_id": "5566",
+            "old_scheduled_start": null,
+            "new_scheduled_start": null,
+            "user_name": "Chef Diego"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T09:30:57.397726",
+        "type": "update_scheduled_start",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "target_user_id": "7788",
+            "old_scheduled_start": null,
+            "new_scheduled_start": null,
+            "user_name": "Manager Sarah"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T09:31:04.874898",
+        "type": "update_scheduled_start",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "target_user_id": "3344",
+            "old_scheduled_start": null,
+            "new_scheduled_start": "09:00",
+            "user_name": "Maria"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T09:31:04.922010",
+        "type": "update_scheduled_start",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "target_user_id": "5566",
+            "old_scheduled_start": null,
+            "new_scheduled_start": "10:00",
+            "user_name": "Chef Diego"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T09:31:04.969615",
+        "type": "update_scheduled_start",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "target_user_id": "7788",
+            "old_scheduled_start": null,
+            "new_scheduled_start": "08:30",
+            "user_name": "Manager Sarah"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T09:34:20.207079",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
     }
 ]
