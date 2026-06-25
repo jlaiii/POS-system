@@ -978,5 +978,38 @@
         "details": {
             "status": "success"
         }
+    },
+    {
+        "user_id": "1111",
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-25T02:21:33.357397",
+        "success": true,
+        "user_agent": "curl/8.5.0",
+        "method": "pin",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "user_id": "1111",
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-25T02:50:21.030673",
+        "success": true,
+        "user_agent": "curl/8.5.0",
+        "method": "pin",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "user_id": "1234",
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-25T02:56:14.423374",
+        "success": true,
+        "user_agent": "Werkzeug/3.1.8",
+        "method": "pin",
+        "details": {
+            "status": "2fa_required"
+        }
     }
 ]

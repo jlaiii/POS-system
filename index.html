@@ -570,6 +570,21 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 .badge-oos { background: rgba(255,68,68,0.15); color: #ff6666; }
 .badge-low { background: rgba(255,170,0,0.15); color: #ffbb33; }
 
+/* Analytics Dashboard */
+.analytics-bar-wrapper { position: relative; }
+.analytics-bar:hover { opacity: 0.85; filter: brightness(1.2); transform: scaleX(1.05); }
+.analytics-hourly-bar-wrapper { position: relative; }
+.analytics-hourly-bar:hover { opacity: 0.85; filter: brightness(1.2); transform: scaleX(1.08); }
+.analytics-period-card { transition: border-color 0.2s; }
+.analytics-period-card:hover { border-color: var(--accent) !important; }
+.analytics-chart-card h4 { display: flex; align-items: center; gap: 6px; }
+/* Smooth bar chart appearance animation */
+.analytics-bar, .analytics-hourly-bar { animation: barGrow 0.5s ease-out forwards; transform-origin: bottom; }
+@keyframes barGrow {
+  from { transform: scaleY(0.3); opacity: 0.5; }
+  to { transform: scaleY(1); opacity: 1; }
+}
+
 </style>
 <link rel="stylesheet" href="style.css" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="style.css"></noscript>
@@ -840,6 +855,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
     <div id="adminTab">
       <div id="adminSubTabs">
         <button onclick="switchAdminSection('stats')" id="asStats" class="active" data-i18n="admin.stats">📊 Stats</button>
+        <button onclick="switchAdminSection('analytics')" id="asAnalytics" data-i18n="admin.analytics">📈 Analytics</button>
         <button onclick="switchAdminSection('charts')" id="asCharts" data-i18n="admin.charts">📈 Charts</button>
         <button onclick="switchAdminSection('most')" id="asMost" data-i18n="admin.most_ordered">🏆 Most Ordered</button>
         <button onclick="switchAdminSection('users')" id="asUsers" data-i18n="admin.users">👥 Users</button>
@@ -899,6 +915,35 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
           </div>
           <div class="charts-row">
             <div class="chart-box" style="grid-column:1/-1;"><h4 data-i18n="admin.charts.item_trends">📈 Item Popularity Trend (7d vs Prior 7d)</h4><canvas id="chartItemTrends"></canvas></div>
+          </div>
+        </div>
+        <!-- Analytics Dashboard -->
+        <div id="secAnalytics" class="admin-section" style="padding-bottom:24px;">
+          <div class="analytics-controls" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center;">
+            <button class="accent" onclick="loadAnalyticsDashboard()" style="font-size:14px;padding:10px 20px;min-height:44px;" data-i18n="admin.analytics.refresh">🔄 Refresh</button>
+          </div>
+          <!-- Period Comparison Cards -->
+          <div class="analytics-period-grid" id="analyticsPeriodGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin-bottom:20px;"></div>
+          <!-- Day of Week Chart -->
+          <div class="analytics-chart-card" style="background:var(--card);border-radius:12px;padding:20px;margin-bottom:16px;">
+            <h4 style="margin-bottom:12px;color:var(--text);font-size:15px;" data-i18n="admin.analytics.dow_title">📅 Revenue by Day of Week</h4>
+            <div id="analyticsDowChart" style="display:flex;align-items:flex-end;gap:6px;min-height:200px;padding-top:20px;"></div>
+            <div class="dow-labels" style="display:flex;gap:6px;margin-top:4px;padding:0 8px;">
+              <div class="analytics-day-labels" id="analyticsDowLabels" style="display:flex;gap:6px;flex:1;"></div>
+            </div>
+          </div>
+          <!-- Hourly Revenue Chart -->
+          <div class="analytics-chart-card" style="background:var(--card);border-radius:12px;padding:20px;margin-bottom:16px;">
+            <h4 style="margin-bottom:12px;color:var(--text);font-size:15px;" data-i18n="admin.analytics.hourly_title">⏰ Revenue by Hour of Day</h4>
+            <div id="analyticsHourlyChart" style="display:flex;align-items:flex-end;gap:3px;min-height:180px;padding-top:20px;overflow-x:auto;"></div>
+            <div class="hourly-labels" style="display:flex;gap:3px;margin-top:4px;overflow-x:auto;padding:0 4px;">
+              <div class="analytics-hourly-labels" id="analyticsHourlyLabels" style="display:flex;gap:3px;flex:none;"></div>
+            </div>
+            <!-- Toggle buttons for hourly view -->
+            <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+              <button class="ghost" onclick="analyticsHourlyMode='revenue';loadAnalyticsDashboard()" id="analyticsHourlyRevBtn" style="font-size:13px;padding:6px 14px;min-height:36px;border:2px solid var(--accent);color:var(--accent);font-weight:600;" data-i18n="admin.analytics.revenue">💰 Revenue</button>
+              <button class="ghost" onclick="analyticsHourlyMode='count';loadAnalyticsDashboard()" id="analyticsHourlyCountBtn" style="font-size:13px;padding:6px 14px;min-height:36px;" data-i18n="admin.analytics.order_count">📋 Orders</button>
+            </div>
           </div>
         </div>
         <!-- Most Ordered -->
@@ -4063,6 +4108,16 @@ const L10N = {
     'admin.giftcards.customer_colon': 'Customer: {name}',
     'admin.giftcards.replace_header': '🔄 Lost Card Replacement',
     'admin.giftcards.sell_title': 'Sell Gift Card',
+    'admin.analytics': '📈 Analytics',
+    'admin.analytics.refresh': '🔄 Refresh',
+    'admin.analytics.dow_title': '📅 Revenue by Day of Week',
+    'admin.analytics.hourly_title': '⏰ Revenue by Hour of Day',
+    'admin.analytics.revenue': '💰 Revenue',
+    'admin.analytics.order_count': '📋 Orders',
+    'admin.analytics.this_week': '📍 This Week',
+    'admin.analytics.last_week': '📅 Last Week',
+    'admin.analytics.this_month': '📆 This Month',
+    'admin.analytics.last_month': '📅 Last Month',
   },
   es: {
     'app.title': '🍽️ Sistema POS',
@@ -4898,6 +4953,16 @@ const L10N = {
     'admin.giftcards.customer_colon': 'Cliente: {name}',
     'admin.giftcards.replace_header': '🔄 Reemplazo de Tarjeta Perdida',
     'admin.giftcards.sell_title': 'Vender Tarjeta de Regalo',
+    'admin.analytics': '📈 Analíticas',
+    'admin.analytics.refresh': '🔄 Actualizar',
+    'admin.analytics.dow_title': '📅 Ingresos por Día de la Semana',
+    'admin.analytics.hourly_title': '⏰ Ingresos por Hora del Día',
+    'admin.analytics.revenue': '💰 Ingresos',
+    'admin.analytics.order_count': '📋 Pedidos',
+    'admin.analytics.this_week': '📍 Esta Semana',
+    'admin.analytics.last_week': '📅 Semana Pasada',
+    'admin.analytics.this_month': '📆 Este Mes',
+    'admin.analytics.last_month': '📅 Mes Pasado',
   }
 };
 
@@ -7069,6 +7134,7 @@ function showApp() {
   // Admin sub-tabs visibility
   const subTabMap = {
     'asStats': perms.includes('view_stats'),
+    'asAnalytics': perms.includes('view_stats'),
     'asCharts': perms.includes('view_stats'),
     'asMost': perms.includes('view_stats'),
     'asUsers': perms.includes('manage_users'),
@@ -11804,6 +11870,7 @@ function switchAdminSection(sec) {
   if (section) section.classList.add('active');
 
   if (sec === 'stats') loadAdminStats();
+  else if (sec === 'analytics') loadAnalyticsDashboard();
   else if (sec === 'charts') loadAdminCharts();
   else if (sec === 'most') loadMostOrdered();
   else if (sec === 'users') loadUsers();
@@ -12233,6 +12300,125 @@ async function loadAdminCharts() {
       });
     }
   } catch(e) {}
+}
+
+// ═══════════ ANALYTICS DASHBOARD ═══════════
+let analyticsHourlyMode = 'revenue';
+
+async function loadAnalyticsDashboard() {
+  // Period comparison cards
+  const periodGrid = document.getElementById('analyticsPeriodGrid');
+  // Day of week
+  const dowChart = document.getElementById('analyticsDowChart');
+  const dowLabels = document.getElementById('analyticsDowLabels');
+  // Hourly
+  const hourlyChart = document.getElementById('analyticsHourlyChart');
+  const hourlyLabels = document.getElementById('analyticsHourlyLabels');
+
+  if (!periodGrid) return; // not on Analytics tab
+  periodGrid.innerHTML = '<div class="empty-state">' + t('loading') + '</div>';
+  dowChart.innerHTML = '<div class="empty-state">' + t('loading') + '</div>';
+  hourlyChart.innerHTML = '<div class="empty-state">' + t('loading') + '</div>';
+  hourlyLabels.innerHTML = '';
+  dowLabels.innerHTML = '';
+
+  // Update toggle button active state
+  const revBtn = document.getElementById('analyticsHourlyRevBtn');
+  const cntBtn = document.getElementById('analyticsHourlyCountBtn');
+  if (revBtn && cntBtn) {
+    revBtn.style.border = analyticsHourlyMode === 'revenue' ? '2px solid var(--accent)' : '2px solid var(--border)';
+    revBtn.style.color = analyticsHourlyMode === 'revenue' ? 'var(--accent)' : 'var(--text2)';
+    cntBtn.style.border = analyticsHourlyMode === 'count' ? '2px solid var(--accent)' : '2px solid var(--border)';
+    cntBtn.style.color = analyticsHourlyMode === 'count' ? 'var(--accent)' : 'var(--text2)';
+  }
+
+  try {
+    const r = await fetch(BACKEND_URL + '/api/analytics/dashboard?adminPin=' + encodeURIComponent(currentUser.id));
+    if (!r.ok) { throw new Error('Fetch failed: ' + r.status); }
+    const json = await r.json();
+    const dash = json.dashboard;
+    if (!dash) { throw new Error('No dashboard data'); }
+
+    // ─── Period Comparison Cards ──────────────────────────
+    const cmp = dash.comparisons;
+    const revUp = cmp.week_change_pct > 0;
+    const revDown = cmp.week_change_pct < 0;
+    const ordUp = cmp.week_order_change_pct > 0;
+    const ordDown = cmp.week_order_change_pct < 0;
+    const mRevUp = cmp.month_change_pct > 0;
+    const mRevDown = cmp.month_change_pct < 0;
+    const mOrdUp = cmp.month_order_change_pct > 0;
+    const mOrdDown = cmp.month_order_change_pct < 0;
+
+    periodGrid.innerHTML = `
+      <div class="analytics-period-card" style="background:var(--card);border-radius:12px;padding:16px;border:1px solid var(--border);">
+        <div style="font-size:13px;color:var(--text2);margin-bottom:4px;" data-i18n="admin.analytics.this_week">📍 This Week</div>
+        <div style="font-size:20px;font-weight:700;color:var(--text);">$${cmp.this_week.revenue.toLocaleString(undefined,{minimumFractionDigits:2})}</div>
+        <div style="font-size:13px;color:var(--text2);">${cmp.this_week.orders} ${t('orders')}</div>
+        <div style="margin-top:6px;display:flex;gap:8px;font-size:12px;flex-wrap:wrap;">
+          <span style="color:${revUp ? '#2ecc71' : (revDown ? '#e74c3c' : 'var(--text2)')};">${revUp ? '▲' : (revDown ? '▼' : '─')} Revenue ${cmp.week_change_pct}%</span>
+          <span style="color:${ordUp ? '#2ecc71' : (ordDown ? '#e74c3c' : 'var(--text2)')};">${ordUp ? '▲' : (ordDown ? '▼' : '─')} Orders ${cmp.week_order_change_pct}%</span>
+        </div>
+      </div>
+      <div class="analytics-period-card" style="background:var(--card);border-radius:12px;padding:16px;border:1px solid var(--border);">
+        <div style="font-size:13px;color:var(--text2);margin-bottom:4px;" data-i18n="admin.analytics.last_week">📅 Last Week</div>
+        <div style="font-size:20px;font-weight:700;color:var(--text);">$${cmp.last_week.revenue.toLocaleString(undefined,{minimumFractionDigits:2})}</div>
+        <div style="font-size:13px;color:var(--text2);">${cmp.last_week.orders} ${t('orders')}</div>
+      </div>
+      <div class="analytics-period-card" style="background:var(--card);border-radius:12px;padding:16px;border:1px solid var(--border);">
+        <div style="font-size:13px;color:var(--text2);margin-bottom:4px;" data-i18n="admin.analytics.this_month">📆 This Month</div>
+        <div style="font-size:20px;font-weight:700;color:var(--text);">$${cmp.this_month.revenue.toLocaleString(undefined,{minimumFractionDigits:2})}</div>
+        <div style="font-size:13px;color:var(--text2);">${cmp.this_month.orders} ${t('orders')}</div>
+        <div style="margin-top:6px;display:flex;gap:8px;font-size:12px;flex-wrap:wrap;">
+          <span style="color:${mRevUp ? '#2ecc71' : (mRevDown ? '#e74c3c' : 'var(--text2)')};">${mRevUp ? '▲' : (mRevDown ? '▼' : '─')} Revenue ${cmp.month_change_pct}%</span>
+          <span style="color:${mOrdUp ? '#2ecc71' : (mOrdDown ? '#e74c3c' : 'var(--text2)')};">${mOrdUp ? '▲' : (mOrdDown ? '▼' : '─')} Orders ${cmp.month_order_change_pct}%</span>
+        </div>
+      </div>
+      <div class="analytics-period-card" style="background:var(--card);border-radius:12px;padding:16px;border:1px solid var(--border);">
+        <div style="font-size:13px;color:var(--text2);margin-bottom:4px;" data-i18n="admin.analytics.last_month">📅 Last Month</div>
+        <div style="font-size:20px;font-weight:700;color:var(--text);">$${cmp.last_month.revenue.toLocaleString(undefined,{minimumFractionDigits:2})}</div>
+        <div style="font-size:13px;color:var(--text2);">${cmp.last_month.orders} ${t('orders')}</div>
+      </div>
+    `;
+
+    // ─── Day of Week Bar Chart ────────────────────
+    const dow = dash.day_of_week;
+    const maxDowRev = Math.max(...dow.map(d => d.revenue), 1);
+    dowChart.innerHTML = dow.map(d => {
+      const pct = (d.revenue / maxDowRev * 100);
+      const shortDay = d.day.slice(0, 3);
+      return `<div class="analytics-bar-wrapper" style="flex:1;display:flex;flex-direction:column;align-items:center;height:180px;justify-content:flex-end;">
+        <div style="font-size:10px;color:var(--text2);margin-bottom:2px;white-space:nowrap;">$${d.revenue.toFixed(0)}</div>
+        <div class="analytics-bar" style="width:100%;max-width:60px;height:${Math.max(pct, 2)}%;background:var(--accent);border-radius:6px 6px 0 0;transition:height 0.4s ease;min-height:4px;position:relative;" title="${d.day}: $${d.revenue} (${d.count} orders, avg $${d.avg})"></div>
+        <div style="font-size:10px;margin-top:4px;color:var(--text2);font-weight:600;">${shortDay}</div>
+        <div style="font-size:9px;color:var(--text3);">${d.count}</div>
+      </div>`;
+    }).join('');
+    dowLabels.innerHTML = '';
+
+    // ─── Hourly Bar Chart ─────────────────────
+    const hourly = dash.hourly;
+    const isRev = analyticsHourlyMode === 'revenue';
+    const maxVal = Math.max(...hourly.map(h => isRev ? h.revenue : h.count), 1);
+    hourlyChart.innerHTML = hourly.map(h => {
+      const val = isRev ? h.revenue : h.count;
+      const pct = (val / maxVal * 100);
+      const tooltip = isRev
+        ? `$${h.revenue.toFixed(2)} (${h.count} orders)`
+        : `${h.count} orders ($${h.revenue.toFixed(2)})`;
+      return `<div class="analytics-hourly-bar-wrapper" style="flex:1;display:flex;flex-direction:column;align-items:center;height:160px;justify-content:flex-end;min-width:28px;">
+        <div style="font-size:9px;color:var(--text2);margin-bottom:2px;white-space:nowrap;">${isRev ? '$' + h.revenue.toFixed(0) : h.count}</div>
+        <div class="analytics-hourly-bar" style="width:100%;max-width:32px;height:${Math.max(pct, 1)}%;background:var(--accent);border-radius:4px 4px 0 0;transition:height 0.4s ease;min-height:3px;opacity:${h.count === 0 ? 0.3 : 1};" title="Hour ${h.label}: ${tooltip}"></div>
+        <div style="font-size:8px;margin-top:2px;color:var(--text3);">${h.hour > 12 ? (h.hour-12)+'p' : (h.hour===0?'12a':h.hour+'a')}</div>
+      </div>`;
+    }).join('');
+    hourlyLabels.innerHTML = '';
+
+  } catch(e) {
+    periodGrid.innerHTML = '<div class="empty-state" style="color:var(--danger);">⚠️ ' + t('toast.network_error') + '</div>';
+    dowChart.innerHTML = '<div class="empty-state" style="color:var(--danger);">⚠️ Error</div>';
+    hourlyChart.innerHTML = '<div class="empty-state" style="color:var(--danger);">⚠️ Error</div>';
+  }
 }
 
 async function loadMostOrdered() {

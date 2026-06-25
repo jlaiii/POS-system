@@ -9971,6 +9971,131 @@ def analytics_summary():
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/api/analytics/dashboard', methods=['GET'])
+def analytics_dashboard():
+    """Returns comprehensive analytics: day-of-week breakdown, hourly revenue, period comparisons.
+    Requires view_stats permission (adminPin as query param)."""
+    admin_pin = request.args.get('adminPin', '')
+    _, err_response = check_get_auth(admin_pin, "view_stats")
+    if err_response:
+        return err_response
+    try:
+        orders = load_json_data(ORDERS_FILE)
+        now = datetime.now()
+        today = now.date()
+
+        # --- Day of Week breakdown (all time) ---
+        day_names = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+        dow_revenue = [0.0] * 7
+        dow_count = [0] * 7
+        dow_active = [0] * 7
+
+        # --- Hourly breakdown (all time) ---
+        hourly_revenue = [0.0] * 24
+        hourly_count = [0] * 24
+
+        # --- Period comparison ---
+        # This week: Monday 00:00 of current week
+        # Last week: Monday 00:00 of previous week
+        weekday = today.weekday()  # Monday=0
+        this_monday = today - timedelta(days=weekday)
+        this_week_start = datetime.combine(this_monday, datetime.min.time())
+        last_week_start = this_week_start - timedelta(days=7)
+        this_month_start = today.replace(day=1)
+        last_month_start = (this_month_start - timedelta(days=28)).replace(day=1)
+        # Last month end = day before this month start
+        last_month_end = this_month_start - timedelta(days=1)
+
+        this_week_revenue = 0.0
+        this_week_count = 0
+        last_week_revenue = 0.0
+        last_week_count = 0
+        this_month_revenue = 0.0
+        this_month_count = 0
+        last_month_revenue = 0.0
+        last_month_count = 0
+
+        for order in orders:
+            try:
+                order_date = order.get('date', '')
+                if not order_date:
+                    continue
+                dt = datetime.fromisoformat(order_date)
+                total = float(order.get('total', 0))
+                hour = dt.hour
+                day_idx = dt.weekday()
+
+                # Day of week
+                dow_revenue[day_idx] += total
+                dow_count[day_idx] += 1
+
+                # Hourly
+                hourly_revenue[hour] += total
+                hourly_count[hour] += 1
+
+                # Period comparisons
+                if dt >= this_week_start:
+                    this_week_revenue += total
+                    this_week_count += 1
+                elif dt >= last_week_start and dt < this_week_start:
+                    last_week_revenue += total
+                    last_week_count += 1
+
+                if dt.replace(hour=0, minute=0, second=0, microsecond=0) >= datetime.combine(this_month_start, datetime.min.time()):
+                    this_month_revenue += total
+                    this_month_count += 1
+                elif dt >= datetime.combine(last_month_start, datetime.min.time()) and dt < datetime.combine(this_month_start, datetime.min.time()):
+                    last_month_revenue += total
+                    last_month_count += 1
+            except (ValueError, TypeError):
+                continue
+
+        # Format day-of-week data
+        dow_data = []
+        for i in range(7):
+            dow_data.append({
+                'day': day_names[i],
+                'revenue': round(dow_revenue[i], 2),
+                'count': dow_count[i],
+                'avg': round(dow_revenue[i] / dow_count[i], 2) if dow_count[i] > 0 else 0
+            })
+
+        # Format hourly data (sorted by hour ascending for bar chart)
+        hourly_data = []
+        for h in range(24):
+            hourly_data.append({
+                'hour': h,
+                'label': f'{h:02d}:00',
+                'revenue': round(hourly_revenue[h], 2),
+                'count': hourly_count[h]
+            })
+
+        # Calculate comparison percentages
+        week_rev_change = round(((this_week_revenue - last_week_revenue) / last_week_revenue * 100), 1) if last_week_revenue > 0 else (100 if this_week_revenue > 0 else 0)
+        week_count_change = round(((this_week_count - last_week_count) / last_week_count * 100), 1) if last_week_count > 0 else (100 if this_week_count > 0 else 0)
+        month_rev_change = round(((this_month_revenue - last_month_revenue) / last_month_revenue * 100), 1) if last_month_revenue > 0 else (100 if this_month_revenue > 0 else 0)
+        month_count_change = round(((this_month_count - last_month_count) / last_month_count * 100), 1) if last_month_count > 0 else (100 if this_month_count > 0 else 0)
+
+        dashboard = {
+            'day_of_week': dow_data,
+            'hourly': hourly_data,
+            'comparisons': {
+                'this_week': {'revenue': round(this_week_revenue, 2), 'orders': this_week_count},
+                'last_week': {'revenue': round(last_week_revenue, 2), 'orders': last_week_count},
+                'week_change_pct': week_rev_change,
+                'week_order_change_pct': week_count_change,
+                'this_month': {'revenue': round(this_month_revenue, 2), 'orders': this_month_count},
+                'last_month': {'revenue': round(last_month_revenue, 2), 'orders': last_month_count},
+                'month_change_pct': month_rev_change,
+                'month_order_change_pct': month_count_change
+            }
+        }
+
+        return jsonify({'dashboard': dashboard})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 @app.route('/api/suggestions', methods=['POST'])
 def get_suggestions():
     """Returns smart reorder suggestions based on user's past orders.
