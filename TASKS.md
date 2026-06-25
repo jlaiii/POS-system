@@ -579,6 +579,6 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 
 ### Priority: MEDIUM
 
-- [ ] **Audit #21: Enable mandatory 2FA for admin/owner roles in production** — `security_config.json` has `require_2fa_for_admins: false`. For production deployment, this should be enabled to protect owner (1111) and manager (2222) accounts from PIN leaks. Enable the toggle, send notification to existing admins to set up 2FA, verify all admin accounts have totp_enabled=true. Currently 0/2 admin-level accounts have 2FA active.
+- [~] worker-1 **Audit #21: Enable mandatory 2FA for admin/owner roles in production** — `security_config.json` has `require_2fa_for_admins: false`. For production deployment, this should be enabled to protect owner (1111) and manager (2222) accounts from PIN leaks. Enable the toggle, send notification to existing admins to set up 2FA, verify all admin accounts have totp_enabled=true. Currently 0/2 admin-level accounts have 2FA active.
 
 - [ ] **Audit #21: Complete SQLite migration** — Migration scripts exist (migrate_orders.py, sync_json_from_db.py) and `pos.db` exists (245KB), but the system still runs on JSON files in production. Complete the migration: switch data loading/saving to SQLite, verify all 24 tables, run integrity checks, confirm backward compatibility fallback. JSON-only will become a bottleneck as order volume grows beyond 1,000+ entries.
