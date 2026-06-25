@@ -11,8 +11,8 @@
         "affected_user_name": "Employee One",
         "related_event": "SEC-001",
         "reported_by": "Security Watchdog",
-        "resolved_at": null,
-        "resolution": null
+        "resolved_at": "2026-06-23T07:47:14",
+        "resolution": "Resolved as related to SEC-001 (2FA state persistence bug). Employee One's 2FA lockout was caused by the same 2FA state persistence bug. Fix verified: 2FA verify endpoint now correctly saves state to users.json."
     },
     {
         "id": "SEC-001",
