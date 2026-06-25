@@ -1,19 +1,19 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-25T22:28 UTC
-> Total checks: 579
-> Healthy: 579 | Broken: 0 | Fixed this cycle: 1
+> Last full cycle: 2026-06-25T23:25 UTC
+> Total checks: 588
+> Healthy: 588 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 — 200 OK, gunicorn+gevent via scripts/run_flask.sh, verified root + /api/health [verified 22:28]
-- [x] All JSON data files exist and are valid — all 14 JSON files valid, parseable [verified 22:28]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin'), 8 users total [verified 22:28]
-- [x] Git repo is clean — committed items.json formatting + inventory.json test debris cleanup (commit be3d70e), remaining changes: RELIABILITY_CHECKLIST.md, activity_log.json (worker activity only) [verified 22:28]
+- [x] Flask app responds on port 5000 — 200 OK, gunicorn+gevent via scripts/run_flask.sh, verified root + /api/health [verified 23:25]
+- [x] All JSON data files exist and are valid — all 15 JSON files valid, parseable [verified 23:25]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin'), 8 users total [verified 23:25]
+- [x] Git repo is clean — committed items.json formatting + inventory.json test debris cleanup (commit be3d70e), remaining changes: RELIABILITY_CHECKLIST.md, activity_log.json (worker activity only) [verified 23:25]
 
 ## HOURLY (check if last check was >1h ago)
-- [x] /api/health — {"status":"ok"} (GET) [verified 22:28]
+- [x] /api/health — {"status":"ok"} (GET) [verified 23:25]
 - [x] Frontend loads — 200, HTML OK [verified 22:28]
 - [x] /api/items returns items — GET, 5 categories with 19 items [verified 22:28]
 - [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 43 shifts found [verified 22:28]
@@ -22,13 +22,13 @@
 - [x] /api/admin_stats returns stats — POST with adminPin=1111, all stats fields present [verified 22:28]
 
 ## EVERY 4 HOURS
-- [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 200, 8 items in queue [verified 20:13]
+- [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 200, 0 items in queue (no active orders) [verified 23:25]
 - [x] Pickup display: verify /api/pickup-display/queue works — GET, 200, 1 ready item (order 93) [verified 20:13]
 - [x] Inventory: check stock decrements on order — 25 inventory items tracked via GET /api/inventory?adminPin=1111, 2 borderline low stock (French Toast, Caesar Salad at threshold). Stock tracking valid. [verified 16:47]
 - [x] User CRUD: add test user (9997) → verify → delete → verified gone (userName/userRole fields) [verified 19:27]
 - [x] Loyalty: points earned on order — endpoint /api/loyalty/lookup works (phone-based), /api/security/discord_webhook returns config [verified 21:16]
 - [x] Cash register: endpoints at /api/cash_drawer/* — status returns active=false, last session closed at 2026-06-24, 10 sessions total [verified 21:16]
-- [x] Webhook: /api/security/discord_webhook returns config (not set) [verified 17:43]
+- [x] Webhook: verify webhook config endpoint works — /api/security/discord_webhook returns config (not set) [verified 22:50]
 - [x] Clock-in late detection: set scheduled_time, clock in late, verify late flag — 7 late shifts confirmed (Carlos 57min, Employee Two 47min, Test2FA 63/503/563min). Late detection works. [verified 19:04]
 - [x] Break tracking: start break → end break → verify break subtracted — Employee One break start→end→clock out, break tracking endpoint responds correctly, shift with breaks found in shift_log.json [verified 19:04]
 - [x] Shift edit: edit a shift time → verify audit trail — Edited shift 0 (Owner), verified audit trail with 5 edits (2 new: Reliability Bot test + revert), edit and revert both logged correctly [verified 19:28]
@@ -41,11 +41,11 @@
 - [x] Concurrent write test: two rapid clock-ins (Employee One 21:10:24, Employee Two 21:10:25) → both succeeded, clocked out, 43 shifts recorded, no data loss [verified 21:11]
 - [x] Large payload test: submit order with 50 items — Order 84 (50 items, table 99) submitted → 200 OK → refunded via /api/orders/refund [verified 12:37]
 - [x] Special chars test: user name with emoji, item name with quotes — Added Test "Special" 🎉 Item via API, verified in items.json, deleted via delete_item API. Emoji and quotes handled correctly. [verified 12:37]
-- [x] app.py syntax check (python3 -m py_compile app.py) — SYNTAX OK [verified 20:13]
-- [x] index.html size check (alert if shrunk dramatically — possible corruption) — 1281016 bytes (normal, ~1.28MB, served 200) [verified 20:13]
+- [x] app.py syntax check (python3 -m py_compile app.py) — SYNTAX OK [verified 23:25]
+- [x] index.html size check (alert if shrunk dramatically — possible corruption) — 1281016 bytes (normal, ~1.28MB, served 200) [verified 22:50]
 - [x] Disk space check: df -h, alert if >80% full — 35% used (OK) [verified 20:13]
 - [x] Memory check: free -m, alert if swap used — 38.3% RAM used, 0 swap (OK) [verified 20:13]
-- [x] Backup integrity: verify latest backup is valid and not empty — 20:07 backup exists (JSON tar.gz + .db.gz both present) [verified 20:13]
+- [x] Backup integrity: verify latest backup is valid and not empty — 22:29 backup exists, all 48 JSON files valid, users.json OK (8 users, PIN 1111 OK) [verified 23:25]
 
 ## DISCOVERED (failures you've seen before — check every 2h)
 - [x] **Flask process dying between runs** — Found dead at 11:16, 11:41, 12:22, 18:22, 02:39, 03:07, 10:02, 03:17, 10:15, 12:06 (11th occurrence). Root cause unknown (no OOM, no crash log, no sys.exit). Werkzeug dev server (`socketio.run()`) can silently stop serving. SWITCHED to gunicorn+gevent via `scripts/run_flask.sh` at 12:08 — auto-restart launcher with rate limiting. [verified 20:13 — running, gunicorn+gevent, single listener]
