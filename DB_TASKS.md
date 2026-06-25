@@ -69,7 +69,7 @@
 - [x] **migrate_items.py** — Migrated 14 items from items.json to SQLite. Flattened 3 categories (Foods, Drinks, Snacks) into category column. Modifiers JSON preserved. Idempotency tested. Commit: 95e8124
 - [x] **migrate_inventory.py** — Migrated 16 inventory items from inventory.json to SQLite. Mapped 'low_stock_threshold' to 'threshold' column. Idempotency tested. Commit: 7d5ee21
 - [x] **migrate_loyalty_points.py** — Migrated 2 loyalty points records from loyalty_points.json to SQLite. Extended schema with 7 fields (email, notes, address, total_redeemed, total_orders, created_at, history). Added schema migration helper in db.py for forward-compatible column additions. Commit: 9b576e3
-- [x] **migrate_orders.py** — Migrated 66 orders from orders.json to SQLite. Handles edge cases (payment as dict, null fields, order 55 with dict payment). Added service_charge_amount + customer_email columns to orders schema. Also migrates cleared_orders.json (0 cleared). Idempotency tested. Commit: TBD
+- [x] **migrate_orders.py** — Migrated 66 orders from orders.json to SQLite. Handles edge cases (payment as dict, null fields, order 55 with dict payment). Added service_charge_amount + customer_email columns to orders schema. Also migrates cleared_orders.json (0 cleared). Idempotency tested. Commit: b20f501
 
 ## ROLLBACK PLAN (always keep current)
 How to revert to JSON mode if DB breaks:
