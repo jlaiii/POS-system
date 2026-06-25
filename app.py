@@ -170,6 +170,7 @@ SECURITY_CONFIG_FILE = 'security_config.json'  # Security config (blocked IPs, t
 GIFT_CARDS_FILE = 'gift_cards.json'  # Gift card management (sell, redeem, balance)
 WAITLIST_FILE = 'waitlist.json'  # Walk-in customer waitlist/digital queue
 FEEDBACK_FILE = 'feedback.json'  # Customer feedback / satisfaction survey
+DRIVERS_FILE = 'drivers.json'  # Delivery driver management
 
 # --- Platform / Multi-Tenant Constants ---
 GLOCAL_DIR = 'data/global'  # Global platform data directory
@@ -269,7 +270,7 @@ def backup_menu():
 
 
 # Ensure JSON files exist and are initialized correctly
-for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE, INVENTORY_FILE, REFUNDED_ORDERS_FILE, FAVORITES_FILE, LOYALTY_FILE, SCHEDULED_PRICING_FILE, WASTE_FILE, DELIVERY_ADDRESSES_FILE, WEBHOOKS_FILE, TABLE_ADS_FILE, CASH_DRAWER_FILE, COMBOS_FILE, SERVICE_CHARGE_FILE, EMAIL_CONFIG_FILE, SHIFT_FILE, TICKETS_FILE, RESERVATIONS_FILE, TICKET_TEMPLATES_FILE, APPROVALS_FILE, RESTAURANT_CONFIG_FILE, PRINTER_CONFIG_FILE, GIFT_CARDS_FILE, WAITLIST_FILE, FEEDBACK_FILE]:
+for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE, INVENTORY_FILE, REFUNDED_ORDERS_FILE, FAVORITES_FILE, LOYALTY_FILE, SCHEDULED_PRICING_FILE, WASTE_FILE, DELIVERY_ADDRESSES_FILE, WEBHOOKS_FILE, TABLE_ADS_FILE, CASH_DRAWER_FILE, COMBOS_FILE, SERVICE_CHARGE_FILE, EMAIL_CONFIG_FILE, SHIFT_FILE, TICKETS_FILE, RESERVATIONS_FILE, TICKET_TEMPLATES_FILE, APPROVALS_FILE, RESTAURANT_CONFIG_FILE, PRINTER_CONFIG_FILE, GIFT_CARDS_FILE, WAITLIST_FILE, FEEDBACK_FILE, DRIVERS_FILE]:
     if not os.path.exists(f):
         with open(f, 'w') as file:
             if f == USERS_FILE:
@@ -362,6 +363,8 @@ for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMES
                 json.dump({"enabled": False, "printer_ip": "", "printer_port": 9100, "printer_type": "network", "receipt_header": "🍽️ POS System", "receipt_footer": "Thank you!", "characters_per_line": 42}, file, indent=4)  # Initialize printer config
             elif f == GIFT_CARDS_FILE:
                 json.dump({"cards": [], "total_sold": 0, "total_redeemed": 0}, file, indent=4)  # Initialize gift cards
+            elif f == DRIVERS_FILE:
+                json.dump({"drivers": []}, file, indent=4)  # Initialize empty drivers list
             else:
                 json.dump([], file)  # Initialize orders.json and cleared_orders.json as empty lists
 
@@ -5525,6 +5528,8 @@ def submit_order():
         'packaging_fee': round(packaging_fee_total, 2),  # Per-type packaging fee total
         'packaging_fee_label': packaging_fee_label,  # Label for packaging fee
         'priority': data.get('priority', None),  # 'rush' or null for normal priority
+        'assigned_driver': data.get('assigned_driver'),  # Driver name/ID assigned to delivery order
+        'delivery_status': data.get('delivery_status', 'pending'),  # pending, assigned, picked_up, delivered
         'manager_approval': data.get('manager_approval', None)  # Manager approval override for discounts/comps
     }
 
@@ -7590,6 +7595,31 @@ def compute_feedback_stats():
         }
 
 
+def compute_driver_stats():
+    """Compute driver summary stats for admin dashboard."""
+    try:
+        drivers_data = load_json_data(DRIVERS_FILE)
+        drivers = drivers_data.get('drivers', [])
+        if not drivers:
+            return {
+                'total_drivers': 0,
+                'available': 0,
+                'delivering': 0,
+                'off_duty': 0
+            }
+        available = len([d for d in drivers if d.get('status') == 'available'])
+        delivering = len([d for d in drivers if d.get('status') == 'delivering'])
+        off_duty = len([d for d in drivers if d.get('status') == 'off_duty'])
+        return {
+            'total_drivers': len(drivers),
+            'available': available,
+            'delivering': delivering,
+            'off_duty': off_duty
+        }
+    except Exception:
+        return {'total_drivers': 0, 'available': 0, 'delivering': 0, 'off_duty': 0}
+
+
 @app.route('/api/orders/bulk_cancel_stale', methods=['POST'])
 def bulk_cancel_stale_orders():
     """Admin action to bulk-cancel pending orders with optional date range filter.
@@ -8214,7 +8244,9 @@ def admin_stats():
         'pending_orders_alert': pending_alert,
         'pending_orders_alert_threshold': pending_alert_threshold,
         # Customer feedback stats
-        'feedback_stats': compute_feedback_stats()
+        'feedback_stats': compute_feedback_stats(),
+        # Driver management stats
+        'driver_stats': compute_driver_stats()
     }
     return jsonify({'message': 'Admin data retrieved', 'stats': stats})
 
@@ -19916,6 +19948,383 @@ def gift_card_report():
         'total_redeemed_amount': round(total_redeemed_amount, 2),
         'outstanding_liability': round(outstanding_liability, 2),
         'payment_method_breakdown': payment_methods
+    })
+
+
+# ── Delivery Driver Management ────────────────────────────────────────────
+# New drivers.json store with driver CRUD, assignment to delivery orders,
+# and delivery status tracking.
+
+@ app.route('/api/drivers/list', methods=['POST'])
+def drivers_list():
+    """List all drivers. Permission-gated (manage_orders)."""
+    data = request.json
+    admin_pin = data.get('adminPin', data.get('user'))
+    users = load_json_data(USERS_FILE)
+    if admin_pin not in users:
+        return jsonify({'message': 'User not found.'}), 404
+    if not check_perm(admin_pin, 'manage_orders') and users[admin_pin].get('role') != 'owner':
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    drivers_data = load_json_data(DRIVERS_FILE)
+    drivers = drivers_data.get('drivers', [])
+
+    # Compute active delivery count per driver
+    orders = load_json_data(ORDERS_FILE)
+    for d in drivers:
+        name = d.get('name', '')
+        active = [o for o in orders if o.get('assigned_driver') == name and o.get('delivery_status', 'pending') not in ('delivered', 'cancelled')]
+        d['active_deliveries'] = len(active)
+
+    return jsonify({'drivers': drivers, 'total': len(drivers)})
+
+
+@ app.route('/api/drivers/add', methods=['POST'])
+def drivers_add():
+    """Add a new driver. Permission-gated (manage_items)."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+    if not check_perm(admin_pin, 'manage_items'):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    name = (data.get('name') or '').strip()
+    phone = (data.get('phone') or '').strip()
+    if not name:
+        return jsonify({'message': 'Driver name is required.'}), 400
+
+    drivers_data = load_json_data(DRIVERS_FILE)
+    drivers = drivers_data.get('drivers', [])
+
+    # Check for duplicate name
+    for d in drivers:
+        if d.get('name', '').lower() == name.lower():
+            return jsonify({'message': f'Driver "{name}" already exists.'}), 409
+
+    new_driver = {
+        'id': str(len(drivers) + 1),
+        'name': name,
+        'phone': phone,
+        'status': 'available',  # available, delivering, off_duty
+        'created_at': datetime.now().isoformat()
+    }
+    drivers.append(new_driver)
+    save_json_data(DRIVERS_FILE, {'drivers': drivers})
+    log_activity('driver_added', admin_pin, name, {'driver_id': new_driver['id'], 'phone': phone})
+    return jsonify({'message': f'Driver "{name}" added successfully.', 'driver': new_driver})
+
+
+@ app.route('/api/drivers/update', methods=['POST'])
+def drivers_update():
+    """Update a driver's info or status. Permission-gated (manage_items)."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+    if not check_perm(admin_pin, 'manage_items'):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    driver_id = data.get('driver_id')
+    if not driver_id:
+        return jsonify({'message': 'Driver ID is required.'}), 400
+
+    drivers_data = load_json_data(DRIVERS_FILE)
+    drivers = drivers_data.get('drivers', [])
+    found = None
+    for d in drivers:
+        if d.get('id') == driver_id:
+            found = d
+            break
+
+    if not found:
+        return jsonify({'message': 'Driver not found.'}), 404
+
+    old_status = found.get('status')
+    if 'name' in data:
+        found['name'] = (data['name'] or '').strip()
+    if 'phone' in data:
+        found['phone'] = (data['phone'] or '').strip()
+    if 'status' in data:
+        new_status = data['status']
+        if new_status not in ('available', 'delivering', 'off_duty'):
+            return jsonify({'message': f'Invalid status: {new_status}'}), 400
+        found['status'] = new_status
+
+    save_json_data(DRIVERS_FILE, {'drivers': drivers})
+    log_activity('driver_updated', admin_pin, found['name'], {'driver_id': driver_id, 'old_status': old_status, 'new_status': found.get('status')})
+    return jsonify({'message': 'Driver updated successfully.', 'driver': found})
+
+
+@ app.route('/api/drivers/delete', methods=['POST'])
+def drivers_delete():
+    """Delete a driver. Permission-gated (manage_items)."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+    if not check_perm(admin_pin, 'manage_items'):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    driver_id = data.get('driver_id')
+    if not driver_id:
+        return jsonify({'message': 'Driver ID is required.'}), 400
+
+    drivers_data = load_json_data(DRIVERS_FILE)
+    drivers = drivers_data.get('drivers', [])
+    found = None
+    for d in drivers:
+        if d.get('id') == driver_id:
+            found = d
+            break
+
+    if not found:
+        return jsonify({'message': 'Driver not found.'}), 404
+
+    # Check if driver has active deliveries
+    orders = load_json_data(ORDERS_FILE)
+    active = [o for o in orders if o.get('assigned_driver') == found['name'] and o.get('delivery_status', 'pending') not in ('delivered', 'cancelled')]
+    if active:
+        return jsonify({'message': f'Cannot delete driver with {len(active)} active deliveries. Reassign deliveries first.'}), 409
+
+    drivers.remove(found)
+    save_json_data(DRIVERS_FILE, {'drivers': drivers})
+    log_activity('driver_deleted', admin_pin, found['name'], {'driver_id': driver_id})
+    return jsonify({'message': f'Driver "{found["name"]}" deleted successfully.'})
+
+
+@ app.route('/api/drivers/assign', methods=['POST'])
+def drivers_assign():
+    """Assign a driver to a delivery order. Permission-gated (manage_orders)."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+    if not check_perm(admin_pin, 'manage_orders'):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    order_id = data.get('order_id')
+    driver_id = data.get('driver_id')
+    if not order_id or not driver_id:
+        return jsonify({'message': 'Order ID and driver ID are required.'}), 400
+
+    drivers_data = load_json_data(DRIVERS_FILE)
+    drivers = drivers_data.get('drivers', [])
+    driver = None
+    for d in drivers:
+        if d.get('id') == driver_id:
+            driver = d
+            break
+    if not driver:
+        return jsonify({'message': 'Driver not found.'}), 404
+
+    orders = load_json_data(ORDERS_FILE)
+    found_order = None
+    for o in orders:
+        if o.get('order_id') == order_id:
+            found_order = o
+            break
+
+    if not found_order:
+        return jsonify({'message': 'Order not found.'}), 404
+
+    old_driver = found_order.get('assigned_driver')
+    found_order['assigned_driver'] = driver['name']
+    found_order['delivery_status'] = 'assigned'
+    # Update driver status to delivering
+    driver['status'] = 'delivering'
+    save_json_data(ORDERS_FILE, orders)
+    save_json_data(DRIVERS_FILE, {'drivers': drivers})
+    log_activity('driver_assigned', admin_pin, f"Driver {driver['name']} → Order #{order_id}", {
+        'order_id': order_id, 'driver_id': driver_id, 'driver_name': driver['name'], 'old_driver': old_driver
+    })
+    return jsonify({'message': f'Order #{order_id} assigned to {driver["name"]}.', 'driver': driver, 'delivery_status': 'assigned'})
+
+
+@ app.route('/api/drivers/unassign', methods=['POST'])
+def drivers_unassign():
+    """Unassign a driver from a delivery order. Permission-gated (manage_orders)."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+    if not check_perm(admin_pin, 'manage_orders'):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    order_id = data.get('order_id')
+    if not order_id:
+        return jsonify({'message': 'Order ID is required.'}), 400
+
+    orders = load_json_data(ORDERS_FILE)
+    found_order = None
+    for o in orders:
+        if o.get('order_id') == order_id:
+            found_order = o
+            break
+
+    if not found_order:
+        return jsonify({'message': 'Order not found.'}), 404
+
+    old_driver_name = found_order.get('assigned_driver')
+    if not old_driver_name:
+        return jsonify({'message': 'No driver assigned to this order.'}), 400
+
+    # Free up the driver
+    drivers_data = load_json_data(DRIVERS_FILE)
+    drivers = drivers_data.get('drivers', [])
+    for d in drivers:
+        if d.get('name') == old_driver_name:
+            # Check if driver has other active orders
+            other_active = [o for o in orders if o.get('assigned_driver') == old_driver_name and o.get('order_id') != order_id and o.get('delivery_status', 'pending') not in ('delivered', 'cancelled')]
+            if not other_active:
+                d['status'] = 'available'
+            break
+
+    found_order['assigned_driver'] = None
+    found_order['delivery_status'] = 'pending'
+    save_json_data(ORDERS_FILE, orders)
+    save_json_data(DRIVERS_FILE, {'drivers': drivers})
+    log_activity('driver_unassigned', admin_pin, f"Driver {old_driver_name} removed from Order #{order_id}", {
+        'order_id': order_id, 'old_driver': old_driver_name
+    })
+    return jsonify({'message': f'Driver removed from Order #{order_id}.'})
+
+
+@ app.route('/api/drivers/delivery-status', methods=['POST'])
+def drivers_delivery_status():
+    """Update delivery status (picked_up, delivered). Permission-gated (manage_orders)."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+    if not check_perm(admin_pin, 'manage_orders'):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    order_id = data.get('order_id')
+    new_status = data.get('status')
+    if not order_id or not new_status:
+        return jsonify({'message': 'Order ID and status are required.'}), 400
+    if new_status not in ('picked_up', 'delivered', 'cancelled'):
+        return jsonify({'message': f'Invalid status: {new_status}'}), 400
+
+    orders = load_json_data(ORDERS_FILE)
+    found_order = None
+    for o in orders:
+        if o.get('order_id') == order_id:
+            found_order = o
+            break
+
+    if not found_order:
+        return jsonify({'message': 'Order not found.'}), 404
+
+    old_status = found_order.get('delivery_status', 'pending')
+    driver_name = found_order.get('assigned_driver')
+    found_order['delivery_status'] = new_status
+
+    # If delivered or cancelled, free up the driver
+    if new_status in ('delivered', 'cancelled') and driver_name:
+        drivers_data = load_json_data(DRIVERS_FILE)
+        drivers = drivers_data.get('drivers', [])
+        for d in drivers:
+            if d.get('name') == driver_name:
+                # Check if driver has other active orders
+                other_active = [o for o in orders if o.get('assigned_driver') == driver_name and o.get('order_id') != order_id and o.get('delivery_status', 'pending') not in ('delivered', 'cancelled')]
+                if not other_active:
+                    d['status'] = 'available'
+                break
+        save_json_data(DRIVERS_FILE, {'drivers': drivers})
+
+    save_json_data(ORDERS_FILE, orders)
+    log_activity('delivery_status_updated', admin_pin, f"Order #{order_id}: {old_status} → {new_status}", {
+        'order_id': order_id, 'old_status': old_status, 'new_status': new_status, 'driver': driver_name
+    })
+    return jsonify({'message': f'Delivery status updated to {new_status}.', 'delivery_status': new_status})
+
+
+@ app.route('/api/drivers/history', methods=['POST'])
+def drivers_history():
+    """Get delivery history for a specific driver or all drivers. Permission-gated (manage_orders)."""
+    data = request.json
+    admin_pin = data.get('adminPin', data.get('user'))
+    users = load_json_data(USERS_FILE)
+    if admin_pin not in users:
+        return jsonify({'message': 'User not found.'}), 404
+    if not check_perm(admin_pin, 'manage_orders') and users[admin_pin].get('role') != 'owner':
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    driver_name = data.get('driver_name')
+    date_from = (data.get('date_from') or '').strip()
+    date_to = (data.get('date_to') or '').strip()
+
+    orders = load_json_data(ORDERS_FILE)
+    # Filter delivery orders
+    deliveries = [o for o in orders if o.get('order_type') == 'delivery' or o.get('assigned_driver')]
+
+    if driver_name:
+        deliveries = [d for d in deliveries if d.get('assigned_driver') == driver_name]
+
+    # Date range filter
+    if date_from:
+        try:
+            dt_from = datetime.fromisoformat(date_from)
+            deliveries = [d for d in deliveries if datetime.fromisoformat(d.get('date', '')) >= dt_from]
+        except (ValueError, KeyError):
+            pass
+    if date_to:
+        try:
+            if 'T' not in date_to:
+                dt_to = datetime.fromisoformat(date_to + 'T23:59:59')
+            else:
+                dt_to = datetime.fromisoformat(date_to)
+            deliveries = [d for d in deliveries if datetime.fromisoformat(d.get('date', '')) <= dt_to]
+        except (ValueError, KeyError):
+            pass
+
+    deliveries.sort(key=lambda o: o.get('date', ''), reverse=True)
+
+    # Compute stats
+    total_deliveries = len(deliveries)
+    completed = [d for d in deliveries if d.get('delivery_status') == 'delivered']
+    cancelled = [d for d in deliveries if d.get('delivery_status') == 'cancelled']
+
+    return jsonify({
+        'deliveries': deliveries,
+        'total': total_deliveries,
+        'completed': len(completed),
+        'cancelled': len(cancelled),
+        'pending': total_deliveries - len(completed) - len(cancelled)
+    })
+
+
+@ app.route('/api/drivers/stats', methods=['POST'])
+def drivers_stats():
+    """Get driver delivery stats summary for admin dashboard. Permission-gated (manage_orders)."""
+    data = request.json
+    admin_pin = data.get('adminPin', data.get('user'))
+    users = load_json_data(USERS_FILE)
+    if admin_pin not in users:
+        return jsonify({'message': 'User not found.'}), 404
+    if not check_perm(admin_pin, 'manage_orders') and users[admin_pin].get('role') != 'owner':
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    drivers_data = load_json_data(DRIVERS_FILE)
+    drivers = drivers_data.get('drivers', [])
+    orders = load_json_data(ORDERS_FILE)
+
+    # Compute per-driver stats
+    driver_stats = []
+    for d in drivers:
+        name = d.get('name', '')
+        driver_orders = [o for o in orders if o.get('assigned_driver') == name]
+        completed = len([o for o in driver_orders if o.get('delivery_status') == 'delivered'])
+        total = len(driver_orders)
+        completion_rate = round((completed / total * 100) if total > 0 else 0, 1)
+        driver_stats.append({
+            'name': name,
+            'phone': d.get('phone', ''),
+            'status': d.get('status', 'available'),
+            'total_deliveries': total,
+            'completed': completed,
+            'cancelled': len([o for o in driver_orders if o.get('delivery_status') == 'cancelled']),
+            'pending_deliveries': total - completed - len([o for o in driver_orders if o.get('delivery_status') == 'cancelled']),
+            'completion_rate': completion_rate,
+            'active_deliveries': d.get('active_deliveries', 0)
+        })
+
+    return jsonify({
+        'drivers': driver_stats,
+        'total_drivers': len(drivers),
+        'available_drivers': len([d for d in drivers if d.get('status') == 'available']),
+        'delivering_drivers': len([d for d in drivers if d.get('status') == 'delivering']),
+        'off_duty_drivers': len([d for d in drivers if d.get('status') == 'off_duty'])
     })
 
 

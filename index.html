@@ -975,6 +975,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
         <button onclick="switchAdminSection('backup')" id="asBackup">💾 Backup</button>
         <button onclick="switchAdminSection('giftcards')" id="asGiftcards" data-i18n="admin.giftcards">🎁 Gift Cards</button>
         <button onclick="switchAdminSection('feedback')" id="asFeedback">📝 Feedback</button>
+        <button onclick="switchAdminSection('drivers')" id="asDrivers">🚚 Drivers</button>
       </div>
       <div id="adminContent">
         <!-- Stats -->
@@ -2898,6 +2899,36 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
               </div>
               <div id="resEditStatus" style="font-size:13px;margin-top:6px;"></div>
             </div>
+          </div>
+        </div>
+        <!-- Delivery Driver Management -->
+        <div id="secDrivers" class="admin-section">
+          <h3 style="margin:0 0 12px 0;">🚚 Delivery Driver Management</h3>
+          <p style="color:var(--text2);margin-bottom:16px;font-size:14px;">Add and manage delivery drivers. Assign drivers to delivery orders and track delivery status.</p>
+
+          <!-- Add Driver Form -->
+          <div class="card" style="margin-bottom:16px;padding:12px 16px;">
+            <h4 style="margin:0 0 10px 0;font-size:15px;">➕ Add New Driver</h4>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
+              <div style="min-width:140px;flex:1;">
+                <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;">Name *</label>
+                <input type="text" id="drvName" placeholder="Driver name" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;" aria-label="Driver name"/>
+              </div>
+              <div style="min-width:140px;flex:1;">
+                <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;">Phone</label>
+                <input type="tel" id="drvPhone" placeholder="555-1234" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;" aria-label="Phone"/>
+              </div>
+              <button class="accent" onclick="drvAddDriver()" style="min-height:44px;padding:8px 20px;font-size:14px;">➕ Add Driver</button>
+            </div>
+            <span id="drvFormStatus" style="font-size:13px;margin-top:6px;display:block;"></span>
+          </div>
+
+          <!-- Driver Stats Summary -->
+          <div id="drvStatsBar" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;"></div>
+
+          <!-- Driver List -->
+          <div id="drvList" style="display:flex;flex-direction:column;gap:8px;">
+            <div class="empty-state">Loading drivers...</div>
           </div>
         </div>
       </div>
@@ -12320,6 +12351,9 @@ async function loadOrderHistory() {
     const orderNotes = o.notes || '';
     const deliveryAddr = o.delivery_address;
     const hasDelivery = deliveryAddr && (deliveryAddr.street || deliveryAddr.city);
+    const assignedDriver = o.assigned_driver || null;
+    const deliveryStatus = o.delivery_status || 'pending';
+    const isDeliveryOrder = o.order_type === 'delivery' || assignedDriver;
     const hasItemNotes = items.some(it => it.note);
     const hasSplitPayments = o.payment_splits && o.payment_splits.length > 1;
     const paymentDisplay = hasSplitPayments
@@ -12346,7 +12380,7 @@ async function loadOrderHistory() {
           <span><strong>#${orderNum}</strong> — ${dt}${statusBadge}${approvalBadge}</span>
           <span class="ho-total">$${total}</span>
         </div>
-        <div class="ho-meta">${t('history.payment')} ${escHtml(paymentDisplay)} | ${t('history.user')} ${escHtml(o.user || 'N/A')}${hasTax ? ' | ' + t('history.tax') + ': $' + parseFloat(o.tax_amount).toFixed(2) : ''}${hasServiceCharge ? ' | 🔧 +$' + parseFloat(o.service_charge_amount).toFixed(2) : ''}${hasTip ? ' | 💬 ' + t('receipt.tip') + ': $' + parseFloat(o.tip_amount).toFixed(2) : ''}${o.table_number ? ' | 🪪 Table #' + o.table_number : ''}${o.order_type ? ' | ' + getOrderTypeIcon(o.order_type) + ' ' + getOrderTypeLabel(o.order_type) : ''}${hasDelivery ? ' | 📮 ' + escHtml(formatDeliveryAddress(deliveryAddr)) : ''}${orderNotes ? ' | 📝 ' + t('history.notes') : ''}${refundReasonStr} <button class="ghost" onclick="event.stopPropagation();reorderFromHistory(${JSON.stringify(items).replace(/\"/g, '&quot;')})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#2ecc71;" title="${t('history.reorder')}">🔄</button>${!isRefunded ? `<button class="ghost" onclick="event.stopPropagation();refireOrderItem(${o.order_id}, null, this)" style="font-size:12px;padding:4px 8px;min-height:28px;color:#f39c12;" title="${t('history.refire_all')}">🔁 All</button>` : ''} <button class="ghost" onclick="event.stopPropagation();printHistoryReceipt(${JSON.stringify(o).replace(/\"/g, '&quot;')}, ${orderNum})" style="font-size:12px;padding:4px 8px;min-height:28px;color:var(--accent);">🖨️</button> <button class="ghost" onclick="event.stopPropagation();printThermalReceipt(this.dataset.orderId)" style="font-size:12px;padding:4px 8px;min-height:28px;color:#e67e22;" title="${t('receipt.print_thermal')}" data-order-id="${o.order_id}">🖨️</button> <button class="ghost" onclick="event.stopPropagation();emailHistoryReceipt(${o.order_id})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#4fc3f7;" title="${t('history.email_receipt')}">📧</button>${canRefund && !isRefunded ? \`<button class="ghost" onclick="event.stopPropagation();showRefundOverlay({order_id: ${o.order_id}, total: '${total}', date: '${(o.date || '').replace(/'/g, "\\'")}', payment: '${(o.payment || '').replace(/'/g, "\\'")}', user: '${(o.user || '').replace(/'/g, "\\'")}', orderNum: ${orderNum}, items: ${JSON.stringify(items).replace(/\\"/g, '&quot;')}})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#e74c3c;">↩️</button>\` : ''}${isCompleted && !isReadyForPickup && !isCollected ? \`<button class="ghost" onclick="event.stopPropagation();markOrderReadyForPickup(${o.order_id})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#f39c12;">📋 Ready</button>\` : ''}</div>
+        <div class="ho-meta">${t('history.payment')} ${escHtml(paymentDisplay)} | ${t('history.user')} ${escHtml(o.user || 'N/A')}${hasTax ? ' | ' + t('history.tax') + ': $' + parseFloat(o.tax_amount).toFixed(2) : ''}${hasServiceCharge ? ' | 🔧 +$' + parseFloat(o.service_charge_amount).toFixed(2) : ''}${hasTip ? ' | 💬 ' + t('receipt.tip') + ': $' + parseFloat(o.tip_amount).toFixed(2) : ''}${o.table_number ? ' | 🪪 Table #' + o.table_number : ''}${o.order_type ? ' | ' + getOrderTypeIcon(o.order_type) + ' ' + getOrderTypeLabel(o.order_type) : ''}${hasDelivery ? ' | 📮 ' + escHtml(formatDeliveryAddress(deliveryAddr)) : ''}${isDeliveryOrder && assignedDriver ? ' | 🚚 ' + escHtml(assignedDriver) + ' (' + deliveryStatus.replace('_',' ') + ')' : ''}${isDeliveryOrder && !assignedDriver ? ' | 🚚 Unassigned' : ''}${orderNotes ? ' | 📝 ' + t('history.notes') : ''}${refundReasonStr} <button class="ghost" onclick="event.stopPropagation();reorderFromHistory(${JSON.stringify(items).replace(/\"/g, '&quot;')})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#2ecc71;" title="${t('history.reorder')}">🔄</button>${!isRefunded ? `<button class="ghost" onclick="event.stopPropagation();refireOrderItem(${o.order_id}, null, this)" style="font-size:12px;padding:4px 8px;min-height:28px;color:#f39c12;" title="${t('history.refire_all')}">🔁 All</button>` : ''} <button class="ghost" onclick="event.stopPropagation();printHistoryReceipt(${JSON.stringify(o).replace(/\"/g, '&quot;')}, ${orderNum})" style="font-size:12px;padding:4px 8px;min-height:28px;color:var(--accent);">🖨️</button> <button class="ghost" onclick="event.stopPropagation();printThermalReceipt(this.dataset.orderId)" style="font-size:12px;padding:4px 8px;min-height:28px;color:#e67e22;" title="${t('receipt.print_thermal')}" data-order-id="${o.order_id}">🖨️</button> <button class="ghost" onclick="event.stopPropagation();emailHistoryReceipt(${o.order_id})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#4fc3f7;" title="${t('history.email_receipt')}">📧</button>${canRefund && !isRefunded ? \`<button class="ghost" onclick="event.stopPropagation();showRefundOverlay({order_id: ${o.order_id}, total: '${total}', date: '${(o.date || '').replace(/'/g, "\\'")}', payment: '${(o.payment || '').replace(/'/g, "\\'")}', user: '${(o.user || '').replace(/'/g, "\\'")}', orderNum: ${orderNum}, items: ${JSON.stringify(items).replace(/\\"/g, '&quot;')}})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#e74c3c;">↩️</button>\` : ''}${isCompleted && !isReadyForPickup && !isCollected ? \`<button class="ghost" onclick="event.stopPropagation();markOrderReadyForPickup(${o.order_id})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#f39c12;">📋 Ready</button>\` : ''}</div>
         <div class="ho-details">
           ${items.map((it, idx) => { const refundedItem = (o.refunded_items || []).find(ri => ri.item_index === idx); const isRefundedItem = !!refundedItem; const canRefire = !isRefundedItem; const itCompType = it.comp_type; const itCompBadge = itCompType === 'employee_meal' ? '<span style=\"font-size:10px;background:#2ecc7133;color:#2ecc71;padding:1px 5px;border-radius:3px;margin-left:4px;font-weight:600;\">🍴</span>' : (itCompType === 'comp' ? '<span style=\"font-size:10px;background:#e9456033;color:#e94560;padding:1px 5px;border-radius:3px;margin-left:4px;font-weight:600;\" title=\"' + escHtml(it.comp_reason||'') + '\">🎁</span>' : ''); return \`<div class="ho-item"\${isRefundedItem ? ' style="opacity:0.6;"' : ''}><span\${isRefundedItem ? ' style="text-decoration:line-through;"' : ''}>\${isRefundedItem ? '↩️ ' : ''}\${escHtml(it.name)} x\${it.qty||1}\${itCompBadge}\${it.note ? '<br/><span style="color:var(--text2);font-size:12px;padding-left:12px;">📝 ' + escHtml(it.note) + '</span>' : ''}\${it.modifiers && it.modifiers.length > 0 ? '<br/><span style="color:#f39c12;font-size:12px;padding-left:12px;">⚙️ ' + it.modifiers.map(m => escHtml(m.option)).join(' · ') + '</span>' : ''}\${isRefundedItem ? '<br/><span style="color:#e74c3c;font-size:11px;padding-left:12px;">↩️ Refunded</span>' : ''}</span><span\${isRefundedItem ? ' style="text-decoration:line-through;"' : ''}>\$\${((it.price||0)*(it.qty||1)).toFixed(2)}\${canRefire ? \` <button class="ghost" onclick="event.stopPropagation();refireOrderItem(${o.order_id}, [${idx}], this)" style="font-size:11px;padding:2px 6px;min-height:24px;color:#f39c12;" title="\${t('history.refire')}">🔁</button>\` : ''}</span></div>\`;}).join('')}
           ${hasTax ? \`
@@ -12358,8 +12392,19 @@ async function loadOrderHistory() {
           \` : ''}
           ${orderNotes ? \`<div class="ho-item" style="color:var(--text2);border-top:1px solid var(--border);padding-top:4px;margin-top:4px;"><span style="font-weight:600;">📝 ${t('history.order_notes')}</span><br/><span style="font-size:13px;">${escHtml(orderNotes)}</span></div>\` : ''}
           ${hasDelivery ? \`<div class="ho-item" style="color:var(--text2);border-top:1px solid var(--border);padding-top:4px;margin-top:4px;"><span style="font-weight:600;">📮 ${t('receipt.delivery_to')}</span><br/><span style="font-size:13px;">${escHtml(formatDeliveryAddress(deliveryAddr))}</span></div>\` : ''}
+          ${isDeliveryOrder ? \`<div class="ho-item" style="border-top:1px solid var(--border);padding-top:4px;margin-top:4px;flex-wrap:wrap;gap:6px;">
+            <span style="font-weight:600;">🚚 Driver:</span>
+            <span style="font-size:13px;color:var(--text2);">${assignedDriver ? escHtml(assignedDriver) + ' (' + deliveryStatus.replace('_',' ') + ')' : 'Not assigned'}</span>
+            <span style="display:flex;gap:4px;flex-wrap:wrap;">
+              ${!assignedDriver ? \`<button class="ghost" onclick="event.stopPropagation();assignDriverToOrder(${o.order_id})" style="font-size:11px;padding:4px 8px;min-height:32px;color:#2ecc71;" title="Assign driver">🚚 Assign</button>\` : ''}
+              ${assignedDriver && deliveryStatus === 'assigned' ? \`<button class="ghost" onclick="event.stopPropagation();updateDeliveryStatus(${o.order_id},'picked_up')" style="font-size:11px;padding:4px 8px;min-height:32px;color:#f39c12;" title="Mark as picked up">📦 Picked Up</button>\` : ''}
+              ${assignedDriver && deliveryStatus === 'picked_up' ? \`<button class="ghost" onclick="event.stopPropagation();updateDeliveryStatus(${o.order_id},'delivered')" style="font-size:11px;padding:4px 8px;min-height:32px;color:#2ecc71;" title="Mark as delivered">✅ Delivered</button>\` : ''}
+              ${assignedDriver && deliveryStatus !== 'delivered' && deliveryStatus !== 'cancelled' ? \`<button class="ghost" onclick="event.stopPropagation();unassignDriverFromOrder(${o.order_id})" style="font-size:11px;padding:4px 8px;min-height:32px;color:#e94560;" title="Unassign driver">✂️ Unassign</button>\` : ''}
+              ${assignedDriver && deliveryStatus !== 'delivered' && deliveryStatus !== 'cancelled' ? \`<button class="ghost" onclick="event.stopPropagation();updateDeliveryStatus(${o.order_id},'cancelled')" style="font-size:11px;padding:4px 8px;min-height:32px;color:#e94560;" title="Cancel delivery">🚫 Cancel</button>\` : ''}
+            </span>
+          </div>\` : ''}
         </div>
-      </div>`;
+      </div>\`;
     list.innerHTML = html;
   } catch(e) { list.innerHTML = '<div class="empty-state val-err">⚠️ ' + t('network_error') + '</div>'; }
   finally { hideContentLoading('historyList'); }
@@ -12859,6 +12904,8 @@ async function loadAdminStats() {
       <div class="stat-card backup-health-card backup-${s.backup_health || 'red'}"><div class="stat-val">${s.backup_health === 'green' ? '🟢 ' : s.backup_health === 'yellow' ? '🟡 ' : '🔴 '}${s.backup_count || 0}</div><div class="stat-lbl">${t('admin.stats.backup_health')}<br><span style="font-size:12px;color:var(--text2);" onclick="switchAdminSection('backup')">${s.backup_count > 0 ? s.backup_count + ' ' + t('admin.stats.backup_count') + ' · ' + (s.latest_backup_ts ? new Date(s.latest_backup_ts).toLocaleString() : t('admin.stats.backup_never')) + ' · ' + s.backup_total_size_hr : t('admin.stats.backup_none')} · <a style="color:var(--accent);text-decoration:underline;cursor:pointer;">${t('admin.stats.backup_goto')}</a></span></div></div>
       <!-- Pending Orders Alert -->
       <div class="stat-card pending-card pending-${s.pending_orders_alert ? 'alert' : 'ok'}"><div class="stat-val">${s.pending_orders_alert ? '🔴 ' : '🟢 '}${s.pending_orders_count || 0}</div><div class="stat-lbl">${t('admin.stats.pending_orders')}<br><span style="font-size:12px;color:var(--text2);">${s.pending_orders_alert ? t('admin.stats.pending_alert', {count: s.pending_orders_count || 0, threshold: s.pending_orders_alert_threshold || 10}) : t('admin.stats.pending_ok', {count: s.pending_orders_count || 0})}</span></div></div>
+      <!-- Driver Stats Card -->
+      ${s.driver_stats ? '<div class="stat-card" style="border-left:3px solid #f39c12;"><div class="stat-val">🚚 ' + s.driver_stats.total_drivers + '</div><div class="stat-lbl">Drivers<br><span style="font-size:12px;color:var(--text2);">🟢 ' + s.driver_stats.available + ' available · 🟡 ' + s.driver_stats.delivering + ' delivering · 🔴 ' + s.driver_stats.off_duty + ' off</span></div></div>' : ''}
       <!-- Customer Feedback Card -->
       ${renderFeedbackStatCard(s.feedback_stats)}
     `;
@@ -23469,6 +23516,250 @@ function showFeedbackRespondModal(feedbackId) {
   if (note === null) return;
   respondToFeedback(feedbackId, false, note.trim());
 }
+
+// ═══════════════════════════════════════════════
+// DRIVER MANAGEMENT FUNCTIONS
+// ═══════════════════════════════════════════════
+
+function switchAdminSection_drivers() {
+  if (!currentUser || !currentUser.pin) return;
+  // Load drivers when section is shown
+  setTimeout(() => { drvLoadDrivers(); }, 50);
+}
+
+async function drvAddDriver() {
+  const name = document.getElementById('drvName');
+  const phone = document.getElementById('drvPhone');
+  const status = document.getElementById('drvFormStatus');
+  if (!name || !status) return;
+  const n = name.value.trim();
+  if (!n) { status.innerHTML = '<span style="color:#e94560;">❌ Driver name is required.</span>'; return; }
+  status.innerHTML = '⏳ Adding...';
+  try {
+    const res = await fetchJSON('/api/drivers/add', {
+      method: 'POST',
+      body: JSON.stringify({ adminPin: currentUser.pin, name: n, phone: phone ? phone.value.trim() : '' })
+    });
+    if (res && res.message) {
+      status.innerHTML = '<span style="color:#2ecc71;">✅ ' + res.message + '</span>';
+      name.value = '';
+      if (phone) phone.value = '';
+      drvLoadDrivers();
+    } else {
+      status.innerHTML = '<span style="color:#e94560;">❌ Failed to add driver.</span>';
+    }
+  } catch (e) {
+    status.innerHTML = '<span style="color:#e94560;">❌ ' + t('toast.network_error') + '</span>';
+  }
+}
+
+async function drvLoadDrivers() {
+  const listEl = document.getElementById('drvList');
+  const statsBar = document.getElementById('drvStatsBar');
+  if (!listEl) return;
+  listEl.innerHTML = '<div class="empty-state">⏳ Loading drivers...</div>';
+  try {
+    const res = await fetchJSON('/api/drivers/list', {
+      method: 'POST',
+      body: JSON.stringify({ adminPin: currentUser.pin })
+    });
+    if (!res || !res.drivers) {
+      listEl.innerHTML = '<div class="empty-state">❌ Failed to load drivers.</div>';
+      return;
+    }
+    const drivers = res.drivers;
+    if (drivers.length === 0) {
+      listEl.innerHTML = '<div class="empty-state">🚚 No drivers yet. Add one above.</div>';
+      if (statsBar) statsBar.innerHTML = '';
+      return;
+    }
+    // Stats bar
+    const available = drivers.filter(d => d.status === 'available').length;
+    const delivering = drivers.filter(d => d.status === 'delivering').length;
+    const offDuty = drivers.filter(d => d.status === 'off_duty').length;
+    if (statsBar) {
+      statsBar.innerHTML = '' +
+        '<div class="stat-card" style="flex:1;min-width:120px;"><div class="stat-val">' + drivers.length + '</div><div class="stat-lbl">🚚 Total Drivers</div></div>' +
+        '<div class="stat-card" style="flex:1;min-width:120px;border-left:3px solid #2ecc71;"><div class="stat-val">' + available + '</div><div class="stat-lbl">🟢 Available</div></div>' +
+        '<div class="stat-card" style="flex:1;min-width:120px;border-left:3px solid #f39c12;"><div class="stat-val">' + delivering + '</div><div class="stat-lbl">🟡 Delivering</div></div>' +
+        '<div class="stat-card" style="flex:1;min-width:120px;border-left:3px solid #e94560;"><div class="stat-val">' + offDuty + '</div><div class="stat-lbl">🔴 Off Duty</div></div>';
+    }
+    // Render driver cards
+    listEl.innerHTML = drivers.map(d => {
+      const statusColor = d.status === 'available' ? '#2ecc71' : d.status === 'delivering' ? '#f39c12' : '#e94560';
+      const statusDot = d.status === 'available' ? '🟢' : d.status === 'delivering' ? '🟡' : '🔴';
+      const activeBadge = d.active_deliveries > 0 ? '<span style="background:#f39c12;color:#fff;padding:2px 8px;border-radius:12px;font-size:12px;margin-left:8px;">📦 ' + d.active_deliveries + ' active</span>' : '';
+      return '' +
+        '<div class="card" style="padding:12px 16px;border-left:4px solid ' + statusColor + ';">' +
+          '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">' +
+            '<div><strong>' + escHtml(d.name) + '</strong> ' + activeBadge + '<br><span style="font-size:13px;color:var(--text2);">' + (d.phone ? '📞 ' + escHtml(d.phone) : '') + '</span></div>' +
+            '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">' +
+              '<span style="font-size:13px;padding:2px 10px;border-radius:12px;background:' + statusColor + '22;color:' + statusColor + ';">' + statusDot + ' ' + d.status.replace('_', ' ') + '</span>' +
+              '<button class="ghost" onclick="drvEditDriver(\'' + d.id + '\')" style="min-height:36px;padding:4px 10px;font-size:12px;" title="Edit">✏️</button>' +
+              '<button class="ghost" onclick="drvDeleteDriver(\'' + d.id + '\',\'' + escHtml(d.name) + '\')" style="min-height:36px;padding:4px 10px;font-size:12px;color:#e94560;" title="Delete">🗑️</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+    }).join('');
+  } catch (e) {
+    listEl.innerHTML = '<div class="empty-state">❌ ' + t('toast.network_error') + '</div>';
+  }
+}
+
+async function drvEditDriver(driverId) {
+  // Simple prompt-based edit: name, phone, status
+  const listEl = document.getElementById('drvList');
+  if (!listEl) return;
+  // Find current data from the rendered cards — we'll re-fetch
+  try {
+    const res = await fetchJSON('/api/drivers/list', {
+      method: 'POST',
+      body: JSON.stringify({ adminPin: currentUser.pin })
+    });
+    if (!res || !res.drivers) return;
+    const driver = res.drivers.find(d => d.id === driverId);
+    if (!driver) { showToast('Driver not found.', 'danger'); return; }
+
+    const newName = prompt('Driver name:', driver.name);
+    if (newName === null) return;
+    const newPhone = prompt('Phone:', driver.phone || '');
+    if (newPhone === null) return;
+    const statusOptions = ['available', 'delivering', 'off_duty'];
+    const currentIdx = statusOptions.indexOf(driver.status);
+    const newStatus = prompt('Status (available / delivering / off_duty):', driver.status);
+    if (newStatus === null) return;
+    if (!statusOptions.includes(newStatus)) {
+      showToast('Invalid status.', 'danger');
+      return;
+    }
+
+    const updateRes = await fetchJSON('/api/drivers/update', {
+      method: 'POST',
+      body: JSON.stringify({
+        adminPin: currentUser.pin,
+        driver_id: driverId,
+        name: newName.trim(),
+        phone: newPhone.trim(),
+        status: newStatus
+      })
+    });
+    if (updateRes && updateRes.message) {
+      showToast('✅ ' + updateRes.message, 'success');
+      drvLoadDrivers();
+    } else {
+      showToast('❌ Update failed.', 'danger');
+    }
+  } catch (e) {
+    showToast(t('toast.network_error'), 'danger');
+  }
+}
+
+async function drvDeleteDriver(driverId, driverName) {
+  if (!confirm('Delete driver "' + driverName + '"? This cannot be undone if they have no active deliveries.')) return;
+  try {
+    const res = await fetchJSON('/api/drivers/delete', {
+      method: 'POST',
+      body: JSON.stringify({ adminPin: currentUser.pin, driver_id: driverId })
+    });
+    if (res && res.message) {
+      showToast('✅ ' + res.message, 'success');
+      drvLoadDrivers();
+    } else {
+      showToast('❌ Delete failed.', 'danger');
+    }
+  } catch (e) {
+    showToast(t('toast.network_error'), 'danger');
+  }
+}
+
+// Assign driver to a delivery order — called from order history
+async function assignDriverToOrder(orderId) {
+  if (!currentUser || !currentUser.pin) return;
+  try {
+    // Get available drivers
+    const res = await fetchJSON('/api/drivers/list', {
+      method: 'POST',
+      body: JSON.stringify({ adminPin: currentUser.pin })
+    });
+    if (!res || !res.drivers) return;
+    const available = res.drivers.filter(d => d.status === 'available' || d.status === 'delivering');
+    if (available.length === 0) {
+      showToast('🚚 No available drivers.', 'warning');
+      return;
+    }
+    // Simple prompt to select driver by name
+    const driverList = available.map(d => d.name + (d.status === 'delivering' ? ' (delivering)' : '')).join('\n');
+    const driverName = prompt('Available drivers:\n' + driverList + '\n\nEnter driver name to assign:', '');
+    if (!driverName) return;
+    const driver = available.find(d => d.name.toLowerCase() === driverName.toLowerCase());
+    if (!driver) {
+      showToast('❌ Driver not found. Check the name and try again.', 'danger');
+      return;
+    }
+    const assignRes = await fetchJSON('/api/drivers/assign', {
+      method: 'POST',
+      body: JSON.stringify({ adminPin: currentUser.pin, order_id: orderId, driver_id: driver.id })
+    });
+    if (assignRes && assignRes.message) {
+      showToast('✅ ' + assignRes.message, 'success');
+      loadOrderHistory(); // Refresh order history
+    } else {
+      showToast('❌ Assignment failed.', 'danger');
+    }
+  } catch (e) {
+    showToast(t('toast.network_error'), 'danger');
+  }
+}
+
+// Update delivery status (picked_up, delivered, cancelled)
+async function updateDeliveryStatus(orderId, newStatus) {
+  if (!currentUser || !currentUser.pin) return;
+  const label = newStatus === 'picked_up' ? 'picked up' : newStatus === 'delivered' ? 'delivered' : 'cancelled';
+  if (!confirm('Mark this delivery as ' + label + '?')) return;
+  try {
+    const res = await fetchJSON('/api/drivers/delivery-status', {
+      method: 'POST',
+      body: JSON.stringify({ adminPin: currentUser.pin, order_id: orderId, status: newStatus })
+    });
+    if (res && res.message) {
+      showToast('✅ ' + res.message, 'success');
+      loadOrderHistory();
+    } else {
+      showToast('❌ Update failed.', 'danger');
+    }
+  } catch (e) {
+    showToast(t('toast.network_error'), 'danger');
+  }
+}
+
+// Unassign driver from order
+async function unassignDriverFromOrder(orderId) {
+  if (!currentUser || !currentUser.pin) return;
+  if (!confirm('Remove driver assignment from this order?')) return;
+  try {
+    const res = await fetchJSON('/api/drivers/unassign', {
+      method: 'POST',
+      body: JSON.stringify({ adminPin: currentUser.pin, order_id: orderId })
+    });
+    if (res && res.message) {
+      showToast('✅ ' + res.message, 'success');
+      loadOrderHistory();
+    } else {
+      showToast('❌ Unassign failed.', 'danger');
+    }
+  } catch (e) {
+    showToast(t('toast.network_error'), 'danger');
+  }
+}
+
+// Hook into switchAdminSection to load drivers when section is shown
+const origSwitchAdminSection = window.switchAdminSection;
+window.switchAdminSection = function(section) {
+  if (origSwitchAdminSection) origSwitchAdminSection(section);
+  if (section === 'drivers') {
+    setTimeout(() => { drvLoadDrivers(); }, 100);
+  }
+};
 </script>
 
 <!-- Manager Approval Overlay (for discount/comp threshold override) -->
