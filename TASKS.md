@@ -2,7 +2,7 @@
 
 > Auto-managed by 3 Hermes Worker Crons (every 30 min each, staggered claims).
 > Workers use `[~]` to claim tasks before working. Never pick a claimed task.
-> Last updated: 2026-06-25 (System Auditor #23 — audit findings and corrections)
+> Last updated: 2026-06-25 (System Auditor #24 — audit findings and corrections)
 
 ## Status Legend
 - `[ ]` = pending (available for any worker)
@@ -659,3 +659,15 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 ### Priority: LOW
 
 - [x] worker-3 **Add expense tracking and profit and loss reporting** — Record business expenses by category (supplies, utilities, repairs, marketing, labor, rent, insurance, other) with date, amount, vendor name, optional note. New expenses.json data store. Admin expense entry form with category dropdown + date picker. View expenses filtered by category/date range in admin analytics. Generate P&L statement: Revenue - COGS = Gross Profit - Expenses = Net Profit. Printable report for bookkeeping. Enables basic financial management within the POS without external accounting software. [worker-3 — Added EXPENSES_FILE constant, 4 backend endpoints (save/list/delete/pnl), expenses admin section with add form + category/date filter + expense list + P&L summary card with revenue/cogs/gross profit/expenses/net profit stat grid + category breakdown chips + print button. Backend calculates COGS from existing item ingredients/inventory data. Full i18n EN+ES. Dark theme, touch-friendly 44px+ targets. Activity logging. Python syntax verified, all 4 endpoints tested working.]
+
+## New Tasks (from System Auditor #24 — 2026-06-25)
+
+### Priority: HIGH
+
+- [ ] **sync_orders() lacks item validation — ghost data confirmed** — `submit_order()` validates items against the menu (empty-reject, name/price matching), but `sync_orders()` does NOT. Evidence: Order #94 exists with `items: []` ($0 ghost order) and Order #95 exists with `items: [{"id": "NONEXISTENT", "name": "Ghost Item", "price": 999}]` ($1,081.42 ghost order). Both bypassed via sync_orders. Add the same item validation logic from submit_order (lines 5436-5486) to sync_orders, checking each item exists in items.json/combos.json with price tolerance. Without this, offline-queued frontend bugs or bad data creates phantom orders that pollute kitchen display and analytics. [System Auditor #24]
+
+### Priority: MEDIUM
+
+- [ ] **Clean up ghost test data in orders.json** — Orders #94 (empty items, $0) and #95 (nonexistent "Ghost Item" at $999) are test/bypass artifacts. They should be cancelled/removed to keep analytics clean. Also check for any other orders with zero items or nonexistent item names. [System Auditor #24]
+
+- [ ] **Restock low inventory items** — French Toast (10 units) and Caesar Salad (10 units) are below the 20-unit low-stock threshold. Admin should restock to normal levels or verify these counts are intentional. [System Auditor #24]
