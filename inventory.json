@@ -2,7 +2,7 @@
     "TestItem": {
         "stock": 100,
         "low_stock_threshold": 10,
-        "unit_cost": 0.50
+        "unit_cost": 0.5
     },
     "Hotdog - Loaded": {
         "stock": 94,
@@ -12,7 +12,7 @@
     "Hamburger - All the Fixings": {
         "stock": 99,
         "low_stock_threshold": 10,
-        "unit_cost": 4.00
+        "unit_cost": 4.0
     },
     "Taco - Beef & Cheese": {
         "stock": 98,
@@ -32,7 +32,7 @@
     "Hotdog - Plain": {
         "stock": 98,
         "low_stock_threshold": 10,
-        "unit_cost": 2.00
+        "unit_cost": 2.0
     },
     "Lemonade": {
         "stock": 96,
@@ -42,7 +42,7 @@
     "Chocolate Bar": {
         "stock": 100,
         "low_stock_threshold": 10,
-        "unit_cost": 1.10
+        "unit_cost": 1.1
     },
     "Mixed Nuts (Small Pack)": {
         "stock": 99,
@@ -52,7 +52,7 @@
     "Taco - Chicken with Salsa": {
         "stock": 95,
         "low_stock_threshold": 10,
-        "unit_cost": 3.50
+        "unit_cost": 3.5
     },
     "Granola Bar": {
         "stock": 99,
@@ -62,22 +62,22 @@
     "Chips (Large Bag)": {
         "stock": 95,
         "low_stock_threshold": 10,
-        "unit_cost": 1.20
+        "unit_cost": 1.2
     },
     "Hamburger - Normal": {
-        "stock": 92,
+        "stock": 91,
         "low_stock_threshold": 10,
-        "unit_cost": 3.50
+        "unit_cost": 3.5
     },
     "Water Bottle": {
         "stock": 97,
         "low_stock_threshold": 10,
-        "unit_cost": 0.60
+        "unit_cost": 0.6
     },
     "Pancakes": {
         "stock": 50,
         "low_stock_threshold": 10,
-        "unit_cost": 2.50
+        "unit_cost": 2.5
     },
     "Bacon & Eggs": {
         "stock": 40,
@@ -87,17 +87,17 @@
     "French Toast": {
         "stock": 10,
         "low_stock_threshold": 10,
-        "unit_cost": 2.80
+        "unit_cost": 2.8
     },
     "Caesar Salad": {
         "stock": 10,
         "low_stock_threshold": 10,
-        "unit_cost": 3.00
+        "unit_cost": 3.0
     },
     "Grilled Chicken Salad": {
         "stock": 30,
         "low_stock_threshold": 10,
-        "unit_cost": 4.50
+        "unit_cost": 4.5
     },
     "Burger Bun": {
         "stock": 200,
@@ -107,12 +107,12 @@
     "Beef Patty": {
         "stock": 150,
         "low_stock_threshold": 30,
-        "unit_cost": 1.50
+        "unit_cost": 1.5
     },
     "Lettuce Leaf": {
         "stock": 500,
         "low_stock_threshold": 100,
-        "unit_cost": 0.10
+        "unit_cost": 0.1
     },
     "Tomato Slice": {
         "stock": 300,
@@ -122,6 +122,6 @@
     "Onion Ring": {
         "stock": 200,
         "low_stock_threshold": 40,
-        "unit_cost": 0.20
+        "unit_cost": 0.2
     }
 }

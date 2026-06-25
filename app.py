@@ -5432,6 +5432,59 @@ def submit_order():
     data = request.json
     items = data.get('items', [])
 
+    # ── Server-side input validation ──
+    # 1. Reject empty items array (ghost orders)
+    if not items:
+        return jsonify({'message': 'Order must contain at least one item.'}), 400
+
+    # 2. Build lookup of valid menu items by name → price (flatten categories)
+    valid_items_map = {}
+    raw_items = load_json_data(ITEMS_FILE)
+    for cat_items in raw_items.values():
+        if isinstance(cat_items, list):
+            for item in cat_items:
+                if isinstance(item, dict) and item.get('name'):
+                    valid_items_map[item['name']] = float(item.get('price', 0))
+
+    # 3. Build lookup of valid combos
+    valid_combos = {}
+    raw_combos = load_json_data(COMBOS_FILE)
+    for c in raw_combos.get('combos', []):
+        if isinstance(c, dict) and c.get('name'):
+            valid_combos[c['name']] = float(c.get('combo_price', 0))
+
+    # 4. Validate each item
+    PRICE_TOLERANCE = 0.50
+    validation_errors = []
+    for idx, item in enumerate(items):
+        item_name = item.get('name', '')
+        item_price = float(item.get('price', 0))
+
+        if item.get('is_combo'):
+            # Combo item — validate against combos.json
+            if item_name not in valid_combos:
+                validation_errors.append(f"Item #{idx + 1} ('{item_name}'): unknown combo.")
+            elif abs(item_price - valid_combos[item_name]) > PRICE_TOLERANCE:
+                validation_errors.append(
+                    f"Item #{idx + 1} ('{item_name}'): price ${item_price:.2f} does not match "
+                    f"combo price ${valid_combos[item_name]:.2f}."
+                )
+        else:
+            # Regular menu item — validate against items.json
+            if item_name not in valid_items_map:
+                validation_errors.append(f"Item #{idx + 1} ('{item_name}'): not found on the menu.")
+            elif abs(item_price - valid_items_map[item_name]) > PRICE_TOLERANCE:
+                validation_errors.append(
+                    f"Item #{idx + 1} ('{item_name}'): price ${item_price:.2f} does not match "
+                    f"menu price ${valid_items_map[item_name]:.2f}."
+                )
+
+    if validation_errors:
+        return jsonify({
+            'message': 'Order validation failed.',
+            'errors': validation_errors
+        }), 400
+
     # Check if user is banned
     user_id = data.get('user')
     if user_id:

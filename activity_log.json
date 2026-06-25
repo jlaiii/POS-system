@@ -11006,5 +11006,404 @@
         "details": {
             "status": "success"
         }
+    },
+    {
+        "timestamp": "2026-06-25T16:24:34.624916",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T16:24:36.814089",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T16:24:45.157285",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T16:33:51.915926",
+        "type": "expense_saved",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "expense_id": "EXP-0001",
+            "category": "supplies",
+            "amount": 150.5,
+            "vendor": "Sysco Foods"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T16:33:56.088500",
+        "type": "expense_saved",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "expense_id": "EXP-0002",
+            "category": "utilities",
+            "amount": 89.99,
+            "vendor": "Electric Co"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T16:33:59.739560",
+        "type": "expense_deleted",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "expense_id": "EXP-0002"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T16:35:31.720734",
+        "type": "expense_saved",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Python-urllib/3.11",
+        "details": {
+            "expense_id": "EXP-0001",
+            "category": "supplies",
+            "amount": 99.99,
+            "vendor": "Test Vendor"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T16:35:31.739756",
+        "type": "expense_deleted",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Python-urllib/3.11",
+        "details": {
+            "expense_id": "EXP-0001"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T16:35:31.755548",
+        "type": "expense_saved",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Python-urllib/3.11",
+        "details": {
+            "expense_id": "EXP-0001",
+            "category": "supplies",
+            "amount": 99.99,
+            "vendor": "Test Vendor"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T16:35:31.773272",
+        "type": "expense_deleted",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Python-urllib/3.11",
+        "details": {
+            "expense_id": "EXP-0001"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T16:47:36.246442",
+        "type": "submit_order",
+        "user_id": null,
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 92,
+            "subtotal": 5.0,
+            "tax_amount": 0.41,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 5.41,
+            "payment_method": "cash",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-25T16:47:39.483112",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T16:47:41.752677",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T16:47:48.814225",
+        "type": "refund_order",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 92,
+            "reason": "Reliability bot test \u2014 automated order lifecycle check",
+            "refunded_by_name": "Owner",
+            "order_total": 5.41,
+            "inventory_restored": []
+        }
+    },
+    {
+        "timestamp": "2026-06-25T17:11:16.685740",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T17:11:26.225689",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T17:44:22.898231",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T17:44:24.019257",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T17:44:30.587371",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T17:53:45.773303",
+        "type": "login_failed",
+        "user_id": null,
+        "user_role": "unknown",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed",
+            "method": "pin",
+            "ip": "127.0.0.1",
+            "attempt": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-25T17:53:55.502552",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T17:54:01.644468",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T17:54:02.814124",
+        "type": "submit_order",
+        "user_id": null,
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 93,
+            "subtotal": 12.0,
+            "tax_amount": 1.24,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 15.25,
+            "payment_method": "cash",
+            "item_count": 2
+        }
+    },
+    {
+        "timestamp": "2026-06-25T17:54:12.953165",
+        "type": "pickup_mark_ready",
+        "user_id": "unknown",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 93,
+            "action": "marked ready for pickup"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T17:54:39.498689",
+        "type": "refund_order",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 93,
+            "reason": "Customer complained about cold food",
+            "refunded_by_name": "Owner",
+            "order_total": 15.25,
+            "inventory_restored": [
+                "Hamburger - Normal x2",
+                "Lemonade x1"
+            ]
+        }
+    },
+    {
+        "timestamp": "2026-06-25T17:55:07.183446",
+        "type": "submit_order",
+        "user_id": null,
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 94,
+            "subtotal": 0.0,
+            "tax_amount": 0.0,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 0.0,
+            "payment_method": "Cash",
+            "item_count": 0
+        }
+    },
+    {
+        "timestamp": "2026-06-25T17:55:08.334698",
+        "type": "submit_order",
+        "user_id": null,
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 95,
+            "subtotal": 999.0,
+            "tax_amount": 82.42,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 1081.42,
+            "payment_method": "Cash",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-25T17:58:19.964519",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Python-urllib/3.11",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T17:59:47.367588",
+        "type": "submit_order",
+        "user_id": "9999",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "order_id": 96,
+            "subtotal": 6.0,
+            "tax_amount": 0.49,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 6.49,
+            "payment_method": "Cash",
+            "item_count": 1
+        }
     }
 ]
