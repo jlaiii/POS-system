@@ -1,0 +1,53 @@
+{
+    "types": {
+        "dine_in": {
+            "label": "Dine In",
+            "icon": "🍽️",
+            "service_charge_enabled": true,
+            "service_charge_percentage": 18.0,
+            "service_charge_threshold": 8,
+            "service_charge_label": "Auto-Gratuity (18%)",
+            "packaging_fee": 0.0,
+            "packaging_fee_label": "",
+            "tax_rate_override": null,
+            "kitchen_header": "DINE-IN"
+        },
+        "takeout": {
+            "label": "Takeout",
+            "icon": "🛍️",
+            "service_charge_enabled": false,
+            "service_charge_percentage": 0.0,
+            "service_charge_threshold": 99,
+            "service_charge_label": "",
+            "packaging_fee": 0.50,
+            "packaging_fee_label": "Packaging Fee",
+            "tax_rate_override": null,
+            "kitchen_header": "TAKEOUT"
+        },
+        "delivery": {
+            "label": "Delivery",
+            "icon": "🚚",
+            "service_charge_enabled": true,
+            "service_charge_percentage": 10.0,
+            "service_charge_threshold": 5,
+            "service_charge_label": "Delivery Fee (10%)",
+            "packaging_fee": 1.00,
+            "packaging_fee_label": "Packaging Fee",
+            "tax_rate_override": null,
+            "kitchen_header": "DELIVERY"
+        },
+        "catering": {
+            "label": "Catering",
+            "icon": "🎉",
+            "service_charge_enabled": true,
+            "service_charge_percentage": 20.0,
+            "service_charge_threshold": 0,
+            "service_charge_label": "Service Charge (20%)",
+            "packaging_fee": 0.0,
+            "packaging_fee_label": "",
+            "tax_rate_override": null,
+            "kitchen_header": "CATERING"
+        }
+    },
+    "default_type": "dine_in"
+}

@@ -1,16 +1,16 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-25T07:45 UTC
-> Total checks: 436
-> Healthy: 436 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-25T08:34 UTC
+> Total checks: 442
+> Healthy: 442 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK [verified 07:45]
-- [x] All JSON data files exist and are valid — all 15 core JSON files valid, parseable [verified 07:45]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', role='owner') present, 5 users total, all fields intact [verified 07:45]
-- [x] Git repo is clean (no uncommitted changes from crashes) — RELIABILITY_CHECKLIST.md, SECURITY_WATCHDOG.md, activity_log.json, login_attempts.json, order_counter.json, refunded_orders.json, security_events.json, orders.json, users.json modified (legitimate runtime logging + force_pin_change flag) — not crash-related [verified 07:45]
+- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK [verified 08:33]
+- [x] All JSON data files exist and are valid — all 15 core JSON files valid, parseable [verified 08:33]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', role='owner') present, 5 users total, all fields intact [verified 08:33]
+- [x] Git repo is clean (no uncommitted changes from crashes) — only SECURITY_WATCHDOG.md modified (expected Security Watchdog activity) [verified 08:33]
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/health — {"status":"ok"} (GET) [verified 07:45]
@@ -28,16 +28,16 @@
 - [x] Inventory: check stock decrements on order — 17 inventory items tracked, 2 OOS (🤖 Robot Burger, Test Nutrition Item — test items), stock tracking valid [verified 07:45]
 - [x] User CRUD: add test user (9876) → verify → delete → verified gone [verified 03:17]
 - [x] Loyalty: points earned on order — endpoint /api/loyalty/lookup returns valid response (customer not found for test phone, endpoint functional), phone-based lookup [verified 04:49]
-- [x] Clock-in late detection: 7 late shifts logged (11-563 min late), late_excused flags present. /api/clock/in returns late_minutes when scheduled_start set [verified 03:17]
-- [x] Break tracking: /api/clock/break endpoint responds correctly — "Not clocked in." when user not clocked in [verified 02:44]
-- [x] Shift edit: edit a shift time → verify audit trail — Edited shift 0, verified audit trail with 3 edit entries recorded [verified 02:44]
-- [x] CSV export: verify /api/export/shifts_csv returns CSV — 200, POST returns CSV content, 37 shifts exported [verified 02:44]
+- [x] Clock-in late detection: set scheduled_time, clock in late, verify late flag — Carlos (123456) scheduled 08:00, clocked in 08:34, late_minutes=35 (grace=5min). Late detection works. [verified 08:34]
+- [x] Break tracking: start break → end break → verify break subtracted — Employee One break start→end→clock out, break tracking works. [verified 08:34]
+- [x] Shift edit: edit a shift time → verify audit trail — Edited shift 37, verified audit trail with edits array (edited_by=Owner, reason, old/new values) [verified 08:34]
+- [x] CSV export: verify /api/export/shifts_csv returns CSV — 200, 3886 bytes, CSV content with 41 shifts [verified 08:34]
 - [x] Offline queue: verify /api/sync_orders endpoint exists — 200, "No orders provided" [verified 05:42]
 - [x] Order lifecycle: create order via /api/submit_order → 200 OK [verified 05:42]
 
 ## EVERY 12 HOURS
 - [x] Full app restart test: kill Flask → restart → verify all critical endpoints — Killed gunicorn (3 workers), started python3 app.py, verified all critical endpoints 200 [verified 22:20]
-- [x] Concurrent write test: two rapid clock-ins (Employee One + Employee Two) → both succeeded, no data loss, 36 shifts recorded [verified 18:32]
+- [x] Concurrent write test: two rapid clock-ins → both succeeded, no data loss, 40 shifts recorded (Employee One 08:34:16, Employee Two 08:34:18) [verified 08:34]
 - [x] Large payload test: submit order with 50 items — Order 15 exists with 50 items [verified 22:20]
 - [x] Special chars test: user name with emoji, item name with quotes — Added 🤖 Robot Burger 🍔 via API, verified, deleted [verified 22:20]
 - [x] app.py syntax check (python3 -m py_compile app.py) — SYNTAX OK [verified 07:45]

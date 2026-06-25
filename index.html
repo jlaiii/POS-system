@@ -856,6 +856,16 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
               <input type="email" id="customerEmail" placeholder="Email receipt to customer" style="flex:1;min-width:140px;min-height:44px;font-size:14px;padding:8px 12px;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);" maxlength="100" inputmode="email" data-i18n-placeholder="cart.email_placeholder" aria-label="Customer email for receipt"/>
             </div>
           </div>
+          <!-- Order type selector -->
+          <div id="orderTypeRow" style="margin-top:6px;">
+            <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;">
+              <span style="color:var(--text2);font-size:13px;font-weight:600;white-space:nowrap;margin-right:4px;" data-i18n="order_type.label">📋 Type:</span>
+              <button class="ot-btn ot-active" data-ot="dine_in" onclick="setOrderType('dine_in')" style="flex:1;min-width:64px;min-height:44px;font-size:13px;font-weight:600;border-radius:8px;padding:6px 10px;border:2px solid var(--border);background:var(--accent);color:#fff;cursor:pointer;transition:all 0.2s;">🍽️ <span data-i18n="order_type.dine_in">Dine In</span></button>
+              <button class="ot-btn" data-ot="takeout" onclick="setOrderType('takeout')" style="flex:1;min-width:64px;min-height:44px;font-size:13px;font-weight:600;border-radius:8px;padding:6px 10px;border:2px solid var(--border);background:var(--bg);color:var(--text2);cursor:pointer;transition:all 0.2s;">🛍️ <span data-i18n="order_type.takeout">Takeout</span></button>
+              <button class="ot-btn" data-ot="delivery" onclick="setOrderType('delivery')" style="flex:1;min-width:64px;min-height:44px;font-size:13px;font-weight:600;border-radius:8px;padding:6px 10px;border:2px solid var(--border);background:var(--bg);color:var(--text2);cursor:pointer;transition:all 0.2s;">🚚 <span data-i18n="order_type.delivery">Delivery</span></button>
+              <button class="ot-btn" data-ot="catering" onclick="setOrderType('catering')" style="flex:1;min-width:64px;min-height:44px;font-size:13px;font-weight:600;border-radius:8px;padding:6px 10px;border:2px solid var(--border);background:var(--bg);color:var(--text2);cursor:pointer;transition:all 0.2s;">🎉 <span data-i18n="order_type.catering">Catering</span></button>
+            </div>
+          </div>
           <div id="cartTotal">Total: $0.00</div>
           <div class="payment-methods" id="paymentMethods"></div>
           <div id="cartActions">
@@ -929,6 +939,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
         <button onclick="switchAdminSection('categories')" id="asCategories" data-i18n="admin.categories">📁 Categories</button>
         <button onclick="switchAdminSection('cashdrawer')" id="asCashdrawer">💰 Cash Drawer</button>
         <button onclick="switchAdminSection('servicecharge')" id="asServicecharge">🔧 Service Charge</button>
+        <button onclick="switchAdminSection('ordertype')" id="asOrdertype">📋 Order Types</button>
         <button onclick="switchAdminSection('combos')" id="asCombos">🍱 Combos</button>
         <button onclick="switchAdminSection('tickets')" id="asTickets" data-i18n="admin.tickets">📋 Tickets</button>
         <button onclick="switchAdminSection('schedule')" id="asSchedule">📅 Schedule</button>
@@ -1937,6 +1948,12 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
               It applies per-order when the condition is met.
             </p>
           </div>
+        </div>
+        <!-- Order Type Configuration -->
+        <div id="secOrdertype" class="admin-section" style="display:none;">
+          <h3>📋 Order Type Configuration</h3>
+          <p style="color:var(--text2);margin-bottom:16px;font-size:14px;" data-i18n="ordertype.description">Configure per-order-type settings: service charge rules, packaging fees, and tax overrides for Dine In, Takeout, Delivery, and Catering orders.</p>
+          <div id="ordertypeContent"></div>
         </div>
         <!-- Combos / Meal Deals -->
         <div id="secCombos" class="admin-section">
@@ -3496,6 +3513,11 @@ const L10N = {
     'cart.clear': '🗑️ Clear',
     'cart.each': 'each',
     'cart.item_note': 'Item note...',
+    'order_type.label': '📋 Type:',
+    'order_type.dine_in': 'Dine In',
+    'order_type.takeout': 'Takeout',
+    'order_type.delivery': 'Delivery',
+    'order_type.catering': 'Catering',
     'delivery.enable': 'Add delivery info',
     'delivery.street': 'Street address',
     'delivery.city': 'City',
@@ -3630,6 +3652,9 @@ const L10N = {
     'admin.stats.pending_auto_cancelled': '🧹 Auto-cancelled {count} stale pending order(s)',
     'admin.stats.bulk_cancel': '🧹 Bulk Cancel Stale Orders',
     'admin.stats.bulk_cancel_confirm': 'Cancel all pending orders in selected date range? This cannot be undone.',
+    'admin.stats.by_type': 'Orders by Type',
+    'admin.stats.order_types': 'order types',
+    'admin.stats.orders': 'orders',
     'admin.stats.bulk_cancel_done': 'Cancelled {count} pending order(s).',
     'admin.stats.stale_section': 'Stale Orders Cleanup',
     'admin.charts.daily_revenue': '📅 Daily Revenue (Last 7 Days)',
@@ -4358,6 +4383,11 @@ const L10N = {
     'cart.clear': '🗑️ Limpiar',
     'cart.each': 'cada uno',
     'cart.item_note': 'Nota del artículo...',
+    'order_type.label': '📋 Tipo:',
+    'order_type.dine_in': 'Comer Aquí',
+    'order_type.takeout': 'Para Llevar',
+    'order_type.delivery': 'Entrega',
+    'order_type.catering': 'Catering',
     'delivery.enable': 'Agregar dirección de envío',
     'delivery.street': 'Dirección',
     'delivery.city': 'Ciudad',
@@ -4491,6 +4521,9 @@ const L10N = {
     'admin.stats.pending_auto_cancelled': '🧹 Auto-cancelados {count} pedido(s) pendientes obsoletos',
     'admin.stats.bulk_cancel': '🧹 Cancelar Lote de Pedidos Obsoletos',
     'admin.stats.bulk_cancel_confirm': '¿Cancelar todos los pedidos pendientes en el rango de fechas seleccionado? Esto no se puede deshacer.',
+    'admin.stats.by_type': 'Pedidos por Tipo',
+    'admin.stats.order_types': 'tipos de pedido',
+    'admin.stats.orders': 'pedidos',
     'admin.stats.bulk_cancel_done': '{count} pedido(s) pendiente(s) cancelado(s).',
     'admin.stats.stale_section': 'Limpieza de Pedidos Obsoletos',
     'admin.charts.daily_revenue': '📅 Ingresos diarios (últimos 7 días)',
@@ -5280,6 +5313,8 @@ let paymentSplits = [{method: 'Cash', amount: 0}]; // [{method, amount}, ...] fo
 let currentCategory = '';
 let itemSearchTerm = '';
 let taxConfig = null; // { global_tax_rate, category_tax_rates, item_tax_overrides }
+let orderTypeConfig = null; // { types: {...}, default_type }
+let currentOrderType = 'dine_in'; // Current order type for the cart
 let appliedDiscount = null; // { code, type, value, discount_amount, description }
 let scheduledPricing = null; // { item_name: { original_price, discounted_price, discount_label, category } }
 let popularItems = new Set(); // Set of item names that are most popular (for "🔥 Most Popular" badge)
@@ -7438,6 +7473,7 @@ function showApp() {
   
   loadTaxConfig();
   loadServiceChargeConfig();
+  loadOrderTypeConfig();
   loadTableSelector();
   setupBarcodeScanner();
   if (currentUser.role === 'cook') {
@@ -9883,8 +9919,18 @@ function renderCart() {
       <span>+$${serviceChargeAmount.toFixed(2)}</span>
     </div>`;
   }
+  // Packaging fee based on order type
+  const packFee = getPackagingFee();
+  let packagingHtml = '';
+  if (packFee.fee > 0) {
+    const pl = packFee.label || 'Packaging Fee';
+    packagingHtml = `<div style="display:flex;justify-content:space-between;align-items:center;color:#4fc3f7;font-size:14px;padding:4px 0;">
+      <span>📦 ${escHtml(pl)}</span>
+      <span>+$${packFee.fee.toFixed(2)}</span>
+    </div>`;
+  }
   const tipAmount = calculateTipAmount(subtotal);
-  const finalTotalWithTip = afterDiscount + tipAmount + serviceChargeAmount;
+  const finalTotalWithTip = afterDiscount + tipAmount + serviceChargeAmount + packFee.fee;
   container.innerHTML = html;
   // Update tip display
   const tipDisplay = document.getElementById('tipDisplay');
@@ -9894,7 +9940,7 @@ function renderCart() {
   } else {
     tipDisplay.textContent = '';
   }
-  totalEl.innerHTML = `${t('cart.subtotal')} $${subtotal.toFixed(2)} | ${t('cart.tax')} $${totalTax.toFixed(2)}${discountHtml}${serviceChargeHtml}${tipAmount > 0 ? `<span style="color:#2ecc71;">💬 Tip: +$${tipAmount.toFixed(2)}</span>` : ''} | <strong>${t('cart.total')} $${finalTotalWithTip.toFixed(2)}</strong>`;
+  totalEl.innerHTML = `${t('cart.subtotal')} $${subtotal.toFixed(2)} | ${t('cart.tax')} $${totalTax.toFixed(2)}${discountHtml}${serviceChargeHtml}${packagingHtml}${tipAmount > 0 ? `<span style="color:#2ecc71;">💬 Tip: +$${tipAmount.toFixed(2)}</span>` : ''} | <strong>${t('cart.total')} $${finalTotalWithTip.toFixed(2)}</strong>`;
   updateDiscountStatus();
   if (driveThroughMode) pushToDriveThrough();
   if (customerDisplayMode) pushToCustomerDisplay();
@@ -9920,7 +9966,8 @@ function buildPaymentMethods() {
     const discAmt = appliedDiscount ? appliedDiscount.discount_amount : 0;
     const tipAmt = calculateTipAmount(sub);
     const scAmt = calculateServiceCharge(sub);
-    return Math.round((sub + tax - discAmt + tipAmt + scAmt) * 100) / 100;
+    const pf = getPackagingFee();
+    return Math.round((sub + tax - discAmt + tipAmt + scAmt + pf.fee) * 100) / 100;
   }
 
   function renderSplitUI() {
@@ -10293,7 +10340,8 @@ function openReviewModal() {
   const discountAmount = appliedDiscount ? appliedDiscount.discount_amount : 0;
   const tipAmount = calculateTipAmount(subtotal);
   const serviceChargeAmount = calculateServiceCharge(subtotal);
-  const total = subtotal + taxAmount - discountAmount + tipAmount + serviceChargeAmount;
+  const packFee = getPackagingFee();
+  const total = subtotal + taxAmount - discountAmount + tipAmount + serviceChargeAmount + packFee.fee;
 
   // Validate split payments
   const allocated = paymentSplits.reduce((sum, s) => sum + (s.amount || 0), 0);
@@ -10305,6 +10353,8 @@ function openReviewModal() {
 
   reviewData = {
     subtotal, taxAmount, discountAmount, tipAmount, serviceChargeAmount, total,
+    packagingFee: packFee.fee,
+    packagingFeeLabel: packFee.label || 'Packaging Fee',
     notes: document.getElementById('orderNotesInput').value.trim(),
     customerEmail: document.getElementById('customerEmail').value.trim(),
     tableNumber: document.getElementById('tableSelect') ? document.getElementById('tableSelect').value : '',
@@ -10452,6 +10502,14 @@ function renderReviewModal() {
   } else {
     svcRow.style.display = 'none';
   }
+  const packRow = document.getElementById('reviewPackagingRow');
+  if (reviewData.packagingFee > 0) {
+    packRow.style.display = 'flex';
+    document.getElementById('reviewPackagingLabel').textContent = '📦 ' + (reviewData.packagingFeeLabel || 'Packaging Fee');
+    document.getElementById('reviewPackaging').textContent = '$' + reviewData.packagingFee.toFixed(2);
+  } else {
+    packRow.style.display = 'none';
+  }
   document.getElementById('reviewTotal').textContent = '$' + reviewData.total.toFixed(2);
 
   // Payment
@@ -10461,6 +10519,7 @@ function renderReviewModal() {
   const metaEl = document.getElementById('reviewMeta');
   let metaParts = [];
   if (reviewData.tableNumber) metaParts.push('🪑 Table ' + reviewData.tableNumber);
+  if (currentOrderType && currentOrderType !== 'dine_in') metaParts.push(getOrderTypeIcon(currentOrderType) + ' ' + getOrderTypeLabel(currentOrderType));
   if (reviewData.customerEmail) metaParts.push('📧 ' + reviewData.customerEmail);
   if (reviewData.isRush) metaParts.push('<span style="padding:4px 10px;background:#e74c3c;color:#fff;border-radius:6px;font-weight:700;">🚨 RUSH</span>');
   metaEl.innerHTML = metaParts.map(m => '<span style="padding:4px 10px;background:var(--card-bg);border-radius:6px;">' + m + '</span>').join('');
@@ -10915,7 +10974,8 @@ async function submitOrder() {
       delivery_address: getDeliveryAddress(),
       customer_email: document.getElementById('customerEmail').value.trim(),
       composed_since: composedSince || null,
-      course_holds: courseHolds
+      course_holds: courseHolds,
+      order_type: currentOrderType || 'dine_in'
     })
     });
     if (!r.ok) {
@@ -11895,7 +11955,7 @@ async function loadOrderHistory() {
           <span><strong>#${orderNum}</strong> — ${dt}${statusBadge}${approvalBadge}</span>
           <span class="ho-total">$${total}</span>
         </div>
-        <div class="ho-meta">${t('history.payment')} ${escHtml(paymentDisplay)} | ${t('history.user')} ${escHtml(o.user || 'N/A')}${hasTax ? ' | ' + t('history.tax') + ': $' + parseFloat(o.tax_amount).toFixed(2) : ''}${hasServiceCharge ? ' | 🔧 +$' + parseFloat(o.service_charge_amount).toFixed(2) : ''}${hasTip ? ' | 💬 ' + t('receipt.tip') + ': $' + parseFloat(o.tip_amount).toFixed(2) : ''}${o.table_number ? ' | 🪪 Table #' + o.table_number : ''}${hasDelivery ? ' | 📮 ' + escHtml(formatDeliveryAddress(deliveryAddr)) : ''}${orderNotes ? ' | 📝 ' + t('history.notes') : ''}${refundReasonStr} <button class="ghost" onclick="event.stopPropagation();reorderFromHistory(${JSON.stringify(items).replace(/\"/g, '&quot;')})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#2ecc71;" title="${t('history.reorder')}">🔄</button>${!isRefunded ? `<button class="ghost" onclick="event.stopPropagation();refireOrderItem(${o.order_id}, null, this)" style="font-size:12px;padding:4px 8px;min-height:28px;color:#f39c12;" title="${t('history.refire_all')}">🔁 All</button>` : ''} <button class="ghost" onclick="event.stopPropagation();printHistoryReceipt(${JSON.stringify(o).replace(/\"/g, '&quot;')}, ${orderNum})" style="font-size:12px;padding:4px 8px;min-height:28px;color:var(--accent);">🖨️</button> <button class="ghost" onclick="event.stopPropagation();printThermalReceipt(this.dataset.orderId)" style="font-size:12px;padding:4px 8px;min-height:28px;color:#e67e22;" title="${t('receipt.print_thermal')}" data-order-id="${o.order_id}">🖨️</button> <button class="ghost" onclick="event.stopPropagation();emailHistoryReceipt(${o.order_id})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#4fc3f7;" title="${t('history.email_receipt')}">📧</button>${canRefund && !isRefunded ? \`<button class="ghost" onclick="event.stopPropagation();showRefundOverlay({order_id: ${o.order_id}, total: '${total}', date: '${(o.date || '').replace(/'/g, "\\'")}', payment: '${(o.payment || '').replace(/'/g, "\\'")}', user: '${(o.user || '').replace(/'/g, "\\'")}', orderNum: ${orderNum}, items: ${JSON.stringify(items).replace(/\\"/g, '&quot;')}})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#e74c3c;">↩️</button>\` : ''}${isCompleted && !isReadyForPickup && !isCollected ? \`<button class="ghost" onclick="event.stopPropagation();markOrderReadyForPickup(${o.order_id})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#f39c12;">📋 Ready</button>\` : ''}</div>
+        <div class="ho-meta">${t('history.payment')} ${escHtml(paymentDisplay)} | ${t('history.user')} ${escHtml(o.user || 'N/A')}${hasTax ? ' | ' + t('history.tax') + ': $' + parseFloat(o.tax_amount).toFixed(2) : ''}${hasServiceCharge ? ' | 🔧 +$' + parseFloat(o.service_charge_amount).toFixed(2) : ''}${hasTip ? ' | 💬 ' + t('receipt.tip') + ': $' + parseFloat(o.tip_amount).toFixed(2) : ''}${o.table_number ? ' | 🪪 Table #' + o.table_number : ''}${o.order_type ? ' | ' + getOrderTypeIcon(o.order_type) + ' ' + getOrderTypeLabel(o.order_type) : ''}${hasDelivery ? ' | 📮 ' + escHtml(formatDeliveryAddress(deliveryAddr)) : ''}${orderNotes ? ' | 📝 ' + t('history.notes') : ''}${refundReasonStr} <button class="ghost" onclick="event.stopPropagation();reorderFromHistory(${JSON.stringify(items).replace(/\"/g, '&quot;')})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#2ecc71;" title="${t('history.reorder')}">🔄</button>${!isRefunded ? `<button class="ghost" onclick="event.stopPropagation();refireOrderItem(${o.order_id}, null, this)" style="font-size:12px;padding:4px 8px;min-height:28px;color:#f39c12;" title="${t('history.refire_all')}">🔁 All</button>` : ''} <button class="ghost" onclick="event.stopPropagation();printHistoryReceipt(${JSON.stringify(o).replace(/\"/g, '&quot;')}, ${orderNum})" style="font-size:12px;padding:4px 8px;min-height:28px;color:var(--accent);">🖨️</button> <button class="ghost" onclick="event.stopPropagation();printThermalReceipt(this.dataset.orderId)" style="font-size:12px;padding:4px 8px;min-height:28px;color:#e67e22;" title="${t('receipt.print_thermal')}" data-order-id="${o.order_id}">🖨️</button> <button class="ghost" onclick="event.stopPropagation();emailHistoryReceipt(${o.order_id})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#4fc3f7;" title="${t('history.email_receipt')}">📧</button>${canRefund && !isRefunded ? \`<button class="ghost" onclick="event.stopPropagation();showRefundOverlay({order_id: ${o.order_id}, total: '${total}', date: '${(o.date || '').replace(/'/g, "\\'")}', payment: '${(o.payment || '').replace(/'/g, "\\'")}', user: '${(o.user || '').replace(/'/g, "\\'")}', orderNum: ${orderNum}, items: ${JSON.stringify(items).replace(/\\"/g, '&quot;')}})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#e74c3c;">↩️</button>\` : ''}${isCompleted && !isReadyForPickup && !isCollected ? \`<button class="ghost" onclick="event.stopPropagation();markOrderReadyForPickup(${o.order_id})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#f39c12;">📋 Ready</button>\` : ''}</div>
         <div class="ho-details">
           ${items.map((it, idx) => { const refundedItem = (o.refunded_items || []).find(ri => ri.item_index === idx); const isRefundedItem = !!refundedItem; const canRefire = !isRefundedItem; const itCompType = it.comp_type; const itCompBadge = itCompType === 'employee_meal' ? '<span style=\"font-size:10px;background:#2ecc7133;color:#2ecc71;padding:1px 5px;border-radius:3px;margin-left:4px;font-weight:600;\">🍴</span>' : (itCompType === 'comp' ? '<span style=\"font-size:10px;background:#e9456033;color:#e94560;padding:1px 5px;border-radius:3px;margin-left:4px;font-weight:600;\" title=\"' + escHtml(it.comp_reason||'') + '\">🎁</span>' : ''); return \`<div class="ho-item"\${isRefundedItem ? ' style="opacity:0.6;"' : ''}><span\${isRefundedItem ? ' style="text-decoration:line-through;"' : ''}>\${isRefundedItem ? '↩️ ' : ''}\${escHtml(it.name)} x\${it.qty||1}\${itCompBadge}\${it.note ? '<br/><span style="color:var(--text2);font-size:12px;padding-left:12px;">📝 ' + escHtml(it.note) + '</span>' : ''}\${it.modifiers && it.modifiers.length > 0 ? '<br/><span style="color:#f39c12;font-size:12px;padding-left:12px;">⚙️ ' + it.modifiers.map(m => escHtml(m.option)).join(' · ') + '</span>' : ''}\${isRefundedItem ? '<br/><span style="color:#e74c3c;font-size:11px;padding-left:12px;">↩️ Refunded</span>' : ''}</span><span\${isRefundedItem ? ' style="text-decoration:line-through;"' : ''}>\$\${((it.price||0)*(it.qty||1)).toFixed(2)}\${canRefire ? \` <button class="ghost" onclick="event.stopPropagation();refireOrderItem(${o.order_id}, [${idx}], this)" style="font-size:11px;padding:2px 6px;min-height:24px;color:#f39c12;" title="\${t('history.refire')}">🔁</button>\` : ''}</span></div>\`;}).join('')}
           ${hasTax ? \`
@@ -12254,6 +12314,7 @@ function switchAdminSection(sec) {
   else if (sec === 'categories') loadCategories();
   else if (sec === 'cashdrawer') loadCashDrawer();
   else if (sec === 'servicecharge') loadServiceChargeConfig();
+  else if (sec === 'ordertype') loadOrderTypeAdmin();
   else if (sec === 'combos') loadCombos();
   else if (sec === 'tickets') loadTicketQueue();
   else if (sec === 'security') loadSecurityDashboard();
@@ -12440,6 +12501,22 @@ async function loadAdminStats() {
       `;
     } else {
       lowSection.innerHTML = '';
+    }
+
+    // Render order type breakdown section
+    const otBreakdown = s.order_type_breakdown || {};
+    const otKeys = Object.keys(otBreakdown);
+    if (otKeys.length > 0) {
+      let otHtml = '<div class="card" style="padding:0;overflow:hidden;margin-top:12px;"><div class="low-stock-header" onclick="this.nextElementSibling.classList.toggle(\'open\');this.querySelector(\'.collapse-icon\').classList.toggle(\'rotated\');"><span style="font-weight:600;">📊 ' + t('admin.stats.by_type') + '</span><span style="color:var(--text2);font-size:13px;">' + otKeys.length + ' ' + t('admin.stats.order_types') + '</span><span class="collapse-icon" style="margin-left:auto;transition:transform .2s;">▼</span></div><div class="low-stock-body"><div style="display:flex;flex-wrap:wrap;gap:8px;padding:12px 16px;">';
+      Object.entries(otBreakdown).forEach(([key, info]) => {
+        const icon = info.icon || '📦';
+        const label = info.label || key;
+        const count = info.count || 0;
+        const sales = parseFloat(info.sales || 0).toFixed(2);
+        otHtml += '<div style="flex:1;min-width:120px;background:var(--card-alt);border-radius:8px;padding:12px;text-align:center;"><div style="font-size:24px;margin-bottom:4px;">' + icon + '</div><div style="font-weight:600;font-size:16px;">' + escHtml(label) + '</div><div style="font-size:14px;color:var(--text2);margin-top:4px;">' + count + ' ' + t('admin.stats.orders') + '</div><div style="font-size:14px;color:#2ecc71;font-weight:600;">$' + sales + '</div></div>';
+      });
+      otHtml += '</div></div></div>';
+      grid.innerHTML += otHtml;
     }
 
     // Render stale order cleanup section
@@ -18817,6 +18894,93 @@ async function loadTaxConfig() {
   } catch(e) { /* silently fail, cart will show no tax */ }
 }
 
+
+// ═══════════ ORDER TYPE CONFIG ═══════════
+async function loadOrderTypeConfig() {
+  try {
+    const r = await fetch(BACKEND_URL + '/api/order-type/config');
+    if (r.ok) {
+      orderTypeConfig = await r.json();
+      const dt = orderTypeConfig.default_type || 'dine_in';
+      if (currentOrderType !== dt) {
+        currentOrderType = dt;
+        updateOrderTypeUI();
+      }
+    }
+  } catch(e) { /* silently fail */ }
+}
+
+function setOrderType(type) {
+  if (!orderTypeConfig || !orderTypeConfig.types || !orderTypeConfig.types[type]) return;
+  if (currentOrderType === type) return;
+  currentOrderType = type;
+  updateOrderTypeUI();
+  renderCart();
+}
+
+function updateOrderTypeUI() {
+  document.querySelectorAll('.ot-btn').forEach(btn => {
+    const ot = btn.getAttribute('data-ot');
+    if (ot === currentOrderType) {
+      btn.style.background = 'var(--accent)';
+      btn.style.color = '#fff';
+      btn.style.borderColor = 'var(--accent)';
+    } else {
+      btn.style.background = 'var(--bg)';
+      btn.style.color = 'var(--text2)';
+      btn.style.borderColor = 'var(--border)';
+    }
+  });
+  // Toggle delivery address row visibility based on order type
+  const deliveryToggleRow = document.getElementById('deliveryRow');
+  if (deliveryToggleRow) {
+    if (currentOrderType === 'delivery') {
+      deliveryToggleRow.style.display = 'block';
+    } else if (currentOrderType === 'takeout' || currentOrderType === 'catering') {
+      deliveryToggleRow.style.display = 'block';
+    } else {
+      // dine_in — hide delivery row, uncheck toggle
+      deliveryToggleRow.style.display = 'none';
+      const dt = document.getElementById('deliveryToggle');
+      if (dt) { dt.checked = false; }
+      document.getElementById('deliveryForm').style.display = 'none';
+    }
+  }
+  // Show table selector for dine-in, hide for others
+  const tableRow = document.getElementById('tableRow');
+  if (tableRow) {
+    tableRow.style.display = currentOrderType === 'dine_in' ? 'block' : 'none';
+    if (currentOrderType !== 'dine_in') {
+      const ts = document.getElementById('tableSelect');
+      if (ts) ts.value = '';
+    }
+  }
+}
+
+// Packaging fee helper
+function getPackagingFee() {
+  if (!orderTypeConfig || !orderTypeConfig.types) return { fee: 0, label: '' };
+  const typeInfo = orderTypeConfig.types[currentOrderType];
+  if (!typeInfo) return { fee: 0, label: '' };
+  const perItem = parseFloat(typeInfo.packaging_fee) || 0;
+  return {
+    fee: perItem * cart.length,
+    label: typeInfo.packaging_fee_label || '',
+    perItem: perItem
+  };
+}
+
+// Order type display helpers
+function getOrderTypeIcon(type) {
+  if (!orderTypeConfig || !orderTypeConfig.types || !orderTypeConfig.types[type]) return '📦';
+  return orderTypeConfig.types[type].icon || '📦';
+}
+
+function getOrderTypeLabel(type) {
+  if (!orderTypeConfig || !orderTypeConfig.types || !orderTypeConfig.types[type]) return type;
+  return orderTypeConfig.types[type].label || type;
+}
+
 async function loadTaxAdmin() {
   await loadTaxConfig();
   if (!taxConfig) { document.getElementById('taxContent').innerHTML = '<div class="empty-state">Cannot load tax config</div>'; return; }
@@ -20164,6 +20328,141 @@ function calculateServiceCharge(subtotal) {
   const pct = serviceChargeConfig.percentage || 0;
   return subtotal * (pct / 100);
 }
+
+
+// ═══════════ ORDER TYPE ADMIN ═══════════
+
+async function loadOrderTypeAdmin() {
+  const container = document.getElementById('ordertypeContent');
+  try {
+    const resp = await fetch(BACKEND_URL + '/api/order-type/config');
+    if (!resp.ok) { container.innerHTML = '<div class="empty-state val-err">⚠️ Failed to load config</div>'; return; }
+    const config = await resp.json();
+    const types = config.types || {};
+    let html = '<div class="card" style="margin-bottom:12px;">';
+    html += '<h4 style="margin-bottom:8px;">🔧 Per-Type Settings</h4>';
+    html += '<div id="otAdminStatus" style="font-size:13px;color:#2ecc71;margin-bottom:8px;"></div>';
+    Object.entries(types).forEach(([key, info]) => {
+      html += `<div style="background:var(--card-alt);border-radius:8px;padding:12px;margin-bottom:12px;border-left:3px solid var(--accent);">
+        <h4 style="margin-bottom:8px;">${info.icon || '📦'} ${escHtml(info.label)} <span style="font-size:12px;color:var(--text2);font-weight:400;">(${key})</span></h4>
+        <div class="form-row" style="flex-wrap:wrap;gap:8px;">
+          <label style="display:flex;align-items:center;gap:6px;font-size:14px;color:var(--text2);">
+            <span>🔛 Auto Service Charge</span>
+            <label class="perm-toggle" style="width:40px;height:22px;">
+              <input type="checkbox" class="ot-sc-enabled" data-ot="${key}" ${info.service_charge_enabled ? 'checked' : ''}>
+              <span class="perm-slider"></span>
+            </label>
+          </label>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:14px;color:var(--text2);white-space:nowrap;">👥 Threshold:</span>
+            <input type="number" class="ot-sc-threshold" data-ot="${key}" min="0" max="100" value="${info.service_charge_threshold}" style="max-width:70px;min-height:36px;font-size:14px;padding:6px;text-align:center;" inputmode="numeric">
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:14px;color:var(--text2);white-space:nowrap;">💯 %:</span>
+            <input type="number" class="ot-sc-pct" data-ot="${key}" min="0" max="100" step="0.5" value="${info.service_charge_percentage}" style="max-width:70px;min-height:36px;font-size:14px;padding:6px;text-align:center;" inputmode="decimal">
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;flex:1;">
+            <span style="font-size:14px;color:var(--text2);white-space:nowrap;">🏷️ SC Label:</span>
+            <input type="text" class="ot-sc-label" data-ot="${key}" maxlength="50" value="${escHtml(info.service_charge_label)}" style="flex:1;min-width:100px;min-height:36px;font-size:14px;padding:6px;">
+          </div>
+        </div>
+        <div class="form-row" style="flex-wrap:wrap;gap:8px;margin-top:8px;">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:14px;color:var(--text2);white-space:nowrap;">📦 Packaging Fee ($):</span>
+            <input type="number" class="ot-pack-fee" data-ot="${key}" min="0" step="0.25" value="${info.packaging_fee}" style="max-width:80px;min-height:36px;font-size:14px;padding:6px;text-align:center;" inputmode="decimal">
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;flex:1;">
+            <span style="font-size:14px;color:var(--text2);white-space:nowrap;">📦 Label:</span>
+            <input type="text" class="ot-pack-label" data-ot="${key}" maxlength="50" value="${escHtml(info.packaging_fee_label)}" style="flex:1;min-width:100px;min-height:36px;font-size:14px;padding:6px;">
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:14px;color:var(--text2);white-space:nowrap;">💰 Tax Rate Override:</span>
+            <input type="number" class="ot-tax-override" data-ot="${key}" min="0" max="100" step="0.1" value="${info.tax_rate_override !== null ? (info.tax_rate_override * 100).toFixed(1) : ''}" placeholder="Use global" style="max-width:90px;min-height:36px;font-size:14px;padding:6px;text-align:center;" inputmode="decimal">
+            <span style="font-size:12px;color:var(--text2);">% (leave empty = global rate)</span>
+          </div>
+        </div>
+        <div style="margin-top:8px;display:flex;align-items:center;gap:6px;">
+          <span style="font-size:14px;color:var(--text2);white-space:nowrap;">🏪 Kitchen Header:</span>
+          <input type="text" class="ot-kitchen-header" data-ot="${key}" maxlength="20" value="${escHtml(info.kitchen_header)}" style="max-width:150px;min-height:36px;font-size:14px;padding:6px;">
+        </div>
+      </div>`;
+    });
+    html += '</div>';
+    html += `<div style="display:flex;gap:8px;margin-top:4px;">
+      <button class="accent" onclick="saveOrderTypeConfig()" style="min-height:48px;font-size:15px;padding:10px 24px;">💾 Save All Order Types</button>
+    </div>`;
+    container.innerHTML = html;
+  } catch(e) {
+    container.innerHTML = '<div class="empty-state val-err">⚠️ Network error</div>';
+  }
+}
+
+async function saveOrderTypeConfig() {
+  const statusEl = document.getElementById('otAdminStatus');
+  const adminPin = currentUser ? currentUser.id : '';
+  const types = {};
+  document.querySelectorAll('.ot-sc-enabled').forEach(el => {
+    const key = el.dataset.ot;
+    if (!types[key]) types[key] = {};
+    types[key].service_charge_enabled = el.checked;
+  });
+  document.querySelectorAll('.ot-sc-threshold').forEach(el => {
+    const key = el.dataset.ot;
+    if (!types[key]) types[key] = {};
+    types[key].service_charge_threshold = parseInt(el.value) || 0;
+  });
+  document.querySelectorAll('.ot-sc-pct').forEach(el => {
+    const key = el.dataset.ot;
+    if (!types[key]) types[key] = {};
+    types[key].service_charge_percentage = parseFloat(el.value) || 0;
+  });
+  document.querySelectorAll('.ot-sc-label').forEach(el => {
+    const key = el.dataset.ot;
+    if (!types[key]) types[key] = {};
+    types[key].service_charge_label = el.value.trim();
+  });
+  document.querySelectorAll('.ot-pack-fee').forEach(el => {
+    const key = el.dataset.ot;
+    if (!types[key]) types[key] = {};
+    types[key].packaging_fee = parseFloat(el.value) || 0;
+  });
+  document.querySelectorAll('.ot-pack-label').forEach(el => {
+    const key = el.dataset.ot;
+    if (!types[key]) types[key] = {};
+    types[key].packaging_fee_label = el.value.trim();
+  });
+  document.querySelectorAll('.ot-tax-override').forEach(el => {
+    const key = el.dataset.ot;
+    if (!types[key]) types[key] = {};
+    const val = el.value.trim();
+    types[key].tax_rate_override = val ? (parseFloat(val) / 100) : null;
+  });
+  document.querySelectorAll('.ot-kitchen-header').forEach(el => {
+    const key = el.dataset.ot;
+    if (!types[key]) types[key] = {};
+    types[key].kitchen_header = el.value.trim();
+  });
+  try {
+    const resp = await fetch(BACKEND_URL + '/api/order-type/config', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ adminPin, types })
+    });
+    const data = await resp.json();
+    if (resp.ok) {
+      orderTypeConfig = data.config || orderTypeConfig;
+      await loadOrderTypeConfig();
+      renderCart();
+      statusEl.textContent = '✅ ' + (data.message || 'Config saved');
+      setTimeout(() => { statusEl.textContent = ''; }, 3000);
+    } else {
+      statusEl.textContent = '❌ ' + (data.message || 'Failed to save');
+    }
+  } catch(e) {
+    statusEl.textContent = '❌ Network error';
+  }
+}
+
 
 // ═══════════ COMBO / MEAL DEAL BUILDER ═══════════
 let comboData = null; // { combos: [...] }
@@ -21836,6 +22135,7 @@ switchAdminSection = function(sec) {
       <div id="reviewDiscountRow" style="display:none;justify-content:space-between;font-size:14px;color:#2ecc71;margin-bottom:4px;"><span>Discount</span><span id="reviewDiscount">-$0.00</span></div>
       <div id="reviewTipRow" style="display:none;justify-content:space-between;font-size:14px;color:var(--text2);margin-bottom:4px;"><span>Tip</span><span id="reviewTip">$0.00</span></div>
       <div id="reviewServiceRow" style="display:none;justify-content:space-between;font-size:14px;color:var(--text2);margin-bottom:4px;"><span>Service Charge</span><span id="reviewService">$0.00</span></div>
+      <div id="reviewPackagingRow" style="display:none;justify-content:space-between;font-size:14px;color:#4fc3f7;margin-bottom:4px;"><span id="reviewPackagingLabel">Packaging Fee</span><span id="reviewPackaging">$0.00</span></div>
       <div style="display:flex;justify-content:space-between;font-size:18px;font-weight:700;color:var(--accent);border-top:2px solid var(--accent);padding-top:8px;margin-top:4px;"><span>Total</span><span id="reviewTotal">$0.00</span></div>
     </div>
 

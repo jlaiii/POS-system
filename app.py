@@ -157,6 +157,7 @@ TICKETS_FILE = 'tickets.json'  # Employee self-service tickets/requests
 RESERVATIONS_FILE = 'reservations.json'  # Table reservation/booking system
 TICKET_TEMPLATES_FILE = 'ticket_templates.json'  # Saved response templates for admin ticket replies
 HANDOFF_NOTES_FILE = 'handoff_notes.json'  # Shift handoff notes for end-of-shift communication
+ORDER_TYPE_CONFIG_FILE = 'order_type_config.json'  # Order type config (service charges, packaging fees per type)
 APPROVALS_FILE = 'timesheet_approvals.json'  # Timesheet pay period approvals
 RESTAURANT_CONFIG_FILE = 'restaurant_config.json'  # Restaurant info for tablet display (name, hours, wifi)
 SCHEDULE_FILE = 'schedule.json'  # Shift schedule builder — weekly shift assignments
@@ -5308,12 +5309,39 @@ def submit_order():
     tip_amount = float(data.get('tip_amount', 0))
     service_charge_amount = float(data.get('service_charge_amount', 0))
 
-    # Accept total from frontend, or compute as subtotal + tax + tip + service charge
+    # --- Order type handling ---
+    order_type = data.get('order_type', 'dine_in')
+    ot_config = get_order_type_config()
+    ot_types = ot_config.get('types', {})
+    ot_default = ot_config.get('default_type', 'dine_in')
+    if order_type not in ot_types:
+        order_type = ot_default
+    ot_info = ot_types.get(order_type, ot_types.get('dine_in', {}))
+
+    # Calculate packaging fee based on order type
+    packaging_fee = float(ot_info.get('packaging_fee', 0))
+    packaging_fee_label = ot_info.get('packaging_fee_label', '')
+    packaging_fee_total = packaging_fee * len(items) if packaging_fee > 0 else 0.0
+
+    # Apply per-type service charge override if not already set by frontend
+    if service_charge_amount == 0 and ot_info.get('service_charge_enabled', False):
+        sc_threshold = int(ot_info.get('service_charge_threshold', 99))
+        sc_pct = float(ot_info.get('service_charge_percentage', 0))
+        if subtotal >= sc_threshold and sc_pct > 0:
+            service_charge_amount = round(subtotal * sc_pct / 100.0, 2)
+
+    # Apply per-type tax rate override if configured
+    tax_rate_override = ot_info.get('tax_rate_override')
+    if tax_rate_override is not None and tax_amount == 0:
+        # Recalculate tax with override rate
+        tax_amount = round(subtotal * float(tax_rate_override), 2)
+
+    # Accept total from frontend, or compute as subtotal + tax + tip + service charge + packaging fee
     total_from_request = data.get('total')
     if total_from_request is not None:
         total = float(total_from_request)
     else:
-        total = subtotal + tax_amount + tip_amount + service_charge_amount
+        total = subtotal + tax_amount + tip_amount + service_charge_amount + packaging_fee_total
 
     # --- Kitchen: auto-increment order ID ---
     counter_data = load_json_data(ORDER_COUNTER_FILE)
@@ -5358,6 +5386,9 @@ def submit_order():
         'table_number': data.get('table_number'),  # Table number for table management
         'delivery_address': data.get('delivery_address'),  # Delivery address info
         'customer_email': data.get('customer_email', ''),  # Email for digital receipt delivery
+        'order_type': order_type,  # dine_in, takeout, delivery, catering
+        'packaging_fee': round(packaging_fee_total, 2),  # Per-type packaging fee total
+        'packaging_fee_label': packaging_fee_label,  # Label for packaging fee
         'priority': data.get('priority', None),  # 'rush' or null for normal priority
         'manager_approval': data.get('manager_approval', None)  # Manager approval override for discounts/comps
     }
@@ -7769,6 +7800,24 @@ def admin_stats():
             other_total += total
             other_count += 1
 
+    # --- Order type breakdown ---
+    order_type_breakdown = {}
+    for order in processed_orders:
+        ot = order.get('order_type', 'dine_in')
+        ot_total = order['total']
+        if ot not in order_type_breakdown:
+            order_type_breakdown[ot] = {'count': 0, 'sales': 0.0, 'label': ot}
+        order_type_breakdown[ot]['count'] += 1
+        order_type_breakdown[ot]['sales'] += ot_total
+    # Enrich with labels from config
+    ot_config = get_order_type_config()
+    for ot_key in order_type_breakdown:
+        ot_info = ot_config.get('types', {}).get(ot_key, {})
+        order_type_breakdown[ot_key]['label'] = ot_info.get('label', ot_key)
+        order_type_breakdown[ot_key]['icon'] = ot_info.get('icon', '📦')
+    for ot_key in list(order_type_breakdown.keys()):
+        order_type_breakdown[ot_key]['sales'] = round(order_type_breakdown[ot_key]['sales'], 2)
+
     now = datetime.now()
     week_ago = now - timedelta(days=7)
     month_ago = now - timedelta(days=30)  # Approx month
@@ -7860,6 +7909,8 @@ def admin_stats():
         'backup_total_size_hr': backup_total_size_hr,
         'latest_backup_size_hr': latest_backup_size_hr,
         'comp_summary': comp_summary,
+        # Order type breakdown
+        'order_type_breakdown': order_type_breakdown,
         # Stale order cleanup
         'stale_cancelled_count': stale_cleanup_result.get('stale_cancelled_count', 0),
         'stale_cancelled_orders': stale_cleanup_result.get('stale_cancelled_orders', []),
@@ -10519,6 +10570,123 @@ def update_service_charge_config():
     save_json_data(SERVICE_CHARGE_FILE, config)
     log_activity('update_service_charge', admin_pin, 'admin', {'new_config': config})
     return jsonify({'message': 'Service charge configuration updated successfully', 'config': config})
+
+
+# ============================================================
+# --- Order Type Configuration Endpoints ---
+# ============================================================
+
+def get_order_type_config():
+    """Load order type config with defaults."""
+    defaults = {
+        "types": {
+            "dine_in": {
+                "label": "Dine In",
+                "icon": "🍽️",
+                "service_charge_enabled": True,
+                "service_charge_percentage": 18.0,
+                "service_charge_threshold": 8,
+                "service_charge_label": "Auto-Gratuity (18%)",
+                "packaging_fee": 0.0,
+                "packaging_fee_label": "",
+                "tax_rate_override": None,
+                "kitchen_header": "DINE-IN"
+            },
+            "takeout": {
+                "label": "Takeout",
+                "icon": "🛍️",
+                "service_charge_enabled": False,
+                "service_charge_percentage": 0.0,
+                "service_charge_threshold": 99,
+                "service_charge_label": "",
+                "packaging_fee": 0.50,
+                "packaging_fee_label": "Packaging Fee",
+                "tax_rate_override": None,
+                "kitchen_header": "TAKEOUT"
+            },
+            "delivery": {
+                "label": "Delivery",
+                "icon": "🚚",
+                "service_charge_enabled": True,
+                "service_charge_percentage": 10.0,
+                "service_charge_threshold": 5,
+                "service_charge_label": "Delivery Fee (10%)",
+                "packaging_fee": 1.00,
+                "packaging_fee_label": "Packaging Fee",
+                "tax_rate_override": None,
+                "kitchen_header": "DELIVERY"
+            },
+            "catering": {
+                "label": "Catering",
+                "icon": "🎉",
+                "service_charge_enabled": True,
+                "service_charge_percentage": 20.0,
+                "service_charge_threshold": 0,
+                "service_charge_label": "Service Charge (20%)",
+                "packaging_fee": 0.0,
+                "packaging_fee_label": "",
+                "tax_rate_override": None,
+                "kitchen_header": "CATERING"
+            }
+        },
+        "default_type": "dine_in"
+    }
+    try:
+        config = load_json_data(ORDER_TYPE_CONFIG_FILE)
+        if not isinstance(config, dict):
+            config = defaults
+        for k, v in defaults.items():
+            if k not in config:
+                config[k] = v
+        # Ensure all type keys exist
+        for type_key, type_defaults in defaults.get("types", {}).items():
+            if type_key not in config.get("types", {}):
+                config["types"][type_key] = type_defaults
+            else:
+                for tk, tv in type_defaults.items():
+                    if tk not in config["types"][type_key]:
+                        config["types"][type_key][tk] = tv
+        return config
+    except (FileNotFoundError, json.JSONDecodeError):
+        save_json_data(ORDER_TYPE_CONFIG_FILE, defaults)
+        return dict(defaults)
+
+
+@app.route('/api/order-type/config', methods=['GET'])
+def api_get_order_type_config():
+    """Get order type configuration (public)."""
+    config = get_order_type_config()
+    return jsonify(config)
+
+
+@app.route('/api/order-type/config', methods=['POST'])
+def api_update_order_type_config():
+    """Update order type configuration (admin/owner only)."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+
+    if not check_perm(admin_pin, "manage_items"):
+        return jsonify({'message': 'Unauthorized. Admin PIN or permission required.'}), 403
+
+    config = get_order_type_config()
+
+    if 'default_type' in data:
+        dt = data['default_type']
+        if dt in config.get('types', {}):
+            config['default_type'] = dt
+        else:
+            return jsonify({'message': f'Invalid default type: {dt}'}), 400
+
+    if 'types' in data:
+        for type_key, type_config in data['types'].items():
+            if type_key in config.get('types', {}):
+                for field, value in type_config.items():
+                    if field in config['types'][type_key]:
+                        config['types'][type_key][field] = value
+
+    save_json_data(ORDER_TYPE_CONFIG_FILE, config)
+    log_activity('update_order_type_config', admin_pin, 'admin', {'new_config': config})
+    return jsonify({'message': 'Order type configuration updated successfully', 'config': config})
 
 
 # ============================================================

@@ -8824,5 +8824,162 @@
         "details": {
             "status": "success"
         }
+    },
+    {
+        "timestamp": "2026-06-25T08:33:36.219329",
+        "type": "clock_in_failed",
+        "user_id": "9876",
+        "user_role": "unknown",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed",
+            "reason": "invalid_pin",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T08:33:44.653064",
+        "type": "clock_in",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee One",
+            "clock_in_time": "2026-06-25T08:33:44.652916",
+            "late_minutes": null,
+            "scheduled_start": null
+        }
+    },
+    {
+        "timestamp": "2026-06-25T08:33:51.999802",
+        "type": "clock_out",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee One",
+            "clock_in_time": "2026-06-25T08:33:44.652916",
+            "clock_out_time": "2026-06-25T08:33:51.997927",
+            "duration_hours": 0.0
+        }
+    },
+    {
+        "timestamp": "2026-06-25T08:34:06.026115",
+        "type": "shift_edited",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "shift_index": 37,
+            "user_id": "1234",
+            "user_name": "Employee One",
+            "changes": {
+                "clock_in_time": {
+                    "old": "2026-06-25T08:33:44.652916",
+                    "new": "2026-06-25T08:30:00"
+                },
+                "clock_out_time": {
+                    "old": "2026-06-25T08:33:51.997927",
+                    "new": "2026-06-25T08:35:00"
+                }
+            },
+            "reason": "Reliability test edit"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T08:34:16.245162",
+        "type": "clock_in",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee One",
+            "clock_in_time": "2026-06-25T08:34:16.245023",
+            "late_minutes": null,
+            "scheduled_start": null
+        }
+    },
+    {
+        "timestamp": "2026-06-25T08:34:18.488229",
+        "type": "clock_in",
+        "user_id": "5678",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee Two",
+            "clock_in_time": "2026-06-25T08:34:18.488078",
+            "late_minutes": null,
+            "scheduled_start": null
+        }
+    },
+    {
+        "timestamp": "2026-06-25T08:34:23.880685",
+        "type": "clock_out",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee One",
+            "clock_in_time": "2026-06-25T08:34:16.245023",
+            "clock_out_time": "2026-06-25T08:34:23.879624",
+            "duration_hours": 0.0
+        }
+    },
+    {
+        "timestamp": "2026-06-25T08:34:24.988287",
+        "type": "clock_out",
+        "user_id": "5678",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee Two",
+            "clock_in_time": "2026-06-25T08:34:18.488078",
+            "clock_out_time": "2026-06-25T08:34:24.986652",
+            "duration_hours": 0.0
+        }
+    },
+    {
+        "timestamp": "2026-06-25T08:34:40.769033",
+        "type": "clock_in",
+        "user_id": "123456",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "user_name": "Carlos",
+            "clock_in_time": "2026-06-25T08:34:40.768823",
+            "late_minutes": 35,
+            "scheduled_start": "08:00"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T08:34:47.162536",
+        "type": "clock_out",
+        "user_id": "123456",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "user_name": "Carlos",
+            "clock_in_time": "2026-06-25T08:34:40.768823",
+            "clock_out_time": "2026-06-25T08:34:47.161380",
+            "duration_hours": 0.0
+        }
     }
 ]
