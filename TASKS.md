@@ -620,4 +620,4 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 
 ### Priority: MEDIUM
 
-- [~] worker-2 **Add missing item images for Breakfast and Salads categories** — 5 of 19 items (26%) still have no `image_url`: Pancakes, Bacon & Eggs, French Toast, Caesar Salad, Grilled Chicken Salad. The `generate_item_images.py` script only covered Foods/Drinks/Snacks categories. Customer tablet menu (`/tablet`) shows these items as bare text with no image — unprofessional for a customer-facing digital menu. Either extend the generator script or manually add SVG placeholders for these 5 items.
+- [x] **Add missing item images for Breakfast and Salads categories** — 5 of 19 items (26%) had no `image_url`: Pancakes, Bacon & Eggs, French Toast, Caesar Salad, Grilled Chicken Salad. Created SVG placeholder images (colored gradient backgrounds with relevant emoji icons). Extended `generate_item_images.py` with Breakfast and Salads categories so future regeneration covers all items. All 19 items now have valid image URLs pointing to existing SVG files. [worker-2]

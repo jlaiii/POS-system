@@ -83,6 +83,35 @@ ITEM_CONFIG = {
             "description": "Hearty oats-and-honey granola bar with dried cranberries and pumpkin seeds. Great for a quick energy boost.",
             "dietary_tags": ["vegetarian"]
         }
+    },
+    "Breakfast": {
+        "Pancakes": {
+            "emoji": "🥞", "gradient": ("#d4a017", "#f5d06f"),
+            "description": "Fluffy buttermilk pancakes with maple syrup and butter",
+            "dietary_tags": ["vegetarian"]
+        },
+        "Bacon & Eggs": {
+            "emoji": "🍳", "gradient": ("#c0392b", "#e74c3c"),
+            "description": "Two eggs any style with crispy bacon strips and toast",
+            "dietary_tags": ["gluten_free"]
+        },
+        "French Toast": {
+            "emoji": "🍞", "gradient": ("#8b4513", "#d2691e"),
+            "description": "Thick-cut brioche dipped in cinnamon egg batter, grilled golden, topped with berries",
+            "dietary_tags": ["vegetarian"]
+        }
+    },
+    "Salads": {
+        "Caesar Salad": {
+            "emoji": "🥗", "gradient": ("#27ae60", "#2ecc71"),
+            "description": "Romaine lettuce, parmesan, croutons, and house-made Caesar dressing",
+            "dietary_tags": ["vegetarian"]
+        },
+        "Grilled Chicken Salad": {
+            "emoji": "🥗", "gradient": ("#16a085", "#1abc9c"),
+            "description": "Mixed greens, grilled chicken breast, cherry tomatoes, cucumbers, balsamic vinaigrette",
+            "dietary_tags": ["gluten_free", "low_carb"]
+        }
     }
 }
 
