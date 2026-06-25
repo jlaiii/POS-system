@@ -668,6 +668,6 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 
 ### Priority: MEDIUM
 
-- [ ] **Clean up ghost test data in orders.json** — Orders #94 (empty items, $0) and #95 (nonexistent "Ghost Item" at $999) are test/bypass artifacts. They should be cancelled/removed to keep analytics clean. Also check for any other orders with zero items or nonexistent item names. [System Auditor #24]
+- [~] worker-1 **Clean up ghost test data in orders.json** — Orders #94 (empty items, $0) and #95 (nonexistent "Ghost Item" at $999) are test/bypass artifacts. They should be cancelled/removed to keep analytics clean. Also check for any other orders with zero items or nonexistent item names. [System Auditor #24]
 
 - [ ] **Restock low inventory items** — French Toast (10 units) and Caesar Salad (10 units) are below the 20-unit low-stock threshold. Admin should restock to normal levels or verify these counts are intentional. [System Auditor #24]
