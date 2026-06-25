@@ -837,6 +837,20 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
                 <span id="loyaltyCustomerName" style="font-weight:600;font-size:14px;"></span>
                 <span id="loyaltyPointsDisplay" style="color:#f39c12;font-size:14px;font-weight:600;">⭐ 0 pts</span>
               </div>
+              <div id="loyaltyProfileInfo" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;font-size:12px;color:var(--text2);align-items:center;">
+                <span id="loyaltyBirthdayDisplay" style="display:none;"></span>
+                <span id="loyaltyAnniversaryDisplay" style="display:none;"></span>
+                <span id="loyaltyVisitCount" style="color:var(--text2);"></span>
+                <button class="ghost btn-sm" onclick="showLoyaltyProfileEdit()" style="font-size:11px;padding:2px 8px;min-height:28px;" title="Edit customer profile">✏️</button>
+              </div>
+              <div id="loyaltyProfileEdit" style="display:none;margin-top:6px;">
+                <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+                  <label style="color:var(--text2);font-size:12px;display:flex;align-items:center;gap:4px;">🎂 <input type="date" id="loyaltyEditBirthday" style="min-height:36px;font-size:13px;padding:4px 8px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);" aria-label="Customer birthday"/></label>
+                  <label style="color:var(--text2);font-size:12px;display:flex;align-items:center;gap:4px;">💍 <input type="date" id="loyaltyEditAnniversary" style="min-height:36px;font-size:13px;padding:4px 8px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);" aria-label="Customer anniversary"/></label>
+                  <button class="accent btn-sm" onclick="saveLoyaltyProfile()" style="font-size:12px;">💾 Save</button>
+                  <button class="ghost btn-sm" onclick="cancelLoyaltyProfileEdit()" style="font-size:12px;">✕ Cancel</button>
+                </div>
+              </div>
               <div id="loyaltyRedeemRow" style="display:none;margin-top:6px;">
                 <button class="outline" onclick="loyaltyRedeem()" style="font-size:13px;padding:8px 14px;min-height:44px;width:100%;border-color:#9b59b6;color:#9b59b6;">🔄 Redeem Points for Discount</button>
               </div>
@@ -846,6 +860,10 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
                 <input type="text" id="loyaltyRegName" placeholder="Customer name" style="flex:1;min-width:120px;min-height:44px;font-size:14px;padding:8px 12px;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);" maxlength="50" aria-label="Customer name for loyalty registration"/>
                 <button class="accent" onclick="loyaltyRegister()" style="font-size:13px;padding:8px 14px;min-height:44px;">✅ Save</button>
                 <button class="ghost" onclick="loyaltyCancelRegister()" style="font-size:13px;padding:8px 14px;min-height:44px;">✕ Cancel</button>
+              </div>
+              <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:6px;">
+                <label style="color:var(--text2);font-size:12px;display:flex;align-items:center;gap:4px;">🎂 <input type="date" id="loyaltyRegBirthday" style="min-height:36px;font-size:13px;padding:4px 8px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);" aria-label="Customer birthday"/></label>
+                <label style="color:var(--text2);font-size:12px;display:flex;align-items:center;gap:4px;">💍 <input type="date" id="loyaltyRegAnniversary" style="min-height:36px;font-size:13px;padding:4px 8px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);" aria-label="Customer anniversary"/></label>
               </div>
             </div>
           </div>
@@ -944,6 +962,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
         <button onclick="switchAdminSection('tickets')" id="asTickets" data-i18n="admin.tickets">📋 Tickets</button>
         <button onclick="switchAdminSection('schedule')" id="asSchedule">📅 Schedule</button>
         <button onclick="switchAdminSection('reservations')" id="asReservations">📅 Reservations</button>
+        <button onclick="switchAdminSection('waitlist')" id="asWaitlist">🚶 Waitlist</button>
         <button onclick="switchAdminSection('security')" id="asSecurity">🛡️ Security</button>
         <button onclick="switchAdminSection('backup')" id="asBackup">💾 Backup</button>
         <button onclick="switchAdminSection('giftcards')" id="asGiftcards" data-i18n="admin.giftcards">🎁 Gift Cards</button>
@@ -2542,6 +2561,76 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
             </div>
             <div id="gcDisableStatus" style="margin-top:8px;font-size:14px;"></div>
           </div>
+        </div>
+        <!-- Waitlist / Digital Queue -->
+        <div id="secWaitlist" class="admin-section">
+          <h3 style="margin:0 0 12px 0;">🚶 Walk-in Waitlist</h3>
+          <p style="color:var(--text2);margin-bottom:16px;font-size:14px;">Digital queue for walk-in customers. Add parties, estimate wait times, notify when table is ready, and track no-shows. Integrates with table floor plan.</p>
+
+          <!-- Today's Stats -->
+          <div class="card" style="margin-bottom:16px;padding:12px 16px;">
+            <div id="wlStats" style="display:flex;gap:12px;flex-wrap:wrap;">
+              <div class="stat-mini"><span class="stat-label">⏳ Waiting</span><span id="wlWaitingCount" class="stat-value" style="color:var(--accent);">0</span></div>
+              <div class="stat-mini"><span class="stat-label">✅ Seated</span><span id="wlSeatedCount" class="stat-value" style="color:#4caf50;">0</span></div>
+              <div class="stat-mini"><span class="stat-label">🔕 No-show</span><span id="wlNoShowCount" class="stat-value" style="color:#f44336;">0</span></div>
+              <div class="stat-mini"><span class="stat-label">🚫 Cancelled</span><span id="wlCancelledCount" class="stat-value" style="color:#ff9800;">0</span></div>
+              <div class="stat-mini"><span class="stat-label">📧 Notified</span><span id="wlNotifiedCount" class="stat-value" style="color:#2196f3;">0</span></div>
+              <div class="stat-mini"><span class="stat-label">⏱ Avg Wait</span><span id="wlAvgWait" class="stat-value">0 min</span></div>
+              <div class="stat-mini"><span class="stat-label">🕐 Est. Wait Now</span><span id="wlEstimateNow" class="stat-value" style="color:var(--accent);">0 min</span></div>
+            </div>
+          </div>
+
+          <!-- Add to Waitlist Form -->
+          <div class="card" style="margin-bottom:16px;padding:12px 16px;">
+            <h4 style="margin:0 0 10px 0;font-size:15px;">➕ Add to Waitlist</h4>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
+              <div style="min-width:140px;flex:1;">
+                <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;">Name *</label>
+                <input type="text" id="wlFormName" placeholder="Customer name" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;" aria-label="Customer name"/>
+              </div>
+              <div style="min-width:70px;flex:0.5;">
+                <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;">Party *</label>
+                <input type="number" id="wlFormParty" value="2" min="1" max="99" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;inputmode:numeric;" aria-label="Party size"/>
+              </div>
+              <div style="min-width:120px;flex:0.7;">
+                <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;">Phone</label>
+                <input type="tel" id="wlFormPhone" placeholder="555-1234" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;" aria-label="Phone"/>
+              </div>
+              <div style="min-width:160px;flex:0.8;">
+                <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;">Email (for notification)</label>
+                <input type="email" id="wlFormEmail" placeholder="customer@example.com" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;" aria-label="Email"/>
+              </div>
+              <div style="min-width:140px;flex:0.7;">
+                <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;">Est. Wait (min)</label>
+                <input type="number" id="wlFormWait" placeholder="Auto" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;inputmode:numeric;" aria-label="Estimated wait minutes"/>
+              </div>
+              <div style="min-width:140px;flex:0.7;">
+                <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;">Notes</label>
+                <input type="text" id="wlFormNotes" placeholder="Allergies, requests..." style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;" aria-label="Notes"/>
+              </div>
+              <button class="accent" onclick="wlAddToWaitlist()" style="min-height:44px;padding:8px 20px;font-size:14px;">➕ Add</button>
+            </div>
+            <div id="wlFormStatus" style="font-size:13px;margin-top:6px;"></div>
+          </div>
+
+          <!-- Filter Bar -->
+          <div class="card" style="margin-bottom:16px;padding:10px 14px;">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+              <select id="wlFilterStatus" onchange="wlLoadList()" style="min-width:120px;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:13px;min-height:40px;" aria-label="Filter by status">
+                <option value="">📋 All Statuses</option>
+                <option value="waiting">⏳ Waiting</option>
+                <option value="notified">📧 Notified</option>
+                <option value="seated">✅ Seated</option>
+                <option value="no_show">🔕 No-show</option>
+                <option value="cancelled">🚫 Cancelled</option>
+              </select>
+              <input type="text" id="wlFilterSearch" placeholder="🔍 Search name, phone, ID..." oninput="wlLoadList()" style="flex:1;min-width:150px;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:13px;min-height:40px;" aria-label="Search waitlist"/>
+              <button class="outline" onclick="wlLoadList()" style="min-height:40px;padding:8px 14px;font-size:13px;">🔄 Refresh</button>
+            </div>
+          </div>
+
+          <!-- Waitlist Entries -->
+          <div id="wlList"></div>
         </div>
         <!-- Schedule Builder -->
         <div id="secSchedule" class="admin-section">
@@ -10766,7 +10855,11 @@ async function confirmOrder() {
       if (warnMsg) setTimeout(() => showToast(warnMsg.trim(), 'danger'), 500);
     }
     if (result.loyalty_earned && result.loyalty_earned > 0) {
-      setTimeout(() => showToast('⭐ ' + result.loyalty_earned + ' loyalty points earned!', 'success'), 1000);
+      let bonusMsg = '⭐ ' + result.loyalty_earned + ' loyalty points earned!';
+      if (result.birthday_bonus > 0) bonusMsg += ' 🎂 Birthday bonus: +' + result.birthday_bonus + ' pts!';
+      if (result.anniversary_bonus > 0) bonusMsg += ' 💍 Anniversary bonus: +' + result.anniversary_bonus + ' pts!';
+      if (result.milestone_bonus > 0) bonusMsg += ' ' + (result.milestone_name || 'Milestone') + ' bonus: +' + result.milestone_bonus + ' pts!';
+      setTimeout(() => showToast(bonusMsg, 'success'), 1000);
       if (loyaltyCustomerPhone) loyaltyLookup();
     }
     receiptData.loyalty_earned = result.loyalty_earned || 0;
@@ -11059,7 +11152,11 @@ async function submitOrder() {
       }
     }
     if (result.loyalty_earned && result.loyalty_earned > 0) {
-      setTimeout(() => showToast('⭐ ' + result.loyalty_earned + ' loyalty points earned!', 'success'), 1000);
+      let bonusMsg = '⭐ ' + result.loyalty_earned + ' loyalty points earned!';
+      if (result.birthday_bonus > 0) bonusMsg += ' 🎂 Birthday bonus: +' + result.birthday_bonus + ' pts!';
+      if (result.anniversary_bonus > 0) bonusMsg += ' 💍 Anniversary bonus: +' + result.anniversary_bonus + ' pts!';
+      if (result.milestone_bonus > 0) bonusMsg += ' ' + (result.milestone_name || 'Milestone') + ' bonus: +' + result.milestone_bonus + ' pts!';
+      setTimeout(() => showToast(bonusMsg, 'success'), 1000);
       // Reload loyalty info if customer is still tracked
       if (loyaltyCustomerPhone) loyaltyLookup();
     }
@@ -11568,6 +11665,29 @@ function loyaltyLookup() {
       document.getElementById('loyaltyRegisterForm').style.display = 'none';
       document.getElementById('loyaltyCustomerName').textContent = '👤 ' + escHtml(data.customer.name);
       document.getElementById('loyaltyPointsDisplay').textContent = '⭐ ' + data.customer.points + ' pts';
+      // Show birthday if set
+      const bdayEl = document.getElementById('loyaltyBirthdayDisplay');
+      if (data.customer.birthday) {
+        const bday = data.customer.birthday.substring(0, 10); // YYYY-MM-DD
+        const bdayLabel = bday.slice(5) === new Date().toISOString().slice(5,10) ? '🎂 ' + bday + ' 🎉' : '🎂 ' + bday;
+        bdayEl.textContent = bdayLabel;
+        bdayEl.style.display = 'inline';
+      } else {
+        bdayEl.style.display = 'none';
+      }
+      // Show anniversary if set
+      const annivEl = document.getElementById('loyaltyAnniversaryDisplay');
+      if (data.customer.anniversary) {
+        const anniv = data.customer.anniversary.substring(0, 10);
+        const annivLabel = anniv.slice(5) === new Date().toISOString().slice(5,10) ? '💍 ' + anniv + ' 🎉' : '💍 ' + anniv;
+        annivEl.textContent = annivLabel;
+        annivEl.style.display = 'inline';
+      } else {
+        annivEl.style.display = 'none';
+      }
+      // Show visit count
+      const visitCount = data.customer.total_orders || 0;
+      document.getElementById('loyaltyVisitCount').textContent = '📋 ' + visitCount + (visitCount === 1 ? ' visit' : ' visits');
       // Show redeem button if they have enough points
       const redeemRow = document.getElementById('loyaltyRedeemRow');
       if (data.customer.points >= 100) {
@@ -11600,9 +11720,11 @@ function loyaltyRegister() {
   const phone = document.getElementById('loyaltyPhone').value.trim();
   const name = document.getElementById('loyaltyRegName').value.trim();
   if (!phone || !name) { showToast('Phone and name required.', 'warning'); return; }
+  const birthday = document.getElementById('loyaltyRegBirthday').value || '';
+  const anniversary = document.getElementById('loyaltyRegAnniversary').value || '';
   fetch(BACKEND_URL + '/api/loyalty/register', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ phone: phone, name: name, adminPin: currentUser ? currentUser.id : '' })
+    body: JSON.stringify({ phone: phone, name: name, birthday: birthday, anniversary: anniversary, adminPin: currentUser ? currentUser.id : '' })
   })
   .then(r => r.json())
   .then(data => {
@@ -11616,11 +11738,56 @@ function loyaltyRegister() {
       document.getElementById('loyaltyPointsDisplay').textContent = '⭐ 0 pts';
       document.getElementById('loyaltyRedeemRow').style.display = 'none';
       document.getElementById('loyaltyRegName').value = '';
+      document.getElementById('loyaltyRegBirthday').value = '';
+      document.getElementById('loyaltyRegAnniversary').value = '';
+      // Trigger loyalty lookup to populate profile info
+      loyaltyLookup();
     } else {
       showToast(data.message || 'Registration failed.', 'warning');
     }
   })
   .catch(e => { showToast(t('toast.network_error'), 'danger'); });
+}
+
+// ── Loyalty profile edit functions ──
+
+function showLoyaltyProfileEdit() {
+  if (!loyaltyCustomerData) return;
+  document.getElementById('loyaltyEditBirthday').value = loyaltyCustomerData.birthday ? loyaltyCustomerData.birthday.substring(0,10) : '';
+  document.getElementById('loyaltyEditAnniversary').value = loyaltyCustomerData.anniversary ? loyaltyCustomerData.anniversary.substring(0,10) : '';
+  document.getElementById('loyaltyProfileEdit').style.display = 'block';
+}
+
+function cancelLoyaltyProfileEdit() {
+  document.getElementById('loyaltyProfileEdit').style.display = 'none';
+}
+
+async function saveLoyaltyProfile() {
+  if (!loyaltyCustomerPhone) return;
+  const birthday = document.getElementById('loyaltyEditBirthday').value || '';
+  const anniversary = document.getElementById('loyaltyEditAnniversary').value || '';
+  try {
+    const r = await fetch(BACKEND_URL + '/api/loyalty/update_profile', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        phone: loyaltyCustomerPhone,
+        birthday: birthday,
+        anniversary: anniversary,
+        adminPin: currentUser ? currentUser.id : ''
+      })
+    });
+    const data = await r.json();
+    if (r.ok) {
+      showToast(data.message || 'Profile updated!', 'success');
+      // Re-lookup to refresh display
+      loyaltyLookup();
+      cancelLoyaltyProfileEdit();
+    } else {
+      showToast(data.message || 'Update failed.', 'warning');
+    }
+  } catch(e) {
+    showToast(t('toast.network_error'), 'danger');
+  }
 }
 
 async function loyaltyRedeem() {

@@ -168,6 +168,7 @@ SECURITY_EVENTS_FILE = 'security_events.json'  # Security events/incidents log
 SECURITY_CONFIG_FILE = 'security_config.json'  # Security config (blocked IPs, thresholds)
 
 GIFT_CARDS_FILE = 'gift_cards.json'  # Gift card management (sell, redeem, balance)
+WAITLIST_FILE = 'waitlist.json'  # Walk-in customer waitlist/digital queue
 
 # --- Platform / Multi-Tenant Constants ---
 GLOCAL_DIR = 'data/global'  # Global platform data directory
@@ -267,7 +268,7 @@ def backup_menu():
 
 
 # Ensure JSON files exist and are initialized correctly
-for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE, INVENTORY_FILE, REFUNDED_ORDERS_FILE, FAVORITES_FILE, LOYALTY_FILE, SCHEDULED_PRICING_FILE, WASTE_FILE, DELIVERY_ADDRESSES_FILE, WEBHOOKS_FILE, TABLE_ADS_FILE, CASH_DRAWER_FILE, COMBOS_FILE, SERVICE_CHARGE_FILE, EMAIL_CONFIG_FILE, SHIFT_FILE, TICKETS_FILE, RESERVATIONS_FILE, TICKET_TEMPLATES_FILE, APPROVALS_FILE, RESTAURANT_CONFIG_FILE, PRINTER_CONFIG_FILE, GIFT_CARDS_FILE]:
+for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE, INVENTORY_FILE, REFUNDED_ORDERS_FILE, FAVORITES_FILE, LOYALTY_FILE, SCHEDULED_PRICING_FILE, WASTE_FILE, DELIVERY_ADDRESSES_FILE, WEBHOOKS_FILE, TABLE_ADS_FILE, CASH_DRAWER_FILE, COMBOS_FILE, SERVICE_CHARGE_FILE, EMAIL_CONFIG_FILE, SHIFT_FILE, TICKETS_FILE, RESERVATIONS_FILE, TICKET_TEMPLATES_FILE, APPROVALS_FILE, RESTAURANT_CONFIG_FILE, PRINTER_CONFIG_FILE, GIFT_CARDS_FILE, WAITLIST_FILE]:
     if not os.path.exists(f):
         with open(f, 'w') as file:
             if f == USERS_FILE:
@@ -374,7 +375,7 @@ def load_json_data(filepath):
             if filepath == USERS_FILE and not isinstance(data, dict):
                 print(f"Warning: {filepath} is not a dictionary. Initializing as empty dict.")
                 return {}
-            if filepath in [ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, TICKETS_FILE, RESERVATIONS_FILE, HANDOFF_NOTES_FILE] and not isinstance(data, list):
+            if filepath in [ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, TICKETS_FILE, RESERVATIONS_FILE, HANDOFF_NOTES_FILE, WAITLIST_FILE] and not isinstance(data, list):
                 print(f"Warning: {filepath} is not a list. Initializing as empty list.")
                 return []
             if filepath == ITEMS_FILE and not isinstance(data, dict):
@@ -5609,6 +5610,10 @@ def submit_order():
     # --- Loyalty: award points if customer phone is provided ---
     loyalty_earned = 0
     customer_phone = data.get('customer_phone', '').strip()
+    birthday_bonus = 0
+    anniversary_bonus = 0
+    milestone_bonus = 0
+    milestone_name = ''
     if customer_phone:
         loyalty_data = load_json_data(LOYALTY_FILE)
         if customer_phone not in loyalty_data:
@@ -5619,6 +5624,8 @@ def submit_order():
                 'email': '',
                 'notes': '',
                 'address': '',
+                'birthday': '',
+                'anniversary': '',
                 'points': 0,
                 'total_earned': 0,
                 'total_redeemed': 0,
@@ -5626,9 +5633,51 @@ def submit_order():
                 'total_orders': 0,
                 'last_visit': '',
                 'created_at': datetime.now().isoformat(),
+                'visit_dates': [],
                 'history': []
             }
         earned = max(1, int(subtotal * LOYALTY_POINTS_PER_DOLLAR))
+        today = datetime.now()
+        today_str = today.strftime('%Y-%m-%d')
+        today_md = today.strftime('%m-%d')
+
+        # ── Birthday bonus: double points if today matches ──
+        cust_bday = loyalty_data[customer_phone].get('birthday', '')
+        if cust_bday:
+            # Support both MM-DD and full ISO date
+            bday_check = cust_bday[5:] if len(cust_bday) == 10 else cust_bday
+            if bday_check == today_md:
+                birthday_bonus = earned
+                earned += earned  # Double points
+
+        # ── Anniversary bonus: +50 bonus points if today matches ──
+        cust_anniv = loyalty_data[customer_phone].get('anniversary', '')
+        if cust_anniv:
+            anniv_check = cust_anniv[5:] if len(cust_anniv) == 10 else cust_anniv
+            if anniv_check == today_md:
+                anniversary_bonus = 50
+                earned += 50
+
+        # ── Milestone visit bonus ──
+        total_orders = loyalty_data[customer_phone].get('total_orders', 0) + 1
+        visit_dates = loyalty_data[customer_phone].get('visit_dates', [])
+        # Milestone thresholds: 5th, 10th, 25th, 50th, 100th, then every 50
+        milestone_thresholds = [5, 10, 25, 50, 100, 150, 200, 250, 300, 500]
+        milestone_names = {
+            5: '5th Visit 🎉', 10: '10th Visit 🏆', 25: '25th Visit 💎',
+            50: '50th Visit 👑', 100: '100th Visit 🌟',
+            150: '150th Visit 🎊', 200: '200th Visit 🏅',
+            250: '250th Visit 🎯', 300: '300th Visit 🚀',
+            500: '500th Visit 💫'
+        }
+        next_visit = total_orders + 1  # After this order
+        for thresh in milestone_thresholds:
+            if total_orders == thresh:
+                milestone_bonus = 100  # 100 bonus points on milestone
+                milestone_name = milestone_names.get(thresh, f'{thresh}th Visit 🎉')
+                earned += milestone_bonus
+                break
+
         loyalty_data[customer_phone]['points'] += earned
         loyalty_data[customer_phone]['total_earned'] += earned
         loyalty_data[customer_phone]['history'].append({
@@ -5636,19 +5685,31 @@ def submit_order():
             'points': earned,
             'order_id': order_id,
             'subtotal': round(subtotal, 2),
-            'date': datetime.now().isoformat()
+            'date': datetime.now().isoformat(),
+            'birthday_bonus': birthday_bonus,
+            'anniversary_bonus': anniversary_bonus,
+            'milestone_bonus': milestone_bonus,
+            'milestone_name': milestone_name
         })
         # Track total spending and visit
         loyalty_data[customer_phone]['total_spent'] = round(loyalty_data[customer_phone].get('total_spent', 0) + subtotal, 2)
-        loyalty_data[customer_phone]['total_orders'] = loyalty_data[customer_phone].get('total_orders', 0) + 1
-        loyalty_data[customer_phone]['last_visit'] = datetime.now().isoformat()
-        loyalty_earned = earned
+        loyalty_data[customer_phone]['total_orders'] = total_orders
+        loyalty_data[customer_phone]['last_visit'] = today.isoformat()
+        # Track visit dates
+        if today_str not in visit_dates:
+            visit_dates.append(today_str)
+            loyalty_data[customer_phone]['visit_dates'] = visit_dates
         save_json_data(LOYALTY_FILE, loyalty_data)
         log_activity('loyalty_earn', data.get('user', 'unknown'), 'user', {
             'customer_phone': customer_phone,
             'points_earned': earned,
-            'order_id': order_id
+            'order_id': order_id,
+            'birthday_bonus': birthday_bonus,
+            'anniversary_bonus': anniversary_bonus,
+            'milestone_bonus': milestone_bonus,
+            'milestone_name': milestone_name
         })
+        loyalty_earned = earned
 
     # --- Comp / Employee Meal tracking ---
     comp_items = [item for item in items if item.get('comp_type')]
@@ -5728,7 +5789,11 @@ def submit_order():
         'order_number': order_number,
         'order_id': order_id,
         'low_stock_warnings': low_stock_warnings,
-        'loyalty_earned': loyalty_earned
+        'loyalty_earned': loyalty_earned,
+        'birthday_bonus': birthday_bonus,
+        'anniversary_bonus': anniversary_bonus,
+        'milestone_bonus': milestone_bonus,
+        'milestone_name': milestone_name
     })
 
 
@@ -6108,6 +6173,8 @@ def sync_orders():
                     'email': '',
                     'notes': '',
                     'address': '',
+                    'birthday': '',
+                    'anniversary': '',
                     'points': 0,
                     'total_earned': 0,
                     'total_redeemed': 0,
@@ -6115,9 +6182,11 @@ def sync_orders():
                     'total_orders': 0,
                     'last_visit': '',
                     'created_at': datetime.now().isoformat(),
+                    'visit_dates': [],
                     'history': []
                 }
             earned = max(1, int(subtotal * LOYALTY_POINTS_PER_DOLLAR))
+            today_str = datetime.now().strftime('%Y-%m-%d')
             loyalty_data[customer_phone]['points'] += earned
             loyalty_data[customer_phone]['total_earned'] += earned
             loyalty_data[customer_phone]['history'].append({
@@ -6130,6 +6199,10 @@ def sync_orders():
             loyalty_data[customer_phone]['total_spent'] = round(loyalty_data[customer_phone].get('total_spent', 0) + subtotal, 2)
             loyalty_data[customer_phone]['total_orders'] = loyalty_data[customer_phone].get('total_orders', 0) + 1
             loyalty_data[customer_phone]['last_visit'] = datetime.now().isoformat()
+            visit_dates = loyalty_data[customer_phone].get('visit_dates', [])
+            if today_str not in visit_dates:
+                visit_dates.append(today_str)
+                loyalty_data[customer_phone]['visit_dates'] = visit_dates
             save_json_data(LOYALTY_FILE, loyalty_data)
             log_activity('loyalty_earn', order_data.get('user', 'unknown'), 'user', {
                 'customer_phone': customer_phone,
@@ -12880,14 +12953,101 @@ def loyalty_lookup():
             'email': loyalty_data[phone].get('email', ''),
             'notes': loyalty_data[phone].get('notes', ''),
             'address': loyalty_data[phone].get('address', ''),
+            'birthday': loyalty_data[phone].get('birthday', ''),
+            'anniversary': loyalty_data[phone].get('anniversary', ''),
             'points': loyalty_data[phone].get('points', 0),
             'total_earned': loyalty_data[phone].get('total_earned', 0),
             'total_redeemed': loyalty_data[phone].get('total_redeemed', 0),
             'total_spent': loyalty_data[phone].get('total_spent', 0.0),
             'total_orders': loyalty_data[phone].get('total_orders', 0),
             'last_visit': loyalty_data[phone].get('last_visit', ''),
-            'created_at': loyalty_data[phone].get('created_at', '')
+            'created_at': loyalty_data[phone].get('created_at', ''),
+            'visit_dates': loyalty_data[phone].get('visit_dates', [])
         }
+    })
+
+
+@app.route('/api/loyalty/update_profile', methods=['POST'])
+def loyalty_update_profile():
+    """Update a customer's loyalty profile (name, email, birthday, anniversary, notes, address)."""
+    data = request.json
+    phone = data.get('phone', '').strip()
+
+    if not phone:
+        return jsonify({'message': 'Phone number is required.'}), 400
+
+    loyalty_data = load_json_data(LOYALTY_FILE)
+
+    if phone not in loyalty_data:
+        return jsonify({'message': 'Customer not found.'}), 404
+
+    customer = loyalty_data[phone]
+    changes = {}
+
+    for field in ('name', 'email', 'notes', 'address', 'birthday', 'anniversary'):
+        if field in data:
+            val = data[field].strip() if isinstance(data[field], str) else data[field]
+            if val != customer.get(field, ''):
+                changes[field] = {'old': customer.get(field, ''), 'new': val}
+                customer[field] = val
+
+    if changes:
+        save_json_data(LOYALTY_FILE, loyalty_data)
+        log_activity('loyalty_profile_update', data.get('adminPin', 'unknown'), 'admin', {
+            'customer_phone': phone,
+            'customer_name': customer.get('name', ''),
+            'changes': changes
+        })
+
+    return jsonify({
+        'message': 'Profile updated successfully.',
+        'customer': customer,
+        'changes': list(changes.keys())
+    })
+
+
+@app.route('/api/loyalty/upcoming_occasions', methods=['POST'])
+def loyalty_upcoming_occasions():
+    """Return customers with birthdays or anniversaries today/this month."""
+    data = request.json or {}
+    scope = data.get('scope', 'month')  # 'today' or 'month'
+    loyalty_data = load_json_data(LOYALTY_FILE)
+    today = datetime.now()
+    today_md = today.strftime('%m-%d')
+    this_month = today.strftime('%m')
+
+    birthdays = []
+    anniversaries = []
+
+    for phone, cust in loyalty_data.items():
+        name = cust.get('name', phone)
+        bday = cust.get('birthday', '')
+        anniv = cust.get('anniversary', '')
+
+        if bday:
+            bday_check = bday[5:] if len(bday) >= 10 else bday
+            if scope == 'today' and bday_check == today_md:
+                birthdays.append({'phone': phone, 'name': name, 'date': bday[:10], 'points': cust.get('points', 0)})
+            elif scope == 'month' and bday_check[:2] == this_month:
+                birthdays.append({'phone': phone, 'name': name, 'date': bday[:10], 'points': cust.get('points', 0)})
+
+        if anniv:
+            anniv_check = anniv[5:] if len(anniv) >= 10 else anniv
+            if scope == 'today' and anniv_check == today_md:
+                anniversaries.append({'phone': phone, 'name': name, 'date': anniv[:10], 'points': cust.get('points', 0)})
+            elif scope == 'month' and anniv_check[:2] == this_month:
+                anniversaries.append({'phone': phone, 'name': name, 'date': anniv[:10], 'points': cust.get('points', 0)})
+
+    birthdays.sort(key=lambda x: x['date'])
+    anniversaries.sort(key=lambda x: x['date'])
+
+    return jsonify({
+        'scope': scope,
+        'today_md': today_md,
+        'birthdays': birthdays,
+        'anniversaries': anniversaries,
+        'total_birthdays': len(birthdays),
+        'total_anniversaries': len(anniversaries)
     })
 
 
@@ -12906,12 +13066,17 @@ def loyalty_register():
     if phone in loyalty_data:
         return jsonify({'message': 'Customer with this phone number already exists.'}), 409
 
+    birthday = data.get('birthday', '').strip()
+    anniversary = data.get('anniversary', '').strip()
+
     loyalty_data[phone] = {
         'phone': phone,
         'name': name,
         'email': '',
         'notes': '',
         'address': '',
+        'birthday': birthday,
+        'anniversary': anniversary,
         'points': 0,
         'total_earned': 0,
         'total_redeemed': 0,
@@ -12919,6 +13084,7 @@ def loyalty_register():
         'total_orders': 0,
         'last_visit': '',
         'created_at': datetime.now().isoformat(),
+        'visit_dates': [],
         'history': []
     }
 
@@ -12926,7 +13092,9 @@ def loyalty_register():
 
     log_activity('loyalty_register', data.get('adminPin', 'unknown'), 'admin', {
         'customer_phone': phone,
-        'customer_name': name
+        'customer_name': name,
+        'has_birthday': bool(birthday),
+        'has_anniversary': bool(anniversary)
     })
 
     return jsonify({'message': f'Customer {name} registered for loyalty points!', 'customer': loyalty_data[phone]})
@@ -18253,6 +18421,576 @@ def schedule_compare():
         'date_from': date_from,
         'date_to': date_to,
         'comparison': comparison
+    })
+
+
+# ═══════════ WAITLIST / DIGITAL QUEUE ═══════════
+
+def generate_waitlist_id():
+    """Generate a sequential waitlist ID like WL-001, WL-002, etc."""
+    waitlist = load_json_data(WAITLIST_FILE)
+    if not waitlist:
+        return "WL-001"
+    max_num = 0
+    for w in waitlist:
+        wid = w.get('id', '')
+        if wid.startswith('WL-'):
+            try:
+                num = int(wid[3:])
+                if num > max_num:
+                    max_num = num
+            except ValueError:
+                pass
+    return f"WL-{max_num + 1:03d}"
+
+
+def calculate_estimated_wait(minutes_per_table=45):
+    """Calculate estimated wait time based on current table occupancy.
+    Returns minutes as integer (0 = immediate seating available).
+    Uses existing TABLES_FILE to count occupied tables vs total capacity.
+    """
+    tables = load_json_data(TABLES_FILE)
+    if not tables:
+        return 0
+    total_tables = len(tables)
+    occupied = sum(1 for t in tables.values() if t.get('status') != 'available')
+    if occupied >= total_tables:
+        # All tables full — estimate based on waitlist length × minutes_per_table
+        waitlist = load_json_data(WAITLIST_FILE)
+        waiting = sum(1 for w in waitlist if w.get('status') in ('waiting',))
+        return waiting * minutes_per_table
+    # Some tables available
+    available = total_tables - occupied
+    waitlist = load_json_data(WAITLIST_FILE)
+    waiting = sum(1 for w in waitlist if w.get('status') in ('waiting',))
+    if waiting == 0:
+        return 0
+    # Estimate: parties ahead / available tables per cycle * minutes_per_table
+    # Rough: every minutes_per_table minutes, available tables free up
+    cycles_needed = max(0, waiting - available) // available + 1 if available > 0 else waiting
+    return cycles_needed * minutes_per_table
+
+
+@app.route('/api/waitlist/add', methods=['POST'])
+def waitlist_add():
+    """Add a party to the walk-in waitlist."""
+    data = request.json
+    if not data:
+        return jsonify({'message': 'No data provided.'}), 400
+
+    user_id = data.get('user_id', '')
+    if not user_id:
+        return jsonify({'message': 'User ID is required.'}), 400
+
+    users = load_json_data(USERS_FILE)
+    user_data = users.get(user_id)
+    if not user_data:
+        return jsonify({'message': 'User not found.'}), 403
+
+    customer_name = (data.get('customer_name') or '').strip()
+    party_size = data.get('party_size', 0)
+    customer_phone = (data.get('customer_phone') or '').strip()
+    customer_email = (data.get('customer_email') or '').strip()
+    notes = (data.get('notes') or '').strip()
+    estimated_wait = data.get('estimated_wait')
+
+    if not customer_name:
+        return jsonify({'message': 'Customer name is required.'}), 400
+    if not party_size or party_size < 1:
+        return jsonify({'message': 'Party size must be at least 1.'}), 400
+
+    if estimated_wait is None:
+        estimated_wait = calculate_estimated_wait()
+
+    entry = {
+        'id': generate_waitlist_id(),
+        'customer_name': customer_name,
+        'customer_phone': customer_phone,
+        'customer_email': customer_email,
+        'party_size': int(party_size),
+        'status': 'waiting',  # waiting | notified | seated | no_show | cancelled
+        'notes': notes,
+        'estimated_wait': int(estimated_wait),
+        'table_number': None,  # assigned when seated
+        'notified_at': None,
+        'created_at': datetime.now().isoformat(),
+        'updated_at': datetime.now().isoformat(),
+        'added_by': user_id,
+        'added_by_name': user_data.get('name', ''),
+        'seated_at': None,
+        'no_show_at': None,
+        'cancelled_reason': None
+    }
+
+    waitlist = load_json_data(WAITLIST_FILE)
+    waitlist.append(entry)
+    save_json_data(WAITLIST_FILE, waitlist)
+
+    log_activity('waitlist_added', user_id, user_data.get('role', 'user'), {
+        'waitlist_id': entry['id'],
+        'customer_name': customer_name,
+        'party_size': party_size,
+        'estimated_wait': estimated_wait
+    })
+
+    # Emit SocketIO event
+    socketio.emit('waitlist_update', {'action': 'added', 'entry': entry})
+
+    return jsonify({
+        'message': f'{customer_name} (Party of {party_size}) added to waitlist. Est. wait: {estimated_wait} min.',
+        'entry': entry,
+        'estimated_wait': estimated_wait
+    })
+
+
+@app.route('/api/waitlist/list', methods=['POST'])
+def waitlist_list():
+    """List waitlist entries with optional filters."""
+    data = request.json or {}
+    filter_status = data.get('filter_status', '')
+    filter_search = data.get('filter_search', '')
+
+    waitlist = load_json_data(WAITLIST_FILE)
+
+    # Sort: waiting first (by created_at ascending), then others (by updated_at descending)
+    def sort_key(w):
+        status_order = {'waiting': 0, 'notified': 1, 'seated': 2, 'no_show': 3, 'cancelled': 4}
+        s = status_order.get(w.get('status', ''), 99)
+        if w.get('status') in ('waiting', 'notified'):
+            return (s, w.get('created_at', ''))
+        return (s, w.get('updated_at', ''))
+
+    waitlist.sort(key=sort_key)
+
+    filtered = []
+    for w in waitlist:
+        if filter_status and w.get('status') != filter_status:
+            continue
+        if filter_search:
+            search_lower = filter_search.lower()
+            if (search_lower not in w.get('customer_name', '').lower() and
+                search_lower not in w.get('customer_phone', '') and
+                search_lower not in w.get('id', '').lower()):
+                continue
+        filtered.append(w)
+
+    # Auto-update estimated wait for waiting entries
+    current_estimate = calculate_estimated_wait()
+    for w in filtered:
+        if w.get('status') == 'waiting':
+            w['current_estimated_wait'] = calculate_estimated_wait()
+
+    return jsonify({
+        'entries': filtered,
+        'total': len(filtered),
+        'current_estimated_wait': current_estimate,
+        'waiting_count': sum(1 for w in filtered if w.get('status') == 'waiting')
+    })
+
+
+@app.route('/api/waitlist/update', methods=['POST'])
+def waitlist_update():
+    """Update a waitlist entry (name, phone, party size, notes)."""
+    data = request.json
+    if not data:
+        return jsonify({'message': 'No data provided.'}), 400
+
+    user_id = data.get('user_id', '')
+    entry_id = data.get('entry_id', '')
+
+    if not user_id:
+        return jsonify({'message': 'User ID is required.'}), 400
+    if not entry_id:
+        return jsonify({'message': 'Entry ID is required.'}), 400
+
+    users = load_json_data(USERS_FILE)
+    user_data = users.get(user_id)
+    if not user_data:
+        return jsonify({'message': 'User not found.'}), 403
+
+    waitlist = load_json_data(WAITLIST_FILE)
+    found = None
+    for w in waitlist:
+        if w.get('id') == entry_id:
+            found = w
+            break
+
+    if not found:
+        return jsonify({'message': f'Waitlist entry {entry_id} not found.'}), 404
+
+    changed = []
+    if 'customer_name' in data:
+        name = (data['customer_name'] or '').strip()
+        if name and name != found.get('customer_name'):
+            changed.append(f"name: {found.get('customer_name')} → {name}")
+            found['customer_name'] = name
+    if 'customer_phone' in data:
+        phone = (data['customer_phone'] or '').strip()
+        if phone != found.get('customer_phone'):
+            changed.append('phone updated')
+            found['customer_phone'] = phone
+    if 'party_size' in data:
+        ps = int(data['party_size'])
+        if ps > 0 and ps != found.get('party_size'):
+            changed.append(f"party_size: {found.get('party_size')} → {ps}")
+            found['party_size'] = ps
+    if 'notes' in data:
+        notes = (data['notes'] or '').strip()
+        if notes != found.get('notes'):
+            changed.append('notes updated')
+            found['notes'] = notes
+    if 'estimated_wait' in data:
+        ew = int(data['estimated_wait'])
+        if ew >= 0:
+            found['estimated_wait'] = ew
+            changed.append('estimated_wait updated')
+
+    if changed:
+        found['updated_at'] = datetime.now().isoformat()
+        save_json_data(WAITLIST_FILE, waitlist)
+        log_activity('waitlist_updated', user_id, user_data.get('role', 'user'), {
+            'entry_id': entry_id,
+            'changes': ', '.join(changed)
+        })
+        socketio.emit('waitlist_update', {'action': 'updated', 'entry': found})
+        return jsonify({'message': f'Entry {entry_id} updated.', 'entry': found, 'changes': changed})
+    else:
+        return jsonify({'message': 'No changes made.', 'entry': found})
+
+
+@app.route('/api/waitlist/check_in', methods=['POST'])
+def waitlist_check_in():
+    """Mark a waitlist entry as seated (checked in). Assigns a table number."""
+    data = request.json
+    if not data:
+        return jsonify({'message': 'No data provided.'}), 400
+
+    user_id = data.get('user_id', '')
+    entry_id = data.get('entry_id', '')
+    table_number = data.get('table_number')
+
+    if not user_id:
+        return jsonify({'message': 'User ID is required.'}), 400
+    if not entry_id:
+        return jsonify({'message': 'Entry ID is required.'}), 400
+
+    users = load_json_data(USERS_FILE)
+    user_data = users.get(user_id)
+    if not user_data:
+        return jsonify({'message': 'User not found.'}), 403
+
+    waitlist = load_json_data(WAITLIST_FILE)
+    found = None
+    for w in waitlist:
+        if w.get('id') == entry_id:
+            found = w
+            break
+
+    if not found:
+        return jsonify({'message': f'Waitlist entry {entry_id} not found.'}), 404
+
+    if found.get('status') != 'waiting':
+        return jsonify({'message': f'Entry {entry_id} is already {found.get("status")}.'}), 400
+
+    # Update table status if table number provided
+    if table_number is not None:
+        tables = load_json_data(TABLES_FILE)
+        table_key = str(table_number)
+        if table_key in tables:
+            tables[table_key]['status'] = 'occupied'
+            tables[table_key]['last_bussed_at'] = None
+            save_json_data(TABLES_FILE, tables)
+
+    found['status'] = 'seated'
+    found['table_number'] = table_number
+    found['seated_at'] = datetime.now().isoformat()
+    found['updated_at'] = datetime.now().isoformat()
+    save_json_data(WAITLIST_FILE, waitlist)
+
+    log_activity('waitlist_checked_in', user_id, user_data.get('role', 'user'), {
+        'entry_id': entry_id,
+        'customer_name': found.get('customer_name'),
+        'party_size': found.get('party_size'),
+        'table_number': table_number
+    })
+
+    socketio.emit('waitlist_update', {'action': 'checked_in', 'entry': found})
+    # Also emit table update for floor plan
+    socketio.emit('table_update', {'action': 'updated', 'table_number': table_number} if table_number else {})
+
+    return jsonify({
+        'message': f'{found.get("customer_name")} seated at table {table_number}.' if table_number else f'{found.get("customer_name")} checked in.',
+        'entry': found
+    })
+
+
+@app.route('/api/waitlist/no_show', methods=['POST'])
+def waitlist_no_show():
+    """Mark a waitlist entry as no-show."""
+    data = request.json
+    if not data:
+        return jsonify({'message': 'No data provided.'}), 400
+
+    user_id = data.get('user_id', '')
+    entry_id = data.get('entry_id', '')
+
+    if not user_id:
+        return jsonify({'message': 'User ID is required.'}), 400
+    if not entry_id:
+        return jsonify({'message': 'Entry ID is required.'}), 400
+
+    users = load_json_data(USERS_FILE)
+    user_data = users.get(user_id)
+    if not user_data:
+        return jsonify({'message': 'User not found.'}), 403
+
+    waitlist = load_json_data(WAITLIST_FILE)
+    found = None
+    for w in waitlist:
+        if w.get('id') == entry_id:
+            found = w
+            break
+
+    if not found:
+        return jsonify({'message': f'Waitlist entry {entry_id} not found.'}), 404
+
+    if found.get('status') not in ('waiting', 'notified'):
+        return jsonify({'message': f'Entry {entry_id} is already {found.get("status")}.'}), 400
+
+    found['status'] = 'no_show'
+    found['no_show_at'] = datetime.now().isoformat()
+    found['updated_at'] = datetime.now().isoformat()
+    save_json_data(WAITLIST_FILE, waitlist)
+
+    log_activity('waitlist_no_show', user_id, user_data.get('role', 'user'), {
+        'entry_id': entry_id,
+        'customer_name': found.get('customer_name')
+    })
+
+    socketio.emit('waitlist_update', {'action': 'no_show', 'entry': found})
+
+    return jsonify({
+        'message': f'{found.get("customer_name")} marked as no-show.',
+        'entry': found
+    })
+
+
+@app.route('/api/waitlist/cancel', methods=['POST'])
+def waitlist_cancel():
+    """Cancel a waitlist entry."""
+    data = request.json
+    if not data:
+        return jsonify({'message': 'No data provided.'}), 400
+
+    user_id = data.get('user_id', '')
+    entry_id = data.get('entry_id', '')
+    reason = (data.get('reason') or '').strip()
+
+    if not user_id:
+        return jsonify({'message': 'User ID is required.'}), 400
+    if not entry_id:
+        return jsonify({'message': 'Entry ID is required.'}), 400
+
+    users = load_json_data(USERS_FILE)
+    user_data = users.get(user_id)
+    if not user_data:
+        return jsonify({'message': 'User not found.'}), 403
+
+    waitlist = load_json_data(WAITLIST_FILE)
+    found = None
+    for w in waitlist:
+        if w.get('id') == entry_id:
+            found = w
+            break
+
+    if not found:
+        return jsonify({'message': f'Waitlist entry {entry_id} not found.'}), 404
+
+    if found.get('status') in ('seated', 'no_show', 'cancelled'):
+        return jsonify({'message': f'Entry {entry_id} is already {found.get("status")}.'}), 400
+
+    found['status'] = 'cancelled'
+    found['cancelled_reason'] = reason or None
+    found['updated_at'] = datetime.now().isoformat()
+    save_json_data(WAITLIST_FILE, waitlist)
+
+    log_activity('waitlist_cancelled', user_id, user_data.get('role', 'user'), {
+        'entry_id': entry_id,
+        'customer_name': found.get('customer_name'),
+        'reason': reason
+    })
+
+    socketio.emit('waitlist_update', {'action': 'cancelled', 'entry': found})
+
+    return jsonify({
+        'message': f'{found.get("customer_name")} removed from waitlist.',
+        'entry': found
+    })
+
+
+@app.route('/api/waitlist/notify', methods=['POST'])
+def waitlist_notify():
+    """Send a notification (email) to the customer that their table is ready.
+    Falls back gracefully if email is not configured.
+    """
+    data = request.json
+    if not data:
+        return jsonify({'message': 'No data provided.'}), 400
+
+    user_id = data.get('user_id', '')
+    entry_id = data.get('entry_id', '')
+
+    if not user_id:
+        return jsonify({'message': 'User ID is required.'}), 400
+    if not entry_id:
+        return jsonify({'message': 'Entry ID is required.'}), 400
+
+    users = load_json_data(USERS_FILE)
+    user_data = users.get(user_id)
+    if not user_data:
+        return jsonify({'message': 'User not found.'}), 403
+
+    waitlist = load_json_data(WAITLIST_FILE)
+    found = None
+    for w in waitlist:
+        if w.get('id') == entry_id:
+            found = w
+            break
+
+    if not found:
+        return jsonify({'message': f'Waitlist entry {entry_id} not found.'}), 404
+
+    if found.get('status') != 'waiting':
+        return jsonify({'message': f'Entry {entry_id} is already {found.get("status")}.'}), 400
+
+    customer_email = found.get('customer_email', '')
+    customer_phone = found.get('customer_phone', '')
+    customer_name = found.get('customer_name', '')
+
+    notified_via = []
+    notification_errors = []
+
+    # Try email notification
+    if customer_email:
+        email_config = load_json_data(EMAIL_CONFIG_FILE)
+        if email_config.get('enabled') and email_config.get('server'):
+            try:
+                import smtplib
+                from email.mime.text import MIMEText
+
+                msg = MIMEText(
+                    f"Hi {customer_name},\n\n"
+                    f"Great news! Your table is ready at our restaurant.\n\n"
+                    f"Please check in with the host stand.\n\n"
+                    f"Thank you for waiting!\n"
+                    f"— Restaurant Team"
+                )
+                msg['Subject'] = 'Your Table is Ready!'
+                msg['From'] = email_config.get('from_addr', '')
+                msg['To'] = customer_email
+
+                server = smtplib.SMTP(email_config.get('server', ''), int(email_config.get('port', 587)))
+                server.ehlo()
+                if email_config.get('use_tls', True):
+                    server.starttls()
+                    server.ehlo()
+                smtp_user = email_config.get('username', '')
+                smtp_pass = email_config.get('password', '')
+                if smtp_user and smtp_pass:
+                    server.login(smtp_user, smtp_pass)
+                server.send_message(msg)
+                server.quit()
+                notified_via.append('email')
+            except Exception as e:
+                notification_errors.append(f"email: {str(e)}")
+        else:
+            notification_errors.append('email not configured')
+    else:
+        notification_errors.append('no email address')
+
+    # Mark as notified
+    found['status'] = 'notified'
+    found['notified_at'] = datetime.now().isoformat()
+    found['updated_at'] = datetime.now().isoformat()
+    save_json_data(WAITLIST_FILE, waitlist)
+
+    log_activity('waitlist_notified', user_id, user_data.get('role', 'user'), {
+        'entry_id': entry_id,
+        'customer_name': customer_name,
+        'notified_via': notified_via,
+        'errors': notification_errors
+    })
+
+    socketio.emit('waitlist_update', {'action': 'notified', 'entry': found})
+
+    response_msg = f'{customer_name} notified'
+    if notified_via:
+        response_msg += f' via {", ".join(notified_via)}.'
+    else:
+        response_msg += '. (no notification sent — ' + '; '.join(notification_errors) + ')'
+
+    return jsonify({
+        'message': response_msg,
+        'entry': found,
+        'notified_via': notified_via,
+        'notification_errors': notification_errors
+    })
+
+
+@app.route('/api/waitlist/estimate', methods=['POST'])
+def waitlist_estimate():
+    """Get the current estimated wait time."""
+    minutes_per_table = request.json.get('minutes_per_table', 45) if request.json else 45
+    estimate = calculate_estimated_wait(minutes_per_table)
+
+    waitlist = load_json_data(WAITLIST_FILE)
+    waiting_count = sum(1 for w in waitlist if w.get('status') == 'waiting')
+
+    return jsonify({
+        'estimated_wait': estimate,
+        'waiting_count': waiting_count,
+        'minutes_per_table': minutes_per_table
+    })
+
+
+@app.route('/api/waitlist/today_stats', methods=['POST'])
+def waitlist_today_stats():
+    """Get today's waitlist stats for the dashboard."""
+    waitlist = load_json_data(WAITLIST_FILE)
+    today = datetime.now().strftime('%Y-%m-%d')
+
+    today_entries = [w for w in waitlist if w.get('created_at', '').startswith(today)]
+    waiting = sum(1 for w in today_entries if w.get('status') == 'waiting')
+    seated = sum(1 for w in today_entries if w.get('status') == 'seated')
+    no_shows = sum(1 for w in today_entries if w.get('status') == 'no_show')
+    cancelled = sum(1 for w in today_entries if w.get('status') == 'cancelled')
+    notified = sum(1 for w in today_entries if w.get('status') == 'notified')
+
+    avg_wait = 0
+    seated_with_wait = [w for w in today_entries if w.get('status') == 'seated' and w.get('seated_at') and w.get('created_at')]
+    if seated_with_wait:
+        total_wait = 0
+        count = 0
+        for w in seated_with_wait:
+            try:
+                created = datetime.fromisoformat(w['created_at'])
+                seated_t = datetime.fromisoformat(w['seated_at'])
+                wait_min = (seated_t - created).total_seconds() / 60
+                total_wait += wait_min
+                count += 1
+            except (ValueError, TypeError):
+                pass
+        if count > 0:
+            avg_wait = round(total_wait / count)
+
+    return jsonify({
+        'waiting': waiting,
+        'seated': seated,
+        'no_shows': no_shows,
+        'cancelled': cancelled,
+        'notified': notified,
+        'total_today': len(today_entries),
+        'average_wait_minutes': avg_wait
     })
 
 
