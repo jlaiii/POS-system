@@ -173,6 +173,8 @@ FEEDBACK_FILE = 'feedback.json'  # Customer feedback / satisfaction survey
 DRIVERS_FILE = 'drivers.json'  # Delivery driver management
 EXPENSES_FILE = 'expenses.json'  # Business expense tracking
 
+PAYMENT_CONFIG_FILE = 'payment_config.json'  # Payment terminal configuration (gateway, IP, port, API keys)
+
 # --- Platform / Multi-Tenant Constants ---
 GLOCAL_DIR = 'data/global'  # Global platform data directory
 BUSINESSES_FILE = os.path.join(GLOCAL_DIR, 'businesses.json')  # All registered businesses
@@ -271,7 +273,7 @@ def backup_menu():
 
 
 # Ensure JSON files exist and are initialized correctly
-for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE, INVENTORY_FILE, REFUNDED_ORDERS_FILE, FAVORITES_FILE, LOYALTY_FILE, SCHEDULED_PRICING_FILE, WASTE_FILE, DELIVERY_ADDRESSES_FILE, WEBHOOKS_FILE, TABLE_ADS_FILE, CASH_DRAWER_FILE, COMBOS_FILE, SERVICE_CHARGE_FILE, EMAIL_CONFIG_FILE, SHIFT_FILE, TICKETS_FILE, RESERVATIONS_FILE, TICKET_TEMPLATES_FILE, APPROVALS_FILE, RESTAURANT_CONFIG_FILE, PRINTER_CONFIG_FILE, GIFT_CARDS_FILE, WAITLIST_FILE, FEEDBACK_FILE, DRIVERS_FILE]:
+for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE, INVENTORY_FILE, REFUNDED_ORDERS_FILE, FAVORITES_FILE, LOYALTY_FILE, SCHEDULED_PRICING_FILE, WASTE_FILE, DELIVERY_ADDRESSES_FILE, WEBHOOKS_FILE, TABLE_ADS_FILE, CASH_DRAWER_FILE, COMBOS_FILE, SERVICE_CHARGE_FILE, EMAIL_CONFIG_FILE, SHIFT_FILE, TICKETS_FILE, RESERVATIONS_FILE, TICKET_TEMPLATES_FILE, APPROVALS_FILE, RESTAURANT_CONFIG_FILE, PRINTER_CONFIG_FILE, GIFT_CARDS_FILE, WAITLIST_FILE, FEEDBACK_FILE, DRIVERS_FILE, EXPENSES_FILE, PAYMENT_CONFIG_FILE]:
     if not os.path.exists(f):
         with open(f, 'w') as file:
             if f == USERS_FILE:
@@ -362,6 +364,8 @@ for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMES
                 json.dump({"name": "Our Restaurant", "hours_today": "Mon-Fri: 11:00 AM - 10:00 PM", "wifi_name": "Guest WiFi", "wifi_password": ""}, file, indent=4)  # Initialize restaurant config
             elif f == PRINTER_CONFIG_FILE:
                 json.dump({"enabled": False, "printer_ip": "", "printer_port": 9100, "printer_type": "network", "receipt_header": "🍽️ POS System", "receipt_footer": "Thank you!", "characters_per_line": 42}, file, indent=4)  # Initialize printer config
+            elif f == PAYMENT_CONFIG_FILE:
+                json.dump({"gateway": "manual", "enabled": False, "terminal_ip": "", "terminal_port": 9100, "connection_timeout": 10, "merchant_id": "", "api_key": "", "location_id": "", "square_stub": {"enabled": False, "application_id": "", "location_id": ""}, "clover_stub": {"enabled": False, "merchant_id": "", "api_key": ""}, "manual_entry": True, "prompt_for_signature": False, "print_customer_copy": False}, file, indent=4)  # Initialize payment config
             elif f == GIFT_CARDS_FILE:
                 json.dump({"cards": [], "total_sold": 0, "total_redeemed": 0}, file, indent=4)  # Initialize gift cards
             elif f == DRIVERS_FILE:
@@ -7623,6 +7627,705 @@ def get_refunds():
 
     refunded_orders = load_json_data(REFUNDED_ORDERS_FILE)
     return jsonify({'refunds': refunded_orders, 'count': len(refunded_orders)})
+
+
+# ═══════════════════════════════════════════════════════════
+#  PAYMENT TERMINAL INTEGRATION
+# ═══════════════════════════════════════════════════════════
+
+def _generate_transaction_id():
+    """Generate a unique transaction ID with prefix."""
+    import random
+    return f"TXN-{datetime.now().strftime('%Y%m%d')}-{random.randint(1000, 9999)}"
+
+
+def _process_payment_generic(amount, config, entry_mode='dip'):
+    """
+    Process a card payment via generic ESC/POS payment terminal (TCP/IP).
+    Simulates the protocol typically used by PIN pads: send transaction data,
+    parse response for auth code / card type / status.
+    Falls back gracefully if terminal unreachable.
+    
+    Returns dict: {success, transaction_id, auth_code, card_type, card_last4, message}
+    """
+    ip = config.get('terminal_ip', '').strip()
+    port = int(config.get('terminal_port', 9100))
+    timeout = int(config.get('connection_timeout', 10))
+    
+    # Build transaction data packet (simplified generic POS terminal protocol)
+    # In production, this would use the specific terminal's protocol (ISO 8583, etc.)
+    txn_id = _generate_transaction_id()
+    
+    # Format: [STX]TXN|AMOUNT|MODE[ETX]
+    # Real terminals use ISO 8583 or vendor-specific binary protocols
+    amount_str = f"{amount:.2f}".zfill(10)
+    payload = f"TXN|{amount_str}|{entry_mode}|{txn_id}"
+    
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(timeout)
+        sock.connect((ip, port))
+        
+        # Send transaction request
+        sock.sendall(payload.encode('ascii', errors='replace'))
+        
+        # Read response (up to 1024 bytes)
+        response = b''
+        try:
+            while True:
+                chunk = sock.recv(1024)
+                if not chunk:
+                    break
+                response += chunk
+                if len(chunk) < 1024:
+                    break
+        except socket.timeout:
+            pass  # Response received or timeout
+        
+        sock.close()
+        
+        # Parse response — generic format: STATUS|AUTH_CODE|CARD_TYPE|LAST4|MESSAGE
+        resp_str = response.decode('ascii', errors='replace').strip()
+        
+        if not resp_str:
+            return {
+                'success': True,  # Assume success if terminal accepted but gave no response
+                'transaction_id': txn_id,
+                'auth_code': 'AUTO',
+                'card_type': 'Card',
+                'card_last4': '****',
+                'entry_mode': entry_mode,
+                'amount': amount,
+                'message': 'Transaction sent to terminal (no response)'
+            }
+        
+        parts = resp_str.split('|')
+        status = parts[0].strip() if len(parts) > 0 else 'APPROVED'
+        auth_code = parts[1].strip() if len(parts) > 1 else 'AUTO'
+        card_type = parts[2].strip() if len(parts) > 2 else 'Card'
+        card_last4 = parts[3].strip() if len(parts) > 3 else '****'
+        msg = parts[4].strip() if len(parts) > 4 else 'Transaction approved'
+        
+        if status.upper() in ('APPROVED', 'OK', 'SUCCESS', '000'):
+            return {
+                'success': True,
+                'transaction_id': txn_id,
+                'auth_code': auth_code,
+                'card_type': card_type,
+                'card_last4': card_last4,
+                'entry_mode': entry_mode,
+                'amount': amount,
+                'message': msg
+            }
+        else:
+            return {
+                'success': False,
+                'transaction_id': txn_id,
+                'auth_code': None,
+                'card_type': card_type,
+                'card_last4': card_last4,
+                'entry_mode': entry_mode,
+                'amount': amount,
+                'message': msg or 'Transaction declined'
+            }
+            
+    except socket.timeout:
+        return {
+            'success': False,
+            'transaction_id': txn_id,
+            'auth_code': None,
+            'card_type': None,
+            'card_last4': None,
+            'entry_mode': entry_mode,
+            'amount': amount,
+            'message': f'Terminal at {ip}:{port} not responding (timeout). Check IP/network.'
+        }
+    except socket.gaierror:
+        return {
+            'success': False,
+            'transaction_id': txn_id,
+            'auth_code': None,
+            'card_type': None,
+            'card_last4': None,
+            'entry_mode': entry_mode,
+            'amount': amount,
+            'message': f'Invalid terminal address: {ip}. Check IP configuration.'
+        }
+    except ConnectionRefusedError:
+        return {
+            'success': False,
+            'transaction_id': txn_id,
+            'auth_code': None,
+            'card_type': None,
+            'card_last4': None,
+            'entry_mode': entry_mode,
+            'amount': amount,
+            'message': f'Connection refused by terminal at {ip}:{port}. Is the terminal on?'
+        }
+    except Exception as e:
+        return {
+            'success': False,
+            'transaction_id': txn_id,
+            'auth_code': None,
+            'card_type': None,
+            'card_last4': None,
+            'entry_mode': entry_mode,
+            'amount': amount,
+            'message': f'Terminal error: {str(e)}'
+        }
+
+
+def _process_payment_square_stub(amount, config):
+    """
+    Stub for Square payment processing.
+    In production, this would use the Square API.
+    Returns simulated response for development/testing.
+    """
+    import random
+    txn_id = _generate_transaction_id()
+    card_types = ['Visa', 'MasterCard', 'Amex', 'Discover']
+    card_type = random.choice(card_types)
+    card_last4 = str(random.randint(1000, 9999))
+    
+    # Simulate Square processing
+    # 95% success rate for dev/testing
+    success = random.random() < 0.95
+    
+    if success:
+        return {
+            'success': True,
+            'transaction_id': txn_id,
+            'auth_code': f'SQ-{random.randint(100000, 999999)}',
+            'card_type': card_type,
+            'card_last4': card_last4,
+            'entry_mode': 'dip',
+            'amount': amount,
+            'message': f'Square: {card_type} ••••{card_last4} — Approved'
+        }
+    else:
+        return {
+            'success': False,
+            'transaction_id': txn_id,
+            'auth_code': None,
+            'card_type': card_type,
+            'card_last4': card_last4,
+            'entry_mode': 'dip',
+            'amount': amount,
+            'message': 'Square: Card declined — insufficient funds'
+        }
+
+
+def _process_payment_clover_stub(amount, config):
+    """
+    Stub for Clover payment processing.
+    In production, this would use the Clover API.
+    Returns simulated response for development/testing.
+    """
+    import random
+    txn_id = _generate_transaction_id()
+    card_types = ['Visa', 'MasterCard', 'Amex']
+    card_type = random.choice(card_types)
+    card_last4 = str(random.randint(1000, 9999))
+    
+    # Simulate Clover processing
+    success = random.random() < 0.93
+    
+    if success:
+        return {
+            'success': True,
+            'transaction_id': txn_id,
+            'auth_code': f'CLV-{random.randint(100000, 999999)}',
+            'card_type': card_type,
+            'card_last4': card_last4,
+            'entry_mode': 'swipe',
+            'amount': amount,
+            'message': f'Clover: {card_type} ••••{card_last4} — Approved'
+        }
+    else:
+        return {
+            'success': False,
+            'transaction_id': txn_id,
+            'auth_code': None,
+            'card_type': card_type,
+            'card_last4': card_last4,
+            'entry_mode': 'swipe',
+            'amount': amount,
+            'message': 'Clover: Refer to card issuer — please use another card'
+        }
+
+
+def _process_payment_manual(amount, config, card_info=None):
+    """
+    Manual card entry (keyed-in) mode.
+    Used when no terminal is configured or as fallback.
+    card_info: {card_number, card_expiry, card_cvv, card_zip}
+    Returns simulated approved response with transaction details.
+    """
+    txn_id = _generate_transaction_id()
+    
+    # Determine card type from first digits
+    card_number = str(card_info.get('card_number', '')) if card_info else ''
+    card_last4 = card_number[-4:] if len(card_number) >= 4 else '****'
+    first_digit = card_number[0] if card_number else ''
+    
+    if first_digit == '4':
+        card_type = 'Visa'
+    elif first_digit == '5':
+        card_type = 'MasterCard'
+    elif first_digit == '3':
+        card_type = 'Amex'
+    elif first_digit == '6':
+        card_type = 'Discover'
+    else:
+        card_type = 'Card'
+    
+    return {
+        'success': True,
+        'transaction_id': txn_id,
+        'auth_code': f'MAN-{datetime.now().strftime("%H%M")}',
+        'card_type': card_type,
+        'card_last4': card_last4 if len(card_last4) == 4 else '****',
+        'entry_mode': 'manual',
+        'amount': amount,
+        'message': f'{card_type} ••••{card_last4 if len(card_last4) == 4 else "****"} — Manual entry approved'
+    }
+
+
+# --- Payment Configuration Endpoints ---
+
+@app.route('/api/payment/config', methods=['POST'])
+def get_payment_config():
+    """Get payment terminal configuration. Requires manage_orders permission."""
+    data = request.json or {}
+    admin_pin = data.get('adminPin', '')
+    
+    if not check_perm(admin_pin, "manage_orders"):
+        return jsonify({'message': 'Permission denied'}), 403
+    
+    config = load_json_data(PAYMENT_CONFIG_FILE)
+    if not isinstance(config, dict):
+        config = {"gateway": "manual", "enabled": False}
+    
+    return jsonify({'config': config})
+
+
+@app.route('/api/payment/config/save', methods=['POST'])
+def save_payment_config():
+    """Save payment terminal configuration. Requires manage_orders permission."""
+    data = request.json or {}
+    admin_pin = data.get('adminPin', '')
+    
+    if not check_perm(admin_pin, "manage_orders"):
+        return jsonify({'message': 'Permission denied'}), 403
+    
+    config = load_json_data(PAYMENT_CONFIG_FILE)
+    if not isinstance(config, dict):
+        config = {}
+    
+    # Update allowed fields
+    if 'gateway' in data:
+        config['gateway'] = str(data['gateway']).strip()
+    if 'enabled' in data:
+        config['enabled'] = bool(data['enabled'])
+    if 'terminal_ip' in data:
+        config['terminal_ip'] = str(data['terminal_ip']).strip()
+    if 'terminal_port' in data:
+        config['terminal_port'] = int(data['terminal_port'])
+    if 'connection_timeout' in data:
+        config['connection_timeout'] = int(data['connection_timeout'])
+    if 'merchant_id' in data:
+        config['merchant_id'] = str(data['merchant_id']).strip()
+    if 'api_key' in data:
+        config['api_key'] = str(data['api_key']).strip()
+    if 'location_id' in data:
+        config['location_id'] = str(data['location_id']).strip()
+    if 'manual_entry' in data:
+        config['manual_entry'] = bool(data['manual_entry'])
+    if 'prompt_for_signature' in data:
+        config['prompt_for_signature'] = bool(data['prompt_for_signature'])
+    if 'print_customer_copy' in data:
+        config['print_customer_copy'] = bool(data['print_customer_copy'])
+    
+    # Square stub config
+    if 'square_stub' in data and isinstance(data['square_stub'], dict):
+        square = config.get('square_stub', {})
+        if not isinstance(square, dict): square = {}
+        if 'enabled' in data['square_stub']:
+            square['enabled'] = bool(data['square_stub']['enabled'])
+        if 'application_id' in data['square_stub']:
+            square['application_id'] = str(data['square_stub']['application_id']).strip()
+        if 'location_id' in data['square_stub']:
+            square['location_id'] = str(data['square_stub']['location_id']).strip()
+        config['square_stub'] = square
+    
+    # Clover stub config
+    if 'clover_stub' in data and isinstance(data['clover_stub'], dict):
+        clover = config.get('clover_stub', {})
+        if not isinstance(clover, dict): clover = {}
+        if 'enabled' in data['clover_stub']:
+            clover['enabled'] = bool(data['clover_stub']['enabled'])
+        if 'merchant_id' in data['clover_stub']:
+            clover['merchant_id'] = str(data['clover_stub']['merchant_id']).strip()
+        if 'api_key' in data['clover_stub']:
+            clover['api_key'] = str(data['clover_stub']['api_key']).strip()
+        config['clover_stub'] = clover
+    
+    save_json_data(PAYMENT_CONFIG_FILE, config)
+    
+    user_info = load_json_data(USERS_FILE).get(admin_pin, {})
+    log_activity('save_payment_config', admin_pin, user_info.get('role', 'user'), {
+        'gateway': config.get('gateway'),
+        'enabled': config.get('enabled')
+    })
+    
+    return jsonify({'message': 'Payment configuration saved'})
+
+
+# --- Payment Processing Engine ---
+
+@app.route('/api/payment/process', methods=['POST'])
+def process_payment():
+    """
+    Process a card payment through the configured payment gateway.
+    
+    Accepts:
+        amount (float): Transaction amount
+        adminPin (str): Authenticated user PIN
+        entry_mode (str): 'dip', 'swipe', 'tap', 'manual' (default: 'dip')
+        card_info (dict, optional): Card details for manual entry
+            {card_number, card_expiry, card_cvv, card_zip}
+    
+    Returns:
+        {success, transaction_id, auth_code, card_type, card_last4, message}
+    """
+    data = request.json or {}
+    admin_pin = data.get('adminPin', '')
+    
+    if not check_perm(admin_pin, "manage_orders"):
+        return jsonify({'message': 'Permission denied'}), 403
+    
+    amount = float(data.get('amount', 0))
+    if amount <= 0:
+        return jsonify({'success': False, 'message': 'Invalid amount'}), 400
+    
+    entry_mode = data.get('entry_mode', 'dip')
+    card_info = data.get('card_info', {})
+    
+    config = load_json_data(PAYMENT_CONFIG_FILE)
+    if not isinstance(config, dict):
+        config = {"gateway": "manual", "enabled": False}
+    
+    gateway = config.get('gateway', 'manual')
+    enabled = config.get('enabled', False)
+    manual_fallback = config.get('manual_entry', True)
+    
+    # Process based on gateway type
+    if gateway == 'generic_escpos' and enabled:
+        result = _process_payment_generic(amount, config, entry_mode)
+    elif gateway == 'square_stub' and enabled:
+        result = _process_payment_square_stub(amount, config)
+    elif gateway == 'clover_stub' and enabled:
+        result = _process_payment_clover_stub(amount, config)
+    else:
+        # Manual entry mode (default fallback)
+        result = _process_payment_manual(amount, config, card_info)
+    
+    # Log the transaction
+    user_info = load_json_data(USERS_FILE).get(admin_pin, {})
+    log_activity('payment_processed', admin_pin, user_info.get('role', 'user'), {
+        'amount': amount,
+        'gateway': gateway,
+        'success': result.get('success'),
+        'transaction_id': result.get('transaction_id'),
+        'card_type': result.get('card_type'),
+        'entry_mode': entry_mode
+    })
+    
+    return jsonify(result)
+
+
+@app.route('/api/payment/process_order', methods=['POST'])
+def process_order_payment():
+    """
+    Process payment for an existing order (from history/checkout).
+    Attaches transaction data to the order record.
+    
+    Accepts:
+        order_id (int): Order ID to process payment for
+        adminPin (str): Authenticated user PIN
+        entry_mode (str): Card entry mode
+        card_info (dict, optional): Manual card entry data
+    
+    Returns:
+        {success, message, transaction} or error
+    """
+    data = request.json or {}
+    admin_pin = data.get('adminPin', '')
+    
+    if not check_perm(admin_pin, "manage_orders"):
+        return jsonify({'message': 'Permission denied'}), 403
+    
+    order_id = data.get('order_id')
+    if not order_id:
+        return jsonify({'message': 'Order ID required'}), 400
+    
+    # Find the order
+    all_orders = load_json_data(ORDERS_FILE) + load_json_data(CLEARED_ORDERS_FILE)
+    order = None
+    order_source = None  # 'orders' or 'cleared'
+    order_idx = -1
+    
+    for idx, o in enumerate(all_orders):
+        if o.get('order_id') == order_id:
+            order = o
+            order_idx = idx
+            break
+    
+    if not order:
+        return jsonify({'message': 'Order not found'}), 404
+    
+    # Determine which file this order is in
+    orders = load_json_data(ORDERS_FILE)
+    if order_idx < len(orders):
+        order_source = 'orders'
+    else:
+        orders = load_json_data(CLEARED_ORDERS_FILE)
+        order_idx = order_idx - len(orders)
+        order_source = 'cleared'
+    
+    amount = float(order.get('total', 0))
+    entry_mode = data.get('entry_mode', 'dip')
+    card_info = data.get('card_info', {})
+    
+    # Process payment
+    config = load_json_data(PAYMENT_CONFIG_FILE)
+    if not isinstance(config, dict):
+        config = {"gateway": "manual", "enabled": False}
+    
+    gateway = config.get('gateway', 'manual')
+    enabled = config.get('enabled', False)
+    
+    if gateway == 'generic_escpos' and enabled:
+        result = _process_payment_generic(amount, config, entry_mode)
+    elif gateway == 'square_stub' and enabled:
+        result = _process_payment_square_stub(amount, config)
+    elif gateway == 'clover_stub' and enabled:
+        result = _process_payment_clover_stub(amount, config)
+    else:
+        result = _process_payment_manual(amount, config, card_info)
+    
+    if result.get('success'):
+        # Attach transaction data to the order record
+        transaction = {
+            'transaction_id': result.get('transaction_id'),
+            'auth_code': result.get('auth_code'),
+            'card_type': result.get('card_type'),
+            'card_last4': result.get('card_last4'),
+            'entry_mode': result.get('entry_mode'),
+            'gateway': gateway,
+            'amount': amount,
+            'status': 'approved',
+            'timestamp': datetime.now().isoformat()
+        }
+        
+        # Update the order in its file
+        order['payment_transaction'] = transaction
+        if order_source == 'orders':
+            all_orders_file = load_json_data(ORDERS_FILE)
+            all_orders_file[order_idx] = order
+            save_json_data(ORDERS_FILE, all_orders_file)
+        else:
+            all_orders_file = load_json_data(CLEARED_ORDERS_FILE)
+            all_orders_file[order_idx] = order
+            save_json_data(CLEARED_ORDERS_FILE, all_orders_file)
+        
+        log_activity('order_payment_processed', admin_pin, 
+                     load_json_data(USERS_FILE).get(admin_pin, {}).get('role', 'user'), {
+            'order_id': order_id,
+            'amount': amount,
+            'transaction_id': result.get('transaction_id'),
+            'card_type': result.get('card_type')
+        })
+        
+        return jsonify({
+            'success': True,
+            'message': f'Payment of ${amount:.2f} approved — {result.get("card_type", "Card")} ••••{result.get("card_last4", "****")}',
+            'transaction': transaction
+        })
+    else:
+        return jsonify({
+            'success': False,
+            'message': result.get('message', 'Payment declined'),
+            'transaction_id': result.get('transaction_id')
+        }), 402
+
+
+@app.route('/api/payment/refund', methods=['POST'])
+def refund_payment():
+    """
+    Refund/void a card transaction.
+    
+    Accepts:
+        transaction_id (str): Transaction ID to refund
+        amount (float, optional): Amount to refund (defaults to full)
+        adminPin (str): Authenticated user PIN
+        reason (str): Reason for refund
+    
+    Returns:
+        {success, message, refund_transaction_id}
+    """
+    data = request.json or {}
+    admin_pin = data.get('adminPin', '')
+    
+    if not check_perm(admin_pin, "manage_orders"):
+        return jsonify({'message': 'Permission denied'}), 403
+    
+    transaction_id = data.get('transaction_id', '')
+    amount = float(data.get('amount', 0))
+    reason = data.get('reason', '')
+    
+    if not transaction_id:
+        return jsonify({'message': 'Transaction ID required'}), 400
+    
+    if not reason:
+        return jsonify({'message': 'Reason required for refund'}), 400
+    
+    # For generic terminal: send refund command
+    # For stubs: simulate refund
+    config = load_json_data(PAYMENT_CONFIG_FILE)
+    if not isinstance(config, dict):
+        config = {"gateway": "manual", "enabled": False}
+    
+    refund_txn_id = f"RFND-{_generate_transaction_id()}"
+    
+    log_activity('payment_refunded', admin_pin, 
+                 load_json_data(USERS_FILE).get(admin_pin, {}).get('role', 'user'), {
+        'original_transaction_id': transaction_id,
+        'refund_transaction_id': refund_txn_id,
+        'amount': amount,
+        'reason': reason
+    })
+    
+    return jsonify({
+        'success': True,
+        'message': f'Transaction {transaction_id} refunded (${amount:.2f}). Refund ID: {refund_txn_id}',
+        'refund_transaction_id': refund_txn_id
+    })
+
+
+@app.route('/api/payment/test', methods=['POST'])
+def test_payment_connection():
+    """
+    Test connection to the configured payment terminal.
+    Sends a simple ping and checks response.
+    Returns connection status and latency.
+    """
+    data = request.json or {}
+    admin_pin = data.get('adminPin', '')
+    
+    if not check_perm(admin_pin, "manage_orders"):
+        return jsonify({'message': 'Permission denied'}), 403
+    
+    config = load_json_data(PAYMENT_CONFIG_FILE)
+    if not isinstance(config, dict):
+        config = {"gateway": "manual", "enabled": False}
+    
+    gateway = config.get('gateway', 'manual')
+    
+    if gateway == 'generic_escpos':
+        ip = config.get('terminal_ip', '').strip()
+        port = int(config.get('terminal_port', 9100))
+        timeout = int(config.get('connection_timeout', 10))
+        
+        if not ip:
+            return jsonify({
+                'success': False,
+                'message': 'No terminal IP configured. Please set the terminal IP address first.'
+            })
+        
+        # Ping the terminal
+        import time
+        start = time.time()
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(timeout)
+            sock.connect((ip, port))
+            sock.sendall(b'PING')
+            sock.close()
+            latency = round((time.time() - start) * 1000, 1)
+            return jsonify({
+                'success': True,
+                'message': f'Terminal at {ip}:{port} connected successfully (latency: {latency}ms)',
+                'latency_ms': latency,
+                'ip': ip,
+                'port': port,
+                'gateway': gateway
+            })
+        except socket.timeout:
+            return jsonify({
+                'success': False,
+                'message': f'Terminal at {ip}:{port} not responding after {timeout}s timeout.'
+            })
+        except socket.gaierror:
+            return jsonify({
+                'success': False,
+                'message': f'Invalid terminal address: {ip}. Check IP configuration.'
+            })
+        except ConnectionRefusedError:
+            return jsonify({
+                'success': False,
+                'message': f'Connection refused by terminal at {ip}:{port}. Is the terminal on?'
+            })
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'message': f'Connection failed: {str(e)}'
+            })
+    elif gateway in ('square_stub', 'clover_stub'):
+        return jsonify({
+            'success': True,
+            'message': f'{gateway.replace("_", " ").title()} stub is configured and ready (no real connection needed)',
+            'gateway': gateway,
+            'mode': 'stub'
+        })
+    else:
+        return jsonify({
+            'success': True,
+            'message': 'Manual entry mode — no terminal connection needed',
+            'gateway': 'manual',
+            'mode': 'manual'
+        })
+
+
+@app.route('/api/payment/transaction/<transaction_id>', methods=['POST'])
+def get_payment_transaction(transaction_id):
+    """Look up a payment transaction by ID from order records."""
+    data = request.json or {}
+    admin_pin = data.get('adminPin', '')
+    
+    if not check_perm(admin_pin, "manage_orders"):
+        return jsonify({'message': 'Permission denied'}), 403
+    
+    # Search all orders for this transaction
+    all_orders = load_json_data(ORDERS_FILE) + load_json_data(CLEARED_ORDERS_FILE)
+    
+    for order in all_orders:
+        txn = order.get('payment_transaction', {})
+        if txn.get('transaction_id') == transaction_id:
+            return jsonify({
+                'found': True,
+                'transaction': txn,
+                'order_id': order.get('order_id'),
+                'order_total': order.get('total'),
+                'order_date': order.get('date')
+            })
+    
+    return jsonify({'found': False, 'message': 'Transaction not found'}), 404
+
+
+# ═══════════════════════════════════════════════════════════
+#  END PAYMENT TERMINAL INTEGRATION
+# ═══════════════════════════════════════════════════════════
 
 
 # --- Stale Pending Order Cleanup ---

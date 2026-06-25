@@ -1,0 +1,23 @@
+{
+    "gateway": "manual",
+    "enabled": false,
+    "terminal_ip": "",
+    "terminal_port": 9100,
+    "connection_timeout": 10,
+    "merchant_id": "",
+    "api_key": "",
+    "location_id": "",
+    "square_stub": {
+        "enabled": false,
+        "application_id": "",
+        "location_id": ""
+    },
+    "clover_stub": {
+        "enabled": false,
+        "merchant_id": "",
+        "api_key": ""
+    },
+    "manual_entry": true,
+    "prompt_for_signature": false,
+    "print_customer_copy": false
+}

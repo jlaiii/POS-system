@@ -11405,5 +11405,584 @@
             "payment_method": "Cash",
             "item_count": 1
         }
+    },
+    {
+        "timestamp": "2026-06-25T18:08:02.973760",
+        "type": "submit_order",
+        "user_id": "9999",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "order_id": 97,
+            "subtotal": 12.0,
+            "tax_amount": 0.98,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 12.98,
+            "payment_method": "Cash",
+            "item_count": 2
+        }
+    },
+    {
+        "timestamp": "2026-06-25T18:08:30.246963",
+        "type": "submit_order",
+        "user_id": null,
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "order_id": 98,
+            "subtotal": 6.4,
+            "tax_amount": 0.53,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 6.93,
+            "payment_method": "Cash",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-25T18:08:30.279196",
+        "type": "submit_order",
+        "user_id": "9999",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "order_id": 99,
+            "subtotal": 6.0,
+            "tax_amount": 0.49,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 6.49,
+            "payment_method": "Cash",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-25T18:08:30.301370",
+        "type": "submit_order",
+        "user_id": "9999",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "order_id": 100,
+            "subtotal": 21.0,
+            "tax_amount": 1.73,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 22.73,
+            "payment_method": "Cash",
+            "item_count": 2
+        }
+    },
+    {
+        "timestamp": "2026-06-25T18:36:56.544862",
+        "type": "submit_order",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 101,
+            "subtotal": 0.0,
+            "tax_amount": 0.0,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 0.0,
+            "payment_method": "Cash",
+            "item_count": 0
+        }
+    },
+    {
+        "timestamp": "2026-06-25T18:36:56.603626",
+        "type": "submit_order",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 102,
+            "subtotal": 999.0,
+            "tax_amount": 82.42,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 1081.42,
+            "payment_method": "Cash",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-25T18:38:31.398277",
+        "type": "submit_order",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 103,
+            "subtotal": 6.0,
+            "tax_amount": 0.49,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 6.49,
+            "payment_method": "Cash",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-25T18:39:59.259703",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T18:40:06.464757",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T18:40:21.947494",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T18:50:09.856432",
+        "type": "login_failed",
+        "user_id": "9999",
+        "user_role": "unknown",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed",
+            "method": "pin",
+            "ip": "127.0.0.1",
+            "attempt": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-25T18:50:09.954939",
+        "type": "login_failed",
+        "user_id": "9999",
+        "user_role": "unknown",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed",
+            "method": "pin",
+            "ip": "127.0.0.1",
+            "attempt": 2
+        }
+    },
+    {
+        "timestamp": "2026-06-25T18:50:10.056849",
+        "type": "login_failed",
+        "user_id": "9999",
+        "user_role": "unknown",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed",
+            "method": "pin",
+            "ip": "127.0.0.1",
+            "attempt": 3
+        }
+    },
+    {
+        "timestamp": "2026-06-25T18:50:10.155308",
+        "type": "login_failed",
+        "user_id": "9999",
+        "user_role": "unknown",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed",
+            "method": "pin",
+            "ip": "127.0.0.1",
+            "attempt": 4
+        }
+    },
+    {
+        "timestamp": "2026-06-25T18:50:10.251020",
+        "type": "login_failed",
+        "user_id": "9999",
+        "user_role": "unknown",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed",
+            "method": "pin",
+            "ip": "127.0.0.1",
+            "attempt": 5
+        }
+    },
+    {
+        "timestamp": "2026-06-25T18:50:13.523846",
+        "type": "login_failed",
+        "user_id": "9999",
+        "user_role": "unknown",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed",
+            "method": "pin",
+            "ip": "127.0.0.1",
+            "attempt": 6
+        }
+    },
+    {
+        "timestamp": "2026-06-25T19:28:02.394491",
+        "type": "add_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "failed",
+            "reason": "Missing data",
+            "new_user_id": "9997"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T19:28:02.413371",
+        "type": "delete_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "failed",
+            "reason": "User ID not found",
+            "target_user_id": "9997"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T19:28:12.887014",
+        "type": "add_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "added_user_id": "9997",
+            "added_user_name": "ReliabilityTest",
+            "added_user_role": "user"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T19:28:12.907021",
+        "type": "delete_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "deleted_user_id": "9997",
+            "deleted_user_name": "ReliabilityTest",
+            "deleted_user_role": "user"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T19:28:52.262617",
+        "type": "shift_edited",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "shift_index": 0,
+            "user_id": "1111",
+            "user_name": "Owner",
+            "changes": {
+                "clock_in_time": {
+                    "old": "2026-06-23T01:10:00",
+                    "new": "2026-06-23T01:10:00"
+                },
+                "clock_out_time": {
+                    "old": "2026-06-23T01:15:00",
+                    "new": "2026-06-23T01:16:00"
+                }
+            },
+            "reason": "Reliability Bot shift edit test - reverting immediately"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T19:28:52.287798",
+        "type": "shift_edited",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "shift_index": 0,
+            "user_id": "1111",
+            "user_name": "Owner",
+            "changes": {
+                "clock_in_time": {
+                    "old": "2026-06-23T01:10:00",
+                    "new": "2026-06-23T01:10:00"
+                },
+                "clock_out_time": {
+                    "old": "2026-06-23T01:16:00",
+                    "new": "2026-06-23T01:15:00"
+                }
+            },
+            "reason": "Revert - Reliability Bot test"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T19:29:25.642613",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T19:51:39.881072",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T19:51:49.604781",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T21:09:51.368727",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T21:09:53.519735",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T21:10:10.880202",
+        "type": "submit_order",
+        "user_id": null,
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 104,
+            "subtotal": 8.99,
+            "tax_amount": 0.74,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 9.73,
+            "payment_method": "Cash",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-25T21:10:13.225409",
+        "type": "refund_order",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 104,
+            "reason": "No reason provided",
+            "refunded_by_name": "Owner",
+            "order_total": 9.73,
+            "inventory_restored": [
+                "Pancakes x1"
+            ]
+        }
+    },
+    {
+        "timestamp": "2026-06-25T21:10:24.101973",
+        "type": "clock_in",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee One",
+            "clock_in_time": "2026-06-25T21:10:24.101760",
+            "late_minutes": null,
+            "scheduled_start": null
+        }
+    },
+    {
+        "timestamp": "2026-06-25T21:10:25.159138",
+        "type": "clock_in",
+        "user_id": "5678",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee Two",
+            "clock_in_time": "2026-06-25T21:10:25.158978",
+            "late_minutes": null,
+            "scheduled_start": null
+        }
+    },
+    {
+        "timestamp": "2026-06-25T21:10:59.111049",
+        "type": "clock_out",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee One",
+            "clock_in_time": "2026-06-25T21:10:24.101760",
+            "clock_out_time": "2026-06-25T21:10:59.108659",
+            "duration_hours": 0.01
+        }
+    },
+    {
+        "timestamp": "2026-06-25T21:10:59.142563",
+        "type": "clock_out",
+        "user_id": "5678",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee Two",
+            "clock_in_time": "2026-06-25T21:10:25.158978",
+            "clock_out_time": "2026-06-25T21:10:59.141231",
+            "duration_hours": 0.01
+        }
+    },
+    {
+        "timestamp": "2026-06-25T21:19:19.709646",
+        "type": "save_payment_config",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "gateway": "square_stub",
+            "enabled": true
+        }
+    },
+    {
+        "timestamp": "2026-06-25T21:19:19.762072",
+        "type": "payment_processed",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "amount": 15.5,
+            "gateway": "square_stub",
+            "success": true,
+            "transaction_id": "TXN-20260625-9898",
+            "card_type": "Visa",
+            "entry_mode": "dip"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T21:19:23.719569",
+        "type": "payment_processed",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "amount": 25.0,
+            "gateway": "square_stub",
+            "success": true,
+            "transaction_id": "TXN-20260625-9688",
+            "card_type": "Discover",
+            "entry_mode": "manual"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T21:19:27.392087",
+        "type": "save_payment_config",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "gateway": "manual",
+            "enabled": false
+        }
+    },
+    {
+        "timestamp": "2026-06-25T21:19:27.418996",
+        "type": "payment_processed",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "amount": 42.5,
+            "gateway": "manual",
+            "success": true,
+            "transaction_id": "TXN-20260625-5700",
+            "card_type": "MasterCard",
+            "entry_mode": "manual"
+        }
     }
 ]

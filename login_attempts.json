@@ -1413,5 +1413,121 @@
         "details": {
             "status": "success"
         }
+    },
+    {
+        "user_id": "1111",
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-25T18:40:21.960407",
+        "success": true,
+        "user_agent": "curl/8.5.0",
+        "method": "pin",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "user_id": "9999",
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-25T18:50:09.870813",
+        "success": false,
+        "user_agent": "curl/8.5.0",
+        "method": "pin",
+        "details": {
+            "reason": "invalid_pin",
+            "attempt": 1
+        }
+    },
+    {
+        "user_id": "9999",
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-25T18:50:09.967806",
+        "success": false,
+        "user_agent": "curl/8.5.0",
+        "method": "pin",
+        "details": {
+            "reason": "invalid_pin",
+            "attempt": 2
+        }
+    },
+    {
+        "user_id": "9999",
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-25T18:50:10.074221",
+        "success": false,
+        "user_agent": "curl/8.5.0",
+        "method": "pin",
+        "details": {
+            "reason": "invalid_pin",
+            "attempt": 3
+        }
+    },
+    {
+        "user_id": "9999",
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-25T18:50:10.168683",
+        "success": false,
+        "user_agent": "curl/8.5.0",
+        "method": "pin",
+        "details": {
+            "reason": "invalid_pin",
+            "attempt": 4
+        }
+    },
+    {
+        "user_id": "9999",
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-25T18:50:10.263781",
+        "success": false,
+        "user_agent": "curl/8.5.0",
+        "method": "pin",
+        "details": {
+            "reason": "invalid_pin",
+            "attempt": 5
+        }
+    },
+    {
+        "user_id": "9999",
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-25T18:50:13.538734",
+        "success": false,
+        "user_agent": "curl/8.5.0",
+        "method": "pin",
+        "details": {
+            "reason": "invalid_pin",
+            "attempt": 6
+        }
+    },
+    {
+        "user_id": "1111",
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-25T19:29:25.656596",
+        "success": true,
+        "user_agent": "curl/8.5.0",
+        "method": "pin",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "user_id": "1111",
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-25T19:51:39.895460",
+        "success": true,
+        "user_agent": "curl/8.5.0",
+        "method": "pin",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "user_id": "1111",
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-25T21:09:51.383295",
+        "success": true,
+        "user_agent": "curl/8.5.0",
+        "method": "pin",
+        "details": {
+            "status": "success"
+        }
     }
 ]

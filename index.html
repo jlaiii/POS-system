@@ -978,6 +978,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
         <button onclick="switchAdminSection('feedback')" id="asFeedback">📝 Feedback</button>
         <button onclick="switchAdminSection('drivers')" id="asDrivers">🚚 Drivers</button>
         <button onclick="switchAdminSection('expenses')" id="asExpenses" data-i18n="admin.expenses">💰 Expenses</button>
+        <button onclick="switchAdminSection('payment')" id="asPayment" data-i18n="admin.payment_terminal">💳 Terminal</button>
       </div>
       <div id="adminContent">
         <!-- Stats -->
@@ -3078,6 +3079,116 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
             <div class="empty-state" data-i18n="admin.expenses.list">📋 Expense Log</div>
           </div>
         </div>
+
+        <!-- Payment Terminal Config -->
+        <div id="secPayment" class="admin-section">
+          <h3 style="margin:0 0 12px 0;">💳 Payment Terminal</h3>
+          <p style="color:var(--text2);margin-bottom:16px;font-size:14px;" data-i18n="admin.payment_desc">Configure credit/debit card payment terminal integration.</p>
+
+          <!-- Gateway Configuration -->
+          <div class="card" style="margin-bottom:16px;padding:12px 16px;">
+            <h4 style="margin:0 0 10px 0;font-size:15px;" data-i18n="admin.payment.gateway">🔌 Gateway Configuration</h4>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+              <div style="min-width:160px;flex:1;">
+                <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;" data-i18n="admin.payment.gateway_type">Gateway Type</label>
+                <select id="paymentGateway" onchange="updatePaymentSettingsVisibility()" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;">
+                  <option value="manual" data-i18n="admin.payment.gateway_manual">Manual Entry Only</option>
+                  <option value="generic_escpos" data-i18n="admin.payment.gateway_escpos">Generic ESC/POS Terminal</option>
+                  <option value="square_stub" data-i18n="admin.payment.gateway_square">Square (API Stub)</option>
+                  <option value="clover_stub" data-i18n="admin.payment.gateway_clover">Clover (API Stub)</option>
+                </select>
+              </div>
+              <div style="min-width:80px;">
+                <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;" data-i18n="admin.payment.enabled">Enabled</label>
+                <label style="display:flex;align-items:center;gap:6px;min-height:44px;cursor:pointer;">
+                  <input type="checkbox" id="paymentEnabled" style="width:20px;height:20px;accent-color:var(--accent);" />
+                  <span style="font-size:14px;" data-i18n="admin.payment.enabled_label">Enable Terminal</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Generic Terminal Settings (shown for generic_escpos) -->
+          <div id="paymentTerminalSettings" class="card" style="margin-bottom:16px;padding:12px 16px;display:none;">
+            <h4 style="margin:0 0 10px 0;font-size:15px;" data-i18n="admin.payment.terminal_settings">🖥️ Terminal Network Settings</h4>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
+              <div style="min-width:140px;flex:1;">
+                <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;" data-i18n="admin.payment.terminal_ip">Terminal IP Address</label>
+                <input type="text" id="paymentTerminalIp" placeholder="192.168.1.100" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;" inputmode="decimal" aria-label="Terminal IP" />
+              </div>
+              <div style="min-width:80px;flex:0.5;">
+                <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;" data-i18n="admin.payment.port">Port</label>
+                <input type="number" id="paymentTerminalPort" value="9100" min="1" max="65535" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;" inputmode="numeric" aria-label="Terminal port" />
+              </div>
+              <div style="min-width:80px;flex:0.5;">
+                <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;" data-i18n="admin.payment.timeout">Timeout (s)</label>
+                <input type="number" id="paymentTimeout" value="10" min="3" max="60" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;" inputmode="numeric" aria-label="Connection timeout" />
+              </div>
+            </div>
+            <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+              <button class="accent" onclick="testPaymentConnection()" style="min-height:44px;padding:8px 20px;font-size:14px;" data-i18n="admin.payment.test">🔌 Test Connection</button>
+            </div>
+            <div id="paymentTestResult" style="margin-top:8px;font-size:14px;"></div>
+          </div>
+
+          <!-- Square Stub Config -->
+          <div id="paymentSquareSettings" class="card" style="margin-bottom:16px;padding:12px 16px;display:none;">
+            <h4 style="margin:0 0 10px 0;font-size:15px;">🔲 Square Configuration</h4>
+            <p style="font-size:13px;color:var(--text2);margin-bottom:12px;">Square API stub — for development/testing. In production, replace with actual Square API integration.</p>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <div style="min-width:160px;flex:1;">
+                <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;">Application ID</label>
+                <input type="text" id="paymentSquareAppId" placeholder="sq0idp-..." style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;" />
+              </div>
+              <div style="min-width:160px;flex:1;">
+                <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;">Location ID</label>
+                <input type="text" id="paymentSquareLocationId" placeholder="L_..." style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Clover Stub Config -->
+          <div id="paymentCloverSettings" class="card" style="margin-bottom:16px;padding:12px 16px;display:none;">
+            <h4 style="margin:0 0 10px 0;font-size:15px;">🍀 Clover Configuration</h4>
+            <p style="font-size:13px;color:var(--text2);margin-bottom:12px;">Clover API stub — for development/testing. In production, replace with actual Clover API integration.</p>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <div style="min-width:160px;flex:1;">
+                <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;">Merchant ID</label>
+                <input type="text" id="paymentCloverMerchantId" placeholder="Merchant ID" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;" />
+              </div>
+              <div style="min-width:160px;flex:1;">
+                <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;">API Token</label>
+                <input type="text" id="paymentCloverApiKey" placeholder="API Token" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Manual Entry Options -->
+          <div class="card" style="margin-bottom:16px;padding:12px 16px;">
+            <h4 style="margin:0 0 10px 0;font-size:15px;" data-i18n="admin.payment.options">⚙️ Options</h4>
+            <div style="display:flex;gap:16px;flex-wrap:wrap;">
+              <label style="display:flex;align-items:center;gap:6px;min-height:44px;cursor:pointer;">
+                <input type="checkbox" id="paymentManualEntry" checked style="width:20px;height:20px;accent-color:var(--accent);" />
+                <span style="font-size:14px;" data-i18n="admin.payment.manual_entry">Allow Manual Entry Fallback</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:6px;min-height:44px;cursor:pointer;">
+                <input type="checkbox" id="paymentPromptSignature" style="width:20px;height:20px;accent-color:var(--accent);" />
+                <span style="font-size:14px;" data-i18n="admin.payment.signature">Prompt for Signature</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:6px;min-height:44px;cursor:pointer;">
+                <input type="checkbox" id="paymentPrintCustomerCopy" style="width:20px;height:20px;accent-color:var(--accent);" />
+                <span style="font-size:14px;" data-i18n="admin.payment.customer_copy">Print Customer Copy</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Save Button -->
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
+            <button class="accent" onclick="savePaymentConfig()" style="min-height:48px;padding:8px 24px;font-size:15px;font-weight:600;" data-i18n="admin.payment.save">💾 Save Configuration</button>
+            <span id="paymentConfigStatus" style="font-size:14px;align-self:center;"></span>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
@@ -4784,6 +4895,45 @@ const L10N = {
     'admin.expenses.print': '🖨️ Print Report',
     'admin.expenses.vendor_colon': 'Vendor: {name}',
     'admin.expenses.amount_colon': 'Amount: ${amount}',
+    'admin.payment_terminal': '💳 Terminal',
+    'admin.payment_desc': 'Configure credit/debit card payment terminal integration.',
+    'admin.payment.gateway': '🔌 Gateway Configuration',
+    'admin.payment.gateway_type': 'Gateway Type',
+    'admin.payment.gateway_manual': 'Manual Entry Only',
+    'admin.payment.gateway_escpos': 'Generic ESC/POS Terminal',
+    'admin.payment.gateway_square': 'Square (API Stub)',
+    'admin.payment.gateway_clover': 'Clover (API Stub)',
+    'admin.payment.enabled': 'Enabled',
+    'admin.payment.enabled_label': 'Enable Terminal',
+    'admin.payment.terminal_settings': '🖥️ Terminal Network Settings',
+    'admin.payment.terminal_ip': 'Terminal IP Address',
+    'admin.payment.port': 'Port',
+    'admin.payment.timeout': 'Timeout (s)',
+    'admin.payment.test': '🔌 Test Connection',
+    'admin.payment.options': '⚙️ Options',
+    'admin.payment.manual_entry': 'Allow Manual Entry Fallback',
+    'admin.payment.signature': 'Prompt for Signature',
+    'admin.payment.customer_copy': 'Print Customer Copy',
+    'admin.payment.save': '💾 Save Configuration',
+    'admin.payment.saved': '✅ Payment configuration saved!',
+    'admin.payment.test_success': '✅ Connection successful!',
+    'admin.payment.test_fail': '❌ Connection failed: {msg}',
+    'payment.card_process': '💳 Process Card Payment',
+    'payment.terminal_prompt': 'Please dip/swipe/tap card on the terminal...',
+    'payment.manual_title': '💳 Manual Card Entry',
+    'payment.manual_sub': 'Enter card details below (dev/testing only)',
+    'payment.card_number': 'Card Number',
+    'payment.expiry': 'Expiry (MM/YY)',
+    'payment.cvv': 'CVV',
+    'payment.zip': 'ZIP Code',
+    'payment.submit': '💳 Process Payment',
+    'payment.processing': '⏳ Processing payment...',
+    'payment.success': '✅ Payment approved!',
+    'payment.declined': '❌ Payment declined',
+    'payment.receipt_txn': 'Transaction ID: {id}',
+    'payment.receipt_card': '{type} ••••{last4}',
+    'payment.receipt_auth': 'Auth Code: {code}',
+    'payment.no_terminal': '⚠️ No terminal configured. Using manual entry.',
   },
   es: {
     'app.title': '🍽️ Sistema POS',
@@ -5752,6 +5902,45 @@ const L10N = {
     'admin.expenses.print': '🖨️ Imprimir Informe',
     'admin.expenses.vendor_colon': 'Proveedor: {name}',
     'admin.expenses.amount_colon': 'Monto: ${amount}',
+    'admin.payment_terminal': '💳 Terminal',
+    'admin.payment_desc': 'Configure la integración del terminal de pago con tarjeta.',
+    'admin.payment.gateway': '🔌 Configuración de Pasarela',
+    'admin.payment.gateway_type': 'Tipo de Pasarela',
+    'admin.payment.gateway_manual': 'Solo Entrada Manual',
+    'admin.payment.gateway_escpos': 'Terminal ESC/POS Genérico',
+    'admin.payment.gateway_square': 'Square (Simulador)',
+    'admin.payment.gateway_clover': 'Clover (Simulador)',
+    'admin.payment.enabled': 'Activado',
+    'admin.payment.enabled_label': 'Activar Terminal',
+    'admin.payment.terminal_settings': '🖥️ Configuración de Red del Terminal',
+    'admin.payment.terminal_ip': 'Dirección IP del Terminal',
+    'admin.payment.port': 'Puerto',
+    'admin.payment.timeout': 'Tiempo de espera (s)',
+    'admin.payment.test': '🔌 Probar Conexión',
+    'admin.payment.options': '⚙️ Opciones',
+    'admin.payment.manual_entry': 'Permitar Entrada Manual',
+    'admin.payment.signature': 'Solicitar Firma',
+    'admin.payment.customer_copy': 'Imprimir Copia del Cliente',
+    'admin.payment.save': '💾 Guardar Configuración',
+    'admin.payment.saved': '✅ ¡Configuración de pago guardada!',
+    'admin.payment.test_success': '✅ ¡Conexión exitosa!',
+    'admin.payment.test_fail': '❌ Conexión fallida: {msg}',
+    'payment.card_process': '💳 Procesar Pago con Tarjeta',
+    'payment.terminal_prompt': 'Inserte/pase/toque la tarjeta en el terminal...',
+    'payment.manual_title': '💳 Entrada Manual de Tarjeta',
+    'payment.manual_sub': 'Ingrese los detalles de la tarjeta (solo dev/pruebas)',
+    'payment.card_number': 'Número de Tarjeta',
+    'payment.expiry': 'Vencimiento (MM/AA)',
+    'payment.cvv': 'CVV',
+    'payment.zip': 'Código Postal',
+    'payment.submit': '💳 Procesar Pago',
+    'payment.processing': '⏳ Procesando pago...',
+    'payment.success': '✅ ¡Pago aprobado!',
+    'payment.declined': '❌ Pago rechazado',
+    'payment.receipt_txn': 'ID de Transacción: {id}',
+    'payment.receipt_card': '{type} ••••{last4}',
+    'payment.receipt_auth': 'Código de Auth: {code}',
+    'payment.no_terminal': '⚠️ No hay terminal configurado. Usando entrada manual.',
   }
 };
 
@@ -10720,6 +10909,8 @@ function buildPaymentMethods() {
   }
   renderSplitUI();
   updateRemaining();
+  // Add card payment button if Card is a selected method
+  addCardPaymentButton();
 }
 
 // ═══════════ CASH CALCULATOR ═══════════
@@ -13013,6 +13204,7 @@ function switchAdminSection(sec) {
   else if (sec === 'feedback') { loadFeedbackStats(); loadFeedbackList(); }
   else if (sec === 'drivers') { drvLoadDrivers(); }
   else if (sec === 'expenses') { loadExpenseList(); loadPnLReport(true); }
+  else if (sec === 'payment') { loadPaymentConfig(); }
 }
 
 // ═══════════ TIMESHEET CONFIG ═══════════
@@ -24458,6 +24650,345 @@ async function loadPnLReport(allTime) {
     card.style.display = 'none';
   }
 }
+
+// ═══════════ PAYMENT TERMINAL ADMIN ═══════════
+
+async function loadPaymentConfig() {
+  try {
+    const res = await fetchJSON(BACKEND_URL + '/api/payment/config', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({adminPin: currentUser.pin || currentUser.id})
+    });
+    if (!res || !res.config) return;
+    const cfg = res.config;
+    
+    document.getElementById('paymentGateway').value = cfg.gateway || 'manual';
+    document.getElementById('paymentEnabled').checked = cfg.enabled || false;
+    document.getElementById('paymentTerminalIp').value = cfg.terminal_ip || '';
+    document.getElementById('paymentTerminalPort').value = cfg.terminal_port || 9100;
+    document.getElementById('paymentTimeout').value = cfg.connection_timeout || 10;
+    document.getElementById('paymentManualEntry').checked = cfg.manual_entry !== false;
+    document.getElementById('paymentPromptSignature').checked = cfg.prompt_for_signature || false;
+    document.getElementById('paymentPrintCustomerCopy').checked = cfg.print_customer_copy || false;
+    
+    // Square stub
+    if (cfg.square_stub) {
+      document.getElementById('paymentSquareAppId').value = cfg.square_stub.application_id || '';
+      document.getElementById('paymentSquareLocationId').value = cfg.square_stub.location_id || '';
+    }
+    // Clover stub
+    if (cfg.clover_stub) {
+      document.getElementById('paymentCloverMerchantId').value = cfg.clover_stub.merchant_id || '';
+      document.getElementById('paymentCloverApiKey').value = cfg.clover_stub.api_key || '';
+    }
+    
+    updatePaymentSettingsVisibility();
+  } catch (e) {
+    showToast(t('toast.network_error'), 'danger');
+  }
+}
+
+function updatePaymentSettingsVisibility() {
+  const gateway = document.getElementById('paymentGateway').value;
+  document.getElementById('paymentTerminalSettings').style.display = gateway === 'generic_escpos' ? 'block' : 'none';
+  document.getElementById('paymentSquareSettings').style.display = gateway === 'square_stub' ? 'block' : 'none';
+  document.getElementById('paymentCloverSettings').style.display = gateway === 'clover_stub' ? 'block' : 'none';
+}
+
+async function savePaymentConfig() {
+  const status = document.getElementById('paymentConfigStatus');
+  status.textContent = '⏳ ' + t('loading');
+  
+  try {
+    const body = {
+      adminPin: currentUser.pin || currentUser.id,
+      gateway: document.getElementById('paymentGateway').value,
+      enabled: document.getElementById('paymentEnabled').checked,
+      terminal_ip: document.getElementById('paymentTerminalIp').value.trim(),
+      terminal_port: parseInt(document.getElementById('paymentTerminalPort').value) || 9100,
+      connection_timeout: parseInt(document.getElementById('paymentTimeout').value) || 10,
+      manual_entry: document.getElementById('paymentManualEntry').checked,
+      prompt_for_signature: document.getElementById('paymentPromptSignature').checked,
+      print_customer_copy: document.getElementById('paymentPrintCustomerCopy').checked,
+      square_stub: {
+        application_id: document.getElementById('paymentSquareAppId').value.trim(),
+        location_id: document.getElementById('paymentSquareLocationId').value.trim()
+      },
+      clover_stub: {
+        merchant_id: document.getElementById('paymentCloverMerchantId').value.trim(),
+        api_key: document.getElementById('paymentCloverApiKey').value.trim()
+      }
+    };
+    
+    const res = await fetchJSON(BACKEND_URL + '/api/payment/config/save', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body)
+    });
+    
+    status.textContent = t('admin.payment.saved');
+    status.style.color = '#2ecc71';
+    setTimeout(() => { status.textContent = ''; }, 3000);
+  } catch (e) {
+    status.textContent = '❌ ' + t('toast.network_error');
+    status.style.color = '#e94560';
+  }
+}
+
+async function testPaymentConnection() {
+  const resultDiv = document.getElementById('paymentTestResult');
+  resultDiv.innerHTML = '⏳ ' + t('loading');
+  
+  try {
+    const res = await fetchJSON(BACKEND_URL + '/api/payment/test', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({adminPin: currentUser.pin || currentUser.id})
+    });
+    
+    if (res && res.success) {
+      resultDiv.innerHTML = '<span style="color:#2ecc71;">✅ ' + res.message + '</span>';
+    } else {
+      resultDiv.innerHTML = '<span style="color:#e94560;">❌ ' + (res ? res.message : t('admin.payment.test_fail', {msg: 'Unknown'})) + '</span>';
+    }
+  } catch (e) {
+    resultDiv.innerHTML = '<span style="color:#e94560;">❌ ' + t('admin.payment.test_fail', {msg: e.message}) + '</span>';
+  }
+}
+
+// ═══════════ CARD PAYMENT PROCESSING UI ═══════════
+
+let _cardPaymentModal = null;
+
+function showCardPaymentModal(amount, onComplete) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.id = 'cardPaymentOverlay';
+  overlay.style.display = 'flex';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+  
+  // Check if terminal is configured
+  const terminalConfigured = document.getElementById('paymentGateway') 
+    ? document.getElementById('paymentGateway').value !== 'manual'
+    : false;
+  const gatewayEnabled = document.getElementById('paymentEnabled')
+    ? document.getElementById('paymentEnabled').checked
+    : false;
+  
+  const useTerminal = terminalConfigured && gatewayEnabled;
+  
+  let html = '';
+  if (useTerminal) {
+    html = `
+      <div class="modal-content" style="max-width:400px;padding:24px;text-align:center;">
+        <h3 style="margin:0 0 16px 0;font-size:18px;">${t('payment.card_process')}</h3>
+        <div style="font-size:48px;margin:16px 0;">💳</div>
+        <p style="font-size:16px;color:var(--text2);margin-bottom:16px;">${t('payment.terminal_prompt')}</p>
+        <p style="font-size:20px;font-weight:700;color:var(--accent);">$${amount.toFixed(2)}</p>
+        <div id="cardPaymentProcessing" style="display:none;margin:16px 0;">
+          <div class="spinner" style="width:32px;height:32px;border:3px solid var(--card-alt);border-top:3px solid var(--accent);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto;"></div>
+          <p style="margin-top:8px;">${t('payment.processing')}</p>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:16px;">
+          <button class="accent" onclick="processCardPayment(${amount})" style="flex:1;min-height:48px;font-size:15px;font-weight:600;">${t('payment.card_process')}</button>
+          <button class="ghost" onclick="closeCardPaymentModal()" style="flex:1;min-height:48px;font-size:14px;">${t('admin.cancel') || 'Cancel'}</button>
+        </div>
+        <div id="cardPaymentResult" style="margin-top:12px;font-size:14px;"></div>
+      </div>`;
+  } else {
+    // Manual entry form
+    html = `
+      <div class="modal-content" style="max-width:400px;padding:24px;">
+        <h3 style="margin:0 0 8px 0;font-size:18px;">${t('payment.manual_title')}</h3>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:16px;">${t('payment.manual_sub')}</p>
+        <p style="font-size:20px;font-weight:700;color:var(--accent);text-align:center;margin-bottom:16px;">$${amount.toFixed(2)}</p>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <input type="text" id="manualCardNumber" placeholder="${t('payment.card_number')}" maxlength="19"
+            style="padding:10px;border:2px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:16px;min-height:48px;text-align:center;font-family:monospace;"
+            inputmode="numeric" aria-label="Card number" />
+          <div style="display:flex;gap:8px;">
+            <input type="text" id="manualCardExpiry" placeholder="${t('payment.expiry')}" maxlength="5"
+              style="flex:1;padding:10px;border:2px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:16px;min-height:48px;text-align:center;font-family:monospace;"
+              inputmode="numeric" aria-label="Expiry date" />
+            <input type="text" id="manualCardCvv" placeholder="${t('payment.cvv')}" maxlength="4"
+              style="flex:0.6;padding:10px;border:2px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:16px;min-height:48px;text-align:center;font-family:monospace;"
+              inputmode="numeric" aria-label="CVV" />
+            <input type="text" id="manualCardZip" placeholder="${t('payment.zip')}" maxlength="10"
+              style="flex:0.6;padding:10px;border:2px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:16px;min-height:48px;text-align:center;font-family:monospace;"
+              inputmode="numeric" aria-label="ZIP code" />
+          </div>
+          <div id="cardPaymentProcessing" style="display:none;">
+            <div class="spinner" style="width:24px;height:24px;border:3px solid var(--card-alt);border-top:3px solid var(--accent);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto;"></div>
+            <p style="text-align:center;margin-top:6px;">${t('payment.processing')}</p>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:4px;">
+            <button class="accent" onclick="processManualCardPayment(${amount})" style="flex:1;min-height:48px;font-size:15px;font-weight:600;">${t('payment.submit')}</button>
+            <button class="ghost" onclick="closeCardPaymentModal()" style="flex:1;min-height:48px;font-size:14px;">${t('admin.cancel') || 'Cancel'}</button>
+          </div>
+          <div id="cardPaymentResult" style="margin-top:8px;font-size:14px;text-align:center;"></div>
+        </div>
+      </div>`;
+  }
+  
+  overlay.innerHTML = html;
+  document.body.appendChild(overlay);
+  
+  // Store callback
+  _cardPaymentModal = { overlay, onComplete };
+}
+
+function closeCardPaymentModal() {
+  if (_cardPaymentModal && _cardPaymentModal.overlay) {
+    _cardPaymentModal.overlay.remove();
+  }
+  _cardPaymentModal = null;
+}
+
+async function processCardPayment(amount) {
+  const processingEl = document.getElementById('cardPaymentProcessing');
+  const resultEl = document.getElementById('cardPaymentResult');
+  const payBtn = document.querySelector('#cardPaymentOverlay .accent');
+  if (payBtn) payBtn.disabled = true;
+  
+  processingEl.style.display = 'block';
+  resultEl.innerHTML = '';
+  
+  try {
+    const res = await fetchJSON(BACKEND_URL + '/api/payment/process', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        adminPin: currentUser.pin || currentUser.id,
+        amount: amount,
+        entry_mode: 'dip'
+      })
+    });
+    
+    processingEl.style.display = 'none';
+    
+    if (res && res.success) {
+      resultEl.innerHTML = '<span style="color:#2ecc71;font-size:16px;">✅ ' + t('payment.success') + '</span>' +
+        '<div style="margin-top:8px;font-size:13px;color:var(--text2);">' +
+        t('payment.receipt_txn', {id: res.transaction_id}) + '<br>' +
+        t('payment.receipt_card', {type: res.card_type || 'Card', last4: res.card_last4 || '****'}) + '<br>' +
+        t('payment.receipt_auth', {code: res.auth_code || '—'}) +
+        '</div>';
+      
+      // Call onComplete with transaction data
+      if (_cardPaymentModal && _cardPaymentModal.onComplete) {
+        setTimeout(() => {
+          _cardPaymentModal.onComplete(res);
+          closeCardPaymentModal();
+        }, 1500);
+      }
+    } else {
+      resultEl.innerHTML = '<span style="color:#e94560;">❌ ' + (res ? res.message : t('payment.declined')) + '</span>';
+      if (payBtn) payBtn.disabled = false;
+    }
+  } catch (e) {
+    processingEl.style.display = 'none';
+    resultEl.innerHTML = '<span style="color:#e94560;">❌ ' + t('toast.network_error') + '</span>';
+    if (payBtn) payBtn.disabled = false;
+  }
+}
+
+async function processManualCardPayment(amount) {
+  const processingEl = document.getElementById('cardPaymentProcessing');
+  const resultEl = document.getElementById('cardPaymentResult');
+  const payBtn = document.querySelector('#cardPaymentOverlay .accent');
+  if (payBtn) payBtn.disabled = true;
+  
+  const cardNumber = document.getElementById('manualCardNumber')?.value.trim() || '';
+  const cardExpiry = document.getElementById('manualCardExpiry')?.value.trim() || '';
+  const cardCvv = document.getElementById('manualCardCvv')?.value.trim() || '';
+  const cardZip = document.getElementById('manualCardZip')?.value.trim() || '';
+  
+  if (!cardNumber) {
+    resultEl.innerHTML = '<span style="color:#e94560;">❌ ' + t('payment.card_number') + ' ' + t('required') + '</span>';
+    if (payBtn) payBtn.disabled = false;
+    return;
+  }
+  
+  processingEl.style.display = 'block';
+  resultEl.innerHTML = '';
+  
+  try {
+    const res = await fetchJSON(BACKEND_URL + '/api/payment/process', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        adminPin: currentUser.pin || currentUser.id,
+        amount: amount,
+        entry_mode: 'manual',
+        card_info: {
+          card_number: cardNumber,
+          card_expiry: cardExpiry,
+          card_cvv: cardCvv,
+          card_zip: cardZip
+        }
+      })
+    });
+    
+    processingEl.style.display = 'none';
+    
+    if (res && res.success) {
+      resultEl.innerHTML = '<span style="color:#2ecc71;font-size:16px;">✅ ' + t('payment.success') + '</span>' +
+        '<div style="margin-top:8px;font-size:13px;color:var(--text2);">' +
+        t('payment.receipt_txn', {id: res.transaction_id}) + '<br>' +
+        t('payment.receipt_card', {type: res.card_type || 'Card', last4: res.card_last4 || '****'}) + '<br>' +
+        t('payment.receipt_auth', {code: res.auth_code || '—'}) +
+        '</div>';
+      
+      if (_cardPaymentModal && _cardPaymentModal.onComplete) {
+        setTimeout(() => {
+          _cardPaymentModal.onComplete(res);
+          closeCardPaymentModal();
+        }, 1500);
+      }
+    } else {
+      resultEl.innerHTML = '<span style="color:#e94560;">❌ ' + (res ? res.message : t('payment.declined')) + '</span>';
+      if (payBtn) payBtn.disabled = false;
+    }
+  } catch (e) {
+    processingEl.style.display = 'none';
+    resultEl.innerHTML = '<span style="color:#e94560;">❌ ' + t('toast.network_error') + '</span>';
+    if (payBtn) payBtn.disabled = false;
+  }
+}
+
+// ── Payment button inside buildPaymentMethods ──
+// Adds a "Process Card Payment" button when Card is among selected methods
+
+function addCardPaymentButton() {
+  // Remove existing card payment button if any
+  const existing = document.getElementById('cardPaymentBtnSection');
+  if (existing) existing.remove();
+  
+  const cardSplit = paymentSplits.find(s => s.method === 'Card');
+  if (!cardSplit || cardSplit.amount <= 0) return;
+  
+  const container = document.getElementById('paymentMethods');
+  if (!container) return;
+  
+  const btnSection = document.createElement('div');
+  btnSection.id = 'cardPaymentBtnSection';
+  btnSection.style.cssText = 'width:100%;margin-top:8px;';
+  
+  const payBtn = document.createElement('button');
+  payBtn.className = 'accent';
+  payBtn.textContent = t('payment.card_process') + ' 💳';
+  payBtn.style.cssText = 'width:100%;min-height:48px;font-size:15px;font-weight:600;border-radius:8px;border:none;background:var(--accent);color:#fff;cursor:pointer;';
+  payBtn.onclick = () => {
+    const amount = cardSplit.amount;
+    showCardPaymentModal(amount, (result) => {
+      // Card payment was approved — mark this split as paid via card
+      if (result && result.success) {
+        showToast(t('payment.success'), 'success');
+      }
+    });
+  };
+  
+  btnSection.appendChild(payBtn);
+  container.appendChild(btnSection);
+}
+
 </script>
 
 </body>

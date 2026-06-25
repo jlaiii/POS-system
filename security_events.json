@@ -371,5 +371,20 @@
         "reported_by": "IP Blocklist Manager",
         "resolved_at": null,
         "resolution": null
+    },
+    {
+        "id": "SEC-027",
+        "created_at": "2026-06-25T18:50:10.265852",
+        "severity": "HIGH",
+        "category": "authentication",
+        "status": "unresolved",
+        "summary": "IP 127.0.0.1 auto-blocked after 5 failed logins",
+        "detail": "IP 127.0.0.1 was automatically added to blocklist after 5 failed login attempts within 5 minutes. Block duration: 60 minutes.",
+        "affected_user": "9999",
+        "affected_user_name": null,
+        "related_event": null,
+        "reported_by": "IP Blocklist Manager",
+        "resolved_at": null,
+        "resolution": null
     }
 ]
