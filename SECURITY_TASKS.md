@@ -1,5 +1,5 @@
 # POS Security Tasks
-> Last run: 2026-06-25 18:40 UTC
+> Last run: 2026-06-25 22:52 UTC
 
 ## CRITICAL — LOGIN & AUTH SECURITY (check every run)
 
@@ -35,6 +35,9 @@
 
 ### CRITICAL: verify_super_admin() never validated the pin field — FIXED this run
 - [x] **Fix super admin authentication bypass** — `verify_super_admin(pin)` checked `if pin in supers` — this looked up the PIN as a **dict KEY** (user ID), NOT the actual `pin` field value in the user's data dict. This meant ANYONE who knew a super admin's user ID (stored in the public key "1111") could log in as that super admin regardless of the actual PIN. The `pin` field in super_admins.json was completely decorative. Fixed: now iterates over all super admin records and compares `data.get('pin')` to the submitted PIN. Verified: old PIN 1111 now correctly rejected, new PIN 634862 accepted.
+
+### CRITICAL: force_pin_change bypass in 3x 2FA login paths — FIXED this run
+- [x] **Fix force_pin_change cleared in 2FA TOTP login, backup code login, email recovery login** — The previous fix only addressed the login() endpoint (PIN + password paths). Three 2FA handlers had IDENTICAL bug: they checked `force_pin_change`, set `force_pin_change_required: true`, then IMMEDIATELY cleared the flag to false and saved. Employee with weak PIN + 2FA could bypass forced PIN change by: login → 2fa_required → complete 2FA → flag cleared → logout → login again (no prompt). Fixed by removing the clear+save from all three 2FA handlers. Re-set force_pin_change=true for Owner (1111) and Manager (2222) whose flags were cleared before the original fix was in place. Verified: login returns force_pin_change_required: true and flag persists.
 
 ## HIGH — DATA PROTECTION & COMPLIANCE
 
@@ -97,6 +100,17 @@
 - [x] **Verify dependency versions** — Flask 3.1.3, pyotp 2.9.0, qrcode 7.4.2, Werkzeug 3.1.8, eventlet 0.41.0. All current stable versions.
 
 ## COMPLETED (this session)
+
+### Run: 2026-06-25 22:52 UTC
+- [x] **Fix force_pin_change bypass in 3x 2FA login paths** — CRITICAL: TOTP login, backup code login, and email recovery login all cleared force_pin_change after showing the prompt. Removed the clear+save from all three. Re-set force_pin_change for Owner (1111) and Manager (2222). Verified with curl.
+- [x] **Verify login rate limiting** — `/api/login` correctly returns attempt counter. Tested with invalid user.
+- [x] **Check for card data storage** — Zero hits for card_number, credit_card, cvv, track_data in codebase. Only card_last4 stored. PCI DSS compliant.
+- [x] **Check XSS vectors** — `escHtml()` used consistently. No unescaped user data in innerHTML.
+- [x] **Check session security** — Sessions use secrets.token_hex(32), 8h active/24h idle expiry, proper logout invalidation.
+- [x] **Check debug mode** — debug=False, allow_unsafe_werkzeug=False. Confirmed.
+- [x] **Check new endpoint auth coverage** — Employee leaderboard, performance, payment, customer display endpoints all have proper auth checks.
+- [x] **Verify file permissions** — All 35+ JSON data files at 0600. Backup directories at 700. Scripts directory properly permissioned.
+- [x] **Check activity_log for sensitive data** — No PINs or passwords logged in details fields. login_failed shows user_id=null.
 
 ### Run: 2026-06-25 18:40 UTC
 - [x] **Fix world-readable data files** — MEDIUM: `items.json`, `drivers.json`, `feedback.json`, `.data_baseline.json`, 6 old menu_backups from June 22, and `scripts/SUPER_ADMIN_PIN_CHANGED.txt` (contained super admin PIN) were all 644 (world-readable). Fixed: chmod 600 on all. Verified with ls -la.
