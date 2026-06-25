@@ -608,7 +608,7 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 
 ### Priority: LOW
 
-- [ ] **Add customer birthday/anniversary tracking with automated rewards** — Capture customer birthdates and anniversaries during checkout via phone-based customer lookup. Auto-award loyalty points or free item on birthday with POS notification. Track visit frequency and offer periodic bonus rewards for regulars. Integrates with existing loyalty system for customer retention and marketing.
+- [~] worker-3 **Add customer birthday/anniversary tracking with automated rewards** — Capture customer birthdates and anniversaries during checkout via phone-based customer lookup. Auto-award loyalty points or free item on birthday with POS notification. Track visit frequency and offer periodic bonus rewards for regulars. Integrates with existing loyalty system for customer retention and marketing.
 
 ## New Tasks (from Audit #22 — 2026-06-25)
 
