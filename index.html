@@ -952,6 +952,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
         <button onclick="switchAdminSection('tables')" id="asTables" data-i18n="admin.tables">🪑 Tables</button>
         <button onclick="switchAdminSection('tablestatus')" id="asTablestatus">🗺️ Floor Plan</button>
         <button onclick="switchAdminSection('inventory')" id="asInventory" data-i18n="admin.inventory">📦 Inventory</button>
+        <button onclick="switchAdminSection('profitability')" id="asProfitability">📊 Profitability</button>
         <button onclick="switchAdminSection('employees')" id="asEmployees" data-i18n="admin.employees">👤 Employee Perf</button>
         <button onclick="switchAdminSection('loyalty')" id="asLoyalty">⭐ Loyalty</button>
         <button onclick="switchAdminSection('customers')" id="asCustomers">👥 Customers</button>
@@ -1098,6 +1099,18 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
             <input type="number" id="addItemCarbs" placeholder="Carbs (g)" step="0.1" min="0" style="max-width:110px;min-height:36px;padding:6px 8px;font-size:13px;" inputmode="decimal" pattern="[0-9]*" title="Carbohydrates in grams"/>
             <input type="number" id="addItemFat" placeholder="Fat (g)" step="0.1" min="0" style="max-width:100px;min-height:36px;padding:6px 8px;font-size:13px;" inputmode="decimal" pattern="[0-9]*" title="Fat in grams"/>
           </div>
+          <div class="form-row" style="flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px;">
+            <span style="font-size:13px;color:var(--text2);min-width:60px;">🧾 <span data-i18n="item.ingredients">Ingredients (Recipe/COGS):</span></span>
+            <div id="addItemIngredientRows" style="flex:1;display:flex;flex-direction:column;gap:4px;">
+              <div class="ingredient-row" style="display:flex;gap:4px;align-items:center;">
+                <input type="text" class="ing-name" placeholder="Ingredient name" style="flex:2;min-width:100px;min-height:32px;font-size:13px;padding:4px 8px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);"/>
+                <input type="number" class="ing-qty" placeholder="Qty" step="0.01" min="0" style="width:70px;min-height:32px;font-size:13px;padding:4px 8px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);" inputmode="decimal" pattern="[0-9]*"/>
+                <input type="text" class="ing-unit" placeholder="Unit" style="width:70px;min-height:32px;font-size:13px;padding:4px 8px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);"/>
+                <button class="ghost" onclick="removeIngredientRow(this)" style="font-size:13px;padding:2px 8px;min-height:32px;">✕</button>
+              </div>
+            </div>
+            <button class="outline" onclick="addIngredientRow('addItemIngredientRows')" style="font-size:13px;padding:4px 12px;min-height:36px;" data-i18n="item.add_ingredient">+ Add Ingredient</button>
+          </div>
           </div>
           <div class="card" style="margin-bottom:12px;">
             <details style="margin-bottom:8px;cursor:pointer;">
@@ -1189,6 +1202,18 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
                 <div id="editVisRuleList" style="margin-top:6px;"></div>
               </div>
             </details>
+            <div class="form-row" style="flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px;">
+              <span style="font-size:13px;color:var(--text2);min-width:60px;">🧾 <span data-i18n="item.ingredients">Ingredients (Recipe/COGS):</span></span>
+              <div id="editItemIngredientRows" style="flex:1;display:flex;flex-direction:column;gap:4px;">
+                <div class="ingredient-row" style="display:flex;gap:4px;align-items:center;">
+                  <input type="text" class="ing-name" placeholder="Ingredient name" style="flex:2;min-width:100px;min-height:32px;font-size:13px;padding:4px 8px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);"/>
+                  <input type="number" class="ing-qty" placeholder="Qty" step="0.01" min="0" style="width:70px;min-height:32px;font-size:13px;padding:4px 8px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);" inputmode="decimal" pattern="[0-9]*"/>
+                  <input type="text" class="ing-unit" placeholder="Unit" style="width:70px;min-height:32px;font-size:13px;padding:4px 8px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);"/>
+                  <button class="ghost" onclick="removeIngredientRow(this)" style="font-size:13px;padding:2px 8px;min-height:32px;">✕</button>
+                </div>
+              </div>
+              <button class="outline" onclick="addIngredientRow('editItemIngredientRows')" style="font-size:13px;padding:4px 12px;min-height:36px;" data-i18n="item.add_ingredient">+ Add Ingredient</button>
+            </div>
           </div>
           <div id="itemMgmtList"><div class="empty-state">Loading items...</div></div>
           <!-- CSV Import/Export -->
@@ -1597,6 +1622,28 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
             </div>
           </div>
           <div id="inventoryList"><div class="empty-state">Loading inventory...</div></div>
+        </div>
+        <!-- Profitability / COGS -->
+        <div id="secProfitability" class="admin-section">
+          <h3 style="margin-bottom:12px;">📊 Menu Profitability (Cost of Goods Sold)</h3>
+          <p style="color:var(--text2);margin-bottom:16px;font-size:14px;">
+            Item costs are calculated from ingredient recipes × unit costs. Set ingredient recipes in item management and ingredient unit costs in inventory management.
+          </p>
+          <div id="profitabilitySummary" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;"></div>
+          <div id="profitabilityFilterBar" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
+            <span style="font-size:13px;color:var(--text2);">Sort by:</span>
+            <select id="profitSortBy" onchange="loadProfitability()" style="max-width:160px;min-height:36px;padding:4px 8px;border-radius:6px;background:var(--bg);color:var(--text);border:1px solid var(--border);">
+              <option value="margin">Margin (lowest first)</option>
+              <option value="margin_desc">Margin (highest first)</option>
+              <option value="cost">Cost (highest first)</option>
+              <option value="profit">Profit (highest first)</option>
+              <option value="name">Name</option>
+            </select>
+            <input type="text" id="profitSearchFilter" placeholder="Search items..." style="flex:1;min-width:150px;min-height:36px;padding:4px 8px;border-radius:6px;background:var(--bg);color:var(--text);border:1px solid var(--border);" onkeyup="if(event.key==='Enter') loadProfitability()"/>
+            <button class="accent" onclick="loadProfitability()" style="font-size:13px;padding:6px 14px;min-height:36px;">🔍 Load</button>
+            <button class="ghost" onclick="document.getElementById('profitSearchFilter').value='';loadProfitability();" style="font-size:13px;padding:6px 12px;min-height:36px;">✕ Clear</button>
+          </div>
+          <div id="profitabilityList"><div class="empty-state">Click 🔍 Load to view profitability data.</div></div>
         </div>
         <!-- Employee Performance -->
         <div id="secEmployees" class="admin-section">
@@ -12740,6 +12787,7 @@ function switchAdminSection(sec) {
   else if (sec === 'tables') loadTableAdmin();
   else if (sec === 'tablestatus') loadTableStatusDashboard();
   else if (sec === 'inventory') loadInventoryAdmin();
+  else if (sec === 'profitability') loadProfitability();
   else if (sec === 'employees') loadEmployeePerformance();
   else if (sec === 'loyalty') loadLoyaltyAdmin();
   else if (sec === 'customers') loadCustomersAdmin();
@@ -14228,11 +14276,17 @@ async function loadItemMgmt() {
           const icons = {'Vegetarian':'🌿','Vegan':'🥦','Gluten-Free':'🌾','Spicy':'🌶️','Nuts':'🥜','Dairy':'🥛','Eggs':'🥚','Seafood':'🦐','Soy':'🫘','Organic':'🌱','Halal':'☪️','Kosher':'✡️','Sugar-Free':'🍃','Low-Carb':'🥬'};
           return `<span style="font-size:11px;margin-left:4px;" title="${escHtml(t)}">${icons[t]||'🏷️'}</span>`;
         }).join('') : '';
+        const cost = item._cost !== undefined ? item._cost : null;
+        const margin = item._margin !== undefined ? item._margin : null;
+        const costHtml = cost !== null ? `<span style="color:#e74c3c;font-size:12px;margin-left:6px;">Cost: $${cost.toFixed(2)}</span>` : '';
+        const marginHtml = margin !== null ? `<span style="color:${margin >= 50 ? '#2ecc71' : (margin >= 25 ? '#f39c12' : '#e74c3c')};font-size:12px;margin-left:4px;">${margin.toFixed(1)}% margin</span>` : '';
+        const ingredientsCount = (item.ingredients && item.ingredients.length) || 0;
+        const recipeBadge = ingredientsCount > 0 ? `<span style="color:#9b59b6;font-size:11px;margin-left:4px;">📋${ingredientsCount}</span>` : '';
         html += `<div class="item-mgmt-entry">
-          <div class="ime-info">${imgHtml}<span class="ime-cat">${escHtml(cat)}</span> — ${escHtml(item.name)} <span class="ime-price">$${item.price.toFixed(2)}</span>${bcHtml}${courseBadge}${dietaryHtml}${item.modifiers && item.modifiers.groups && item.modifiers.groups.length > 0 ? '<span style="color:#f39c12;font-size:11px;margin-left:6px;">⚙️</span>' : ''} ${item.active === false ? '<span style="color:var(--text2);font-size:11px;margin-left:6px;" data-i18n="item.hidden">🚫 Hidden</span>' : '<span style="color:#2ecc71;font-size:11px;margin-left:6px;" data-i18n="item.visible">👁️ Visible</span>'}</div>
+          <div class="ime-info">${imgHtml}<span class="ime-cat">${escHtml(cat)}</span> — ${escHtml(item.name)} <span class="ime-price">$${item.price.toFixed(2)}</span>${bcHtml}${courseBadge}${dietaryHtml}${costHtml}${marginHtml}${recipeBadge}${item.modifiers && item.modifiers.groups && item.modifiers.groups.length > 0 ? '<span style="color:#f39c12;font-size:11px;margin-left:6px;">⚙️</span>' : ''} ${item.active === false ? '<span style="color:var(--text2);font-size:11px;margin-left:6px;" data-i18n="item.hidden">🚫 Hidden</span>' : '<span style="color:#2ecc71;font-size:11px;margin-left:6px;" data-i18n="item.visible">👁️ Visible</span>'}</div>
           <div class="ime-actions">
             <button class="outline" onclick='toggleItemVisibility(${JSON.stringify(cat)},${JSON.stringify(item.name)})' style="font-size:13px;padding:6px 12px;min-height:36px;" title="${item.active === false ? t('item.show') : t('item.hide')}">${item.active === false ? '👁️' : '🚫'}</button>
-            <button class="outline" onclick='startEditItem(${JSON.stringify(cat)},${JSON.stringify(item.name)},${item.price},${JSON.stringify(bc)},${JSON.stringify(imgUrl)},${JSON.stringify(course)},${JSON.stringify(dietaryTags)},${JSON.stringify(item.nutritional_info || {})},${JSON.stringify(item.scheduled_visibility || [])})' style="font-size:13px;padding:6px 12px;min-height:36px;">✏️</button>
+            <button class="outline" onclick='startEditItem(${JSON.stringify(cat)},${JSON.stringify(item.name)},${item.price},${JSON.stringify(bc)},${JSON.stringify(imgUrl)},${JSON.stringify(course)},${JSON.stringify(dietaryTags)},${JSON.stringify(item.nutritional_info || {})},${JSON.stringify(item.scheduled_visibility || [])},${JSON.stringify(item.ingredients || [])})' style="font-size:13px;padding:6px 12px;min-height:36px;">✏️</button>
             <button class="outline" onclick='editItemModifiers(${JSON.stringify(cat)},${JSON.stringify(item.name)})' style="font-size:13px;padding:6px 12px;min-height:36px;">⚙️</button>
             <button class="danger" onclick='deleteItem(${JSON.stringify(cat)},${JSON.stringify(item.name)})' style="font-size:13px;padding:6px 12px;min-height:36px;">🗑️</button>
           </div>
@@ -14243,7 +14297,7 @@ async function loadItemMgmt() {
   } catch(e) { list.innerHTML = '<div class="empty-state">' + t('network_error') + '</div>'; }
 }
 
-function startEditItem(cat, name, price, barcode, imageUrl, course, dietaryTags, nutritionalInfo, visibilityRules) {
+function startEditItem(cat, name, price, barcode, imageUrl, course, dietaryTags, nutritionalInfo, visibilityRules, ingredients) {
   document.getElementById('editItemForm').classList.add('active');
   document.getElementById('editOldCat').value = cat;
   document.getElementById('editOldName').value = name;
@@ -14260,6 +14314,7 @@ function startEditItem(cat, name, price, barcode, imageUrl, course, dietaryTags,
   document.getElementById('editItemCarbs').value = ni.carbs || '';
   document.getElementById('editItemFat').value = ni.fat || '';
   loadVisibilityRules('edit', visibilityRules || []);
+  loadIngredients('edit', ingredients || []);
   document.getElementById('editItemForm').scrollIntoView({ behavior: 'smooth' });
 }
 
@@ -14283,7 +14338,7 @@ async function saveEditItem() {
   const fat = document.getElementById('editItemFat').value.trim();
   if (!newCat || !newName || isNaN(newPrice) || newPrice <= 0) { showToast(t('toast.fill_all_fields'), 'danger'); return; }
   try {
-    const body = { adminPin: currentUser.id, oldCategory: oldCat, oldName, newCategory: newCat, newName, newPrice, barcode: newBarcode, image_url: newImageUrl, course: newCourse, dietary_tags: dietaryTags, scheduled_visibility: getVisibilityRules('edit') };
+    const body = { adminPin: currentUser.id, oldCategory: oldCat, oldName, newCategory: newCat, newName, newPrice, barcode: newBarcode, image_url: newImageUrl, course: newCourse, dietary_tags: dietaryTags, scheduled_visibility: getVisibilityRules('edit'), ingredients: getIngredients('edit') };
     const ni = {};
     if (calories) ni.calories = parseFloat(calories);
     if (protein) ni.protein = parseFloat(protein);
@@ -14368,6 +14423,63 @@ function loadVisibilityRules(form, rules) {
     rules.forEach(r => list.push({ days_of_week: r.days_of_week || [], start_time: r.start_time || '06:00', end_time: r.end_time || '23:59' }));
   }
   renderVisibilityRuleList(form);
+}
+
+// ---- Ingredient (Recipe/COGS) Management ----
+
+function addIngredientRow(containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const row = document.createElement('div');
+  row.className = 'ingredient-row';
+  row.style.cssText = 'display:flex;gap:4px;align-items:center;';
+  row.innerHTML = '<input type="text" class="ing-name" placeholder="Ingredient name" style="flex:2;min-width:100px;min-height:32px;font-size:13px;padding:4px 8px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);"/>' +
+    '<input type="number" class="ing-qty" placeholder="Qty" step="0.01" min="0" style="width:70px;min-height:32px;font-size:13px;padding:4px 8px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);" inputmode="decimal" pattern="[0-9]*"/>' +
+    '<input type="text" class="ing-unit" placeholder="Unit" style="width:70px;min-height:32px;font-size:13px;padding:4px 8px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);"/>' +
+    '<button class="ghost" onclick="removeIngredientRow(this)" style="font-size:13px;padding:2px 8px;min-height:32px;">✕</button>';
+  container.appendChild(row);
+}
+
+function removeIngredientRow(btn) {
+  const row = btn.closest('.ingredient-row');
+  if (row && row.parentElement && row.parentElement.children.length > 1) {
+    row.remove();
+  } else {
+    showToast('At least one ingredient row required', 'warning');
+  }
+}
+
+function getIngredients(prefix) {
+  const container = document.getElementById(prefix + 'ItemIngredientRows');
+  if (!container) return [];
+  const rows = container.querySelectorAll('.ingredient-row');
+  const result = [];
+  rows.forEach(row => {
+    const name = row.querySelector('.ing-name')?.value?.trim();
+    const qty = parseFloat(row.querySelector('.ing-qty')?.value);
+    const unit = row.querySelector('.ing-unit')?.value?.trim() || 'piece';
+    if (name && qty > 0) {
+      result.push({ name, qty, unit });
+    }
+  });
+  return result;
+}
+
+function loadIngredients(prefix, ingredients) {
+  const container = document.getElementById(prefix + 'ItemIngredientRows');
+  if (!container) return;
+  container.innerHTML = '';
+  const list = Array.isArray(ingredients) && ingredients.length > 0 ? ingredients : [{ name: '', qty: '', unit: '' }];
+  list.forEach(ing => {
+    const row = document.createElement('div');
+    row.className = 'ingredient-row';
+    row.style.cssText = 'display:flex;gap:4px;align-items:center;';
+    row.innerHTML = '<input type="text" class="ing-name" value="' + escHtml(String(ing.name || '')) + '" placeholder="Ingredient name" style="flex:2;min-width:100px;min-height:32px;font-size:13px;padding:4px 8px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);"/>' +
+      '<input type="number" class="ing-qty" value="' + (ing.qty || '') + '" placeholder="Qty" step="0.01" min="0" style="width:70px;min-height:32px;font-size:13px;padding:4px 8px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);" inputmode="decimal" pattern="[0-9]*"/>' +
+      '<input type="text" class="ing-unit" value="' + escHtml(String(ing.unit || 'piece')) + '" placeholder="Unit" style="width:70px;min-height:32px;font-size:13px;padding:4px 8px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);"/>' +
+      '<button class="ghost" onclick="removeIngredientRow(this)" style="font-size:13px;padding:2px 8px;min-height:32px;">✕</button>';
+    container.appendChild(row);
+  });
 }
 
 async function toggleItemVisibility(cat, name) {
@@ -14680,7 +14792,7 @@ async function addItem() {
   const fat = document.getElementById('addItemFat').value.trim();
   if (!category || !name || isNaN(price) || price <= 0) { showToast(t('toast.fill_all_fields'), 'danger'); return; }
   try {
-    const body = { adminPin: currentUser.id, category, name, price, barcode, image_url: imageUrl, course, dietary_tags: dietaryTags, scheduled_visibility: getVisibilityRules('add') };
+    const body = { adminPin: currentUser.id, category, name, price, barcode, image_url: imageUrl, course, dietary_tags: dietaryTags, scheduled_visibility: getVisibilityRules('add'), ingredients: getIngredients('add') };
     if (calories) body.calories = parseFloat(calories);
     if (protein) body.protein = parseFloat(protein);
     if (carbs) body.carbs = parseFloat(carbs);
@@ -16679,6 +16791,9 @@ async function loadInventoryAdmin() {
           '<label style="color:var(--text2);font-size:13px;">Alert at: ' +
             '<input type="number" id="invThresh_' + escJs(itemName) + '" value="' + threshold + '" min="0" style="width:60px;min-height:36px;padding:4px 8px;font-size:14px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);" inputmode="numeric" pattern="[0-9]*" />' +
           '</label>' +
+          '<label style="color:var(--text2);font-size:13px;" title="Unit cost for COGS calculation">$ Unit: ' +
+            '<input type="number" id="invCost_' + escJs(itemName) + '" value="' + (inv.unit_cost || 0) + '" step="0.01" min="0" style="width:70px;min-height:36px;padding:4px 8px;font-size:14px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);" inputmode="decimal" pattern="[0-9]*" />' +
+          '</label>' +
           '<button class="accent" onclick="updateInventoryItem(\'' + escJs(itemName) + '\')" style="font-size:13px;padding:6px 12px;min-height:36px;">Save</button>' +
         '</div>' +
       '</div>';
@@ -16692,20 +16807,26 @@ async function loadInventoryAdmin() {
 async function updateInventoryItem(itemName) {
   const stockInput = document.getElementById('invStock_' + itemName);
   const threshInput = document.getElementById('invThresh_' + itemName);
+  const costInput = document.getElementById('invCost_' + itemName);
   if (!stockInput || !threshInput) return;
   const stock = parseInt(stockInput.value);
   const threshold = parseInt(threshInput.value);
+  const unitCost = costInput ? parseFloat(costInput.value) : undefined;
   if (isNaN(stock) || stock < 0) { showToast('Stock must be a non-negative integer', 'danger'); return; }
   if (isNaN(threshold) || threshold < 0) { showToast('Threshold must be a non-negative integer', 'danger'); return; }
   try {
+    const body = {
+      adminPin: currentUser.id,
+      item_name: itemName,
+      stock: stock,
+      low_stock_threshold: threshold
+    };
+    if (unitCost !== undefined && !isNaN(unitCost) && unitCost >= 0) {
+      body.unit_cost = unitCost;
+    }
     const r = await fetch(BACKEND_URL + '/api/inventory/update', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        adminPin: currentUser.id,
-        item_name: itemName,
-        stock: stock,
-        low_stock_threshold: threshold
-      })
+      body: JSON.stringify(body)
     });
     const d = await r.json();
     if (!r.ok) { showToast(d.message || 'Failed', 'danger'); return; }
@@ -16733,6 +16854,78 @@ async function initInventory() {
     showToast('Initialized ' + successCount + ' items with 0 stock', 'success');
     loadInventoryAdmin();
   } catch(e) { showToast(t('toast.network_error'), 'danger'); }
+}
+
+// ═══════════ PROFITABILITY / COGS ═══════════
+
+async function loadProfitability() {
+  const list = document.getElementById('profitabilityList');
+  const summaryDiv = document.getElementById('profitabilitySummary');
+  if (!list) return;
+  list.innerHTML = '<div class="empty-state">' + t('loading') + '</div>';
+  try {
+    const r = await fetch(BACKEND_URL + '/api/items/profitability', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id })
+    });
+    if (!r.ok) { list.innerHTML = '<div class="empty-state val-err">Failed to load</div>'; return; }
+    const data = await r.json();
+    let items = data.items || [];
+    const summary = data.summary || {};
+
+    // Apply search filter
+    const searchVal = (document.getElementById('profitSearchFilter')?.value || '').trim().toLowerCase();
+    if (searchVal) {
+      items = items.filter(i => i.name.toLowerCase().includes(searchVal) || i.category.toLowerCase().includes(searchVal));
+    }
+
+    // Apply sorting
+    const sortBy = document.getElementById('profitSortBy')?.value || 'margin';
+    const sortFns = {
+      'margin': (a, b) => a.margin - b.margin,
+      'margin_desc': (a, b) => b.margin - a.margin,
+      'cost': (a, b) => b.cost - a.cost,
+      'profit': (a, b) => b.profit - a.profit,
+      'name': (a, b) => a.name.localeCompare(b.name)
+    };
+    items.sort(sortFns[sortBy] || sortFns.margin);
+
+    // Summary cards
+    summaryDiv.innerHTML = '' +
+      '<div class="stat-card"><strong>📊 ' + summary.total_items + '</strong><span>Total Items</span></div>' +
+      '<div class="stat-card"><strong>📋 ' + summary.items_with_recipes + '</strong><span>With Recipes</span></div>' +
+      '<div class="stat-card"><strong>' + (summary.avg_margin !== undefined ? summary.avg_margin + '%' : '—') + '</strong><span>Avg Margin</span></div>' +
+      (summary.highest_margin ? '<div class="stat-card" style="border-left:3px solid #2ecc71;"><strong>' + escHtml(summary.highest_margin.name) + '</strong><span>Highest: ' + summary.highest_margin.margin + '% margin</span></div>' : '') +
+      (summary.lowest_margin ? '<div class="stat-card" style="border-left:3px solid #e74c3c;"><strong>' + escHtml(summary.lowest_margin.name) + '</strong><span>Lowest: ' + summary.lowest_margin.margin + '% margin</span></div>' : '');
+
+    // Item list
+    if (items.length === 0) {
+      list.innerHTML = '<div class="empty-state">No items found.</div>';
+      return;
+    }
+    let html = '';
+    items.forEach(item => {
+      const marginColor = item.margin >= 50 ? '#2ecc71' : (item.margin >= 25 ? '#f39c12' : (item.margin >= 10 ? '#e67e22' : '#e74c3c'));
+      const hasRecipe = item.ingredients && item.ingredients.length > 0;
+      const ingStr = hasRecipe ? item.ingredients.map(ing => escHtml(ing.name) + ' (' + ing.qty + ' ' + ing.unit + ' @ $' + ing.unit_cost.toFixed(2) + ')').join(', ') : 'No recipe set';
+      html += '<div class="item-mgmt-entry" style="margin-bottom:6px;">' +
+        '<div class="ime-info">' +
+          '<span class="ime-cat">' + escHtml(item.category) + '</span> — ' + escHtml(item.name) +
+          ' <span class="ime-price">$' + item.price.toFixed(2) + '</span>' +
+          ' <span style="color:#e74c3c;font-size:12px;">Cost: $' + item.cost.toFixed(2) + '</span>' +
+          ' <span style="color:' + marginColor + ';font-size:12px;font-weight:600;">' + item.margin + '% margin</span>' +
+          ' <span style="color:#3498db;font-size:12px;">Profit: $' + item.profit.toFixed(2) + '</span>' +
+          (hasRecipe ? ' <span style="color:#9b59b6;font-size:11px;">📋 ' + item.ingredients.length + ' ingredients</span>' : ' <span style="color:var(--text2);font-size:11px;">🚫 No recipe</span>') +
+        '</div>' +
+        '<div style="font-size:12px;color:var(--text2);padding:2px 8px 6px 8px;' + (hasRecipe ? '' : 'font-style:italic;') + '">' +
+          '🧾 ' + (hasRecipe ? ingStr : 'Set ingredients in item edit form to calculate COGS.') +
+        '</div>' +
+      '</div>';
+    });
+    list.innerHTML = html;
+  } catch(e) {
+    list.innerHTML = '<div class="empty-state val-err">' + t('network_error') + '</div>';
+  }
 }
 
 // ═══════════ WASTE TRACKING ═══════════

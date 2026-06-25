@@ -10390,5 +10390,621 @@
         "details": {
             "status": "success"
         }
+    },
+    {
+        "timestamp": "2026-06-25T15:22:46.550994",
+        "type": "feedback_received",
+        "user_id": "customer",
+        "user_role": "public",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "feedback_id": 1,
+            "rating": 5,
+            "alert": "\ud83c\udf1f 5-star glowing review received",
+            "order_id": 42
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:22:46.564167",
+        "type": "feedback_received",
+        "user_id": "customer",
+        "user_role": "public",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "feedback_id": 2,
+            "rating": 1,
+            "alert": "\u26a0\ufe0f 1-star complaint received",
+            "order_id": null
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:22:46.582654",
+        "type": "feedback_responded",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "feedback_id": 1,
+            "response_note": "Thanks!",
+            "create_ticket": false
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:22:46.594721",
+        "type": "feedback_responded",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "feedback_id": 2,
+            "response_note": "",
+            "create_ticket": true
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:22:46.606196",
+        "type": "ticket_created_from_feedback",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "ticket_id": "TKT-002",
+            "feedback_id": 2
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:22:46.619570",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:22:46.643200",
+        "type": "submit_order",
+        "user_id": "1111",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "order_id": 91,
+            "subtotal": 6.0,
+            "tax_amount": 0.49,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 6.49,
+            "payment_method": "cash",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:40:27.007163",
+        "type": "driver_added",
+        "user_id": "1111",
+        "user_role": "John Driver",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "driver_id": "1",
+            "phone": "555-0100"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:40:27.023131",
+        "type": "driver_added",
+        "user_id": "1111",
+        "user_role": "Maria Driver",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "driver_id": "2",
+            "phone": "555-0101"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:40:27.038383",
+        "type": "driver_updated",
+        "user_id": "1111",
+        "user_role": "John Driver",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "driver_id": "1",
+            "old_status": "available",
+            "new_status": "off_duty"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:40:27.056204",
+        "type": "driver_deleted",
+        "user_id": "1111",
+        "user_role": "Maria Driver",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "driver_id": "2"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:40:27.069237",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:41:24.355530",
+        "type": "driver_added",
+        "user_id": "1111",
+        "user_role": "Alice",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "driver_id": "1",
+            "phone": "555-0100"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:41:24.372538",
+        "type": "driver_added",
+        "user_id": "1111",
+        "user_role": "Bob",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "driver_id": "2",
+            "phone": "555-0101"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:41:24.394431",
+        "type": "driver_added",
+        "user_id": "1111",
+        "user_role": "Charlie",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "driver_id": "3",
+            "phone": "555-0102"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:41:24.412163",
+        "type": "driver_updated",
+        "user_id": "1111",
+        "user_role": "Alice Updated",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "driver_id": "1",
+            "old_status": "available",
+            "new_status": "off_duty"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:41:24.455641",
+        "type": "driver_deleted",
+        "user_id": "1111",
+        "user_role": "Charlie",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "driver_id": "3"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:41:24.471381",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:41:54.665684",
+        "type": "driver_added",
+        "user_id": "1111",
+        "user_role": "Alice",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "driver_id": "1",
+            "phone": "555-0100"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:41:54.680648",
+        "type": "driver_added",
+        "user_id": "1111",
+        "user_role": "Bob",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "driver_id": "2",
+            "phone": "555-0101"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:41:54.699177",
+        "type": "driver_added",
+        "user_id": "1111",
+        "user_role": "Charlie",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "driver_id": "3",
+            "phone": "555-0102"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:41:54.723787",
+        "type": "driver_updated",
+        "user_id": "1111",
+        "user_role": "Alice U",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "driver_id": "1",
+            "old_status": "available",
+            "new_status": "off_duty"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:41:54.739065",
+        "type": "driver_updated",
+        "user_id": "1111",
+        "user_role": "Alice U",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "driver_id": "1",
+            "old_status": "off_duty",
+            "new_status": "available"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:41:54.762055",
+        "type": "driver_assigned",
+        "user_id": "1111",
+        "user_role": "Driver Bob \u2192 Order #11",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "order_id": 11,
+            "driver_id": "2",
+            "driver_name": "Bob",
+            "old_driver": null
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:41:54.786235",
+        "type": "delivery_status_updated",
+        "user_id": "1111",
+        "user_role": "Order #11: assigned \u2192 picked_up",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "order_id": 11,
+            "old_status": "assigned",
+            "new_status": "picked_up",
+            "driver": "Bob"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:41:54.811284",
+        "type": "delivery_status_updated",
+        "user_id": "1111",
+        "user_role": "Order #11: picked_up \u2192 delivered",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "order_id": 11,
+            "old_status": "picked_up",
+            "new_status": "delivered",
+            "driver": "Bob"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:41:54.837231",
+        "type": "driver_assigned",
+        "user_id": "1111",
+        "user_role": "Driver Bob \u2192 Order #11",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "order_id": 11,
+            "driver_id": "2",
+            "driver_name": "Bob",
+            "old_driver": "Bob"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:41:54.856392",
+        "type": "driver_unassigned",
+        "user_id": "1111",
+        "user_role": "Driver Bob removed from Order #11",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "order_id": 11,
+            "old_driver": "Bob"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:41:54.877155",
+        "type": "driver_deleted",
+        "user_id": "1111",
+        "user_role": "Charlie",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "driver_id": "3"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:41:54.894834",
+        "type": "driver_added",
+        "user_id": "1111",
+        "user_role": "Dave",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "driver_id": "3",
+            "phone": "555-0103"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:41:54.914025",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:42:12.691156",
+        "type": "driver_added",
+        "user_id": "1111",
+        "user_role": "Dave",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "driver_id": "1",
+            "phone": "555-0103"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:42:12.713463",
+        "type": "driver_assigned",
+        "user_id": "1111",
+        "user_role": "Driver Dave \u2192 Order #11",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "order_id": 11,
+            "driver_id": "1",
+            "driver_name": "Dave",
+            "old_driver": null
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:43:09.861199",
+        "type": "driver_added",
+        "user_id": "1111",
+        "user_role": "Alice",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "driver_id": "1",
+            "phone": "555-0100"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:43:09.875489",
+        "type": "driver_added",
+        "user_id": "1111",
+        "user_role": "Bob",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "driver_id": "2",
+            "phone": "555-0101"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:43:09.893495",
+        "type": "driver_added",
+        "user_id": "1111",
+        "user_role": "Charlie",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "driver_id": "3",
+            "phone": "555-0102"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:43:09.912420",
+        "type": "driver_updated",
+        "user_id": "1111",
+        "user_role": "Alice U",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "driver_id": "1",
+            "old_status": "available",
+            "new_status": "off_duty"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:43:09.929440",
+        "type": "driver_updated",
+        "user_id": "1111",
+        "user_role": "Alice",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "driver_id": "1",
+            "old_status": "off_duty",
+            "new_status": "available"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:43:09.948543",
+        "type": "driver_assigned",
+        "user_id": "1111",
+        "user_role": "Driver Bob \u2192 Order #11",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "order_id": 11,
+            "driver_id": "2",
+            "driver_name": "Bob",
+            "old_driver": "Dave"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:43:09.967995",
+        "type": "delivery_status_updated",
+        "user_id": "1111",
+        "user_role": "Order #11: assigned \u2192 picked_up",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "order_id": 11,
+            "old_status": "assigned",
+            "new_status": "picked_up",
+            "driver": "Bob"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:43:09.986567",
+        "type": "delivery_status_updated",
+        "user_id": "1111",
+        "user_role": "Order #11: picked_up \u2192 delivered",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "order_id": 11,
+            "old_status": "picked_up",
+            "new_status": "delivered",
+            "driver": "Bob"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:43:10.009196",
+        "type": "driver_assigned",
+        "user_id": "1111",
+        "user_role": "Driver Bob \u2192 Order #11",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "order_id": 11,
+            "driver_id": "2",
+            "driver_name": "Bob",
+            "old_driver": "Bob"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:43:10.028119",
+        "type": "driver_unassigned",
+        "user_id": "1111",
+        "user_role": "Driver Bob removed from Order #11",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "order_id": 11,
+            "old_driver": "Bob"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:43:10.046576",
+        "type": "driver_deleted",
+        "user_id": "1111",
+        "user_role": "Charlie",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "driver_id": "3"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:43:10.062501",
+        "type": "driver_added",
+        "user_id": "1111",
+        "user_role": "Dave",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "driver_id": "3",
+            "phone": "555-0103"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:43:10.083103",
+        "type": "driver_assigned",
+        "user_id": "1111",
+        "user_role": "Driver Dave \u2192 Order #11",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "order_id": 11,
+            "driver_id": "3",
+            "driver_name": "Dave",
+            "old_driver": null
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:43:10.105250",
+        "type": "driver_unassigned",
+        "user_id": "1111",
+        "user_role": "Driver Dave removed from Order #11",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "order_id": 11,
+            "old_driver": "Dave"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:43:10.120896",
+        "type": "driver_deleted",
+        "user_id": "1111",
+        "user_role": "Dave",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "driver_id": "3"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T15:43:10.137457",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "status": "success"
+        }
     }
 ]

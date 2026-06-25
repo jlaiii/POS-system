@@ -41,7 +41,14 @@
             },
             "description": "Juicy quarter-pound beef patty with crisp lettuce, ripe tomato, and fresh onion on a toasted sesame seed bun.",
             "image_url": "static/images/hamburger-normal.svg",
-            "dietary_tags": []
+            "dietary_tags": [],
+            "ingredients": [
+                {"name": "Burger Bun", "qty": 1, "unit": "piece"},
+                {"name": "Beef Patty", "qty": 1, "unit": "piece"},
+                {"name": "Lettuce Leaf", "qty": 2, "unit": "leaves"},
+                {"name": "Tomato Slice", "qty": 2, "unit": "slices"},
+                {"name": "Onion Ring", "qty": 1, "unit": "piece"}
+            ]
         },
         {
             "name": "Hamburger - All the Fixings",

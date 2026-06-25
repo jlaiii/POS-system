@@ -4733,13 +4733,22 @@ def sessions_logout_all():
 @app.route('/api/items', methods=['GET'])
 def get_items():
     items = load_json_data(ITEMS_FILE)
-    # Annotate each item with _visible flag based on scheduled_visibility rules
+    inventory = load_json_data(INVENTORY_FILE)
+    # Annotate each item with _visible flag and cost/margin info
     result = {}
     for cat, cat_items in items.items():
         result[cat] = []
         for item in cat_items:
             annotated = dict(item)
             annotated['_visible'] = is_item_visible(item)
+            cost, breakdown = calculate_item_cost(item, inventory)
+            annotated['_cost'] = cost
+            annotated['_ingredients'] = breakdown
+            price = float(item.get('price', 0))
+            if price > 0:
+                annotated['_margin'] = round(((price - cost) / price) * 100, 1)
+            else:
+                annotated['_margin'] = 0.0
             result[cat].append(annotated)
     return jsonify(result)
 
@@ -4767,6 +4776,33 @@ def get_popular_items():
     popular = [{'name': name, 'count': count} for name, count in most_common]
     
     return jsonify({'popular': popular, 'total_orders_with_data': len(orders)})
+
+
+@app.route('/api/items/profitability', methods=['POST'])
+def items_profitability():
+    """Return profitability ranking for all menu items (cost, margin, breakeven).
+    Requires view_stats permission."""
+    data = request.json
+    admin_pin = data.get('adminPin', '')
+    if not check_perm(admin_pin, 'view_stats'):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+    items_data = load_json_data(ITEMS_FILE)
+    inventory_data = load_json_data(INVENTORY_FILE)
+    results = get_item_profitability(items_data, inventory_data)
+    # Calculate summary stats
+    total_items = len(results)
+    items_with_ingredients = sum(1 for r in results if r['ingredients'])
+    avg_margin = round(sum(r['margin'] for r in results) / total_items, 1) if total_items > 0 else 0
+    return jsonify({
+        'items': results,
+        'summary': {
+            'total_items': total_items,
+            'items_with_recipes': items_with_ingredients,
+            'avg_margin': avg_margin,
+            'highest_margin': results[-1] if results else None,
+            'lowest_margin': results[0] if results else None
+        }
+    })
 
 
 @app.route('/api/items/csv_export', methods=['GET'])
@@ -4999,7 +5035,7 @@ def add_item():
                 nutrition[key] = round(float(val), 1)
             except (ValueError, TypeError):
                 pass
-    items_data[category].append({"name": name, "price": price, "barcode": data.get('barcode', ''), "image_url": data.get('image_url', ''), "description": data.get('description', ''), "course": data.get('course', 'main'), "active": True, "dietary_tags": data.get('dietary_tags', []), "nutritional_info": nutrition if nutrition else {}, "scheduled_visibility": data.get('scheduled_visibility', [])})
+    items_data[category].append({"name": name, "price": price, "barcode": data.get('barcode', ''), "image_url": data.get('image_url', ''), "description": data.get('description', ''), "course": data.get('course', 'main'), "active": True, "dietary_tags": data.get('dietary_tags', []), "nutritional_info": nutrition if nutrition else {}, "scheduled_visibility": data.get('scheduled_visibility', []), "ingredients": data.get('ingredients', [])})
     save_json_data(ITEMS_FILE, items_data)
     backup_menu()  # Auto-backup after successful save
     
@@ -5077,7 +5113,7 @@ def edit_item():
                 old_barcode = items_data[old_category][i].get('barcode', '')
                 old_course = item.get('course', 'main')
                 old_active = item.get('active', True)
-                items_data[new_category].append({"name": new_name, "price": new_price, "barcode": data.get('barcode', old_barcode), "image_url": data.get('image_url', old_image_url), "description": data.get('description', item.get('description', '')), "course": data.get('course', old_course), "active": old_active, "dietary_tags": data.get('dietary_tags', item.get('dietary_tags', [])), "nutritional_info": data.get('nutritional_info', item.get('nutritional_info', {})), "scheduled_visibility": data.get('scheduled_visibility', item.get('scheduled_visibility', []))})
+                items_data[new_category].append({"name": new_name, "price": new_price, "barcode": data.get('barcode', old_barcode), "image_url": data.get('image_url', old_image_url), "description": data.get('description', item.get('description', '')), "course": data.get('course', old_course), "active": old_active, "dietary_tags": data.get('dietary_tags', item.get('dietary_tags', [])), "nutritional_info": data.get('nutritional_info', item.get('nutritional_info', {})), "scheduled_visibility": data.get('scheduled_visibility', item.get('scheduled_visibility', [])), "ingredients": data.get('ingredients', item.get('ingredients', []))})
             else:  # Only name/price/barcode changing within same category
                 items_data[old_category][i]["name"] = new_name
                 items_data[old_category][i]["price"] = new_price
@@ -5095,6 +5131,8 @@ def edit_item():
                     items_data[old_category][i]["nutritional_info"] = data.get('nutritional_info', {})
                 if 'scheduled_visibility' in data:
                     items_data[old_category][i]["scheduled_visibility"] = data.get('scheduled_visibility', [])
+                if 'ingredients' in data:
+                    items_data[old_category][i]["ingredients"] = data.get('ingredients', [])
             break
 
     if not item_found:
@@ -11371,6 +11409,56 @@ def is_item_visible(item):
         return True  # No rules = always visible
     return any(is_schedule_active(rule) for rule in visibility_rules)
 
+def calculate_item_cost(item, inventory_data):
+    """Calculate the total ingredient cost for a menu item based on its recipe/ingredients.
+    Returns (cost, ingredients_breakdown) where cost is the sum of qty * unit_cost.
+    If item has no ingredients, returns (0, [])."""
+    ingredients = item.get('ingredients', [])
+    if not ingredients:
+        return 0.0, []
+    total_cost = 0.0
+    breakdown = []
+    for ing in ingredients:
+        ing_name = ing.get('name', '')
+        qty = float(ing.get('qty', 0))
+        # Look up unit_cost from inventory data by ingredient name
+        inv_entry = inventory_data.get(ing_name, {})
+        unit_cost = float(inv_entry.get('unit_cost', 0))
+        line_cost = round(qty * unit_cost, 4)
+        total_cost += line_cost
+        breakdown.append({
+            'name': ing_name,
+            'qty': qty,
+            'unit': ing.get('unit', 'piece'),
+            'unit_cost': unit_cost,
+            'line_cost': round(line_cost, 2)
+        })
+    return round(total_cost, 2), breakdown
+
+def get_item_profitability(items_data, inventory_data):
+    """Return a list of dicts with profitability data for every menu item.
+    Sorted by margin ascending (lowest margin first — most at risk)."""
+    results = []
+    for cat, cat_items in items_data.items():
+        for item in cat_items:
+            price = float(item.get('price', 0))
+            cost, breakdown = calculate_item_cost(item, inventory_data)
+            margin = 0.0
+            if price > 0:
+                margin = round(((price - cost) / price) * 100, 1)
+            results.append({
+                'category': cat,
+                'name': item['name'],
+                'price': price,
+                'cost': cost,
+                'margin': margin,
+                'breakeven': round(cost, 2),
+                'profit': round(price - cost, 2),
+                'ingredients': breakdown
+            })
+    results.sort(key=lambda x: x['margin'])
+    return results
+
 def get_active_scheduled_discounts():
     """Return list of pricing rules that are currently active."""
     rules = load_json_data(SCHEDULED_PRICING_FILE)
@@ -12873,7 +12961,17 @@ def update_inventory():
             inventory[item_name]['low_stock_threshold'] = low_stock_threshold
         except (ValueError, TypeError):
             return jsonify({'message': 'Low stock threshold must be a non-negative integer.'}), 400
-    
+
+    unit_cost = data.get('unit_cost')
+    if unit_cost is not None:
+        try:
+            unit_cost = round(float(unit_cost), 2)
+            if unit_cost < 0:
+                raise ValueError
+            inventory[item_name]['unit_cost'] = unit_cost
+        except (ValueError, TypeError):
+            return jsonify({'message': 'unit_cost must be a non-negative number.'}), 400
+
     save_json_data(INVENTORY_FILE, inventory)
     log_activity('update_inventory', admin_pin, admin_role, {
         'item_name': item_name,
@@ -12883,6 +12981,66 @@ def update_inventory():
     return jsonify({
         'message': f'Inventory for "{item_name}" updated.',
         'inventory': inventory[item_name]
+    })
+
+
+@app.route('/api/inventory/update_unit_cost', methods=['POST'])
+def update_inventory_unit_cost():
+    """Update the unit_cost for an inventory item (ingredient-level cost tracking).
+    Logs a warning if the cost change exceeds 10% (significant margin impact)."""
+    data = request.json
+    admin_pin = data.get('adminPin', '')
+    if not check_perm(admin_pin, 'manage_items'):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+    item_name = data.get('item_name', '').strip()
+    unit_cost = data.get('unit_cost')
+    if not item_name or unit_cost is None:
+        return jsonify({'message': 'item_name and unit_cost are required.'}), 400
+    try:
+        unit_cost = round(float(unit_cost), 2)
+        if unit_cost < 0:
+            raise ValueError
+    except (ValueError, TypeError):
+        return jsonify({'message': 'unit_cost must be a non-negative number.'}), 400
+    inventory = load_json_data(INVENTORY_FILE)
+    if item_name not in inventory:
+        inventory[item_name] = {'stock': 0, 'low_stock_threshold': 10}
+    old_cost = float(inventory[item_name].get('unit_cost', 0))
+    inventory[item_name]['unit_cost'] = unit_cost
+    save_json_data(INVENTORY_FILE, inventory)
+    admin_user = load_json_data(USERS_FILE).get(admin_pin, {})
+    admin_role = admin_user.get('role', 'unknown')
+    # Alert if cost changed significantly
+    alerts = []
+    if old_cost > 0 and unit_cost > 0:
+        pct_change = abs((unit_cost - old_cost) / old_cost) * 100
+        if pct_change > 10:
+            # Find which menu items use this ingredient and would have >10% margin impact
+            items_data = load_json_data(ITEMS_FILE)
+            affected = []
+            for cat, cat_items in items_data.items():
+                for item in cat_items:
+                    ingredients = item.get('ingredients', [])
+                    for ing in ingredients:
+                        if ing.get('name', '') == item_name:
+                            affected.append(f"{item['name']} ({cat})")
+                            break
+            if affected:
+                alerts.append({
+                    'type': 'cost_change_warning',
+                    'message': f'Unit cost for "{item_name}" changed by {pct_change:.1f}% (${old_cost:.2f} → ${unit_cost:.2f}). Affects: {", ".join(affected[:5])}{" and more" if len(affected) > 5 else ""}.'
+                })
+    log_activity('update_unit_cost', admin_pin, admin_role, {
+        'item_name': item_name,
+        'old_cost': old_cost,
+        'new_cost': unit_cost,
+        'pct_change': round(abs(unit_cost - old_cost) / old_cost * 100, 1) if old_cost > 0 else None
+    })
+    return jsonify({
+        'message': f'Unit cost for "{item_name}" updated: ${unit_cost:.2f}',
+        'item_name': item_name,
+        'unit_cost': unit_cost,
+        'alerts': alerts
     })
 
 

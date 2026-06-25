@@ -1,16 +1,16 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-25T14:40 UTC
-> Total checks: 498
-> Healthy: 498 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-25T15:25 UTC
+> Total checks: 499
+> Healthy: 499 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK, gunicorn+gevent running since 12:08 [verified 14:40]
-- [x] All JSON data files exist and are valid — all 15 core JSON files valid, parseable [verified 14:40]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', role='owner', email='owner@example.com', password_hash present) [verified 14:40]
-- [x] Git repo is clean (no uncommitted changes from crashes) — expected worker modifications (RELIABILITY_CHECKLIST.md, SECURITY_WATCHDOG.md, activity_log.json, login_attempts.json, loyalty_points.json, order_counter.json, orders.json, refunded_orders.json, + untracked waitlist.json) [verified 14:40]
+- [x] Flask app responds on port 5000 — 200 OK, gunicorn+gevent (single worker, PID 1206142) [verified 15:25]
+- [x] All JSON data files exist and are valid — all 15 core JSON files valid, parseable [verified 15:25]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin') [verified 15:25]
+- [x] Git repo is clean — expected worker modifications (SECURITY_WATCHDOG.md, activity_log.json, inventory.json, order_counter.json, orders.json, tickets.json) [verified 15:25]
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/health — {"status":"ok"} (GET) [verified 14:40]

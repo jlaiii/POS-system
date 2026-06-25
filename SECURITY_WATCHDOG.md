@@ -1,6 +1,6 @@
 # POS Security Watchdog
 
-> Last run: 2026-06-25T14:38 UTC
+> Last run: 2026-06-25T15:23 UTC
 > Total events tracked: 25 (SEC-001 → SEC-025)
 > Active blocks: 0 IPs
 > Unresolved alerts: 22 (same as last run — no new events)
@@ -20,54 +20,57 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (14:19–14:38 UTC, ~19m window since last run)
+### ℹ️ Activity Summary (14:38–15:23 UTC, ~45m window since last run)
 
-**New activity log entries since last run**: 15 entries.
+**New activity log entries since last run**: 42 entries.
 
 | Time | Type | User | Details |
 |---|---|---|---|
-| 14:25:22 | login_failed | 9999 | Non-existent user — 1 failed attempt (127.0.0.1, curl) |
-| 14:28:40 | login | 1234 | Employee One — 2fa_required |
-| 14:28:49 | login | 123456 | Carlos — success |
-| 14:30:12 | login | 123456 | Carlos — success |
-| 14:36:48 | login | 123456 | Carlos — success (Python-urllib) |
-| 14:36:48 | login | 123456 | Carlos — success (Python-urllib) |
-| 14:36:48 | pin_changed | 987654 | Carlos — old PIN 123456→987654 |
-| 14:36:48 | pin_change_failed | 987654 | Guessable PIN |
-| 14:36:58 | login_failed | 123456 | Carlos — 2 failed attempts after PIN change |
-| 14:37:18 | login | 987654 | Carlos — success with new PIN |
-| 14:37:18 | login | 987654 | Carlos — success with new PIN |
-| 14:37:18 | pin_changed | 7392 | Carlos — PIN changed to 7392 |
-| 14:37:18 | pin_changed | 987654 | Carlos — PIN changed back to 987654 |
+| 14:40:42 | login | 1111 | Owner — success (127.0.0.1, curl) |
+| 14:40:53 | admin_login | — | Owner — success |
+| 14:40:59 | admin_login | — | Owner — success |
+| 15:08:05 | submit_order | — | Order 85 — $8.99+$1.62 srv chrg, $11.35 total, Cash |
+| 15:08:41 | submit_order | — | Order 86 — $8.99+$1.62 srv chrg, $11.35 total, Cash |
+| 15:08:56 | submit_order | — | Order 87 — $8.99+$1.62 srv chrg, $11.35 total, Cash |
+| 15:09:23 | submit_order | — | Order 88 — $8.99, $9.73 total, Cash |
+| 15:09:31 | submit_order | — | Order 89 — $8.99, $9.73 total, Cash |
+| 15:10:21 | submit_order | — | Order 90 — $8.99, $9.73 total, Cash |
+| 15:21:29 | feedback_received | — | 5-star + 1-star reviews, tickets created |
+| 15:21:35 | admin_login | — | success |
+| 15:21:40 | admin_login | — | success |
+| 15:22:46 | feedback_received | — | 5-star + 1-star reviews, tickets created |
+| 15:22:46 | admin_login | — | success |
+| 15:22:46 | submit_order | — | Order 91 — $6.00, $6.49 total, Cash |
 
-All activity is from localhost (127.0.0.1). The Carlos PIN change activity (14:36:48–14:37:18) appears to be a cron worker testing PIN change functionality (changed PIN twice with a revert). No real user activity.
+All activity from localhost (127.0.0.1). Owner testing order submission, feedback, and ticketing functionality. Orders 85-87 include a $1.62 service charge (added by frontend logic, not suspicious). No real user (employee/customer) activity.
 
-**Login attempts (login_attempts.json)**: 12 new entries since last run (2 failed, 10 successful). Last login at 14:37:18 (Carlos/987654).
-
-**Failed logins in last 5 min**: 2 (user 123456, 127.0.0.1, 14:36:58 — after PIN changed, likely user mistyping new PIN).
+**Failed logins since last run**: 0.
 
 **Server**: UP (HTTP 200).
 
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: 0 IPs with 5+ failed logins in last 5 min. 0 users with 5+ failed attempts.
-- **Failed logins since last run**: 3 (user 9999 at 14:25:22 — non-existent, probably test; user 123456 at 14:36:58 — 2 attempts after PIN change).
-- **Successful-after-failure**: User 123456 had 2 failures at 14:36:58, but these occurred AFTER 2 successful logins at 14:36:48. Failures were caused by PIN change taking effect mid-session. Not a brute-force compromise.
-- **Account enumeration**: 1 failed login for non-existent user 9999 from localhost. Single attempt by curl — likely cron worker test. No probing pattern.
-- **Off-hours**: Current time 14:38 UTC — normal hours (06:00-22:00).
+- **Failed logins since last run**: 0 — none at all.
+- **Successful-after-failure**: None.
+- **Account enumeration**: None — no failed logins for non-existent users.
+- **Off-hours**: Current time 15:23 UTC — normal hours (06:00-22:00).
 - **Known IPs**: Unchanged. All localhost.
-- **Rapid successive logins**: Carlos (123456→987654) logged in 4 times across 2 IPs(PIN change) — all from localhost, normal dev activity.
+- **Rapid successive logins**: None detected.
+- **Cross-IP targeting**: None.
 
 ### 🔒 Security Config
 - All config files unchanged. No sabotage detected.
 - `blocked_ips: []` — no active blocks.
 - `auto_block_threshold: 5` — unchanged.
 - `require_2fa_for_admins: true` — unchanged.
+- `rate_limit_enabled: true` — unchanged.
 
 ### 💰 Financial Check
-- No new orders placed since last run.
+- 7 new orders placed since last run (85-91, all by Owner 1111).
 - 0 orders with $0 total. 0 with 100% discount.
-- 0 large tips, 0 suspicious patterns.
-- No new refunds since last run. Existing refunds are all $0 by Owner (1111) — cron test cleanup.
+- 0 large tips on small orders.
+- 1 existing refund since last run (Order 84 — $372.16, refunded by Owner, reason: "Reliability bot 50-item test cleanup"). This is a cron worker test cleanup, not suspicious.
+- Refund rates: Owner (1111): 4.8% — normal. Employee Two (5678): 6.7% — normal. Employee One (1234): 33.3% but only 3 total orders (1 refund from Reliability Bot test) — small sample, not actionable.
 - No active clocked-in employees.
 
 ### 📂 File Integrity
@@ -110,14 +113,14 @@ None.
 - **SEC-025**: [HIGH] Super admin default PIN changed from 1111 to secure random PIN — resolved by Security Sentinel at 10:19. (Reported 2026-06-25T10:19)
 
 ## System State
-| | **Current time**: 2026-06-25T14:38 UTC — normal hours (off-hours window 22:00-06:00)
-| | **Activity entries since last run**: 15 (all cron worker test operations — PIN change testing for Carlos account — no real user activity)
-| | **New login attempts since last run**: 12 (2 failed, 10 successful)
-| | **Failed logins since last run**: 3 (1 for non-existent 9999, 2 for 123456 after PIN change)
+| | **Current time**: 2026-06-25T15:23 UTC — normal hours (off-hours window 22:00-06:00)
+| | **Activity entries since last run**: 42 (all Owner test operations — order submission, feedback testing, admin logins — no real user activity)
+| | **New login attempts since last run**: 1 (Owner 1111, success, 127.0.0.1)
+| | **Failed logins since last run**: 0
 | | **Known IPs**: Unchanged. All localhost.
 | | **Blocked IPs**: 0
 | | **Config changes**: None since last run.
 | | **File integrity**: All JSON files parseable. No unexpected new files.
-| | **Users**: 8 accounts. Owner 2FA still NOT enabled (SEC-001/SEC-013 — code-level bug).
+| | **Users**: 8 accounts. Owner 2FA still NOT enabled (SEC-001/SEC-013 — known code-level bug).
 | | **Security events**: 25 tracked (SEC-001 through SEC-025). 22 unresolved. 0 new this run.
 | | **Server**: UP (HTTP 200).
