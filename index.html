@@ -1336,6 +1336,42 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
               <div id="tsAdminLoginsList"><div class="empty-state" style="padding:20px;">Click Filter to view admin login times.</div></div>
             </div>
           </div>
+          <!-- Shift Handoff Notes (collapsible) -->
+          <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:12px;">
+            <button onclick="toggleHandoffNotes()" style="font-size:14px;padding:10px 16px;min-height:44px;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;width:100%;text-align:left;font-weight:600;">
+              📝 Shift Handoff Notes ▼
+            </button>
+            <div id="handoffNotesSection" style="display:none;margin-top:8px;">
+              <!-- Filter Bar -->
+              <div class="card" style="margin-bottom:8px;padding:8px 12px;">
+                <div class="form-row" style="gap:6px;flex-wrap:wrap;align-items:center;">
+                  <label style="font-size:12px;color:var(--text2);">Category:</label>
+                  <select id="hnFilterCategory" style="max-width:140px;min-height:36px;font-size:12px;" onchange="loadHandoffNotes()">
+                    <option value="">All</option>
+                    <option value="equipment">🔧 Equipment</option>
+                    <option value="customer">👤 Customer</option>
+                    <option value="inventory">📦 Inventory</option>
+                    <option value="other">📋 General</option>
+                  </select>
+                  <label style="font-size:12px;color:var(--text2);">Priority:</label>
+                  <select id="hnFilterPriority" style="max-width:120px;min-height:36px;font-size:12px;" onchange="loadHandoffNotes()">
+                    <option value="">All</option>
+                    <option value="info">ℹ️ Info</option>
+                    <option value="warning">⚠️ Warning</option>
+                    <option value="urgent">🚨 Urgent</option>
+                  </select>
+                  <label style="font-size:12px;color:var(--text2);">From:</label>
+                  <input type="date" id="hnFilterDateFrom" style="max-width:130px;min-height:36px;font-size:12px;" onchange="loadHandoffNotes()">
+                  <label style="font-size:12px;color:var(--text2);">To:</label>
+                  <input type="date" id="hnFilterDateTo" style="max-width:130px;min-height:36px;font-size:12px;" onchange="loadHandoffNotes()">
+                  <button class="ghost" onclick="document.getElementById('hnFilterCategory').value='';document.getElementById('hnFilterPriority').value='';document.getElementById('hnFilterDateFrom').value='';document.getElementById('hnFilterDateTo').value='';loadHandoffNotes()" style="min-height:36px;padding:4px 10px;font-size:12px;">✕ Clear</button>
+                  <button class="outline" onclick="loadHandoffNotes()" style="min-height:36px;padding:4px 10px;font-size:12px;">🔄 Refresh</button>
+                </div>
+              </div>
+              <!-- Handoff Notes List -->
+              <div id="handoffNotesList"><div class="empty-state" style="padding:20px;">No handoff notes yet. Notes left during clock-out appear here.</div></div>
+            </div>
+          </div>
         </div>
         <!-- Permissions (owner only) -->
         <div id="secPermissions" class="admin-section">
@@ -3012,11 +3048,30 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 
 <!-- ═══════════ CLOCK-OUT NOTES OVERLAY ═══════════ -->
 <div id="clockOutNotesOverlay" class="modal-overlay" role="dialog" aria-modal="true" aria-label="Clock out notes">
-  <div class="modal-box" style="max-width:450px;">
+  <div class="modal-box" style="max-width:500px;">
     <h3 style="margin-bottom:8px;">⏰ Clock Out</h3>
     <p style="color:var(--text2);margin-bottom:12px;font-size:14px;">Add optional notes about your shift (e.g., "covered closing duties", "stayed late for deep clean").</p>
-    <textarea id="clockOutNotesInput" rows="3" style="width:100%;padding:12px;border-radius:8px;background:var(--bg);border:2px solid var(--border);color:var(--text);font-size:15px;resize:vertical;" placeholder="Shift notes (optional)..." aria-label="Shift notes for clock out"></textarea>
-    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;">
+    <textarea id="clockOutNotesInput" rows="2" style="width:100%;padding:12px;border-radius:8px;background:var(--bg);border:2px solid var(--border);color:var(--text);font-size:15px;resize:vertical;" placeholder="Shift notes (optional)..." aria-label="Shift notes for clock out"></textarea>
+    <!-- Handoff Notes Section -->
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
+      <h4 style="margin:0 0 8px 0;font-size:14px;color:var(--accent);">📝 Handoff Notes for Next Shift</h4>
+      <p style="color:var(--text2);margin:0 0 8px 0;font-size:12px;">Leave a note for the next shift about equipment issues, customer situations, inventory alerts, or anything important.</p>
+      <div class="form-row" style="gap:6px;flex-wrap:wrap;margin-bottom:8px;">
+        <select id="hnCategory" style="flex:1;min-width:90px;max-width:160px;min-height:44px;font-size:14px;">
+          <option value="other">📋 General</option>
+          <option value="equipment">🔧 Equipment</option>
+          <option value="customer">👤 Customer</option>
+          <option value="inventory">📦 Inventory</option>
+        </select>
+        <select id="hnPriority" style="flex:0 0 120px;min-height:44px;font-size:14px;">
+          <option value="info">ℹ️ Info</option>
+          <option value="warning">⚠️ Warning</option>
+          <option value="urgent">🚨 Urgent</option>
+        </select>
+      </div>
+      <textarea id="hnNoteInput" rows="2" style="width:100%;padding:12px;border-radius:8px;background:var(--bg);border:2px solid var(--border);color:var(--text);font-size:15px;resize:vertical;" placeholder="Describe the issue (optional)..." aria-label="Handoff note for next shift"></textarea>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;">
       <button class="ghost" onclick="closeClockOutNotes()" style="font-size:16px;padding:12px 24px;min-height:48px;">Cancel</button>
       <button class="accent" onclick="confirmClockOut()" style="font-size:16px;padding:12px 24px;min-height:48px;">✅ Clock Out</button>
     </div>
@@ -6171,6 +6226,9 @@ async function toggleClock() {
   } else {
     // Clock out — show notes modal
     document.getElementById('clockOutNotesInput').value = '';
+    document.getElementById('hnNoteInput').value = '';
+    document.getElementById('hnCategory').value = 'other';
+    document.getElementById('hnPriority').value = 'info';
     document.getElementById('clockOutNotesOverlay').classList.add('active');
   }
 }
@@ -6204,8 +6262,24 @@ function closeClockOutNotes() {
 async function confirmClockOut() {
   if (!currentUser) return;
   const notes = document.getElementById('clockOutNotesInput').value.trim();
+  // Check for handoff note
+  const hnNote = document.getElementById('hnNoteInput').value.trim();
+  const hnCategory = document.getElementById('hnCategory').value;
+  const hnPriority = document.getElementById('hnPriority').value;
   closeClockOutNotes();
   try {
+    // Save handoff note first (if provided) — don't block clock-out
+    if (hnNote) {
+      fetch(BACKEND_URL + '/api/handoff_notes/save', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          adminPin: currentUser.id,
+          note: hnNote,
+          category: hnCategory,
+          priority: hnPriority
+        })
+      }).catch(e => console.warn('Failed to save handoff note:', e));
+    }
     const r = await fetch(BACKEND_URL + '/api/clock/out', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ adminPin: currentUser.id, notes: notes })
@@ -14758,6 +14832,74 @@ async function loadTsAdminLogins() {
   } catch(e) { list.innerHTML = '<div class="empty-state">' + t('network_error') + '</div>'; }
 }
 
+/* ══════════════════════════════════════════════════════════════
+   Shift Handoff Notes — End-of-Shift Communication
+   ══════════════════════════════════════════════════════════════ */
+
+function toggleHandoffNotes() {
+  const section = document.getElementById('handoffNotesSection');
+  if (!section) return;
+  const isHidden = section.style.display === 'none' || section.style.display === '';
+  section.style.display = isHidden ? 'block' : 'none';
+  if (isHidden) loadHandoffNotes();
+}
+
+async function loadHandoffNotes() {
+  const list = document.getElementById('handoffNotesList');
+  if (!list) return;
+  list.innerHTML = '<div class="empty-state">' + t('loading') + '</div>';
+  try {
+    const params = { adminPin: currentUser.id };
+    const cat = document.getElementById('hnFilterCategory')?.value || '';
+    const pri = document.getElementById('hnFilterPriority')?.value || '';
+    const dateFrom = document.getElementById('hnFilterDateFrom')?.value || '';
+    const dateTo = document.getElementById('hnFilterDateTo')?.value || '';
+    if (cat) params.category = cat;
+    if (pri) params.priority = pri;
+    if (dateFrom) params.date_from = new Date(dateFrom + 'T00:00:00').toISOString();
+    if (dateTo) params.date_to = new Date(dateTo + 'T23:59:59').toISOString();
+    const r = await fetch(BACKEND_URL + '/api/handoff_notes/list', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params)
+    });
+    if (!r.ok) {
+      const errData = await r.json().catch(() => ({}));
+      list.innerHTML = '<div class="empty-state">' + (errData.message || 'Error loading notes') + '</div>';
+      return;
+    }
+    const data = await r.json();
+    const notes = data.notes || [];
+    if (notes.length === 0) {
+      list.innerHTML = '<div class="empty-state">No handoff notes match the current filters.</div>';
+      return;
+    }
+    const priorityEmoji = { info: 'ℹ️', warning: '⚠️', urgent: '🚨' };
+    const categoryEmoji = { equipment: '🔧', customer: '👤', inventory: '📦', other: '📋' };
+    const priorityBorder = { info: 'var(--text2)', warning: '#f39c12', urgent: '#e74c3c' };
+    list.innerHTML = '<div style="display:flex;flex-direction:column;gap:8px;">' +
+      notes.map(n => {
+        const borderColor = priorityBorder[n.priority] || 'var(--text2)';
+        const pEmoji = priorityEmoji[n.priority] || 'ℹ️';
+        const cEmoji = categoryEmoji[n.category] || '📋';
+        const ts = n.created_at ? new Date(n.created_at).toLocaleString() : '';
+        return `<div class="card" style="padding:10px 14px;border-left:4px solid ${borderColor};">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap;">
+            <div style="font-weight:600;font-size:14px;">${pEmoji} ${escHtml(n.note)}</div>
+            <span style="font-size:11px;color:var(--text2);white-space:nowrap;">${ts}</span>
+          </div>
+          <div style="margin-top:4px;display:flex;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--text2);">
+            <span>${cEmoji} ${n.category}</span>
+            <span>👤 ${escHtml(n.user_name || n.user_id)}</span>
+            <span style="color:${borderColor};font-weight:600;">${pEmoji} ${n.priority}</span>
+          </div>
+        </div>`;
+      }).join('') +
+      '</div>';
+  } catch(e) {
+    list.innerHTML = '<div class="empty-state">' + t('network_error') + '</div>';
+  }
+}
+
 /** Export dashboard as CSV */
 async function exportTsDashboardCSV() {
   if (!_tsDashboardEmployees || _tsDashboardEmployees.length === 0) {
@@ -21528,3 +21670,4 @@ async function loadGiftCardReport() {
 </script>
 
 </body>
+</html>

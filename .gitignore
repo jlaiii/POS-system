@@ -22,5 +22,6 @@ pos_orders_backup.json
 pos.db
 timesheet_approvals.json
 tickets.json
+handoff_notes.json
 .data_baseline.json
 pos-system.pid

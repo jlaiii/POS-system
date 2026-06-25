@@ -156,6 +156,7 @@ TIMESHEET_CONFIG_FILE = 'timesheet_config.json'  # Timesheet configuration (over
 TICKETS_FILE = 'tickets.json'  # Employee self-service tickets/requests
 RESERVATIONS_FILE = 'reservations.json'  # Table reservation/booking system
 TICKET_TEMPLATES_FILE = 'ticket_templates.json'  # Saved response templates for admin ticket replies
+HANDOFF_NOTES_FILE = 'handoff_notes.json'  # Shift handoff notes for end-of-shift communication
 APPROVALS_FILE = 'timesheet_approvals.json'  # Timesheet pay period approvals
 RESTAURANT_CONFIG_FILE = 'restaurant_config.json'  # Restaurant info for tablet display (name, hours, wifi)
 SCHEDULE_FILE = 'schedule.json'  # Shift schedule builder — weekly shift assignments
@@ -350,7 +351,7 @@ def load_json_data(filepath):
             if filepath == USERS_FILE and not isinstance(data, dict):
                 print(f"Warning: {filepath} is not a dictionary. Initializing as empty dict.")
                 return {}
-            if filepath in [ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, TICKETS_FILE, RESERVATIONS_FILE] and not isinstance(data, list):
+            if filepath in [ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, TICKETS_FILE, RESERVATIONS_FILE, HANDOFF_NOTES_FILE] and not isinstance(data, list):
                 print(f"Warning: {filepath} is not a list. Initializing as empty list.")
                 return []
             if filepath == ITEMS_FILE and not isinstance(data, dict):
@@ -16676,6 +16677,110 @@ def ticket_templates_delete():
                  {'template_id': template_id})
 
     return jsonify({'message': 'Template deleted successfully!'})
+
+
+# ═══════════════════════════════════════════════════════════
+# Shift Handoff Notes — End-of-Shift Communication
+# ═══════════════════════════════════════════════════════════
+
+@app.route('/api/handoff_notes/save', methods=['POST'])
+def handoff_notes_save():
+    """Save a handoff note for end-of-shift communication.
+    Any logged-in employee can save a note. Stores author, timestamp,
+    note text, priority (info/warning/urgent), and category
+    (equipment/customer/inventory/other).
+    """
+    data = request.json
+    if not data:
+        return jsonify({'message': 'Request body is required.'}), 400
+
+    user_id = data.get('adminPin')
+    if not user_id:
+        return jsonify({'message': 'User ID required.'}), 400
+
+    users = load_json_data(USERS_FILE)
+    user_data = users.get(user_id, {})
+    if not user_data:
+        return jsonify({'message': 'User not found.'}), 404
+
+    note_text = (data.get('note') or '').strip()
+    if not note_text:
+        return jsonify({'message': 'Note text is required.'}), 400
+
+    priority = data.get('priority', 'info')
+    if priority not in ('info', 'warning', 'urgent'):
+        priority = 'info'
+
+    category = data.get('category', 'other')
+    if category not in ('equipment', 'customer', 'inventory', 'other'):
+        category = 'other'
+
+    notes = load_json_data(HANDOFF_NOTES_FILE)
+    if not isinstance(notes, list):
+        notes = []
+
+    note_entry = {
+        'id': f'HN-{len(notes) + 1:04d}',
+        'user_id': user_id,
+        'user_name': user_data.get('name', 'Unknown'),
+        'note': note_text,
+        'priority': priority,
+        'category': category,
+        'created_at': datetime.now().isoformat()
+    }
+    notes.append(note_entry)
+    save_json_data(HANDOFF_NOTES_FILE, notes)
+
+    log_activity('handoff_note_saved', user_id, user_data.get('role', 'user'),
+                 {'note_id': note_entry['id'], 'priority': priority, 'category': category})
+
+    return jsonify({'message': 'Handoff note saved!', 'note': note_entry})
+
+
+@app.route('/api/handoff_notes/list', methods=['POST'])
+def handoff_notes_list():
+    """List handoff notes with optional filtering by category/priority/date range.
+    Requires manage_users or view_timesheet permission.
+    """
+    data = request.json or {}
+    admin_pin = data.get('adminPin')
+    if not admin_pin:
+        return jsonify({'message': 'Admin PIN required.'}), 400
+    if not (check_perm(admin_pin, 'manage_users') or check_perm(admin_pin, 'view_timesheet')):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    notes = load_json_data(HANDOFF_NOTES_FILE)
+    if not isinstance(notes, list):
+        notes = []
+
+    # Filtering
+    filter_category = data.get('category')
+    filter_priority = data.get('priority')
+    filter_date_from = data.get('date_from')
+    filter_date_to = data.get('date_to')
+
+    filtered = notes
+    if filter_category:
+        filtered = [n for n in filtered if n.get('category') == filter_category]
+    if filter_priority:
+        filtered = [n for n in filtered if n.get('priority') == filter_priority]
+    if filter_date_from:
+        try:
+            fd_from = datetime.fromisoformat(filter_date_from)
+            filtered = [n for n in filtered if datetime.fromisoformat(n['created_at']) >= fd_from]
+        except (ValueError, KeyError):
+            pass
+    if filter_date_to:
+        try:
+            fd_to = datetime.fromisoformat(filter_date_to)
+            filtered = [n for n in filtered if datetime.fromisoformat(n['created_at']) <= fd_to]
+        except (ValueError, KeyError):
+            pass
+
+    # Sort newest first
+    filtered.sort(key=lambda n: n.get('created_at', ''), reverse=True)
+
+    return jsonify({'notes': filtered, 'total': len(filtered)})
 
 
 # ============================================================
