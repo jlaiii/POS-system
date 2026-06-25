@@ -30,7 +30,7 @@
 - [ ] Write migrate_table_ads.py — table_ads table migration
 - [ ] Write migrate_security_events.py — security_events table migration
 - [ ] Write migrate_known_ips.py — known_ips table migration
-- [ ] Write migrate_login_attempts.py — login_attempts table migration
+- [x] Write migrate_login_attempts.py — login_attempts table migration (102 rows verified ✓)
 - [ ] Write migrate_refunded_orders.py — refunded_orders table migration
 - [ ] Write migrate_cleared_orders.py — cleared_orders table migration
 
@@ -70,6 +70,7 @@
 - [x] **migrate_inventory.py** — Migrated 16 inventory items from inventory.json to SQLite. Mapped 'low_stock_threshold' to 'threshold' column. Idempotency tested. Commit: 7d5ee21
 - [x] **migrate_loyalty_points.py** — Migrated 2 loyalty points records from loyalty_points.json to SQLite. Extended schema with 7 fields (email, notes, address, total_redeemed, total_orders, created_at, history). Added schema migration helper in db.py for forward-compatible column additions. Commit: 9b576e3
 - [x] **migrate_orders.py** — Migrated 66 orders from orders.json to SQLite. Handles edge cases (payment as dict, null fields, order 55 with dict payment). Added service_charge_amount + customer_email columns to orders schema. Also migrates cleared_orders.json (0 cleared). Idempotency tested. Commit: b20f501
+- [x] **migrate_login_attempts.py** — Migrated 102 login attempts from login_attempts.json to SQLite. Added user_agent + details columns to schema. Updated db.py with schema migration entries. Idempotency tested. Commit: a280b28
 
 ## ROLLBACK PLAN (always keep current)
 How to revert to JSON mode if DB breaks:
@@ -105,7 +106,7 @@ How to revert to JSON mode if DB breaks:
 | table_ads.json | table_ads | object | 0 | |
 | security_events.json | security_events | array | ? | |
 | known_ips.json | known_ips | dict | ? | |
-| login_attempts.json | login_attempts | dict | ? | |
+| login_attempts.json | login_attempts | array | 102 | ✓ |
 | security_config.json | — | config singleton | — | keep JSON |
 | timesheet_config.json | — | config singleton | — | keep JSON |
 | tax_config.json | — | config singleton | — | keep JSON |
