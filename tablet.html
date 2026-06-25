@@ -1804,9 +1804,9 @@ async function fetchMenuItems() {
       const popData = await popRes.json();
       popularItems = new Set((popData.popular || []).map(p => p.name));
     }
-    // Build category list (exclude empty categories)
+    // Build category list (exclude empty categories and categories with no visible items)
     categories = Object.keys(menuItemsData).filter(cat => {
-      return Array.isArray(menuItemsData[cat]) && menuItemsData[cat].length > 0;
+      return Array.isArray(menuItemsData[cat]) && menuItemsData[cat].some(it => it.active !== false && it._visible !== false);
     });
     if (categories.length > 0) {
       activeCategory = categories[0];
@@ -1855,7 +1855,7 @@ function switchCategory(cat) {
 
 function renderItems() {
   const grid = document.getElementById('menuItemsGrid');
-  const items = (menuItemsData[activeCategory] || []).filter(it => it.active !== false);
+  const items = (menuItemsData[activeCategory] || []).filter(it => it.active !== false && it._visible !== false);
 
   if (items.length === 0) {
     grid.innerHTML = '<div id="noItemsMsg" data-i18n="no_items_category">No items in this category.</div>';

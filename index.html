@@ -111,6 +111,46 @@ button.btn-sm, .btn-sm { font-size: 13px; padding: 4px 12px; min-height: 36px; m
   box-shadow: 0 0 8px rgba(233,69,96,0.2);
 }
 
+.day-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--text2);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  min-height: 36px;
+  user-select: none;
+}
+.day-check input { margin: 0; width: 16px; height: 16px; accent-color: var(--accent); }
+.day-check:has(input:checked) {
+  background: rgba(233,69,96,0.12);
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.vis-rule-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text2);
+  margin: 3px;
+}
+.vis-rule-tag .vis-del {
+  cursor: pointer;
+  color: #e94560;
+  margin-left: 4px;
+  font-weight: bold;
+}
+
 .val-err { color: #ff6b6b; background: rgba(255,107,107,0.1); border: 1px solid rgba(255,107,107,0.3); }
 .val-warn { color: #ffd93d; background: rgba(255,217,61,0.1); border: 1px solid rgba(255,217,61,0.3); }
 
@@ -1018,6 +1058,31 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
             <input type="number" id="addItemFat" placeholder="Fat (g)" step="0.1" min="0" style="max-width:100px;min-height:36px;padding:6px 8px;font-size:13px;" inputmode="decimal" pattern="[0-9]*" title="Fat in grams"/>
           </div>
           </div>
+          <div class="card" style="margin-bottom:12px;">
+            <details style="margin-bottom:8px;cursor:pointer;">
+              <summary style="font-size:14px;color:var(--text2);padding:8px 0;">⏰ <span data-i18n="item.visibility_schedule">Visibility Schedule</span></summary>
+              <div id="addItemVisibilityRules" style="margin-top:8px;">
+                <div class="form-row" style="flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:6px;">
+                  <span style="font-size:13px;color:var(--text2);min-width:60px;" data-i18n="item.visibility_days">Days:</span>
+                  <label class="day-check"><input type="checkbox" value="0" class="vis-day-add"> Mon</label>
+                  <label class="day-check"><input type="checkbox" value="1" class="vis-day-add"> Tue</label>
+                  <label class="day-check"><input type="checkbox" value="2" class="vis-day-add"> Wed</label>
+                  <label class="day-check"><input type="checkbox" value="3" class="vis-day-add"> Thu</label>
+                  <label class="day-check"><input type="checkbox" value="4" class="vis-day-add"> Fri</label>
+                  <label class="day-check"><input type="checkbox" value="5" class="vis-day-add"> Sat</label>
+                  <label class="day-check"><input type="checkbox" value="6" class="vis-day-add"> Sun</label>
+                </div>
+                <div class="form-row" style="flex-wrap:wrap;gap:6px;align-items:center;">
+                  <span style="font-size:13px;color:var(--text2);" data-i18n="item.visibility_time">Time:</span>
+                  <input type="time" id="addVisStartTime" value="06:00" style="max-width:140px;min-height:36px;padding:6px 8px;font-size:13px;">
+                  <span style="color:var(--text2);">—</span>
+                  <input type="time" id="addVisEndTime" value="23:59" style="max-width:140px;min-height:36px;padding:6px 8px;font-size:13px;">
+                  <button class="outline" onclick="addVisibilityRule('add')" style="font-size:13px;padding:6px 12px;min-height:36px;" data-i18n="item.visibility_add_rule">+ Add Rule</button>
+                </div>
+                <div id="addVisRuleList" style="margin-top:6px;"></div>
+              </div>
+            </details>
+          </div>
           <div id="editItemForm">
             <h4>✏️ Edit Item</h4>
             <input type="hidden" id="editOldCat"/>
@@ -1060,6 +1125,29 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
               <input type="number" id="editItemCarbs" placeholder="Carbs (g)" step="0.1" min="0" style="max-width:110px;min-height:36px;padding:6px 8px;font-size:13px;" inputmode="decimal" pattern="[0-9]*" title="Carbohydrates in grams"/>
               <input type="number" id="editItemFat" placeholder="Fat (g)" step="0.1" min="0" style="max-width:100px;min-height:36px;padding:6px 8px;font-size:13px;" inputmode="decimal" pattern="[0-9]*" title="Fat in grams"/>
             </div>
+            <details style="margin-top:8px;cursor:pointer;">
+              <summary style="font-size:14px;color:var(--text2);padding:8px 0;">⏰ <span data-i18n="item.visibility_schedule">Visibility Schedule</span></summary>
+              <div id="editItemVisibilityRules" style="margin-top:8px;">
+                <div class="form-row" style="flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:6px;">
+                  <span style="font-size:13px;color:var(--text2);min-width:60px;" data-i18n="item.visibility_days">Days:</span>
+                  <label class="day-check"><input type="checkbox" value="0" class="vis-day-edit"> Mon</label>
+                  <label class="day-check"><input type="checkbox" value="1" class="vis-day-edit"> Tue</label>
+                  <label class="day-check"><input type="checkbox" value="2" class="vis-day-edit"> Wed</label>
+                  <label class="day-check"><input type="checkbox" value="3" class="vis-day-edit"> Thu</label>
+                  <label class="day-check"><input type="checkbox" value="4" class="vis-day-edit"> Fri</label>
+                  <label class="day-check"><input type="checkbox" value="5" class="vis-day-edit"> Sat</label>
+                  <label class="day-check"><input type="checkbox" value="6" class="vis-day-edit"> Sun</label>
+                </div>
+                <div class="form-row" style="flex-wrap:wrap;gap:6px;align-items:center;">
+                  <span style="font-size:13px;color:var(--text2);" data-i18n="item.visibility_time">Time:</span>
+                  <input type="time" id="editVisStartTime" value="06:00" style="max-width:140px;min-height:36px;padding:6px 8px;font-size:13px;">
+                  <span style="color:var(--text2);">—</span>
+                  <input type="time" id="editVisEndTime" value="23:59" style="max-width:140px;min-height:36px;padding:6px 8px;font-size:13px;">
+                  <button class="outline" onclick="addVisibilityRule('edit')" style="font-size:13px;padding:6px 12px;min-height:36px;" data-i18n="item.visibility_add_rule">+ Add Rule</button>
+                </div>
+                <div id="editVisRuleList" style="margin-top:6px;"></div>
+              </div>
+            </details>
           </div>
           <div id="itemMgmtList"><div class="empty-state">Loading items...</div></div>
           <!-- CSV Import/Export -->
@@ -3424,6 +3512,10 @@ const L10N = {
     'item.no_items': 'No items in this category',
     'item.load_fail': 'Cannot load items',
     'item.popular': 'Most Popular',
+    'item.visibility_schedule': 'Visibility Schedule',
+    'item.visibility_days': 'Days:',
+    'item.visibility_time': 'Time:',
+    'item.visibility_add_rule': '+ Add Rule',
     'history.filter_date': 'Filter by date',
     'history.filter_date_from': 'From date',
     'history.filter_date_to': 'To date',
@@ -4281,6 +4373,10 @@ const L10N = {
     'item.no_items': 'No hay artículos en esta categoría',
     'item.load_fail': 'No se pueden cargar los artículos',
     'item.popular': 'Más Popular',
+    'item.visibility_schedule': 'Horario de Visibilidad',
+    'item.visibility_days': 'Días:',
+    'item.visibility_time': 'Hora:',
+    'item.visibility_add_rule': '+ Añadir Regla',
     'history.filter_date': 'Filtrar por fecha',
     'history.filter_date_from': 'Desde fecha',
     'history.filter_date_to': 'Hasta fecha',
@@ -9130,7 +9226,7 @@ function renderCategories() {
     container.appendChild(btn);
   }
   Object.keys(itemsData).forEach(cat => {
-    const hasVisible = (itemsData[cat] || []).some(item => item.active !== false);
+    const hasVisible = (itemsData[cat] || []).some(item => item.active !== false && item._visible !== false);
     if (!hasVisible) return;
     const btn = document.createElement('button');
     btn.textContent = cat;
@@ -9296,6 +9392,7 @@ function renderItems() {
     Object.keys(itemsData).forEach(cat => {
       (itemsData[cat] || []).forEach(item => {
         if (item.active === false) return;
+        if (item._visible === false) return;
         if (item.name.toLowerCase().includes(term)) {
           if (!isItemFilteredByAllergens(item)) {
             results.push({ ...item, _category: cat });
@@ -9366,6 +9463,7 @@ function renderItems() {
     }
     items.forEach(item => {
       if (item.active === false) return;
+      if (item._visible === false) return;
       if (isItemFilteredByAllergens(item)) return;
       const inv = inventoryData[item.name] || {};
       const stock = inv.stock !== undefined ? inv.stock : null;
@@ -13537,7 +13635,7 @@ async function loadItemMgmt() {
           <div class="ime-info">${imgHtml}<span class="ime-cat">${escHtml(cat)}</span> — ${escHtml(item.name)} <span class="ime-price">$${item.price.toFixed(2)}</span>${bcHtml}${courseBadge}${dietaryHtml}${item.modifiers && item.modifiers.groups && item.modifiers.groups.length > 0 ? '<span style="color:#f39c12;font-size:11px;margin-left:6px;">⚙️</span>' : ''} ${item.active === false ? '<span style="color:var(--text2);font-size:11px;margin-left:6px;" data-i18n="item.hidden">🚫 Hidden</span>' : '<span style="color:#2ecc71;font-size:11px;margin-left:6px;" data-i18n="item.visible">👁️ Visible</span>'}</div>
           <div class="ime-actions">
             <button class="outline" onclick='toggleItemVisibility(${JSON.stringify(cat)},${JSON.stringify(item.name)})' style="font-size:13px;padding:6px 12px;min-height:36px;" title="${item.active === false ? t('item.show') : t('item.hide')}">${item.active === false ? '👁️' : '🚫'}</button>
-            <button class="outline" onclick='startEditItem(${JSON.stringify(cat)},${JSON.stringify(item.name)},${item.price},${JSON.stringify(bc)},${JSON.stringify(imgUrl)},${JSON.stringify(course)},${JSON.stringify(dietaryTags)},${JSON.stringify(item.nutritional_info || {})})' style="font-size:13px;padding:6px 12px;min-height:36px;">✏️</button>
+            <button class="outline" onclick='startEditItem(${JSON.stringify(cat)},${JSON.stringify(item.name)},${item.price},${JSON.stringify(bc)},${JSON.stringify(imgUrl)},${JSON.stringify(course)},${JSON.stringify(dietaryTags)},${JSON.stringify(item.nutritional_info || {})},${JSON.stringify(item.scheduled_visibility || [])})' style="font-size:13px;padding:6px 12px;min-height:36px;">✏️</button>
             <button class="outline" onclick='editItemModifiers(${JSON.stringify(cat)},${JSON.stringify(item.name)})' style="font-size:13px;padding:6px 12px;min-height:36px;">⚙️</button>
             <button class="danger" onclick='deleteItem(${JSON.stringify(cat)},${JSON.stringify(item.name)})' style="font-size:13px;padding:6px 12px;min-height:36px;">🗑️</button>
           </div>
@@ -13548,7 +13646,7 @@ async function loadItemMgmt() {
   } catch(e) { list.innerHTML = '<div class="empty-state">' + t('network_error') + '</div>'; }
 }
 
-function startEditItem(cat, name, price, barcode, imageUrl, course, dietaryTags, nutritionalInfo) {
+function startEditItem(cat, name, price, barcode, imageUrl, course, dietaryTags, nutritionalInfo, visibilityRules) {
   document.getElementById('editItemForm').classList.add('active');
   document.getElementById('editOldCat').value = cat;
   document.getElementById('editOldName').value = name;
@@ -13564,6 +13662,7 @@ function startEditItem(cat, name, price, barcode, imageUrl, course, dietaryTags,
   document.getElementById('editItemProtein').value = ni.protein || '';
   document.getElementById('editItemCarbs').value = ni.carbs || '';
   document.getElementById('editItemFat').value = ni.fat || '';
+  loadVisibilityRules('edit', visibilityRules || []);
   document.getElementById('editItemForm').scrollIntoView({ behavior: 'smooth' });
 }
 
@@ -13587,7 +13686,7 @@ async function saveEditItem() {
   const fat = document.getElementById('editItemFat').value.trim();
   if (!newCat || !newName || isNaN(newPrice) || newPrice <= 0) { showToast(t('toast.fill_all_fields'), 'danger'); return; }
   try {
-    const body = { adminPin: currentUser.id, oldCategory: oldCat, oldName, newCategory: newCat, newName, newPrice, barcode: newBarcode, image_url: newImageUrl, course: newCourse, dietary_tags: dietaryTags };
+    const body = { adminPin: currentUser.id, oldCategory: oldCat, oldName, newCategory: newCat, newName, newPrice, barcode: newBarcode, image_url: newImageUrl, course: newCourse, dietary_tags: dietaryTags, scheduled_visibility: getVisibilityRules('edit') };
     const ni = {};
     if (calories) ni.calories = parseFloat(calories);
     if (protein) ni.protein = parseFloat(protein);
@@ -13620,6 +13719,58 @@ async function deleteItem(cat, name) {
     loadItemMgmt();
     loadItems();
   } catch(e) { showToast(t('toast.network_error'), 'danger'); }
+}
+
+// ---- Visibility Schedule Management ----
+
+let addVisibilityRuleList = [];
+let editVisibilityRuleList = [];
+
+function addVisibilityRule(form) {
+  const prefix = form === 'add' ? 'add' : 'edit';
+  const days = Array.from(document.querySelectorAll('.vis-day-' + prefix + ':checked')).map(cb => parseInt(cb.value));
+  if (days.length === 0) { showToast('Select at least one day', 'danger'); return; }
+  const start = document.getElementById(prefix + 'VisStartTime').value;
+  const end = document.getElementById(prefix + 'VisEndTime').value;
+  if (!start || !end) { showToast('Select start and end time', 'danger'); return; }
+  const rule = { days_of_week: days, start_time: start, end_time: end };
+  const list = form === 'add' ? addVisibilityRuleList : editVisibilityRuleList;
+  list.push(rule);
+  renderVisibilityRuleList(form);
+}
+
+function removeVisibilityRule(form, index) {
+  const list = form === 'add' ? addVisibilityRuleList : editVisibilityRuleList;
+  list.splice(index, 1);
+  renderVisibilityRuleList(form);
+}
+
+function renderVisibilityRuleList(form) {
+  const prefix = form === 'add' ? 'add' : 'edit';
+  const list = form === 'add' ? addVisibilityRuleList : editVisibilityRuleList;
+  const container = document.getElementById(prefix + 'VisRuleList');
+  const DAY_NAMES = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  if (list.length === 0) {
+    container.innerHTML = '<span style="font-size:12px;color:var(--text2);">No rules &mdash; item always visible</span>';
+    return;
+  }
+  container.innerHTML = list.map((rule, i) => {
+    const daysStr = (rule.days_of_week || []).map(d => DAY_NAMES[d] || d).join(', ');
+    return '<span class="vis-rule-tag">' + escHtml(daysStr) + ' ' + rule.start_time + '&ndash;' + rule.end_time + ' <span class="vis-del" onclick="removeVisibilityRule(\'' + form + '\', ' + i + ')">✕</span></span>';
+  }).join('');
+}
+
+function getVisibilityRules(form) {
+  return form === 'add' ? addVisibilityRuleList : editVisibilityRuleList;
+}
+
+function loadVisibilityRules(form, rules) {
+  const list = form === 'add' ? addVisibilityRuleList : editVisibilityRuleList;
+  list.length = 0;
+  if (Array.isArray(rules)) {
+    rules.forEach(r => list.push({ days_of_week: r.days_of_week || [], start_time: r.start_time || '06:00', end_time: r.end_time || '23:59' }));
+  }
+  renderVisibilityRuleList(form);
 }
 
 async function toggleItemVisibility(cat, name) {
@@ -13932,7 +14083,7 @@ async function addItem() {
   const fat = document.getElementById('addItemFat').value.trim();
   if (!category || !name || isNaN(price) || price <= 0) { showToast(t('toast.fill_all_fields'), 'danger'); return; }
   try {
-    const body = { adminPin: currentUser.id, category, name, price, barcode, image_url: imageUrl, course, dietary_tags: dietaryTags };
+    const body = { adminPin: currentUser.id, category, name, price, barcode, image_url: imageUrl, course, dietary_tags: dietaryTags, scheduled_visibility: getVisibilityRules('add') };
     if (calories) body.calories = parseFloat(calories);
     if (protein) body.protein = parseFloat(protein);
     if (carbs) body.carbs = parseFloat(carbs);
@@ -13954,6 +14105,7 @@ async function addItem() {
     document.getElementById('addItemCarbs').value = '';
     document.getElementById('addItemFat').value = '';
     setDietaryTags('addItem', []); // Clear selected tags
+    addVisibilityRuleList = []; renderVisibilityRuleList('add');
     loadItemMgmt();
     loadItems();
   } catch(e) { showToast(t('toast.network_error'), 'danger'); }

@@ -4629,7 +4629,15 @@ def sessions_logout_all():
 @app.route('/api/items', methods=['GET'])
 def get_items():
     items = load_json_data(ITEMS_FILE)
-    return jsonify(items)
+    # Annotate each item with _visible flag based on scheduled_visibility rules
+    result = {}
+    for cat, cat_items in items.items():
+        result[cat] = []
+        for item in cat_items:
+            annotated = dict(item)
+            annotated['_visible'] = is_item_visible(item)
+            result[cat].append(annotated)
+    return jsonify(result)
 
 
 @app.route('/api/items/popular', methods=['GET'])
@@ -4887,7 +4895,7 @@ def add_item():
                 nutrition[key] = round(float(val), 1)
             except (ValueError, TypeError):
                 pass
-    items_data[category].append({"name": name, "price": price, "barcode": data.get('barcode', ''), "image_url": data.get('image_url', ''), "description": data.get('description', ''), "course": data.get('course', 'main'), "active": True, "dietary_tags": data.get('dietary_tags', []), "nutritional_info": nutrition if nutrition else {}})
+    items_data[category].append({"name": name, "price": price, "barcode": data.get('barcode', ''), "image_url": data.get('image_url', ''), "description": data.get('description', ''), "course": data.get('course', 'main'), "active": True, "dietary_tags": data.get('dietary_tags', []), "nutritional_info": nutrition if nutrition else {}, "scheduled_visibility": data.get('scheduled_visibility', [])})
     save_json_data(ITEMS_FILE, items_data)
     backup_menu()  # Auto-backup after successful save
     
@@ -4965,7 +4973,7 @@ def edit_item():
                 old_barcode = items_data[old_category][i].get('barcode', '')
                 old_course = item.get('course', 'main')
                 old_active = item.get('active', True)
-                items_data[new_category].append({"name": new_name, "price": new_price, "barcode": data.get('barcode', old_barcode), "image_url": data.get('image_url', old_image_url), "description": data.get('description', item.get('description', '')), "course": data.get('course', old_course), "active": old_active, "dietary_tags": data.get('dietary_tags', item.get('dietary_tags', [])), "nutritional_info": data.get('nutritional_info', item.get('nutritional_info', {}))})
+                items_data[new_category].append({"name": new_name, "price": new_price, "barcode": data.get('barcode', old_barcode), "image_url": data.get('image_url', old_image_url), "description": data.get('description', item.get('description', '')), "course": data.get('course', old_course), "active": old_active, "dietary_tags": data.get('dietary_tags', item.get('dietary_tags', [])), "nutritional_info": data.get('nutritional_info', item.get('nutritional_info', {})), "scheduled_visibility": data.get('scheduled_visibility', item.get('scheduled_visibility', []))})
             else:  # Only name/price/barcode changing within same category
                 items_data[old_category][i]["name"] = new_name
                 items_data[old_category][i]["price"] = new_price
@@ -4981,6 +4989,8 @@ def edit_item():
                     items_data[old_category][i]["description"] = data.get('description', '')
                 if 'nutritional_info' in data:
                     items_data[old_category][i]["nutritional_info"] = data.get('nutritional_info', {})
+                if 'scheduled_visibility' in data:
+                    items_data[old_category][i]["scheduled_visibility"] = data.get('scheduled_visibility', [])
             break
 
     if not item_found:
@@ -10710,6 +10720,14 @@ def is_schedule_active(rule):
             return now_minutes >= start_minutes or now_minutes <= end_minutes
     except (ValueError, TypeError):
         return False
+
+def is_item_visible(item):
+    """Check if an item's scheduled_visibility rules make it visible right now.
+    If scheduled_visibility is empty or not set, the item is always visible."""
+    visibility_rules = item.get('scheduled_visibility', [])
+    if not visibility_rules:
+        return True  # No rules = always visible
+    return any(is_schedule_active(rule) for rule in visibility_rules)
 
 def get_active_scheduled_discounts():
     """Return list of pricing rules that are currently active."""
