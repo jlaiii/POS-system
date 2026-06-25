@@ -1,10 +1,10 @@
 # POS Security Watchdog
 
-> Last run: 2026-06-25T04:56 UTC
-> Total events tracked: 21 (SEC-001 → SEC-021)
+> Last run: 2026-06-25T06:28 UTC
+> Total events tracked: 24 (SEC-001 → SEC-024)
 > Active blocks: 0 IPs
-> Unresolved alerts: 19 (SEC-001, SEC-003, SEC-005, SEC-006, SEC-007, SEC-008, SEC-009, SEC-010, SEC-011, SEC-012, SEC-013, SEC-014, SEC-015, SEC-016, SEC-017, SEC-018, SEC-019, SEC-020, SEC-021)
-> Run result: SILENT — baseline activity, Reliability Bot test, no new threats
+> Unresolved alerts: 22 (SEC-001, SEC-003, SEC-005, SEC-006, SEC-007, SEC-008, SEC-009, SEC-010, SEC-011, SEC-012, SEC-013, SEC-014, SEC-015, SEC-016, SEC-017, SEC-018, SEC-019, SEC-020, SEC-021, SEC-022, SEC-023, SEC-024)
+> Run result: SILENT — baseline activity, no new threats
 
 ## Current Run Findings
 
@@ -17,52 +17,49 @@ None.
 ### 🟡 MEDIUM (0)
 None.
 
-### 🟢 LOW (3)
-- **Employee One unauthorized API access** — User 1234 (Employee One) logged in at 02:56:14 (off-hours, 2FA challenged) and immediately attempted to access `/api/analytics/dashboard` which requires `view_stats` permission. The system correctly denied access (unauthorized_access logged). Employee One only has `pos_access`. This could be a curious employee poking around, but worth noting given the off-hours context and immediate targeting of a restricted endpoint. (Carried forward — no new activity.)
-- **Orders 78 & 79 still missing from orders.json** — Same persistence bug. order_counter.json still shows next=80 confirming the counter advanced but data was never saved. No new data loss since last run. (Carried forward.)
-- **Order 80 persistence succeeded** — Order 80 was submitted at 04:55:42 and persisted correctly to orders.json (previously orders 78-79 were lost). The refund at 04:55:55 by Owner (reason: "Reliability test refund") confirms both write and refund operations are working. Intermittent persistence bug appears to affect some orders but not others. (New — watch for pattern.)
+### 🟢 LOW (1)
+- **Orders 78-80 still missing from orders.json** — Same persistence bug. order_counter.json shows counter=82 confirming Order 81 was the most recent saved. Orders 78-79 never persisted to orders.json (only in activity_log). Order 80 was refunded and exists in refunded_orders.json. Order 81 successfully saved — bug may be intermittent. (Carried forward.)
 
-### ℹ️ Activity Summary (04:28–04:56 UTC, ~28m window)
+### ℹ️ Activity Summary (06:10–06:28 UTC, ~18m window)
 
-**Activity log**: 2 new entries since last run.
-1. 04:55:42 — submit_order, user null, 127.0.0.1 — Order 80 ($5.00 Hotdog, cash)
-2. 04:55:55 — refund_order, Owner (1111), 127.0.0.1 — Order 80 refunded ("Reliability test refund")
+**New entries since last run:**
+1. 06:26:46 — login, Owner (1111), 127.0.0.1, success (curl/8.5.0)
+2. 06:26:55 — admin_login, Owner (1111), 127.0.0.1, success
+3. 06:27:06 — admin_login, Owner (1111), 127.0.0.1, success
 
-**Login attempts (login_attempts.json)**: No new entries since 04:13:23. Zero login activity in this window.
+**Login attempts (login_attempts.json)**: 1 entry: Owner (1111) at 06:26:46, 127.0.0.1, success (curl/8.5.0).
 
 **Failed logins in last 5 min**: 0. No brute force.
 
-**Activity note**: The order+refund at 04:55 is consistent with Reliability Bot automated testing. No real human activity detected.
-
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: 0 IPs with 5+ failed logins in last 5 min. 0 users with 5+ failed attempts. No credential stuffing.
-- **Failed logins since last run**: 0. No login events at all.
+- **Failed logins since last run**: 0.
 - **Successful-after-failure**: None in this window.
 - **Account enumeration**: 0 failed attempts for non-existent PINs.
-- **Off-hours**: Current time 04:56 UTC — off-hours window (22:00-06:00). No new user logins to flag.
+- **Off-hours**: Current time 06:28 UTC — past off-hours window (22:00-06:00). Owner login at 06:26 is in normal hours. No new off-hours events.
 - **Known IPs**: Unchanged. All localhost. No new IPs to track.
-- **Rapid successive logins**: None.
+- **Rapid successive logins**: Owner (1111) logged in 3 times in 20 seconds (06:26:46-06:27:06) — all from same IP (127.0.0.1), same user agent (curl/8.5.0). Pattern is consistent with automated cron/admin testing, not credential sharing.
 
 ### 🔒 Security Config
 - All config files unchanged. No sabotage detected.
-- Owner 2FA still NOT enabled (SEC-001/SEC-013 — requires Security Sentinel code fix).
 - `blocked_ips: []` — no active blocks.
 - `auto_block_threshold: 5` — unchanged.
-- `require_2fa_for_admins: false`
+- `require_2fa_for_admins: true` — unchanged.
+- Owner (1111) 2FA still NOT enabled (SEC-001/SEC-013 — requires Security Sentinel code fix).
 
 ### 💰 Financial Check
-- Orders 78-79 still missing (persistence bug, carried forward).
-- **Order 80**: $5.00 Hotdog — submitted by null user (likely Reliability Bot). Refunded by Owner at 04:55:55. Not suspicious.
+- Orders 78-80 still missing from orders.json (known persistence bug). Order 81 persisted correctly.
+- 0 new orders, 0 new refunds since last run.
 - 0 orders with $0 total. 0 with 100% discount.
-- No other refunds, comps, or anomalies.
+- 13 total refunds, all by Owner (1111) — consistent with testing.
+- No large tips, no suspicious order patterns.
 
 ### 📂 File Integrity
-- All JSON files parseable. No corruption.
-- Orders 78 & 79 still missing (persistence bug, flagged LOW).
-- Order 80 was persisted successfully (intermittent bug).
-- No suspicious files outside scripts/ or expected project files.
-- Owner account present, active, not banned.
-- Git: modified files (RELIABILITY_CHECKLIST.md, SECURITY_WATCHDOG.md, activity_log.json, login_attempts.json, order_counter.json, orders.json, refunded_orders.json, security_events.json) — all expected from cron worker activity.
+- All 41 JSON files parseable. No corruption.
+- No suspicious files (.php, .exe, .sh, etc.).
+- Owner account (1111) present, active, not banned.
+- No new files in workdir.
+- Low stock: items at 0 — test/novelty items, not actionable.
 
 ## Active Blocks
 None.
@@ -71,7 +68,10 @@ None.
 - **SEC-006**: [HIGH] User Manager blocked by admin (Owner) at 20:23:31 — "Test block from cron". (Reported 2026-06-23T20:23)
 
 ## Unresolved MEDIUM Events
-- **SEC-021**: [MEDIUM] ⚠️ Off-hours login: Owner (1111) at 04:13. (Reported 2026-06-25T04:13 via IP Blocklist Manager)
+- **SEC-024**: [MEDIUM] ⚠️ Off-hours login: Owner (1111) at 05:43. (Reported 2026-06-25T05:43)
+- **SEC-023**: [MEDIUM] ⚠️ Off-hours login: Manager (2222) at 05:24. (Reported 2026-06-25T05:24)
+- **SEC-022**: [MEDIUM] ⚠️ Off-hours login: Owner (1111) at 05:21. (Reported 2026-06-25T05:21)
+- **SEC-021**: [MEDIUM] ⚠️ Off-hours login: Owner (1111) at 04:13. (Reported 2026-06-25T04:13)
 - **SEC-020**: [MEDIUM] ⚠️ Off-hours login: Owner (1111) at 02:50. (Reported 2026-06-25T02:50)
 - **SEC-019**: [MEDIUM] ⚠️ Off-hours login: Owner (1111) at 02:21. (Reported 2026-06-25T02:21)
 - **SEC-018**: [MEDIUM] ⚠️ Off-hours login: Employee Two (5678) at 00:28. (Reported 2026-06-25T00:28)
@@ -94,15 +94,15 @@ None.
 None.
 
 ## System State
-- **Current time**: 2026-06-25T04:28 UTC — off-hours (window 22:00-06:00)
-- **Activity log entries since last run**: 3 (Owner login + 2 admin_logins)
-- **New login attempts since last run**: 1 (Owner 1111 success at 04:13)
+- **Current time**: 2026-06-25T06:28 UTC — normal hours (off-hours window 22:00-06:00)
+- **Activity log entries since last run**: 3 (Owner login + 2 admin_logins at 06:26-06:27)
+- **New login attempts since last run**: 1 (Owner 1111 at 06:26:46, success)
 - **Failed logins since last run**: 0
-- **Known IPs**: Unchanged. All localhost. last_seen not updated for Owner.
+- **Known IPs**: Unchanged. All localhost.
 - **Blocked IPs**: 0
 - **Config changes**: None since last run.
-- **File integrity**: All JSON files parseable. Orders 78-79 still missing (known persistence bug). gift_cards.json now 3 entries (previously 0).
-- **Users**: 5 accounts. Owner 2FA still NOT enabled (SEC-001/SEC-013 — unresolved).
-- **Security events**: 21 tracked (SEC-001 through SEC-021). 19 unresolved.
+- **File integrity**: All 41 JSON files parseable. Orders 78-80 still missing (known persistence bug).
+- **Users**: 5 accounts. Owner 2FA still NOT enabled (SEC-001/SEC-013 — code-level bug, requires Security Sentinel fix).
+- **Security events**: 24 tracked (SEC-001 through SEC-024). 22 unresolved.
 - **Server**: backend healthy.
-- **Git status**: modified files — activity_log.json, login_attempts.json, security_events.json, SECURITY_WATCHDOG.md, RELIABILITY_CHECKLIST.md (all expected from normal cron activity).
+- **Owner pattern**: Normal localhost testing activity in normal hours.

@@ -1219,6 +1219,18 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
                 <span id="compConfigStatus" style="font-size:12px;color:#4caf50;display:none;">✅ Comp config saved!</span>
                 </div>
                 </div>
+                <!-- Discount / Comp Approval Threshold -->
+                <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px;" id="discountApprovalSection">
+                <h5 style="margin:0 0 6px 0;font-size:13px;color:var(--accent);">🏷️ Discount &amp; Comp Approval Threshold</h5>
+                <p style="font-size:11px;color:var(--text2);margin:0 0 8px 0;">When a discount or comp total exceeds this dollar amount, a manager PIN override is required to submit the order. Set to 0 to disable.</p>
+                <div class="form-row" style="gap:12px;flex-wrap:wrap;align-items:end;">
+                <div>
+                  <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:2px;">Approval threshold ($)</label>
+                  <input type="number" id="tsConfigDiscountApprovalThreshold" value="0" min="0" max="10000" step="1" style="width:100px;min-height:40px;font-size:14px;" inputmode="numeric" title="Manager PIN required when discount or comp total exceeds this amount. 0 = disabled.">
+                </div>
+                <span id="discountApprovalStatus" style="font-size:12px;color:#4caf50;display:none;">✅ Saved!</span>
+                </div>
+                </div>
                 <!-- Course Delays Config -->
                 <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px;" id="courseDelaysSection">
                 <h5 style="margin:0 0 6px 0;font-size:13px;color:var(--accent);">⏰ Course Timing Delays</h5>
@@ -3620,6 +3632,10 @@ const L10N = {
     'toast.item_out_of_stock': 'Item out of stock',
     'toast.fill_all_fields': 'Fill all fields correctly',
     'toast.select_payment': 'Please select a payment method',
+    'admin.enter_manager_pin': 'Enter manager PIN to approve:',
+    'toast.approval_required': 'Manager approval required for this order',
+    'toast.approval_granted': '✅ Approved!',
+    'toast.approval_cancelled': 'Approval cancelled. Order not submitted.',
     'toast.no_data_export': 'No data to export. Load a period first.',
     'toast.enter_ip': 'Please enter an IP address.',
     'toast.select_date_range': 'Select a date range first',
@@ -4473,6 +4489,10 @@ const L10N = {
     'toast.item_out_of_stock': 'Artículo agotado',
     'toast.fill_all_fields': 'Complete todos los campos correctamente',
     'toast.select_payment': 'Seleccione un método de pago',
+    'admin.enter_manager_pin': 'Ingrese PIN del gerente para aprobar:',
+    'toast.approval_required': 'Se requiere aprobación del gerente para esta orden',
+    'toast.approval_granted': '✅ ¡Aprobado!',
+    'toast.approval_cancelled': 'Aprobación cancelada. Orden no enviada.',
     'toast.no_data_export': 'Sin datos para exportar. Cargue un período primero.',
     'toast.enter_ip': 'Ingrese una dirección IP.',
     'toast.select_date_range': 'Seleccione un rango de fechas primero',
@@ -5170,6 +5190,8 @@ let popularItems = new Set(); // Set of item names that are most popular (for "�
 let orderIsRush = false; // Tracks whether current cart order is marked as rush/urgent
 let courseHolds = {}; // Tracks which courses are held: {"appetizer": false, "main": true, "dessert": true}
 let courseHoldsTimer = null; // Interval timer for countdown display in review modal
+let managerApprovalData = null; // Manager approval for discount/comp threshold override
+let pendingConfirmData = null; // Stored data from confirmOrder() when approval is needed
 let loyaltyCustomerPhone = ''; // Currently tracked loyalty customer phone
 let loyaltyCustomerData = null; // { phone, name, points, total_earned, ... }
 let chartPayment = null;
@@ -10468,6 +10490,20 @@ async function confirmOrder() {
   const selectedTable = document.getElementById('tableSelect') ? document.getElementById('tableSelect').value : '';
   if (selectedTable) receiptData.table_number = parseInt(selectedTable);
 
+  // ── Manager approval check for discount/comp threshold ──
+  const approvalThreshold = window.timesheetConfig && window.timesheetConfig.discount_approval_threshold
+    ? parseFloat(window.timesheetConfig.discount_approval_threshold) : 0;
+  let compTotal = 0;
+  cart.forEach(item => { if (item.comp_type) compTotal += item.price * item.qty; });
+  const needsApproval = approvalThreshold > 0 && (discountAmount > approvalThreshold || compTotal > approvalThreshold);
+  
+  if (needsApproval && !managerApprovalData) {
+    // Store pending data and show approval modal
+    pendingConfirmData = { receiptData, discountAmount, compTotal, approvalThreshold, selectedTable, subtotal, taxAmount, tipAmount, serviceChargeAmount, total };
+    showManagerApproval(receiptData, discountAmount, compTotal, approvalThreshold);
+    return; // Will resume via submitManagerApproval()
+  }
+
   try {
     const r = await fetch(BACKEND_URL + '/api/submit_order', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -10491,7 +10527,8 @@ async function confirmOrder() {
         customer_email: document.getElementById('customerEmail').value.trim(),
         composed_since: composedSince || null,
         priority: orderIsRush ? 'rush' : null,
-        course_holds: courseHolds
+        course_holds: courseHolds,
+        manager_approval: managerApprovalData
       })
     });
     if (!r.ok) {
@@ -10543,6 +10580,7 @@ async function confirmOrder() {
     // Clear cart
     cart = [];
     appliedDiscount = null;
+    managerApprovalData = null;
     resetTip();
     document.getElementById('orderNotesInput').value = '';
     renderCart();
@@ -10555,12 +10593,92 @@ async function confirmOrder() {
     showReceipt(receiptData);
     cart = [];
     appliedDiscount = null;
+    managerApprovalData = null;
     resetTip();
     document.getElementById('orderNotesInput').value = '';
     renderCart();
   }
   document.getElementById('confirmOrderBtn').disabled = false;
   document.getElementById('confirmOrderBtn').textContent = '✅ Confirm & Submit';
+}
+
+/* ── Manager Approval for Discount/Comp Threshold ── */
+
+/** Show the manager approval modal */
+function showManagerApproval(receiptData, discountAmount, compTotal, threshold) {
+  const reason = document.getElementById('managerApprovalReason');
+  let parts = [];
+  if (discountAmount > threshold) parts.push('💰 Discount: -$' + discountAmount.toFixed(2));
+  if (compTotal > threshold) parts.push('🎁 Comps: $' + compTotal.toFixed(2));
+  reason.innerHTML = 'This order requires manager approval because the following exceed the $' + threshold.toFixed(2) + ' threshold:<br><strong>' + parts.join(', ') + '</strong>';
+  document.getElementById('managerApprovalPin').value = '';
+  document.getElementById('managerApprovalError').style.display = 'none';
+  document.getElementById('managerApprovalOverlay').style.display = 'flex';
+  document.getElementById('managerApprovalBtn').disabled = false;
+  document.getElementById('managerApprovalBtn').textContent = '✅ Approve';
+  // Focus PIN input
+  setTimeout(() => document.getElementById('managerApprovalPin').focus(), 100);
+}
+
+/** Submit the manager PIN for approval */
+async function submitManagerApproval() {
+  const pin = document.getElementById('managerApprovalPin').value.trim();
+  if (!pin) {
+    document.getElementById('managerApprovalError').textContent = 'Please enter a manager PIN.';
+    document.getElementById('managerApprovalError').style.display = 'block';
+    return;
+  }
+  const btn = document.getElementById('managerApprovalBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Verifying...';
+  document.getElementById('managerApprovalError').style.display = 'none';
+  
+  try {
+    const r = await fetch(BACKEND_URL + '/api/orders/approve_discount', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        adminPin: pin,
+        discount_amount: pendingConfirmData ? pendingConfirmData.discountAmount : 0,
+        comp_total: pendingConfirmData ? pendingConfirmData.compTotal : 0
+      })
+    });
+    const data = await r.json();
+    if (!r.ok || !data.approved) {
+      document.getElementById('managerApprovalError').textContent = data.message || 'Approval denied.';
+      document.getElementById('managerApprovalError').style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = '✅ Approve';
+      document.getElementById('managerApprovalPin').value = '';
+      document.getElementById('managerApprovalPin').focus();
+      return;
+    }
+    // Approval granted — store and continue
+    managerApprovalData = data.approval;
+    document.getElementById('managerApprovalOverlay').style.display = 'none';
+    showToast(data.message || '✅ Approved!', 'success');
+    // Resume order submission
+    if (pendingConfirmData) {
+      const p = pendingConfirmData;
+      pendingConfirmData = null;
+      // Re-run the submission with approval data
+      await confirmOrder();
+    }
+  } catch(e) {
+    document.getElementById('managerApprovalError').textContent = 'Network error. Please try again.';
+    document.getElementById('managerApprovalError').style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = '✅ Approve';
+  }
+}
+
+/** Cancel manager approval and go back to cart */
+function cancelManagerApproval() {
+  document.getElementById('managerApprovalOverlay').style.display = 'none';
+  managerApprovalData = null;
+  pendingConfirmData = null;
+  document.getElementById('confirmOrderBtn').disabled = false;
+  document.getElementById('confirmOrderBtn').textContent = '✅ Confirm & Submit';
+  showToast('Approval cancelled. Order not submitted.', 'warning');
 }
 
 /* ── Order Undo Toast ── */
@@ -10844,6 +10962,7 @@ async function clearCart() {
     });
     cart = [];
     appliedDiscount = null;
+    managerApprovalData = null;
     resetTip();
     clearLoyaltyCustomer();
     document.getElementById('orderNotesInput').value = '';
@@ -11665,6 +11784,9 @@ async function loadOrderHistory() {
     const isCollected = o.collected_at ? true : false;
     const statusLabel = t('history.status_' + status) || status;
     const statusBadge = `<span class="ho-status-badge ${status}">${statusLabel}</span>`;
+    const approvalBadge = o.manager_approval && o.manager_approval.approved_by
+      ? `<span style="display:inline-block;font-size:11px;background:#3498db33;color:#3498db;padding:1px 6px;border-radius:4px;margin-left:4px;font-weight:600;" title="Approved by ${escHtml(o.manager_approval.approved_by_name || 'Manager')} at ${new Date(o.manager_approval.approved_at).toLocaleString()}">👔 MGR</span>`
+      : '';
     const refundReasonStr = isRefunded && o.refund_reason
       ? `<br/><span style="color:var(--text2);font-size:12px;">${t('history.refund_reason', {reason: escHtml(o.refund_reason)})}</span>\`
       : (o.refunded_items && o.refunded_items.length > 0 && !isRefunded
@@ -11672,7 +11794,7 @@ async function loadOrderHistory() {
         : '');
     html += `<div class="history-order" onclick="this.classList.toggle('expanded')">
         <div class="ho-header">
-          <span><strong>#${orderNum}</strong> — ${dt}${statusBadge}</span>
+          <span><strong>#${orderNum}</strong> — ${dt}${statusBadge}${approvalBadge}</span>
           <span class="ho-total">$${total}</span>
         </div>
         <div class="ho-meta">${t('history.payment')} ${escHtml(paymentDisplay)} | ${t('history.user')} ${escHtml(o.user || 'N/A')}${hasTax ? ' | ' + t('history.tax') + ': $' + parseFloat(o.tax_amount).toFixed(2) : ''}${hasServiceCharge ? ' | 🔧 +$' + parseFloat(o.service_charge_amount).toFixed(2) : ''}${hasTip ? ' | 💬 ' + t('receipt.tip') + ': $' + parseFloat(o.tip_amount).toFixed(2) : ''}${o.table_number ? ' | 🪪 Table #' + o.table_number : ''}${hasDelivery ? ' | 📮 ' + escHtml(formatDeliveryAddress(deliveryAddr)) : ''}${orderNotes ? ' | 📝 ' + t('history.notes') : ''}${refundReasonStr} <button class="ghost" onclick="event.stopPropagation();reorderFromHistory(${JSON.stringify(items).replace(/\"/g, '&quot;')})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#2ecc71;" title="${t('history.reorder')}">🔄</button>${!isRefunded ? `<button class="ghost" onclick="event.stopPropagation();refireOrderItem(${o.order_id}, null, this)" style="font-size:12px;padding:4px 8px;min-height:28px;color:#f39c12;" title="${t('history.refire_all')}">🔁 All</button>` : ''} <button class="ghost" onclick="event.stopPropagation();printHistoryReceipt(${JSON.stringify(o).replace(/\"/g, '&quot;')}, ${orderNum})" style="font-size:12px;padding:4px 8px;min-height:28px;color:var(--accent);">🖨️</button> <button class="ghost" onclick="event.stopPropagation();printThermalReceipt(this.dataset.orderId)" style="font-size:12px;padding:4px 8px;min-height:28px;color:#e67e22;" title="${t('receipt.print_thermal')}" data-order-id="${o.order_id}">🖨️</button> <button class="ghost" onclick="event.stopPropagation();emailHistoryReceipt(${o.order_id})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#4fc3f7;" title="${t('history.email_receipt')}">📧</button>${canRefund && !isRefunded ? \`<button class="ghost" onclick="event.stopPropagation();showRefundOverlay({order_id: ${o.order_id}, total: '${total}', date: '${(o.date || '').replace(/'/g, "\\'")}', payment: '${(o.payment || '').replace(/'/g, "\\'")}', user: '${(o.user || '').replace(/'/g, "\\'")}', orderNum: ${orderNum}, items: ${JSON.stringify(items).replace(/\\"/g, '&quot;')}})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#e74c3c;">↩️</button>\` : ''}${isCompleted && !isReadyForPickup && !isCollected ? \`<button class="ghost" onclick="event.stopPropagation();markOrderReadyForPickup(${o.order_id})" style="font-size:12px;padding:4px 8px;min-height:28px;color:#f39c12;">📋 Ready</button>\` : ''}</div>
@@ -12090,6 +12212,9 @@ async function loadTimesheetConfig() {
     if (staleHoursEl) staleHoursEl.value = config.stale_order_hours !== undefined ? config.stale_order_hours : 24;
     const pendingAlertEl = document.getElementById('tsConfigPendingAlert');
     if (pendingAlertEl) pendingAlertEl.value = config.pending_order_alert_threshold !== undefined ? config.pending_order_alert_threshold : 10;
+    // Discount approval threshold
+    const discApprEl = document.getElementById('tsConfigDiscountApprovalThreshold');
+    if (discApprEl) discApprEl.value = config.discount_approval_threshold !== undefined ? config.discount_approval_threshold : 0;
   } catch(e) {}
 }
 
@@ -12114,7 +12239,8 @@ async function saveTimesheetConfig() {
       side: parseInt(document.getElementById('tsCourseDelaySide')?.value) || 0
     },
     stale_order_hours: parseInt(document.getElementById('tsConfigStaleHours')?.value) || 24,
-    pending_order_alert_threshold: parseInt(document.getElementById('tsConfigPendingAlert')?.value) || 10
+    pending_order_alert_threshold: parseInt(document.getElementById('tsConfigPendingAlert')?.value) || 10,
+    discount_approval_threshold: parseFloat(document.getElementById('tsConfigDiscountApprovalThreshold')?.value) || 0
   };
   try {
     const r = await fetch(BACKEND_URL + '/api/timesheet/config', {
@@ -21793,6 +21919,25 @@ async function loadGiftCardReport() {
   }
 }
 </script>
+
+<!-- Manager Approval Overlay (for discount/comp threshold override) -->
+<div id="managerApprovalOverlay" class="modal-overlay" role="dialog" aria-modal="true" aria-label="Manager approval required" style="display:none;">
+  <div class="modal-box" style="max-width:420px;width:90%;padding:24px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <h3 style="margin:0;font-size:18px;">👔 Manager Approval Required</h3>
+    </div>
+    <p id="managerApprovalReason" style="font-size:14px;color:var(--text2);margin-bottom:16px;padding:10px;background:var(--card-alt);border-radius:8px;border-left:4px solid var(--accent);"></p>
+    <div style="margin-bottom:16px;">
+      <label style="font-size:13px;color:var(--text2);display:block;margin-bottom:4px;" data-i18n="admin.enter_manager_pin">Enter manager PIN to approve:</label>
+      <input type="password" id="managerApprovalPin" inputmode="numeric" pattern="[0-9]*" autocomplete="off" style="width:100%;min-height:48px;font-size:18px;text-align:center;letter-spacing:4px;background:var(--bg);border:2px solid var(--border);border-radius:8px;color:var(--text);" maxlength="8" placeholder="• • • •" />
+    </div>
+    <p id="managerApprovalError" style="font-size:13px;color:#e94560;margin:0 0 12px 0;display:none;"></p>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="outline" onclick="cancelManagerApproval()" style="min-height:48px;padding:8px 20px;font-size:14px;" data-i18n="admin.cancel">Cancel</button>
+      <button class="accent" onclick="submitManagerApproval()" style="min-height:48px;padding:8px 20px;font-size:14px;" id="managerApprovalBtn">✅ Approve</button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>

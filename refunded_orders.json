@@ -497,5 +497,51 @@
         "reason": "No reason provided",
         "refunded_at": "2026-06-24T23:43:24.651171",
         "refunded_by": "1111"
+    },
+    {
+        "order_id": 80,
+        "original_order": {
+            "order_id": 80,
+            "status": "refunded",
+            "claimed_by": null,
+            "claimed_at": null,
+            "completed_at": null,
+            "date": "2026-06-25T04:55:42.363321",
+            "user": null,
+            "payment": {
+                "method": "cash",
+                "amount": 5.0
+            },
+            "payment_splits": null,
+            "items": [
+                {
+                    "name": "Hotdog",
+                    "price": 5.0,
+                    "quantity": 1,
+                    "category": "Foods",
+                    "course_send_at": "2026-06-25T04:55:42.363464",
+                    "course_fired": true
+                }
+            ],
+            "subtotal": 5.0,
+            "tax_amount": 0.0,
+            "tip_amount": 0.0,
+            "service_charge_amount": 0.0,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 5.0,
+            "notes": "",
+            "item_notes": {},
+            "table_number": null,
+            "delivery_address": null,
+            "customer_email": "",
+            "priority": null,
+            "refund_reason": "Reliability test refund",
+            "refunded_at": "2026-06-25T04:55:55.249925",
+            "refunded_by": "1111"
+        },
+        "reason": "Reliability test refund",
+        "refunded_at": "2026-06-25T04:55:55.249925",
+        "refunded_by": "1111"
     }
 ]

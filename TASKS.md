@@ -587,7 +587,7 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 
 ### Priority: HIGH
 
-- [~] worker-1 **Discount and comp manager approval threshold** — Configurable dollar threshold above which applying a discount or marking an item as comp requires a manager PIN override. Currently `daily_comp_cap` and `employee_meal_limit` show warnings but don't enforce approval — any employee with POS access can apply any discount value or comp without oversight. Add `discount_approval_threshold` to timesheet_config.json (default 0 = disabled, no approval required). Backend: new `POST /api/orders/approve_discount` endpoint verifying manager PIN + storing approval record on order. Frontend: manager PIN prompt modal when discount/comp exceeds configured threshold, approval badge on order history. Activity logging for all approvals/denials. Prevents theft and unauthorized discounts. i18n EN + ES. Permission-gated (manage_users).
+- [x] worker-1 **Discount and comp manager approval threshold** — Configurable dollar threshold above which applying a discount or marking an item as comp requires a manager PIN override. New `discount_approval_threshold` in timesheet_config.json (default 0 = disabled). Backend `POST /api/orders/approve_discount` endpoint verifies manager PIN with manage_users permission. Frontend manager PIN prompt modal in order review flow, approval badge in order history. Activity logging for all approvals. i18n EN + ES. Permission-gated (manage_users). [worker-1]
 
 ### Priority: MEDIUM
 

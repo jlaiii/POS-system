@@ -17,7 +17,7 @@
         "totp_backup_codes": [],
         "totp_setup_at": null,
         "pin_reset_notification": null,
-        "force_pin_change": true,
+        "force_pin_change": false,
         "temp_pin": null,
         "temp_pin_expiry": null,
         "email": "owner@example.com"

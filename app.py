@@ -931,7 +931,8 @@ def get_timesheet_config():
             'side': 0         # minutes after order submission to fire
         },
         'stale_order_hours': 24,            # hours before a pending order is auto-cancelled
-        'pending_order_alert_threshold': 10  # max pending orders before dashboard alert
+        'pending_order_alert_threshold': 10, # max pending orders before dashboard alert
+        'discount_approval_threshold': 0      # $ threshold for manager approval on discounts/comps (0 = disabled)
     }
     try:
         config = load_json_data(TIMESHEET_CONFIG_FILE)
@@ -975,7 +976,8 @@ def save_timesheet_config(config):
             'side': 0
         },
         'stale_order_hours': 24,
-        'pending_order_alert_threshold': 10
+        'pending_order_alert_threshold': 10,
+        'discount_approval_threshold': 0
     }
     for k, v in defaults.items():
         if k not in config:
@@ -5346,8 +5348,46 @@ def submit_order():
         'table_number': data.get('table_number'),  # Table number for table management
         'delivery_address': data.get('delivery_address'),  # Delivery address info
         'customer_email': data.get('customer_email', ''),  # Email for digital receipt delivery
-        'priority': data.get('priority', None)  # 'rush' or null for normal priority
+        'priority': data.get('priority', None),  # 'rush' or null for normal priority
+        'manager_approval': data.get('manager_approval', None)  # Manager approval override for discounts/comps
     }
+
+    # --- Manager approval threshold check ---
+    # If discount_approval_threshold > 0, check if discount or comp exceeds it
+    ts_config = get_timesheet_config()
+    approval_threshold = float(ts_config.get('discount_approval_threshold', 0))
+    if approval_threshold > 0:
+        discount_amt = float(data.get('discount_amount', 0))
+        # Calculate total comp value
+        comp_total = 0
+        for item in items:
+            if item.get('comp_type'):
+                comp_total += float(item.get('price', 0)) * int(item.get('qty', 1))
+        
+        needs_approval = False
+        if discount_amt > approval_threshold:
+            needs_approval = True
+        if comp_total > approval_threshold:
+            needs_approval = True
+        
+        if needs_approval:
+            manager_approval = data.get('manager_approval')
+            if not manager_approval or not manager_approval.get('approved_by'):
+                return jsonify({
+                    'message': f'This order requires manager approval. Discount (${discount_amt:.2f}) or comps (${comp_total:.2f}) exceed the ${approval_threshold:.2f} threshold.'
+                }), 403
+            # Verify the approval is from a valid manager
+            users_check = load_json_data(USERS_FILE)
+            appr_pin = str(manager_approval.get('approved_by', ''))
+            if appr_pin not in users_check:
+                return jsonify({'message': 'Invalid manager approval — approving user not found.'}), 403
+            appr_user = users_check[appr_pin]
+            appr_role = appr_user.get('role', '')
+            appr_perms = appr_user.get('permissions', [])
+            if appr_role not in ('admin', 'owner') and 'manage_users' not in appr_perms:
+                return jsonify({'message': 'Invalid manager approval — approver lacks manage_users permission.'}), 403
+            # Store approval on order
+            order_details['manager_approval'] = manager_approval
 
     # --- Course-based timing: calculate course_send_at for each item ---
     # course_holds: dict like {"appetizer": false, "main": true, "dessert": true}
@@ -5693,6 +5733,57 @@ def undo_order():
     return jsonify({
         'message': f'Order #{order_id} undone successfully.',
         'order_id': int(order_id)
+    })
+
+@app.route('/api/orders/approve_discount', methods=['POST'])
+def approve_discount_override():
+    """Verify a manager PIN for discount/comp approval override.
+    
+    When a discount or comp total exceeds the configured threshold,
+    a manager with manage_users permission must approve.
+    Returns the approving manager's info to include in the order.
+    """
+    data = request.json
+    admin_pin = data.get('adminPin', '').strip()
+    discount_amount = float(data.get('discount_amount', 0))
+    comp_total = float(data.get('comp_total', 0))
+    
+    if not admin_pin:
+        return jsonify({'approved': False, 'message': 'Manager PIN is required.'}), 400
+    
+    users = load_json_data(USERS_FILE)
+    if admin_pin not in users:
+        return jsonify({'approved': False, 'message': 'Invalid manager PIN.'}), 403
+    
+    user_info = users[admin_pin]
+    user_info = upgrade_user(user_info)
+    
+    # Check manage_users permission
+    role = user_info.get('role', '')
+    permissions = user_info.get('permissions', [])
+    if role not in ('admin', 'owner') and 'manage_users' not in permissions:
+        return jsonify({'approved': False, 'message': 'User does not have manager approval permission.'}), 403
+    
+    now_iso = datetime.now().isoformat()
+    approval = {
+        'approved_by': admin_pin,
+        'approved_by_name': user_info.get('name', 'Manager'),
+        'approved_at': now_iso,
+        'discount_amount': discount_amount,
+        'comp_total': comp_total
+    }
+    
+    log_activity('discount_comp_approved', admin_pin, user_info.get('role', 'user'), {
+        'approved_by_name': user_info.get('name', 'Manager'),
+        'discount_amount': discount_amount,
+        'comp_total': comp_total,
+        'timestamp': now_iso
+    })
+    
+    return jsonify({
+        'approved': True,
+        'approval': approval,
+        'message': f"Approved by {user_info.get('name', 'Manager')}"
     })
 
 @app.route('/api/clear_order', methods=['POST'])
