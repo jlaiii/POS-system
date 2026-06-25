@@ -495,7 +495,7 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 
 - [x] worker-3 **Add order submit input validation (empty items, nonexistent items)** — `submit_order()` currently accepts `items: []` (empty array) and creates ghost orders with $0 total. Also accepts items with arbitrary names/prices without checking they exist in the menu database. Real restaurant impact: accidental empty submit creates phantom orders on kitchen display; API-level or frontend bugs can create items with wrong prices. Fix: (1) reject empty items array with 400 error; (2) validate each item exists in items.json; (3) verify price matches menu price within tolerance (e.g., ±$0.50). [Production Auditor]
 
-- [ ] **Reduce customer display poll interval from 2s to 5-10s** — `POLL_INTERVAL = 2000` in customer-display.html line 419. On a wall-mounted tablet running 12+ hours, 2-second polling generates ~43,200 API requests/day, draining battery. Change to 5000-10000ms and prefer WebSocket events for live updates instead of polling. [Production Auditor]
+- [~] worker-1 **Reduce customer display poll interval from 2s to 5-10s** — `POLL_INTERVAL = 2000` in customer-display.html line 419. On a wall-mounted tablet running 12+ hours, 2-second polling generates ~43,200 API requests/day, draining battery. Change to 5000-10000ms and prefer WebSocket events for live updates instead of polling. [Production Auditor]
 
 - [ ] **Add kiosk mode cancel/reset flow for customers** — Kiosk mode only has "Staff Exit" which returns to POS. A customer who changes their mind mid-order has no "Cancel Order" or "Start Over" option. Add a customer-facing cancel button with confirmation dialog that clears the cart. [Production Auditor]
 
