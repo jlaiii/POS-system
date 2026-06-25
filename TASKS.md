@@ -642,7 +642,7 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 
 - [~] worker-2 **Add auto-gratuity for large parties** — Configurable service charge auto-applied when party size exceeds configurable threshold (default: 6 guests to 18% gratuity). Configurable percentage and party size minimum in admin settings. Displayed as separate "Auto-Gratuity (X%)" line item in cart, review modal, receipt, and end-of-day summary. Manager override button to remove or adjust gratuity. Clear labeling per regulatory requirements (not a voluntary tip). Full i18n EN+ES. Essential for any full-service restaurant handling groups.
 
-- [ ] **Add customer feedback / satisfaction survey system** — QR code on printed and emailed receipts linking to a lightweight feedback page. Customers rate experience (1-5 stars) and optionally leave comments. Feedback aggregated in admin dashboard: average rating trend chart (daily/weekly/monthly), recent reviews list, response/follow-up button that creates a ticket in the existing ticket system. Low/high rating alerts (1-star complaints or 5-star glowing reviews). Helps identify service issues before they escalate to public review sites.
+- [~] worker-3 **Add customer feedback / satisfaction survey system** — QR code on printed and emailed receipts linking to a lightweight feedback page. Customers rate experience (1-5 stars) and optionally leave comments. Feedback aggregated in admin dashboard: average rating trend chart (daily/weekly/monthly), recent reviews list, response/follow-up button that creates a ticket in the existing ticket system. Low/high rating alerts (1-star complaints or 5-star glowing reviews). Helps identify service issues before they escalate to public review sites.
 
 ### Priority: MEDIUM
 
