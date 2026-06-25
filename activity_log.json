@@ -12235,5 +12235,236 @@
         "details": "Cancelled 8 stale pending orders: #74, #75, #91, #96, #97, #98, #99, #100. Fixed user/waiter data on affected orders.",
         "user_id": "system_worker3",
         "user_name": "Worker-3 (cron)"
+    },
+    {
+        "timestamp": "2026-06-25T22:52:55.581567",
+        "type": "login_failed",
+        "user_id": null,
+        "user_role": "unknown",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed",
+            "method": "pin",
+            "ip": "127.0.0.1",
+            "attempt": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-25T22:54:02.943263",
+        "type": "login_failed",
+        "user_id": null,
+        "user_role": "unknown",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed",
+            "method": "pin",
+            "ip": "127.0.0.1",
+            "attempt": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-25T22:54:49.229730",
+        "type": "login_failed",
+        "user_id": null,
+        "user_role": "unknown",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed",
+            "method": "pin",
+            "ip": "127.0.0.1",
+            "attempt": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-25T22:54:50.364972",
+        "type": "login",
+        "user_id": "2222",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Manager",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T22:59:43.618090",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T22:59:44.749813",
+        "type": "login",
+        "user_id": "2222",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Manager",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T22:59:51.062409",
+        "type": "login",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "2fa_required",
+            "method": "pin",
+            "user_name": "Employee One",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T23:09:02.584860",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Python-urllib/3.11",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T23:09:02.617541",
+        "type": "login",
+        "user_id": "2222",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Python-urllib/3.11",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Manager",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T23:09:02.642883",
+        "type": "login",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Python-urllib/3.11",
+        "details": {
+            "status": "2fa_required",
+            "method": "pin",
+            "user_name": "Employee One",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T23:09:02.659974",
+        "type": "login_failed",
+        "user_id": "9999",
+        "user_role": "unknown",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Python-urllib/3.11",
+        "details": {
+            "status": "failed",
+            "method": "pin",
+            "ip": "127.0.0.1",
+            "attempt": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-25T23:09:12.789878",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Python-urllib/3.11",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T23:09:12.811769",
+        "type": "login",
+        "user_id": "2222",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Python-urllib/3.11",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Manager",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T23:09:12.834409",
+        "type": "login",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Python-urllib/3.11",
+        "details": {
+            "status": "2fa_required",
+            "method": "pin",
+            "user_name": "Employee One",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T23:09:12.852956",
+        "type": "login_failed",
+        "user_id": "9999",
+        "user_role": "unknown",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Python-urllib/3.11",
+        "details": {
+            "status": "failed",
+            "method": "pin",
+            "ip": "127.0.0.1",
+            "attempt": 2
+        }
+    },
+    {
+        "action": "security_event_resolved",
+        "detail": "Resolved SEC-026: Large order anomaly \u2014 test/dev order, not a real security concern.",
+        "timestamp": "2026-06-25T23:22:04.210382",
+        "user": "1111",
+        "user_name": "Owner"
+    },
+    {
+        "action": "security_event_resolved",
+        "detail": "Resolved SEC-027: IP 127.0.0.1 auto-blocked \u2014 localhost dev activity, not a real security threat.",
+        "timestamp": "2026-06-25T23:22:04.210382",
+        "user": "1111",
+        "user_name": "Owner"
+    },
+    {
+        "action": "security_event_resolved",
+        "detail": "Resolved SEC-028: Off-hours login Owner 22:28 \u2014 localhost dev/testing by cron workers, same as SEC-009 through SEC-024.",
+        "timestamp": "2026-06-25T23:22:04.210382",
+        "user": "1111",
+        "user_name": "Owner"
     }
 ]
