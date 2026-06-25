@@ -575,7 +575,7 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 
 ### Priority: HIGH
 
-- [ ] **Audit #21: Stale pending order cleanup** — 53 out of 66 orders (80%) are stuck in "pending" status (never processed by kitchen). In production, orders accumulating in pending state means lost tickets. Add a cleanup script or auto-archive mechanism: auto-cancel orders older than 24h in pending status, with configurable threshold. Add a dashboard alert when pending count exceeds a threshold (e.g., >10 pending orders). Add a "Bulk Cancel Stale Orders" admin action with date range filter. Prevents old test data from polluting real metrics and alerts staff to stuck orders.
+- [~] worker-3 **Audit #21: Stale pending order cleanup** — 53 out of 66 orders (80%) are stuck in "pending" status (never processed by kitchen). In production, orders accumulating in pending state means lost tickets. Add a cleanup script or auto-archive mechanism: auto-cancel orders older than 24h in pending status, with configurable threshold. Add a dashboard alert when pending count exceeds a threshold (e.g., >10 pending orders). Add a "Bulk Cancel Stale Orders" admin action with date range filter. Prevents old test data from polluting real metrics and alerts staff to stuck orders.
 
 ### Priority: MEDIUM
 
