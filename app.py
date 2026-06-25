@@ -3236,8 +3236,10 @@ def twofa_verify_login():
 
     if user_data.get('force_pin_change', False):
         response_data['force_pin_change_required'] = True
-        users[user_id]['force_pin_change'] = False
-        save_json_data(USERS_FILE, users)
+        # Do NOT clear force_pin_change here — it must persist until the
+        # user actually changes their PIN via /api/auth/change_pin.
+        # Clearing it early lets users escape the forced PIN change by
+        # completing 2FA, logging out, and logging back in.
 
     try:
         check_anomalies_after_login(user_id, user_data['name'], get_client_ip())
@@ -3382,8 +3384,8 @@ def twofa_backup_login():
 
     if user_data.get('force_pin_change', False):
         response_data['force_pin_change_required'] = True
-        users[user_id]['force_pin_change'] = False
-        save_json_data(USERS_FILE, users)
+        # Do NOT clear force_pin_change here — it must persist until the
+        # user actually changes their PIN via /api/auth/change_pin.
 
     try:
         check_anomalies_after_login(user_id, user_data['name'], get_client_ip())
@@ -3611,8 +3613,8 @@ def twofa_verify_email_recovery():
 
     if user_data.get('force_pin_change', False):
         response_data['force_pin_change_required'] = True
-        users[user_id]['force_pin_change'] = False
-        save_json_data(USERS_FILE, users)
+        # Do NOT clear force_pin_change here — it must persist until the
+        # user actually changes their PIN via /api/auth/change_pin.
 
     try:
         check_anomalies_after_login(user_id, user_data['name'], get_client_ip())
