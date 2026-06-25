@@ -922,6 +922,12 @@ def get_timesheet_config():
         'comp_config': {
             'employee_meal_limit': 15.0,  # max $ per employee meal
             'daily_comp_cap': 50.0        # max $ comped per day before warning
+        },
+        'course_delays': {
+            'appetizer': 0,   # minutes after order submission to fire
+            'main': 15,       # minutes after order submission to fire
+            'dessert': 20,    # minutes after order submission to fire
+            'side': 0         # minutes after order submission to fire
         }
     }
     try:
@@ -958,6 +964,12 @@ def save_timesheet_config(config):
         'comp_config': {
             'employee_meal_limit': 15.0,
             'daily_comp_cap': 50.0
+        },
+        'course_delays': {
+            'appetizer': 0,
+            'main': 15,
+            'dessert': 20,
+            'side': 0
         }
     }
     for k, v in defaults.items():
@@ -5331,6 +5343,25 @@ def submit_order():
         'customer_email': data.get('customer_email', ''),  # Email for digital receipt delivery
         'priority': data.get('priority', None)  # 'rush' or null for normal priority
     }
+
+    # --- Course-based timing: calculate course_send_at for each item ---
+    # course_holds: dict like {"appetizer": false, "main": true, "dessert": true}
+    # Items in a "held" course get delayed firing based on course_delays config
+    course_holds = data.get('course_holds', {})
+    config_data = get_timesheet_config()
+    course_delays = config_data.get('course_delays', {})
+    now_iso = datetime.now().isoformat()
+    for item in order_details['items']:
+        course = item.get('course', 'main')
+        is_held = course_holds.get(course, False)
+        if is_held:
+            delay_min = course_delays.get(course, 0)
+            fire_time = datetime.now() + timedelta(minutes=delay_min)
+            item['course_send_at'] = fire_time.isoformat()
+            item['course_fired'] = False
+        else:
+            item['course_send_at'] = now_iso  # fire immediately
+            item['course_fired'] = True
     orders = load_json_data(ORDERS_FILE)
 
     # --- Concurrent use staleness check ---
@@ -5784,6 +5815,23 @@ def sync_orders():
             'delivery_address': order_data.get('delivery_address'),
             'priority': order_data.get('priority', None)
         }
+
+        # --- Course-based timing for synced orders ---
+        course_holds = order_data.get('course_holds', {})
+        config_data = get_timesheet_config()
+        course_delays = config_data.get('course_delays', {})
+        now_iso = datetime.now().isoformat()
+        for item in order_details['items']:
+            course = item.get('course', 'main')
+            is_held = course_holds.get(course, False)
+            if is_held:
+                delay_min = course_delays.get(course, 0)
+                fire_time = datetime.now() + timedelta(minutes=delay_min)
+                item['course_send_at'] = fire_time.isoformat()
+                item['course_fired'] = False
+            else:
+                item['course_send_at'] = now_iso
+                item['course_fired'] = True
         orders_data.append(order_details)
 
         # Increment counter
@@ -10755,10 +10803,28 @@ def menu_restore():
 @app.route('/api/kitchen/queue', methods=['GET'])
 def kitchen_queue():
     """Returns all orders where status is 'pending' or 'preparing', sorted oldest first.
-    Orders are grouped by table_number so same-table orders appear together."""
+    Orders are grouped by table_number so same-table orders appear together.
+    Each item includes course timing info (minutes_to_fire, course_fired)."""
     try:
         orders = load_json_data(ORDERS_FILE)
         active_orders = [o for o in orders if o.get('status') in ('pending', 'preparing')]
+        now = datetime.now()
+        for order in active_orders:
+            for item in order.get('items', []):
+                send_at = item.get('course_send_at')
+                if send_at:
+                    try:
+                        send_dt = datetime.fromisoformat(send_at)
+                        seconds = (send_dt - now).total_seconds()
+                        item['minutes_to_fire'] = max(0, int(seconds / 60))
+                        item['course_fired'] = seconds <= 0
+                    except (ValueError, TypeError):
+                        item['minutes_to_fire'] = 0
+                        item['course_fired'] = True
+                else:
+                    # Legacy items without course timing — fire immediately
+                    item['minutes_to_fire'] = 0
+                    item['course_fired'] = True
         # Sort by table_number first (null/None last), then by date ascending
         def sort_key(o):
             tbl = o.get('table_number')

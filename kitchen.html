@@ -49,6 +49,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-u
 .card .item{font-size:1.1em;font-weight:600;display:flex;gap:6px;flex-wrap:wrap;align-items:baseline}
 .card .item .qty{color:var(--accent);font-weight:700}
 .card .item .mod{font-size:13px;color:#f39c12;font-weight:400;padding-left:6px}
+.card .item .course-timer{display:inline-block;font-size:11px;font-weight:600;background:#2ecc7133;color:#2ecc71;padding:1px 6px;border-radius:4px;margin-left:4px;vertical-align:middle}
 .card .notes{font-size:.9em;color:#f39c12;font-style:italic;background:#f39c1215;padding:6px 10px;border-radius:6px}
 .card .pay{font-size:.85em;color:var(--text2)}
 .card .act{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
@@ -208,11 +209,22 @@ function renderCard(o,inGroup){
   const itemsH=items.map(it=>{
     const qty=it.qty||it.quantity||1;const qtyD=qty>1?' <span class="qty">x'+qty+'</span>':'';
     const modD=it.modifiers&&it.modifiers.length>0?'<span class="mod">'+it.modifiers.map(m=>escHtml(m.option)).join(', ')+'</span>':'';
+    // Course timing badge
+    let courseTimingHtml='';
+    const mf=it.minutes_to_fire!==undefined?it.minutes_to_fire:0;
+    const cf=it.course_fired;
+    if(!cf&&mf>0){
+      courseTimingHtml='<span class="course-timer">⏰ Fire in '+mf+'m</span>';
+    }else if(!cf&&mf<=0){
+      courseTimingHtml='<span class="course-timer" style="background:#e9456033;color:#e94560;animation:cp 1.5s ease-in-out infinite">⏰ Firing now</span>';
+    }
+    const course=it.course||'';
+    const courseIcon=course==='appetizer'?'🥗':(course==='dessert'?'🍰':(course==='side'?'🥗':''));
     let ch='';
     if(it.is_combo&&it.child_items&&it.child_items.length>0){
       ch='<div style="margin-top:3px;padding-left:6px;border-left:2px solid #e94560;font-size:13px;color:var(--text2)">'+
         it.child_items.map(ci=>'<div style="padding:1px 0">🍱 '+escHtml(ci.name)+' <span class="qty">x'+(ci.qty||1)+'</span></div>').join('')+'</div>';}
-    return '<div class="item">'+escHtml(it.name||it.item_name||'?')+qtyD+modD+'</div>'+ch;
+    return '<div class="item">'+courseIcon+courseTimingHtml+escHtml(it.name||it.item_name||'?')+qtyD+modD+'</div>'+ch;
   }).join('');
   const itemNotes=[];items.forEach((it,i)=>{if(it.note)itemNotes.push(escHtml(it.name||'Item '+(i+1))+': '+escHtml(it.note))});
   const notesH=(notes||itemNotes.length>0)?'<div class="notes">📝 '+escHtml(notes)+((notes&&itemNotes.length>0)?' | ':'')+itemNotes.join(' | ')+'</div>':'';

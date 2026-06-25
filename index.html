@@ -1167,6 +1167,30 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
                 <span id="compConfigStatus" style="font-size:12px;color:#4caf50;display:none;">✅ Comp config saved!</span>
                 </div>
                 </div>
+                <!-- Course Delays Config -->
+                <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px;" id="courseDelaysSection">
+                <h5 style="margin:0 0 6px 0;font-size:13px;color:var(--accent);">⏰ Course Timing Delays</h5>
+                <p style="font-size:11px;color:var(--text2);margin:0 0 8px 0;">Configure how long (in minutes) after order submission each course waits before sending to the kitchen. Set to 0 for immediate firing. Only applies when a course is set to "Hold" in the review modal.</p>
+                <div class="form-row" style="gap:12px;flex-wrap:wrap;align-items:end;">
+                <div>
+                  <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:2px;">🥗 Appetizer delay (min)</label>
+                  <input type="number" id="tsCourseDelayAppetizer" value="0" min="0" max="120" step="1" style="width:80px;min-height:40px;font-size:14px;" inputmode="numeric" pattern="[0-9]*">
+                </div>
+                <div>
+                  <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:2px;">🍽️ Main delay (min)</label>
+                  <input type="number" id="tsCourseDelayMain" value="15" min="0" max="120" step="1" style="width:80px;min-height:40px;font-size:14px;" inputmode="numeric" pattern="[0-9]*">
+                </div>
+                <div>
+                  <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:2px;">🍰 Dessert delay (min)</label>
+                  <input type="number" id="tsCourseDelayDessert" value="20" min="0" max="120" step="1" style="width:80px;min-height:40px;font-size:14px;" inputmode="numeric" pattern="[0-9]*">
+                </div>
+                <div>
+                  <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:2px;">🥗 Side delay (min)</label>
+                  <input type="number" id="tsCourseDelaySide" value="0" min="0" max="120" step="1" style="width:80px;min-height:40px;font-size:14px;" inputmode="numeric" pattern="[0-9]*">
+                </div>
+                <span id="courseDelayStatus" style="font-size:12px;color:#4caf50;display:none;">✅ Course delays saved!</span>
+                </div>
+                </div>
             </div>
           </div>
           <!-- Missing clock-out alert banner -->
@@ -4985,6 +5009,8 @@ let appliedDiscount = null; // { code, type, value, discount_amount, description
 let scheduledPricing = null; // { item_name: { original_price, discounted_price, discount_label, category } }
 let popularItems = new Set(); // Set of item names that are most popular (for "🔥 Most Popular" badge)
 let orderIsRush = false; // Tracks whether current cart order is marked as rush/urgent
+let courseHolds = {}; // Tracks which courses are held: {"appetizer": false, "main": true, "dessert": true}
+let courseHoldsTimer = null; // Interval timer for countdown display in review modal
 let loyaltyCustomerPhone = ''; // Currently tracked loyalty customer phone
 let loyaltyCustomerData = null; // { phone, name, points, total_earned, ... }
 let chartPayment = null;
@@ -9970,31 +9996,102 @@ function openReviewModal() {
     reviewData.payment = 'Cash';
   }
 
+  // Detect courses present in cart and initialize courseHolds
+  const presentCourses = new Set();
+  cart.forEach(item => {
+    // Look up the item's course from menu data (itemsByCategory)
+    let course = 'main';
+    for (const cat of Object.values(itemsByCategory || {})) {
+      const found = (cat || []).find(i => i.name === item.name);
+      if (found && found.course) { course = found.course; break; }
+    }
+    item.course = course;
+    presentCourses.add(course);
+  });
+  // Reset courseHolds: only hold non-appetizer courses by default
+  courseHolds = {};
+  presentCourses.forEach(c => {
+    if (c === 'appetizer' || c === 'side') {
+      courseHolds[c] = false; // Send now
+    } else {
+      courseHolds[c] = true;  // Hold (delay firing)
+    }
+  });
+
   renderReviewModal();
   document.getElementById('orderReviewOverlay').style.display = 'flex';
+
+  // Start countdown timer for course holds display
+  if (courseHoldsTimer) clearInterval(courseHoldsTimer);
+  courseHoldsTimer = setInterval(updateCourseCountdowns, 1000);
 }
 
-/** Render the review modal content */
+/** Render the review modal content with course group toggles */
 function renderReviewModal() {
   const itemsDiv = document.getElementById('reviewItems');
   itemsDiv.innerHTML = '';
+
+  // Group cart items by course
+  const courseGroups = {};
   cart.forEach((item, i) => {
-    const modHtml = (item.modifiers && item.modifiers.length > 0)
-      ? '<div style="font-size:12px;color:var(--text2);margin-top:2px;">Modifiers: ' + item.modifiers.map(m => m.name + (m.price > 0 ? ' (+$' + m.price.toFixed(2) + ')' : '')).join(', ') + '</div>'
-      : '';
-    const noteHtml = item.note
-      ? '<div style="font-size:12px;color:var(--text2);font-style:italic;">📝 ' + escapeHtml(item.note) + '</div>'
-      : '';
-    let compBadgeHtml = '';
-    if (item.comp_type === 'employee_meal') {
-      compBadgeHtml = '<span style="display:inline-block;font-size:10px;background:#2ecc7133;color:#2ecc71;padding:1px 6px;border-radius:4px;margin-left:4px;font-weight:600;">🍴 EMP</span>';
-    } else if (item.comp_type === 'comp') {
-      compBadgeHtml = '<span style="display:inline-block;font-size:10px;background:#e9456033;color:#e94560;padding:1px 6px;border-radius:4px;margin-left:4px;font-weight:600;" title="' + escapeHtml(item.comp_reason || '') + '">🎁 COMP</span>';
+    const course = item.course || 'main';
+    if (!courseGroups[course]) courseGroups[course] = { items: [], label: getCourseLabel(course), icon: getCourseIcon(course) };
+    courseGroups[course].items.push({ item, index: i });
+  });
+
+  // Course display order: appetizer, main, side, dessert
+  const courseOrder = ['appetizer', 'main', 'side', 'dessert'];
+  const sortedCourses = Object.keys(courseGroups).sort((a, b) => {
+    const ai = courseOrder.indexOf(a); const bi = courseOrder.indexOf(b);
+    return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+  });
+
+  sortedCourses.forEach(course => {
+    const grp = courseGroups[course];
+    const isHeld = courseHolds[course] === true;
+    const presentCourses = Object.keys(courseGroups);
+
+    // Build course header with toggle and countdown
+    const delayMinutes = getCourseDelay(course);
+    const isFirstCourse = presentCourses.length > 0 && sortedCourses[0] === course;
+    let toggleHtml = '';
+    if (!isFirstCourse && !presentCourses.every(c => c === course)) {
+      toggleHtml = '<button class="course-toggle ' + (isHeld ? 'held' : 'send-now') + '" onclick="toggleCourseHold(\'' + course + '\')" style="min-height:36px;padding:4px 16px;font-size:12px;font-weight:600;border-radius:6px;border:none;cursor:pointer;touch-action:manipulation;' + (isHeld ? 'background:#e94560;color:#fff;' : 'background:#2ecc71;color:#fff;') + '">' + (isHeld ? '⏰ Held' : '✅ Send Now') + '</button>';
     }
-    const card = document.createElement('div');
-    card.style.cssText = 'display:flex;justify-content:space-between;align-items:flex-start;padding:8px 12px;background:var(--card-bg);border-radius:8px;border-left:3px solid var(--accent);';
-    card.innerHTML = '<div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:600;color:var(--text);">' + item.qty + '× ' + escapeHtml(item.name) + compBadgeHtml + '</div>' + modHtml + noteHtml + '</div><div style="font-size:14px;font-weight:600;color:var(--text);white-space:nowrap;margin-left:10px;">$' + (item.price * item.qty).toFixed(2) + '</div>';
-    itemsDiv.appendChild(card);
+
+    // Countdown display for held courses
+    let countdownHtml = '';
+    if (isHeld) {
+      const now = new Date();
+      const fireTime = new Date(now.getTime() + delayMinutes * 60000);
+      countdownHtml = '<span class="course-countdown" data-course="' + course + '" data-fire="' + fireTime.toISOString() + '" style="font-size:12px;color:var(--text2);margin-left:8px;">⏳ Will fire in ' + delayMinutes + 'm</span>';
+    }
+
+    const headerHtml = '<div class="course-group-header" style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;margin:8px 0 4px 0;background:var(--card-bg);border-radius:8px;border-left:4px solid ' + (isHeld ? '#e94560' : '#2ecc71') + ';">' +
+      '<span style="font-size:14px;font-weight:700;color:var(--text);">' + grp.icon + ' ' + grp.label + '</span>' +
+      '<div style="display:flex;align-items:center;gap:6px;">' + countdownHtml + toggleHtml + '</div>' +
+      '</div>';
+    itemsDiv.insertAdjacentHTML('beforeend', headerHtml);
+
+    // Render items in this course group
+    grp.items.forEach(({ item, index }) => {
+      const modHtml = (item.modifiers && item.modifiers.length > 0)
+        ? '<div style="font-size:12px;color:var(--text2);margin-top:2px;">Modifiers: ' + item.modifiers.map(m => m.name + (m.price > 0 ? ' (+$' + m.price.toFixed(2) + ')' : '')).join(', ') + '</div>'
+        : '';
+      const noteHtml = item.note
+        ? '<div style="font-size:12px;color:var(--text2);font-style:italic;">📝 ' + escapeHtml(item.note) + '</div>'
+        : '';
+      let compBadgeHtml = '';
+      if (item.comp_type === 'employee_meal') {
+        compBadgeHtml = '<span style="display:inline-block;font-size:10px;background:#2ecc7133;color:#2ecc71;padding:1px 6px;border-radius:4px;margin-left:4px;font-weight:600;">🍴 EMP</span>';
+      } else if (item.comp_type === 'comp') {
+        compBadgeHtml = '<span style="display:inline-block;font-size:10px;background:#e9456033;color:#e94560;padding:1px 6px;border-radius:4px;margin-left:4px;font-weight:600;" title="' + escapeHtml(item.comp_reason || '') + '">🎁 COMP</span>';
+      }
+      const card = document.createElement('div');
+      card.style.cssText = 'display:flex;justify-content:space-between;align-items:flex-start;padding:8px 12px;background:var(--card-bg);border-radius:8px;border-left:3px solid var(--accent);margin-bottom:4px;';
+      card.innerHTML = '<div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:600;color:var(--text);">' + item.qty + '× ' + escapeHtml(item.name) + compBadgeHtml + '</div>' + modHtml + noteHtml + '</div><div style="font-size:14px;font-weight:600;color:var(--text);white-space:nowrap;margin-left:10px;">$' + (item.price * item.qty).toFixed(2) + '</div>';
+      itemsDiv.appendChild(card);
+    });
   });
 
   // Order notes
@@ -10047,6 +10144,68 @@ function renderReviewModal() {
 /** Close the review modal (back to cart) */
 function closeReviewModal() {
   document.getElementById('orderReviewOverlay').style.display = 'none';
+  if (courseHoldsTimer) { clearInterval(courseHoldsTimer); courseHoldsTimer = null; }
+}
+
+/* ── Course timing helpers ── */
+
+/** Get display label for a course */
+function getCourseLabel(course) {
+  const labels = { 'appetizer': 'Appetizer', 'main': 'Main', 'dessert': 'Dessert', 'side': 'Side' };
+  return labels[course] || course.charAt(0).toUpperCase() + course.slice(1);
+}
+
+/** Get emoji icon for a course */
+function getCourseIcon(course) {
+  const icons = { 'appetizer': '🥗', 'main': '🍽️', 'dessert': '🍰', 'side': '🥗' };
+  return icons[course] || '🍽️';
+}
+
+/** Get the configured delay for a course in minutes (from timesheet config) */
+function getCourseDelay(course) {
+  // Default delays: appetizer 0, main 15, dessert 20, side 0
+  const defaults = { 'appetizer': 0, 'main': 15, 'dessert': 20, 'side': 0 };
+  // Try to load from timesheet config stored globally or use defaults
+  if (window.timesheetConfig && window.timesheetConfig.course_delays) {
+    const d = window.timesheetConfig.course_delays[course];
+    if (d !== undefined) return d;
+  }
+  return defaults[course] || 0;
+}
+
+/** Toggle a course between Send Now and Hold */
+function toggleCourseHold(course) {
+  if (courseHolds[course] === false) {
+    courseHolds[course] = true;
+  } else {
+    courseHolds[course] = false;
+  }
+  renderReviewModal(); // Re-render to reflect new state
+}
+
+/** Update countdown timers for held courses (called every 1s from interval) */
+function updateCourseCountdowns() {
+  document.querySelectorAll('.course-countdown').forEach(el => {
+    const course = el.getAttribute('data-course');
+    const fireStr = el.getAttribute('data-fire');
+    if (!course || !fireStr) return;
+    const fireTime = new Date(fireStr);
+    const now = new Date();
+    const diffMs = fireTime - now;
+    if (diffMs <= 0) {
+      el.textContent = '⏰ Firing now!';
+      el.style.color = '#e94560';
+      el.style.fontWeight = '700';
+      return;
+    }
+    const diffMin = Math.floor(diffMs / 60000);
+    const diffSec = Math.floor((diffMs % 60000) / 1000);
+    if (diffMin > 0) {
+      el.textContent = '⏳ Will fire in ' + diffMin + 'm ' + diffSec + 's';
+    } else {
+      el.textContent = '⏳ Will fire in ' + diffSec + 's';
+    }
+  });
 }
 
 /** Confirm and submit the order from the review modal */
@@ -10126,7 +10285,8 @@ async function confirmOrder() {
         delivery_address: getDeliveryAddress(),
         customer_email: document.getElementById('customerEmail').value.trim(),
         composed_since: composedSince || null,
-        priority: orderIsRush ? 'rush' : null
+        priority: orderIsRush ? 'rush' : null,
+        course_holds: courseHolds
       })
     });
     if (!r.ok) {
@@ -10333,7 +10493,8 @@ async function submitOrder() {
       customer_phone: loyaltyCustomerPhone || '',
       delivery_address: getDeliveryAddress(),
       customer_email: document.getElementById('customerEmail').value.trim(),
-      composed_since: composedSince || null
+      composed_since: composedSince || null,
+      course_holds: courseHolds
     })
     });
     if (!r.ok) {
@@ -11710,6 +11871,14 @@ async function loadTimesheetConfig() {
     const dailyCompEl = document.getElementById('tsConfigDailyCompCap');
     if (empMealEl) empMealEl.value = compCfg.employee_meal_limit !== undefined ? compCfg.employee_meal_limit.toFixed(2) : '15.00';
     if (dailyCompEl) dailyCompEl.value = compCfg.daily_comp_cap !== undefined ? compCfg.daily_comp_cap.toFixed(2) : '50.00';
+    // Store globally for course timing countdown
+    window.timesheetConfig = config;
+    // Course delays
+    const delays = config.course_delays || {};
+    ['Appetizer', 'Main', 'Dessert', 'Side'].forEach(c => {
+      const el = document.getElementById('tsCourseDelay' + c);
+      if (el) el.value = delays[c.toLowerCase()] !== undefined ? delays[c.toLowerCase()] : (c === 'Main' ? 15 : (c === 'Dessert' ? 20 : 0));
+    });
   } catch(e) {}
 }
 
@@ -11726,6 +11895,12 @@ async function saveTimesheetConfig() {
     comp_config: {
       employee_meal_limit: parseFloat(document.getElementById('tsConfigEmpMealLimit')?.value) || 15.0,
       daily_comp_cap: parseFloat(document.getElementById('tsConfigDailyCompCap')?.value) || 50.0
+    },
+    course_delays: {
+      appetizer: parseInt(document.getElementById('tsCourseDelayAppetizer')?.value) || 0,
+      main: parseInt(document.getElementById('tsCourseDelayMain')?.value) || 15,
+      dessert: parseInt(document.getElementById('tsCourseDelayDessert')?.value) || 20,
+      side: parseInt(document.getElementById('tsCourseDelaySide')?.value) || 0
     }
   };
   try {
