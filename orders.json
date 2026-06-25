@@ -2720,5 +2720,43 @@
         "delivery_address": null,
         "customer_email": "",
         "priority": null
+    },
+    {
+        "order_id": 82,
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-25T09:17:52.158431",
+        "user": "1234",
+        "payment": "Cash",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Test Item",
+                "price": 10.0,
+                "qty": 1,
+                "category": "Test",
+                "course_send_at": "2026-06-25T09:17:52.158532",
+                "course_fired": true
+            }
+        ],
+        "subtotal": 10.0,
+        "tax_amount": 0.8,
+        "tip_amount": 0.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "total": 10.8,
+        "notes": "",
+        "item_notes": {},
+        "table_number": null,
+        "delivery_address": null,
+        "customer_email": "",
+        "order_type": "takeout",
+        "packaging_fee": 0.5,
+        "packaging_fee_label": "Packaging Fee",
+        "priority": null,
+        "manager_approval": null
     }
 ]

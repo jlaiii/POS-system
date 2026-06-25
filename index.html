@@ -10609,7 +10609,8 @@ async function confirmOrder() {
   const discountAmount = appliedDiscount ? appliedDiscount.discount_amount : 0;
   const tipAmount = calculateTipAmount(subtotal);
   const serviceChargeAmount = calculateServiceCharge(subtotal);
-  const total = subtotal + taxAmount - discountAmount + tipAmount + serviceChargeAmount;
+  const packFee = getPackagingFee();
+  const total = subtotal + taxAmount - discountAmount + tipAmount + serviceChargeAmount + packFee.fee;
 
   // Validate split payments add up
   const allocated = paymentSplits.reduce((sum, s) => sum + (s.amount || 0), 0);
@@ -10918,7 +10919,8 @@ async function submitOrder() {
   const discountAmount = appliedDiscount ? appliedDiscount.discount_amount : 0;
   const tipAmount = calculateTipAmount(subtotal);
   const serviceChargeAmount = calculateServiceCharge(subtotal);
-  const total = subtotal + taxAmount - discountAmount + tipAmount + serviceChargeAmount;
+  const packFee = getPackagingFee();
+  const total = subtotal + taxAmount - discountAmount + tipAmount + serviceChargeAmount + packFee.fee;
   // Validate split payments add up
   const allocated = paymentSplits.reduce((sum, s) => sum + (s.amount || 0), 0);
   if (Math.abs(Math.round(allocated * 100) / 100 - Math.round(total * 100) / 100) > 0.01) {

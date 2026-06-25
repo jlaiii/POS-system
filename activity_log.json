@@ -8981,5 +8981,34 @@
             "clock_out_time": "2026-06-25T08:34:47.161380",
             "duration_hours": 0.0
         }
+    },
+    {
+        "timestamp": "2026-06-25T09:17:45.917588",
+        "type": "admin_login",
+        "user_id": "1234",
+        "user_role": "unauthorized",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T09:17:52.162287",
+        "type": "submit_order",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 82,
+            "subtotal": 10.0,
+            "tax_amount": 0.8,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 10.8,
+            "payment_method": "Cash",
+            "item_count": 1
+        }
     }
 ]
