@@ -1,5 +1,5 @@
 # POS Security Tasks
-> Last run: 2026-06-25 10:18 UTC
+> Last run: 2026-06-25 14:30 UTC
 
 ## CRITICAL — LOGIN & AUTH SECURITY (check every run)
 
@@ -37,6 +37,9 @@
 - [x] **Fix super admin authentication bypass** — `verify_super_admin(pin)` checked `if pin in supers` — this looked up the PIN as a **dict KEY** (user ID), NOT the actual `pin` field value in the user's data dict. This meant ANYONE who knew a super admin's user ID (stored in the public key "1111") could log in as that super admin regardless of the actual PIN. The `pin` field in super_admins.json was completely decorative. Fixed: now iterates over all super admin records and compares `data.get('pin')` to the submitted PIN. Verified: old PIN 1111 now correctly rejected, new PIN 634862 accepted.
 
 ## HIGH — DATA PROTECTION & COMPLIANCE
+
+### HIGH: Forced PIN change mechanism was bypassable — FIXED this run
+- [x] **Fix force_pin_change cleared at login instead of at PIN change** — The `force_pin_change` flag was being cleared to `False` in the login endpoint (both PIN and password paths) BEFORE the user actually changed their PIN. This meant a user with `force_pin_change: true` could: (1) log in, see the prompt, (2) log out, (3) log back in — and the flag would be gone, allowing them to skip the forced PIN change entirely. Fixed: login no longer clears the flag; it is now cleared only in `change_pin` after a successful PIN change. Verified: login returns `force_pin_change_required: true` and the flag remains `true` in users.json until the PIN is actually changed.
 
 ### HIGH: Default super admin PIN was 1111 — FIXED this run
 - [x] **Change super admin default PIN** — `data/global/super_admins.json` stored super admin PIN 1111 in plaintext. Same as the default owner PIN. Changed to cryptographically random 6-digit PIN (634862). New PIN stored in `data/global/.super_admin_pin_notice.json`.
@@ -95,6 +98,15 @@
 
 ## COMPLETED (this session)
 
+### Run: 2026-06-25 14:30 UTC
+- [x] **Fix force_pin_change cleared at login** — HIGH: `force_pin_change` flag was cleared in both password login and PIN login paths before user changed PIN. Fixed: login preserves flag, change_pin endpoint clears it after successful PIN change. Verified with curl.
+- [x] **Verify login rate limiting** — `/api/login` correctly returns attempt counter for non-existent users. Tested with user 9999.
+- [x] **Check for card data storage** — Zero hits in codebase for card_number, credit_card, cvv, track_data.
+- [x] **Check XSS vectors** — `escHtml()` used consistently. No unescaped user data in innerHTML.
+- [x] **Check session security** — Sessions use secrets.token_hex(32), 8h active/24h idle expiry, proper logout invalidation.
+- [x] **Check debug mode** — Confirmed debug=False, no Werkzeug debugger.
+- [x] **Check backup/restore path traversal** — Validated path traversal prevention in restore endpoint (os.path.normpath + startswith checks).
+
 ### Run: 2026-06-25 10:18 UTC
 - [x] **Fix super admin authentication bypass** — CRITICAL: `verify_super_admin()` checked dict keys instead of `pin` field. Any valid super admin user ID worked as a login PIN. Fixed: now properly validates the actual `pin` field.
 - [x] **Change super admin default PIN** — HIGH: Changed from weak default 1111 to cryptographically random 6-digit PIN (634862). Old PIN invalidated. New PIN stored in notification files.
@@ -130,5 +142,4 @@
 
 - SEC-001/SEC-013: 2FA persistence bug — suspected race condition; threading lock added. Monitor next 2-3 runs to confirm fix.
 - User 9999 login attempts at ~07:56 UTC on 2026-06-24: 20 rapid attempts from multiple IPs. User 9999 does NOT currently exist in users.json. The attempts all returned "2fa_required" suggesting 9999 may have existed briefly. Verify no credential stuffing succeeded.
-- Super admin PIN 1111 is the default. Rate limiting + session expiry mitigate brute force, but PIN should be changed to a strong random value.
 - require_2fa_for_admins is now true (set by worker-1). Monitor for admin workflow disruption.

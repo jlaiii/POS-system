@@ -1728,7 +1728,10 @@ def login():
 
                     if u_data.get('force_pin_change', False):
                         force_change_required = True
-                        users[uid]['force_pin_change'] = False
+                        # Do NOT clear force_pin_change here — it must persist until the
+                        # user actually changes their PIN via /api/auth/change_pin.
+                        # Clearing it early lets users escape the forced PIN change by
+                        # logging out and back in.
 
                     if pin_reset_info or force_change_required:
                         save_json_data(USERS_FILE, users)
@@ -1903,7 +1906,10 @@ def login():
 
             if user_info.get('force_pin_change', False):
                 force_change_required = True
-                users[user_id]['force_pin_change'] = False
+                # Do NOT clear force_pin_change here — it must persist until the
+                # user actually changes their PIN via /api/auth/change_pin.
+                # Clearing it early lets users escape the forced PIN change by
+                # logging out and back in.
 
             if pin_reset_info or force_change_required:
                 save_json_data(USERS_FILE, users)
@@ -4365,6 +4371,8 @@ def change_pin():
 
     # Move user data from old PIN to new PIN
     user_data_copy = dict(user_data)
+    # Clear force_pin_change flag since PIN was actually changed
+    user_data_copy['force_pin_change'] = False
     del users[user_id]
     users[new_pin] = user_data_copy
     save_json_data(USERS_FILE, users)
