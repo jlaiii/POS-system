@@ -1126,6 +1126,10 @@ login_failed_attempts = {}
 # Structure: {ip_or_user_id: {'count': int, 'lock_until': datetime or None, 'window_start': datetime}}
 clock_failed_attempts = {}
 
+# In-memory platform super admin login attempt tracking — resets on server restart
+# Structure: {ip: {'count': int, 'lock_until': datetime or None, 'window_start': datetime}}
+platform_failed_attempts = {}
+
 # In-memory per-IP rate limit tracker — resets on server restart
 # Structure: {client_ip: {'requests': [timestamp1, timestamp2, ...], 'login_requests': [ts1, ...], 'api_requests': [ts1, ...]}}
 rate_limit_tracker = defaultdict(lambda: {'requests': [], 'login_requests': [], 'api_requests': []})
@@ -16259,17 +16263,56 @@ def ticket_templates_delete():
 @app.route('/api/platform/super_admin/login', methods=['POST'])
 def platform_super_admin_login():
     """Super admin login. Separate from business user login.
-    Accepts PIN, returns session token if valid super admin."""
+    Accepts PIN, returns session token if valid super admin.
+    Rate-limited: 5 attempts per 60s per IP, 10min lockout."""
     data = request.json
     if not data:
         return jsonify({'message': 'Request body is required.'}), 400
 
     pin = str(data.get('pin', ''))
+    client_ip = get_client_ip()
+    now = datetime.now()
+
+    # --- Rate limiting: prevent brute force on super admin PIN ---
+    if client_ip not in platform_failed_attempts:
+        platform_failed_attempts[client_ip] = {'count': 0, 'lock_until': None, 'window_start': now}
+    platform_attempt = platform_failed_attempts[client_ip]
+
+    # Check lockout
+    if platform_attempt.get('lock_until') and now < platform_attempt['lock_until']:
+        remaining = int((platform_attempt['lock_until'] - now).total_seconds())
+        return jsonify({
+            'message': f'Too many login attempts. Try again in {remaining} seconds.',
+            'locked': True,
+            'retry_after': remaining
+        }), 429
+
+    # Clear expired lock
+    if platform_attempt.get('lock_until') and now >= platform_attempt['lock_until']:
+        platform_attempt['lock_until'] = None
+        platform_attempt['count'] = 0
+
+    # Reset window if >60s have passed
+    if platform_attempt.get('window_start') and (now - platform_attempt['window_start']).total_seconds() > 60:
+        platform_attempt['count'] = 0
+        platform_attempt['window_start'] = now
+
+    # Check the PIN
     super_admin = verify_super_admin(pin)
     if not super_admin:
+        # Record failure
+        platform_attempt['count'] += 1
+        if platform_attempt['window_start'] is None:
+            platform_attempt['window_start'] = now
+        if platform_attempt['count'] >= 5:
+            platform_attempt['lock_until'] = now + timedelta(minutes=10)
         log_activity('platform_login_failed', pin, 'super_admin',
-                     {'reason': 'Invalid super admin PIN', 'ip': get_client_ip()})
+                     {'reason': 'Invalid super admin PIN', 'ip': client_ip})
         return jsonify({'message': 'Invalid super admin credentials.'}), 401
+
+    # Success — clear failed attempts for this IP
+    if client_ip in platform_failed_attempts:
+        del platform_failed_attempts[client_ip]
 
     # Generate session token
     session_token = secrets.token_hex(32)
