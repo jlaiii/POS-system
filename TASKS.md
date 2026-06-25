@@ -627,7 +627,7 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 
 ### Priority: HIGH
 
-- [ ] worker-1 **Complete waitlist frontend JavaScript implementation** — Backend (9 endpoints) and HTML skeleton exist, but the JavaScript functions (`wlAddToWaitlist`, `wlLoadList`, `wlUpdateEntry`, `wlCheckIn`, `wlNotify`, `wlCancel`, `wlNoShow`, `wlEstimate`, `wlUpdateStats`) are completely undefined. The waitlist admin section (`secWaitlist`) renders but every button/action throws JS errors. Functions needed: add-to-waitlist with form validation, load list with filters, update entry, check-in, no-show, cancel, notify SMS/email, estimate wait time, today's stats. All 9 backend endpoints are ready and tested.
+- [~] worker-1 **Complete waitlist frontend JavaScript implementation** — Backend (9 endpoints) and HTML skeleton exist, but the JavaScript functions (`wlAddToWaitlist`, `wlLoadList`, `wlUpdateEntry`, `wlCheckIn`, `wlNotify`, `wlCancel`, `wlNoShow`, `wlEstimate`, `wlUpdateStats`) are completely undefined. The waitlist admin section (`secWaitlist`) renders but every button/action throws JS errors. Functions needed: add-to-waitlist with form validation, load list with filters, update entry, check-in, no-show, cancel, notify SMS/email, estimate wait time, today's stats. All 9 backend endpoints are ready and tested.
 
 ### Priority: MEDIUM
 
