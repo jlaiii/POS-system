@@ -308,7 +308,30 @@ for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMES
             elif f == ORDER_COUNTER_FILE:
                 json.dump({"counter": 1}, file, indent=4)  # Initialize order counter at 1
             elif f == TABLES_FILE:
-                json.dump({}, file, indent=4)  # Initialize empty tables
+                # Seed 20 default tables for a standard restaurant layout
+                _now = datetime.now().isoformat()
+                json.dump({
+                    "1": {"number": 1, "name": "Patio 1", "tablet_id": "", "status": "available", "section": "Patio", "capacity": 2, "created_at": _now, "last_bussed_at": None},
+                    "2": {"number": 2, "name": "Patio 2", "tablet_id": "", "status": "available", "section": "Patio", "capacity": 2, "created_at": _now, "last_bussed_at": None},
+                    "3": {"number": 3, "name": "Patio 3", "tablet_id": "", "status": "available", "section": "Patio", "capacity": 2, "created_at": _now, "last_bussed_at": None},
+                    "4": {"number": 4, "name": "Patio 4", "tablet_id": "", "status": "available", "section": "Patio", "capacity": 4, "created_at": _now, "last_bussed_at": None},
+                    "5": {"number": 5, "name": "Main 1", "tablet_id": "", "status": "available", "section": "Main Dining", "capacity": 4, "created_at": _now, "last_bussed_at": None},
+                    "6": {"number": 6, "name": "Main 2", "tablet_id": "", "status": "available", "section": "Main Dining", "capacity": 4, "created_at": _now, "last_bussed_at": None},
+                    "7": {"number": 7, "name": "Main 3", "tablet_id": "", "status": "available", "section": "Main Dining", "capacity": 4, "created_at": _now, "last_bussed_at": None},
+                    "8": {"number": 8, "name": "Main 4", "tablet_id": "", "status": "available", "section": "Main Dining", "capacity": 4, "created_at": _now, "last_bussed_at": None},
+                    "9": {"number": 9, "name": "Main 5", "tablet_id": "", "status": "available", "section": "Main Dining", "capacity": 6, "created_at": _now, "last_bussed_at": None},
+                    "10": {"number": 10, "name": "Main 6", "tablet_id": "", "status": "available", "section": "Main Dining", "capacity": 6, "created_at": _now, "last_bussed_at": None},
+                    "11": {"number": 11, "name": "Bar 1", "tablet_id": "", "status": "available", "section": "Bar", "capacity": 2, "created_at": _now, "last_bussed_at": None},
+                    "12": {"number": 12, "name": "Bar 2", "tablet_id": "", "status": "available", "section": "Bar", "capacity": 2, "created_at": _now, "last_bussed_at": None},
+                    "13": {"number": 13, "name": "Bar 3", "tablet_id": "", "status": "available", "section": "Bar", "capacity": 4, "created_at": _now, "last_bussed_at": None},
+                    "14": {"number": 14, "name": "Bar 4", "tablet_id": "", "status": "available", "section": "Bar", "capacity": 4, "created_at": _now, "last_bussed_at": None},
+                    "15": {"number": 15, "name": "Window 1", "tablet_id": "", "status": "available", "section": "Window", "capacity": 2, "created_at": _now, "last_bussed_at": None},
+                    "16": {"number": 16, "name": "Window 2", "tablet_id": "", "status": "available", "section": "Window", "capacity": 2, "created_at": _now, "last_bussed_at": None},
+                    "17": {"number": 17, "name": "VIP Room", "tablet_id": "", "status": "available", "section": "VIP", "capacity": 8, "created_at": _now, "last_bussed_at": None},
+                    "18": {"number": 18, "name": "Side 1", "tablet_id": "", "status": "available", "section": "Main Dining", "capacity": 4, "created_at": _now, "last_bussed_at": None},
+                    "19": {"number": 19, "name": "Side 2", "tablet_id": "", "status": "available", "section": "Main Dining", "capacity": 4, "created_at": _now, "last_bussed_at": None},
+                    "20": {"number": 20, "name": "Party Table", "tablet_id": "", "status": "available", "section": "Main Dining", "capacity": 10, "created_at": _now, "last_bussed_at": None}
+                }, file, indent=4)  # Seed 20 default tables
             elif f == INVENTORY_FILE:
                 json.dump({}, file, indent=4)  # Initialize empty inventory
             elif f == FAVORITES_FILE:
@@ -343,7 +366,6 @@ for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMES
 # Ensure menu_backups directory exists at startup
 if not os.path.exists(MENU_BACKUPS_DIR):
     os.makedirs(MENU_BACKUPS_DIR, exist_ok=True)
-
 
 def load_json_data(filepath):
     try:
@@ -476,6 +498,30 @@ def save_json_data(filepath, data):
             json.dump(data, f, indent=4)
         # Always enforce owner-only read/write (0600) for data files
         os.chmod(filepath, 0o600)
+
+
+# Auto-seed tables.json with default 20-table layout if file is empty
+# (handles existing installations that have an empty {} tables.json)
+try:
+    _tables_data = load_json_data(TABLES_FILE)
+    if not _tables_data:
+        _tables_seed = {}
+        _now = datetime.now().isoformat()
+        _default_tables = [
+            (1, "Patio 1", "Patio", 2), (2, "Patio 2", "Patio", 2), (3, "Patio 3", "Patio", 2), (4, "Patio 4", "Patio", 4),
+            (5, "Main 1", "Main Dining", 4), (6, "Main 2", "Main Dining", 4), (7, "Main 3", "Main Dining", 4), (8, "Main 4", "Main Dining", 4),
+            (9, "Main 5", "Main Dining", 6), (10, "Main 6", "Main Dining", 6),
+            (11, "Bar 1", "Bar", 2), (12, "Bar 2", "Bar", 2), (13, "Bar 3", "Bar", 4), (14, "Bar 4", "Bar", 4),
+            (15, "Window 1", "Window", 2), (16, "Window 2", "Window", 2),
+            (17, "VIP Room", "VIP", 8),
+            (18, "Side 1", "Main Dining", 4), (19, "Side 2", "Main Dining", 4), (20, "Party Table", "Main Dining", 10)
+        ]
+        for _num, _name, _section, _cap in _default_tables:
+            _tables_seed[str(_num)] = {"number": _num, "name": _name, "tablet_id": "", "status": "available", "section": _section, "capacity": _cap, "created_at": _now, "last_bussed_at": None}
+        save_json_data(TABLES_FILE, _tables_seed)
+        print(f"✅ Auto-seeded {len(_tables_seed)} default tables into {TABLES_FILE}")
+except Exception:
+    pass  # Silently skip if tables.json doesn't exist or has issues
 
 
 # --- Platform / Multi-Tenant Helpers ---

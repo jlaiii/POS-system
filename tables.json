@@ -1,1 +1,202 @@
-{}
+{
+  "1": {
+    "number": 1,
+    "name": "Patio 1",
+    "tablet_id": "",
+    "status": "available",
+    "section": "Patio",
+    "capacity": 2,
+    "created_at": "2026-06-25T10:24:39.519403",
+    "last_bussed_at": null
+  },
+  "2": {
+    "number": 2,
+    "name": "Patio 2",
+    "tablet_id": "",
+    "status": "available",
+    "section": "Patio",
+    "capacity": 2,
+    "created_at": "2026-06-25T10:24:39.519403",
+    "last_bussed_at": null
+  },
+  "3": {
+    "number": 3,
+    "name": "Patio 3",
+    "tablet_id": "",
+    "status": "available",
+    "section": "Patio",
+    "capacity": 2,
+    "created_at": "2026-06-25T10:24:39.519403",
+    "last_bussed_at": null
+  },
+  "4": {
+    "number": 4,
+    "name": "Patio 4",
+    "tablet_id": "",
+    "status": "available",
+    "section": "Patio",
+    "capacity": 4,
+    "created_at": "2026-06-25T10:24:39.519403",
+    "last_bussed_at": null
+  },
+  "5": {
+    "number": 5,
+    "name": "Main 1",
+    "tablet_id": "",
+    "status": "available",
+    "section": "Main Dining",
+    "capacity": 4,
+    "created_at": "2026-06-25T10:24:39.519403",
+    "last_bussed_at": null
+  },
+  "6": {
+    "number": 6,
+    "name": "Main 2",
+    "tablet_id": "",
+    "status": "available",
+    "section": "Main Dining",
+    "capacity": 4,
+    "created_at": "2026-06-25T10:24:39.519403",
+    "last_bussed_at": null
+  },
+  "7": {
+    "number": 7,
+    "name": "Main 3",
+    "tablet_id": "",
+    "status": "available",
+    "section": "Main Dining",
+    "capacity": 4,
+    "created_at": "2026-06-25T10:24:39.519403",
+    "last_bussed_at": null
+  },
+  "8": {
+    "number": 8,
+    "name": "Main 4",
+    "tablet_id": "",
+    "status": "available",
+    "section": "Main Dining",
+    "capacity": 4,
+    "created_at": "2026-06-25T10:24:39.519403",
+    "last_bussed_at": null
+  },
+  "9": {
+    "number": 9,
+    "name": "Main 5",
+    "tablet_id": "",
+    "status": "available",
+    "section": "Main Dining",
+    "capacity": 6,
+    "created_at": "2026-06-25T10:24:39.519403",
+    "last_bussed_at": null
+  },
+  "10": {
+    "number": 10,
+    "name": "Main 6",
+    "tablet_id": "",
+    "status": "available",
+    "section": "Main Dining",
+    "capacity": 6,
+    "created_at": "2026-06-25T10:24:39.519403",
+    "last_bussed_at": null
+  },
+  "11": {
+    "number": 11,
+    "name": "Bar 1",
+    "tablet_id": "",
+    "status": "available",
+    "section": "Bar",
+    "capacity": 2,
+    "created_at": "2026-06-25T10:24:39.519403",
+    "last_bussed_at": null
+  },
+  "12": {
+    "number": 12,
+    "name": "Bar 2",
+    "tablet_id": "",
+    "status": "available",
+    "section": "Bar",
+    "capacity": 2,
+    "created_at": "2026-06-25T10:24:39.519403",
+    "last_bussed_at": null
+  },
+  "13": {
+    "number": 13,
+    "name": "Bar 3",
+    "tablet_id": "",
+    "status": "available",
+    "section": "Bar",
+    "capacity": 4,
+    "created_at": "2026-06-25T10:24:39.519403",
+    "last_bussed_at": null
+  },
+  "14": {
+    "number": 14,
+    "name": "Bar 4",
+    "tablet_id": "",
+    "status": "available",
+    "section": "Bar",
+    "capacity": 4,
+    "created_at": "2026-06-25T10:24:39.519403",
+    "last_bussed_at": null
+  },
+  "15": {
+    "number": 15,
+    "name": "Window 1",
+    "tablet_id": "",
+    "status": "available",
+    "section": "Window",
+    "capacity": 2,
+    "created_at": "2026-06-25T10:24:39.519403",
+    "last_bussed_at": null
+  },
+  "16": {
+    "number": 16,
+    "name": "Window 2",
+    "tablet_id": "",
+    "status": "available",
+    "section": "Window",
+    "capacity": 2,
+    "created_at": "2026-06-25T10:24:39.519403",
+    "last_bussed_at": null
+  },
+  "17": {
+    "number": 17,
+    "name": "VIP Room",
+    "tablet_id": "",
+    "status": "available",
+    "section": "VIP",
+    "capacity": 8,
+    "created_at": "2026-06-25T10:24:39.519403",
+    "last_bussed_at": null
+  },
+  "18": {
+    "number": 18,
+    "name": "Side 1",
+    "tablet_id": "",
+    "status": "available",
+    "section": "Main Dining",
+    "capacity": 4,
+    "created_at": "2026-06-25T10:24:39.519403",
+    "last_bussed_at": null
+  },
+  "19": {
+    "number": 19,
+    "name": "Side 2",
+    "tablet_id": "",
+    "status": "available",
+    "section": "Main Dining",
+    "capacity": 4,
+    "created_at": "2026-06-25T10:24:39.519403",
+    "last_bussed_at": null
+  },
+  "20": {
+    "number": 20,
+    "name": "Party Table",
+    "tablet_id": "",
+    "status": "available",
+    "section": "Main Dining",
+    "capacity": 10,
+    "created_at": "2026-06-25T10:24:39.519403",
+    "last_bussed_at": null
+  }
+}
