@@ -592,3 +592,19 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 ### Priority: MEDIUM
 
 - [ ] **Menu item time-based visibility scheduling** — Auto-show/hide items from POS grid and customer tablet menu based on day of week and time range (e.g., breakfast items 6–11am, lunch 11am–4pm, dinner after 4pm). Add `scheduled_visibility` array field to item data model (day-of-week + start/end time rules, same format as scheduled_pricing). Reuse existing `is_schedule_active()` helper for time range checking. Admin UI: visibility schedule editor per item in add/edit forms with day-of-week checkboxes + start/end time inputs. Items outside their visibility window hidden from POS grid and tablet menu (still visible in admin item management). Simplifies shift transitions for multi-daypart restaurants. i18n EN + ES. Backward compatible (no rules = always visible, same as today).
+
+## New Tasks (from Task Generator — 2026-06-25)
+
+### Priority: HIGH
+
+- [ ] **Add order type classification (dine-in, takeout, delivery, catering) with per-type workflows** — Categorize each order with explicit type field (dine_in/takeout/delivery/catering). Different service charge rules, packaging fees per type, tax rate overrides, and kitchen ticket formatting per type. Filter sales stats by order type for channel analysis. Quick-type selector in POS cart area with icon buttons. Essential for multi-channel restaurants that handle both dine-in and takeout in the same system.
+
+### Priority: MEDIUM
+
+- [ ] **Add waitlist/digital queue for walk-in customers** — Host stand tool to add parties to waitlist with party size, name, phone, estimated wait time. Auto-calculate wait times from current table occupancy. Send SMS notification when table is ready via existing email/SMS config. Check-in marking, no-show tracking, and waitlist-to-table assignment integration with existing floor plan dashboard.
+
+- [ ] **Add server-side tax recalculation on order submit and tax period reporting** — Enforce tax calculation on server during order submission using configured tax_config rates (global, category, item overrides) instead of trusting frontend-supplied tax_amount. Add tax period report endpoint showing gross sales, taxable sales, tax collected by rate category, exempt sales totals, and net sales — exportable as CSV/PDF for tax filing compliance.
+
+### Priority: LOW
+
+- [ ] **Add customer birthday/anniversary tracking with automated rewards** — Capture customer birthdates and anniversaries during checkout via phone-based customer lookup. Auto-award loyalty points or free item on birthday with POS notification. Track visit frequency and offer periodic bonus rewards for regulars. Integrates with existing loyalty system for customer retention and marketing.
