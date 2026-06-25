@@ -416,7 +416,7 @@ body {
 
 <script>
 // ── CONFIG ──
-const POLL_INTERVAL = 2000; // 2 seconds
+const POLL_INTERVAL = 8000; // 8 seconds fallback (WebSocket preferred for live updates)
 const API_BASE = window.location.origin;
 
 // ── DOM REFS ──
@@ -479,6 +479,17 @@ function escHtml(s) {
 }
 
 // ── POLLING ──
+let pollTimer = null;
+
+function startPolling(interval) {
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(pollStatus, interval);
+}
+
+function stopPolling() {
+  if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+}
+
 async function pollStatus() {
   try {
     const r = await fetch(API_BASE + '/api/customer-display/status');
@@ -562,9 +573,10 @@ function initSocketIO() {
     socket.on('connect', () => {
       socketEnabled = true;
       socket.emit('join_customer_display');
+      stopPolling(); // WebSocket connected — rely on events, no polling needed
     });
-    socket.on('disconnect', () => {});
-    socket.on('connect_error', () => { socketEnabled = false; });
+    socket.on('disconnect', () => { startPolling(POLL_INTERVAL); });
+    socket.on('connect_error', () => { socketEnabled = false; startPolling(POLL_INTERVAL); });
     socket.on('customer_update', () => {
       // Real-time notification — fetch latest state immediately
       pollStatus();
@@ -578,7 +590,8 @@ function initSocketIO() {
 showScreen(idleScreen);
 initSocketIO();
 pollStatus();
-setInterval(pollStatus, POLL_INTERVAL);
+// Start polling as fallback (WebSocket will stop it on connect, restart on disconnect)
+startPolling(POLL_INTERVAL);
 </script>
 </body>
 </html>
