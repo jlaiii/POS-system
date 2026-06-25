@@ -302,11 +302,11 @@
 }
 .shift-edit-btn {
   font-size: 12px;
-  padding: 4px 10px;
-  min-height: 32px;
+  padding: 8px 14px;
+  min-height: 44px;
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   color: var(--text);
   transition: background .15s;
@@ -806,7 +806,7 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
 
 /* Cart expand/collapse toggle for portrait/compact mode */
 #cart.cart-expanded { max-height: 70vh; }
-#cartToggle { display: none; background: transparent; color: var(--text2); border: none; cursor: pointer; font-size: 18px; padding: 4px 8px; min-height: 32px; min-width: 32px; border-radius: 6px; align-items: center; justify-content: center; }
+#cartToggle { display: none; background: transparent; color: var(--text2); border: none; cursor: pointer; font-size: 18px; padding: 6px 10px; min-height: 44px; min-width: 44px; border-radius: 8px; align-items: center; justify-content: center; }
 #cartToggle:hover { background: var(--hover); color: var(--text); }
 #cartHeader { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 #cartHeader h3 { margin: 0; }
