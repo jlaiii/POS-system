@@ -19062,6 +19062,10 @@ def internal_error(error):
 # Start the hourly security digest timer (works on import, including gunicorn)
 start_security_digest_timer()
 
+# Run stale pending order cleanup on server start (not just on admin_stats view)
+# Prevents old test/stale data from polluting analytics, kitchen display, and alerts
+auto_cleanup_stale_orders()
+
 if __name__ == '__main__':
     # PRODUCTION: use gunicorn + gevent (see scripts/run_flask.sh)
     #   gunicorn -k gevent -w 1 --bind 0.0.0.0:5000 app:app
