@@ -368,6 +368,8 @@ for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMES
                 json.dump({"drivers": []}, file, indent=4)  # Initialize empty drivers list
             else:
                 json.dump([], file)  # Initialize orders.json and cleared_orders.json as empty lists
+        # Enforce owner-only permissions on newly created JSON data files
+        os.chmod(f, 0o600)
 
 # Ensure menu_backups directory exists at startup
 if not os.path.exists(MENU_BACKUPS_DIR):
