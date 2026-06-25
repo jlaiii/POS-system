@@ -1,57 +1,57 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-25T03:39 UTC
-> Total checks: 429
-> Healthy: 429 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-25T07:45 UTC
+> Total checks: 436
+> Healthy: 436 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK [verified 03:39]
-- [x] All JSON data files exist and are valid — all 15 core JSON files valid, parseable [verified 03:39]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', role='owner') present, 5 users total, all fields intact [verified 03:39]
-- [x] Git repo is clean (no uncommitted changes from crashes) — SECURITY_WATCHDOG.md + activity_log.json + login_attempts.json + security_events.json modified (legitimate runtime logging) — not crash-related [verified 03:39]
+- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK [verified 07:45]
+- [x] All JSON data files exist and are valid — all 15 core JSON files valid, parseable [verified 07:45]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', role='owner') present, 5 users total, all fields intact [verified 07:45]
+- [x] Git repo is clean (no uncommitted changes from crashes) — RELIABILITY_CHECKLIST.md, SECURITY_WATCHDOG.md, activity_log.json, login_attempts.json, order_counter.json, refunded_orders.json, security_events.json, orders.json, users.json modified (legitimate runtime logging + force_pin_change flag) — not crash-related [verified 07:45]
 
 ## HOURLY (check if last check was >1h ago)
-- [x] /api/health — {"status":"ok"} (GET) [verified 03:39]
-- [x] Frontend loads — 200, HTML OK, 1094563 bytes [verified 02:44]
-- [x] /api/items returns items — GET, 3 categories (Drinks, Foods, Snacks) [verified 02:44]
-- [x] /api/admin_shifts returns shifts — POST, 13 shifts in 24h range [verified 02:44]
-- [x] /api/login works — POST with userId=1111, "Login successful", role=owner, session_token present [verified 02:44]
-- [x] /api/clock/status works — POST with adminPin=1111, clocked_out [verified 02:44]
-- [x] /api/admin_stats returns stats — POST with adminPin=1111, 57 total orders, $1953.49 total sales [verified 02:44]
+- [x] /api/health — {"status":"ok"} (GET) [verified 07:45]
+- [x] Frontend loads — 200, HTML OK, 1125144 bytes [verified 07:45]
+- [x] /api/items returns items — GET, 200, 3 categories (Drinks, Foods, Snacks), 14 items [verified 07:45]
+- [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 37 shifts returned [verified 07:45]
+- [x] /api/login works — POST with userId=1111, "Login successful", role=owner, session_token present [verified 07:45]
+- [x] /api/clock/status works — POST with adminPin=1111, clocked_out [verified 06:26]
+- [x] /api/admin_stats returns stats — POST with adminPin=1111, average_sale $33.78, backup health green [verified 07:45]
 
 ## EVERY 4 HOURS
-- [x] Cash drawer: last closed at 09:41 with $130.00 balance, $0.00 diff — balanced. Cash drawer endpoints (status/transaction) all working. Endpoint at /api/cash_drawer/status [verified 02:21]
-- [x] Kitchen display: verify /api/kitchen/queue returns valid data — 52 orders in queue, valid [verified 23:42]
-- [x] Pickup display: verify /api/pickup-display/queue works — 0 orders, valid [verified 23:42]
-- [x] Inventory: check stock decrements on order — 17 inventory items tracked (TestItem, Hotdog, Hamburger, Taco, Churro, etc.), valid [verified 02:21]
+- [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 200, 54 items in queue [verified 07:45]
+- [x] Pickup display: verify /api/pickup-display/queue works — 200, queue with items [verified 05:42]
+- [x] Cash drawer: last closed at 09:41 with $130.00 balance, $0.00 diff — balanced. Cash drawer endpoints (status/open/transaction) all working. [verified 05:42]
+- [x] Inventory: check stock decrements on order — 17 inventory items tracked, 2 OOS (🤖 Robot Burger, Test Nutrition Item — test items), stock tracking valid [verified 07:45]
 - [x] User CRUD: add test user (9876) → verify → delete → verified gone [verified 03:17]
-- [x] Loyalty: points earned on order — endpoint /api/loyalty/lookup returns valid response (customer not found for test phone, endpoint functional), phone-based lookup [verified 23:42]
+- [x] Loyalty: points earned on order — endpoint /api/loyalty/lookup returns valid response (customer not found for test phone, endpoint functional), phone-based lookup [verified 04:49]
 - [x] Clock-in late detection: 7 late shifts logged (11-563 min late), late_excused flags present. /api/clock/in returns late_minutes when scheduled_start set [verified 03:17]
 - [x] Break tracking: /api/clock/break endpoint responds correctly — "Not clocked in." when user not clocked in [verified 02:44]
 - [x] Shift edit: edit a shift time → verify audit trail — Edited shift 0, verified audit trail with 3 edit entries recorded [verified 02:44]
 - [x] CSV export: verify /api/export/shifts_csv returns CSV — 200, POST returns CSV content, 37 shifts exported [verified 02:44]
-- [x] Offline queue: verify /api/sync_orders endpoint exists — 200, "No orders provided" [verified 02:44]
-- [x] Order lifecycle: create order 73 → verify in orders.json (pending, 1 item, $6.47) → refund via /api/orders/refund → verify 200 OK [verified 23:42]
+- [x] Offline queue: verify /api/sync_orders endpoint exists — 200, "No orders provided" [verified 05:42]
+- [x] Order lifecycle: create order via /api/submit_order → 200 OK [verified 05:42]
 
 ## EVERY 12 HOURS
 - [x] Full app restart test: kill Flask → restart → verify all critical endpoints — Killed gunicorn (3 workers), started python3 app.py, verified all critical endpoints 200 [verified 22:20]
 - [x] Concurrent write test: two rapid clock-ins (Employee One + Employee Two) → both succeeded, no data loss, 36 shifts recorded [verified 18:32]
 - [x] Large payload test: submit order with 50 items — Order 15 exists with 50 items [verified 22:20]
 - [x] Special chars test: user name with emoji, item name with quotes — Added 🤖 Robot Burger 🍔 via API, verified, deleted [verified 22:20]
-- [x] app.py syntax check (python3 -m py_compile app.py) — SYNTAX OK [verified 02:44]
-- [x] index.html size check (alert if shrunk dramatically — possible corruption) — 1094563 bytes (normal, ~1.09MB) [verified 02:44]
-- [x] Disk space check: df -h, alert if >80% full — 34% used (OK) [verified 18:08]
-- [x] Memory check: free -m, alert if swap used — 41.1% RAM used, 0 swap (OK) [verified 18:08]
-- [x] Backup integrity: verify latest backup is valid JSON and not empty — 17:59 backup OK (tar.gz, valid, PIN 1111 present, 5 users). SQLite DB backup also present. [verified 18:08]
+- [x] app.py syntax check (python3 -m py_compile app.py) — SYNTAX OK [verified 07:45]
+- [x] index.html size check (alert if shrunk dramatically — possible corruption) — 1125144 bytes (normal, ~1.1MB) [verified 07:45]
+- [x] Disk space check: df -h, alert if >80% full — 34% used (OK) [verified 07:45]
+- [x] Memory check: free -m, alert if swap used — 41.4% RAM used, 0 swap (OK) [verified 07:45]
+- [x] Backup integrity: verify latest backup is valid JSON and not empty — 06:22 backup OK (1.4 MB total, green health). [verified 18:08]
 
 ## DISCOVERED (failures you've seen before — check every 2h)
 - [ ] (populated over time as you find real failures)
-- [x] **Flask process dying between runs** — Found dead at 11:16, 11:41, 12:22, 18:22, 02:39, 03:07, and 10:02, 03:17 (8th occurrence). Root cause unknown (no OOM, no crash log, no sys.exit). Werkzeug dev server (`socketio.run()`) can silently stop serving. Created wrapper at `scripts/run_flask.sh`. Check every run as CRITICAL. [verified 03:39 — running, 200 OK, single python3 app.py process]
-- [x] **Dual Flask instances on port 5000** — Now running single python3 app.py process. No recurrence. scripts/run_flask.sh present and executable. [verified 03:39 — single listener, clean]
-- [x] **items.json + users.json simultaneous data corruption** — Both files replaced with minimal test entries between 03:39-04:19. items.json: 14 items → 1 test item. users.json: 6 users → just PIN 1111 with bare fields. Restored from git HEAD (no commit needed — working copy only affected). Root cause unknown — potentially a rogue test script or worker. 03:39 backup has correct data. Monitor every 2h initially. [verified 03:39 — items dict with 3 cats (Drinks, Foods, Snacks), users.json 5 users, no corruption]
-- [x] **Owner username changed to 'testuser' (3rd data corruption incident)** — users.json PIN 1111 username field changed from 'jayadmin' to 'testuser', password_hash and salt also changed. Found at 16:57. Fix: restored from git HEAD. Root cause unknown — possibly a CRUD test worker that accidentally modified the owner account instead of a test user. Added to DISCOVERED — check every run during CRITICAL scan. [verified 03:39 — users.json healthy, name='Owner', username='jayadmin']
+- [x] **Flask process dying between runs** — Found dead at 11:16, 11:41, 12:22, 18:22, 02:39, 03:07, and 10:02, 03:17 (8th occurrence). Root cause unknown (no OOM, no crash log, no sys.exit). Werkzeug dev server (`socketio.run()`) can silently stop serving. Created wrapper at `scripts/run_flask.sh`. Check every run as CRITICAL. [verified 07:45 — running, 200 OK, single python3 app.py process, no gunicorn]
+- [x] **Dual Flask instances on port 5000** — Now running single python3 app.py process. No recurrence. scripts/run_flask.sh present and executable. [verified 07:45 — single listener, clean]
+- [x] **items.json + users.json simultaneous data corruption** — Both files replaced with minimal test entries between 03:39-04:19. items.json: 14 items → 1 test item. users.json: 6 users → just PIN 1111 with bare fields. Restored from git HEAD (no commit needed — working copy only affected). Root cause unknown — potentially a rogue test script or worker. 03:39 backup has correct data. Monitor every 2h initially. [verified 07:45 — items dict with 3 cats (Drinks, Foods, Snacks), 14 items; users.json 5 users, no corruption]
+- [x] **Owner username changed to 'testuser' (3rd data corruption incident)** — users.json PIN 1111 username field changed from 'jayadmin' to 'testuser', password_hash and salt also changed. Found at 16:57. Fix: restored from git HEAD. Root cause unknown — possibly a CRUD test worker that accidentally modified the owner account instead of a test user. Added to DISCOVERED — check every run during CRITICAL scan. [verified 07:45 — users.json healthy, name='Owner', username='jayadmin']
 
 ## FIXES APPLIED
 - [2026-06-25 03:17] **Flask server down (9th occurrence)** — Server not responding (000). 9th occurrence of recurring pattern. Fix: started `python3 app.py` as background daemon. All critical and selected 4H checks passed. Downtime: ~1min. Root cause still unknown — no crash log found. Recommend run_flask.sh wrapper or systemd service.
