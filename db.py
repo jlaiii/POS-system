@@ -287,7 +287,9 @@ def init_db():
             item_notes TEXT DEFAULT '{}',
             claimed_by TEXT,
             claimed_at TEXT,
-            completed_at TEXT
+            completed_at TEXT,
+            service_charge_amount REAL DEFAULT 0,
+            customer_email TEXT DEFAULT ''
         )
     """)
 
@@ -552,6 +554,9 @@ def _migrate_schemas():
         ('loyalty_points', 'total_orders', 'INTEGER DEFAULT 0'),
         ('loyalty_points', 'created_at', 'TEXT'),
         ('loyalty_points', 'history', 'TEXT DEFAULT "[]"'),
+        # orders: added service_charge_amount, customer_email in schema update
+        ('orders', 'service_charge_amount', 'REAL DEFAULT 0'),
+        ('orders', 'customer_email', 'TEXT DEFAULT ""'),
     ]
 
     for table, column, col_def in migrations:

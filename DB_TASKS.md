@@ -1,6 +1,6 @@
 # POS Database Migration Tasks
-> Last run: 2026-06-24 20:xx UTC
-> Current phase: Phase 2 — Migration Scripts (6/24 complete)
+> Last run: 2026-06-25 02:xx UTC
+> Current phase: Phase 2 — Migration Scripts (7/24 complete)
 
 ## Phase 1: Schema Design
 - [x] Design all SQLite table schemas (users, shift_log, orders, items, inventory, etc.)
@@ -15,7 +15,7 @@
 - [x] Write migrate_items.py — items table migration (14 rows verified ✓)
 - [x] Write migrate_inventory.py — inventory table migration (16 rows verified ✓)
 - [x] Write migrate_loyalty_points.py — loyalty_points table migration (2 records verified ✓)
-- [ ] Write migrate_orders.py — orders table migration
+- [x] Write migrate_orders.py — orders table migration (66 rows verified ✓)
 - [ ] Write migrate_combos.py — combos table migration
 - [ ] Write migrate_favorites.py — favorites table migration
 - [ ] Write migrate_waste_log.py — waste_log table migration
@@ -69,6 +69,7 @@
 - [x] **migrate_items.py** — Migrated 14 items from items.json to SQLite. Flattened 3 categories (Foods, Drinks, Snacks) into category column. Modifiers JSON preserved. Idempotency tested. Commit: 95e8124
 - [x] **migrate_inventory.py** — Migrated 16 inventory items from inventory.json to SQLite. Mapped 'low_stock_threshold' to 'threshold' column. Idempotency tested. Commit: 7d5ee21
 - [x] **migrate_loyalty_points.py** — Migrated 2 loyalty points records from loyalty_points.json to SQLite. Extended schema with 7 fields (email, notes, address, total_redeemed, total_orders, created_at, history). Added schema migration helper in db.py for forward-compatible column additions. Commit: 9b576e3
+- [x] **migrate_orders.py** — Migrated 66 orders from orders.json to SQLite. Handles edge cases (payment as dict, null fields, order 55 with dict payment). Added service_charge_amount + customer_email columns to orders schema. Also migrates cleared_orders.json (0 cleared). Idempotency tested. Commit: TBD
 
 ## ROLLBACK PLAN (always keep current)
 How to revert to JSON mode if DB breaks:
@@ -88,8 +89,8 @@ How to revert to JSON mode if DB breaks:
 | items.json | items | dict (key=category) | 14 items | ✓ |
 || inventory.json | inventory | dict (key=item_name) | 16 | ✓ |
 || loyalty_points.json | loyalty_points | dict (key=phone) | 2 | ✓ |
-| orders.json | orders | array | 0 | |
-| cleared_orders.json | cleared_orders | array | 0 | |
+| orders.json | orders | array | 66 | ✓ |
+| cleared_orders.json | cleared_orders | array | 0 | ✓ |
 | combos.json | combos | object {combos:[]} | 0 | |
 | favorites.json | favorites | dict | 0 | |
 | waste_log.json | waste_log | array | 0 | |
@@ -240,9 +241,11 @@ CREATE TABLE IF NOT EXISTS orders (
     notes TEXT DEFAULT '',
     user_id TEXT,
     customer_phone TEXT,
+    customer_email TEXT DEFAULT '',
     discount_code TEXT,
     discount_amount REAL DEFAULT 0,
     item_notes TEXT DEFAULT '{}',
+    service_charge_amount REAL DEFAULT 0,
     claimed_by TEXT,
     claimed_at TEXT,
     completed_at TEXT
