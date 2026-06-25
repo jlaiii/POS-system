@@ -684,7 +684,7 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 
 ### Priority: MEDIUM
 
-- [ ] **Add menu item seasonal/limited-time flag with auto-expiry** — Restaurants frequently run LTOs (limited-time offers) and seasonal items (pumpkin spice latte in fall, watermelon salad in summer) that should auto-remove from the menu after a set date. Add an optional `end_date` field to item data model. Items past their end_date auto-hide from the POS grid, customer tablet menu, and online ordering view (still visible in admin item management with an "Expired ⏰" badge). Admin gets a dashboard notification 7 days and 1 day before expiry. Existing scheduled_visibility system handles time-of-day rules but not date-based hard cutoffs. Also useful for catering menus with seasonal availability.
+- [~] worker-3 **Add menu item seasonal/limited-time flag with auto-expiry** — Restaurants frequently run LTOs (limited-time offers) and seasonal items (pumpkin spice latte in fall, watermelon salad in summer) that should auto-remove from the menu after a set date. Add an optional `end_date` field to item data model. Items past their end_date auto-hide from the POS grid, customer tablet menu, and online ordering view (still visible in admin item management with an "Expired ⏰" badge). Admin gets a dashboard notification 7 days and 1 day before expiry. Existing scheduled_visibility system handles time-of-day rules but not date-based hard cutoffs. Also useful for catering menus with seasonal availability.
 
 ### Priority: LOW
 
