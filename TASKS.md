@@ -664,7 +664,7 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 
 ### Priority: HIGH
 
-- [ ] **sync_orders() lacks item validation — ghost data confirmed** — `submit_order()` validates items against the menu (empty-reject, name/price matching), but `sync_orders()` does NOT. Evidence: Order #94 exists with `items: []` ($0 ghost order) and Order #95 exists with `items: [{"id": "NONEXISTENT", "name": "Ghost Item", "price": 999}]` ($1,081.42 ghost order). Both bypassed via sync_orders. Add the same item validation logic from submit_order (lines 5436-5486) to sync_orders, checking each item exists in items.json/combos.json with price tolerance. Without this, offline-queued frontend bugs or bad data creates phantom orders that pollute kitchen display and analytics. [System Auditor #24]
+- [~] worker-2 **sync_orders() lacks item validation — ghost data confirmed** — `submit_order()` validates items against the menu (empty-reject, name/price matching), but `sync_orders()` does NOT. Evidence: Order #94 exists with `items: []` ($0 ghost order) and Order #95 exists with `items: [{"id": "NONEXISTENT", "name": "Ghost Item", "price": 999}]` ($1,081.42 ghost order). Both bypassed via sync_orders. Add the same item validation logic from submit_order (lines 5436-5486) to sync_orders, checking each item exists in items.json/combos.json with price tolerance. Without this, offline-queued frontend bugs or bad data creates phantom orders that pollute kitchen display and analytics. [System Auditor #24]
 
 ### Priority: MEDIUM
 
