@@ -1,5 +1,5 @@
 # POS Security Tasks
-> Last run: 2026-06-25 14:30 UTC
+> Last run: 2026-06-25 18:40 UTC
 
 ## CRITICAL — LOGIN & AUTH SECURITY (check every run)
 
@@ -97,6 +97,18 @@
 - [x] **Verify dependency versions** — Flask 3.1.3, pyotp 2.9.0, qrcode 7.4.2, Werkzeug 3.1.8, eventlet 0.41.0. All current stable versions.
 
 ## COMPLETED (this session)
+
+### Run: 2026-06-25 18:40 UTC
+- [x] **Fix world-readable data files** — MEDIUM: `items.json`, `drivers.json`, `feedback.json`, `.data_baseline.json`, 6 old menu_backups from June 22, and `scripts/SUPER_ADMIN_PIN_CHANGED.txt` (contained super admin PIN) were all 644 (world-readable). Fixed: chmod 600 on all. Verified with ls -la.
+- [x] **Fix JSON init code to enforce 0600 on new files** — MEDIUM: The module-level initialization loop (lines 273-370) used plain `json.dump()` instead of `save_json_data()` when creating new JSON files, meaning first-run installations would create world-readable data files. Added `os.chmod(f, 0o600)` after each file creation. Root cause fix — applies to all 30+ file types.
+- [x] **Check login rate limiting** — Verified: 5 failed PIN attempts = 10-minute lockout with correct retry_after=600. Password path uses IP-based rate limit (10 req/60s). Both working correctly.
+- [x] **Check for card data storage** — Zero hits for card_number, credit_card, cvv, track_data in codebase. PCI DSS compliance maintained.
+- [x] **Check XSS vectors** — `escHtml()` and `escapeHtml()` both use proper DOM-based escaping (createTextNode). User-supplied data consistently escaped. No unescaped innerHTML with user data found.
+- [x] **Check session security** — Sessions use secrets.token_hex(32), 8h active / 24h idle expiry, logout properly invalidates sessions. Verified.
+- [x] **Check debug mode** — debug=False, allow_unsafe_werkzeug=False. Confirmed.
+- [x] **Check 2FA disable requires re-auth** — `/api/users/disable_2fa` requires `manage_users` permission + reason. Owner-only can disable 2FA on admins. Logged with audit trail.
+- [x] **Check eval/exec usage** — Zero instances in codebase. No code injection vectors.
+- [x] **Verify file permissions** — All 35+ JSON data files now at 0600. SUPER_ADMIN_PIN_CHANGED.txt at 0600. Backup files at 0600. Menu backups fixed.
 
 ### Run: 2026-06-25 14:30 UTC
 - [x] **Fix force_pin_change cleared at login** — HIGH: `force_pin_change` flag was cleared in both password login and PIN login paths before user changed PIN. Fixed: login preserves flag, change_pin endpoint clears it after successful PIN change. Verified with curl.
