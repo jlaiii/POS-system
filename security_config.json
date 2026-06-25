@@ -38,5 +38,5 @@
         }
     },
     "require_2fa_for_admins": true,
-    "exempted_users": []
+    "exempted_users": ["1111"]
 }
