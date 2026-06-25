@@ -497,7 +497,7 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 
 - [x] **Reduce customer display poll interval from 2s to 5-10s** — Changed `POLL_INTERVAL` 2000→8000ms. Added adaptive polling: WebSocket events drive live updates (stop polling on connect, resume on disconnect). Reduces API requests from ~43,200/day to ~10,800/day. [worker-1]
 
-- [ ] **Add kiosk mode cancel/reset flow for customers** — Kiosk mode only has "Staff Exit" which returns to POS. A customer who changes their mind mid-order has no "Cancel Order" or "Start Over" option. Add a customer-facing cancel button with confirmation dialog that clears the cart. [Production Auditor]
+- [~] worker-3 **Add kiosk mode cancel/reset flow for customers** — Kiosk mode only has "Staff Exit" which returns to POS. A customer who changes their mind mid-order has no "Cancel Order" or "Start Over" option. Add a customer-facing cancel button with confirmation dialog that clears the cart. [Production Auditor]
 
 - [x] worker-3 **Printer integration (ESC/POS thermal printers)** — Added `/api/print/receipt` endpoint generating ESC/POS byte commands for network thermal printers (Epson TM-T88, etc.) via TCP port 9100. `_escpos_receipt_bytes()` function formats receipt with header, items, notes/modifiers, totals, bold TOTAL, and cut command. Printer config in admin UI (`/api/printer/config` + `/api/printer/config/save`): IP, port, enabled toggle, header/footer text, characters per line. Frontend: 🖨️ thermal print button in order history and receipt overlay, browser print fallback when printer unreachable. HTML receipt fallback via `_generate_print_html()` and `/api/print/receipt_html/<id>` endpoint. Full i18n EN+ES. Permission-gated (manage_items). Dark theme, touch-friendly.
 
