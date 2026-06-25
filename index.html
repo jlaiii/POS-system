@@ -22133,12 +22133,452 @@ async function resQuickStatus(resId, newStatus) {
   }
 }
 
-// Load today's reservations on section switch
-const _origSwitchAdminSection = switchAdminSection;
+// ═══════════ WAITLIST / DIGITAL QUEUE ═══════════
+
+async function wlUpdateStats() {
+  try {
+    const resp = await fetch('/api/waitlist/today_stats', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({})
+    });
+    const data = await resp.json();
+    if (!resp.ok) return;
+    const wlWaitingCount = document.getElementById('wlWaitingCount');
+    if (wlWaitingCount) wlWaitingCount.textContent = data.waiting || 0;
+    const wlSeatedCount = document.getElementById('wlSeatedCount');
+    if (wlSeatedCount) wlSeatedCount.textContent = data.seated || 0;
+    const wlNoShowCount = document.getElementById('wlNoShowCount');
+    if (wlNoShowCount) wlNoShowCount.textContent = data.no_shows || 0;
+    const wlCancelledCount = document.getElementById('wlCancelledCount');
+    if (wlCancelledCount) wlCancelledCount.textContent = data.cancelled || 0;
+    const wlNotifiedCount = document.getElementById('wlNotifiedCount');
+    if (wlNotifiedCount) wlNotifiedCount.textContent = data.notified || 0;
+    const wlAvgWait = document.getElementById('wlAvgWait');
+    if (wlAvgWait) wlAvgWait.textContent = (data.average_wait_minutes || 0) + ' min';
+    // Also update current estimate
+    wlEstimate();
+  } catch(e) { console.error('wlUpdateStats error:', e); }
+}
+
+async function wlEstimate() {
+  try {
+    const resp = await fetch('/api/waitlist/estimate', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({})
+    });
+    const data = await resp.json();
+    if (resp.ok) {
+      const el = document.getElementById('wlEstimateNow');
+      if (el) el.textContent = (data.estimated_wait || 0) + ' min';
+    }
+  } catch(e) { console.error('wlEstimate error:', e); }
+}
+
+async function wlAddToWaitlist() {
+  const statusEl = document.getElementById('wlFormStatus');
+  const userId = localStorage.getItem('userId') || '';
+  if (!userId) { statusEl.textContent = '⚠️ ' + (t('login.required') || 'Not logged in.'); statusEl.style.color = 'var(--accent)'; return; }
+
+  const name = document.getElementById('wlFormName').value.trim();
+  const party = parseInt(document.getElementById('wlFormParty').value) || 0;
+  const phone = document.getElementById('wlFormPhone').value.trim();
+  const email = document.getElementById('wlFormEmail').value.trim();
+  const waitStr = document.getElementById('wlFormWait').value.trim();
+  const notes = document.getElementById('wlFormNotes').value.trim();
+
+  if (!name) { statusEl.textContent = '⚠️ ' + (t('waitlist.name_required') || 'Customer name is required.'); statusEl.style.color = 'var(--accent)'; return; }
+  if (party < 1) { statusEl.textContent = '⚠️ ' + (t('waitlist.party_required') || 'Party size must be at least 1.'); statusEl.style.color = 'var(--accent)'; return; }
+
+  const estimated_wait = waitStr ? parseInt(waitStr) : null;
+
+  statusEl.textContent = '⏳ ' + (t('waitlist.adding') || 'Adding to waitlist...');
+  statusEl.style.color = 'var(--text2)';
+
+  try {
+    const resp = await fetch('/api/waitlist/add', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        user_id: userId,
+        customer_name: name,
+        party_size: party,
+        customer_phone: phone,
+        customer_email: email,
+        notes: notes,
+        estimated_wait: estimated_wait
+      })
+    });
+    const data = await resp.json();
+    if (resp.ok) {
+      statusEl.textContent = '✅ ' + (data.message || 'Added!');
+      statusEl.style.color = '#4caf50';
+      // Clear form
+      document.getElementById('wlFormName').value = '';
+      document.getElementById('wlFormPhone').value = '';
+      document.getElementById('wlFormEmail').value = '';
+      document.getElementById('wlFormWait').value = '';
+      document.getElementById('wlFormNotes').value = '';
+      wlLoadList();
+      wlUpdateStats();
+      showToast(data.message || 'Added to waitlist', 'success');
+    } else {
+      statusEl.textContent = '⚠️ ' + (data.message || 'Failed to add');
+      statusEl.style.color = 'var(--accent)';
+    }
+  } catch(e) {
+    statusEl.textContent = '⚠️ ' + (t('network_error') || 'Network error');
+    statusEl.style.color = 'var(--accent)';
+    console.error('wlAddToWaitlist error:', e);
+  }
+}
+
+function wlStatusBadge(status) {
+  const badges = {
+    'waiting': '<span class="badge" style="background:var(--accent);color:#fff;">⏳ Waiting</span>',
+    'notified': '<span class="badge" style="background:#2196f3;color:#fff;">📧 Notified</span>',
+    'seated': '<span class="badge" style="background:#4caf50;color:#fff;">✅ Seated</span>',
+    'no_show': '<span class="badge" style="background:#f44336;color:#fff;">🔕 No-show</span>',
+    'cancelled': '<span class="badge" style="background:#ff9800;color:#fff;">🚫 Cancelled</span>'
+  };
+  return badges[status] || '<span class="badge">⚪ ' + status + '</span>';
+}
+
+function wlFormatTime(isoStr) {
+  if (!isoStr) return '';
+  try {
+    const d = new Date(isoStr);
+    return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  } catch(e) { return isoStr; }
+}
+
+function wlFormatDate(isoStr) {
+  if (!isoStr) return '';
+  try {
+    const d = new Date(isoStr);
+    return d.toLocaleDateString([], {month:'short', day:'numeric'});
+  } catch(e) { return isoStr; }
+}
+
+function wlWaitTime(createdAt, seatedAt) {
+  if (!createdAt || !seatedAt) return '';
+  try {
+    const c = new Date(createdAt);
+    const s = new Date(seatedAt);
+    const min = Math.round((s - c) / 60000);
+    return min + ' min';
+  } catch(e) { return ''; }
+}
+
+function wlRenderEntry(w) {
+  const actions = [];
+  if (w.status === 'waiting') {
+    actions.push('<button class="accent" onclick="wlCheckIn(\'' + w.id + '\')" style="min-height:36px;padding:4px 10px;font-size:12px;">✅ Seat</button>');
+    actions.push('<button class="outline" onclick="wlNotify(\'' + w.id + '\')" style="min-height:36px;padding:4px 10px;font-size:12px;" title="Notify customer">📧 Notify</button>');
+    actions.push('<button class="outline" onclick="wlCancel(\'' + w.id + '\')" style="min-height:36px;padding:4px 10px;font-size:12px;">🚫 Cancel</button>');
+    actions.push('<button class="outline" onclick="wlNoShow(\'' + w.id + '\')" style="min-height:36px;padding:4px 10px;font-size:12px;">🔕 No-show</button>');
+    actions.push('<button class="outline" onclick="wlUpdateEntry(\'' + w.id + '\')" style="min-height:36px;padding:4px 10px;font-size:12px;">✏️ Edit</button>');
+  } else if (w.status === 'notified') {
+    actions.push('<button class="accent" onclick="wlCheckIn(\'' + w.id + '\')" style="min-height:36px;padding:4px 10px;font-size:12px;">✅ Seat</button>');
+    actions.push('<button class="outline" onclick="wlNoShow(\'' + w.id + '\')" style="min-height:36px;padding:4px 10px;font-size:12px;">🔕 No-show</button>');
+  } else {
+    actions.push('<button class="outline" onclick="wlUpdateEntry(\'' + w.id + '\')" style="min-height:36px;padding:4px 10px;font-size:12px;">👁️ View</button>');
+  }
+
+  const waitDisplay = w.status === 'waiting'
+    ? '<span style="color:var(--accent);font-weight:600;">~' + (w.current_estimated_wait || w.estimated_wait || '?') + ' min</span>'
+    : (w.seated_at ? '<span style="color:#4caf50;">Seated ' + wlWaitTime(w.created_at, w.seated_at) + '</span>' : '');
+
+  return '<div class="card" style="padding:12px 16px;margin-bottom:8px;border-left:4px solid ' +
+    (w.status === 'waiting' ? 'var(--accent)' : w.status === 'notified' ? '#2196f3' : w.status === 'seated' ? '#4caf50' : w.status === 'no_show' ? '#f44336' : '#ff9800') + ';">' +
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">' +
+    '<div style="flex:1;min-width:180px;">' +
+    '<div style="font-size:16px;font-weight:600;">' + escHtml(w.customer_name || '') +
+    ' <span style="font-size:13px;font-weight:400;color:var(--text2);">(👥 ' + (w.party_size || '?') + ')</span></div>' +
+    '<div style="font-size:12px;color:var(--text2);margin-top:4px;">' +
+    '<span style="font-weight:600;">' + w.id + '</span>' +
+    (w.customer_phone ? ' &nbsp;📞 ' + escHtml(w.customer_phone) : '') +
+    (w.customer_email ? ' &nbsp;✉️ ' + escHtml(w.customer_email) : '') +
+    '</div>' +
+    (w.notes ? '<div style="font-size:12px;color:var(--text2);margin-top:4px;font-style:italic;">📝 ' + escHtml(w.notes) + '</div>' : '') +
+    (w.table_number ? '<div style="font-size:12px;color:#4caf50;margin-top:4px;">🪑 Table ' + w.table_number + '</div>' : '') +
+    (w.cancelled_reason ? '<div style="font-size:12px;color:#ff9800;margin-top:4px;">Reason: ' + escHtml(w.cancelled_reason) + '</div>' : '') +
+    '</div>' +
+    '<div style="text-align:right;flex-shrink:0;">' +
+    '<div style="margin-bottom:6px;">' + wlStatusBadge(w.status) + '</div>' +
+    '<div style="font-size:11px;color:var(--text2);">' + wlFormatTime(w.created_at) + ' ' + wlFormatDate(w.created_at) + '</div>' +
+    (waitDisplay ? '<div style="font-size:12px;margin-top:4px;">' + waitDisplay + '</div>' : '') +
+    (w.added_by_name ? '<div style="font-size:11px;color:var(--text2);margin-top:4px;">by ' + escHtml(w.added_by_name) + '</div>' : '') +
+    '</div>' +
+    '</div>' +
+    (actions.length > 0 ? '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;justify-content:flex-end;">' + actions.join('') + '</div>' : '') +
+    '</div>';
+}
+
+async function wlLoadList() {
+  const listEl = document.getElementById('wlList');
+  if (!listEl) return;
+
+  const filterStatus = document.getElementById('wlFilterStatus')?.value || '';
+  const filterSearch = document.getElementById('wlFilterSearch')?.value || '';
+
+  listEl.innerHTML = '<div class="empty-state"><div class="spinner"></div> Loading...</div>';
+
+  try {
+    const resp = await fetch('/api/waitlist/list', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        filter_status: filterStatus,
+        filter_search: filterSearch
+      })
+    });
+    const data = await resp.json();
+    if (!resp.ok) {
+      listEl.innerHTML = '<div class="empty-state" style="color:var(--accent);">⚠️ ' + (data.message || 'Failed to load') + '</div>';
+      return;
+    }
+
+    const entries = data.entries || [];
+    if (entries.length === 0) {
+      listEl.innerHTML = '<div class="empty-state">📋 No waitlist entries found' +
+        (filterStatus ? ' matching filter.' : ' yet. Add your first party above!') + '</div>';
+      return;
+    }
+
+    let html = '';
+    for (const w of entries) {
+      html += wlRenderEntry(w);
+    }
+    listEl.innerHTML = html;
+  } catch(e) {
+    listEl.innerHTML = '<div class="empty-state" style="color:var(--accent);">⚠️ ' + (t('network_error') || 'Network error') + '</div>';
+    console.error('wlLoadList error:', e);
+  }
+}
+
+async function wlUpdateEntry(id) {
+  // Find the entry from the currently loaded list
+  const userId = localStorage.getItem('userId') || '';
+  if (!userId) { showToast('Not logged in', 'error'); return; }
+
+  try {
+    const resp = await fetch('/api/waitlist/list', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({})
+    });
+    const data = await resp.json();
+    const entries = data.entries || [];
+    const w = entries.find(x => x.id === id);
+    if (!w) { showToast('Entry not found', 'error'); return; }
+
+    // Populate edit modal
+    document.getElementById('wlEditId').value = w.id;
+    document.getElementById('wlEditName').value = w.customer_name || '';
+    document.getElementById('wlEditParty').value = w.party_size || 1;
+    document.getElementById('wlEditPhone').value = w.customer_phone || '';
+    document.getElementById('wlEditEmail').value = w.customer_email || '';
+    document.getElementById('wlEditNotes').value = w.notes || '';
+    document.getElementById('wlEditWait').value = w.estimated_wait || '';
+    document.getElementById('wlEditStatusText').textContent = w.status || '';
+
+    document.getElementById('wlEditModal').style.display = 'flex';
+  } catch(e) {
+    console.error('wlUpdateEntry error:', e);
+    showToast('Error loading entry details', 'error');
+  }
+}
+
+async function wlSaveUpdate() {
+  const statusEl = document.getElementById('wlEditStatus');
+  const userId = localStorage.getItem('userId') || '';
+  if (!userId) { statusEl.textContent = '⚠️ Not logged in.'; statusEl.style.color = 'var(--accent)'; return; }
+
+  const entryId = document.getElementById('wlEditId').value;
+  const name = document.getElementById('wlEditName').value.trim();
+  const party = parseInt(document.getElementById('wlEditParty').value) || 1;
+  const phone = document.getElementById('wlEditPhone').value.trim();
+  const email = document.getElementById('wlEditEmail').value.trim();
+  const notes = document.getElementById('wlEditNotes').value.trim();
+  const waitStr = document.getElementById('wlEditWait').value.trim();
+
+  if (!name) { statusEl.textContent = '⚠️ Name is required.'; statusEl.style.color = 'var(--accent)'; return; }
+
+  const body = {
+    user_id: userId,
+    entry_id: entryId,
+    customer_name: name,
+    party_size: party
+  };
+  if (phone) body.customer_phone = phone;
+  if (email) body.customer_email = email;
+  body.notes = notes;
+  if (waitStr) body.estimated_wait = parseInt(waitStr);
+
+  statusEl.textContent = '⏳ Saving...';
+  statusEl.style.color = 'var(--text2)';
+
+  try {
+    const resp = await fetch('/api/waitlist/update', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body)
+    });
+    const data = await resp.json();
+    if (resp.ok) {
+      statusEl.textContent = '✅ ' + (data.message || 'Saved!');
+      statusEl.style.color = '#4caf50';
+      setTimeout(() => { wlCloseEditModal(); }, 800);
+      wlLoadList();
+      wlUpdateStats();
+    } else {
+      statusEl.textContent = '⚠️ ' + (data.message || 'Save failed');
+      statusEl.style.color = 'var(--accent)';
+    }
+  } catch(e) {
+    statusEl.textContent = '⚠️ Network error';
+    statusEl.style.color = 'var(--accent)';
+    console.error('wlSaveUpdate error:', e);
+  }
+}
+
+function wlCloseEditModal() {
+  document.getElementById('wlEditModal').style.display = 'none';
+}
+
+async function wlCheckIn(id) {
+  const userId = localStorage.getItem('userId') || '';
+  if (!userId) { showToast('Not logged in', 'error'); return; }
+
+  // Prompt for table number
+  const tableNum = prompt('Enter table number (optional, leave blank for none):', '');
+  const tableNumber = tableNum ? parseInt(tableNum) : null;
+  if (tableNum && isNaN(tableNumber)) { showToast('Invalid table number', 'error'); return; }
+
+  try {
+    const resp = await fetch('/api/waitlist/check_in', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        user_id: userId,
+        entry_id: id,
+        table_number: tableNumber
+      })
+    });
+    const data = await resp.json();
+    if (resp.ok) {
+      showToast(data.message || 'Checked in', 'success');
+      wlLoadList();
+      wlUpdateStats();
+    } else {
+      showToast(data.message || 'Check-in failed', 'error');
+    }
+  } catch(e) {
+    showToast('Network error', 'error');
+    console.error('wlCheckIn error:', e);
+  }
+}
+
+async function wlNotify(id) {
+  const userId = localStorage.getItem('userId') || '';
+  if (!userId) { showToast('Not logged in', 'error'); return; }
+
+  if (!confirm('Notify this customer that their table is ready? (Email notification will be sent if configured.)')) return;
+
+  try {
+    const resp = await fetch('/api/waitlist/notify', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        user_id: userId,
+        entry_id: id
+      })
+    });
+    const data = await resp.json();
+    if (resp.ok) {
+      showToast(data.message || 'Notified', 'success');
+      wlLoadList();
+      wlUpdateStats();
+    } else {
+      showToast(data.message || 'Notify failed', 'error');
+    }
+  } catch(e) {
+    showToast('Network error', 'error');
+    console.error('wlNotify error:', e);
+  }
+}
+
+async function wlCancel(id) {
+  const userId = localStorage.getItem('userId') || '';
+  if (!userId) { showToast('Not logged in', 'error'); return; }
+
+  const reason = prompt('Reason for cancellation (optional):', '');
+  if (reason === null) return; // cancelled prompt
+
+  try {
+    const resp = await fetch('/api/waitlist/cancel', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        user_id: userId,
+        entry_id: id,
+        reason: reason || ''
+      })
+    });
+    const data = await resp.json();
+    if (resp.ok) {
+      showToast(data.message || 'Cancelled', 'success');
+      wlLoadList();
+      wlUpdateStats();
+    } else {
+      showToast(data.message || 'Cancel failed', 'error');
+    }
+  } catch(e) {
+    showToast('Network error', 'error');
+    console.error('wlCancel error:', e);
+  }
+}
+
+async function wlNoShow(id) {
+  const userId = localStorage.getItem('userId') || '';
+  if (!userId) { showToast('Not logged in', 'error'); return; }
+
+  if (!confirm('Mark this entry as no-show?')) return;
+
+  try {
+    const resp = await fetch('/api/waitlist/no_show', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        user_id: userId,
+        entry_id: id
+      })
+    });
+    const data = await resp.json();
+    if (resp.ok) {
+      showToast(data.message || 'Marked as no-show', 'success');
+      wlLoadList();
+      wlUpdateStats();
+    } else {
+      showToast(data.message || 'Failed', 'error');
+    }
+  } catch(e) {
+    showToast('Network error', 'error');
+    console.error('wlNoShow error:', e);
+  }
+}
+
+// Load waitlist data on section switch
+const _origSwitchAdminSection2 = switchAdminSection || function(){};
 switchAdminSection = function(sec) {
-  _origSwitchAdminSection(sec);
+  _origSwitchAdminSection2(sec);
+  if (sec === 'waitlist') {
+    wlUpdateStats();
+    wlLoadList();
+  }
   if (sec === 'reservations') {
-    // Ensure current date is today
     _resCurrentDate = new Date();
     resLoadDay();
   }
@@ -22683,6 +23123,52 @@ async function loadGiftCardReport() {
     <div style="display:flex;gap:10px;justify-content:flex-end;">
       <button class="outline" onclick="cancelManagerApproval()" style="min-height:48px;padding:8px 20px;font-size:14px;" data-i18n="admin.cancel">Cancel</button>
       <button class="accent" onclick="submitManagerApproval()" style="min-height:48px;padding:8px 20px;font-size:14px;" id="managerApprovalBtn">✅ Approve</button>
+    </div>
+  </div>
+</div>
+
+<!-- Waitlist Edit Modal -->
+<div id="wlEditModal" class="modal-overlay" role="dialog" aria-modal="true" style="display:none;">
+  <div class="modal-box" style="max-width:500px;max-height:80vh;overflow-y:auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <h3 style="margin:0;">✏️ Edit Waitlist Entry</h3>
+      <span id="wlEditStatusText" style="font-size:13px;color:var(--text2);"></span>
+    </div>
+    <input type="hidden" id="wlEditId" />
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:140px;margin-bottom:10px;">
+        <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;">Name *</label>
+        <input type="text" id="wlEditName" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;" />
+      </div>
+      <div style="flex:0.5;min-width:70px;margin-bottom:10px;">
+        <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;">Party</label>
+        <input type="number" id="wlEditParty" min="1" max="99" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;" />
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:140px;margin-bottom:10px;">
+        <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;">Phone</label>
+        <input type="tel" id="wlEditPhone" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;" />
+      </div>
+      <div style="flex:1;min-width:160px;margin-bottom:10px;">
+        <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;">Email</label>
+        <input type="email" id="wlEditEmail" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;" />
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:140px;margin-bottom:10px;">
+        <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;">Est. Wait (min)</label>
+        <input type="number" id="wlEditWait" min="0" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;" />
+      </div>
+      <div style="flex:2;min-width:240px;margin-bottom:10px;">
+        <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;">Notes</label>
+        <input type="text" id="wlEditNotes" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;" />
+      </div>
+    </div>
+    <div id="wlEditStatus" style="font-size:13px;margin-bottom:8px;"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="outline" onclick="wlCloseEditModal()" style="min-height:44px;padding:8px 20px;font-size:14px;">Cancel</button>
+      <button class="accent" onclick="wlSaveUpdate()" style="min-height:44px;padding:8px 20px;font-size:14px;">💾 Save</button>
     </div>
   </div>
 </div>
