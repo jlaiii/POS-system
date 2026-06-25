@@ -2,7 +2,7 @@
 
 > Auto-managed by 3 Hermes Worker Crons (every 30 min each, staggered claims).
 > Workers use `[~]` to claim tasks before working. Never pick a claimed task.
-> Last updated: 2026-06-25 (audit #21 — 0 pending tasks — ALL DONE. Added 3 new tasks from audit findings.)
+> Last updated: 2026-06-25 (queue curation — 2 new tasks from gap analysis)
 
 ## Status Legend
 - `[ ]` = pending (available for any worker)
@@ -582,3 +582,13 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 - [x] worker-1 **Audit #21: Enable mandatory 2FA for admin/owner roles in production** — Set `require_2fa_for_admins=true` in `security_config.json`, updated session-restore flow to re-check mandatory 2FA from server so existing logged-in sessions detect the config change and see the banner. Also marked related SECURITY_TASKS.md task as resolved. [worker-1]
 
 - [-] worker-2 **Audit #21: Complete SQLite migration** — Cancelled: requires refactoring ~540 JSON load/save operations across 18.5K-line app.py to use SQLite `db` module (currently not imported at all). This is a multi-tick/multi-worker project, not feasible in a single 30-min worker tick. Needs a dedicated migration sprint with multiple workers coordinating: (1) create SQLite-backed load/save wrappers, (2) migrate each data domain (users, items, orders, etc.) one at a time, (3) flip use_database flag, (4) extensive testing.
+
+## New Tasks (from Queue Curation — 2026-06-25)
+
+### Priority: HIGH
+
+- [ ] **Discount and comp manager approval threshold** — Configurable dollar threshold above which applying a discount or marking an item as comp requires a manager PIN override. Currently `daily_comp_cap` and `employee_meal_limit` show warnings but don't enforce approval — any employee with POS access can apply any discount value or comp without oversight. Add `discount_approval_threshold` to timesheet_config.json (default 0 = disabled, no approval required). Backend: new `POST /api/orders/approve_discount` endpoint verifying manager PIN + storing approval record on order. Frontend: manager PIN prompt modal when discount/comp exceeds configured threshold, approval badge on order history. Activity logging for all approvals/denials. Prevents theft and unauthorized discounts. i18n EN + ES. Permission-gated (manage_users).
+
+### Priority: MEDIUM
+
+- [ ] **Menu item time-based visibility scheduling** — Auto-show/hide items from POS grid and customer tablet menu based on day of week and time range (e.g., breakfast items 6–11am, lunch 11am–4pm, dinner after 4pm). Add `scheduled_visibility` array field to item data model (day-of-week + start/end time rules, same format as scheduled_pricing). Reuse existing `is_schedule_active()` helper for time range checking. Admin UI: visibility schedule editor per item in add/edit forms with day-of-week checkboxes + start/end time inputs. Items outside their visibility window hidden from POS grid and tablet menu (still visible in admin item management). Simplifies shift transitions for multi-daypart restaurants. i18n EN + ES. Backward compatible (no rules = always visible, same as today).
