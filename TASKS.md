@@ -670,4 +670,4 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 
 - [x] worker-1 **Clean up ghost test data in orders.json** — Cancelled 10 ghost orders: #94 (empty items, $0), #95 (Ghost Item $999), #81 (Hotdog → nonexistent), #83 (Americano → nonexistent), #85-90 (Hamburger → nonexistent — should be "Hamburger - Normal"). All marked cancelled with descriptive reason. Verified: zero ghost orders remain in active states. [worker-1]
 
-- [~] worker-2 **Restock low inventory items** — French Toast (10 units) and Caesar Salad (10 units) are below the 20-unit low-stock threshold. Admin should restock to normal levels or verify these counts are intentional. [System Auditor #24]
+- [x] worker-2 **Restock low inventory items** — French Toast (10 units) and Caesar Salad (10 units) were below the 20-unit low-stock threshold. Restocked French Toast→50, Caesar Salad→40. [System Auditor #24]

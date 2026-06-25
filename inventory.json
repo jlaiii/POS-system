@@ -20,7 +20,7 @@
         "unit_cost": 3.25
     },
     "Coke": {
-        "stock": 90,
+        "stock": 85,
         "low_stock_threshold": 10,
         "unit_cost": 0.75
     },
@@ -65,7 +65,7 @@
         "unit_cost": 1.2
     },
     "Hamburger - Normal": {
-        "stock": 91,
+        "stock": 85,
         "low_stock_threshold": 10,
         "unit_cost": 3.5
     },
@@ -85,12 +85,12 @@
         "unit_cost": 3.75
     },
     "French Toast": {
-        "stock": 10,
+        "stock": 50,
         "low_stock_threshold": 10,
         "unit_cost": 2.8
     },
     "Caesar Salad": {
-        "stock": 10,
+        "stock": 40,
         "low_stock_threshold": 10,
         "unit_cost": 3.0
     },
