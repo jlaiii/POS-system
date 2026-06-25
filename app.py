@@ -5301,11 +5301,41 @@ def submit_order():
                 return jsonify({'message': 'User is banned'}), 403
 
     # Calculate subtotal from items for verification
-    calculated_subtotal = sum(float(item.get('price', 0)) * int(item.get('qty', 1)) for item in items)
+    calculated_subtotal = sum(float(item.get('price', 0)) * int(item.get('qty') or 1) for item in items)
 
-    # Accept tax info from frontend, or default to 0 for backward compatibility
     subtotal = float(data.get('subtotal', calculated_subtotal))
-    tax_amount = float(data.get('tax_amount', 0))
+
+    # 🔐 SERVER-SIDE TAX RECALCULATION
+    # Enforce tax calculation using configured tax_config rates instead of trusting frontend.
+    tax_config = load_json_data(TAX_CONFIG_FILE)
+    calculated_tax = 0.0
+    item_tax_rates = {}
+    item_tax_amounts = {}
+    for idx, item in enumerate(items):
+        item_name = item.get('name', '')
+        item_category = item.get('category', '')
+        item_qty = int(item.get('qty') or 1)
+        item_price = float(item.get('price', 0))
+        line_total = item_price * item_qty
+        rate = get_effective_tax_rate(item_name, item_category, tax_config)
+        item_tax = round(line_total * rate, 2)
+        item_tax_rates[idx] = round(rate * 100, 3)  # store as percentage
+        item_tax_amounts[idx] = item_tax
+        calculated_tax += item_tax
+    tax_amount = round(calculated_tax, 2)
+
+    # Also store per-item tax breakdown on the order for transparency
+    item_tax_details = []
+    for idx, item in enumerate(items):
+        item_tax_details.append({
+            'name': item.get('name', ''),
+            'category': item.get('category', ''),
+            'qty': int(item.get('qty') or 1),
+            'price': float(item.get('price', 0)),
+            'tax_rate': item_tax_rates.get(idx, 0),
+            'tax_amount': item_tax_amounts.get(idx, 0)
+        })
+
     tip_amount = float(data.get('tip_amount', 0))
     service_charge_amount = float(data.get('service_charge_amount', 0))
 
@@ -5330,18 +5360,11 @@ def submit_order():
         if subtotal >= sc_threshold and sc_pct > 0:
             service_charge_amount = round(subtotal * sc_pct / 100.0, 2)
 
-    # Apply per-type tax rate override if configured
-    tax_rate_override = ot_info.get('tax_rate_override')
-    if tax_rate_override is not None and tax_amount == 0:
-        # Recalculate tax with override rate
-        tax_amount = round(subtotal * float(tax_rate_override), 2)
+    # Accept discount from frontend
+    discount_amount = round(float(data.get('discount_amount', 0)), 2)
 
-    # Accept total from frontend, or compute as subtotal + tax + tip + service charge + packaging fee
-    total_from_request = data.get('total')
-    if total_from_request is not None:
-        total = float(total_from_request)
-    else:
-        total = subtotal + tax_amount + tip_amount + service_charge_amount + packaging_fee_total
+    # Compute total server-side: subtotal + tax - discount + tip + service_charge + packaging
+    total = round(subtotal + tax_amount - discount_amount + tip_amount + service_charge_amount + packaging_fee_total, 2)
 
     # --- Kitchen: auto-increment order ID ---
     counter_data = load_json_data(ORDER_COUNTER_FILE)
@@ -5379,7 +5402,8 @@ def submit_order():
         'tip_amount': round(tip_amount, 2),
         'service_charge_amount': round(service_charge_amount, 2),
         'discount_code': data.get('discount_code'),
-        'discount_amount': round(float(data.get('discount_amount', 0)), 2),
+        'discount_amount': discount_amount,
+        'item_tax_details': item_tax_details,  # Per-item tax rate/amount breakdown
         'total': round(total, 2),
         'notes': data.get('notes', ''),  # Per-order special instructions
         'item_notes': data.get('item_notes', {}),  # Per-item notes {index: note_string}
@@ -5899,17 +5923,37 @@ def sync_orders():
                 continue
 
         # Calculate subtotal from items
-        calculated_subtotal = sum(float(item.get('price', 0)) * int(item.get('qty', 1)) for item in items)
+        calculated_subtotal = sum(float(item.get('price', 0)) * int(item.get('qty') or 1) for item in items)
         subtotal = float(order_data.get('subtotal', calculated_subtotal))
-        tax_amount = float(order_data.get('tax_amount', 0))
+
+        # 🔐 SERVER-SIDE TAX RECALCULATION for synced orders
+        tax_config = load_json_data(TAX_CONFIG_FILE)
+        calculated_tax = 0.0
+        item_tax_details = []
+        for s_idx, item in enumerate(items):
+            item_name = item.get('name', '')
+            item_category = item.get('category', '')
+            item_qty = int(item.get('qty') or 1)
+            item_price = float(item.get('price', 0))
+            line_total = item_price * item_qty
+            rate = get_effective_tax_rate(item_name, item_category, tax_config)
+            item_tax = round(line_total * rate, 2)
+            item_tax_details.append({
+                'name': item_name,
+                'category': item_category,
+                'qty': item_qty,
+                'price': item_price,
+                'tax_rate': round(rate * 100, 3),
+                'tax_amount': item_tax
+            })
+            calculated_tax += item_tax
+        tax_amount = round(calculated_tax, 2)
+
         tip_amount = float(order_data.get('tip_amount', 0))
         service_charge_amount = float(order_data.get('service_charge_amount', 0))
+        discount_amount = round(float(order_data.get('discount_amount', 0)), 2)
 
-        total_from_request = order_data.get('total')
-        if total_from_request is not None:
-            total = float(total_from_request)
-        else:
-            total = subtotal + tax_amount + tip_amount + service_charge_amount
+        total = round(subtotal + tax_amount - discount_amount + tip_amount + service_charge_amount, 2)
 
         order_id = counter_data.get("counter", 1)
 
@@ -5944,7 +5988,8 @@ def sync_orders():
             'tip_amount': round(tip_amount, 2),
             'service_charge_amount': round(service_charge_amount, 2),
             'discount_code': order_data.get('discount_code'),
-            'discount_amount': round(float(order_data.get('discount_amount', 0)), 2),
+            'discount_amount': discount_amount,
+            'item_tax_details': item_tax_details,  # Per-item tax rate/amount breakdown
             'total': round(total, 2),
             'notes': order_data.get('notes', ''),
             'item_notes': order_data.get('item_notes', {}),
@@ -10472,19 +10517,29 @@ def get_suggestions():
 def get_effective_tax_rate(item_name, category, tax_config):
     """Determine the effective tax rate for an item.
     Priority: item override > category override > global rate.
+    Returns rate as decimal (e.g., 0.0825 for 8.25%).
     """
     # Check item-specific override
     item_overrides = tax_config.get('item_tax_overrides', {})
     if item_name in item_overrides and item_overrides[item_name] is not None:
-        return float(item_overrides[item_name])
+        rate = float(item_overrides[item_name])
+        if rate > 1:
+            rate /= 100.0
+        return rate
 
     # Check category override
     cat_rates = tax_config.get('category_tax_rates', {})
     if category in cat_rates and cat_rates[category] is not None:
-        return float(cat_rates[category])
+        rate = float(cat_rates[category])
+        if rate > 1:
+            rate /= 100.0
+        return rate
 
     # Fall back to global rate
-    return float(tax_config.get('global_tax_rate', 0.0))
+    rate = float(tax_config.get('global_tax_rate', 0.0))
+    if rate > 1:
+        rate /= 100.0
+    return rate
 
 
 @app.route('/api/tax_config', methods=['GET'])
@@ -10524,6 +10579,135 @@ def update_tax_config():
     save_json_data(TAX_CONFIG_FILE, config)
     log_activity('update_tax_config', admin_pin, 'admin', {'new_config': config})
     return jsonify({'message': 'Tax configuration updated successfully', 'config': config})
+
+
+@app.route('/api/tax_period_report', methods=['POST'])
+def tax_period_report():
+    """Generate a tax period report with breakdown by rate category.
+    Returns gross sales, taxable/exempt breakdown, tax collected by rate, net sales.
+    Permission-gated (view_stats).
+    """
+    data = request.json
+    admin_pin = data.get('adminPin')
+
+    if not check_perm(admin_pin, "view_stats"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    date_from = data.get('date_from')
+    date_to = data.get('date_to')
+
+    orders = load_json_data(ORDERS_FILE)
+    cleared = load_json_data(CLEARED_ORDERS_FILE)
+    all_orders = orders + cleared
+
+    # Filter by date range
+    filtered = []
+    for o in all_orders:
+        odate = o.get('date', '')
+        if date_from and odate < date_from:
+            continue
+        if date_to and odate > date_to + 'T23:59:59':
+            continue
+        # Exclude refunded/voided orders
+        status = o.get('status', '')
+        if status in ('refunded', 'voided'):
+            continue
+        filtered.append(o)
+
+    # Initialize aggregators
+    gross_sales = 0.0
+    net_sales = 0.0
+    total_tax_collected = 0.0
+    taxable_gross = 0.0  # Sales that had tax applied
+    exempt_gross = 0.0   # Sales with 0% tax
+    order_count = len(filtered)
+    rate_categories = {}  # rate_pct -> {'taxable_gross': x, 'tax_collected': y, 'order_count': z}
+    exempt_rate_str = '0.0%'
+
+    tax_config = load_json_data(TAX_CONFIG_FILE)
+
+    for o in filtered:
+        o_total = float(o.get('total', 0))
+        o_tax = float(o.get('tax_amount', 0))
+        o_subtotal = float(o.get('subtotal', 0))
+        gross_sales += o_total
+        total_tax_collected += o_tax
+
+        # Use stored item_tax_details if available (from new server-side tax calculator),
+        # otherwise derive from current tax_config rates for reporting purposes.
+        stored_tax_details = o.get('item_tax_details')
+        if stored_tax_details and isinstance(stored_tax_details, list) and len(stored_tax_details) > 0:
+            for td in stored_tax_details:
+                rate_pct = str(td.get('tax_rate', 0))
+                rate_key = f'{rate_pct}%'
+                if rate_key not in rate_categories:
+                    rate_categories[rate_key] = {
+                        'taxable_gross': 0.0,
+                        'tax_collected': 0.0,
+                        'item_count': 0
+                    }
+                qty = int(td.get('qty') or 1)
+                price = float(td.get('price', 0))
+                line_total = price * qty
+                rate_categories[rate_key]['taxable_gross'] += line_total
+                rate_categories[rate_key]['tax_collected'] += float(td.get('tax_amount', 0))
+                rate_categories[rate_key]['item_count'] += qty
+                if float(td.get('tax_rate', 0)) == 0:
+                    exempt_gross += line_total
+                else:
+                    taxable_gross += line_total
+        else:
+            items = o.get('items', [])
+            for item in items:
+                item_name = item.get('name', '')
+                item_category = item.get('category', '')
+                item_qty = int(item.get('qty') or 1)
+                item_price = float(item.get('price', 0))
+                line_total = item_price * item_qty
+
+                rate = get_effective_tax_rate(item_name, item_category, tax_config)
+                rate_pct = round(rate * 100, 3)
+                rate_key = f'{rate_pct}%'
+
+                if rate_key not in rate_categories:
+                    rate_categories[rate_key] = {
+                        'taxable_gross': 0.0,
+                        'tax_collected': 0.0,
+                        'item_count': 0
+                    }
+                rate_categories[rate_key]['taxable_gross'] += line_total
+                rate_categories[rate_key]['tax_collected'] += round(line_total * rate, 2)
+                rate_categories[rate_key]['item_count'] += item_qty
+
+                if rate == 0:
+                    exempt_gross += line_total
+                else:
+                    taxable_gross += line_total
+
+    net_sales = round(gross_sales - total_tax_collected, 2)
+
+    # Format rate categories for output
+    rate_breakdown = []
+    for rate_pct in sorted(rate_categories.keys()):
+        rc = rate_categories[rate_pct]
+        rate_breakdown.append({
+            'rate': rate_pct,
+            'taxable_gross': round(rc['taxable_gross'], 2),
+            'tax_collected': round(rc['tax_collected'], 2),
+            'item_count': rc['item_count']
+        })
+
+    return jsonify({
+        'date_from': date_from,
+        'date_to': date_to,
+        'order_count': order_count,
+        'gross_sales': round(gross_sales, 2),
+        'total_tax_collected': round(total_tax_collected, 2),
+        'taxable_gross': round(taxable_gross, 2),
+        'exempt_gross': round(exempt_gross, 2),
+        'net_sales': net_sales,
+        'rate_breakdown': rate_breakdown
+    })
 
 
 # ============================================================

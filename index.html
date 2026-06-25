@@ -962,6 +962,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
           <div id="staleOrdersSection" style="margin-top:12px;"></div>
           <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
             <button class="accent" onclick="showEndOfDaySummary()" style="font-size:14px;padding:12px 20px;min-height:48px;">📋 End of Day Summary</button>
+            <button class="accent" onclick="showTaxPeriodReport()" style="font-size:14px;padding:12px 20px;min-height:48px;">💰 Tax Period Report</button>
             <button class="accent" onclick="exportOrdersCSV()" style="font-size:14px;padding:12px 20px;min-height:48px;">📥 Export Orders (CSV)</button>
           </div>
         </div>
@@ -3241,6 +3242,21 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
   </div>
 </div>
 
+<!-- ═══════════ TAX PERIOD REPORT MODAL ═══════════ -->
+<div id="taxReportOverlay" class="modal-overlay" role="dialog" aria-modal="true" aria-label="Tax Period Report" style="display:none;" onclick="if(event.target===this)closeTaxReport()">
+  <div class="modal-content eod-report" style="max-width:720px;max-height:90vh;overflow-y:auto;padding:24px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+      <h3 id="taxReportTitle" style="margin:0;font-size:18px;">💰 Tax Period Report</h3>
+      <div style="display:flex;gap:8px;">
+        <button class="outline" onclick="closeTaxReport()" style="font-size:14px;padding:10px 18px;min-height:44px;" data-i18n="admin.stats.tax_close">✕ Close</button>
+      </div>
+    </div>
+    <div id="taxReportContent" style="min-height:100px;">
+      <div class="empty-state">Loading...</div>
+    </div>
+  </div>
+</div>
+
 <style>
 /* Print styles for end-of-day report */
 @media print {
@@ -3646,6 +3662,22 @@ const L10N = {
     'admin.stats.eod_print': '🖨️ Print / PDF',
     'admin.stats.eod_close': 'Close',
     'admin.stats.eod_no_orders': 'No orders found for the selected period.',
+    'admin.stats.tax_report': '💰 Tax Period Report',
+    'admin.stats.tax_report_title': '💰 Tax Period Report',
+    'admin.stats.tax_period': 'Period:',
+    'admin.stats.tax_gross_sales': 'Gross Sales',
+    'admin.stats.tax_net_sales': 'Net Sales',
+    'admin.stats.tax_collected': 'Total Tax Collected',
+    'admin.stats.tax_taxable': 'Taxable Sales',
+    'admin.stats.tax_exempt': 'Exempt Sales',
+    'admin.stats.tax_rate_breakdown': 'Tax Rate Breakdown',
+    'admin.stats.tax_rate': 'Rate',
+    'admin.stats.tax_rate_gross': 'Taxable Gross',
+    'admin.stats.tax_amount': 'Tax',
+    'admin.stats.tax_items': 'Items',
+    'admin.stats.tax_no_data': 'No data for the selected period.',
+    'admin.stats.tax_close': 'Close',
+    'admin.stats.tax_order_count': 'Orders',
     'admin.stats.pending_orders': 'Pending Orders',
     'admin.stats.pending_alert': '⚠️ {count} pending orders — exceeds {threshold} limit',
     'admin.stats.pending_ok': '✅ {count} pending orders (under limit)',
@@ -4515,6 +4547,22 @@ const L10N = {
     'admin.stats.eod_print': '🖨️ Imprimir / PDF',
     'admin.stats.eod_close': 'Cerrar',
     'admin.stats.eod_no_orders': 'No se encontraron pedidos para el período seleccionado.',
+    'admin.stats.tax_report': '💰 Informe de Impuestos',
+    'admin.stats.tax_report_title': '💰 Informe de Impuestos',
+    'admin.stats.tax_period': 'Período:',
+    'admin.stats.tax_gross_sales': 'Ventas Brutas',
+    'admin.stats.tax_net_sales': 'Ventas Netas',
+    'admin.stats.tax_collected': 'Impuestos Cobrados',
+    'admin.stats.tax_taxable': 'Ventas Gravables',
+    'admin.stats.tax_exempt': 'Ventas Exentas',
+    'admin.stats.tax_rate_breakdown': 'Desglose por Tasa',
+    'admin.stats.tax_rate': 'Tasa',
+    'admin.stats.tax_rate_gross': 'Base Gravable',
+    'admin.stats.tax_amount': 'Impuesto',
+    'admin.stats.tax_items': 'Artículos',
+    'admin.stats.tax_no_data': 'Sin datos para el período seleccionado.',
+    'admin.stats.tax_close': 'Cerrar',
+    'admin.stats.tax_order_count': 'Pedidos',
     'admin.stats.pending_orders': 'Pedidos Pendientes',
     'admin.stats.pending_alert': '⚠️ {count} pedidos pendientes — supera el límite de {threshold}',
     'admin.stats.pending_ok': '✅ {count} pedidos pendientes (bajo límite)',
@@ -9735,10 +9783,11 @@ function getTaxRate(itemName, category) {
   return parseFloat(taxConfig.global_tax_rate || 0);
 }
 
-/** Map a cart item to the API format including comp fields */
+/** Map a cart item to the API format including comp fields and category */
 function mapCartItem(c) {
   return {
     name: c.name, price: c.price, qty: c.qty,
+    category: c.category || '',
     note: c.note || '', modifiers: c.modifiers || [],
     comp_type: c.comp_type || null,
     comp_reason: c.comp_reason || null,
@@ -12665,6 +12714,84 @@ async function showEndOfDaySummary() {
   } catch(e) {
     content.innerHTML = '<div class="empty-state val-err">⚠️ ' + t('network_error') + '</div>';
   }
+}
+
+/** Show the Tax Period Report modal */
+async function showTaxPeriodReport() {
+  const overlay = document.getElementById('taxReportOverlay');
+  const content = document.getElementById('taxReportContent');
+  overlay.style.display = 'flex';
+  content.innerHTML = '<div class="empty-state">' + t('loading') + '...</div>';
+
+  try {
+    const body = { adminPin: currentUser.id };
+    const dateFrom = document.getElementById('statsDateFrom').value;
+    const dateTo = document.getElementById('statsDateTo').value;
+    if (dateFrom) body.date_from = dateFrom;
+    if (dateTo) body.date_to = dateTo;
+
+    const result = await fetchJSON(BACKEND_URL + '/api/tax_period_report', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (!result.ok) {
+      content.innerHTML = '<div class="empty-state val-err">⚠️ ' + (result.error || t('unauthorized')) + '</div>';
+      return;
+    }
+    const r = result.data;
+
+    if (r.order_count === 0) {
+      content.innerHTML = '<div class="empty-state">' + t('admin.stats.tax_no_data') + '</div>';
+      return;
+    }
+
+    const fmt = n => '$' + parseFloat(n || 0).toFixed(2);
+    const periodLabel = t('admin.stats.tax_period') + ' ' + (dateFrom || '…') + ' → ' + (dateTo || '…');
+
+    let html = `
+      <div class="eod-meta">${periodLabel}</div>
+      <div class="eod-stat-grid">
+        <div class="eod-stat-card"><div class="eod-stat-val">${fmt(r.gross_sales)}</div><div class="eod-stat-lbl">${t('admin.stats.tax_gross_sales')}</div></div>
+        <div class="eod-stat-card"><div class="eod-stat-val">${fmt(r.net_sales)}</div><div class="eod-stat-lbl">${t('admin.stats.tax_net_sales')}</div></div>
+        <div class="eod-stat-card"><div class="eod-stat-val">${fmt(r.total_tax_collected)}</div><div class="eod-stat-lbl">${t('admin.stats.tax_collected')}</div></div>
+        <div class="eod-stat-card"><div class="eod-stat-val">${fmt(r.taxable_gross)}</div><div class="eod-stat-lbl">${t('admin.stats.tax_taxable')}</div></div>
+        <div class="eod-stat-card"><div class="eod-stat-val">${fmt(r.exempt_gross)}</div><div class="eod-stat-lbl">${t('admin.stats.tax_exempt')}</div></div>
+        <div class="eod-stat-card"><div class="eod-stat-val">${r.order_count}</div><div class="eod-stat-lbl">${t('admin.stats.tax_order_count')}</div></div>
+      </div>`;
+
+    // Rate breakdown table
+    if (r.rate_breakdown && r.rate_breakdown.length > 0) {
+      html += `<div class="eod-section">
+        <h4>${t('admin.stats.tax_rate_breakdown')}</h4>
+        <table class="eod-cat-table">
+          <thead><tr>
+            <th>${t('admin.stats.tax_rate')}</th>
+            <th style="text-align:right;">${t('admin.stats.tax_rate_gross')}</th>
+            <th style="text-align:right;">${t('admin.stats.tax_amount')}</th>
+            <th style="text-align:right;">${t('admin.stats.tax_items')}</th>
+          </tr></thead>
+          <tbody>`;
+      r.rate_breakdown.forEach(rb => {
+        html += `<tr>
+          <td>${escHtml(rb.rate)}</td>
+          <td style="text-align:right;">${fmt(rb.taxable_gross)}</td>
+          <td style="text-align:right;">${fmt(rb.tax_collected)}</td>
+          <td style="text-align:right;">${rb.item_count}</td>
+        </tr>`;
+      });
+      html += `</tbody></table></div>`;
+    }
+
+    content.innerHTML = html;
+    document.getElementById('taxReportTitle').textContent = t('admin.stats.tax_report_title');
+
+  } catch(e) {
+    content.innerHTML = '<div class="empty-state val-err">⚠️ ' + t('network_error') + '</div>';
+  }
+}
+
+function closeTaxReport() {
+  document.getElementById('taxReportOverlay').style.display = 'none';
 }
 
 async function loadAdminCharts() {
