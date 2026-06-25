@@ -17007,6 +17007,7 @@ def platform_super_admin_login():
         'role': 'super_admin',
         'permissions': super_admin.get('permissions', []),
         'created_at': datetime.now().isoformat(),
+        'last_active': datetime.now().isoformat(),
         'ip': get_client_ip()
     }
 
@@ -17021,8 +17022,14 @@ def platform_super_admin_login():
 
 
 def require_super_admin():
-    """Decorator helper: extract and validate super admin session from request.
-    Returns the session data or (jsonify(error), status_code)."""
+    """Extract and validate super admin session from request with expiry checks.
+    Returns (session, None) on success, or (None, (jsonify(error), status_code)) on failure.
+
+    Session expiry:
+    - Max session duration: 8 hours from created_at (hard limit)
+    - Idle timeout: 4 hours since last_active (tighter than user sessions for security)
+    Expired sessions are automatically cleaned up from platform_sessions.
+    """
     data = request.json or {}
     session_token = data.get('session_token') or request.headers.get('X-Super-Token')
     if not session_token:
@@ -17030,6 +17037,35 @@ def require_super_admin():
     session = platform_sessions.get(session_token)
     if not session:
         return None, (jsonify({'message': 'Invalid or expired super admin session.'}), 401)
+
+    now = datetime.now()
+
+    # Check max session duration (8h hard limit from creation)
+    created_at = session.get('created_at')
+    if created_at:
+        try:
+            created_dt = datetime.fromisoformat(created_at)
+            if now - created_dt > timedelta(hours=8):
+                # Session expired — clean up
+                del platform_sessions[session_token]
+                return None, (jsonify({'message': 'Session expired (max 8 hours). Please log in again.'}), 401)
+        except (ValueError, TypeError):
+            pass
+
+    # Check idle timeout (4h since last active)
+    last_active = session.get('last_active')
+    if last_active:
+        try:
+            last_active_dt = datetime.fromisoformat(last_active)
+            if now - last_active_dt > timedelta(hours=4):
+                del platform_sessions[session_token]
+                return None, (jsonify({'message': 'Session expired due to inactivity (4h). Please log in again.'}), 401)
+        except (ValueError, TypeError):
+            pass
+
+    # Update last_active timestamp
+    session['last_active'] = now.isoformat()
+
     return session, None
 
 

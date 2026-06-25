@@ -17,7 +17,7 @@
         "totp_backup_codes": [],
         "totp_setup_at": null,
         "pin_reset_notification": null,
-        "force_pin_change": false,
+        "force_pin_change": true,
         "temp_pin": null,
         "temp_pin_expiry": null,
         "email": "owner@example.com"
@@ -46,7 +46,7 @@
         ],
         "totp_setup_at": "2026-06-23T07:59:32.165011",
         "pin_reset_notification": null,
-        "force_pin_change": false,
+        "force_pin_change": true,
         "temp_pin": null,
         "temp_pin_expiry": null,
         "email": "employee@example.com",
@@ -89,7 +89,7 @@
         "totp_backup_codes": [],
         "totp_setup_at": null,
         "pin_reset_notification": null,
-        "force_pin_change": false,
+        "force_pin_change": true,
         "temp_pin": null,
         "temp_pin_expiry": null
     },
