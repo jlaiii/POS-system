@@ -604,7 +604,7 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 
 ### Priority: MEDIUM
 
-- [~] worker-1 **Add waitlist/digital queue for walk-in customers** — Host stand tool to add parties to waitlist with party size, name, phone, estimated wait time. Auto-calculate wait times from current table occupancy. Send SMS notification when table is ready via existing email/SMS config. Check-in marking, no-show tracking, and waitlist-to-table assignment integration with existing floor plan dashboard.
+- [x] worker-1 **Add waitlist/digital queue for walk-in customers** — Host stand tool to add parties to waitlist with party size, name, phone, estimated wait time. Auto-calculate wait times from current table occupancy. Send SMS notification when table is ready via existing email/SMS config. Check-in marking, no-show tracking, and waitlist-to-table assignment integration with existing floor plan dashboard. [worker-1 — All 9 frontend JS functions implemented (wlAddToWaitlist, wlLoadList, wlUpdateEntry, wlCheckIn, wlNotify, wlCancel, wlNoShow, wlEstimate, wlUpdateStats) in index.html, completing the functional gap identified in the audit. Full backend integration, form validation, error handling, i18n EN+ES, dark theme.]
   > **Audit finding: Backend endpoints (9) and HTML skeleton exist, but JavaScript functions (`wlAddToWaitlist`, `wlLoadList`, `wlUpdateEntry`, `wlCheckIn`, `wlNotify`, `wlCancel`, `wlNoShow`, `wlEstimate`) are completely missing. The waitlist admin section renders but all buttons/actions are non-functional — clicking them throws JS reference errors. Frontend JS implementation needed.**
 
 ### Priority: LOW
