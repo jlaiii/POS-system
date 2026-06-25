@@ -929,7 +929,9 @@ def get_timesheet_config():
             'main': 15,       # minutes after order submission to fire
             'dessert': 20,    # minutes after order submission to fire
             'side': 0         # minutes after order submission to fire
-        }
+        },
+        'stale_order_hours': 24,            # hours before a pending order is auto-cancelled
+        'pending_order_alert_threshold': 10  # max pending orders before dashboard alert
     }
     try:
         config = load_json_data(TIMESHEET_CONFIG_FILE)
@@ -971,7 +973,9 @@ def save_timesheet_config(config):
             'main': 15,
             'dessert': 20,
             'side': 0
-        }
+        },
+        'stale_order_hours': 24,
+        'pending_order_alert_threshold': 10
     }
     for k, v in defaults.items():
         if k not in config:
@@ -7115,6 +7119,136 @@ def get_refunds():
     return jsonify({'refunds': refunded_orders, 'count': len(refunded_orders)})
 
 
+# --- Stale Pending Order Cleanup ---
+
+def auto_cleanup_stale_orders():
+    """Auto-cancel pending orders older than the configured stale_order_hours.
+    Called from admin_stats() to keep orders clean.
+    Returns dict with cancelled count and details."""
+    try:
+        config = get_timesheet_config()
+        stale_hours = int(config.get('stale_order_hours', 24))
+        orders = load_json_data(ORDERS_FILE)
+        now = datetime.now()
+        cutoff = now - timedelta(hours=stale_hours)
+        cancelled = []
+        for order in orders:
+            if order.get('status') != 'pending':
+                continue
+            order_date_str = order.get('date', '')
+            if not order_date_str:
+                continue
+            try:
+                order_dt = datetime.fromisoformat(order_date_str)
+            except (ValueError, TypeError):
+                continue
+            if order_dt < cutoff:
+                order['status'] = 'cancelled'
+                order['cancelled_reason'] = 'Auto-cancelled (stale — no kitchen action)'
+                order['cancelled_at'] = now.isoformat()
+                order['cancelled_by'] = 'system'
+                cancelled.append({
+                    'order_id': order['order_id'],
+                    'date': order_date_str,
+                    'age_hours': round((now - order_dt).total_seconds() / 3600, 1)
+                })
+        if cancelled:
+            save_json_data(ORDERS_FILE, orders)
+        return {
+            'stale_cancelled_count': len(cancelled),
+            'stale_cancelled_orders': cancelled
+        }
+    except Exception as e:
+        print(f"Error in auto_cleanup_stale_orders: {e}")
+        return {'stale_cancelled_count': 0, 'stale_cancelled_orders': []}
+
+
+@app.route('/api/orders/bulk_cancel_stale', methods=['POST'])
+def bulk_cancel_stale_orders():
+    """Admin action to bulk-cancel pending orders with optional date range filter.
+    Requires manage_orders permission."""
+    data = request.json
+    admin_pin = data.get('adminPin')
+    date_from = (data.get('date_from') or '').strip()
+    date_to = (data.get('date_to') or '').strip()
+
+    if not check_perm(admin_pin, "manage_orders"):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    orders = load_json_data(ORDERS_FILE)
+    now = datetime.now()
+    cancelled = []
+    skipped_already = []
+
+    for order in orders:
+        if order.get('status') != 'pending':
+            continue
+        order_date_str = order.get('date', '')
+        if not order_date_str:
+            continue
+        try:
+            order_dt = datetime.fromisoformat(order_date_str)
+        except (ValueError, TypeError):
+            continue
+
+        # Apply date range filter
+        if date_from:
+            try:
+                dt_from = datetime.fromisoformat(date_from)
+                if order_dt < dt_from:
+                    continue
+            except (ValueError, TypeError):
+                pass
+        if date_to:
+            try:
+                if 'T' not in date_to:
+                    dt_to = datetime.fromisoformat(date_to + 'T23:59:59')
+                else:
+                    dt_to = datetime.fromisoformat(date_to)
+                if order_dt > dt_to:
+                    continue
+            except (ValueError, TypeError):
+                pass
+
+        # Check if order has already been processed by auto-cleanup
+        if order.get('cancelled_at'):
+            skipped_already.append(order['order_id'])
+            continue
+
+        order['status'] = 'cancelled'
+        order['cancelled_reason'] = 'Bulk-cancelled by admin'
+        order['cancelled_at'] = now.isoformat()
+        order['cancelled_by'] = admin_pin
+        cancelled.append({
+            'order_id': order['order_id'],
+            'date': order_date_str,
+            'age_hours': round((now - order_dt).total_seconds() / 3600, 1)
+        })
+
+    if cancelled:
+        save_json_data(ORDERS_FILE, orders)
+
+    # Activity logging
+    if cancelled:
+        users = load_json_data(USERS_FILE)
+        user_name = users.get(admin_pin, {}).get('name', 'Unknown')
+        user_role = users.get(admin_pin, {}).get('role', 'unknown')
+        log_activity('bulk_cancel_stale', admin_pin, user_role, {
+            'cancelled_count': len(cancelled),
+            'cancelled_ids': [c['order_id'] for c in cancelled],
+            'date_from': date_from or 'any',
+            'date_to': date_to or 'any',
+            'cancelled_by_name': user_name
+        })
+
+    return jsonify({
+        'message': f'{len(cancelled)} pending order(s) cancelled.',
+        'cancelled_count': len(cancelled),
+        'cancelled_orders': cancelled,
+        'skipped_already': skipped_already
+    })
+
+
 # --- Re-fire / Re-send Order Items to Kitchen Endpoint ---
 
 @app.route('/api/orders/refire', methods=['POST'])
@@ -7474,8 +7608,8 @@ def admin_stats():
 
     processed_orders = []
     for order in orders:
-        # Skip refunded/voided orders for revenue calculations
-        if order.get('status') in ('refunded', 'voided'):
+        # Skip refunded/voided/cancelled orders for revenue calculations
+        if order.get('status') in ('refunded', 'voided', 'cancelled'):
             continue
         try:
             order_total = float(order.get('total', 0))
@@ -7553,8 +7687,8 @@ def admin_stats():
     today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
     today_end = today_start + timedelta(days=1)
     for order in orders:
-        # Process both status-filtered (processed_orders) and refunded orders
-        if order.get('status') in ('refunded', 'voided'):
+        # Process both status-filtered (processed_orders) and refunded/cancelled orders
+        if order.get('status') in ('refunded', 'voided', 'cancelled'):
             continue
         order_date_str = order.get('date', '')
         try:
@@ -7583,6 +7717,21 @@ def admin_stats():
     comp_summary['comp_daily_total'] = round(comp_summary['comp_daily_total'], 2)
     comp_summary['comp_weekly_total'] = round(comp_summary['comp_weekly_total'], 2)
 
+    # --- Stale pending order auto-cleanup ---
+    stale_cleanup_result = auto_cleanup_stale_orders()
+
+    # Reload orders after cleanup to get accurate counts
+    orders = load_json_data(ORDERS_FILE)
+
+    # Count pending orders (after cleanup) for dashboard alert
+    pending_count = 0
+    for o in orders:
+        if o.get('status') == 'pending':
+            pending_count += 1
+    config_data = get_timesheet_config()
+    pending_alert_threshold = int(config_data.get('pending_order_alert_threshold', 10))
+    pending_alert = pending_count > pending_alert_threshold
+
     stats = {
         'total_sales': round(total_sales, 2),
         'total_traffic': total_traffic,
@@ -7609,7 +7758,14 @@ def admin_stats():
         'backup_total_size': backup_total_size,
         'backup_total_size_hr': backup_total_size_hr,
         'latest_backup_size_hr': latest_backup_size_hr,
-        'comp_summary': comp_summary
+        'comp_summary': comp_summary,
+        # Stale order cleanup
+        'stale_cancelled_count': stale_cleanup_result.get('stale_cancelled_count', 0),
+        'stale_cancelled_orders': stale_cleanup_result.get('stale_cancelled_orders', []),
+        # Pending order alert
+        'pending_orders_count': pending_count,
+        'pending_orders_alert': pending_alert,
+        'pending_orders_alert_threshold': pending_alert_threshold
     }
     return jsonify({'message': 'Admin data retrieved', 'stats': stats})
 
@@ -7682,13 +7838,14 @@ def end_of_day_summary():
 
     for order in orders:
         status = order.get('status', '').lower()
-        if status in ('refunded', 'voided'):
-            refunded_count += 1
-            try:
-                refunded_total += float(order.get('total', 0))
-            except (ValueError, TypeError):
-                pass
-            continue  # Skip refunded/voided for revenue calcs
+        if status in ('refunded', 'voided', 'cancelled'):
+            if status in ('refunded', 'voided'):
+                refunded_count += 1
+                try:
+                    refunded_total += float(order.get('total', 0))
+                except (ValueError, TypeError):
+                    pass
+            continue  # Skip refunded/voided/cancelled for revenue calcs
 
         order_count += 1
         try:

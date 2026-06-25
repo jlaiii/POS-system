@@ -575,7 +575,7 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 
 ### Priority: HIGH
 
-- [~] worker-3 **Audit #21: Stale pending order cleanup** — 53 out of 66 orders (80%) are stuck in "pending" status (never processed by kitchen). In production, orders accumulating in pending state means lost tickets. Add a cleanup script or auto-archive mechanism: auto-cancel orders older than 24h in pending status, with configurable threshold. Add a dashboard alert when pending count exceeds a threshold (e.g., >10 pending orders). Add a "Bulk Cancel Stale Orders" admin action with date range filter. Prevents old test data from polluting real metrics and alerts staff to stuck orders.
+- [x] worker-3 **Audit #21: Stale pending order cleanup** — 53 out of 66 orders (80%) are stuck in "pending" status (never processed by kitchen). Added auto-cleanup on admin_stats view: cancels pending orders older than configurable `stale_order_hours` (default 24h). Dashboard alert card when pending count exceeds configurable threshold (default 10). Bulk Cancel Stale Orders button with date range filter in Stats tab. Configurable thresholds in Timesheet Config UI. Backend: `auto_cleanup_stale_orders()` helper + `POST /api/orders/bulk_cancel_stale` endpoint with activity logging. Frontend: pending order stat card (green/red border), stale cleanup banner, collapsible bulk cancel section. i18n EN+ES. Cancelled orders excluded from revenue/comp/end-of-day calculations. [worker-3]
 
 ### Priority: MEDIUM
 

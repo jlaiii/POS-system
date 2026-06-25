@@ -542,6 +542,12 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 .backup-health-card.backup-red { border-left: 4px solid #ff4444; }
 .backup-health-card .stat-val { font-size: 22px; }
 
+/* Pending orders alert card in stats grid */
+.pending-card { cursor: default; }
+.pending-card.pending-alert { border-left: 4px solid #ff4444; }
+.pending-card.pending-ok { border-left: 4px solid #44cc44; }
+.pending-card .stat-val { font-size: 22px; }
+
 /* Low-stock collapsible section */
 .low-stock-header {
   display: flex; align-items: center; gap: 10px;
@@ -902,6 +908,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
           </div>
           <div class="stats-grid" id="statsGrid"><div class="skeleton-stats-grid"><div class="skeleton-stat-card"><div class="skeleton skeleton-line" style="width:40%;height:12px;"></div><div class="skeleton skeleton-line" style="width:60%;height:22px;"></div><div class="skeleton skeleton-line tiny"></div></div><div class="skeleton-stat-card"><div class="skeleton skeleton-line" style="width:50%;height:12px;"></div><div class="skeleton skeleton-line" style="width:45%;height:22px;"></div><div class="skeleton skeleton-line tiny"></div></div></div></div>
           <div id="lowStockSection" style="margin-top:12px;"></div>
+          <div id="staleOrdersSection" style="margin-top:12px;"></div>
           <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
             <button class="accent" onclick="showEndOfDaySummary()" style="font-size:14px;padding:12px 20px;min-height:48px;">📋 End of Day Summary</button>
             <button class="accent" onclick="exportOrdersCSV()" style="font-size:14px;padding:12px 20px;min-height:48px;">📥 Export Orders (CSV)</button>
@@ -1234,6 +1241,22 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
                   <input type="number" id="tsCourseDelaySide" value="0" min="0" max="120" step="1" style="width:80px;min-height:40px;font-size:14px;" inputmode="numeric" pattern="[0-9]*">
                 </div>
                 <span id="courseDelayStatus" style="font-size:12px;color:#4caf50;display:none;">✅ Course delays saved!</span>
+                </div>
+                </div>
+                <!-- Stale Order Cleanup Config -->
+                <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px;" id="staleOrderConfigSection">
+                <h5 style="margin:0 0 6px 0;font-size:13px;color:var(--accent);">🧹 Stale Order Cleanup</h5>
+                <p style="font-size:11px;color:var(--text2);margin:0 0 8px 0;">Auto-cancel pending orders older than N hours. Dashboard alert when pending count exceeds threshold.</p>
+                <div class="form-row" style="gap:12px;flex-wrap:wrap;align-items:end;">
+                <div>
+                  <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:2px;">Stale order threshold (hours)</label>
+                  <input type="number" id="tsConfigStaleHours" value="24" min="1" max="720" step="1" style="width:80px;min-height:40px;font-size:14px;" inputmode="numeric" pattern="[0-9]*" title="Orders pending longer than this many hours will be auto-cancelled on admin stats view">
+                </div>
+                <div>
+                  <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:2px;">Pending alert threshold</label>
+                  <input type="number" id="tsConfigPendingAlert" value="10" min="1" max="1000" step="1" style="width:80px;min-height:40px;font-size:14px;" inputmode="numeric" pattern="[0-9]*" title="Show dashboard alert when pending orders exceed this count">
+                </div>
+                <span id="staleOrderConfigStatus" style="font-size:12px;color:#4caf50;display:none;">✅ Stale config saved!</span>
                 </div>
                 </div>
             </div>
@@ -3497,6 +3520,14 @@ const L10N = {
     'admin.stats.eod_print': '🖨️ Print / PDF',
     'admin.stats.eod_close': 'Close',
     'admin.stats.eod_no_orders': 'No orders found for the selected period.',
+    'admin.stats.pending_orders': 'Pending Orders',
+    'admin.stats.pending_alert': '⚠️ {count} pending orders — exceeds {threshold} limit',
+    'admin.stats.pending_ok': '✅ {count} pending orders (under limit)',
+    'admin.stats.pending_auto_cancelled': '🧹 Auto-cancelled {count} stale pending order(s)',
+    'admin.stats.bulk_cancel': '🧹 Bulk Cancel Stale Orders',
+    'admin.stats.bulk_cancel_confirm': 'Cancel all pending orders in selected date range? This cannot be undone.',
+    'admin.stats.bulk_cancel_done': 'Cancelled {count} pending order(s).',
+    'admin.stats.stale_section': 'Stale Orders Cleanup',
     'admin.charts.daily_revenue': '📅 Daily Revenue (Last 7 Days)',
     'admin.charts.payment_methods': '💳 Payment Methods',
     'admin.charts.item_trends': '📈 Item Popularity Trend (7d vs Prior 7d)',
@@ -4342,6 +4373,14 @@ const L10N = {
     'admin.stats.eod_print': '🖨️ Imprimir / PDF',
     'admin.stats.eod_close': 'Cerrar',
     'admin.stats.eod_no_orders': 'No se encontraron pedidos para el período seleccionado.',
+    'admin.stats.pending_orders': 'Pedidos Pendientes',
+    'admin.stats.pending_alert': '⚠️ {count} pedidos pendientes — supera el límite de {threshold}',
+    'admin.stats.pending_ok': '✅ {count} pedidos pendientes (bajo límite)',
+    'admin.stats.pending_auto_cancelled': '🧹 Auto-cancelados {count} pedido(s) pendientes obsoletos',
+    'admin.stats.bulk_cancel': '🧹 Cancelar Lote de Pedidos Obsoletos',
+    'admin.stats.bulk_cancel_confirm': '¿Cancelar todos los pedidos pendientes en el rango de fechas seleccionado? Esto no se puede deshacer.',
+    'admin.stats.bulk_cancel_done': '{count} pedido(s) pendiente(s) cancelado(s).',
+    'admin.stats.stale_section': 'Limpieza de Pedidos Obsoletos',
     'admin.charts.daily_revenue': '📅 Ingresos diarios (últimos 7 días)',
     'admin.charts.payment_methods': '💳 Métodos de pago',
     'admin.charts.item_trends': '📈 Tendencia de popularidad (7d vs 7d anterior)',
@@ -12020,6 +12059,11 @@ async function loadTimesheetConfig() {
       const el = document.getElementById('tsCourseDelay' + c);
       if (el) el.value = delays[c.toLowerCase()] !== undefined ? delays[c.toLowerCase()] : (c === 'Main' ? 15 : (c === 'Dessert' ? 20 : 0));
     });
+    // Stale order cleanup config
+    const staleHoursEl = document.getElementById('tsConfigStaleHours');
+    if (staleHoursEl) staleHoursEl.value = config.stale_order_hours !== undefined ? config.stale_order_hours : 24;
+    const pendingAlertEl = document.getElementById('tsConfigPendingAlert');
+    if (pendingAlertEl) pendingAlertEl.value = config.pending_order_alert_threshold !== undefined ? config.pending_order_alert_threshold : 10;
   } catch(e) {}
 }
 
@@ -12042,7 +12086,9 @@ async function saveTimesheetConfig() {
       main: parseInt(document.getElementById('tsCourseDelayMain')?.value) || 15,
       dessert: parseInt(document.getElementById('tsCourseDelayDessert')?.value) || 20,
       side: parseInt(document.getElementById('tsCourseDelaySide')?.value) || 0
-    }
+    },
+    stale_order_hours: parseInt(document.getElementById('tsConfigStaleHours')?.value) || 24,
+    pending_order_alert_threshold: parseInt(document.getElementById('tsConfigPendingAlert')?.value) || 10
   };
   try {
     const r = await fetch(BACKEND_URL + '/api/timesheet/config', {
@@ -12108,6 +12154,8 @@ async function loadAdminStats() {
       <div class="stat-card"><div class="stat-val">$${parseFloat(s.monthly_sales||0).toFixed(2)}</div><div class="stat-lbl">${t('admin.stats.monthly_sales')}</div></div>
       <div class="stat-card inv-health-card${(s.out_of_stock_count||0) > 0 ? ' inv-critical' : (s.low_stock_count||0) > 0 ? ' inv-warning' : ' inv-ok'}"><div class="stat-val">${(s.out_of_stock_count||0) > 0 ? '🚫 ' : (s.low_stock_count||0) > 0 ? '⚠️ ' : '✅ '}${(s.out_of_stock_count||0) + (s.low_stock_count||0)}</div><div class="stat-lbl">${t('admin.stats.inventory_health')}<br><span style="font-size:12px;color:var(--text2);">${(s.out_of_stock_count||0) > 0 ? (s.out_of_stock_count + ' ' + t('admin.stats.out_of_stock') + ', ') : ''}${(s.low_stock_count||0)} ${t('admin.stats.low_stock')}</span></div></div>
       <div class="stat-card backup-health-card backup-${s.backup_health || 'red'}"><div class="stat-val">${s.backup_health === 'green' ? '🟢 ' : s.backup_health === 'yellow' ? '🟡 ' : '🔴 '}${s.backup_count || 0}</div><div class="stat-lbl">${t('admin.stats.backup_health')}<br><span style="font-size:12px;color:var(--text2);" onclick="switchAdminSection('backup')">${s.backup_count > 0 ? s.backup_count + ' ' + t('admin.stats.backup_count') + ' · ' + (s.latest_backup_ts ? new Date(s.latest_backup_ts).toLocaleString() : t('admin.stats.backup_never')) + ' · ' + s.backup_total_size_hr : t('admin.stats.backup_none')} · <a style="color:var(--accent);text-decoration:underline;cursor:pointer;">${t('admin.stats.backup_goto')}</a></span></div></div>
+      <!-- Pending Orders Alert -->
+      <div class="stat-card pending-card pending-${s.pending_orders_alert ? 'alert' : 'ok'}"><div class="stat-val">${s.pending_orders_alert ? '🔴 ' : '🟢 '}${s.pending_orders_count || 0}</div><div class="stat-lbl">${t('admin.stats.pending_orders')}<br><span style="font-size:12px;color:var(--text2);">${s.pending_orders_alert ? t('admin.stats.pending_alert', {count: s.pending_orders_count || 0, threshold: s.pending_orders_alert_threshold || 10}) : t('admin.stats.pending_ok', {count: s.pending_orders_count || 0})}</span></div></div>
     `;
     // Append comp summary section if there are any comps
     const comp = s.comp_summary || {};
@@ -12143,6 +12191,32 @@ async function loadAdminStats() {
     } else {
       lowSection.innerHTML = '';
     }
+
+    // Render stale order cleanup section
+    const staleSection = document.getElementById('staleOrdersSection');
+    const staleCount = s.stale_cancelled_count || 0;
+    const pendingCount = s.pending_orders_count || 0;
+    let staleHtml = '';
+    if (staleCount > 0) {
+      staleHtml += `<div class="stale-cleanup-banner" style="background:var(--card);border-left:3px solid #27ae60;padding:10px 16px;border-radius:8px;margin-top:12px;font-size:14px;">${t('admin.stats.pending_auto_cancelled', {count: staleCount})}</div>`;
+    }
+    if (pendingCount > 0) {
+      staleHtml += `
+        <div class="card" style="padding:0;overflow:hidden;margin-top:12px;">
+          <div class="low-stock-header" onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('.collapse-icon').classList.toggle('rotated');">
+            <span style="font-weight:600;">${t('admin.stats.stale_section')}</span>
+            <span style="color:var(--text2);font-size:13px;">${pendingCount} ${t('admin.stats.pending_orders')}</span>
+            <span class="collapse-icon" style="margin-left:auto;transition:transform .2s;">▼</span>
+          </div>
+          <div class="low-stock-body">
+            <div style="padding:12px 16px;text-align:center;">
+              <button class="accent" onclick="bulkCancelStaleOrders()" style="min-height:48px;padding:10px 24px;font-size:15px;">${t('admin.stats.bulk_cancel')}</button>
+              <p style="font-size:12px;color:var(--text2);margin:8px 0 0 0;">${t('admin.stats.bulk_cancel_confirm')}</p>
+            </div>
+          </div>
+        </div>`;
+    }
+    staleSection.innerHTML = staleHtml;
   } catch(e) { grid.innerHTML = '<div class="empty-state val-err">⚠️ ' + t('network_error') + '</div>'; }
   finally { hideContentLoading('statsGrid'); }
 }
@@ -12155,6 +12229,31 @@ function closeEodSummary() {
 
 function printEodSummary() {
   window.print();
+}
+
+/* ───────── Stale Orders Bulk Cancel ───────── */
+async function bulkCancelStaleOrders() {
+  if (!confirm(t('admin.stats.bulk_cancel_confirm'))) return;
+  try {
+    const body = { adminPin: currentUser.id };
+    const dateFrom = document.getElementById('statsDateFrom').value;
+    const dateTo = document.getElementById('statsDateTo').value;
+    if (dateFrom) body.date_from = dateFrom;
+    if (dateTo) body.date_to = dateTo;
+    const result = await fetchJSON(BACKEND_URL + '/api/orders/bulk_cancel_stale', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (!result.ok) {
+      showToast('⚠️ ' + (result.error || t('network_error')), 'danger');
+      return;
+    }
+    const d = result.data;
+    showToast('✅ ' + t('admin.stats.bulk_cancel_done', {count: d.cancelled_count || 0}), 'success', 4000);
+    loadAdminStats(); // Refresh stats
+  } catch(e) {
+    showToast('⚠️ ' + t('network_error'), 'danger');
+  }
 }
 
 async function showEndOfDaySummary() {
