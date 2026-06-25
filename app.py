@@ -1085,6 +1085,7 @@ def fire_webhooks_async(order_data):
 
 KITCHEN_ROOM = 'kitchen'
 CUSTOMER_ROOM = 'customer_display'
+POS_CUSTOMER_ROOM = 'pos_customer_display'
 DRIVETHROUGH_ROOM = 'drivethrough'
 PICKUP_ROOM = 'pickup'
 POS_TERMINALS_ROOM = 'pos_terminals'
@@ -1124,6 +1125,18 @@ def handle_join_customer_display():
 def handle_leave_customer_display():
     """Customer display page leaves the customer display room."""
     leave_room(CUSTOMER_ROOM)
+
+
+@socketio.on('join_pos_customer_display')
+def handle_join_pos_customer_display():
+    """POS customer display page joins the pos_customer_display room."""
+    join_room(POS_CUSTOMER_ROOM)
+
+
+@socketio.on('leave_pos_customer_display')
+def handle_leave_pos_customer_display():
+    """POS customer display page leaves the pos_customer_display room."""
+    leave_room(POS_CUSTOMER_ROOM)
 
 
 @socketio.on('join_drivethrough')
@@ -1185,6 +1198,11 @@ def emit_kitchen_update():
 def emit_customer_update():
     """Broadcast to customer display room that display state changed."""
     socketio.emit('customer_update', {}, room=CUSTOMER_ROOM)
+
+
+def emit_pos_customer_update():
+    """Broadcast to POS customer display room that display state changed."""
+    socketio.emit('pos_customer_update', {}, room=POS_CUSTOMER_ROOM)
 
 
 def emit_drivethrough_update():
@@ -13195,6 +13213,96 @@ def customer_display_reset():
 
 
 # ============================================================
+# POS Customer-Facing Display System (Checkout Counter)
+# ============================================================
+
+# In-memory live cart state for POS customer-facing display
+pos_customer_display_state = {
+    'items': [],
+    'subtotal': 0,
+    'tax': 0,
+    'tip': 0,
+    'total': 0,
+    'status': 'idle',  # 'idle', 'building', 'complete'
+    'order_number': None,
+    'mode_active': False,
+    'paid_amount': 0,
+    'payment_method': None,
+    'loyalty_points_earned': 0,
+    'updated_at': datetime.now().isoformat()
+}
+
+
+@app.route('/api/pos-customer-display/update', methods=['POST'])
+def pos_customer_display_update():
+    """POS frontend pushes current cart state to POS customer display."""
+    global pos_customer_display_state
+    data = request.json
+    items = data.get('items', [])
+    subtotal = float(data.get('subtotal', 0))
+    tax = float(data.get('tax', 0))
+    tip = float(data.get('tip', 0))
+    total = float(data.get('total', 0))
+    pos_customer_display_state = {
+        'items': items,
+        'subtotal': subtotal,
+        'tax': tax,
+        'tip': tip,
+        'total': total,
+        'status': 'building',
+        'order_number': data.get('order_number'),
+        'mode_active': True,
+        'paid_amount': float(data.get('paid_amount', 0)),
+        'payment_method': data.get('payment_method'),
+        'loyalty_points_earned': int(data.get('loyalty_points_earned', 0)),
+        'updated_at': datetime.now().isoformat()
+    }
+    emit_pos_customer_update()
+    return jsonify({'message': 'POS customer display updated'})
+
+
+@app.route('/api/pos-customer-display/status', methods=['GET'])
+def pos_customer_display_status():
+    """POS customer display polls for current order state."""
+    return jsonify(pos_customer_display_state)
+
+
+@app.route('/api/pos-customer-display/complete', methods=['POST'])
+def pos_customer_display_complete():
+    """Mark the current order as complete on the POS customer display."""
+    global pos_customer_display_state
+    data = request.json
+    pos_customer_display_state['status'] = 'complete'
+    pos_customer_display_state['order_number'] = data.get('order_number')
+    pos_customer_display_state['loyalty_points_earned'] = int(data.get('loyalty_points_earned', pos_customer_display_state.get('loyalty_points_earned', 0)))
+    pos_customer_display_state['updated_at'] = datetime.now().isoformat()
+    emit_pos_customer_update()
+    return jsonify({'message': 'Order marked as complete'})
+
+
+@app.route('/api/pos-customer-display/reset', methods=['POST'])
+def pos_customer_display_reset():
+    """Reset the POS customer display to idle."""
+    global pos_customer_display_state
+    pos_customer_display_state = {
+        'items': [],
+        'subtotal': 0,
+        'tax': 0,
+        'tip': 0,
+        'total': 0,
+        'status': 'idle',
+        'order_number': None,
+        'mode_active': pos_customer_display_state.get('mode_active', False),
+        'paid_amount': 0,
+        'payment_method': None,
+        'loyalty_points_earned': 0,
+        'updated_at': datetime.now().isoformat()
+    }
+    emit_pos_customer_update()
+    return jsonify({'message': 'POS customer display reset'})
+
+
+# ============================================================
 # Pickup Display Board System
 # ============================================================
 
@@ -17370,6 +17478,11 @@ def serve_drivethrough():
 @app.route('/customer-display')
 def serve_customer_display():
     return send_from_directory(app.static_folder, 'customer-display.html')
+
+
+@app.route('/pos-customer-display')
+def serve_pos_customer_display():
+    return send_from_directory(app.static_folder, 'pos-customer-display.html')
 
 
 @app.route('/pickup-display')

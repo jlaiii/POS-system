@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=2.0"/>
+<title>POS Customer Display</title>
+<meta name="theme-color" content="#ffffff"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; touch-action: manipulation; }
+
+:root {
+  --bg: #ffffff;
+  --card: #f5f7fa;
+  --accent: #e94560;
+  --text: #1a1a2e;
+  --text2: #6b7280;
+  --border: #e5e7eb;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --primary: #3b82f6;
+  --font-size: 32px;
+}
+
+html, body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: var(--font-size);
+  overflow: hidden;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+/* ── IDLE STATE ── */
+#idleScreen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  text-align: center;
+  animation: fadeIn 0.6s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+#idleScreen .icon {
+  font-size: 5rem;
+  opacity: 0.5;
+}
+
+#idleScreen h1 {
+  font-size: 2.2rem;
+  color: var(--text2);
+  font-weight: 300;
+  letter-spacing: 1px;
+}
+
+#idleScreen .brand {
+  font-size: 3.5rem;
+  font-weight: 800;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 3px;
+}
+
+#idleScreen .sub {
+  font-size: 1.1rem;
+  color: var(--text2);
+}
+
+/* ── ORDER BUILDING SCREEN ── */
+#orderScreen {
+  display: none;
+  width: 100%;
+  max-width: 1100px;
+  height: 100vh;
+  flex-direction: column;
+  padding: 16px 0;
+}
+
+#orderScreen.active { display: flex; }
+
+/* Header */
+.pcd-header {
+  text-align: center;
+  padding: 12px 0;
+  border-bottom: 3px solid var(--border);
+  position: relative;
+}
+
+.pcd-header h1 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.pcd-header .order-info {
+  font-size: 0.9rem;
+  color: var(--text2);
+  margin-top: 4px;
+}
+
+/* Loyalty bar */
+.pcd-loyalty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  color: #92400e;
+  padding: 6px 20px;
+  border-radius: 0 0 12px 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  position: absolute;
+  top: 0;
+  right: 0;
+  border: 1px solid #f59e0b;
+  border-top: none;
+}
+
+.pcd-loyalty .star {
+  font-size: 1rem;
+}
+
+/* ── Items list ── */
+.pcd-items {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding: 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pcd-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--card);
+  border-radius: 14px;
+  padding: 14px 24px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  border-left: 5px solid var(--accent);
+  animation: slideIn 0.3s ease-out;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.pcd-item .qty {
+  color: var(--accent);
+  font-weight: 800;
+  margin-right: 12px;
+  min-width: 40px;
+  text-align: center;
+}
+
+.pcd-item .name {
+  flex: 1;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.pcd-item .name .modifiers {
+  display: block;
+  font-size: 0.65rem;
+  color: var(--text2);
+  font-weight: 400;
+  margin-top: 2px;
+}
+
+.pcd-item .notes-badge {
+  font-size: 0.55rem;
+  color: #92400e;
+  background: #fef3c7;
+  padding: 2px 8px;
+  border-radius: 6px;
+  margin-left: 6px;
+  font-weight: 500;
+}
+
+.pcd-item .price {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--primary);
+  min-width: 80px;
+  text-align: right;
+}
+
+.pcd-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  color: var(--text2);
+}
+
+/* ── Totals ── */
+.pcd-totals {
+  border-top: 3px solid var(--border);
+  padding: 14px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pcd-total-line {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1rem;
+  color: var(--text2);
+}
+
+.pcd-total-line .label { font-weight: 400; }
+.pcd-total-line .value { font-weight: 600; }
+.pcd-total-line.grand-total {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--text);
+  border-top: 2px solid var(--border);
+  padding-top: 10px;
+  margin-top: 6px;
+}
+
+.pcd-total-line.grand-total .value {
+  color: var(--accent);
+  font-size: 1.8rem;
+}
+
+/* ── Payment Progress ── */
+.pcd-payment {
+  margin-top: 10px;
+  padding: 12px 0;
+  border-top: 2px solid var(--border);
+}
+
+.pcd-payment .progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--text2);
+  margin-bottom: 6px;
+}
+
+.pcd-payment .progress-bar {
+  width: 100%;
+  height: 20px;
+  background: var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.pcd-payment .progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--success), #34d399);
+  border-radius: 10px;
+  transition: width 0.5s ease;
+  width: 0%;
+}
+
+.pcd-payment .progress-fill.partial {
+  background: linear-gradient(90deg, var(--warning), #fbbf24);
+}
+
+.pcd-payment .payment-method {
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--text2);
+  margin-top: 6px;
+}
+
+.pcd-payment .payment-method span {
+  display: inline-block;
+  background: var(--card);
+  padding: 4px 14px;
+  border-radius: 8px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* ── Status bar ── */
+.pcd-status-bar {
+  text-align: center;
+  color: var(--text2);
+  font-size: 0.7rem;
+  padding: 8px 0;
+  border-top: 1px solid var(--border);
+}
+
+.pcd-status-bar .dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--success);
+  margin-right: 6px;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* ── COMPLETE / THANK YOU SCREEN ── */
+#completeScreen {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 20px;
+  animation: fadeIn 0.5s ease-out;
+}
+
+#completeScreen.active { display: flex; }
+
+#completeScreen .check-icon {
+  font-size: 6rem;
+  color: var(--success);
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+#completeScreen h1 {
+  font-size: 3rem;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: 1px;
+}
+
+#completeScreen .order-number {
+  font-size: 1.3rem;
+  color: var(--text2);
+  background: var(--card);
+  padding: 10px 28px;
+  border-radius: 12px;
+  display: inline-block;
+}
+
+#completeScreen .thank-you {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--success);
+}
+
+#completeScreen .sub-text {
+  font-size: 1rem;
+  color: var(--text2);
+}
+
+#completeScreen .loyalty-earned {
+  font-size: 1.1rem;
+  color: #92400e;
+  background: #fef3c7;
+  padding: 8px 24px;
+  border-radius: 30px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── MODE INACTIVE OVERLAY ── */
+#inactiveOverlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(255,255,255,0.9);
+  z-index: 999;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 16px;
+}
+
+#inactiveOverlay.active { display: flex; }
+
+#inactiveOverlay .icon { font-size: 3.5rem; opacity: 0.4; }
+#inactiveOverlay h2 { font-size: 1.8rem; color: var(--text2); font-weight: 300; }
+#inactiveOverlay p { font-size: 0.9rem; color: var(--text2); }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  :root { --font-size: 24px; }
+  body { padding: 12px; }
+  .pcd-item { font-size: 1rem; padding: 12px 16px; }
+  .pcd-item .name { font-size: 1rem; }
+  .pcd-item .price { font-size: 1rem; }
+  .pcd-total-line.grand-total { font-size: 1.3rem; }
+  #completeScreen h1 { font-size: 2rem; }
+  #completeScreen .thank-you { font-size: 1.5rem; }
+  .pcd-header h1 { font-size: 1.3rem; }
+  #idleScreen .brand { font-size: 2.5rem; }
+  #idleScreen h1 { font-size: 1.5rem; }
+  .pcd-loyalty { font-size: 0.7rem; padding: 4px 12px; }
+}
+
+@media (min-width: 1200px) {
+  :root { --font-size: 38px; }
+  .pcd-item { font-size: 1.3rem; padding: 18px 28px; }
+  .pcd-item .name { font-size: 1.3rem; }
+  .pcd-item .price { font-size: 1.3rem; }
+  .pcd-total-line.grand-total { font-size: 1.8rem; }
+  #completeScreen h1 { font-size: 3.5rem; }
+}
+
+/* Landscape on tablets */
+@media (orientation: landscape) and (max-height: 500px) {
+  :root { --font-size: 18px; }
+  .pcd-item { padding: 8px 16px; }
+  .pcd-items { gap: 4px; padding: 8px 0; }
+  .pcd-header { padding: 6px 0; }
+}
+</style>
+<script src="https://cdn.socket.io/4.8.1/socket.io.min.js" integrity="sha384-mkQ3/9F6QIkz1z7jC1Jfn5qO8ANMgS4zX9VX5G5WIQT2Q9F9M0cL0Kj2mF6KnC" crossorigin="anonymous"></script>
+</head>
+<body>
+
+<!-- IDLE SCREEN -->
+<div id="idleScreen">
+  <div class="icon">🛒</div>
+  <div class="brand">POS System</div>
+  <h1>Welcome!</h1>
+  <div class="sub">Your order will appear here</div>
+</div>
+
+<!-- ORDER BUILDING SCREEN -->
+<div id="orderScreen">
+  <div class="pcd-header">
+    <h1>🧾 Your Order</h1>
+    <div class="order-info">
+      <span id="pcdOrderNum"></span>
+    </div>
+    <div class="pcd-loyalty" id="pcdLoyaltyBar" style="display:none;">
+      <span class="star">⭐</span>
+      <span>Earn <strong id="pcdLoyaltyPts">0</strong> loyalty points</span>
+    </div>
+  </div>
+  <div class="pcd-items" id="pcdItems">
+    <div class="pcd-empty">No items yet</div>
+  </div>
+  <div class="pcd-totals">
+    <div class="pcd-total-line">
+      <span class="label">Subtotal</span>
+      <span class="value" id="pcdSubtotal">$0.00</span>
+    </div>
+    <div class="pcd-total-line">
+      <span class="label">Tax</span>
+      <span class="value" id="pcdTax">$0.00</span>
+    </div>
+    <div class="pcd-total-line" id="pcdTipRow" style="display:none;">
+      <span class="label">💬 Tip</span>
+      <span class="value" id="pcdTip">$0.00</span>
+    </div>
+    <div class="pcd-total-line grand-total">
+      <span class="label">Total</span>
+      <span class="value" id="pcdTotal">$0.00</span>
+    </div>
+  </div>
+
+  <!-- Payment Progress -->
+  <div class="pcd-payment" id="pcdPayment" style="display:none;">
+    <div class="progress-label">
+      <span>Payment Progress</span>
+      <span><strong id="pcdPaidAmount">$0.00</strong> / <span id="pcdTotalAmount">$0.00</span></span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="pcdProgressFill"></div>
+    </div>
+    <div class="payment-method">
+      Paying with <span id="pcdPaymentMethod">—</span>
+    </div>
+  </div>
+
+  <div class="pcd-status-bar">
+    <span class="dot"></span> Live — Updates automatically
+  </div>
+</div>
+
+<!-- COMPLETE / THANK YOU SCREEN -->
+<div id="completeScreen">
+  <div class="check-icon">✅</div>
+  <h1>Order Submitted!</h1>
+  <div class="order-number" id="pcdCompleteOrderNum"></div>
+  <div class="thank-you">🙏 Thank You!</div>
+  <div class="sub-text">Your order is being prepared</div>
+  <div class="loyalty-earned" id="pcdCompleteLoyalty" style="display:none;">
+    ⭐ +<span id="pcdCompleteLoyaltyPts">0</span> loyalty points earned!
+  </div>
+</div>
+
+<!-- INACTIVE OVERLAY -->
+<div id="inactiveOverlay">
+  <div class="icon">💤</div>
+  <h2>Counter Display Not Active</h2>
+  <p>Ask a staff member to activate the display</p>
+</div>
+
+<script>
+// ── CONFIG ──
+const POLL_INTERVAL = 6000;
+const API_BASE = window.location.origin;
+
+// ── DOM REFS ──
+const idleScreen = document.getElementById('idleScreen');
+const orderScreen = document.getElementById('orderScreen');
+const completeScreen = document.getElementById('completeScreen');
+const inactiveOverlay = document.getElementById('inactiveOverlay');
+const pcdItems = document.getElementById('pcdItems');
+const pcdSubtotal = document.getElementById('pcdSubtotal');
+const pcdTax = document.getElementById('pcdTax');
+const pcdTip = document.getElementById('pcdTip');
+const pcdTipRow = document.getElementById('pcdTipRow');
+const pcdTotal = document.getElementById('pcdTotal');
+const pcdOrderNum = document.getElementById('pcdOrderNum');
+const pcdCompleteOrderNum = document.getElementById('pcdCompleteOrderNum');
+const pcdPayment = document.getElementById('pcdPayment');
+const pcdPaidAmount = document.getElementById('pcdPaidAmount');
+const pcdTotalAmount = document.getElementById('pcdTotalAmount');
+const pcdProgressFill = document.getElementById('pcdProgressFill');
+const pcdPaymentMethod = document.getElementById('pcdPaymentMethod');
+const pcdLoyaltyBar = document.getElementById('pcdLoyaltyBar');
+const pcdLoyaltyPts = document.getElementById('pcdLoyaltyPts');
+const pcdCompleteLoyalty = document.getElementById('pcdCompleteLoyalty');
+const pcdCompleteLoyaltyPts = document.getElementById('pcdCompleteLoyaltyPts');
+
+// ── STATE ──
+let currentStatus = 'idle';
+let previousItems = '';
+
+// ── HELPERS ──
+function formatPrice(n) {
+  return '$' + parseFloat(n).toFixed(2);
+}
+
+function showScreen(screen) {
+  [idleScreen, orderScreen, completeScreen].forEach(s => s.classList.remove('active'));
+  if (screen) {
+    screen.classList.add('active');
+    screen.style.display = 'flex';
+  }
+}
+
+function escHtml(s) {
+  if (!s) return '';
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+function renderItems(items) {
+  if (!items || items.length === 0) {
+    pcdItems.innerHTML = '<div class="pcd-empty">No items yet</div>';
+    return;
+  }
+  let html = '';
+  items.forEach(item => {
+    const name = item.name || 'Unknown';
+    const qty = item.qty || 1;
+    const price = parseFloat(item.price || 0);
+    const lineTotal = price * qty;
+    const hasNotes = item.notes ? `<span class="notes-badge">📝 ${escHtml(item.notes)}</span>` : '';
+    let modifiersHtml = '';
+    if (item.modifiers && item.modifiers.length > 0) {
+      modifiersHtml = '<span class="modifiers">' + item.modifiers.map(m => escHtml(m)).join(', ') + '</span>';
+    }
+    html += `<div class="pcd-item">
+      <span class="qty">${qty}×</span>
+      <span class="name">${escHtml(name)}${modifiersHtml}${hasNotes}</span>
+      <span class="price">${formatPrice(lineTotal)}</span>
+    </div>`;
+  });
+  pcdItems.innerHTML = html;
+}
+
+// ── POLLING ──
+let pollTimer = null;
+
+function startPolling(interval) {
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(pollStatus, interval);
+}
+
+function stopPolling() {
+  if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+}
+
+async function pollStatus() {
+  try {
+    const r = await fetch(API_BASE + '/api/pos-customer-display/status');
+    if (!r.ok) return;
+    const data = await r.json();
+
+    // Handle mode inactive
+    if (!data.mode_active && data.status === 'idle') {
+      inactiveOverlay.classList.add('active');
+      showScreen(null);
+      return;
+    } else {
+      inactiveOverlay.classList.remove('active');
+    }
+
+    const itemsJson = JSON.stringify(data.items || []);
+    const statusChanged = data.status !== currentStatus;
+    const itemsChanged = itemsJson !== previousItems;
+
+    // Update display based on status
+    if (data.status === 'idle') {
+      showScreen(idleScreen);
+      currentStatus = 'idle';
+    } else if (data.status === 'complete') {
+      pcdCompleteOrderNum.textContent = data.order_number ? 'Order #' + data.order_number : '';
+      // Show loyalty if applicable
+      if (data.loyalty_points_earned) {
+        pcdCompleteLoyalty.style.display = 'inline-flex';
+        pcdCompleteLoyaltyPts.textContent = data.loyalty_points_earned;
+      } else {
+        pcdCompleteLoyalty.style.display = 'none';
+      }
+      showScreen(completeScreen);
+      currentStatus = 'complete';
+    } else {
+      // 'building' — show order
+      showScreen(orderScreen);
+
+      // Update order number
+      pcdOrderNum.textContent = data.order_number ? 'Order #' + data.order_number : '';
+
+      // Update items
+      if (itemsChanged) {
+        renderItems(data.items);
+        previousItems = itemsJson;
+      }
+
+      // Update totals
+      pcdSubtotal.textContent = formatPrice(data.subtotal || 0);
+      pcdTax.textContent = formatPrice(data.tax || 0);
+
+      const tip = parseFloat(data.tip || 0);
+      if (tip > 0) {
+        pcdTipRow.style.display = 'flex';
+        pcdTip.textContent = formatPrice(tip);
+      } else {
+        pcdTipRow.style.display = 'none';
+      }
+
+      pcdTotal.textContent = formatPrice(data.total || 0);
+
+      // Loyalty bar
+      if (data.loyalty_points_earned && data.loyalty_points_earned > 0) {
+        pcdLoyaltyBar.style.display = 'flex';
+        pcdLoyaltyPts.textContent = data.loyalty_points_earned;
+      } else {
+        pcdLoyaltyBar.style.display = 'none';
+      }
+
+      // Payment progress
+      const paid = parseFloat(data.paid_amount || 0);
+      const total = parseFloat(data.total || 0);
+      if (paid > 0 && total > 0) {
+        pcdPayment.style.display = 'block';
+        pcdPaidAmount.textContent = formatPrice(paid);
+        pcdTotalAmount.textContent = formatPrice(total);
+        const pct = Math.min(100, Math.round((paid / total) * 100));
+        pcdProgressFill.style.width = pct + '%';
+        pcdProgressFill.className = 'progress-fill' + (pct < 100 ? ' partial' : '');
+        pcdPaymentMethod.textContent = data.payment_method || '—';
+      } else {
+        pcdPayment.style.display = 'none';
+      }
+
+      currentStatus = 'building';
+    }
+  } catch(e) {
+    inactiveOverlay.classList.add('active');
+  }
+}
+
+// ── SOCKETIO REAL-TIME SUPPORT ──
+let socket = null;
+let socketEnabled = true;
+
+function initSocketIO() {
+  if (typeof io === 'undefined') { socketEnabled = false; return; }
+  try {
+    socket = io(API_BASE, {
+      transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      timeout: 10000
+    });
+    socket.on('connect', () => {
+      socketEnabled = true;
+      socket.emit('join_pos_customer_display');
+      stopPolling();
+    });
+    socket.on('disconnect', () => { startPolling(POLL_INTERVAL); });
+    socket.on('connect_error', () => { socketEnabled = false; startPolling(POLL_INTERVAL); });
+    socket.on('pos_customer_update', () => {
+      pollStatus();
+    });
+  } catch(e) {
+    socketEnabled = false;
+  }
+}
+
+// ── START ──
+showScreen(idleScreen);
+initSocketIO();
+pollStatus();
+startPolling(POLL_INTERVAL);
+</script>
+</body>
+</html>

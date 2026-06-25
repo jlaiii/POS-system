@@ -912,10 +912,12 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
             <button class="outline" id="dtModeBtn" onclick="toggleDriveThrough()">🛵 Drive-Through</button>
             <button class="outline" id="kioskModeBtn" onclick="enterKioskMode()" style="border-color:#2ecc71;color:#2ecc71;">🪟 Kiosk Mode</button>
             <button class="outline" id="customerDisplayBtn" onclick="toggleCustomerDisplay()" style="border-color:#4fc3f7;color:#4fc3f7;">🖥️ Customer Display</button>
+            <button class="outline" id="posCustomerDisplayBtn" onclick="togglePosCustomerDisplay()" style="border-color:#f472b6;color:#f472b6;">🧾 Counter Display</button>
             <button class="outline" id="pickupBoardBtn" onclick="togglePickupBoard()" style="border-color:#f39c12;color:#f39c12;">📋 Pickup Board</button>
           </div>
           <div class="dt-indicator" id="dtIndicator"><span class="dot"></span> Drive-through display is live</div>
           <div class="cd-indicator" id="cdIndicator"><span class="dot"></span> Customer display is live — open <a href="/customer-display" target="_blank" style="color:#4fc3f7;">/customer-display</a></div>
+          <div class="pcd-indicator" id="pcdIndicator"><span class="dot"></span> Counter display is live — open <a href="/pos-customer-display" target="_blank" style="color:#f472b6;">/pos-customer-display</a></div>
           <div class="pb-indicator" id="pbIndicator"><span class="dot"></span> Pickup board is live — open <a href="/pickup-display" target="_blank" style="color:#f39c12;">/pickup-display</a></div>
         </div>
       </div>
@@ -10777,6 +10779,7 @@ function renderCart() {
   updateDiscountStatus();
   if (driveThroughMode) pushToDriveThrough();
   if (customerDisplayMode) pushToCustomerDisplay();
+  if (posCustomerDisplayMode) pushToPosCustomerDisplay();
   // Rebuild payment splits to stay in sync with cart total
   buildPaymentMethods();
   saveCartDraft();
@@ -11573,6 +11576,9 @@ async function confirmOrder() {
     if (customerDisplayMode) {
       try { await fetch(BACKEND_URL + '/api/customer-display/complete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ order_number: result.order_id }) }); } catch(e) {}
     }
+    if (posCustomerDisplayMode) {
+      try { await fetch(BACKEND_URL + '/api/pos-customer-display/complete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ order_number: result.order_id, loyalty_points_earned: posCustomerDisplayLastLoyaltyPts }) }); } catch(e) {}
+    }
     if (pickupBoardMode) {
       try { await fetch(BACKEND_URL + '/api/pickup-display/mark-ready', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ order_id: result.order_id, user: currentUser.id }) }); } catch(e) {}
     }
@@ -11883,6 +11889,15 @@ async function submitOrder() {
         });
       } catch(e) { /* silent */ }
     }
+    // If pos customer display mode is active, mark order as complete
+    if (posCustomerDisplayMode) {
+      try {
+        await fetch(BACKEND_URL + '/api/pos-customer-display/complete', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ order_number: result.order_id, loyalty_points_earned: posCustomerDisplayLastLoyaltyPts })
+        });
+      } catch(e) { /* silent */ }
+    }
     // If pickup board mode is active, mark order as ready for pickup
     if (pickupBoardMode) {
       try {
@@ -11988,6 +12003,10 @@ async function clearCart() {
     // If customer display mode is active, reset display
     if (customerDisplayMode) {
       fetch(BACKEND_URL + '/api/customer-display/reset', { method: 'POST', headers: { 'Content-Type': 'application/json' } }).catch(() => {});
+    }
+    // If pos customer display mode is active, reset display
+    if (posCustomerDisplayMode) {
+      fetch(BACKEND_URL + '/api/pos-customer-display/reset', { method: 'POST', headers: { 'Content-Type': 'application/json' } }).catch(() => {});
     }
   } catch(e) { showToast(t('toast.network_error'), 'danger'); }
 }
@@ -12602,6 +12621,69 @@ async function pushToCustomerDisplay() {
         tax: Math.round(taxAmount * 100) / 100,
         tip: Math.round(tipAmount * 100) / 100,
         total: Math.round(finalTotalWithTip * 100) / 100
+      })
+    });
+  } catch(e) { /* silent */ }
+}
+
+// ═══════════ POS CUSTOMER DISPLAY (Checkout Counter) ═══════════
+let posCustomerDisplayMode = false;
+let posCustomerDisplayLastLoyaltyPts = 0;
+
+function togglePosCustomerDisplay() {
+  posCustomerDisplayMode = !posCustomerDisplayMode;
+  const btn = document.getElementById('posCustomerDisplayBtn');
+  const indicator = document.getElementById('pcdIndicator');
+  if (posCustomerDisplayMode) {
+    btn.classList.add('active');
+    btn.innerHTML = '🧾 Counter Display ON';
+    indicator.classList.add('active');
+    pushToPosCustomerDisplay();
+    showToast('Counter display activated', 'success');
+  } else {
+    btn.classList.remove('active');
+    btn.innerHTML = '🧾 Counter Display';
+    indicator.classList.remove('active');
+    // Reset the counter display
+    fetch(BACKEND_URL + '/api/pos-customer-display/reset', { method: 'POST', headers: { 'Content-Type': 'application/json' } }).catch(() => {});
+  }
+}
+
+async function pushToPosCustomerDisplay() {
+  if (!posCustomerDisplayMode) return;
+  let subtotal = 0, taxAmount = 0;
+  cart.forEach(item => {
+    const lineTotal = item.price * item.qty;
+    subtotal += lineTotal;
+    const rate = getTaxRate(item.name, item.category || '');
+    taxAmount += lineTotal * rate;
+  });
+  const discountAmount = appliedDiscount ? appliedDiscount.discount_amount : 0;
+  const tipAmount = parseFloat(document.getElementById('cartTotal').dataset.tip || 0);
+  const finalTotal = subtotal + taxAmount - discountAmount;
+  const finalTotalWithTip = finalTotal + tipAmount;
+  // Get loyalty points being earned this order
+  let loyaltyPts = 0;
+  if (loyaltyCustomerData && loyaltyCustomerData.points) {
+    const ptsPerDollar = 10; // standard earning rate
+    loyaltyPts = Math.floor(finalTotalWithTip * ptsPerDollar);
+  }
+  posCustomerDisplayLastLoyaltyPts = loyaltyPts;
+  // Get payment progress info
+  const paidAmount = parseFloat(document.getElementById('paidAmount')?.value || 0);
+  const paymentMethod = document.querySelector('#paymentMethods .active')?.textContent?.trim() || '';
+  try {
+    await fetch(BACKEND_URL + '/api/pos-customer-display/update', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        items: cart.map(c => ({ name: c.name, price: c.price, qty: c.qty, notes: c.notes, modifiers: c.modifiers || [] })),
+        subtotal: Math.round(subtotal * 100) / 100,
+        tax: Math.round(taxAmount * 100) / 100,
+        tip: Math.round(tipAmount * 100) / 100,
+        total: Math.round(finalTotalWithTip * 100) / 100,
+        paid_amount: Math.round(paidAmount * 100) / 100,
+        payment_method: paymentMethod || null,
+        loyalty_points_earned: loyaltyPts
       })
     });
   } catch(e) { /* silent */ }
