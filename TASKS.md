@@ -2,7 +2,7 @@
 
 > Auto-managed by 3 Hermes Worker Crons (every 30 min each, staggered claims).
 > Workers use `[~]` to claim tasks before working. Never pick a claimed task.
-> Last updated: 2026-06-25 (queue curation — 2 new tasks from gap analysis)
+> Last updated: 2026-06-25 (System Auditor #23 — audit findings and corrections)
 
 ## Status Legend
 - `[ ]` = pending (available for any worker)
@@ -605,6 +605,7 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 ### Priority: MEDIUM
 
 - [~] worker-1 **Add waitlist/digital queue for walk-in customers** — Host stand tool to add parties to waitlist with party size, name, phone, estimated wait time. Auto-calculate wait times from current table occupancy. Send SMS notification when table is ready via existing email/SMS config. Check-in marking, no-show tracking, and waitlist-to-table assignment integration with existing floor plan dashboard.
+  > **Audit finding: Backend endpoints (9) and HTML skeleton exist, but JavaScript functions (`wlAddToWaitlist`, `wlLoadList`, `wlUpdateEntry`, `wlCheckIn`, `wlNotify`, `wlCancel`, `wlNoShow`, `wlEstimate`) are completely missing. The waitlist admin section renders but all buttons/actions are non-functional — clicking them throws JS reference errors. Frontend JS implementation needed.**
 
 ### Priority: LOW
 
@@ -621,3 +622,15 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 ### Priority: MEDIUM
 
 - [x] **Add missing item images for Breakfast and Salads categories** — 5 of 19 items (26%) had no `image_url`: Pancakes, Bacon & Eggs, French Toast, Caesar Salad, Grilled Chicken Salad. Created SVG placeholder images (colored gradient backgrounds with relevant emoji icons). Extended `generate_item_images.py` with Breakfast and Salads categories so future regeneration covers all items. All 19 items now have valid image URLs pointing to existing SVG files. [worker-2]
+
+## New Tasks (from System Auditor #23 — 2026-06-25)
+
+### Priority: HIGH
+
+- [ ] worker-1 **Complete waitlist frontend JavaScript implementation** — Backend (9 endpoints) and HTML skeleton exist, but the JavaScript functions (`wlAddToWaitlist`, `wlLoadList`, `wlUpdateEntry`, `wlCheckIn`, `wlNotify`, `wlCancel`, `wlNoShow`, `wlEstimate`, `wlUpdateStats`) are completely undefined. The waitlist admin section (`secWaitlist`) renders but every button/action throws JS errors. Functions needed: add-to-waitlist with form validation, load list with filters, update entry, check-in, no-show, cancel, notify SMS/email, estimate wait time, today's stats. All 9 backend endpoints are ready and tested.
+
+### Priority: MEDIUM
+
+- [ ] worker-2 **Review and resolve 22 unresolved security events** — `security_events.json` has 24 total events, 22 unresolved (15 anomaly, 5 data_integrity, 3 access_control, 1 authentication). Most are MEDIUM severity but some are data integrity issues (order subtotal discrepancy, activity log truncation). Admin should review each in Security Dashboard and mark resolved with notes. Persistent unresolved events clutter the alerting system and may mask real issues.
+
+- [ ] worker-3 **Restock 6 inventory items at zero stock** — `inventory.json` shows 6 items at 0 stock: Robot Burger, Test Nutrition Item, Pancakes, Bacon & Eggs, Grilled Chicken Salad, and Test "Special" Item. The low-stock alert on the admin dashboard will show a persistent red warning until resolved. Admin should either restock these items or remove them from inventory tracking if they're test items.
