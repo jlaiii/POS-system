@@ -696,7 +696,7 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 
 - [x] worker-3 **Clean up 8 stale pending orders from test data** — Orders #74 (table 5, 22h), #75 (table 6, 22h), #91 (4-7h), #96-#100 (4-7h, user 9999 doesn't exist) are pending with no kitchen action. Cancel them manually since they're under the 24h stale threshold but appear to be abandoned test orders. Fix data quality issues: order #98 has waiter=None, orders #96-100 reference non-existent user 9999. Update or cancel these records. [worker-3 — Ran cleanup script: set all 8 orders to cancelled with reason, fixed user=system on 96-100 (was 9999), fixed waiter=system on all 8, set user=system on #98 (was null). Updated SQLite for orders 74/75 (others not yet migrated). Logged to activity_log.]
 
-- [ ] **Resolve 3 outstanding security events** — SEC-026 (large order anomaly), SEC-027 (IP auto-block - 127.0.0.1), SEC-028 (off-hours login by Owner). All appear to be expected dev/test behavior but are unresolved and pollute the security event log. Resolve with appropriate notes. [System Auditor #25]
+- [~] worker-1 **Resolve 3 outstanding security events** — SEC-026 (large order anomaly), SEC-027 (IP auto-block - 127.0.0.1), SEC-028 (off-hours login by Owner). All appear to be expected dev/test behavior but are unresolved and pollute the security event log. Resolve with appropriate notes. [System Auditor #25]
 
 ### Priority: MEDIUM
 
