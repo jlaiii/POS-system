@@ -1,19 +1,19 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-25T03:17 UTC
-> Total checks: 428
-> Healthy: 428 | Broken: 0 | Fixed this cycle: 1
+> Last full cycle: 2026-06-25T03:39 UTC
+> Total checks: 429
+> Healthy: 429 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK [verified 03:17]
-- [x] All JSON data files exist and are valid — all 13 core JSON files valid, parseable [verified 03:17]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, username='jayadmin', role='owner') present, 5 users total [verified 03:17]
-- [x] Git repo is clean (no uncommitted changes from crashes) — SECURITY_WATCHDOG.md + activity_log.json modified (legitimate runtime logging) — not crash-related [verified 03:17]
+- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK [verified 03:39]
+- [x] All JSON data files exist and are valid — all 15 core JSON files valid, parseable [verified 03:39]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', role='owner') present, 5 users total, all fields intact [verified 03:39]
+- [x] Git repo is clean (no uncommitted changes from crashes) — SECURITY_WATCHDOG.md + activity_log.json + login_attempts.json + security_events.json modified (legitimate runtime logging) — not crash-related [verified 03:39]
 
 ## HOURLY (check if last check was >1h ago)
-- [x] /api/health — {"status":"ok"} (GET) [verified 03:17]
+- [x] /api/health — {"status":"ok"} (GET) [verified 03:39]
 - [x] Frontend loads — 200, HTML OK, 1094563 bytes [verified 02:44]
 - [x] /api/items returns items — GET, 3 categories (Drinks, Foods, Snacks) [verified 02:44]
 - [x] /api/admin_shifts returns shifts — POST, 13 shifts in 24h range [verified 02:44]
@@ -48,10 +48,10 @@
 
 ## DISCOVERED (failures you've seen before — check every 2h)
 - [ ] (populated over time as you find real failures)
-- [x] **Flask process dying between runs** — Found dead at 11:16, 11:41, 12:22, 18:22, 02:39, 03:07, and 10:02, 03:17 (8th occurrence). Root cause unknown (no OOM, no crash log, no sys.exit). Werkzeug dev server (`socketio.run()`) can silently stop serving. Created wrapper at `scripts/run_flask.sh`. Check every run as CRITICAL. [verified 03:17 — running, 200 OK]
-- [x] **Dual Flask instances on port 5000** — Now running single gunicorn+gevent worker. No recurrence. [verified 03:17 — single listener, clean]
-- [x] **items.json + users.json simultaneous data corruption** — Both files replaced with minimal test entries between 03:39-04:19. items.json: 14 items → 1 test item. users.json: 6 users → just PIN 1111 with bare fields. Restored from git HEAD (no commit needed — working copy only affected). Root cause unknown — potentially a rogue test script or worker. 03:39 backup has correct data. Monitor every 2h initially. [verified 03:17 — items.json 14 items (Drinks:3, Foods:6, Snacks:5), users.json 5 users, no corruption]
-- [x] **Owner username changed to 'testuser' (3rd data corruption incident)** — users.json PIN 1111 username field changed from 'jayadmin' to 'testuser', password_hash and salt also changed. Found at 16:57. Fix: restored from git HEAD. Root cause unknown — possibly a CRUD test worker that accidentally modified the owner account instead of a test user. Added to DISCOVERED — check every run during CRITICAL scan. [verified 03:17 — users.json healthy, username='jayadmin']
+- [x] **Flask process dying between runs** — Found dead at 11:16, 11:41, 12:22, 18:22, 02:39, 03:07, and 10:02, 03:17 (8th occurrence). Root cause unknown (no OOM, no crash log, no sys.exit). Werkzeug dev server (`socketio.run()`) can silently stop serving. Created wrapper at `scripts/run_flask.sh`. Check every run as CRITICAL. [verified 03:39 — running, 200 OK, single python3 app.py process]
+- [x] **Dual Flask instances on port 5000** — Now running single python3 app.py process. No recurrence. scripts/run_flask.sh present and executable. [verified 03:39 — single listener, clean]
+- [x] **items.json + users.json simultaneous data corruption** — Both files replaced with minimal test entries between 03:39-04:19. items.json: 14 items → 1 test item. users.json: 6 users → just PIN 1111 with bare fields. Restored from git HEAD (no commit needed — working copy only affected). Root cause unknown — potentially a rogue test script or worker. 03:39 backup has correct data. Monitor every 2h initially. [verified 03:39 — items dict with 3 cats (Drinks, Foods, Snacks), users.json 5 users, no corruption]
+- [x] **Owner username changed to 'testuser' (3rd data corruption incident)** — users.json PIN 1111 username field changed from 'jayadmin' to 'testuser', password_hash and salt also changed. Found at 16:57. Fix: restored from git HEAD. Root cause unknown — possibly a CRUD test worker that accidentally modified the owner account instead of a test user. Added to DISCOVERED — check every run during CRITICAL scan. [verified 03:39 — users.json healthy, name='Owner', username='jayadmin']
 
 ## FIXES APPLIED
 - [2026-06-25 03:17] **Flask server down (9th occurrence)** — Server not responding (000). 9th occurrence of recurring pattern. Fix: started `python3 app.py` as background daemon. All critical and selected 4H checks passed. Downtime: ~1min. Root cause still unknown — no crash log found. Recommend run_flask.sh wrapper or systemd service.
