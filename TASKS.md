@@ -631,6 +631,6 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 
 ### Priority: MEDIUM
 
-- [ ] worker-2 **Review and resolve 22 unresolved security events** — `security_events.json` has 24 total events, 22 unresolved (15 anomaly, 5 data_integrity, 3 access_control, 1 authentication). Most are MEDIUM severity but some are data integrity issues (order subtotal discrepancy, activity log truncation). Admin should review each in Security Dashboard and mark resolved with notes. Persistent unresolved events clutter the alerting system and may mask real issues.
+- [~] worker-2 **Review and resolve 22 unresolved security events** — `security_events.json` has 24 total events, 22 unresolved (15 anomaly, 5 data_integrity, 3 access_control, 1 authentication). Most are MEDIUM severity but some are data integrity issues (order subtotal discrepancy, activity log truncation). Admin should review each in Security Dashboard and mark resolved with notes. Persistent unresolved events clutter the alerting system and may mask real issues.
 
 - [ ] worker-3 **Restock 6 inventory items at zero stock** — `inventory.json` shows 6 items at 0 stock: Robot Burger, Test Nutrition Item, Pancakes, Bacon & Eggs, Grilled Chicken Salad, and Test "Special" Item. The low-stock alert on the admin dashboard will show a persistent red warning until resolved. Admin should either restock these items or remove them from inventory tracking if they're test items.
