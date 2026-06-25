@@ -614,7 +614,7 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 
 ### Priority: HIGH
 
-- [ ] **Seed tables.json with default table layout** — `tables.json` has 0 entries. The entire table management system (table assignment, table status dashboard, tab checkout, table detail view) is non-functional. Create a default seed of 20 tables (or admin initialization wizard) so waiters can assign orders to tables. Without this, the table management feature set is invisible to restaurant staff.
+- [~] worker-2 **Seed tables.json with default table layout** — `tables.json` has 0 entries. The entire table management system (table assignment, table status dashboard, tab checkout, table detail view) is non-functional. Create a default seed of 20 tables (or admin initialization wizard) so waiters can assign orders to tables. Without this, the table management feature set is invisible to restaurant staff.
 
 - [ ] **One-time forced cleanup of stale pending orders** — 50 of 67 orders (75%) are stuck in "pending" status from June 23 and are now >24h old. The `auto_cleanup_stale_orders()` function exists and runs on `admin_stats()` view, but the data hasn't been cleaned. Trigger a one-time forced cleanup or modify startup to auto-clean stale orders on server start rather than only on admin_stats view. This test data pollutes analytics, the kitchen display, and the pending-order alert threshold.
 
