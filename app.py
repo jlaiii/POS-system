@@ -1087,6 +1087,7 @@ KITCHEN_ROOM = 'kitchen'
 CUSTOMER_ROOM = 'customer_display'
 DRIVETHROUGH_ROOM = 'drivethrough'
 PICKUP_ROOM = 'pickup'
+POS_TERMINALS_ROOM = 'pos_terminals'
 
 
 @socketio.on('connect')
@@ -1163,6 +1164,19 @@ def handle_leave_waiter(waiter_id):
         leave_room(f'waiter_{waiter_id}')
 
 
+@socketio.on('join_pos_terminal')
+def handle_join_pos_terminal(data):
+    """POS terminal client joins the shared pos_terminals room for multi-terminal sync."""
+    if data and data.get('terminal_id'):
+        join_room(POS_TERMINALS_ROOM)
+
+
+@socketio.on('leave_pos_terminal')
+def handle_leave_pos_terminal():
+    """POS terminal client leaves the shared pos_terminals room."""
+    leave_room(POS_TERMINALS_ROOM)
+
+
 def emit_kitchen_update():
     """Broadcast to kitchen room that order state changed."""
     socketio.emit('kitchen_update', {}, room=KITCHEN_ROOM)
@@ -1181,6 +1195,36 @@ def emit_drivethrough_update():
 def emit_pickup_update():
     """Broadcast to pickup display room that pickup state changed."""
     socketio.emit('pickup_update', {}, room=PICKUP_ROOM)
+
+
+def emit_pos_sync(event_type, order_id=None, table_number=None, waiter_id=None, items_count=0, order_total=0.0):
+    """Broadcast order sync event to all POS terminals for multi-terminal synchronization.
+
+    Called whenever an order is created, status-changed, refunded, or cancelled
+    from any terminal. All connected POS clients receive this and refresh relevant views.
+
+    Args:
+        event_type: 'order_submitted', 'order_completed', 'order_cancelled',
+                    'order_refunded', 'order_updated'
+        order_id: int or None
+        table_number: int or None
+        waiter_id: str or None (the user PIN who submitted/owns the order)
+        items_count: int (number of items in the order)
+        order_total: float (order total amount)
+    """
+    try:
+        payload = {
+            'type': event_type,
+            'order_id': order_id,
+            'table_number': table_number,
+            'waiter_id': waiter_id,
+            'items_count': items_count,
+            'total': order_total,
+            'timestamp': datetime.now().isoformat()
+        }
+        socketio.emit('order_sync', payload, room=POS_TERMINALS_ROOM)
+    except Exception:
+        pass  # Non-critical — don't break the request if broadcast fails
 
 
 @socketio.on('tablet_call_server')
@@ -5896,10 +5940,12 @@ def submit_order():
     # --- Webhooks: fire to third-party delivery integrations ---
     fire_webhooks_async(order_details)
 
-    # --- SocketIO: notify kitchen, customer display, drivethrough ---
+    # --- SocketIO: notify kitchen, customer display, drivethrough, POS terminals ---
     emit_kitchen_update()
     emit_customer_update()
     emit_drivethrough_update()
+    emit_pos_sync('order_submitted', order_id=order_id, table_number=data.get('table_number'),
+                  waiter_id=data.get('user'), items_count=len(items), order_total=order_details.get('total', 0))
 
     # Anomaly detection: check rapid orders, large order
     try:
@@ -6072,6 +6118,12 @@ def undo_order():
                             refunded_gc.append({'code': gc_code, 'amount': round(gc_amount, 2)})
                     except Exception:
                         pass
+
+    # --- SocketIO: notify POS terminals about the undo ---
+    emit_pos_sync('order_refunded', order_id=int(order_id),
+                  waiter_id=user,
+                  items_count=len(found_order.get('items', [])),
+                  order_total=float(found_order.get('total', 0)))
 
     return jsonify({
         'message': f'Order #{order_id} undone successfully.',
@@ -7436,6 +7488,14 @@ def refund_order():
         'inventory_restored': restored_items
     })
 
+    # --- SocketIO: notify POS terminals about the refund ---
+    order_id_int = int(order_id)
+    order_total = float(found_order.get('total', 0))
+    items_count = len(found_order.get('items', []))
+    table_number = found_order.get('table_number')
+    emit_pos_sync('order_refunded', order_id=order_id_int, table_number=table_number,
+                  waiter_id=admin_pin, items_count=items_count, order_total=order_total)
+
     return jsonify({
         'message': f'Order #{order_id} refunded successfully.',
         'reason': reason
@@ -7604,6 +7664,13 @@ def refund_item():
         'inventory_restored': restored_items,
         'order_fully_refunded': refunded_indices_count >= total_item_count
     })
+
+    # --- SocketIO: notify POS terminals about the partial refund ---
+    emit_pos_sync('order_refunded', order_id=int(order_id),
+                  table_number=found_order.get('table_number'),
+                  waiter_id=admin_pin,
+                  items_count=len(refund_entries),
+                  order_total=round(total_refund_amount, 2))
 
     return jsonify({
         'message': f'Order #{order_id}: {len(refund_entries)} item(s) refunded.',
@@ -12818,6 +12885,10 @@ def kitchen_complete():
                         'table_number': order.get('table_number'),
                         'items': [{'name': i.get('name'), 'qty': i.get('qty', 1)} for i in order.get('items', []) if not i.get('is_combo_child')]
                     }, room=f'waiter_{waiter_id}')
+                # Emit to all POS terminals for multi-terminal sync
+                emit_pos_sync('order_completed', order_id=order_id, table_number=order.get('table_number'),
+                              waiter_id=order.get('user'), items_count=len(order.get('items', [])),
+                              order_total=float(order.get('total', 0)))
                 return jsonify({'message': f'Order #{order_id} completed', 'order': order})
         return jsonify({'error': f'Order #{order_id} not found'}), 404
     except Exception as e:
@@ -12852,6 +12923,10 @@ def kitchen_cancel():
                     'order_id': order_id, 'action': 'cancelled', 'reason': reason
                 })
                 emit_kitchen_update()
+                # Emit to all POS terminals for multi-terminal sync
+                emit_pos_sync('order_cancelled', order_id=order_id, table_number=order.get('table_number'),
+                              waiter_id=order.get('user'), items_count=len(order.get('items', [])),
+                              order_total=float(order.get('total', 0)))
                 return jsonify({'message': f'Order #{order_id} cancelled', 'order': order})
         return jsonify({'error': f'Order #{order_id} not found'}), 404
     except Exception as e:

@@ -4934,6 +4934,13 @@ const L10N = {
     'payment.receipt_card': '{type} ••••{last4}',
     'payment.receipt_auth': 'Auth Code: {code}',
     'payment.no_terminal': '⚠️ No terminal configured. Using manual entry.',
+    // Multi-terminal sync
+    'order_sync.new_order': 'New order from another terminal',
+    'order_sync.completed': 'Order completed from another terminal',
+    'order_sync.cancelled': 'Order cancelled from another terminal',
+    'order_sync.refunded': 'Order refunded from another terminal',
+    'order_sync.updated': 'Order updated from another terminal',
+    'order_sync.table': 'Table {number}',
   },
   es: {
     'app.title': '🍽️ Sistema POS',
@@ -5941,6 +5948,13 @@ const L10N = {
     'payment.receipt_card': '{type} ••••{last4}',
     'payment.receipt_auth': 'Código de Auth: {code}',
     'payment.no_terminal': '⚠️ No hay terminal configurado. Usando entrada manual.',
+    // Multi-terminal sync
+    'order_sync.new_order': 'Nuevo pedido de otro terminal',
+    'order_sync.completed': 'Pedido completado de otro terminal',
+    'order_sync.cancelled': 'Pedido cancelado de otro terminal',
+    'order_sync.refunded': 'Pedido reembolsado de otro terminal',
+    'order_sync.updated': 'Pedido actualizado de otro terminal',
+    'order_sync.table': 'Mesa {number}',
   }
 };
 
@@ -6162,6 +6176,8 @@ function initSocketIO() {
       if (currentUser && currentUser.id) {
         socket.emit('join_waiter', currentUser.id);
       }
+      // Join shared POS terminals room for multi-terminal sync
+      socket.emit('join_pos_terminal', { terminal_id: currentUser ? currentUser.id : 'anon' });
     });
 
     socket.on('disconnect', () => {
@@ -6231,6 +6247,51 @@ function initSocketIO() {
         else msg += ' — ' + itemNames;
       }
       showToast(msg, 'success', 8000);
+    });
+
+    // ── Multi-terminal sync: order sync from other POS terminals ──
+    let posSyncTimer = null;  // debounce timer
+    socket.on('order_sync', (data) => {
+      if (!data || !data.type) return;
+      // Clear any pending debounce
+      if (posSyncTimer) { clearTimeout(posSyncTimer); posSyncTimer = null; }
+      // Debounce refreshes: accumulate rapid events, refresh once after 2s idle
+      posSyncTimer = setTimeout(() => {
+        posSyncTimer = null;
+        // Refresh order history if the History tab is active
+        if (_lastTab === 'history') loadOrderHistory();
+        // Refresh table status if the Tables tab is active (admin sub-tab)
+        if (_lastTab === 'admin' && document.getElementById('secTablestatus') && document.getElementById('secTablestatus').style.display !== 'none') {
+          loadTableStatusDashboard();
+        }
+      }, 2000);
+
+      // Show a non-intrusive notification toast
+      // Don't show for our own events or for completed orders (already handled)
+      const isOwnOrder = currentUser && data.waiter_id === currentUser.id;
+      if (isOwnOrder) return;
+
+      let msg = '';
+      const tableStr = data.table_number ? t('order_sync.table', {number: data.table_number}) + ' ' : '';
+      const orderStr = data.order_id ? '#' + data.order_id : '';
+
+      switch (data.type) {
+        case 'order_submitted':
+          msg = '🆕 ' + (tableStr || t('order_sync.new_order')) + orderStr;
+          break;
+        case 'order_completed':
+          msg = '✅ ' + (tableStr || t('order_sync.completed')) + orderStr;
+          break;
+        case 'order_cancelled':
+          msg = '❌ ' + (tableStr || t('order_sync.cancelled')) + orderStr;
+          break;
+        case 'order_refunded':
+          msg = '↩️ ' + (tableStr || t('order_sync.refunded')) + orderStr;
+          break;
+        default:
+          msg = '🔄 ' + t('order_sync.updated') + ' ' + orderStr;
+      }
+      if (msg) showToast(msg, 'info', 4000);
     });
   } catch(e) {
     socketEnabled = false;
