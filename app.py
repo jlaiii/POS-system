@@ -11127,6 +11127,162 @@ def employee_pay_history_csv():
     })
 
 
+@app.route('/api/employee/leaderboard', methods=['POST'])
+def employee_leaderboard():
+    """Employee performance leaderboard for admin dashboard.
+    Aggregates revenue, items sold, avg ticket size, tip %, satisfaction rating,
+    and punctuality. Period: 'week' (this week Mon-Sun), 'month' (this month), 'pay_period'.
+    """
+    data = request.json or {}
+    admin_pin = data.get('adminPin')
+
+    if not check_perm(admin_pin, 'view_stats'):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    period = (data.get('period') or 'week').strip()
+    users = load_json_data(USERS_FILE)
+    orders = load_json_data(ORDERS_FILE)
+    shift_log = load_json_data(SHIFT_FILE)
+    feedback_data = load_json_data(FEEDBACK_FILE) if hasattr(globals(), 'FEEDBACK_FILE') else []
+    if not isinstance(feedback_data, list):
+        feedback_data = []
+
+    now = datetime.now()
+    today = now.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    # Determine date range
+    if period == 'week':
+        date_from = today - timedelta(days=today.weekday())
+        date_to = date_from + timedelta(days=6, hours=23, minutes=59, seconds=59)
+        period_label = date_from.strftime('%b %d') + ' - ' + date_to.strftime('%b %d')
+    elif period == 'month':
+        date_from = today.replace(day=1)
+        next_month = date_from.replace(month=date_from.month + 1) if date_from.month < 12 else date_from.replace(year=date_from.year + 1, month=1)
+        date_to = next_month - timedelta(seconds=1)
+        period_label = date_from.strftime('%B %Y')
+    else:
+        # pay_period — use the same logic as timesheet pay period (most recent closed period)
+        date_from, date_to = today - timedelta(days=today.weekday()), today - timedelta(days=today.weekday()) + timedelta(days=6, hours=23, minutes=59, seconds=59)
+        # Use previous full week as pay period
+        date_from = date_from - timedelta(days=7)
+        date_to = date_from + timedelta(days=6, hours=23, minutes=59, seconds=59)
+        period_label = date_from.strftime('%b %d') + ' - ' + date_to.strftime('%b %d')
+
+    # Collect feedback ratings per waiter (by user_id)
+    waiter_ratings = defaultdict(list)
+    for fb in feedback_data:
+        if 'waiter_id' in fb and 'rating' in fb:
+            waiter_ratings[str(fb['waiter_id'])].append(float(fb['rating']))
+
+    # Aggregate order data per user
+    user_perf = defaultdict(lambda: {
+        'revenue': 0.0, 'items_sold': 0, 'order_count': 0, 'tips': 0.0,
+        'ratings': [], 'items_qty': 0
+    })
+
+    for o in orders:
+        waiter = str(o.get('user') or '')
+        if not waiter:
+            continue
+        try:
+            order_date_str = o.get('date', '')
+            if order_date_str:
+                order_dt = datetime.fromisoformat(order_date_str)
+                if not (date_from <= order_dt <= date_to):
+                    continue
+        except (ValueError, TypeError):
+            continue
+
+        # Skip cancelled/refunded
+        status = (o.get('status') or '').lower()
+        if status in ('cancelled', 'refunded', 'voided'):
+            continue
+
+        total = float(o.get('total', 0) or 0)
+        tip = float(o.get('tip_amount', 0) or 0)
+        items = o.get('items', [])
+        items_count = len(items)
+        items_qty = sum(int(item.get('quantity', 1) if isinstance(item, dict) else 1) for item in items)
+
+        user_perf[waiter]['revenue'] += total
+        user_perf[waiter]['tips'] += tip
+        user_perf[waiter]['order_count'] += 1
+        user_perf[waiter]['items_qty'] += items_qty
+
+    # Aggregate late shift data
+    user_late_shifts = defaultdict(int)
+    for s in shift_log:
+        uid = str(s.get('user_id', ''))
+        if not uid:
+            continue
+        late_min = s.get('late_minutes')
+        if late_min and int(late_min) > 0 and not s.get('late_excused'):
+            try:
+                clock_in_str = s.get('clock_in_time', '')
+                if clock_in_str:
+                    clock_dt = datetime.fromisoformat(clock_in_str)
+                    if date_from <= clock_dt <= date_to:
+                        user_late_shifts[uid] += 1
+            except (ValueError, TypeError):
+                pass
+
+    # Build leaderboard array
+    leaderboard = []
+    for uid, perf in user_perf.items():
+        if perf['order_count'] == 0:
+            continue
+        user_info = users.get(uid, {})
+        avg_ticket = round(perf['revenue'] / perf['order_count'], 2) if perf['order_count'] > 0 else 0
+        tip_pct = round((perf['tips'] / perf['revenue']) * 100, 1) if perf['revenue'] > 0 else 0
+        # Satisfaction — from feedback ratings (if any)
+        ratings = waiter_ratings.get(uid, [])
+        avg_rating = round(sum(ratings) / len(ratings), 1) if ratings else None
+
+        leaderboard.append({
+            'user_id': uid,
+            'name': user_info.get('name', 'Unknown'),
+            'role': user_info.get('role', 'user'),
+            'revenue': round(perf['revenue'], 2),
+            'items_sold': perf['items_qty'],
+            'order_count': perf['order_count'],
+            'avg_ticket': avg_ticket,
+            'tip_pct': tip_pct,
+            'tips': round(perf['tips'], 2),
+            'avg_rating': avg_rating,
+            'rating_count': len(ratings),
+            'late_shifts': user_late_shifts.get(uid, 0),
+        })
+
+    # Sort by revenue descending
+    leaderboard.sort(key=lambda x: x['revenue'], reverse=True)
+
+    # Add rank and "next to beat" info
+    for i, entry in enumerate(leaderboard):
+        entry['rank'] = i + 1
+        if i > 0:
+            ahead = leaderboard[i - 1]
+            entry['gap_to_leader'] = round(ahead['revenue'] - entry['revenue'], 2)
+        else:
+            entry['gap_to_leader'] = 0
+
+    current_user_id = data.get('userId', '')
+    my_standing = None
+    if current_user_id:
+        for entry in leaderboard:
+            if entry['user_id'] == current_user_id:
+                my_standing = entry
+                break
+
+    return jsonify({
+        'leaderboard': leaderboard,
+        'my_standing': my_standing,
+        'period': period,
+        'period_label': period_label,
+        'date_from': date_from.isoformat(),
+        'date_to': date_to.isoformat(),
+    })
+
+
 @app.route('/api/export/shifts_csv', methods=['POST'])
 def export_shifts_csv():
     """Export employee shift records as CSV."""

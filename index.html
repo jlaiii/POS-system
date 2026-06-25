@@ -740,6 +740,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
         </div>
         <div id="barcodeStatus"></div>
       </div>
+      <div id="leaderboardSummary" style="display:none;padding:6px 12px;margin-bottom:6px;background:var(--bg2);border-radius:8px;font-size:13px;cursor:pointer;" onclick="switchMainTab('admin');switchAdminSection('leaderboard');loadLeaderboard('week');"></div>
       <div id="itemSearchRow"><input type="text" id="itemSearchInput" placeholder="🔍 Search items..." data-i18n-placeholder="item.search" autocomplete="off" aria-label="Search menu items"/></div>
       <!-- RECENT ORDERS quick-access (collapsible) -->
       <div id="recentOrdersSection" class="recent-orders-wrap" style="display:none;">
@@ -981,6 +982,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
         <button onclick="switchAdminSection('drivers')" id="asDrivers">🚚 Drivers</button>
         <button onclick="switchAdminSection('expenses')" id="asExpenses" data-i18n="admin.expenses">💰 Expenses</button>
         <button onclick="switchAdminSection('payment')" id="asPayment" data-i18n="admin.payment_terminal">💳 Terminal</button>
+        <button onclick="switchAdminSection('leaderboard')" id="asLeaderboard">🏆 Leaderboard</button>
       </div>
       <div id="adminContent">
         <!-- Stats -->
@@ -3202,6 +3204,21 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
           </div>
         </div>
 
+        <!-- Employee Performance Leaderboard -->
+        <div id="secLeaderboard" class="admin-section">
+          <h3 style="margin:0 0 12px 0;">🏆 Employee Performance Leaderboard</h3>
+          <p style="color:var(--text2);margin-bottom:12px;font-size:14px;">Top-performing waitstaff ranked by revenue for the selected period.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center;">
+            <button class="ghost" onclick="loadLeaderboard('week')" id="lbWeekBtn" style="min-height:36px;padding:6px 14px;font-size:13px;font-weight:600;background:var(--accent);color:#fff;">This Week</button>
+            <button class="ghost" onclick="loadLeaderboard('month')" id="lbMonthBtn" style="min-height:36px;padding:6px 14px;font-size:13px;">This Month</button>
+            <button class="ghost" onclick="loadLeaderboard('pay_period')" id="lbPayPeriodBtn" style="min-height:36px;padding:6px 14px;font-size:13px;">Pay Period</button>
+            <span id="lbPeriodLabel" style="font-size:13px;color:var(--text2);margin-left:8px;"></span>
+          </div>
+          <div id="leaderboardContainer">
+            <div class="empty-state">Select a period to load leaderboard data.</div>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
@@ -4912,6 +4929,22 @@ const L10N = {
     'admin.expenses.amount_colon': 'Amount: ${amount}',
     'admin.payment_terminal': '💳 Terminal',
     'admin.payment_desc': 'Configure credit/debit card payment terminal integration.',
+    'admin.leaderboard': '🏆 Leaderboard',
+    'admin.leaderboard.title': '🏆 Employee Performance Leaderboard',
+    'admin.leaderboard.desc': 'Top-performing waitstaff ranked by revenue for the selected period.',
+    'admin.leaderboard.week': 'This Week',
+    'admin.leaderboard.month': 'This Month',
+    'admin.leaderboard.pay_period': 'Pay Period',
+    'admin.leaderboard.select_period': 'Select a period to load leaderboard data.',
+    'admin.leaderboard.loading': '⏳ Loading...',
+    'admin.leaderboard.failed': 'Failed to load leaderboard.',
+    'admin.leaderboard.network_error': 'Network error loading leaderboard.',
+    'admin.leaderboard.no_data': 'No order data for this period.',
+    'admin.leaderboard.you': '(You)',
+    'admin.leaderboard.leader': '🏆 Leader',
+    'admin.leaderboard.behind': '${gap} behind #{rank}',
+    'admin.leaderboard.avg_ticket': 'Avg Ticket: ${amount}',
+    'admin.leaderboard.tip': 'Tip: ${pct}% (${amount})',
     'admin.payment.gateway': '🔌 Gateway Configuration',
     'admin.payment.gateway_type': 'Gateway Type',
     'admin.payment.gateway_manual': 'Manual Entry Only',
@@ -5928,6 +5961,22 @@ const L10N = {
     'admin.expenses.amount_colon': 'Monto: ${amount}',
     'admin.payment_terminal': '💳 Terminal',
     'admin.payment_desc': 'Configure la integración del terminal de pago con tarjeta.',
+    'admin.leaderboard': '🏆 Tabla de Clasificación',
+    'admin.leaderboard.title': '🏆 Tabla de Clasificación de Empleados',
+    'admin.leaderboard.desc': 'Los mejores empleados clasificados por ingresos en el período seleccionado.',
+    'admin.leaderboard.week': 'Esta Semana',
+    'admin.leaderboard.month': 'Este Mes',
+    'admin.leaderboard.pay_period': 'Período de Pago',
+    'admin.leaderboard.select_period': 'Seleccione un período para cargar datos.',
+    'admin.leaderboard.loading': '⏳ Cargando...',
+    'admin.leaderboard.failed': 'Error al cargar la clasificación.',
+    'admin.leaderboard.network_error': 'Error de red al cargar la clasificación.',
+    'admin.leaderboard.no_data': 'Sin datos de pedidos para este período.',
+    'admin.leaderboard.you': '(Tú)',
+    'admin.leaderboard.leader': '🏆 Líder',
+    'admin.leaderboard.behind': '${gap} detrás de #{rank}',
+    'admin.leaderboard.avg_ticket': 'Ticket Prom: ${amount}',
+    'admin.leaderboard.tip': 'Propina: ${pct}% (${amount})',
     'admin.payment.gateway': '🔌 Configuración de Pasarela',
     'admin.payment.gateway_type': 'Tipo de Pasarela',
     'admin.payment.gateway_manual': 'Solo Entrada Manual',
@@ -6545,6 +6594,7 @@ window.addEventListener('DOMContentLoaded', () => {
       } catch(e) {}
     })();
     showApp();
+    loadLeaderboardSummary();
   }
   // Detect and set language
   currentLang = detectLanguage();
@@ -6694,6 +6744,7 @@ async function doLogin(userId) {
     pinValue = '';
     renderPinDisplay();
     showApp();
+    loadLeaderboardSummary();
     if (data.pin_reset_info) {
       showToast(data.pin_reset_info.message, 'warning', 8000);
     }
@@ -24949,6 +25000,151 @@ async function testPaymentConnection() {
   } catch (e) {
     resultDiv.innerHTML = '<span style="color:#e94560;">❌ ' + t('admin.payment.test_fail', {msg: e.message}) + '</span>';
   }
+}
+
+// ═══════════ EMPLOYEE LEADERBOARD ═══════════
+
+let leaderboardData = null;
+let leaderboardPeriod = 'week';
+
+async function loadLeaderboard(period) {
+  if (!period) period = leaderboardPeriod;
+  leaderboardPeriod = period;
+
+  // Highlight active button
+  ['week','month','pay_period'].forEach(p => {
+    const btn = document.getElementById('lb' + p.charAt(0).toUpperCase() + p.slice(1) + 'Btn');
+    if (btn) {
+      btn.style.background = p === period ? 'var(--accent)' : '';
+      btn.style.color = p === period ? '#fff' : '';
+    }
+  });
+
+  const container = document.getElementById('leaderboardContainer');
+  container.innerHTML = '<div class="empty-state">⏳ Loading...</div>';
+
+  try {
+    const res = await fetchJSON(BACKEND_URL + '/api/employee/leaderboard', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        adminPin: currentUser.pin || currentUser.id,
+        period: period,
+        userId: currentUser.id || currentUser.pin
+      })
+    });
+
+    if (!res || !res.leaderboard) {
+      container.innerHTML = '<div class="empty-state val-err">Failed to load leaderboard.</div>';
+      return;
+    }
+
+    leaderboardData = res.leaderboard;
+    const labelEl = document.getElementById('lbPeriodLabel');
+    if (labelEl) labelEl.textContent = res.period_label || '';
+
+    renderLeaderboard(res.leaderboard, res.my_standing);
+  } catch (e) {
+    container.innerHTML = '<div class="empty-state val-err">Network error loading leaderboard.</div>';
+  }
+}
+
+function renderLeaderboard(data, myStanding) {
+  const container = document.getElementById('leaderboardContainer');
+  if (!data || data.length === 0) {
+    container.innerHTML = '<div class="empty-state">No order data for this period.</div>';
+    return;
+  }
+
+  const maxRevenue = data[0] ? data[0].revenue : 1;
+
+  let html = '';
+  data.forEach((entry, i) => {
+    const barWidth = maxRevenue > 0 ? (entry.revenue / maxRevenue) * 100 : 0;
+    const isMe = myStanding && entry.user_id === myStanding.user_id;
+    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1);
+
+    // Rating display
+    const ratingStr = entry.avg_rating !== null && entry.avg_rating !== undefined
+      ? '⭐ ' + entry.avg_rating.toFixed(1) + (entry.rating_count > 0 ? ' (' + entry.rating_count + ')' : '')
+      : '—';
+
+    html += '<div class="card" style="padding:12px 16px;margin-bottom:8px;' +
+      (isMe ? 'border-left:3px solid var(--accent);' : '') + '">' +
+      '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">' +
+        '<span style="font-size:20px;font-weight:700;min-width:32px;text-align:center;">' + medal + '</span>' +
+        '<div style="flex:1;min-width:160px;">' +
+          '<div style="font-size:15px;font-weight:600;">' + escHtml(entry.name) +
+            (isMe ? ' <span style="color:var(--accent);font-size:12px;">(You)</span>' : '') +
+          '</div>' +
+          '<div style="font-size:12px;color:var(--text2);margin-top:2px;">' +
+            escHtml(entry.user_id) + ' · ' + entry.order_count + ' orders · ' + entry.items_sold + ' items' +
+          '</div>' +
+        '</div>' +
+        '<div style="text-align:right;min-width:100px;">' +
+          '<div style="font-size:18px;font-weight:700;color:var(--accent);">$' + entry.revenue.toFixed(2) + '</div>' +
+          (i > 0 ? '<div style="font-size:11px;color:var(--text2);">$' + entry.gap_to_leader.toFixed(2) + ' behind #' + (i) + '</div>' : '<div style="font-size:11px;color:#2ecc71;">🏆 Leader</div>') +
+        '</div>' +
+      '</div>' +
+      '<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--text2);">' +
+        '<span>💵 Avg Ticket: <strong>$' + entry.avg_ticket.toFixed(2) + '</strong></span>' +
+        '<span>💸 Tip: <strong>' + entry.tip_pct + '%</strong> ($' + entry.tips.toFixed(2) + ')</span>' +
+        '<span>' + ratingStr + '</span>' +
+        (entry.late_shifts > 0
+          ? '<span style="color:#e94560;">🕐 Late: <strong>' + entry.late_shifts + '</strong></span>'
+          : '<span>🕐 Late: 0</span>') +
+      '</div>' +
+      '<div style="margin-top:6px;height:10px;background:var(--bg2);border-radius:5px;overflow:hidden;">' +
+        '<div style="height:100%;width:' + barWidth + '%;background:var(--accent);border-radius:5px;opacity:0.7;transition:width 0.5s;"></div>' +
+      '</div>' +
+    '</div>';
+  });
+
+  container.innerHTML = html;
+}
+
+// Load the POS home screen gamification summary (shown after login)
+async function loadLeaderboardSummary() {
+  const el = document.getElementById('leaderboardSummary');
+  if (!el || !currentUser) { if (el) el.style.display = 'none'; return; }
+  try {
+    const res = await fetchJSON(BACKEND_URL + '/api/employee/leaderboard', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        adminPin: currentUser.id || currentUser.pin,
+        period: 'week',
+        userId: currentUser.id || currentUser.pin
+      })
+    });
+    if (!res || !res.leaderboard || res.leaderboard.length === 0) {
+      el.style.display = 'none';
+      return;
+    }
+    const my = res.my_standing;
+    if (!my) {
+      el.style.display = 'none';
+      return;
+    }
+    const rank = my.rank;
+    const total = res.leaderboard.length;
+    let msg = '';
+    if (rank === 1) {
+      msg = '🥇 ' + escHtml(my.name) + ' — You\'re #1 this week! $' + my.revenue.toFixed(2) + ' in sales.';
+    } else if (rank <= 3) {
+      const leader = res.leaderboard[0];
+      msg = medalFor(rank) + ' ' + escHtml(my.name) + ' — #' + rank + ' this week! $' + my.gap_to_leader.toFixed(2) + ' behind ' + escHtml(leader.name) + '.';
+    } else {
+      const leader = res.leaderboard[0];
+      msg = '#' + rank + ' of ' + total + ' · $' + my.gap_to_leader.toFixed(2) + ' behind ' + escHtml(leader.name) + ' this week.';
+    }
+    el.textContent = '🏆 ' + msg + ' Tap to view leaderboard →';
+    el.style.display = 'block';
+  } catch(e) {
+    el.style.display = 'none';
+  }
+}
+
+function medalFor(rank) {
+  return rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '';
 }
 
 // ═══════════ CARD PAYMENT PROCESSING UI ═══════════
