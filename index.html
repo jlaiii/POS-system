@@ -873,6 +873,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
         <button onclick="switchAdminSection('reservations')" id="asReservations">📅 Reservations</button>
         <button onclick="switchAdminSection('security')" id="asSecurity">🛡️ Security</button>
         <button onclick="switchAdminSection('backup')" id="asBackup">💾 Backup</button>
+        <button onclick="switchAdminSection('giftcards')" id="asGiftcards" data-i18n="admin.giftcards">🎁 Gift Cards</button>
       </div>
       <div id="adminContent">
         <!-- Stats -->
@@ -2204,6 +2205,80 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
               <span id="backupLastBackup" style="font-size:13px;color:var(--text2);">⏳ Last backup: checking...</span>
               <button class="outline" onclick="checkBackupStatus()" style="min-height:40px;padding:8px 16px;font-size:13px;">🔄 Check Status</button>
             </div>
+          </div>
+        </div>
+        <!-- Gift Card Management -->
+        <div id="secGiftcards" class="admin-section">
+          <h3 data-i18n="admin.giftcards.title">🎁 Gift Card Management</h3>
+          <p style="color:var(--text2);margin-bottom:16px;font-size:14px;" data-i18n="admin.giftcards.sell_desc">Sell new gift cards, check balances, disable lost cards, and view sales reports.</p>
+
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+            <button class="accent" onclick="showGiftCardSellForm()" style="min-height:48px;padding:10px 20px;font-size:15px;" data-i18n="admin.giftcards.sell">💳 Sell Gift Card</button>
+            <button class="outline" onclick="loadGiftCardList()" style="min-height:48px;padding:10px 20px;font-size:15px;" data-i18n="admin.giftcards.list">📋 Gift Card List</button>
+            <button class="outline" onclick="loadGiftCardReport()" style="min-height:48px;padding:10px 20px;font-size:15px;" data-i18n="admin.giftcards.report">📊 Sales Report</button>
+            <button class="outline" onclick="showGiftCardDisableForm()" style="min-height:48px;padding:10px 20px;font-size:15px;border-color:#e94560;color:#e94560;" data-i18n="admin.giftcards.disable">🚫 Disable Card</button>
+          </div>
+
+          <!-- Sell Gift Card Form (hidden by default) -->
+          <div id="gcSellForm" style="display:none;" class="card" style="margin-bottom:12px;">
+            <h4 style="margin-bottom:12px;" data-i18n="admin.giftcards.sell_title">💳 Sell Gift Card</h4>
+            <div class="form-row">
+              <label data-i18n="admin.giftcards.amount">Amount ($)</label>
+              <input type="number" id="gcSellAmount" step="5" min="5" max="500" value="25" style="flex:1;min-height:48px;font-size:16px;padding:8px;background:var(--bg);border:2px solid var(--border);border-radius:8px;color:#fff;" inputmode="decimal"/>
+            </div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:8px;" data-i18n="admin.giftcards.amount_min">Min: $5, Max: $500</div>
+            <div class="form-row">
+              <label data-i18n="admin.giftcards.payment">Payment Method</label>
+              <select id="gcSellPayment" style="flex:1;min-height:48px;font-size:16px;padding:8px;background:var(--bg);border:2px solid var(--border);border-radius:8px;color:#fff;">
+                <option value="Cash">💵 Cash</option>
+                <option value="Card">💳 Card</option>
+                <option value="Mobile Pay">📱 Mobile Pay</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label data-i18n="admin.giftcards.customer">Customer Name (optional)</label>
+              <input type="text" id="gcSellCustomer" placeholder="e.g. John Doe" style="flex:1;min-height:48px;font-size:16px;padding:8px;background:var(--bg);border:2px solid var(--border);border-radius:8px;color:#fff;" maxlength="100"/>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:8px;">
+              <button class="accent" onclick="sellGiftCard()" style="min-height:48px;padding:12px 24px;font-size:15px;" data-i18n="admin.giftcards.sell_btn">💳 Sell Gift Card</button>
+              <button class="outline" onclick="document.getElementById('gcSellForm').style.display='none'" style="min-height:48px;padding:12px 24px;font-size:15px;" data-i18n="cancel">Cancel</button>
+            </div>
+            <div id="gcSellStatus" style="margin-top:8px;font-size:14px;"></div>
+          </div>
+
+          <!-- Gift Card List -->
+          <div id="gcListContainer" style="display:none;">
+            <div id="gcListContent"></div>
+          </div>
+
+          <!-- Gift Card Report -->
+          <div id="gcReportContainer" style="display:none;">
+            <div id="gcReportContent"></div>
+          </div>
+
+          <!-- Disable Card Form (hidden by default) -->
+          <div id="gcDisableForm" style="display:none;" class="card" style="margin-bottom:12px;">
+            <h4 style="margin-bottom:12px;" data-i18n="admin.giftcards.replace_header">🔄 Lost Card Replacement</h4>
+            <p style="color:var(--text2);margin-bottom:12px;font-size:14px;" data-i18n="admin.giftcards.disable_desc">Disable a lost/stolen gift card and optionally issue a replacement with the remaining balance.</p>
+            <div class="form-row">
+              <label data-i18n="admin.giftcards.code">Gift Card Code</label>
+              <input type="text" id="gcDisableCode" placeholder="GC-XXXX-XXXX-XXXX" style="flex:1;min-height:48px;font-size:16px;padding:8px;background:var(--bg);border:2px solid var(--border);border-radius:8px;color:#fff;text-transform:uppercase;" maxlength="20"/>
+            </div>
+            <div class="form-row">
+              <label data-i18n="admin.giftcards.disable_reason">Reason for disabling</label>
+              <input type="text" id="gcDisableReason" value="Lost/stolen" style="flex:1;min-height:48px;font-size:16px;padding:8px;background:var(--bg);border:2px solid var(--border);border-radius:8px;color:#fff;" maxlength="200"/>
+            </div>
+            <div class="form-row" style="margin-bottom:8px;">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                <input type="checkbox" id="gcIssueReplacement" checked style="width:20px;height:20px;"/>
+                <span data-i18n="admin.giftcards.issue_replacement">Issue replacement card (with remaining balance)</span>
+              </label>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <button class="danger" onclick="disableGiftCard()" style="min-height:48px;padding:12px 24px;font-size:15px;" data-i18n="admin.giftcards.disable_btn">🚫 Disable Card</button>
+              <button class="outline" onclick="document.getElementById('gcDisableForm').style.display='none'" style="min-height:48px;padding:12px 24px;font-size:15px;" data-i18n="cancel">Cancel</button>
+            </div>
+            <div id="gcDisableStatus" style="margin-top:8px;font-size:14px;"></div>
           </div>
         </div>
         <!-- Schedule Builder -->
@@ -3887,6 +3962,52 @@ const L10N = {
     'admin.retention.activity_log': 'Keep activity logs (days)',
     'admin.retention.login_attempts': 'Keep login attempts (days)',
     'admin.retention.saved': 'Retention settings saved!',
+    'admin.giftcards': '🎁 Gift Cards',
+    'admin.giftcards.title': '🎁 Gift Card Management',
+    'admin.giftcards.sell': '💳 Sell Gift Card',
+    'admin.giftcards.sell_desc': 'Sell a new gift card to a customer.',
+    'admin.giftcards.amount': 'Amount ($)',
+    'admin.giftcards.amount_min': 'Min: $5, Max: $500',
+    'admin.giftcards.payment': 'Payment Method',
+    'admin.giftcards.customer': 'Customer Name (optional)',
+    'admin.giftcards.sell_btn': '💳 Sell Gift Card',
+    'admin.giftcards.sold': '🎉 Gift card {code} sold for ${amount}!',
+    'admin.giftcards.balance_check': '🔍 Check Balance',
+    'admin.giftcards.code': 'Gift Card Code',
+    'admin.giftcards.code_ph': 'e.g. GC-XXXX-XXXX-XXXX',
+    'admin.giftcards.check_btn': '🔍 Check',
+    'admin.giftcards.balance': 'Balance: ${balance}',
+    'admin.giftcards.initial': 'Initial: ${amount}',
+    'admin.giftcards.disabled': 'Disabled',
+    'admin.giftcards.sold_by': 'Sold by: {name}',
+    'admin.giftcards.sold_at': 'Sold: {date}',
+    'admin.giftcards.redeem_count': 'Redemptions: {n}',
+    'admin.giftcards.liability': 'Outstanding Liability: ${amount}',
+    'admin.giftcards.total_sold': 'Total Sold: ${amount}',
+    'admin.giftcards.total_redeemed': 'Total Redeemed: ${amount}',
+    'admin.giftcards.active_cards': 'Active Cards: {n}',
+    'admin.giftcards.disable': 'Disable Card',
+    'admin.giftcards.disable_desc': 'Disable a lost/stolen gift card and optionally issue a replacement.',
+    'admin.giftcards.disable_reason': 'Reason for disabling',
+    'admin.giftcards.issue_replacement': 'Issue replacement card (with remaining balance)',
+    'admin.giftcards.disable_btn': '🚫 Disable Card',
+    'admin.giftcards.disabled_msg': '✅ Gift card {code} disabled.',
+    'admin.giftcards.replaced_msg': 'Replacement card: {code}',
+    'admin.giftcards.list': '📋 Gift Card List',
+    'admin.giftcards.report': '📊 Sales Report',
+    'admin.giftcards.no_cards': 'No gift cards sold yet.',
+    'admin.giftcards.redeem': '🎁 Gift Card',
+    'admin.giftcards.pay_with_gc': 'Pay with Gift Card',
+    'admin.giftcards.gc_code': 'Gift Card Code',
+    'admin.giftcards.gc_amount': 'Amount to Apply',
+    'admin.giftcards.remaining': 'Remaining: ${balance}',
+    'admin.giftcards.apply_btn': 'Apply Gift Card',
+    'admin.giftcards.applied': '✅ ${amount} applied from gift card.',
+    'admin.giftcards.insufficient': 'Insufficient balance. ${balance} remaining.',
+    'admin.giftcards.not_found': 'Gift card not found.',
+    'admin.giftcards.customer_colon': 'Customer: {name}',
+    'admin.giftcards.replace_header': '🔄 Lost Card Replacement',
+    'admin.giftcards.sell_title': 'Sell Gift Card',
   },
   es: {
     'app.title': '🍽️ Sistema POS',
@@ -4661,6 +4782,52 @@ const L10N = {
     'admin.retention.activity_log': 'Conservar registros (días)',
     'admin.retention.login_attempts': 'Conservar intentos de inicio (días)',
     'admin.retention.saved': '¡Configuración de retención guardada!',
+    'admin.giftcards': '🎁 Tarjetas de Regalo',
+    'admin.giftcards.title': '🎁 Gestión de Tarjetas de Regalo',
+    'admin.giftcards.sell': '💳 Vender Tarjeta',
+    'admin.giftcards.sell_desc': 'Vender una nueva tarjeta de regalo a un cliente.',
+    'admin.giftcards.amount': 'Monto ($)',
+    'admin.giftcards.amount_min': 'Mín: $5, Máx: $500',
+    'admin.giftcards.payment': 'Método de Pago',
+    'admin.giftcards.customer': 'Nombre del Cliente (opcional)',
+    'admin.giftcards.sell_btn': '💳 Vender Tarjeta',
+    'admin.giftcards.sold': '🎉 Tarjeta {code} vendida por ${amount}!',
+    'admin.giftcards.balance_check': '🔍 Consultar Saldo',
+    'admin.giftcards.code': 'Código de Tarjeta',
+    'admin.giftcards.code_ph': 'ej. GC-XXXX-XXXX-XXXX',
+    'admin.giftcards.check_btn': '🔍 Consultar',
+    'admin.giftcards.balance': 'Saldo: ${balance}',
+    'admin.giftcards.initial': 'Inicial: ${amount}',
+    'admin.giftcards.disabled': 'Deshabilitada',
+    'admin.giftcards.sold_by': 'Vendida por: {name}',
+    'admin.giftcards.sold_at': 'Vendida: {date}',
+    'admin.giftcards.redeem_count': 'Canjes: {n}',
+    'admin.giftcards.liability': 'Pasivo Pendiente: ${amount}',
+    'admin.giftcards.total_sold': 'Total Vendido: ${amount}',
+    'admin.giftcards.total_redeemed': 'Total Canjeado: ${amount}',
+    'admin.giftcards.active_cards': 'Tarjetas Activas: {n}',
+    'admin.giftcards.disable': 'Deshabilitar Tarjeta',
+    'admin.giftcards.disable_desc': 'Deshabilitar una tarjeta perdida/robada y opcionalmente emitir un reemplazo.',
+    'admin.giftcards.disable_reason': 'Motivo de deshabilitación',
+    'admin.giftcards.issue_replacement': 'Emitir tarjeta de reemplazo (con saldo restante)',
+    'admin.giftcards.disable_btn': '🚫 Deshabilitar',
+    'admin.giftcards.disabled_msg': '✅ Tarjeta {code} deshabilitada.',
+    'admin.giftcards.replaced_msg': 'Reemplazo: {code}',
+    'admin.giftcards.list': '📋 Lista de Tarjetas',
+    'admin.giftcards.report': '📊 Informe de Ventas',
+    'admin.giftcards.no_cards': 'Aún no se han vendido tarjetas de regalo.',
+    'admin.giftcards.redeem': '🎁 Tarjeta de Regalo',
+    'admin.giftcards.pay_with_gc': 'Pagar con Tarjeta de Regalo',
+    'admin.giftcards.gc_code': 'Código de Tarjeta',
+    'admin.giftcards.gc_amount': 'Monto a Aplicar',
+    'admin.giftcards.remaining': 'Restante: ${balance}',
+    'admin.giftcards.apply_btn': 'Aplicar Tarjeta',
+    'admin.giftcards.applied': '✅ ${amount} aplicado de tarjeta de regalo.',
+    'admin.giftcards.insufficient': 'Saldo insuficiente. ${balance} restante.',
+    'admin.giftcards.not_found': 'Tarjeta de regalo no encontrada.',
+    'admin.giftcards.customer_colon': 'Cliente: {name}',
+    'admin.giftcards.replace_header': '🔄 Reemplazo de Tarjeta Perdida',
+    'admin.giftcards.sell_title': 'Vender Tarjeta de Regalo',
   }
 };
 
@@ -9257,7 +9424,7 @@ function renderCart() {
 }
 
 function buildPaymentMethods() {
-  const methods = ['Cash', 'Card', 'Mobile Pay'];
+  const methods = ['Cash', 'Card', 'Mobile Pay', 'Gift Card'];
   const container = document.getElementById('paymentMethods');
   container.innerHTML = '';
 
@@ -9285,7 +9452,7 @@ function buildPaymentMethods() {
       const existing = paymentSplits.find(s => s.method === m);
       const btn = document.createElement('button');
       btn.className = existing ? 'selected' : '';
-      btn.textContent = m === 'Cash' ? '💵 Cash' : m === 'Card' ? '💳 Card' : '📱 Mobile Pay';
+      btn.textContent = m === 'Cash' ? '💵 Cash' : m === 'Card' ? '💳 Card' : m === 'Mobile Pay' ? '📱 Mobile Pay' : '🎁 ' + t('admin.giftcards.redeem');
       btn.onclick = () => {
         const idx = paymentSplits.findIndex(s => s.method === m);
         if (idx >= 0) {
@@ -9311,7 +9478,7 @@ function buildPaymentMethods() {
       const row = document.createElement('div');
       row.style.cssText = 'display:flex;align-items:center;gap:6px;background:var(--card);padding:6px 10px;border-radius:8px;flex:1;min-width:140px;';
       const label = document.createElement('span');
-      label.textContent = s.method === 'Cash' ? '💵' : s.method === 'Card' ? '💳' : '📱';
+      label.textContent = s.method === 'Cash' ? '💵' : s.method === 'Card' ? '💳' : s.method === 'Mobile Pay' ? '📱' : '🎁';
       label.style.cssText = 'font-size:16px;';
       const inp = document.createElement('input');
       inp.type = 'number';
@@ -9377,6 +9544,34 @@ function buildPaymentMethods() {
         <div id="cashChangeDisplay" style="text-align:center;padding:8px;font-size:14px;color:var(--text2);">${t('cash_calc.change_due')} <span style="font-size:24px;font-weight:700;color:#2ecc71;">$0.00</span></div>
       `;
       container.appendChild(calcDiv);
+    }
+
+    // --- Gift Card Payment UI (when Gift Card is a selected payment method) ---
+    const usesGiftCard = paymentSplits.some(s => s.method === 'Gift Card');
+    const oldGcUi = document.getElementById('giftCardPaymentUI');
+    if (oldGcUi) oldGcUi.remove();
+    if (usesGiftCard) {
+      const gcDiv = document.createElement('div');
+      gcDiv.id = 'giftCardPaymentUI';
+      gcDiv.style.cssText = 'width:100%;margin-top:10px;padding:10px;background:var(--card);border-radius:10px;border:1px solid var(--border);';
+      gcDiv.innerHTML = `
+        <div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:6px;">🎁 ${t('admin.giftcards.pay_with_gc')}</div>
+        <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
+          <input type="text" id="gcCodeInput" placeholder="${t('admin.giftcards.code_ph')}"
+            style="flex:1;min-height:44px;font-size:15px;padding:8px 12px;background:var(--bg);border:2px solid var(--accent);border-radius:8px;color:#fff;text-align:center;text-transform:uppercase;"
+            maxlength="20" />
+          <button onclick="checkGiftCardBalance()" style="min-height:44px;padding:8px 16px;background:#0f3460;color:#fff;border:1px solid var(--border);border-radius:8px;font-size:14px;cursor:pointer;white-space:nowrap;">${t('admin.giftcards.check_btn')}</button>
+        </div>
+        <div id="gcBalanceDisplay" style="margin-bottom:6px;font-size:14px;color:var(--text2);text-align:center;"></div>
+        <div id="gcApplyRow" style="display:none;flex-wrap:wrap;gap:6px;align-items:center;">
+          <input type="number" id="gcAmountInput" step="0.01" min="0" placeholder="${t('admin.giftcards.gc_amount')}"
+            style="flex:1;min-height:44px;font-size:16px;font-weight:600;padding:8px 12px;background:var(--bg);border:2px solid #2ecc71;border-radius:8px;color:#fff;text-align:center;"
+            inputmode="decimal" />
+          <button onclick="applyGiftCardToSplit()" style="min-height:44px;padding:8px 20px;background:#2ecc71;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;white-space:nowrap;">${t('admin.giftcards.apply_btn')}</button>
+        </div>
+        <div id="gcStatus" style="margin-top:4px;font-size:13px;text-align:center;"></div>
+      `;
+      container.appendChild(gcDiv);
     }
   }
 
@@ -9452,6 +9647,89 @@ function setCashAmount(amount) {
   if (!input) return;
   input.value = amount.toFixed(2);
   updateCashChange();
+}
+
+// ═══════════ GIFT CARD HELPERS ═══════════
+let _gcLastBalance = 0;
+
+async function checkGiftCardBalance() {
+  const input = document.getElementById('gcCodeInput');
+  const display = document.getElementById('gcBalanceDisplay');
+  const applyRow = document.getElementById('gcApplyRow');
+  const status = document.getElementById('gcStatus');
+  if (!input || !display) return;
+  const code = input.value.trim().toUpperCase();
+  if (!code) {
+    display.innerHTML = '<span style="color:#e94560;">❌ ' + t('admin.giftcards.code') + ' ' + t('required') + '</span>';
+    return;
+  }
+  display.innerHTML = '⏳ ' + t('loading');
+  try {
+    const resp = await fetchJSON('/api/gift-cards/balance', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({code})
+    });
+    if (resp && resp.balance !== undefined) {
+      _gcLastBalance = resp.balance;
+      const disabled = resp.disabled ? ' [' + t('admin.giftcards.disabled') + ']' : '';
+      const customer = resp.customer_name ? ' — ' + resp.customer_name : '';
+      display.innerHTML = '<span style="color:#2ecc71;font-size:18px;font-weight:700;">' + t('admin.giftcards.balance', {balance: resp.balance.toFixed(2)}) + '</span>' + disabled + customer;
+      if (!resp.disabled && resp.balance > 0) {
+        applyRow.style.display = 'flex';
+        document.getElementById('gcAmountInput').value = Math.min(resp.balance, getOrderTotalFromSplits()).toFixed(2);
+      } else {
+        applyRow.style.display = 'none';
+      }
+      if (status) status.innerHTML = '';
+    } else {
+      display.innerHTML = '<span style="color:#e94560;">❌ ' + t('admin.giftcards.not_found') + '</span>';
+      applyRow.style.display = 'none';
+    }
+  } catch (e) {
+    display.innerHTML = '<span style="color:#e94560;">❌ ' + t('network_error') + '</span>';
+    applyRow.style.display = 'none';
+  }
+}
+
+function getOrderTotalFromSplits() {
+  let sub = 0, tax = 0;
+  cart.forEach(item => {
+    const lt = item.price * item.qty;
+    sub += lt;
+    const rate = getTaxRate(item.name, item.category || '');
+    tax += lt * rate;
+  });
+  const discAmt = appliedDiscount ? appliedDiscount.discount_amount : 0;
+  const tipAmt = calculateTipAmount(sub);
+  const scAmt = calculateServiceCharge(sub);
+  return Math.round((sub + tax - discAmt + tipAmt + scAmt) * 100) / 100;
+}
+
+async function applyGiftCardToSplit() {
+  const amountInput = document.getElementById('gcAmountInput');
+  const codeInput = document.getElementById('gcCodeInput');
+  const status = document.getElementById('gcStatus');
+  if (!amountInput || !codeInput || !status) return;
+  const code = codeInput.value.trim().toUpperCase();
+  const amount = parseFloat(amountInput.value);
+  if (!amount || amount <= 0) {
+    status.innerHTML = '<span style="color:#e94560;">❌ ' + t('toast.fill_all_fields') + '</span>';
+    return;
+  }
+  if (amount > _gcLastBalance) {
+    status.innerHTML = '<span style="color:#e94560;">❌ ' + t('admin.giftcards.insufficient', {balance: _gcLastBalance.toFixed(2)}) + '</span>';
+    return;
+  }
+  // Find the Gift Card split and set its amount + gift card code
+  const gcSplit = paymentSplits.find(s => s.method === 'Gift Card');
+  if (gcSplit) {
+    gcSplit.amount = amount;
+    gcSplit.gc_code = code; // Store the code for backend redemption on submit
+    status.innerHTML = '<span style="color:#2ecc71;">✅ ' + t('admin.giftcards.applied', {amount: amount.toFixed(2)}) + '</span>';
+    updateRemaining();
+    renderCart();
+  }
 }
 
 // ═══════════ TIP CALCULATION ═══════════
@@ -11260,6 +11538,7 @@ function switchAdminSection(sec) {
   else if (sec === 'backup') checkBackupStatus();
   else if (sec === 'kitchensound') loadKitchenSoundConfigAdmin();
   else if (sec === 'schedule') loadSchedule();
+  else if (sec === 'giftcards') loadGiftCardList();
 }
 
 // ═══════════ TIMESHEET CONFIG ═══════════
@@ -20517,5 +20796,212 @@ switchAdminSection = function(sec) {
     <button class="ghost" onclick="closeUndoToast()" style="min-height:48px;font-size:14px;padding:10px 20px;">✕ Dismiss</button>
   </div>
 </div>
+
+<!-- ═══════════ GIFT CARD ADMIN FUNCTIONS ═══════════ -->
+<script>
+function showGiftCardSellForm() {
+  const form = document.getElementById('gcSellForm');
+  if (form) form.style.display = form.style.display === 'none' ? 'block' : 'block';
+  document.getElementById('gcSellStatus').innerHTML = '';
+  document.getElementById('gcListContainer').style.display = 'none';
+  document.getElementById('gcReportContainer').style.display = 'none';
+  document.getElementById('gcDisableForm').style.display = 'none';
+}
+
+function showGiftCardDisableForm() {
+  document.getElementById('gcDisableForm').style.display = 'block';
+  document.getElementById('gcSellForm').style.display = 'none';
+  document.getElementById('gcListContainer').style.display = 'none';
+  document.getElementById('gcReportContainer').style.display = 'none';
+  document.getElementById('gcDisableStatus').innerHTML = '';
+}
+
+async function sellGiftCard() {
+  const status = document.getElementById('gcSellStatus');
+  if (!status) return;
+  const amount = parseFloat(document.getElementById('gcSellAmount').value);
+  const payment = document.getElementById('gcSellPayment').value;
+  const customer = document.getElementById('gcSellCustomer').value.trim();
+  if (!amount || amount < 5 || amount > 500) {
+    status.innerHTML = '<span style="color:#e94560;">❌ ' + t('admin.giftcards.amount_min') + '</span>';
+    return;
+  }
+  status.innerHTML = '⏳ ' + t('loading');
+  try {
+    const resp = await fetchJSON('/api/gift-cards/sell', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({user: currentUser.id, adminPin: currentUser.id, amount, payment, customer_name: customer})
+    });
+    if (resp && resp.code) {
+      status.innerHTML = '<span style="color:#2ecc71;font-size:16px;font-weight:600;">' + t('admin.giftcards.sold', {code: resp.code, amount: resp.balance.toFixed(2)}) + '</span>' +
+        '<div style="margin-top:8px;padding:10px;background:#0f3460;border-radius:8px;text-align:center;">' +
+        '<div style="font-size:12px;color:var(--text2);margin-bottom:4px;">' + t('admin.giftcards.code') + '</div>' +
+        '<div style="font-size:20px;font-weight:700;color:#2ecc71;letter-spacing:2px;font-family:monospace;">' + resp.code + '</div>' +
+        '<div style="font-size:16px;color:#fff;margin-top:4px;">$' + resp.balance.toFixed(2) + '</div>' +
+        '</div>';
+      // Reload list
+      loadGiftCardList();
+    } else {
+      status.innerHTML = '<span style="color:#e94560;">❌ ' + (resp && resp.message ? resp.message : t('network_error')) + '</span>';
+    }
+  } catch (e) {
+    status.innerHTML = '<span style="color:#e94560;">❌ ' + t('network_error') + '</span>';
+  }
+}
+
+async function loadGiftCardList() {
+  const container = document.getElementById('gcListContainer');
+  const content = document.getElementById('gcListContent');
+  if (!container || !content) return;
+  container.style.display = 'block';
+  document.getElementById('gcSellForm').style.display = 'none';
+  document.getElementById('gcReportContainer').style.display = 'none';
+  document.getElementById('gcDisableForm').style.display = 'none';
+  content.innerHTML = '⏳ ' + t('loading');
+  try {
+    const resp = await fetchJSON('/api/gift-cards/list', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({user: currentUser.id, adminPin: currentUser.id})
+    });
+    if (!resp || !resp.cards) {
+      content.innerHTML = '<span style="color:var(--text2);">' + t('admin.giftcards.no_cards') + '</span>';
+      return;
+    }
+    // Header stats
+    let html = '<div class="card" style="margin-bottom:12px;padding:12px;">';
+    html += '<div style="display:flex;gap:12px;flex-wrap:wrap;">';
+    html += '<span style="font-size:15px;">' + t('admin.giftcards.total_sold', {amount: (resp.total_sold || 0).toFixed(2)}) + '</span>';
+    html += '<span style="font-size:15px;">' + t('admin.giftcards.total_redeemed', {amount: (resp.total_redeemed || 0).toFixed(2)}) + '</span>';
+    html += '<span style="font-size:15px;color:#2ecc71;">' + t('admin.giftcards.active_cards', {n: resp.active_cards || 0}) + '</span>';
+    html += '<span style="font-size:15px;color:#f39c12;">' + t('admin.giftcards.liability', {amount: (resp.outstanding_liability || 0).toFixed(2)}) + '</span>';
+    html += '</div></div>';
+
+    // Table
+    html += '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:13px;">';
+    html += '<thead><tr style="background:var(--card);">';
+    html += '<th style="padding:8px;text-align:left;border-bottom:2px solid var(--border);">' + t('admin.giftcards.code') + '</th>';
+    html += '<th style="padding:8px;text-align:right;border-bottom:2px solid var(--border);">' + t('admin.giftcards.balance').replace('${balance}', '') + '</th>';
+    html += '<th style="padding:8px;text-align:right;border-bottom:2px solid var(--border);">' + t('admin.giftcards.initial').replace('${amount}', '') + '</th>';
+    html += '<th style="padding:8px;text-align:left;border-bottom:2px solid var(--border);">' + t('admin.giftcards.redeem_count').replace('{n}', '') + '</th>';
+    html += '<th style="padding:8px;text-align:left;border-bottom:2px solid var(--border);">' + t('admin.giftcards.sold_by').replace('{name}', '') + '</th>';
+    html += '<th style="padding:8px;text-align:left;border-bottom:2px solid var(--border);">Status</th>';
+    html += '<th style="padding:8px;text-align:left;border-bottom:2px solid var(--border);">Actions</th>';
+    html += '</tr></thead><tbody>';
+
+    resp.cards.forEach(c => {
+      const statusClass = c.disabled ? 'color:#e94560;' : 'color:#2ecc71;';
+      const statusText = c.disabled ? t('admin.giftcards.disabled') : 'Active';
+      const soldAt = c.sold_at ? new Date(c.sold_at).toLocaleDateString() : '';
+      html += '<tr style="border-bottom:1px solid var(--border);">';
+      html += '<td style="padding:8px;font-family:monospace;font-weight:600;">' + escHtml(c.code) + '</td>';
+      html += '<td style="padding:8px;text-align:right;font-weight:600;">$' + c.balance.toFixed(2) + '</td>';
+      html += '<td style="padding:8px;text-align:right;color:var(--text2);">$' + c.initial_balance.toFixed(2) + '</td>';
+      html += '<td style="padding:8px;text-align:center;">' + c.redemption_count + '</td>';
+      html += '<td style="padding:8px;">' + escHtml(c.sold_by_name) + '<br><span style="font-size:11px;color:var(--text2);">' + soldAt + '</span></td>';
+      html += '<td style="padding:8px;"><span style="' + statusClass + 'font-weight:600;">' + statusText + '</span></td>';
+      html += '<td style="padding:8px;">';
+      if (!c.disabled) {
+        html += '<button class="ghost" onclick="showGiftCardDisableFor(\'' + c.code + '\')" style="min-height:36px;padding:4px 10px;font-size:12px;color:#e94560;" title="Disable">🚫</button>';
+      }
+      html += '</td></tr>';
+    });
+    html += '</tbody></table></div>';
+    content.innerHTML = html;
+  } catch (e) {
+    content.innerHTML = '<span style="color:#e94560;">❌ ' + t('network_error') + '</span>';
+  }
+}
+
+function showGiftCardDisableFor(code) {
+  showGiftCardDisableForm();
+  document.getElementById('gcDisableCode').value = code;
+}
+
+async function disableGiftCard() {
+  const status = document.getElementById('gcDisableStatus');
+  const code = document.getElementById('gcDisableCode').value.trim().toUpperCase();
+  const reason = document.getElementById('gcDisableReason').value.trim();
+  const issueReplacement = document.getElementById('gcIssueReplacement').checked;
+  if (!code) {
+    status.innerHTML = '<span style="color:#e94560;">❌ ' + t('admin.giftcards.code') + ' ' + t('required') + '</span>';
+    return;
+  }
+  status.innerHTML = '⏳ ' + t('loading');
+  try {
+    const resp = await fetchJSON('/api/gift-cards/disable', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({user: currentUser.id, adminPin: currentUser.id, code, reason, issue_replacement: issueReplacement})
+    });
+    if (resp && resp.disabled) {
+      let msg = '<span style="color:#2ecc71;font-size:16px;">' + t('admin.giftcards.disabled_msg', {code}) + '</span>';
+      if (resp.replacement_code) {
+        msg += '<div style="margin-top:8px;padding:8px;background:#0f3460;border-radius:8px;text-align:center;">' +
+          t('admin.giftcards.replaced_msg', {code: resp.replacement_code}) + '</div>';
+      }
+      status.innerHTML = msg;
+      loadGiftCardList();
+    } else {
+      status.innerHTML = '<span style="color:#e94560;">❌ ' + (resp && resp.message ? resp.message : t('network_error')) + '</span>';
+    }
+  } catch (e) {
+    status.innerHTML = '<span style="color:#e94560;">❌ ' + t('network_error') + '</span>';
+  }
+}
+
+async function loadGiftCardReport() {
+  const container = document.getElementById('gcReportContainer');
+  const content = document.getElementById('gcReportContent');
+  if (!container || !content) return;
+  container.style.display = 'block';
+  document.getElementById('gcSellForm').style.display = 'none';
+  document.getElementById('gcListContainer').style.display = 'none';
+  document.getElementById('gcDisableForm').style.display = 'none';
+  content.innerHTML = '⏳ ' + t('loading');
+  try {
+    const resp = await fetchJSON('/api/gift-cards/report', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({user: currentUser.id, adminPin: currentUser.id})
+    });
+    if (!resp) {
+      content.innerHTML = '<span style="color:var(--text2);">' + t('admin.giftcards.no_cards') + '</span>';
+      return;
+    }
+    let html = '<div class="card" style="padding:16px;">';
+    html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;">';
+
+    const cards = [
+      {label: t('admin.giftcards.total_sold', {amount: ''}), value: '$' + (resp.total_sold_amount || 0).toFixed(2), color: '#2ecc71'},
+      {label: t('admin.giftcards.total_redeemed', {amount: ''}), value: '$' + (resp.total_redeemed_amount || 0).toFixed(2), color: '#3498db'},
+      {label: t('admin.giftcards.liability', {amount: ''}), value: '$' + (resp.outstanding_liability || 0).toFixed(2), color: '#f39c12'},
+      {label: t('admin.giftcards.active_cards', {n: ''}), value: String(resp.active_cards || 0), color: '#2ecc71'},
+    ];
+    cards.forEach(c => {
+      html += '<div style="background:var(--bg);padding:12px;border-radius:8px;border-left:4px solid ' + c.color + ';">';
+      html += '<div style="font-size:12px;color:var(--text2);margin-bottom:4px;">' + c.label + '</div>';
+      html += '<div style="font-size:22px;font-weight:700;color:' + c.color + ';">' + c.value + '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+
+    // Payment method breakdown
+    if (resp.payment_method_breakdown && Object.keys(resp.payment_method_breakdown).length > 0) {
+      html += '<h4 style="margin:16px 0 8px;">💳 ' + t('admin.stats.eod_payment_methods') + '</h4>';
+      html += '<div style="display:flex;gap:8px;flex-wrap:wrap;">';
+      for (const [method, amount] of Object.entries(resp.payment_method_breakdown)) {
+        html += '<span style="background:var(--card);padding:6px 12px;border-radius:6px;font-size:14px;">' + escHtml(method) + ': <strong>$' + amount.toFixed(2) + '</strong></span>';
+      }
+      html += '</div>';
+    }
+    html += '</div>';
+    content.innerHTML = html;
+  } catch (e) {
+    content.innerHTML = '<span style="color:#e94560;">❌ ' + t('network_error') + '</span>';
+  }
+}
+</script>
 
 </body>

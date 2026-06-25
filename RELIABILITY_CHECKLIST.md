@@ -1,25 +1,25 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-25T00:09 UTC
-> Total checks: 407
-> Healthy: 407 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-25T01:53 UTC
+> Total checks: 412
+> Healthy: 412 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK [verified 00:09]
-- [x] All JSON data files exist and are valid — all 9 core JSON files valid, parseable [verified 00:09]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, username='jayadmin', role='owner') present, 5 users total [verified 00:09]
-- [x] Git repo is clean (no uncommitted changes from crashes) — 7 modified files (activity_log.json, login_attempts.json, order_counter.json, orders.json, refunded_orders.json, security_events.json, timesheet.json — operational updates by workers, expected) [verified 00:09]
+- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK [verified 01:53]
+- [x] All JSON data files exist and are valid — all 9 core JSON files valid, parseable [verified 01:53]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, username='jayadmin', role='owner') present, 5 users total [verified 01:53]
+- [x] Git repo is clean (no uncommitted changes from crashes) — clean (no modified files) [verified 01:53]
 
 ## HOURLY (check if last check was >1h ago)
-- [x] /api/health — {"status":"ok"} (GET) [verified 23:42]
-- [x] Frontend loads — 200, HTML OK [verified 23:42]
-- [x] /api/items returns items — GET, 14 items across 3 categories (Drinks:3, Foods:6, Snacks:5) [verified 23:42]
+- [x] /api/health — {"status":"ok"} (GET) [verified 01:53]
+- [x] Frontend loads — 200, HTML OK [verified 01:53]
+- [x] /api/items returns items — GET, 14 items across 3 categories (Drinks:3, Foods:6, Snacks:5) [verified 01:53]
 - [x] /api/admin_shifts returns shifts — POST, 36 shifts returned [verified 00:09]
 - [x] /api/login works — POST with userId=1111, LOGIN OK — user: Owner, role: owner, session_token present [verified 00:09]
-- [x] /api/clock/status works — POST with adminPin=1111, clocked_out [verified 23:20]
-- [x] /api/admin_stats returns stats — POST with adminPin=1111, stats returned [verified 23:20]
+- [x] /api/clock/status works — POST with adminPin=1111, clocked_out [verified 01:53]
+- [x] /api/admin_stats returns stats — POST with adminPin=1111, 57 total orders, $1953.49 total sales [verified 01:53]
 
 ## EVERY 4 HOURS
 - [x] Cash drawer: last closed at 09:41 with $130.00 balance, $0.00 diff — balanced. Cash drawer endpoints (status/history/report) all working [verified 20:57]

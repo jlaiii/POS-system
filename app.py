@@ -165,6 +165,8 @@ LOGIN_ATTEMPTS_FILE = 'login_attempts.json'  # Persistent login attempt records 
 SECURITY_EVENTS_FILE = 'security_events.json'  # Security events/incidents log
 SECURITY_CONFIG_FILE = 'security_config.json'  # Security config (blocked IPs, thresholds)
 
+GIFT_CARDS_FILE = 'gift_cards.json'  # Gift card management (sell, redeem, balance)
+
 # --- Platform / Multi-Tenant Constants ---
 GLOCAL_DIR = 'data/global'  # Global platform data directory
 BUSINESSES_FILE = os.path.join(GLOCAL_DIR, 'businesses.json')  # All registered businesses
@@ -263,7 +265,7 @@ def backup_menu():
 
 
 # Ensure JSON files exist and are initialized correctly
-for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE, INVENTORY_FILE, REFUNDED_ORDERS_FILE, FAVORITES_FILE, LOYALTY_FILE, SCHEDULED_PRICING_FILE, WASTE_FILE, DELIVERY_ADDRESSES_FILE, WEBHOOKS_FILE, TABLE_ADS_FILE, CASH_DRAWER_FILE, COMBOS_FILE, SERVICE_CHARGE_FILE, EMAIL_CONFIG_FILE, SHIFT_FILE, TICKETS_FILE, RESERVATIONS_FILE, TICKET_TEMPLATES_FILE, APPROVALS_FILE, RESTAURANT_CONFIG_FILE, PRINTER_CONFIG_FILE]:
+for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE, INVENTORY_FILE, REFUNDED_ORDERS_FILE, FAVORITES_FILE, LOYALTY_FILE, SCHEDULED_PRICING_FILE, WASTE_FILE, DELIVERY_ADDRESSES_FILE, WEBHOOKS_FILE, TABLE_ADS_FILE, CASH_DRAWER_FILE, COMBOS_FILE, SERVICE_CHARGE_FILE, EMAIL_CONFIG_FILE, SHIFT_FILE, TICKETS_FILE, RESERVATIONS_FILE, TICKET_TEMPLATES_FILE, APPROVALS_FILE, RESTAURANT_CONFIG_FILE, PRINTER_CONFIG_FILE, GIFT_CARDS_FILE]:
     if not os.path.exists(f):
         with open(f, 'w') as file:
             if f == USERS_FILE:
@@ -331,6 +333,8 @@ for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMES
                 json.dump({"name": "Our Restaurant", "hours_today": "Mon-Fri: 11:00 AM - 10:00 PM", "wifi_name": "Guest WiFi", "wifi_password": ""}, file, indent=4)  # Initialize restaurant config
             elif f == PRINTER_CONFIG_FILE:
                 json.dump({"enabled": False, "printer_ip": "", "printer_port": 9100, "printer_type": "network", "receipt_header": "🍽️ POS System", "receipt_footer": "Thank you!", "characters_per_line": 42}, file, indent=4)  # Initialize printer config
+            elif f == GIFT_CARDS_FILE:
+                json.dump({"cards": [], "total_sold": 0, "total_redeemed": 0}, file, indent=4)  # Initialize gift cards
             else:
                 json.dump([], file)  # Initialize orders.json and cleared_orders.json as empty lists
 
@@ -5465,6 +5469,42 @@ def submit_order():
     except Exception:
         pass
 
+    # --- Gift Card Redemption: process any gift card payment splits ---
+    gift_card_redemptions = []
+    if payment_splits and isinstance(payment_splits, list):
+        for split in payment_splits:
+            if split.get('method') == 'Gift Card' and split.get('gc_code'):
+                gc_code = split['gc_code']
+                gc_amount = float(split.get('amount', 0))
+                if gc_amount > 0:
+                    try:
+                        gc_data = _get_gift_cards()
+                        card = None
+                        for c in gc_data['cards']:
+                            if c['code'] == gc_code:
+                                card = c
+                                break
+                        if card and not card.get('disabled', False):
+                            current_balance = float(card['balance'])
+                            if gc_amount <= current_balance:
+                                new_balance = round(current_balance - gc_amount, 2)
+                                card['balance'] = new_balance
+                                card['redemption_history'].append({
+                                    'amount': round(gc_amount, 2),
+                                    'balance_after': new_balance,
+                                    'redeemed_at': datetime.now().isoformat(),
+                                    'order_id': order_id
+                                })
+                                gc_data['total_redeemed'] += round(gc_amount, 2)
+                                save_json_data(GIFT_CARDS_FILE, gc_data)
+                                gift_card_redemptions.append({
+                                    'code': gc_code,
+                                    'amount': round(gc_amount, 2),
+                                    'balance_after': new_balance
+                                })
+                    except Exception:
+                        pass
+
     return jsonify({
         'message': 'Order submitted successfully',
         'order_number': order_number,
@@ -5554,6 +5594,38 @@ def undo_order():
         'inventory_restored': restored_items,
         'order_total': found_order.get('total', 0)
     })
+
+    # --- Gift Card Refund: restore balance if gift card was used ---
+    refunded_gc = []
+    payment_splits = found_order.get('payment_splits')
+    if payment_splits and isinstance(payment_splits, list):
+        for split in payment_splits:
+            if split.get('method') == 'Gift Card' and split.get('gc_code'):
+                gc_code = split['gc_code']
+                gc_amount = float(split.get('amount', 0))
+                if gc_amount > 0:
+                    try:
+                        gc_data = _get_gift_cards()
+                        card = None
+                        for c in gc_data['cards']:
+                            if c['code'] == gc_code:
+                                card = c
+                                break
+                        if card:
+                            current_balance = float(card['balance'])
+                            card['balance'] = round(current_balance + gc_amount, 2)
+                            card['redemption_history'].append({
+                                'amount': round(-gc_amount, 2),
+                                'balance_after': card['balance'],
+                                'redeemed_at': datetime.now().isoformat(),
+                                'order_id': order_id,
+                                'type': 'refund'
+                            })
+                            gc_data['total_redeemed'] -= round(gc_amount, 2)
+                            save_json_data(GIFT_CARDS_FILE, gc_data)
+                            refunded_gc.append({'code': gc_code, 'amount': round(gc_amount, 2)})
+                    except Exception:
+                        pass
 
     return jsonify({
         'message': f'Order #{order_id} undone successfully.',
@@ -17538,6 +17610,369 @@ def get_date_reservations():
         'date': date,
         'reservations': day_reservations,
         'total': len(day_reservations)
+    })
+
+
+# ── Gift Card Management Endpoints ────────────────────────────────────────
+# Data structure in gift_cards.json:
+# {
+#   "cards": [
+#     {
+#       "code": "GC-XXXX-XXXX-XXXX",
+#       "pin": "1234",
+#       "initial_balance": 50.00,
+#       "balance": 50.00,
+#       "sold_at": "2026-06-25T12:00:00",
+#       "sold_by": "1111",
+#       "sold_by_name": "Owner",
+#       "disabled": false,
+#       "disabled_at": null,
+#       "replaced_by": null,
+#       "redemption_history": []
+#     }
+#   ],
+#   "total_sold": 0,
+#   "total_redeemed": 0
+# }
+
+def _generate_gift_card_code():
+    """Generate a unique gift card code in format GC-XXXX-XXXX-XXXX."""
+    import secrets as _sec
+    chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'  # No 0/O/1/I for readability
+    groups = []
+    for _ in range(3):
+        group = ''.join(_sec.choice(chars) for _ in range(4))
+        groups.append(group)
+    return 'GC-' + '-'.join(groups)
+
+
+def _get_gift_cards():
+    """Load gift cards data, ensuring structure is valid."""
+    data = load_json_data(GIFT_CARDS_FILE)
+    if not isinstance(data, dict):
+        data = {"cards": [], "total_sold": 0, "total_redeemed": 0}
+    if "cards" not in data:
+        data["cards"] = []
+    if "total_sold" not in data:
+        data["total_sold"] = 0
+    if "total_redeemed" not in data:
+        data["total_redeemed"] = 0
+    return data
+
+
+@app.route('/api/gift-cards/sell', methods=['POST'])
+def gift_card_sell():
+    """Sell a gift card. Creates a new card with a unique code."""
+    data = request.json
+    user_id = data.get('user')
+    admin_pin = data.get('adminPin', user_id)
+    amount = float(data.get('amount', 0))
+    payment_method = data.get('payment', 'Cash')
+    customer_name = data.get('customer_name', '')
+
+    # Validate amount
+    if amount < 5:
+        return jsonify({'message': 'Minimum gift card amount is $5.00.'}), 400
+    if amount > 500:
+        return jsonify({'message': 'Maximum gift card amount is $500.00.'}), 400
+
+    # Validate permissions
+    users = load_json_data(USERS_FILE)
+    if admin_pin not in users:
+        return jsonify({'message': 'User not found.'}), 404
+    user_info = users[admin_pin]
+    if not check_perm(admin_pin, 'manage_items') and user_info.get('role') != 'owner':
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    # Load gift card data
+    gc_data = _get_gift_cards()
+
+    # Generate unique code
+    existing_codes = {c['code'] for c in gc_data['cards']}
+    code = _generate_gift_card_code()
+    while code in existing_codes:
+        code = _generate_gift_card_code()
+
+    # Create card record
+    card = {
+        'code': code,
+        'initial_balance': round(amount, 2),
+        'balance': round(amount, 2),
+        'sold_at': datetime.now().isoformat(),
+        'sold_by': admin_pin,
+        'sold_by_name': user_info.get('name', 'Unknown'),
+        'payment_method': payment_method,
+        'customer_name': customer_name,
+        'disabled': False,
+        'disabled_at': None,
+        'disabled_reason': None,
+        'replaced_by': None,
+        'replaced_from': None,
+        'redemption_history': []
+    }
+    gc_data['cards'].append(card)
+    gc_data['total_sold'] += round(amount, 2)
+    save_json_data(GIFT_CARDS_FILE, gc_data)
+
+    log_activity('gift_card_sold', admin_pin, user_info.get('role', 'user'), {
+        'code': code,
+        'amount': amount,
+        'payment_method': payment_method,
+        'customer_name': customer_name
+    })
+
+    return jsonify({
+        'message': f'Gift card {code} sold for ${amount:.2f}.',
+        'code': code,
+        'balance': round(amount, 2)
+    })
+
+
+@app.route('/api/gift-cards/redeem', methods=['POST'])
+def gift_card_redeem():
+    """Redeem a gift card. Deducts from balance."""
+    data = request.json
+    code = data.get('code', '').strip().upper()
+    amount = float(data.get('amount', 0))
+    order_id = data.get('order_id')
+
+    if not code:
+        return jsonify({'message': 'Gift card code is required.'}), 400
+    if amount <= 0:
+        return jsonify({'message': 'Redemption amount must be greater than zero.'}), 400
+
+    gc_data = _get_gift_cards()
+
+    # Find the card
+    card = None
+    for c in gc_data['cards']:
+        if c['code'] == code:
+            card = c
+            break
+
+    if not card:
+        return jsonify({'message': 'Gift card not found.'}), 404
+
+    if card.get('disabled', False):
+        return jsonify({'message': 'This gift card has been disabled.'}), 400
+
+    current_balance = float(card['balance'])
+    if amount > current_balance:
+        return jsonify({
+            'message': f'Insufficient balance. Card has ${current_balance:.2f} remaining.',
+            'balance': round(current_balance, 2)
+        }), 400
+
+    # Deduct
+    new_balance = round(current_balance - amount, 2)
+    card['balance'] = new_balance
+
+    # Add redemption record
+    card['redemption_history'].append({
+        'amount': round(amount, 2),
+        'balance_after': new_balance,
+        'redeemed_at': datetime.now().isoformat(),
+        'order_id': order_id
+    })
+    gc_data['total_redeemed'] += round(amount, 2)
+    save_json_data(GIFT_CARDS_FILE, gc_data)
+
+    return jsonify({
+        'message': f'${amount:.2f} redeemed from gift card {code}. Remaining balance: ${new_balance:.2f}.',
+        'code': code,
+        'redeemed': round(amount, 2),
+        'balance': new_balance
+    })
+
+
+@app.route('/api/gift-cards/balance', methods=['POST'])
+def gift_card_balance():
+    """Check a gift card balance."""
+    data = request.json
+    code = data.get('code', '').strip().upper()
+
+    if not code:
+        return jsonify({'message': 'Gift card code is required.'}), 400
+
+    gc_data = _get_gift_cards()
+    card = None
+    for c in gc_data['cards']:
+        if c['code'] == code:
+            card = c
+            break
+
+    if not card:
+        return jsonify({'message': 'Gift card not found.'}), 404
+
+    return jsonify({
+        'code': card['code'],
+        'balance': float(card['balance']),
+        'initial_balance': float(card.get('initial_balance', 0)),
+        'disabled': card.get('disabled', False),
+        'customer_name': card.get('customer_name', '')
+    })
+
+
+@app.route('/api/gift-cards/list', methods=['POST'])
+def gift_card_list():
+    """List all gift cards (admin)."""
+    data = request.json
+    admin_pin = data.get('adminPin', data.get('user'))
+
+    users = load_json_data(USERS_FILE)
+    if admin_pin not in users:
+        return jsonify({'message': 'User not found.'}), 404
+    if not check_perm(admin_pin, 'manage_items') and users[admin_pin].get('role') != 'owner':
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    gc_data = _get_gift_cards()
+
+    # Return cards with full details (admin view)
+    cards = []
+    for c in gc_data['cards']:
+        cards.append({
+            'code': c['code'],
+            'initial_balance': float(c.get('initial_balance', 0)),
+            'balance': float(c['balance']),
+            'sold_at': c.get('sold_at', ''),
+            'sold_by_name': c.get('sold_by_name', ''),
+            'customer_name': c.get('customer_name', ''),
+            'payment_method': c.get('payment_method', ''),
+            'disabled': c.get('disabled', False),
+            'disabled_at': c.get('disabled_at'),
+            'disabled_reason': c.get('disabled_reason'),
+            'redemption_count': len(c.get('redemption_history', [])),
+            'replaced_by': c.get('replaced_by'),
+            'replaced_from': c.get('replaced_from')
+        })
+
+    return jsonify({
+        'cards': cards,
+        'total_sold': gc_data.get('total_sold', 0),
+        'total_redeemed': gc_data.get('total_redeemed', 0),
+        'active_cards': sum(1 for c in gc_data['cards'] if not c.get('disabled', False)),
+        'outstanding_liability': sum(float(c['balance']) for c in gc_data['cards'] if not c.get('disabled', False))
+    })
+
+
+@app.route('/api/gift-cards/disable', methods=['POST'])
+def gift_card_disable():
+    """Disable a lost/stolen gift card and optionally issue a replacement."""
+    data = request.json
+    admin_pin = data.get('adminPin', data.get('user'))
+    code = data.get('code', '').strip().upper()
+    reason = data.get('reason', 'Lost/stolen')
+    issue_replacement = data.get('issue_replacement', True)
+    new_code_result = None
+
+    # Validate permissions
+    users = load_json_data(USERS_FILE)
+    if admin_pin not in users:
+        return jsonify({'message': 'User not found.'}), 404
+    if not check_perm(admin_pin, 'manage_items') and users[admin_pin].get('role') != 'owner':
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    gc_data = _get_gift_cards()
+
+    card = None
+    for c in gc_data['cards']:
+        if c['code'] == code:
+            card = c
+            break
+
+    if not card:
+        return jsonify({'message': 'Gift card not found.'}), 404
+
+    if card.get('disabled', False):
+        return jsonify({'message': 'Gift card is already disabled.'}), 400
+
+    # Disable the card
+    card['disabled'] = True
+    card['disabled_at'] = datetime.now().isoformat()
+    card['disabled_reason'] = reason
+
+    # Issue replacement with same balance
+    if issue_replacement and float(card['balance']) > 0:
+        existing_codes = {c['code'] for c in gc_data['cards']}
+        new_code = _generate_gift_card_code()
+        while new_code in existing_codes:
+            new_code = _generate_gift_card_code()
+
+        new_card = {
+            'code': new_code,
+            'initial_balance': float(card['balance']),
+            'balance': float(card['balance']),
+            'sold_at': datetime.now().isoformat(),
+            'sold_by': admin_pin,
+            'sold_by_name': users[admin_pin].get('name', 'Unknown'),
+            'customer_name': card.get('customer_name', ''),
+            'payment_method': 'Replacement',
+            'disabled': False,
+            'disabled_at': None,
+            'disabled_reason': None,
+            'replaced_by': None,
+            'replaced_from': code,
+            'redemption_history': []
+        }
+        gc_data['cards'].append(new_card)
+        card['replaced_by'] = new_code
+        new_code_result = new_code
+
+    save_json_data(GIFT_CARDS_FILE, gc_data)
+
+    log_activity('gift_card_disabled', admin_pin, users[admin_pin].get('role', 'user'), {
+        'code': code,
+        'reason': reason,
+        'replacement_issued': issue_replacement,
+        'replacement_code': new_code_result
+    })
+
+    msg = f'Gift card {code} has been disabled.'
+    if new_code_result:
+        msg += f' Replacement card {new_code_result} issued with remaining balance ${float(card["balance"]):.2f}.'
+
+    return jsonify({
+        'message': msg,
+        'code': code,
+        'disabled': True,
+        'replacement_code': new_code_result
+    })
+
+
+@app.route('/api/gift-cards/report', methods=['POST'])
+def gift_card_report():
+    """Gift card sales report for admin."""
+    data = request.json
+    admin_pin = data.get('adminPin', data.get('user'))
+
+    users = load_json_data(USERS_FILE)
+    if admin_pin not in users:
+        return jsonify({'message': 'User not found.'}), 404
+    if not check_perm(admin_pin, 'manage_items') and users[admin_pin].get('role') != 'owner':
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    gc_data = _get_gift_cards()
+
+    total_sold_amount = gc_data.get('total_sold', 0)
+    total_redeemed_amount = gc_data.get('total_redeemed', 0)
+    active_cards = [c for c in gc_data['cards'] if not c.get('disabled', False)]
+    disabled_cards = [c for c in gc_data['cards'] if c.get('disabled', False)]
+    outstanding_liability = sum(float(c['balance']) for c in active_cards)
+
+    # Count by payment method
+    payment_methods = {}
+    for c in gc_data['cards']:
+        pm = c.get('payment_method', 'Unknown')
+        payment_methods[pm] = payment_methods.get(pm, 0) + float(c.get('initial_balance', 0))
+
+    return jsonify({
+        'total_cards_sold': len(gc_data['cards']),
+        'active_cards': len(active_cards),
+        'disabled_cards': len(disabled_cards),
+        'total_sold_amount': round(total_sold_amount, 2),
+        'total_redeemed_amount': round(total_redeemed_amount, 2),
+        'outstanding_liability': round(outstanding_liability, 2),
+        'payment_method_breakdown': payment_methods
     })
 
 
