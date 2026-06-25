@@ -609,3 +609,15 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 ### Priority: LOW
 
 - [ ] **Add customer birthday/anniversary tracking with automated rewards** — Capture customer birthdates and anniversaries during checkout via phone-based customer lookup. Auto-award loyalty points or free item on birthday with POS notification. Track visit frequency and offer periodic bonus rewards for regulars. Integrates with existing loyalty system for customer retention and marketing.
+
+## New Tasks (from Audit #22 — 2026-06-25)
+
+### Priority: HIGH
+
+- [ ] **Seed tables.json with default table layout** — `tables.json` has 0 entries. The entire table management system (table assignment, table status dashboard, tab checkout, table detail view) is non-functional. Create a default seed of 20 tables (or admin initialization wizard) so waiters can assign orders to tables. Without this, the table management feature set is invisible to restaurant staff.
+
+- [ ] **One-time forced cleanup of stale pending orders** — 50 of 67 orders (75%) are stuck in "pending" status from June 23 and are now >24h old. The `auto_cleanup_stale_orders()` function exists and runs on `admin_stats()` view, but the data hasn't been cleaned. Trigger a one-time forced cleanup or modify startup to auto-clean stale orders on server start rather than only on admin_stats view. This test data pollutes analytics, the kitchen display, and the pending-order alert threshold.
+
+### Priority: MEDIUM
+
+- [ ] **Add missing item images for Breakfast and Salads categories** — 5 of 19 items (26%) still have no `image_url`: Pancakes, Bacon & Eggs, French Toast, Caesar Salad, Grilled Chicken Salad. The `generate_item_images.py` script only covered Foods/Drinks/Snacks categories. Customer tablet menu (`/tablet`) shows these items as bare text with no image — unprofessional for a customer-facing digital menu. Either extend the generator script or manually add SVG placeholders for these 5 items.
