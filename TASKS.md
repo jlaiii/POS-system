@@ -684,7 +684,7 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 
 ### Priority: MEDIUM
 
-- [~] worker-3 **Add menu item seasonal/limited-time flag with auto-expiry** — Restaurants frequently run LTOs (limited-time offers) and seasonal items (pumpkin spice latte in fall, watermelon salad in summer) that should auto-remove from the menu after a set date. Add an optional `end_date` field to item data model. Items past their end_date auto-hide from the POS grid, customer tablet menu, and online ordering view (still visible in admin item management with an "Expired ⏰" badge). Admin gets a dashboard notification 7 days and 1 day before expiry. Existing scheduled_visibility system handles time-of-day rules but not date-based hard cutoffs. Also useful for catering menus with seasonal availability.
+- [x] worker-3 **Add menu item seasonal/limited-time flag with auto-expiry** — Added optional `end_date` field to item data model. Backend: `is_item_expired()`, `days_until_expiry()` helpers, `is_item_visible()` extended to hide expired items, `_expired`/`_days_until_expiry` annotation on GET /api/items, end_date accepted in add_item/edit_item/CSV import/CSV export. Frontend: End Date date picker in Add Item and Edit Item forms, ⏰ Expired badge (red) and ⏳ Xd left badge (amber) in admin item management list, 📅 Seasonal/LTO Items stat card on admin dashboard with collapsible section showing expired/expiring items. Items past their end_date auto-hide from POS grid, customer tablet menu, and online ordering view. i18n EN + ES. Dark theme compatible. [worker-3]
 
 ### Priority: LOW
 

@@ -993,6 +993,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
           </div>
           <div class="stats-grid" id="statsGrid"><div class="skeleton-stats-grid"><div class="skeleton-stat-card"><div class="skeleton skeleton-line" style="width:40%;height:12px;"></div><div class="skeleton skeleton-line" style="width:60%;height:22px;"></div><div class="skeleton skeleton-line tiny"></div></div><div class="skeleton-stat-card"><div class="skeleton skeleton-line" style="width:50%;height:12px;"></div><div class="skeleton skeleton-line" style="width:45%;height:22px;"></div><div class="skeleton skeleton-line tiny"></div></div></div></div>
           <div id="lowStockSection" style="margin-top:12px;"></div>
+          <div id="expirySection" style="margin-top:12px;"></div>
           <div id="staleOrdersSection" style="margin-top:12px;"></div>
           <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
             <button class="accent" onclick="showEndOfDaySummary()" style="font-size:14px;padding:12px 20px;min-height:48px;">📋 End of Day Summary</button>
@@ -1115,6 +1116,11 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
             </div>
             <button class="outline" onclick="addIngredientRow('addItemIngredientRows')" style="font-size:13px;padding:4px 12px;min-height:36px;" data-i18n="item.add_ingredient">+ Add Ingredient</button>
           </div>
+          <div class="form-row" style="flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px;">
+            <span style="font-size:13px;color:var(--text2);min-width:60px;">📅 <span data-i18n="item.end_date">End Date (LTO/Seasonal):</span></span>
+            <input type="date" id="addItemEndDate" style="max-width:180px;min-height:36px;padding:6px 8px;font-size:13px;" title="If set, item auto-hides after this date"/>
+            <span style="font-size:12px;color:var(--text2);" data-i18n="item.end_date_hint">Leave empty for permanent items</span>
+          </div>
           </div>
           <div class="card" style="margin-bottom:12px;">
             <details style="margin-bottom:8px;cursor:pointer;">
@@ -1217,6 +1223,11 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
                 </div>
               </div>
               <button class="outline" onclick="addIngredientRow('editItemIngredientRows')" style="font-size:13px;padding:4px 12px;min-height:36px;" data-i18n="item.add_ingredient">+ Add Ingredient</button>
+            </div>
+            <div class="form-row" style="flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px;">
+              <span style="font-size:13px;color:var(--text2);min-width:60px;">📅 <span data-i18n="item.end_date">End Date (LTO/Seasonal):</span></span>
+              <input type="date" id="editItemEndDate" style="max-width:180px;min-height:36px;padding:6px 8px;font-size:13px;" title="If set, item auto-hides after this date"/>
+              <span style="font-size:12px;color:var(--text2);" data-i18n="item.end_date_hint">Leave empty for permanent items</span>
             </div>
           </div>
           <div id="itemMgmtList"><div class="empty-state">Loading items...</div></div>
@@ -4001,6 +4012,8 @@ const L10N = {
     'item.visibility_days': 'Days:',
     'item.visibility_time': 'Time:',
     'item.visibility_add_rule': '+ Add Rule',
+    'item.end_date': 'End Date (LTO/Seasonal):',
+    'item.end_date_hint': 'Leave empty for permanent items',
     'history.filter_date': 'Filter by date',
     'history.filter_date_from': 'From date',
     'history.filter_date_to': 'To date',
@@ -5015,6 +5028,8 @@ const L10N = {
     'item.visibility_days': 'Días:',
     'item.visibility_time': 'Hora:',
     'item.visibility_add_rule': '+ Añadir Regla',
+    'item.end_date': 'Fecha de Fin (LTO/Temporada):',
+    'item.end_date_hint': 'Dejar vacío para artículos permanentes',
     'history.filter_date': 'Filtrar por fecha',
     'history.filter_date_from': 'Desde fecha',
     'history.filter_date_to': 'Hasta fecha',
@@ -13497,6 +13512,8 @@ async function loadAdminStats() {
       ${s.driver_stats ? '<div class="stat-card" style="border-left:3px solid #f39c12;"><div class="stat-val">🚚 ' + s.driver_stats.total_drivers + '</div><div class="stat-lbl">Drivers<br><span style="font-size:12px;color:var(--text2);">🟢 ' + s.driver_stats.available + ' available · 🟡 ' + s.driver_stats.delivering + ' delivering · 🔴 ' + s.driver_stats.off_duty + ' off</span></div></div>' : ''}
       <!-- Customer Feedback Card -->
       ${renderFeedbackStatCard(s.feedback_stats)}
+      <!-- Item Expiry / LTO Alert -->
+      <div class="stat-card expiry-card" style="border-left:3px solid ${(s.expired_count||0) > 0 ? '#e74c3c' : (s.expiring_today_count||0) > 0 ? '#f39c12' : (s.expiring_soon_count||0) > 0 ? '#e67e22' : '#2ecc71'};"><div class="stat-val">${(s.expired_count||0) > 0 ? '🔴 ' : (s.expiring_today_count||0) > 0 ? '🟡 ' : (s.expiring_soon_count||0) > 0 ? '🟠 ' : '✅ '}${(s.expired_count||0)+(s.expiring_soon_count||0)+(s.expiring_today_count||0)}</div><div class="stat-lbl">Seasonal/LTO Items<br><span style="font-size:12px;color:var(--text2);">${(s.expired_count||0) > 0 ? (s.expired_count + ' expired · ') : ''}${(s.expiring_today_count||0) > 0 ? (s.expiring_today_count + ' expiring today · ') : ''}${(s.expiring_soon_count||0) ? (s.expiring_soon_count + ' expiring ≤7d') : 'No items expiring'}</span></div></div>
     `;
     // Append comp summary section if there are any comps
     const comp = s.comp_summary || {};
@@ -13531,6 +13548,37 @@ async function loadAdminStats() {
       `;
     } else {
       lowSection.innerHTML = '';
+    }
+
+    // Render expired/expiring items collapsible section
+    const expiredItems = s.expired_items || [];
+    const expiringSoon = s.expiring_soon_items || [];
+    const totalExpiryItems = expiredItems.length + expiringSoon.length;
+    const expirySection = document.getElementById('expirySection');
+    if (totalExpiryItems > 0) {
+      const allExpiryItems = [
+        ...expiredItems.map(i => ({ item: i, status: 'expired' })),
+        ...expiringSoon.map(i => ({ item: i.item, days: i.days, status: i.days === 0 ? 'today' : 'soon' }))
+      ];
+      expirySection.innerHTML = `
+        <div class="card" style="padding:0;overflow:hidden;">
+          <div class="low-stock-header" onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('.collapse-icon').classList.toggle('rotated');">
+            <span style="font-weight:600;">📅 Seasonal/LTO Items</span>
+            <span style="color:var(--text2);font-size:13px;">${expiredItems.length} expired · ${expiringSoon.length} expiring soon</span>
+            <span class="collapse-icon" style="margin-left:auto;transition:transform .2s;">▼</span>
+          </div>
+          <div class="low-stock-body">
+            ${allExpiryItems.map(it => `
+              <div class="low-stock-item ${it.status === 'expired' ? 'oos' : 'low'}" style="justify-content:space-between;">
+                <span class="low-stock-name">${escHtml(it.item)}</span>
+                <span class="low-stock-badge ${it.status === 'expired' ? 'badge-oos' : 'badge-low'}">${it.status === 'expired' ? '⏰ Expired' : it.status === 'today' ? '⏳ Expires today!' : '⏳ ' + it.days + ' days left'}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    } else {
+      expirySection.innerHTML = '';
     }
 
     // Render order type breakdown section
@@ -14823,11 +14871,16 @@ async function loadItemMgmt() {
         const marginHtml = margin !== null ? `<span style="color:${margin >= 50 ? '#2ecc71' : (margin >= 25 ? '#f39c12' : '#e74c3c')};font-size:12px;margin-left:4px;">${margin.toFixed(1)}% margin</span>` : '';
         const ingredientsCount = (item.ingredients && item.ingredients.length) || 0;
         const recipeBadge = ingredientsCount > 0 ? `<span style="color:#9b59b6;font-size:11px;margin-left:4px;">📋${ingredientsCount}</span>` : '';
+        const _endDate = item.end_date || '';
+        const expiringBadge = item._expired ? `<span style="color:#e74c3c;font-size:11px;margin-left:4px;font-weight:bold;">⏰ Expired</span>` :
+          (item._days_until_expiry !== null && item._days_until_expiry !== undefined && item._days_until_expiry <= 7 && item._days_until_expiry >= 0 ?
+            `<span style="color:${item._days_until_expiry <= 1 ? '#e74c3c' : '#f39c12'};font-size:11px;margin-left:4px;">⏳ ${item._days_until_expiry === 0 ? 'Expires today' : item._days_until_expiry + 'd left'}</span>` : '');
+        const endDateBadge = _endDate ? `<span style="color:var(--text2);font-size:11px;margin-left:4px;">📅 ${escHtml(_endDate)}</span>` : '';
         html += `<div class="item-mgmt-entry">
-          <div class="ime-info">${imgHtml}<span class="ime-cat">${escHtml(cat)}</span> — ${escHtml(item.name)} <span class="ime-price">$${item.price.toFixed(2)}</span>${bcHtml}${courseBadge}${dietaryHtml}${costHtml}${marginHtml}${recipeBadge}${item.modifiers && item.modifiers.groups && item.modifiers.groups.length > 0 ? '<span style="color:#f39c12;font-size:11px;margin-left:6px;">⚙️</span>' : ''} ${item.active === false ? '<span style="color:var(--text2);font-size:11px;margin-left:6px;" data-i18n="item.hidden">🚫 Hidden</span>' : '<span style="color:#2ecc71;font-size:11px;margin-left:6px;" data-i18n="item.visible">👁️ Visible</span>'}</div>
+          <div class="ime-info">${imgHtml}<span class="ime-cat">${escHtml(cat)}</span> — ${escHtml(item.name)} <span class="ime-price">$${item.price.toFixed(2)}</span>${bcHtml}${courseBadge}${dietaryHtml}${costHtml}${marginHtml}${recipeBadge}${endDateBadge}${expiringBadge}${item.modifiers && item.modifiers.groups && item.modifiers.groups.length > 0 ? '<span style="color:#f39c12;font-size:11px;margin-left:6px;">⚙️</span>' : ''} ${item.active === false ? '<span style="color:var(--text2);font-size:11px;margin-left:6px;" data-i18n="item.hidden">🚫 Hidden</span>' : '<span style="color:#2ecc71;font-size:11px;margin-left:6px;" data-i18n="item.visible">👁️ Visible</span>'}</div>
           <div class="ime-actions">
             <button class="outline" onclick='toggleItemVisibility(${JSON.stringify(cat)},${JSON.stringify(item.name)})' style="font-size:13px;padding:6px 12px;min-height:36px;" title="${item.active === false ? t('item.show') : t('item.hide')}">${item.active === false ? '👁️' : '🚫'}</button>
-            <button class="outline" onclick='startEditItem(${JSON.stringify(cat)},${JSON.stringify(item.name)},${item.price},${JSON.stringify(bc)},${JSON.stringify(imgUrl)},${JSON.stringify(course)},${JSON.stringify(dietaryTags)},${JSON.stringify(item.nutritional_info || {})},${JSON.stringify(item.scheduled_visibility || [])},${JSON.stringify(item.ingredients || [])})' style="font-size:13px;padding:6px 12px;min-height:36px;">✏️</button>
+            <button class="outline" onclick='startEditItem(${JSON.stringify(cat)},${JSON.stringify(item.name)},${item.price},${JSON.stringify(bc)},${JSON.stringify(imgUrl)},${JSON.stringify(course)},${JSON.stringify(dietaryTags)},${JSON.stringify(item.nutritional_info || {})},${JSON.stringify(item.scheduled_visibility || [])},${JSON.stringify(item.ingredients || [])},${JSON.stringify(_endDate)})' style="font-size:13px;padding:6px 12px;min-height:36px;">✏️</button>
             <button class="outline" onclick='editItemModifiers(${JSON.stringify(cat)},${JSON.stringify(item.name)})' style="font-size:13px;padding:6px 12px;min-height:36px;">⚙️</button>
             <button class="danger" onclick='deleteItem(${JSON.stringify(cat)},${JSON.stringify(item.name)})' style="font-size:13px;padding:6px 12px;min-height:36px;">🗑️</button>
           </div>
@@ -14838,7 +14891,7 @@ async function loadItemMgmt() {
   } catch(e) { list.innerHTML = '<div class="empty-state">' + t('network_error') + '</div>'; }
 }
 
-function startEditItem(cat, name, price, barcode, imageUrl, course, dietaryTags, nutritionalInfo, visibilityRules, ingredients) {
+function startEditItem(cat, name, price, barcode, imageUrl, course, dietaryTags, nutritionalInfo, visibilityRules, ingredients, endDate) {
   document.getElementById('editItemForm').classList.add('active');
   document.getElementById('editOldCat').value = cat;
   document.getElementById('editOldName').value = name;
@@ -14856,6 +14909,7 @@ function startEditItem(cat, name, price, barcode, imageUrl, course, dietaryTags,
   document.getElementById('editItemFat').value = ni.fat || '';
   loadVisibilityRules('edit', visibilityRules || []);
   loadIngredients('edit', ingredients || []);
+  document.getElementById('editItemEndDate').value = endDate || '';
   document.getElementById('editItemForm').scrollIntoView({ behavior: 'smooth' });
 }
 
@@ -14879,7 +14933,7 @@ async function saveEditItem() {
   const fat = document.getElementById('editItemFat').value.trim();
   if (!newCat || !newName || isNaN(newPrice) || newPrice <= 0) { showToast(t('toast.fill_all_fields'), 'danger'); return; }
   try {
-    const body = { adminPin: currentUser.id, oldCategory: oldCat, oldName, newCategory: newCat, newName, newPrice, barcode: newBarcode, image_url: newImageUrl, course: newCourse, dietary_tags: dietaryTags, scheduled_visibility: getVisibilityRules('edit'), ingredients: getIngredients('edit') };
+    const body = { adminPin: currentUser.id, oldCategory: oldCat, oldName, newCategory: newCat, newName, newPrice, barcode: newBarcode, image_url: newImageUrl, course: newCourse, dietary_tags: dietaryTags, scheduled_visibility: getVisibilityRules('edit'), ingredients: getIngredients('edit'), end_date: document.getElementById('editItemEndDate').value || null };
     const ni = {};
     if (calories) ni.calories = parseFloat(calories);
     if (protein) ni.protein = parseFloat(protein);
@@ -15333,7 +15387,7 @@ async function addItem() {
   const fat = document.getElementById('addItemFat').value.trim();
   if (!category || !name || isNaN(price) || price <= 0) { showToast(t('toast.fill_all_fields'), 'danger'); return; }
   try {
-    const body = { adminPin: currentUser.id, category, name, price, barcode, image_url: imageUrl, course, dietary_tags: dietaryTags, scheduled_visibility: getVisibilityRules('add'), ingredients: getIngredients('add') };
+  const body = { adminPin: currentUser.id, category, name, price, barcode, image_url: imageUrl, course, dietary_tags: dietaryTags, scheduled_visibility: getVisibilityRules('add'), ingredients: getIngredients('add'), end_date: document.getElementById('addItemEndDate').value || null };
     if (calories) body.calories = parseFloat(calories);
     if (protein) body.protein = parseFloat(protein);
     if (carbs) body.carbs = parseFloat(carbs);

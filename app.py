@@ -4810,6 +4810,8 @@ def get_items():
         for item in cat_items:
             annotated = dict(item)
             annotated['_visible'] = is_item_visible(item)
+            annotated['_expired'] = is_item_expired(item)
+            annotated['_days_until_expiry'] = days_until_expiry(item)
             cost, breakdown = calculate_item_cost(item, inventory)
             annotated['_cost'] = cost
             annotated['_ingredients'] = breakdown
@@ -4882,7 +4884,7 @@ def items_csv_export():
     items_data = load_json_data(ITEMS_FILE)
     output = io.StringIO()
     writer = csv.writer(output)
-    writer.writerow(['category', 'name', 'price', 'description', 'image_url', 'dietary_tags', 'barcode', 'calories', 'protein', 'carbs', 'fat'])
+    writer.writerow(['category', 'name', 'price', 'description', 'image_url', 'dietary_tags', 'barcode', 'calories', 'protein', 'carbs', 'fat', 'end_date'])
     for cat, items in items_data.items():
         for item in items:
             description = item.get('description', '')
@@ -4899,7 +4901,8 @@ def items_csv_export():
                 ni.get('calories', ''),
                 ni.get('protein', ''),
                 ni.get('carbs', ''),
-                ni.get('fat', '')
+                ni.get('fat', ''),
+                item.get('end_date', '')
             ])
     csv_content = output.getvalue()
     output.close()
@@ -4992,6 +4995,12 @@ def items_csv_import():
                         existing['barcode'] = barcode
                     if dietary_tags:
                         existing['dietary_tags'] = dietary_tags
+                    # Parse end_date if provided
+                    end_date_val = (row.get('end_date') or '').strip()
+                    if end_date_val:
+                        existing['end_date'] = end_date_val
+                    elif 'end_date' in row:
+                        existing['end_date'] = None
                     # Parse nutritional columns
                     ni = existing.get('nutritional_info', {})
                     for nk in ['calories', 'protein', 'carbs', 'fat']:
@@ -5024,7 +5033,8 @@ def items_csv_import():
                     'dietary_tags': dietary_tags,
                     'course': 'main',
                     'active': True,
-                    'nutritional_info': ni
+                    'nutritional_info': ni,
+                    'end_date': (row.get('end_date') or '').strip() or None
                 })
                 created += 1
         except Exception as e:
@@ -5104,7 +5114,7 @@ def add_item():
                 nutrition[key] = round(float(val), 1)
             except (ValueError, TypeError):
                 pass
-    items_data[category].append({"name": name, "price": price, "barcode": data.get('barcode', ''), "image_url": data.get('image_url', ''), "description": data.get('description', ''), "course": data.get('course', 'main'), "active": True, "dietary_tags": data.get('dietary_tags', []), "nutritional_info": nutrition if nutrition else {}, "scheduled_visibility": data.get('scheduled_visibility', []), "ingredients": data.get('ingredients', [])})
+    items_data[category].append({"name": name, "price": price, "barcode": data.get('barcode', ''), "image_url": data.get('image_url', ''), "description": data.get('description', ''), "course": data.get('course', 'main'), "active": True, "dietary_tags": data.get('dietary_tags', []), "nutritional_info": nutrition if nutrition else {}, "scheduled_visibility": data.get('scheduled_visibility', []), "ingredients": data.get('ingredients', []), "end_date": data.get('end_date', None)})
     save_json_data(ITEMS_FILE, items_data)
     backup_menu()  # Auto-backup after successful save
     
@@ -5182,7 +5192,7 @@ def edit_item():
                 old_barcode = items_data[old_category][i].get('barcode', '')
                 old_course = item.get('course', 'main')
                 old_active = item.get('active', True)
-                items_data[new_category].append({"name": new_name, "price": new_price, "barcode": data.get('barcode', old_barcode), "image_url": data.get('image_url', old_image_url), "description": data.get('description', item.get('description', '')), "course": data.get('course', old_course), "active": old_active, "dietary_tags": data.get('dietary_tags', item.get('dietary_tags', [])), "nutritional_info": data.get('nutritional_info', item.get('nutritional_info', {})), "scheduled_visibility": data.get('scheduled_visibility', item.get('scheduled_visibility', [])), "ingredients": data.get('ingredients', item.get('ingredients', []))})
+                items_data[new_category].append({"name": new_name, "price": new_price, "barcode": data.get('barcode', old_barcode), "image_url": data.get('image_url', old_image_url), "description": data.get('description', item.get('description', '')), "course": data.get('course', old_course), "active": old_active, "dietary_tags": data.get('dietary_tags', item.get('dietary_tags', [])), "nutritional_info": data.get('nutritional_info', item.get('nutritional_info', {})), "scheduled_visibility": data.get('scheduled_visibility', item.get('scheduled_visibility', [])), "ingredients": data.get('ingredients', item.get('ingredients', [])), "end_date": data.get('end_date', item.get('end_date', None))})
             else:  # Only name/price/barcode changing within same category
                 items_data[old_category][i]["name"] = new_name
                 items_data[old_category][i]["price"] = new_price
@@ -5202,6 +5212,8 @@ def edit_item():
                     items_data[old_category][i]["scheduled_visibility"] = data.get('scheduled_visibility', [])
                 if 'ingredients' in data:
                     items_data[old_category][i]["ingredients"] = data.get('ingredients', [])
+                if 'end_date' in data:
+                    items_data[old_category][i]["end_date"] = data.get('end_date', None)
             break
 
     if not item_found:
@@ -8895,6 +8907,35 @@ def admin_stats():
         low_stock_items = []
     # --- End inventory health ---
 
+    # --- Item expiry / limited-time notification ---
+    try:
+        items_data = load_json_data(ITEMS_FILE)
+        expired_count = 0
+        expiring_soon_count = 0  # within 7 days
+        expiring_today_count = 0  # within 1 day
+        expired_items = []
+        expiring_soon_items = []
+        for cat, cat_items in items_data.items():
+            for item in cat_items:
+                du = days_until_expiry(item)
+                if du is not None:
+                    if du < 0:
+                        expired_count += 1
+                        expired_items.append(cat + '/' + item.get('name', '?'))
+                    elif du == 0:
+                        expiring_today_count += 1
+                        expiring_soon_items.append({'item': cat + '/' + item.get('name', '?'), 'days': 0})
+                    elif du <= 7:
+                        expiring_soon_count += 1
+                        expiring_soon_items.append({'item': cat + '/' + item.get('name', '?'), 'days': du})
+    except Exception:
+        expired_count = 0
+        expiring_soon_count = 0
+        expiring_today_count = 0
+        expired_items = []
+        expiring_soon_items = []
+    # --- End item expiry ---
+
     # --- Backup health scan ---
     try:
         backup_dir = os.path.join('backups', 'json')
@@ -9138,6 +9179,11 @@ def admin_stats():
         'low_stock_count': low_stock_count,
         'out_of_stock_count': out_of_stock_count,
         'low_stock_items': low_stock_items,
+        'expired_count': expired_count,
+        'expiring_soon_count': expiring_soon_count,
+        'expiring_today_count': expiring_today_count,
+        'expired_items': expired_items,
+        'expiring_soon_items': expiring_soon_items,
         'raw_orders': orders,
         'raw_cleared_orders': cleared_orders,
         # Backup health
@@ -12280,11 +12326,41 @@ def is_schedule_active(rule):
 
 def is_item_visible(item):
     """Check if an item's scheduled_visibility rules make it visible right now.
-    If scheduled_visibility is empty or not set, the item is always visible."""
+    If scheduled_visibility is empty or not set, the item is always visible.
+    Also checks if the item has expired (end_date past today)."""
+    if is_item_expired(item):
+        return False
     visibility_rules = item.get('scheduled_visibility', [])
     if not visibility_rules:
         return True  # No rules = always visible
     return any(is_schedule_active(rule) for rule in visibility_rules)
+
+
+def is_item_expired(item):
+    """Check if an item has an end_date in the past."""
+    end_date_str = item.get('end_date')
+    if not end_date_str:
+        return False
+    try:
+        from datetime import datetime
+        end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+        return datetime.now().date() > end_date
+    except (ValueError, TypeError):
+        return False
+
+
+def days_until_expiry(item):
+    """Return days until an item expires, or None if no end_date.
+    Returns negative if already expired."""
+    end_date_str = item.get('end_date')
+    if not end_date_str:
+        return None
+    try:
+        from datetime import datetime
+        end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+        return (end_date - datetime.now().date()).days
+    except (ValueError, TypeError):
+        return None
 
 def calculate_item_cost(item, inventory_data):
     """Calculate the total ingredient cost for a menu item based on its recipe/ingredients.
