@@ -71,7 +71,7 @@
 - [x] **migrate_loyalty_points.py** — Migrated 2 loyalty points records from loyalty_points.json to SQLite. Extended schema with 7 fields (email, notes, address, total_redeemed, total_orders, created_at, history). Added schema migration helper in db.py for forward-compatible column additions. Commit: 9b576e3
 - [x] **migrate_orders.py** — Migrated 66 orders from orders.json to SQLite. Handles edge cases (payment as dict, null fields, order 55 with dict payment). Added service_charge_amount + customer_email columns to orders schema. Also migrates cleared_orders.json (0 cleared). Idempotency tested. Commit: b20f501
 - [x] **migrate_login_attempts.py** — Migrated 102 login attempts from login_attempts.json to SQLite. Added user_agent + details columns to schema. Updated db.py with schema migration entries. Idempotency tested. Commit: a280b28
-- [x] **migrate_security_events.py** — Migrated 24 security events from security_events.json to SQLite. Mapped category→event_type, affected_user→user_id, with full incident metadata in details JSON. Idempotency tested. Commit: pending
+- [x] **migrate_security_events.py** — Migrated 24 security events from security_events.json to SQLite. Mapped category→event_type, affected_user→user_id, with full incident metadata in details JSON. Idempotency tested. Commit: 3352888
 
 ## ROLLBACK PLAN (always keep current)
 How to revert to JSON mode if DB breaks:
