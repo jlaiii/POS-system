@@ -501,7 +501,9 @@ def init_db():
             user_id TEXT,
             timestamp TEXT,
             success INTEGER DEFAULT 0,
-            method TEXT
+            method TEXT,
+            user_agent TEXT DEFAULT '',
+            details TEXT DEFAULT '{}'
         )
     """)
 
@@ -557,6 +559,9 @@ def _migrate_schemas():
         # orders: added service_charge_amount, customer_email in schema update
         ('orders', 'service_charge_amount', 'REAL DEFAULT 0'),
         ('orders', 'customer_email', 'TEXT DEFAULT ""'),
+        # login_attempts: added user_agent, details in schema update
+        ('login_attempts', 'user_agent', 'TEXT DEFAULT ""'),
+        ('login_attempts', 'details', 'TEXT DEFAULT "{}"'),
     ]
 
     for table, column, col_def in migrations:
