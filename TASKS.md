@@ -597,7 +597,7 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 
 ### Priority: HIGH
 
-- [ ] **Add order type classification (dine-in, takeout, delivery, catering) with per-type workflows** — Categorize each order with explicit type field (dine_in/takeout/delivery/catering). Different service charge rules, packaging fees per type, tax rate overrides, and kitchen ticket formatting per type. Filter sales stats by order type for channel analysis. Quick-type selector in POS cart area with icon buttons. Essential for multi-channel restaurants that handle both dine-in and takeout in the same system.
+- [~] worker-3 **Add order type classification (dine-in, takeout, delivery, catering) with per-type workflows** — Categorize each order with explicit type field (dine_in/takeout/delivery/catering). Different service charge rules, packaging fees per type, tax rate overrides, and kitchen ticket formatting per type. Filter sales stats by order type for channel analysis. Quick-type selector in POS cart area with icon buttons. Essential for multi-channel restaurants that handle both dine-in and takeout in the same system.
 
 ### Priority: MEDIUM
 
