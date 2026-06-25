@@ -1,7 +1,7 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-25T21:11 UTC
-> Total checks: 575
-> Healthy: 575 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-25T21:16 UTC
+> Total checks: 578
+> Healthy: 578 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
@@ -13,7 +13,7 @@
 - [x] Git repo is clean — worker-modified data files only (RELIABILITY_CHECKLIST, SECURITY_WATCHDOG, activity_log, login_attempts, order_counter, security_events) — no crash debris [verified 21:09]
 
 ## HOURLY (check if last check was >1h ago)
-- [x] /api/health — {"status":"ok"} (GET) [verified 20:13]
+- [x] /api/health — {"status":"ok"} (GET) [verified 21:16]
 - [x] Frontend loads — 200, HTML OK [verified 21:09]
 - [x] /api/items returns items — GET, 5 categories with items [verified 21:09]
 - [x] /api/admin_shifts returns shifts — POST with adminPin=1111, shifts returned (0 for date range) [verified 21:09]
@@ -26,8 +26,8 @@
 - [x] Pickup display: verify /api/pickup-display/queue works — GET, 200, 1 ready item (order 93) [verified 20:13]
 - [x] Inventory: check stock decrements on order — 25 inventory items tracked via GET /api/inventory?adminPin=1111, 2 borderline low stock (French Toast, Caesar Salad at threshold). Stock tracking valid. [verified 16:47]
 - [x] User CRUD: add test user (9997) → verify → delete → verified gone (userName/userRole fields) [verified 19:27]
-- [x] Loyalty: points earned on order — endpoint /api/loyalty/lookup works (phone-based), /api/security/discord_webhook returns config [verified 17:43]
-- [x] Cash register: endpoints at /api/cash_drawer/* — status returns active=false, last session closed at 2026-06-24, 10 sessions total [verified 17:43]
+- [x] Loyalty: points earned on order — endpoint /api/loyalty/lookup works (phone-based), /api/security/discord_webhook returns config [verified 21:16]
+- [x] Cash register: endpoints at /api/cash_drawer/* — status returns active=false, last session closed at 2026-06-24, 10 sessions total [verified 21:16]
 - [x] Webhook: /api/security/discord_webhook returns config (not set) [verified 17:43]
 - [x] Clock-in late detection: set scheduled_time, clock in late, verify late flag — 7 late shifts confirmed (Carlos 57min, Employee Two 47min, Test2FA 63/503/563min). Late detection works. [verified 19:04]
 - [x] Break tracking: start break → end break → verify break subtracted — Employee One break start→end→clock out, break tracking endpoint responds correctly, shift with breaks found in shift_log.json [verified 19:04]
