@@ -2,7 +2,7 @@
 
 > Auto-managed by 3 Hermes Worker Crons (every 30 min each, staggered claims).
 > Workers use `[~]` to claim tasks before working. Never pick a claimed task.
-> Last updated: 2026-06-25 (System Auditor #24 — audit findings and corrections)
+> Last updated: 2026-06-25 (System Auditor #25 — audit findings and corrections)
 
 ## Status Legend
 - `[ ]` = pending (available for any worker)
@@ -689,3 +689,15 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 ### Priority: LOW
 
 - [x] worker-1 **Add employee performance leaderboard and gamification** — Admin leaderboard sub-tab with period selector (This Week/This Month/Pay Period), pure CSS bar chart ranking top-performing waitstaff by revenue with avg ticket, tip %, satisfaction rating, and punctuality data. POS home screen shows gamification summary ("You're #2 this week — $45 behind Maria!"). Tapping navigates to leaderboard. Backend POST /api/employee/leaderboard endpoint aggregates order data (revenue, items sold, tips) with shift late tracking and feedback ratings. i18n EN+ES. Dark theme compatible.
+
+## New Tasks (from System Auditor #25 — 2026-06-25)
+
+### Priority: HIGH
+
+- [ ] **Clean up 8 stale pending orders from test data** — Orders #74 (table 5, 22h), #75 (table 6, 22h), #91 (4-7h), #96-#100 (4-7h, user 9999 doesn't exist) are pending with no kitchen action. Cancel them manually since they're under the 24h stale threshold but appear to be abandoned test orders. Fix data quality issues: order #98 has waiter=None, orders #96-100 reference non-existent user 9999. Update or cancel these records. [System Auditor #25]
+
+- [ ] **Resolve 3 outstanding security events** — SEC-026 (large order anomaly), SEC-027 (IP auto-block - 127.0.0.1), SEC-028 (off-hours login by Owner). All appear to be expected dev/test behavior but are unresolved and pollute the security event log. Resolve with appropriate notes. [System Auditor #25]
+
+### Priority: MEDIUM
+
+- [ ] **Enable 2FA for Owner (1111) to comply with mandatory 2FA policy** — `require_2fa_for_admins=true` in security_config.json, but the Owner account (1111) does not have 2FA enabled. This means the mandatory 2FA banner is shown and admin features are blocked for the primary account. Owner needs to set up 2FA via the setup flow or the exemption list needs to be configured. Until resolved, the Owner experiences degraded admin access. [System Auditor #25]
