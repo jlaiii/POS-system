@@ -830,7 +830,8 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
         <input type="date" id="historyDateFrom" onchange="loadOrderHistory()" data-i18n-placeholder="history.filter_date_from" aria-label="Order history date from"/>
         <span style="color:var(--text2);align-self:center;">→</span>
         <input type="date" id="historyDateTo" onchange="loadOrderHistory()" data-i18n-placeholder="history.filter_date_to" aria-label="Order history date to"/>
-        <button class="ghost" onclick="document.getElementById('historyDateFrom').value='';document.getElementById('historyDateTo').value='';loadOrderHistory();" data-i18n="history.clear">✕ Clear</button>
+        <button class="ghost" onclick="document.getElementById('historyDateFrom').value='';document.getElementById('historyDateTo').value='';document.getElementById('historyTableFilter').value='';loadOrderHistory();" data-i18n="history.clear">✕ Clear</button>
+        <select id="historyTableFilter" onchange="loadOrderHistory()" aria-label="Filter by table number" style="padding:6px 10px;border-radius:8px;background:var(--card);color:var(--text);border:1px solid var(--border);max-width:120px;"><option value="">— All Tables —</option></select>
       </div>
       <div id="historyList" aria-live="polite"><div class="skeleton-list"><div class="skeleton-row"><div class="skeleton skeleton-thumb"></div><div style="flex:1;display:flex;flex-direction:column;gap:6px;"><div class="skeleton skeleton-line" style="width:45%;"></div><div class="skeleton skeleton-line" style="width:75%;"></div><div class="skeleton skeleton-line tiny"></div></div><div class="skeleton" style="width:60px;height:28px;border-radius:14px;flex-shrink:0;"></div></div><div class="skeleton-row"><div class="skeleton skeleton-thumb"></div><div style="flex:1;display:flex;flex-direction:column;gap:6px;"><div class="skeleton skeleton-line" style="width:50%;"></div><div class="skeleton skeleton-line" style="width:65%;"></div><div class="skeleton skeleton-line tiny"></div></div><div class="skeleton" style="width:60px;height:28px;border-radius:14px;flex-shrink:0;"></div></div></div></div>
     </div>
@@ -3167,6 +3168,8 @@ const L10N = {
     'history.filter_date_from': 'From date',
     'history.filter_date_to': 'To date',
     'history.clear': '✕ Clear',
+    'history.filter_table': 'Filter by Table',
+    'history.all_tables': '— All Tables —',
     'history.loading': 'Loading orders...',
     'history.empty': 'No orders found',
     'history.payment': 'Payment:',
@@ -3939,6 +3942,8 @@ const L10N = {
     'history.filter_date_from': 'Desde fecha',
     'history.filter_date_to': 'Hasta fecha',
     'history.clear': '✕ Limpiar',
+    'history.filter_table': 'Filtrar por Mesa',
+    'history.all_tables': '— Todas las Mesas —',
     'history.loading': 'Cargando pedidos...',
     'history.empty': 'No se encontraron pedidos',
     'history.payment': 'Pago:',
@@ -10833,6 +10838,28 @@ async function loadOrderHistory() {
     let orders = result.data.orders || [];
     // Sort by date descending
     orders.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+    // --- Table number quick-filter ---
+    const sel = document.getElementById('historyTableFilter');
+    const selectedTable = sel.value;
+    // Collect unique table numbers from all fetched orders
+    const tableSet = new Set();
+    orders.forEach(o => { if (o.table_number) tableSet.add(String(o.table_number)); });
+    const tableNumbers = Array.from(tableSet).sort((a, b) => parseInt(a) - parseInt(b));
+    // Rebuild dropdown options preserving selection
+    let opts = '<option value="">' + t('history.all_tables') + '</option>';
+    tableNumbers.forEach(tn => {
+      opts += '<option value="' + tn + '"' + (selectedTable === tn ? ' selected' : '') + '>🪪 Table #' + tn + '</option>';
+    });
+    sel.innerHTML = opts;
+    // Apply table filter
+    if (selectedTable) {
+      orders = orders.filter(o => String(o.table_number) === selectedTable);
+    }
+    // Apply i18n to the dropdown
+    const allTablesOpt = sel.querySelector('option[value=""]');
+    if (allTablesOpt) allTablesOpt.textContent = t('history.all_tables');
+
     if (orders.length === 0) { list.innerHTML = '<div class="empty-state">' + t('history.empty') + '</div>'; return; }
     let html = '';
     orders.forEach((o, i) => {

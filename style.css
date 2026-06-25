@@ -810,6 +810,7 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
 
   /* History filter: full-width inputs */
   #historyFilter input { max-width: 100%; width: 100%; }
+  #historyFilter select { max-width: 100%; width: 100%; }
   #historyFilter { flex-direction: column; align-items: stretch; }
 
   /* Form rows: stack everything */
@@ -1008,6 +1009,7 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
   /* History filters — stack in portrait */
   #historyFilter { flex-direction: column; align-items: stretch; }
   #historyFilter input { max-width: 100%; }
+  #historyFilter select { max-width: 100%; width: 100%; }
 
   /* Admin sub-tabs — scrollable row */
   #adminSubTabs button { font-size: 12px; padding: 8px 10px; min-height: 38px; }
