@@ -12809,5 +12809,165 @@
             "date_to": "2026-06-26",
             "tip_amount": 0
         }
+    },
+    {
+        "timestamp": "2026-06-26T01:46:55.896850",
+        "type": "tip_pool_config_updated",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "config": {
+                "enabled": true,
+                "method": "hours",
+                "pool_percent": 100.0,
+                "eligible_roles": [
+                    "user",
+                    "cook"
+                ],
+                "weights": {
+                    "admin": 0.5,
+                    "cook": 0.4,
+                    "owner": 0.0,
+                    "user": 1.0
+                },
+                "manual_overrides": []
+            }
+        }
+    },
+    {
+        "timestamp": "2026-06-26T01:46:55.915339",
+        "type": "tip_pool_override",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "user_id": "3344",
+            "date_from": "2026-06-01",
+            "date_to": "2026-06-26",
+            "tip_amount": 42.0
+        }
+    },
+    {
+        "timestamp": "2026-06-26T01:46:55.940706",
+        "type": "tip_pool_config_updated",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "config": {
+                "enabled": false,
+                "method": "hours",
+                "pool_percent": 100.0,
+                "eligible_roles": [
+                    "user",
+                    "cook"
+                ],
+                "weights": {
+                    "admin": 0.5,
+                    "cook": 0.4,
+                    "owner": 0.0,
+                    "user": 1.0
+                },
+                "manual_overrides": []
+            }
+        }
+    },
+    {
+        "timestamp": "2026-06-26T01:46:55.955077",
+        "type": "tip_pool_override",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "user_id": "3344",
+            "date_from": "2026-06-01",
+            "date_to": "2026-06-26",
+            "tip_amount": 0
+        }
+    },
+    {
+        "timestamp": "2026-06-26T01:47:19.975646",
+        "type": "tip_pool_config_updated",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "config": {
+                "enabled": true,
+                "method": "hours",
+                "pool_percent": 100.0,
+                "eligible_roles": [
+                    "user",
+                    "cook"
+                ],
+                "weights": {
+                    "admin": 0.5,
+                    "cook": 0.4,
+                    "owner": 0.0,
+                    "user": 1.0
+                },
+                "manual_overrides": []
+            }
+        }
+    },
+    {
+        "timestamp": "2026-06-26T01:47:19.994900",
+        "type": "tip_pool_override",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "user_id": "3344",
+            "date_from": "2026-06-01",
+            "date_to": "2026-06-26",
+            "tip_amount": 42.0
+        }
+    },
+    {
+        "timestamp": "2026-06-26T01:47:20.019405",
+        "type": "tip_pool_config_updated",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "config": {
+                "enabled": false,
+                "method": "hours",
+                "pool_percent": 100.0,
+                "eligible_roles": [
+                    "user",
+                    "cook"
+                ],
+                "weights": {
+                    "admin": 0.5,
+                    "cook": 0.4,
+                    "owner": 0.0,
+                    "user": 1.0
+                },
+                "manual_overrides": []
+            }
+        }
+    },
+    {
+        "timestamp": "2026-06-26T01:47:20.033714",
+        "type": "tip_pool_override",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "user_id": "3344",
+            "date_from": "2026-06-01",
+            "date_to": "2026-06-26",
+            "tip_amount": 0
+        }
     }
 ]
