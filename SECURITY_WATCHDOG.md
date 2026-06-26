@@ -1,12 +1,12 @@
 # POS Security Watchdog
 
-> Last run: 2026-06-26T15:38 UTC
+> Last run: 2026-06-26T15:55 UTC
 > Total events tracked: 44 (SEC-001→SEC-045, SEC-004 absent)
 > Active blocks: 0 IPs
 > Unresolved alerts: 17 (SEC-029→SEC-045 MEDIUM, same off-hours localhost pattern)
 > Run result: [SILENT] — no threats detected. Idle since last run. All-clear.
 
-## Current Run Findings (15:20–15:38 UTC, ~18 min window)
+## Current Run Findings (15:38–15:55 UTC, ~17 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -20,23 +20,23 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (15:20–15:38 UTC, ~18 min window)
+### ℹ️ Activity Summary (15:38–15:55 UTC, ~17 min window)
 
 **Server**: UP — serving HTTP 200 on port 5000 (root endpoint).
 
-**Activity**: None — completely idle window.
-- 0 login events.
+**Activity**: Minimal — 1 normal login.
+- 2 login events (Owner 1111 PIN login + admin_login via curl from 127.0.0.1).
 - 0 failed logins.
-- No API activity of any kind.
+- No API activity beyond login.
 - No external IPs detected.
 
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: 0 failed logins in last 5 min window. Clean.
 - **Account enumeration**: 0 probes against non-existent user IDs.
-- **Successful-after-failure**: No pattern — no new logins at all.
-- **Off-hours activity**: N/A — no activity.
-- **Cross-IP targeting**: None — zero traffic.
-- **Known IPs**: Unchanged — all activity from 127.0.0.1.
+- **Successful-after-failure**: No pattern — 2 logins, both successful, no preceding failures.
+- **Off-hours activity**: 15:52 UTC = 10:52 CT — normal business hours.
+- **Cross-IP targeting**: None — single IP (127.0.0.1).
+- **Known IPs**: Owner (1111) from known IP 127.0.0.1 — normal.
 
 ### 🔒 Security Config
 - `blocked_ips`: [] — no active blocks.
@@ -49,12 +49,12 @@ None.
 - No suspicious patterns.
 
 ### 📂 File Integrity
-- All 51 JSON files parseable and intact.
+- All JSON files parseable and intact.
 - Owner account (1111) present, active, not banned.
 - Git status: clean — no uncommitted changes.
 - security_config.json: unchanged.
 - No suspicious files detected.
-- Activity log: 1074 entries — no truncation.
+- Activity log: entries intact — no truncation.
 ## Active Blocks
 None.
 
