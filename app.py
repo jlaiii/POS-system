@@ -176,6 +176,8 @@ EXPENSES_FILE = 'expenses.json'  # Business expense tracking
 PAYMENT_CONFIG_FILE = 'payment_config.json'  # Payment terminal configuration (gateway, IP, port, API keys)
 TIP_POOL_CONFIG_FILE = 'tip_pool_config.json'  # Tip pooling and distribution configuration
 
+CUSTOMER_ACCOUNTS_FILE = 'customer_accounts.json'  # Customer accounts with login, favorites, addresses, payment methods
+
 # --- Platform / Multi-Tenant Constants ---
 GLOCAL_DIR = 'data/global'  # Global platform data directory
 BUSINESSES_FILE = os.path.join(GLOCAL_DIR, 'businesses.json')  # All registered businesses
@@ -274,7 +276,7 @@ def backup_menu():
 
 
 # Ensure JSON files exist and are initialized correctly
-for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE, INVENTORY_FILE, REFUNDED_ORDERS_FILE, FAVORITES_FILE, LOYALTY_FILE, SCHEDULED_PRICING_FILE, WASTE_FILE, DELIVERY_ADDRESSES_FILE, WEBHOOKS_FILE, TABLE_ADS_FILE, CASH_DRAWER_FILE, COMBOS_FILE, SERVICE_CHARGE_FILE, EMAIL_CONFIG_FILE, SHIFT_FILE, TICKETS_FILE, RESERVATIONS_FILE, TICKET_TEMPLATES_FILE, APPROVALS_FILE, RESTAURANT_CONFIG_FILE, PRINTER_CONFIG_FILE, GIFT_CARDS_FILE, WAITLIST_FILE, FEEDBACK_FILE, DRIVERS_FILE, EXPENSES_FILE, PAYMENT_CONFIG_FILE]:
+for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMESHEET_FILE, ITEMS_FILE, TAX_CONFIG_FILE, DISCOUNTS_FILE, ORDER_COUNTER_FILE, TABLES_FILE, INVENTORY_FILE, REFUNDED_ORDERS_FILE, FAVORITES_FILE, LOYALTY_FILE, SCHEDULED_PRICING_FILE, WASTE_FILE, DELIVERY_ADDRESSES_FILE, WEBHOOKS_FILE, TABLE_ADS_FILE, CASH_DRAWER_FILE, COMBOS_FILE, SERVICE_CHARGE_FILE, EMAIL_CONFIG_FILE, SHIFT_FILE, TICKETS_FILE, RESERVATIONS_FILE, TICKET_TEMPLATES_FILE, APPROVALS_FILE, RESTAURANT_CONFIG_FILE, PRINTER_CONFIG_FILE, GIFT_CARDS_FILE, WAITLIST_FILE, FEEDBACK_FILE, DRIVERS_FILE, EXPENSES_FILE, PAYMENT_CONFIG_FILE, CUSTOMER_ACCOUNTS_FILE]:
     if not os.path.exists(f):
         with open(f, 'w') as file:
             if f == USERS_FILE:
@@ -361,6 +363,8 @@ for f in [USERS_FILE, ORDERS_FILE, CLEARED_ORDERS_FILE, ACTIVITY_LOG_FILE, TIMES
                 json.dump({"enabled": True, "threshold": 8, "percentage": 18.0, "label": "Auto-Gratuity (18%)"}, file, indent=4)  # Initialize service charge config
             elif f == EMAIL_CONFIG_FILE:
                 json.dump({"server": "", "port": 587, "username": "", "password": "", "from_addr": "", "use_tls": True, "enabled": False}, file, indent=4)  # Initialize email config
+            elif f == CUSTOMER_ACCOUNTS_FILE:
+                json.dump({}, file, indent=4)  # Initialize as empty dict (phone -> customer account)
             elif f == RESTAURANT_CONFIG_FILE:
                 json.dump({"name": "Our Restaurant", "hours_today": "Mon-Fri: 11:00 AM - 10:00 PM", "wifi_name": "Guest WiFi", "wifi_password": ""}, file, indent=4)  # Initialize restaurant config
             elif f == PRINTER_CONFIG_FILE:
@@ -7064,6 +7068,9 @@ def get_order_receipt(order_id):
   <div class="footer" style="font-size:11px;">📝 How was your experience?<br>
     <a href="/feedback?order={order_id}" style="color:#e94560;text-decoration:underline;">Leave a review →</a>
   </div>
+  <div class="footer" style="font-size:11px;margin-top:6px;">🔐
+    <a href="/customer-login" style="color:#e94560;text-decoration:underline;">Sign in to your account</a> for favorites, order history &amp; rewards
+  </div>
 </body>
 </html>'''
 
@@ -7174,6 +7181,9 @@ def email_receipt():
   <hr style="margin-top:12px;">
   <div class="footer" style="font-size:11px;">📝 How was your experience?<br>
     <a href="/feedback?order={order_id}" style="color:#e94560;text-decoration:underline;">Leave a review →</a>
+  </div>
+  <div class="footer" style="font-size:11px;margin-top:6px;">🔐
+    <a href="/customer-login" style="color:#e94560;text-decoration:underline;">Sign in to your account</a> for favorites, order history &amp; rewards
   </div>
 </body>
 </html>'''
@@ -15344,6 +15354,643 @@ def customer_update():
 
 
 # ============================================================
+# Customer Accounts (Self-Service Registration, Login, Profile)
+# ============================================================
+
+
+def _generate_customer_id(accounts):
+    """Generate a unique customer ID like CUST-001, CUST-002, etc."""
+    existing_ids = set(accounts.keys()) if isinstance(accounts, dict) else set()
+    i = 1
+    while f'CUST-{i:04d}' in existing_ids:
+        i += 1
+    return f'CUST-{i:04d}'
+
+
+@app.route('/api/customers/account/register', methods=['POST'])
+def customer_account_register():
+    """Register a new customer account with email+password or phone+PIN."""
+    data = request.json or {}
+    email = data.get('email', '').strip().lower()
+    password = data.get('password', '')
+    phone = data.get('phone', '').strip()
+    pin = data.get('pin', '')
+    name = data.get('name', '').strip()
+
+    if not name:
+        return jsonify({'message': 'Name is required.'}), 400
+
+    if not email and not phone:
+        return jsonify({'message': 'Email or phone number is required.'}), 400
+
+    if email and not password:
+        return jsonify({'message': 'Password is required when registering with email.'}), 400
+
+    if phone and not pin:
+        return jsonify({'message': 'PIN is required when registering with phone.'}), 400
+
+    accounts = load_json_data(CUSTOMER_ACCOUNTS_FILE)
+    if not isinstance(accounts, dict):
+        accounts = {}
+
+    # Check for duplicate email or phone
+    for cid, acc in accounts.items():
+        if email and acc.get('email', '').lower() == email:
+            return jsonify({'message': 'An account with this email already exists.'}), 409
+        if phone and acc.get('phone', '') == phone:
+            return jsonify({'message': 'An account with this phone number already exists.'}), 409
+
+    # Also check if phone already registered in loyalty
+    if phone:
+        loyalty_data = load_json_data(LOYALTY_FILE)
+        if phone not in loyalty_data:
+            # Auto-register in loyalty
+            loyalty_data[phone] = {
+                'phone': phone, 'name': name, 'email': email, 'notes': '',
+                'address': '', 'birthday': '', 'anniversary': '',
+                'points': 0, 'total_earned': 0, 'total_redeemed': 0,
+                'total_spent': 0.0, 'total_orders': 0, 'last_visit': '',
+                'created_at': datetime.now().isoformat(), 'visit_dates': [], 'history': []
+            }
+            save_json_data(LOYALTY_FILE, loyalty_data)
+
+    customer_id = _generate_customer_id(accounts)
+    pw_hash, pw_salt = (hash_password(password) if password else (None, None))
+
+    accounts[customer_id] = {
+        'customer_id': customer_id,
+        'email': email,
+        'password_hash': pw_hash,
+        'password_salt': pw_salt,
+        'phone': phone,
+        'pin': pin if pin else None,
+        'name': name,
+        'addresses': [],
+        'saved_payment_methods': [],
+        'favorite_items': [],
+        'created_at': datetime.now().isoformat(),
+        'updated_at': datetime.now().isoformat(),
+        'last_login': None,
+        'magic_link_token': None,
+        'magic_link_expiry': None
+    }
+
+    save_json_data(CUSTOMER_ACCOUNTS_FILE, accounts)
+
+    log_activity('customer_account_register', customer_id, 'customer', {
+        'name': name,
+        'has_email': bool(email),
+        'has_phone': bool(phone)
+    })
+
+    return jsonify({
+        'message': f'Account created for {name}! Welcome!',
+        'customer_id': customer_id,
+        'name': name,
+        'email': email,
+        'phone': phone
+    })
+
+
+@app.route('/api/customers/account/login', methods=['POST'])
+def customer_account_login():
+    """Login with email+password or phone+PIN. Returns session token."""
+    data = request.json or {}
+    email = data.get('email', '').strip().lower()
+    password = data.get('password', '')
+    phone = data.get('phone', '').strip()
+    pin = data.get('pin', '')
+
+    if not email and not phone:
+        return jsonify({'message': 'Email or phone number is required.'}), 400
+
+    accounts = load_json_data(CUSTOMER_ACCOUNTS_FILE)
+    if not isinstance(accounts, dict):
+        accounts = {}
+
+    found_account = None
+    found_id = None
+
+    for cid, acc in accounts.items():
+        if email and acc.get('email', '').lower() == email:
+            found_account = acc
+            found_id = cid
+            break
+        if phone and acc.get('phone', '') == phone:
+            found_account = acc
+            found_id = cid
+            break
+
+    if not found_account:
+        return jsonify({'message': 'Account not found. Please register first.'}), 404
+
+    # Validate credentials
+    if email and password:
+        stored_hash = found_account.get('password_hash')
+        stored_salt = found_account.get('password_salt')
+        if not stored_hash or not stored_salt or not verify_password(password, stored_hash, stored_salt):
+            return jsonify({'message': 'Invalid password.'}), 401
+    elif phone and pin:
+        stored_pin = found_account.get('pin')
+        if not stored_pin or str(stored_pin) != str(pin):
+            return jsonify({'message': 'Invalid PIN.'}), 401
+
+    # Update last login
+    accounts[found_id]['last_login'] = datetime.now().isoformat()
+    save_json_data(CUSTOMER_ACCOUNTS_FILE, accounts)
+
+    # Generate magic link token (for session)
+    token = secrets.token_urlsafe(32)
+    accounts[found_id]['magic_link_token'] = token
+    accounts[found_id]['magic_link_expiry'] = (datetime.now() + timedelta(hours=24)).isoformat()
+    save_json_data(CUSTOMER_ACCOUNTS_FILE, accounts)
+
+    # Get loyalty data if phone exists
+    loyalty_data = load_json_data(LOYALTY_FILE)
+    cust_phone = found_account.get('phone', '')
+    loyalty_info = loyalty_data.get(cust_phone, {}) if cust_phone else {}
+
+    return jsonify({
+        'message': f'Welcome back, {found_account.get("name", "")}!',
+        'customer_id': found_id,
+        'name': found_account.get('name', ''),
+        'email': found_account.get('email', ''),
+        'phone': found_account.get('phone', ''),
+        'token': token,
+        'loyalty_points': loyalty_info.get('points', 0),
+        'loyalty_total_orders': loyalty_info.get('total_orders', 0),
+        'loyalty_total_spent': loyalty_info.get('total_spent', 0.0)
+    })
+
+
+@app.route('/api/customers/account/magic-login', methods=['POST'])
+def customer_account_magic_login():
+    """Login via magic link token (from QR code or email link)."""
+    data = request.json or {}
+    token = data.get('token', '').strip()
+
+    if not token:
+        return jsonify({'message': 'Token is required.'}), 400
+
+    accounts = load_json_data(CUSTOMER_ACCOUNTS_FILE)
+    if not isinstance(accounts, dict):
+        accounts = {}
+
+    found_id = None
+    for cid, acc in accounts.items():
+        if acc.get('magic_link_token') == token:
+            expiry = acc.get('magic_link_expiry')
+            if expiry:
+                try:
+                    exp_dt = datetime.fromisoformat(expiry)
+                    if datetime.now() > exp_dt:
+                        return jsonify({'message': 'Login link has expired. Please log in again.'}), 401
+                except (ValueError, TypeError):
+                    return jsonify({'message': 'Invalid token expiry.'}), 401
+            found_id = cid
+            break
+
+    if not found_id:
+        return jsonify({'message': 'Invalid or expired login link.'}), 401
+
+    # Update last login, generate new token
+    accounts[found_id]['last_login'] = datetime.now().isoformat()
+    new_token = secrets.token_urlsafe(32)
+    accounts[found_id]['magic_link_token'] = new_token
+    accounts[found_id]['magic_link_expiry'] = (datetime.now() + timedelta(hours=24)).isoformat()
+    save_json_data(CUSTOMER_ACCOUNTS_FILE, accounts)
+
+    acc = accounts[found_id]
+    loyalty_data = load_json_data(LOYALTY_FILE)
+    cust_phone = acc.get('phone', '')
+    loyalty_info = loyalty_data.get(cust_phone, {}) if cust_phone else {}
+
+    return jsonify({
+        'message': f'Welcome back, {acc.get("name", "")}!',
+        'customer_id': found_id,
+        'name': acc.get('name', ''),
+        'email': acc.get('email', ''),
+        'phone': acc.get('phone', ''),
+        'token': new_token,
+        'loyalty_points': loyalty_info.get('points', 0),
+        'loyalty_total_orders': loyalty_info.get('total_orders', 0),
+        'loyalty_total_spent': loyalty_info.get('total_spent', 0.0)
+    })
+
+
+@app.route('/api/customers/account/generate-magic-link', methods=['POST'])
+def customer_generate_magic_link():
+    """Generate a magic link token for QR code or email. Requires customer auth."""
+    data = request.json or {}
+    customer_id = data.get('customer_id', '').strip()
+    token = data.get('token', '').strip()
+
+    if not customer_id or not token:
+        return jsonify({'message': 'Customer ID and token are required.'}), 400
+
+    accounts = load_json_data(CUSTOMER_ACCOUNTS_FILE)
+    if not isinstance(accounts, dict):
+        accounts = {}
+
+    if customer_id not in accounts:
+        return jsonify({'message': 'Account not found.'}), 404
+
+    if accounts[customer_id].get('magic_link_token') != token:
+        return jsonify({'message': 'Invalid token.'}), 401
+
+    # Generate a short-lived magic link token
+    magic_token = secrets.token_urlsafe(16)
+    accounts[customer_id]['magic_link_token'] = magic_token
+    accounts[customer_id]['magic_link_expiry'] = (datetime.now() + timedelta(hours=1)).isoformat()
+    save_json_data(CUSTOMER_ACCOUNTS_FILE, accounts)
+
+    base_url = request.host_url.rstrip('/')
+    magic_url = f'{base_url}/customer-login?token={magic_token}'
+
+    return jsonify({
+        'message': 'Magic link generated.',
+        'magic_url': magic_url,
+        'magic_token': magic_token,
+        'expires_in_hours': 1
+    })
+
+
+@app.route('/api/customers/account/profile', methods=['POST'])
+def customer_account_profile():
+    """Get customer profile with loyalty data, favorites, addresses, and order history."""
+    data = request.json or {}
+    customer_id = data.get('customer_id', '').strip()
+    token = data.get('token', '').strip()
+
+    if not customer_id or not token:
+        return jsonify({'message': 'Customer ID and token are required.'}), 400
+
+    accounts = load_json_data(CUSTOMER_ACCOUNTS_FILE)
+    if not isinstance(accounts, dict):
+        accounts = {}
+
+    if customer_id not in accounts:
+        return jsonify({'message': 'Account not found.'}), 404
+
+    if accounts[customer_id].get('magic_link_token') != token:
+        return jsonify({'message': 'Invalid token.'}), 401
+
+    acc = accounts[customer_id]
+    phone = acc.get('phone', '')
+
+    # Get loyalty info
+    loyalty_data = load_json_data(LOYALTY_FILE)
+    loyalty_info = loyalty_data.get(phone, {}) if phone else {}
+
+    # Get order history for this customer
+    all_orders = load_json_data(ORDERS_FILE) + load_json_data(CLEARED_ORDERS_FILE)
+    order_history = []
+    for o in all_orders:
+        match = False
+        # Match by phone
+        if phone and o.get('customer_phone', '').strip() == phone:
+            match = True
+        # Match by email
+        cust_email = acc.get('email', '')
+        if cust_email and o.get('customer_email', '').strip().lower() == cust_email.lower():
+            match = True
+        if match:
+            order_history.append({
+                'order_id': o.get('order_id', 0),
+                'date': o.get('date', ''),
+                'subtotal': o.get('subtotal', 0),
+                'total': o.get('total', 0),
+                'items': o.get('items', []),
+                'payment': o.get('payment', ''),
+                'status': o.get('status', 'completed'),
+                'table_number': o.get('table_number'),
+                'order_type': o.get('order_type', 'dine-in')
+            })
+
+    order_history.sort(key=lambda o: o.get('date', ''), reverse=True)
+
+    return jsonify({
+        'customer_id': customer_id,
+        'name': acc.get('name', ''),
+        'email': acc.get('email', ''),
+        'phone': acc.get('phone', ''),
+        'addresses': acc.get('addresses', []),
+        'saved_payment_methods': acc.get('saved_payment_methods', []),
+        'favorite_items': acc.get('favorite_items', []),
+        'created_at': acc.get('created_at', ''),
+        'last_login': acc.get('last_login', ''),
+        'loyalty': {
+            'points': loyalty_info.get('points', 0),
+            'total_earned': loyalty_info.get('total_earned', 0),
+            'total_redeemed': loyalty_info.get('total_redeemed', 0),
+            'total_spent': loyalty_info.get('total_spent', 0.0),
+            'total_orders': loyalty_info.get('total_orders', 0),
+            'last_visit': loyalty_info.get('last_visit', ''),
+            'birthday': loyalty_info.get('birthday', ''),
+            'anniversary': loyalty_info.get('anniversary', ''),
+            'history': loyalty_info.get('history', [])
+        },
+        'order_history': order_history[:50]  # Last 50 orders
+    })
+
+
+@app.route('/api/customers/account/update', methods=['POST'])
+def customer_account_update():
+    """Update customer profile fields."""
+    data = request.json or {}
+    customer_id = data.get('customer_id', '').strip()
+    token = data.get('token', '').strip()
+
+    if not customer_id or not token:
+        return jsonify({'message': 'Customer ID and token are required.'}), 400
+
+    accounts = load_json_data(CUSTOMER_ACCOUNTS_FILE)
+    if not isinstance(accounts, dict):
+        accounts = {}
+
+    if customer_id not in accounts:
+        return jsonify({'message': 'Account not found.'}), 404
+
+    if accounts[customer_id].get('magic_link_token') != token:
+        return jsonify({'message': 'Invalid token.'}), 401
+
+    acc = accounts[customer_id]
+
+    if 'name' in data:
+        acc['name'] = data['name'].strip()
+    if 'email' in data:
+        new_email = data['email'].strip().lower()
+        # Check duplicate
+        for cid, a in accounts.items():
+            if cid != customer_id and a.get('email', '').lower() == new_email:
+                return jsonify({'message': 'Email already in use by another account.'}), 409
+        acc['email'] = new_email
+    if 'phone' in data:
+        new_phone = data['phone'].strip()
+        for cid, a in accounts.items():
+            if cid != customer_id and a.get('phone', '') == new_phone:
+                return jsonify({'message': 'Phone already in use by another account.'}), 409
+        acc['phone'] = new_phone
+    if 'password' in data and data['password']:
+        pw_hash, pw_salt = hash_password(data['password'])
+        acc['password_hash'] = pw_hash
+        acc['password_salt'] = pw_salt
+    if 'pin' in data and data['pin']:
+        acc['pin'] = data['pin']
+
+    acc['updated_at'] = datetime.now().isoformat()
+    save_json_data(CUSTOMER_ACCOUNTS_FILE, accounts)
+
+    # Also update loyalty name if phone matches
+    phone = acc.get('phone', '')
+    if phone:
+        loyalty_data = load_json_data(LOYALTY_FILE)
+        if phone in loyalty_data:
+            loyalty_data[phone]['name'] = acc.get('name', '')
+            if acc.get('email'):
+                loyalty_data[phone]['email'] = acc.get('email', '')
+            save_json_data(LOYALTY_FILE, loyalty_data)
+
+    log_activity('customer_account_update', customer_id, 'customer', {
+        'updated_fields': [k for k in ['name', 'email', 'phone'] if k in data]
+    })
+
+    return jsonify({'message': 'Profile updated successfully.'})
+
+
+@app.route('/api/customers/account/favorites', methods=['POST'])
+def customer_account_favorites():
+    """Add or remove favorite items."""
+    data = request.json or {}
+    customer_id = data.get('customer_id', '').strip()
+    token = data.get('token', '').strip()
+    action = data.get('action', '')  # 'add' or 'remove'
+    item_name = data.get('item_name', '').strip()
+
+    if not customer_id or not token:
+        return jsonify({'message': 'Customer ID and token are required.'}), 400
+    if action not in ('add', 'remove'):
+        return jsonify({'message': 'Action must be "add" or "remove".'}), 400
+    if not item_name:
+        return jsonify({'message': 'Item name is required.'}), 400
+
+    accounts = load_json_data(CUSTOMER_ACCOUNTS_FILE)
+    if not isinstance(accounts, dict):
+        accounts = {}
+
+    if customer_id not in accounts:
+        return jsonify({'message': 'Account not found.'}), 404
+    if accounts[customer_id].get('magic_link_token') != token:
+        return jsonify({'message': 'Invalid token.'}), 401
+
+    favorites = accounts[customer_id].get('favorite_items', [])
+    if action == 'add':
+        if item_name not in favorites:
+            favorites.append(item_name)
+    elif action == 'remove':
+        if item_name in favorites:
+            favorites.remove(item_name)
+
+    accounts[customer_id]['favorite_items'] = favorites
+    accounts[customer_id]['updated_at'] = datetime.now().isoformat()
+    save_json_data(CUSTOMER_ACCOUNTS_FILE, accounts)
+
+    return jsonify({
+        'message': f'Item {"added to" if action == "add" else "removed from"} favorites.',
+        'favorite_items': favorites
+    })
+
+
+@app.route('/api/customers/account/addresses', methods=['POST'])
+def customer_account_addresses():
+    """Manage delivery addresses (list, add, update, delete)."""
+    data = request.json or {}
+    customer_id = data.get('customer_id', '').strip()
+    token = data.get('token', '').strip()
+    action = data.get('action', 'list')  # 'list', 'add', 'update', 'delete'
+
+    if not customer_id or not token:
+        return jsonify({'message': 'Customer ID and token are required.'}), 400
+
+    accounts = load_json_data(CUSTOMER_ACCOUNTS_FILE)
+    if not isinstance(accounts, dict):
+        accounts = {}
+
+    if customer_id not in accounts:
+        return jsonify({'message': 'Account not found.'}), 404
+    if accounts[customer_id].get('magic_link_token') != token:
+        return jsonify({'message': 'Invalid token.'}), 401
+
+    acc = accounts[customer_id]
+    addresses = acc.get('addresses', [])
+
+    if action == 'add':
+        addr = {
+            'id': secrets.token_hex(8),
+            'label': data.get('label', 'Home').strip(),
+            'street': data.get('street', '').strip(),
+            'city': data.get('city', '').strip(),
+            'state': data.get('state', '').strip(),
+            'zip': data.get('zip', '').strip(),
+            'instructions': data.get('instructions', '').strip()
+        }
+        if not addr['street']:
+            return jsonify({'message': 'Street address is required.'}), 400
+        addresses.append(addr)
+    elif action == 'update':
+        addr_id = data.get('address_id', '')
+        for i, a in enumerate(addresses):
+            if a.get('id') == addr_id:
+                if 'label' in data: addresses[i]['label'] = data['label'].strip()
+                if 'street' in data: addresses[i]['street'] = data['street'].strip()
+                if 'city' in data: addresses[i]['city'] = data['city'].strip()
+                if 'state' in data: addresses[i]['state'] = data['state'].strip()
+                if 'zip' in data: addresses[i]['zip'] = data['zip'].strip()
+                if 'instructions' in data: addresses[i]['instructions'] = data['instructions'].strip()
+                break
+    elif action == 'delete':
+        addr_id = data.get('address_id', '')
+        addresses = [a for a in addresses if a.get('id') != addr_id]
+
+    acc['addresses'] = addresses
+    acc['updated_at'] = datetime.now().isoformat()
+    save_json_data(CUSTOMER_ACCOUNTS_FILE, accounts)
+
+    return jsonify({'message': 'Addresses updated.', 'addresses': addresses})
+
+
+@app.route('/api/customers/account/payment-methods', methods=['POST'])
+def customer_account_payment_methods():
+    """Manage saved payment methods (list, add, delete)."""
+    data = request.json or {}
+    customer_id = data.get('customer_id', '').strip()
+    token = data.get('token', '').strip()
+    action = data.get('action', 'list')  # 'list', 'add', 'delete'
+
+    if not customer_id or not token:
+        return jsonify({'message': 'Customer ID and token are required.'}), 400
+
+    accounts = load_json_data(CUSTOMER_ACCOUNTS_FILE)
+    if not isinstance(accounts, dict):
+        accounts = {}
+
+    if customer_id not in accounts:
+        return jsonify({'message': 'Account not found.'}), 404
+    if accounts[customer_id].get('magic_link_token') != token:
+        return jsonify({'message': 'Invalid token.'}), 401
+
+    acc = accounts[customer_id]
+    methods = acc.get('saved_payment_methods', [])
+
+    if action == 'add':
+        pm = {
+            'id': secrets.token_hex(8),
+            'type': data.get('type', 'card').strip(),
+            'last4': data.get('last4', '').strip(),
+            'brand': data.get('brand', '').strip(),
+            'expiry': data.get('expiry', '').strip(),
+            'token': data.get('card_token', secrets.token_hex(16)),
+            'is_default': False
+        }
+        if not methods:
+            pm['is_default'] = True
+        methods.append(pm)
+    elif action == 'delete':
+        pm_id = data.get('payment_method_id', '')
+        methods = [m for m in methods if m.get('id') != pm_id]
+    elif action == 'set_default':
+        pm_id = data.get('payment_method_id', '')
+        for m in methods:
+            m['is_default'] = (m.get('id') == pm_id)
+
+    acc['saved_payment_methods'] = methods
+    acc['updated_at'] = datetime.now().isoformat()
+    save_json_data(CUSTOMER_ACCOUNTS_FILE, accounts)
+
+    return jsonify({'message': 'Payment methods updated.', 'saved_payment_methods': methods})
+
+
+@app.route('/api/customers/account/reorder', methods=['POST'])
+def customer_account_reorder():
+    """Return the items from a past order for easy reorder."""
+    data = request.json or {}
+    customer_id = data.get('customer_id', '').strip()
+    token = data.get('token', '').strip()
+    order_id = data.get('order_id')
+
+    if not customer_id or not token:
+        return jsonify({'message': 'Customer ID and token are required.'}, 400)
+    if not order_id:
+        return jsonify({'message': 'Order ID is required.'}, 400)
+
+    accounts = load_json_data(CUSTOMER_ACCOUNTS_FILE)
+    if not isinstance(accounts, dict):
+        accounts = {}
+    if customer_id not in accounts:
+        return jsonify({'message': 'Account not found.'}, 404)
+    if accounts[customer_id].get('magic_link_token') != token:
+        return jsonify({'message': 'Invalid token.'}, 401)
+
+    all_orders = load_json_data(ORDERS_FILE) + load_json_data(CLEARED_ORDERS_FILE)
+    order = None
+    for o in all_orders:
+        if o.get('order_id') == order_id:
+            order = o
+            break
+
+    if not order:
+        return jsonify({'message': 'Order not found.'}, 404)
+
+    items = []
+    for item in order.get('items', []):
+        items.append({
+            'name': item.get('name', ''),
+            'qty': item.get('qty', 1),
+            'price': item.get('price', 0),
+            'course': item.get('course', 'main'),
+            'notes': item.get('notes', ''),
+            'modifiers': item.get('modifiers', []),
+            'modifier_options': item.get('modifier_options', []),
+            'modifier_notes': item.get('modifier_notes', [])
+        })
+
+    return jsonify({'items': items, 'order_id': order_id})
+
+
+@app.route('/api/customers/account/link-phone', methods=['POST'])
+def customer_account_link_phone():
+    """Link an existing loyalty phone number to a customer account."""
+    data = request.json or {}
+    customer_id = data.get('customer_id', '').strip()
+    token = data.get('token', '').strip()
+    phone = data.get('phone', '').strip()
+
+    if not customer_id or not token:
+        return jsonify({'message': 'Customer ID and token are required.'}, 400)
+    if not phone:
+        return jsonify({'message': 'Phone number is required.'}, 400)
+
+    accounts = load_json_data(CUSTOMER_ACCOUNTS_FILE)
+    if not isinstance(accounts, dict):
+        accounts = {}
+    if customer_id not in accounts:
+        return jsonify({'message': 'Account not found.'}, 404)
+    if accounts[customer_id].get('magic_link_token') != token:
+        return jsonify({'message': 'Invalid token.'}, 401)
+
+    # Check phone not linked elsewhere
+    for cid, acc in accounts.items():
+        if cid != customer_id and acc.get('phone', '') == phone:
+            return jsonify({'message': 'This phone is already linked to another account.'}, 409)
+
+    accounts[customer_id]['phone'] = phone
+    accounts[customer_id]['updated_at'] = datetime.now().isoformat()
+    save_json_data(CUSTOMER_ACCOUNTS_FILE, accounts)
+
+    return jsonify({'message': 'Phone linked to your account. You can now earn loyalty points!'})
+
+
+# ============================================================
 # Kiosk Order Lookup & Payment
 # ============================================================
 
@@ -22083,6 +22730,12 @@ def drivers_stats():
 def serve_feedback_page():
     """Serve the customer feedback/survey page."""
     return send_from_directory(app.static_folder, 'feedback.html')
+
+
+@app.route('/customer-login')
+def serve_customer_login_page():
+    """Serve the customer account login page (accessed via QR code or email link)."""
+    return send_from_directory(app.static_folder, 'customer-login.html')
 
 
 @app.route('/api/feedback/submit', methods=['POST'])

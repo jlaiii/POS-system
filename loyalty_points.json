@@ -1,48 +1,66 @@
 {
-  "555-9999": {
-    "phone": "555-9999",
-    "name": "555-9999",
-    "email": "",
-    "notes": "",
-    "address": "",
-    "points": 12,
-    "total_earned": 12,
-    "total_redeemed": 0,
-    "total_spent": 12.0,
-    "total_orders": 1,
-    "last_visit": "2026-06-23T19:19:59.291274",
-    "created_at": "2026-06-23T19:19:59.291240",
-    "history": [
-      {
-        "type": "earned",
+    "555-9999": {
+        "phone": "555-9999",
+        "name": "555-9999",
+        "email": "",
+        "notes": "",
+        "address": "",
         "points": 12,
-        "order_id": 42,
-        "subtotal": 12.0,
-        "date": "2026-06-23T19:19:59.291269"
-      }
-    ]
-  },
-  "555-0123": {
-    "phone": "555-0123",
-    "name": "555-0123",
-    "email": "",
-    "notes": "",
-    "address": "",
-    "points": 24,
-    "total_earned": 24,
-    "total_redeemed": 0,
-    "total_spent": 24.0,
-    "total_orders": 1,
-    "last_visit": "2026-06-24T08:02:42.105988",
-    "created_at": "2026-06-24T08:02:42.105935",
-    "history": [
-      {
-        "type": "earned",
+        "total_earned": 12,
+        "total_redeemed": 0,
+        "total_spent": 12.0,
+        "total_orders": 1,
+        "last_visit": "2026-06-23T19:19:59.291274",
+        "created_at": "2026-06-23T19:19:59.291240",
+        "history": [
+            {
+                "type": "earned",
+                "points": 12,
+                "order_id": 42,
+                "subtotal": 12.0,
+                "date": "2026-06-23T19:19:59.291269"
+            }
+        ]
+    },
+    "555-0123": {
+        "phone": "555-0123",
+        "name": "555-0123",
+        "email": "",
+        "notes": "",
+        "address": "",
         "points": 24,
-        "order_id": 62,
-        "subtotal": 24.0,
-        "date": "2026-06-24T08:02:42.105982"
-      }
-    ]
-  }
+        "total_earned": 24,
+        "total_redeemed": 0,
+        "total_spent": 24.0,
+        "total_orders": 1,
+        "last_visit": "2026-06-24T08:02:42.105988",
+        "created_at": "2026-06-24T08:02:42.105935",
+        "history": [
+            {
+                "type": "earned",
+                "points": 24,
+                "order_id": 62,
+                "subtotal": 24.0,
+                "date": "2026-06-24T08:02:42.105982"
+            }
+        ]
+    },
+    "555-0100": {
+        "phone": "555-0100",
+        "name": "John Test",
+        "email": "john@test.com",
+        "notes": "",
+        "address": "",
+        "birthday": "",
+        "anniversary": "",
+        "points": 0,
+        "total_earned": 0,
+        "total_redeemed": 0,
+        "total_spent": 0.0,
+        "total_orders": 0,
+        "last_visit": "",
+        "created_at": "2026-06-26T01:53:01.846468",
+        "visit_dates": [],
+        "history": []
+    }
 }

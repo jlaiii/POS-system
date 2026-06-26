@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>My Account — POS System</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #1a1a2e; color: #e0e0e0;
+  min-height: 100vh; display: flex; flex-direction: column;
+  align-items: center;
+}
+.container { width: 100%; max-width: 480px; padding: 20px; margin: 0 auto; }
+h1 { font-size: 24px; color: #fff; text-align: center; margin: 20px 0; }
+h2 { font-size: 18px; color: #e94560; margin: 16px 0 8px; }
+.card {
+  background: #16213e; border-radius: 12px; padding: 20px;
+  margin-bottom: 16px; border: 1px solid #0f3460;
+}
+.form-group { margin-bottom: 12px; }
+label { display: block; font-size: 13px; color: #a0a0b0; margin-bottom: 4px; }
+input, select, textarea {
+  width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #0f3460;
+  background: #1a1a2e; color: #fff; font-size: 16px; outline: none;
+}
+input:focus, select:focus { border-color: #e94560; }
+button {
+  padding: 12px 24px; border-radius: 8px; border: none;
+  font-size: 16px; font-weight: 600; cursor: pointer;
+  min-height: 48px; min-width: 48px; transition: opacity .15s;
+}
+button:active { opacity: .7; }
+.btn-primary { background: #e94560; color: #fff; width: 100%; }
+.btn-secondary { background: #0f3460; color: #fff; }
+.btn-sm { padding: 8px 16px; font-size: 13px; min-height: 36px; }
+.btn-outline { background: transparent; border: 1px solid #e94560; color: #e94560; }
+.btn-danger { background: #c0392b; color: #fff; }
+.tabs { display: flex; gap: 4px; margin-bottom: 16px; }
+.tab {
+  flex: 1; padding: 10px; text-align: center; border-radius: 8px 8px 0 0;
+  background: #0f3460; cursor: pointer; color: #a0a0b0;
+  font-size: 14px; min-height: 44px; display: flex; align-items: center; justify-content: center;
+}
+.tab.active { background: #16213e; color: #e94560; font-weight: 600; }
+.hidden { display: none !important; }
+.toast {
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+  background: #16213e; border: 1px solid #0f3460; border-radius: 12px;
+  padding: 16px 24px; max-width: 90%; text-align: center;
+  z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,.5);
+  animation: slideUp .3s ease;
+}
+@keyframes slideUp { from { transform: translateX(-50%) translateY(20px); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }
+.toast-success { border-color: #27ae60; }
+.toast-error { border-color: #e74c3c; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+.badge-green { background: #27ae60; color: #fff; }
+.badge-red { background: #e74c3c; color: #fff; }
+.badge-blue { background: #3498db; color: #fff; }
+.badge-gold { background: #f39c12; color: #000; }
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 8px 0; }
+.stat-card {
+  background: #1a1a2e; border-radius: 8px; padding: 12px; text-align: center;
+}
+.stat-value { font-size: 20px; font-weight: 700; color: #fff; }
+.stat-label { font-size: 11px; color: #a0a0b0; margin-top: 2px; }
+.order-item { padding: 8px 0; border-bottom: 1px solid #0f3460; }
+.order-item:last-child { border-bottom: none; }
+.order-header { display: flex; justify-content: space-between; align-items: center; }
+.order-date { font-size: 12px; color: #a0a0b0; }
+.item-chip { display: inline-block; background: #0f3460; padding: 4px 8px; border-radius: 4px; margin: 2px; font-size: 12px; }
+.fav-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: #0f3460; padding: 8px 12px; border-radius: 8px; margin: 4px;
+  font-size: 14px; cursor: pointer; min-height: 44px;
+}
+.fav-chip:hover { background: #e94560; }
+.addr-card {
+  background: #0f3460; border-radius: 8px; padding: 12px; margin-bottom: 8px;
+}
+.addr-label { font-weight: 600; color: #e94560; font-size: 13px; margin-bottom: 4px; }
+.addr-text { font-size: 13px; color: #a0a0b0; }
+.loading { text-align: center; color: #a0a0b0; padding: 40px; font-size: 14px; }
+.link { color: #e94560; text-decoration: underline; cursor: pointer; font-size: 13px; }
+.link:hover { opacity: .8; }
+.error-text { color: #e74c3c; font-size: 12px; margin-top: 4px; }
+.mt-8 { margin-top: 8px; }
+.mt-16 { margin-top: 16px; }
+.mb-8 { margin-bottom: 8px; }
+.flex { display: flex; gap: 8px; }
+.flex-wrap { flex-wrap: wrap; }
+.gap-4 { gap: 4px; }
+.text-center { text-align: center; }
+.text-accent { color: #e94560; }
+.text-muted { color: #a0a0b0; }
+.text-sm { font-size: 12px; }
+.font-bold { font-weight: 700; }
+input, select, textarea { font-size: 16px; }
+@media (max-width: 480px) {
+  .container { padding: 12px; }
+  h1 { font-size: 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>🍽️ My Account</h1>
+
+  <!-- LOGIN VIEW -->
+  <div id="loginView">
+    <div class="card">
+      <h2>🔐 Sign In</h2>
+      <p class="text-sm text-muted mb-8">Sign in with your email &amp; password or phone &amp; PIN</p>
+      <div class="tabs" id="loginTabSelector">
+        <div class="tab active" data-tab="email" onclick="switchLoginTab('email')">📧 Email</div>
+        <div class="tab" data-tab="phone" onclick="switchLoginTab('phone')">📱 Phone</div>
+      </div>
+
+      <!-- Email Login -->
+      <div id="loginEmailSection">
+        <div class="form-group">
+          <label for="loginEmail">Email</label>
+          <input type="email" id="loginEmail" placeholder="you@example.com" inputmode="email">
+        </div>
+        <div class="form-group">
+          <label for="loginPassword">Password</label>
+          <input type="password" id="loginPassword" placeholder="Enter password">
+        </div>
+      </div>
+
+      <!-- Phone Login -->
+      <div id="loginPhoneSection" class="hidden">
+        <div class="form-group">
+          <label for="loginPhone">Phone Number</label>
+          <input type="tel" id="loginPhone" placeholder="+1 (555) 123-4567" inputmode="tel">
+        </div>
+        <div class="form-group">
+          <label for="loginPin">PIN (4 digits)</label>
+          <input type="password" id="loginPin" placeholder="Enter PIN" inputmode="numeric" pattern="[0-9]*" maxlength="4">
+        </div>
+      </div>
+
+      <button class="btn-primary mt-8" onclick="doLogin()">Sign In</button>
+      <p class="text-center mt-8 text-sm">
+        <span class="text-muted">Don't have an account?</span>
+        <span class="link" onclick="showRegister()">Register here</span>
+      </p>
+    </div>
+    <div class="card text-center">
+      <p class="text-muted text-sm">Or sign in with a magic link from your email</p>
+    </div>
+  </div>
+
+  <!-- REGISTER VIEW -->
+  <div id="registerView" class="hidden">
+    <div class="card">
+      <h2>📝 Create Account</h2>
+      <p class="text-sm text-muted mb-8">Register to save favorites, track orders, earn rewards</p>
+      <div class="form-group">
+        <label for="regName">Full Name *</label>
+        <input type="text" id="regName" placeholder="Your name">
+      </div>
+      <div class="form-group">
+        <label for="regEmail">Email</label>
+        <input type="email" id="regEmail" placeholder="you@example.com" inputmode="email">
+      </div>
+      <div class="form-group">
+        <label for="regPassword">Password (required with email)</label>
+        <input type="password" id="regPassword" placeholder="Create a password">
+      </div>
+      <div class="form-group">
+        <label for="regPhone">Phone Number</label>
+        <input type="tel" id="regPhone" placeholder="+1 (555) 123-4567" inputmode="tel">
+      </div>
+      <div class="form-group">
+        <label for="regPin">PIN (4 digits, required with phone)</label>
+        <input type="password" id="regPin" placeholder="4-digit PIN" inputmode="numeric" pattern="[0-9]*" maxlength="4">
+      </div>
+      <button class="btn-primary" onclick="doRegister()">Create Account</button>
+      <p class="text-center mt-8 text-sm">
+        <span class="text-muted">Already have an account?</span>
+        <span class="link" onclick="showLogin()">Sign in</span>
+      </p>
+    </div>
+  </div>
+
+  <!-- DASHBOARD VIEW (logged in) -->
+  <div id="dashboardView" class="hidden">
+    <!-- Header -->
+    <div class="flex" style="justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <h2 id="dashboardName">Welcome!</h2>
+      <button class="btn-sm btn-outline" onclick="doLogout()">Sign Out</button>
+    </div>
+
+    <!-- Dashboard tabs -->
+    <div class="tabs">
+      <div class="tab active" data-tab="overview" onclick="switchDashboardTab('overview')">📊 Overview</div>
+      <div class="tab" data-tab="orders" onclick="switchDashboardTab('orders')">📋 Orders</div>
+      <div class="tab" data-tab="favorites" onclick="switchDashboardTab('favorites')">⭐ Favorites</div>
+      <div class="tab" data-tab="profile" onclick="switchDashboardTab('profile')">👤 Profile</div>
+    </div>
+
+    <!-- Overview Tab -->
+    <div id="dashOverview">
+      <div class="card">
+        <div class="stat-grid" id="overviewStats">
+          <div class="stat-card"><div class="stat-value" id="statPoints">0</div><div class="stat-label">⭐ Points</div></div>
+          <div class="stat-card"><div class="stat-value" id="statOrders">0</div><div class="stat-label">📋 Orders</div></div>
+          <div class="stat-card"><div class="stat-value" id="statSpent">$0</div><div class="stat-label">💰 Spent</div></div>
+          <div class="stat-card"><div class="stat-value" id="statFavs">0</div><div class="stat-label">⭐ Favorites</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>🥇 Loyalty Rewards</h2>
+        <div id="loyaltyInfo">Loading...</div>
+      </div>
+    </div>
+
+    <!-- Orders Tab -->
+    <div id="dashOrders" class="hidden">
+      <div class="card">
+        <h2>📋 Order History</h2>
+        <div id="orderHistoryList">
+          <div class="loading">Loading orders...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Favorites Tab -->
+    <div id="dashFavorites" class="hidden">
+      <div class="card">
+        <div class="flex" style="justify-content:space-between;align-items:center;">
+          <h2>⭐ My Favorites</h2>
+        </div>
+        <div id="favoritesList" class="flex flex-wrap mt-8">
+          <div class="loading">Loading favorites...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Profile Tab -->
+    <div id="dashProfile" class="hidden">
+      <div class="card">
+        <h2>👤 Profile</h2>
+        <div class="form-group">
+          <label>Name</label>
+          <input type="text" id="profName" placeholder="Your name">
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="profEmail" placeholder="Email" inputmode="email">
+        </div>
+        <div class="form-group">
+          <label>Phone</label>
+          <input type="tel" id="profPhone" placeholder="Phone" inputmode="tel">
+        </div>
+        <button class="btn-primary" onclick="updateProfile()">Update Profile</button>
+      </div>
+      <div class="card">
+        <h2>🏠 Delivery Addresses</h2>
+        <div id="addressesList"></div>
+        <button class="btn-secondary btn-sm mt-8" onclick="showAddAddress()">+ Add Address</button>
+      </div>
+      <div class="card">
+        <h2>💳 Saved Payment Methods</h2>
+        <div id="paymentMethodsList"></div>
+        <button class="btn-secondary btn-sm mt-8" onclick="showAddPayment()">+ Add Payment Method</button>
+      </div>
+      <div class="card">
+        <h2>📱 Link Phone to Account</h2>
+        <p class="text-sm text-muted mb-8">Link your loyalty phone number to earn points on orders</p>
+        <div class="flex">
+          <input type="tel" id="linkPhoneInput" placeholder="Phone number" inputmode="tel" style="flex:1;">
+          <button class="btn-sm btn-secondary" onclick="linkPhone()">Link</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Address Modal -->
+<div id="addrModal" class="hidden" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:100;">
+  <div style="background:#16213e;border-radius:12px;padding:24px;width:90%;max-width:400px;max-height:90vh;overflow-y:auto;">
+    <h2 id="addrModalTitle">Add Address</h2>
+    <div class="form-group">
+      <label>Label (Home, Work, etc.)</label>
+      <input type="text" id="addrLabel" placeholder="Home">
+    </div>
+    <div class="form-group">
+      <label>Street Address *</label>
+      <input type="text" id="addrStreet" placeholder="123 Main St">
+    </div>
+    <div class="form-group">
+      <label>City</label>
+      <input type="text" id="addrCity" placeholder="City">
+    </div>
+    <div class="form-group">
+      <label>State</label>
+      <input type="text" id="addrState" placeholder="State">
+    </div>
+    <div class="form-group">
+      <label>ZIP Code</label>
+      <input type="text" id="addrZip" placeholder="12345">
+    </div>
+    <div class="form-group">
+      <label>Delivery Instructions</label>
+      <textarea id="addrInstructions" rows="2" placeholder="Optional notes"></textarea>
+    </div>
+    <input type="hidden" id="addrEditId" value="">
+    <div class="flex" style="justify-content:flex-end;">
+      <button class="btn-sm btn-secondary" onclick="closeAddrModal()">Cancel</button>
+      <button class="btn-sm btn-primary" onclick="saveAddress()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Payment Modal -->
+<div id="payModal" class="hidden" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:100;">
+  <div style="background:#16213e;border-radius:12px;padding:24px;width:90%;max-width:400px;">
+    <h2>Add Payment Method</h2>
+    <div class="form-group">
+      <label>Card Type</label>
+      <select id="payType"><option value="card">💳 Credit/Debit Card</option></select>
+    </div>
+    <div class="form-group">
+      <label>Card Brand</label>
+      <input type="text" id="payBrand" placeholder="Visa, Mastercard, etc.">
+    </div>
+    <div class="form-group">
+      <label>Last 4 Digits</label>
+      <input type="text" id="payLast4" placeholder="4242" inputmode="numeric" pattern="[0-9]*" maxlength="4">
+    </div>
+    <div class="form-group">
+      <label>Expiry</label>
+      <input type="text" id="payExpiry" placeholder="MM/YY">
+    </div>
+    <div class="flex" style="justify-content:flex-end;">
+      <button class="btn-sm btn-secondary" onclick="closePayModal()">Cancel</button>
+      <button class="btn-sm btn-primary" onclick="savePayment()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// --- State ---
+let CUSTOMER_ID = null;
+let CUSTOMER_TOKEN = null;
+let CUSTOMER_DATA = null;
+let LOGIN_TAB = 'email';
+
+// --- i18n ---
+function t(key) { return key; } // Simple pass-through for now, EN only
+
+// --- Toast ---
+function showToast(msg, type) {
+  type = type || 'success';
+  const existing = document.querySelector('.toast');
+  if (existing) existing.remove();
+  const t = document.createElement('div');
+  t.className = 'toast toast-' + type;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
+// --- URL Params ---
+function getUrlParam(name) {
+  const url = new URL(window.location.href);
+  return url.searchParams.get(name) || '';
+}
+
+// Check for magic link token in URL
+const magicToken = getUrlParam('token');
+if (magicToken) {
+  doMagicLogin(magicToken);
+}
+
+// --- Tab Switching ---
+function switchLoginTab(tab) {
+  LOGIN_TAB = tab;
+  document.querySelectorAll('#loginTabSelector .tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  document.getElementById('loginEmailSection').classList.toggle('hidden', tab !== 'email');
+  document.getElementById('loginPhoneSection').classList.toggle('hidden', tab !== 'phone');
+}
+
+function showRegister() {
+  document.getElementById('loginView').classList.add('hidden');
+  document.getElementById('registerView').classList.remove('hidden');
+}
+
+function showLogin() {
+  document.getElementById('registerView').classList.add('hidden');
+  document.getElementById('loginView').classList.remove('hidden');
+}
+
+function switchDashboardTab(tab) {
+  document.querySelectorAll('#dashboardView .tabs .tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  document.getElementById('dashOverview').classList.toggle('hidden', tab !== 'overview');
+  document.getElementById('dashOrders').classList.toggle('hidden', tab !== 'orders');
+  document.getElementById('dashFavorites').classList.toggle('hidden', tab !== 'favorites');
+  document.getElementById('dashProfile').classList.toggle('hidden', tab !== 'profile');
+}
+
+// --- Magic Link Login ---
+async function doMagicLogin(token) {
+  try {
+    const res = await fetch('/api/customers/account/magic-login', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({token})
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(data.message || 'Login link expired', 'error');
+      return;
+    }
+    CUSTOMER_ID = data.customer_id;
+    CUSTOMER_TOKEN = data.token;
+    // Remove token from URL
+    window.history.replaceState({}, '', '/customer-login');
+    showToast(data.message, 'success');
+    loadDashboard();
+  } catch (e) {
+    showToast('Network error', 'error');
+  }
+}
+
+// --- Login ---
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const phone = document.getElementById('loginPhone').value.trim();
+  const pin = document.getElementById('loginPin').value;
+
+  if (LOGIN_TAB === 'email' && !email) { showToast('Email is required', 'error'); return; }
+  if (LOGIN_TAB === 'email' && !password) { showToast('Password is required', 'error'); return; }
+  if (LOGIN_TAB === 'phone' && !phone) { showToast('Phone is required', 'error'); return; }
+  if (LOGIN_TAB === 'phone' && !pin) { showToast('PIN is required', 'error'); return; }
+
+  try {
+    const res = await fetch('/api/customers/account/login', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({email, password, phone, pin})
+    });
+    const data = await res.json();
+    if (!res.ok) { showToast(data.message || 'Login failed', 'error'); return; }
+    CUSTOMER_ID = data.customer_id;
+    CUSTOMER_TOKEN = data.token;
+    showToast(data.message, 'success');
+    loadDashboard();
+  } catch (e) {
+    showToast('Network error', 'error');
+  }
+}
+
+// --- Register ---
+async function doRegister() {
+  const name = document.getElementById('regName').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const password = document.getElementById('regPassword').value;
+  const phone = document.getElementById('regPhone').value.trim();
+  const pin = document.getElementById('regPin').value;
+
+  if (!name) { showToast('Name is required', 'error'); return; }
+
+  try {
+    const res = await fetch('/api/customers/account/register', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({name, email, password, phone, pin})
+    });
+    const data = await res.json();
+    if (!res.ok) { showToast(data.message || 'Registration failed', 'error'); return; }
+    showToast(data.message, 'success');
+    // Switch to login and pre-fill
+    showLogin();
+    if (email) { document.getElementById('loginEmail').value = email; switchLoginTab('email'); }
+    else if (phone) { document.getElementById('loginPhone').value = phone; switchLoginTab('phone'); }
+  } catch (e) {
+    showToast('Network error', 'error');
+  }
+}
+
+// --- Dashboard ---
+async function loadDashboard() {
+  document.getElementById('loginView').classList.add('hidden');
+  document.getElementById('registerView').classList.add('hidden');
+  document.getElementById('dashboardView').classList.remove('hidden');
+
+  try {
+    const res = await fetch('/api/customers/account/profile', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({customer_id: CUSTOMER_ID, token: CUSTOMER_TOKEN})
+    });
+    if (!res.ok) {
+      if (res.status === 401) { doLogout(); showToast('Session expired', 'error'); return; }
+      const d = await res.json();
+      showToast(d.message || 'Failed to load profile', 'error');
+      return;
+    }
+    CUSTOMER_DATA = await res.json();
+    renderDashboard();
+  } catch (e) {
+    showToast('Network error', 'error');
+  }
+}
+
+function renderDashboard() {
+  const d = CUSTOMER_DATA;
+  document.getElementById('dashboardName').textContent = '👋 Welcome, ' + (d.name || 'Guest') + '!';
+
+  // Overview stats
+  document.getElementById('statPoints').textContent = (d.loyalty && d.loyalty.points) || 0;
+  document.getElementById('statOrders').textContent = (d.loyalty && d.loyalty.total_orders) || 0;
+  document.getElementById('statSpent').textContent = '$' + ((d.loyalty && d.loyalty.total_spent) || 0).toFixed(2);
+  document.getElementById('statFavs').textContent = (d.favorite_items && d.favorite_items.length) || 0;
+
+  // Loyalty info
+  const loy = d.loyalty || {};
+  let loyHtml = '<div class="stat-grid">';
+  loyHtml += '<div class="stat-card"><div class="stat-value">' + (loy.total_earned || 0) + '</div><div class="stat-label">🌟 Total Earned</div></div>';
+  loyHtml += '<div class="stat-card"><div class="stat-value">' + (loy.total_redeemed || 0) + '</div><div class="stat-label">🔄 Redeemed</div></div>';
+  loyHtml += '</div>';
+  if (loy.birthday) loyHtml += '<p class="text-sm mt-8">🎂 Birthday: ' + loy.birthday.slice(0,10) + '</p>';
+  if (loy.anniversary) loyHtml += '<p class="text-sm">💍 Anniversary: ' + loy.anniversary.slice(0,10) + '</p>';
+  if (loy.last_visit) loyHtml += '<p class="text-sm text-muted mt-8">Last visit: ' + loy.last_visit.slice(0,10) + '</p>';
+  document.getElementById('loyaltyInfo').innerHTML = loyHtml;
+
+  // Orders
+  renderOrderHistory(d.order_history);
+
+  // Favorites
+  renderFavorites(d.favorite_items);
+
+  // Profile
+  document.getElementById('profName').value = d.name || '';
+  document.getElementById('profEmail').value = d.email || '';
+  document.getElementById('profPhone').value = d.phone || '';
+
+  // Addresses
+  renderAddresses(d.addresses);
+
+  // Payment methods
+  renderPaymentMethods(d.saved_payment_methods);
+}
+
+// --- Order History ---
+function renderOrderHistory(orders) {
+  const container = document.getElementById('orderHistoryList');
+  if (!orders || orders.length === 0) {
+    container.innerHTML = '<p class="text-muted text-sm">No orders yet.</p>';
+    return;
+  }
+  let html = '';
+  orders.slice(0, 20).forEach(o => {
+    const items = (o.items || []).slice(0, 5);
+    const itemChips = items.map(i => '<span class="item-chip">' + (i.name || '') + ' x' + (i.qty || 1) + '</span>').join('');
+    html += '<div class="order-item">';
+    html += '<div class="order-header">';
+    html += '<div><span class="font-bold">#' + (o.order_id || '') + '</span>';
+    if (o.status) html += ' <span class="badge badge-green">' + o.status + '</span>';
+    if (o.payment) html += ' <span class="badge badge-blue">' + o.payment + '</span>';
+    html += '</div>';
+    html += '<div class="order-date">' + (o.date ? o.date.slice(0,10) : '') + '</div>';
+    html += '</div>';
+    html += '<div class="mt-8">' + itemChips + '</div>';
+    html += '<div class="flex mt-8" style="justify-content:space-between;align-items:center;">';
+    html += '<span class="font-bold text-accent">$' + (o.total || 0).toFixed(2) + '</span>';
+    html += '<button class="btn-sm btn-outline" onclick="reorder(' + (o.order_id || 0) + ')">🔄 Reorder</button>';
+    html += '</div>';
+    html += '</div>';
+  });
+  if (orders.length > 20) {
+    html += '<p class="text-center text-sm text-muted mt-8">Showing last 20 of ' + orders.length + ' orders</p>';
+  }
+  container.innerHTML = html;
+}
+
+async function reorder(orderId) {
+  try {
+    const res = await fetch('/api/customers/account/reorder', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({customer_id: CUSTOMER_ID, token: CUSTOMER_TOKEN, order_id: orderId})
+    });
+    const data = await res.json();
+    if (!res.ok) { showToast(data.message || 'Failed to load order', 'error'); return; }
+    // Show the items in a toast — in a real POS this would add to cart
+    const itemNames = (data.items || []).map(i => i.name + ' x' + i.qty).join(', ');
+    showToast('🔄 Ready to reorder: ' + itemNames, 'success');
+  } catch (e) {
+    showToast('Network error', 'error');
+  }
+}
+
+// --- Favorites ---
+function renderFavorites(items) {
+  const container = document.getElementById('favoritesList');
+  if (!items || items.length === 0) {
+    container.innerHTML = '<p class="text-muted text-sm">No favorite items yet. Browse the menu and add favorites!</p>';
+    return;
+  }
+  let html = '';
+  items.forEach(name => {
+    html += '<div class="fav-chip" onclick="removeFavorite(\'' + name.replace(/'/g, "\\'") + '\')">⭐ ' + name + ' ✕</div>';
+  });
+  container.innerHTML = html;
+  if (items.length > 0) {
+    container.innerHTML += '<p class="text-sm text-muted mt-8">Tap a favorite to remove it</p>';
+  }
+}
+
+async function removeFavorite(name) {
+  try {
+    const res = await fetch('/api/customers/account/favorites', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({customer_id: CUSTOMER_ID, token: CUSTOMER_TOKEN, action: 'remove', item_name: name})
+    });
+    const data = await res.json();
+    if (!res.ok) { showToast(data.message || 'Failed', 'error'); return; }
+    CUSTOMER_DATA.favorite_items = data.favorite_items;
+    renderFavorites(data.favorite_items);
+    renderDashboard();
+    showToast('⭐ Removed from favorites', 'success');
+  } catch (e) {
+    showToast('Network error', 'error');
+  }
+}
+
+// --- Addresses ---
+function renderAddresses(addresses) {
+  const container = document.getElementById('addressesList');
+  if (!addresses || addresses.length === 0) {
+    container.innerHTML = '<p class="text-muted text-sm">No saved addresses.</p>';
+    return;
+  }
+  let html = '';
+  addresses.forEach(a => {
+    html += '<div class="addr-card">';
+    html += '<div class="addr-label">' + (a.label || 'Address') + '</div>';
+    html += '<div class="addr-text">' + (a.street || '') + '</div>';
+    if (a.city || a.state) html += '<div class="addr-text">' + (a.city || '') + (a.state ? ', ' + a.state : '') + ' ' + (a.zip || '') + '</div>';
+    if (a.instructions) html += '<div class="addr-text text-sm mt-8">📝 ' + a.instructions + '</div>';
+    html += '<div class="flex mt-8 gap-4">';
+    html += '<button class="btn-sm btn-outline" onclick="editAddress(\'' + a.id + '\')">✏️ Edit</button>';
+    html += '<button class="btn-sm btn-danger" onclick="deleteAddress(\'' + a.id + '\')">🗑️ Delete</button>';
+    html += '</div></div>';
+  });
+  container.innerHTML = html;
+}
+
+function showAddAddress() {
+  document.getElementById('addrModalTitle').textContent = 'Add Address';
+  document.getElementById('addrLabel').value = '';
+  document.getElementById('addrStreet').value = '';
+  document.getElementById('addrCity').value = '';
+  document.getElementById('addrState').value = '';
+  document.getElementById('addrZip').value = '';
+  document.getElementById('addrInstructions').value = '';
+  document.getElementById('addrEditId').value = '';
+  document.getElementById('addrModal').classList.remove('hidden');
+}
+
+function closeAddrModal() {
+  document.getElementById('addrModal').classList.add('hidden');
+}
+
+async function saveAddress() {
+  const editId = document.getElementById('addrEditId').value;
+  const action = editId ? 'update' : 'add';
+  const body = {
+    customer_id: CUSTOMER_ID, token: CUSTOMER_TOKEN, action,
+    label: document.getElementById('addrLabel').value.trim(),
+    street: document.getElementById('addrStreet').value.trim(),
+    city: document.getElementById('addrCity').value.trim(),
+    state: document.getElementById('addrState').value.trim(),
+    zip: document.getElementById('addrZip').value.trim(),
+    instructions: document.getElementById('addrInstructions').value.trim()
+  };
+  if (editId) body.address_id = editId;
+
+  if (!body.street) { showToast('Street address is required', 'error'); return; }
+
+  try {
+    const res = await fetch('/api/customers/account/addresses', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (!res.ok) { showToast(data.message || 'Failed', 'error'); return; }
+    closeAddrModal();
+    CUSTOMER_DATA.addresses = data.addresses;
+    renderAddresses(data.addresses);
+    showToast('Address saved!', 'success');
+  } catch (e) {
+    showToast('Network error', 'error');
+  }
+}
+
+function editAddress(id) {
+  const addr = (CUSTOMER_DATA.addresses || []).find(a => a.id === id);
+  if (!addr) return;
+  document.getElementById('addrModalTitle').textContent = 'Edit Address';
+  document.getElementById('addrLabel').value = addr.label || '';
+  document.getElementById('addrStreet').value = addr.street || '';
+  document.getElementById('addrCity').value = addr.city || '';
+  document.getElementById('addrState').value = addr.state || '';
+  document.getElementById('addrZip').value = addr.zip || '';
+  document.getElementById('addrInstructions').value = addr.instructions || '';
+  document.getElementById('addrEditId').value = id;
+  document.getElementById('addrModal').classList.remove('hidden');
+}
+
+async function deleteAddress(id) {
+  if (!confirm('Delete this address?')) return;
+  try {
+    const res = await fetch('/api/customers/account/addresses', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({customer_id: CUSTOMER_ID, token: CUSTOMER_TOKEN, action: 'delete', address_id: id})
+    });
+    const data = await res.json();
+    if (!res.ok) { showToast(data.message || 'Failed', 'error'); return; }
+    CUSTOMER_DATA.addresses = data.addresses;
+    renderAddresses(data.addresses);
+    showToast('Address deleted', 'success');
+  } catch (e) {
+    showToast('Network error', 'error');
+  }
+}
+
+// --- Payment Methods ---
+function renderPaymentMethods(methods) {
+  const container = document.getElementById('paymentMethodsList');
+  if (!methods || methods.length === 0) {
+    container.innerHTML = '<p class="text-muted text-sm">No saved payment methods.</p>';
+    return;
+  }
+  let html = '';
+  methods.forEach(m => {
+    html += '<div class="addr-card">';
+    html += '<div class="addr-label">' + (m.brand || 'Card') + ' •••• ' + (m.last4 || '****') + (m.is_default ? ' ⭐' : '') + '</div>';
+    html += '<div class="addr-text">' + (m.type || 'card') + (m.expiry ? ' | Exp: ' + m.expiry : '') + '</div>';
+    html += '<div class="flex mt-8 gap-4">';
+    html += '<button class="btn-sm btn-outline" onclick="setDefaultPayment(\'' + m.id + '\')">⭐ Make Default</button>';
+    html += '<button class="btn-sm btn-danger" onclick="deletePayment(\'' + m.id + '\')">🗑️ Delete</button>';
+    html += '</div></div>';
+  });
+  container.innerHTML = html;
+}
+
+function showAddPayment() {
+  document.getElementById('payBrand').value = '';
+  document.getElementById('payLast4').value = '';
+  document.getElementById('payExpiry').value = '';
+  document.getElementById('payModal').classList.remove('hidden');
+}
+
+function closePayModal() {
+  document.getElementById('payModal').classList.add('hidden');
+}
+
+async function savePayment() {
+  const body = {
+    customer_id: CUSTOMER_ID, token: CUSTOMER_TOKEN, action: 'add',
+    type: 'card',
+    brand: document.getElementById('payBrand').value.trim(),
+    last4: document.getElementById('payLast4').value.trim(),
+    expiry: document.getElementById('payExpiry').value.trim()
+  };
+  if (!body.last4) { showToast('Last 4 digits required', 'error'); return; }
+
+  try {
+    const res = await fetch('/api/customers/account/payment-methods', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (!res.ok) { showToast(data.message || 'Failed', 'error'); return; }
+    closePayModal();
+    CUSTOMER_DATA.saved_payment_methods = data.saved_payment_methods;
+    renderPaymentMethods(data.saved_payment_methods);
+    showToast('Payment method saved!', 'success');
+  } catch (e) {
+    showToast('Network error', 'error');
+  }
+}
+
+async function setDefaultPayment(id) {
+  try {
+    const res = await fetch('/api/customers/account/payment-methods', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({customer_id: CUSTOMER_ID, token: CUSTOMER_TOKEN, action: 'set_default', payment_method_id: id})
+    });
+    const data = await res.json();
+    if (!res.ok) { showToast(data.message || 'Failed', 'error'); return; }
+    CUSTOMER_DATA.saved_payment_methods = data.saved_payment_methods;
+    renderPaymentMethods(data.saved_payment_methods);
+    showToast('Default payment updated', 'success');
+  } catch (e) {
+    showToast('Network error', 'error');
+  }
+}
+
+async function deletePayment(id) {
+  if (!confirm('Delete this payment method?')) return;
+  try {
+    const res = await fetch('/api/customers/account/payment-methods', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({customer_id: CUSTOMER_ID, token: CUSTOMER_TOKEN, action: 'delete', payment_method_id: id})
+    });
+    const data = await res.json();
+    if (!res.ok) { showToast(data.message || 'Failed', 'error'); return; }
+    CUSTOMER_DATA.saved_payment_methods = data.saved_payment_methods;
+    renderPaymentMethods(data.saved_payment_methods);
+    showToast('Payment method deleted', 'success');
+  } catch (e) {
+    showToast('Network error', 'error');
+  }
+}
+
+// --- Profile Update ---
+async function updateProfile() {
+  const body = {
+    customer_id: CUSTOMER_ID, token: CUSTOMER_TOKEN,
+    name: document.getElementById('profName').value.trim(),
+    email: document.getElementById('profEmail').value.trim(),
+    phone: document.getElementById('profPhone').value.trim()
+  };
+  try {
+    const res = await fetch('/api/customers/account/update', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (!res.ok) { showToast(data.message || 'Failed', 'error'); return; }
+    showToast('Profile updated!', 'success');
+    // Reload dashboard
+    loadDashboard();
+  } catch (e) {
+    showToast('Network error', 'error');
+  }
+}
+
+// --- Link Phone ---
+async function linkPhone() {
+  const phone = document.getElementById('linkPhoneInput').value.trim();
+  if (!phone) { showToast('Phone number required', 'error'); return; }
+
+  try {
+    const res = await fetch('/api/customers/account/link-phone', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({customer_id: CUSTOMER_ID, token: CUSTOMER_TOKEN, phone})
+    });
+    const data = await res.json();
+    if (!res.ok) { showToast(data.message || 'Failed', 'error'); return; }
+    showToast(data.message, 'success');
+    document.getElementById('linkPhoneInput').value = '';
+    loadDashboard();
+  } catch (e) {
+    showToast('Network error', 'error');
+  }
+}
+
+// --- Logout ---
+function doLogout() {
+  CUSTOMER_ID = null;
+  CUSTOMER_TOKEN = null;
+  CUSTOMER_DATA = null;
+  document.getElementById('dashboardView').classList.add('hidden');
+  document.getElementById('loginView').classList.remove('hidden');
+  document.getElementById('registerView').classList.add('hidden');
+  document.getElementById('loginEmail').value = '';
+  document.getElementById('loginPassword').value = '';
+  document.getElementById('loginPhone').value = '';
+  document.getElementById('loginPin').value = '';
+  showToast('Signed out', 'success');
+}
+</script>
+</body>
+</html>

@@ -12969,5 +12969,18 @@
             "date_to": "2026-06-26",
             "tip_amount": 0
         }
+    },
+    {
+        "timestamp": "2026-06-26T01:53:01.847026",
+        "type": "customer_account_register",
+        "user_id": "CUST-0001",
+        "user_role": "customer",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "name": "John Test",
+            "has_email": true,
+            "has_phone": true
+        }
     }
 ]

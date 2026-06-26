@@ -844,7 +844,10 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
             <div id="loyaltyInfo" style="display:none;background:var(--card);border-radius:8px;padding:10px;margin-top:4px;">
               <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
                 <span id="loyaltyCustomerName" style="font-weight:600;font-size:14px;"></span>
-                <span id="loyaltyPointsDisplay" style="color:#f39c12;font-size:14px;font-weight:600;">⭐ 0 pts</span>
+                <span style="display:flex;gap:6px;align-items:center;">
+                  <span id="loyaltyPointsDisplay" style="color:#f39c12;font-size:14px;font-weight:600;">⭐ 0 pts</span>
+                  <button class="ghost btn-sm" onclick="window.open('/customer-login','_blank')" style="font-size:11px;padding:2px 8px;min-height:28px;" title="Customer account">🔐 Account</button>
+                </span>
               </div>
               <div id="loyaltyProfileInfo" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;font-size:12px;color:var(--text2);align-items:center;">
                 <span id="loyaltyBirthdayDisplay" style="display:none;"></span>

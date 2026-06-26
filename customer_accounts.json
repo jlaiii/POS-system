@@ -1,0 +1,41 @@
+{
+    "CUST-0001": {
+        "customer_id": "CUST-0001",
+        "email": "john@test.com",
+        "password_hash": "bfa99c3471dcfe736f9885153a0734a2e1ded517a6a821af1f10abb19b93dbd6",
+        "password_salt": "0f6bbf7b942e0069e44424535f392de8",
+        "phone": "555-0100",
+        "pin": "1234",
+        "name": "John Test",
+        "addresses": [
+            {
+                "id": "d1ded31289e1ae73",
+                "label": "Home",
+                "street": "123 Main St",
+                "city": "Anytown",
+                "state": "CA",
+                "zip": "90210",
+                "instructions": ""
+            }
+        ],
+        "saved_payment_methods": [
+            {
+                "id": "3065e200a281f2e5",
+                "type": "card",
+                "last4": "4242",
+                "brand": "Visa",
+                "expiry": "12/28",
+                "token": "e4950fb196cfc0995856311361e925e5",
+                "is_default": true
+            }
+        ],
+        "favorite_items": [
+            "Hamburger - Normal"
+        ],
+        "created_at": "2026-06-26T01:53:01.846860",
+        "updated_at": "2026-06-26T01:53:01.873926",
+        "last_login": "2026-06-26T01:53:01.877931",
+        "magic_link_token": "3iUahSkYv25mT3_hwCWzfkZEe55e6SP0dquya5joJug",
+        "magic_link_expiry": "2026-06-27T01:53:01.878255"
+    }
+}
