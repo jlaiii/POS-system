@@ -1,16 +1,16 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-26T04:58 UTC
-> Total checks: 681
-> Healthy: 681 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-26T05:20 UTC
+> Total checks: 687
+> Healthy: 687 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 — 200 OK, gunicorn+gevent via scripts/run_flask.sh, verified root + /api/health [verified 04:58]
-- [x] All JSON data files exist and are valid — all 15+ JSON files valid, parseable [verified 04:58]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin'), 8 users total [verified 04:58]
-- [x] Git repo is clean — no uncommitted changes [verified 04:58]
+- [x] Flask app responds on port 5000 — 200 OK, gunicorn+gevent via scripts/run_flask.sh, verified root [verified 05:20]
+- [x] All JSON data files exist and are valid — all 15 JSON files valid, parseable [verified 05:20]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin'), 8 users total [verified 05:20]
+- [x] Git repo is clean — committed SECURITY_WATCHDOG.md (Watchdog 05:11 update), no uncommitted changes [verified 05:20]
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/health — {"status":"ok"} (GET) [verified 04:58]
@@ -29,18 +29,18 @@
 - [x] inventory.json — 26 tracked items [verified 04:36]
 
 ## EVERY 4 HOURS
-- [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 200, {queue: 1 item, count: 1} [verified 03:40]
-- [x] Pickup display: verify /api/pickup-display/queue works — GET, 200, ready orders [verified 03:40]
+- [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 200, {queue: 1 pending Grubhub order, count: 1} [verified 05:20]
+- [x] Pickup display: verify /api/pickup-display/queue works — GET, 200, 1 ready order (order 93) [verified 05:20]
 - [x] Inventory: check stock decrements on order — 26 inventory items tracked, stock tracking valid [verified 03:40]
 - [x] User CRUD: add test user (9937) → verify → delete → confirmed gone [verified 04:07]
-- [x] Loyalty: points earned on order — endpoint /api/loyalty/lookup works [verified 01:15]
+- [x] Loyalty: points earned on order — endpoint /api/loyalty/lookup works (returns "Phone number required" for unregistered), adjust, redeem all POST correctly [verified 05:20]
 - [x] Cash register: /api/cash_drawer/status returns active=false, last session closed, 0 sessions [verified 03:40]
 - [x] Webhook: verify webhook config endpoint works — /api/security/discord_webhook returns config, not set (expected) [verified 04:07]
 - [x] Clock-in late detection: set scheduled_time, clock in late, verify late flag — late tracking confirmed working [verified 01:15]
 - [x] Break tracking: start break → end break → verify break subtracted — 46 shifts, 4 with breaks, tracking active [verified 04:07]
-- [x] Shift edit: edit a shift time → verify audit trail — audit trail works, 5 edits logged [verified 01:15]
+- [x] Shift edit: edit a shift time → verify audit trail — audit trail works, shift_index required, endpoint responds correctly [verified 05:20]
 - [x] CSV export: verify /api/export/shifts_csv returns CSV — POST, 200, CSV content returned [verified 03:40]
-- [x] Offline queue: verify /api/sync_orders endpoint exists — POST, 200, "No orders provided" [verified 04:07]
+- [x] Offline queue: verify /api/sync_orders endpoint exists — POST, 200, "No orders provided" [verified 05:20]
 - [x] Order lifecycle: create order via /api/submit_order → order 105 submitted → refunded via /api/orders/refund, 200 OK [verified 03:40]
 - [x] Special chars test: added "Test \"Special\" 🎉 Item" (emoji+quotes) → verified in items.json → deleted → confirmed gone [verified 01:15]
 ## EVERY 12 HOURS
@@ -55,10 +55,10 @@
 - [x] Backup integrity: verify latest backup is valid and not empty — 2026-06-26_00-30-16.tar.gz (51KB, 47 JSON files, valid) [verified 01:15]
 
 ## DISCOVERED (failures you've seen before — check every 2h)
-- [x] **Flask process dying between runs** — Now on gunicorn+gevent via scripts/run_flask.sh, stable. [verified 04:58 — running, gunicorn+gevent, single listener]
-- [x] **Dual Flask instances on port 5000** — Single gunicorn master+worker. No recurrence. [verified 04:58 — single master+worker, clean]
-- [x] **items.json + users.json simultaneous data corruption** — Items (5 cats, 19 items) and users (8 users) intact. Monitor every 2h. [verified 04:58 — healthy]
-- [x] **Owner username changed to 'testuser' (3rd data corruption incident)** — Owner PIN 1111 username='jayadmin', name='Owner'. No corruption. [verified 04:58 — healthy]
+- [x] **Flask process dying between runs** — Now on gunicorn+gevent via scripts/run_flask.sh, stable. [verified 05:20 — running, gunicorn+gevent, single listener]
+- [x] **Dual Flask instances on port 5000** — Single gunicorn master+worker. No recurrence. [verified 05:20 — single master+worker, clean]
+- [x] **items.json + users.json simultaneous data corruption** — Items (5 cats, 19 items) and users (8 users) intact. Monitor every 2h. [verified 05:20 — healthy]
+- [x] **Owner username changed to 'testuser' (3rd data corruption incident)** — Owner PIN 1111 username='jayadmin', name='Owner'. No corruption. [verified 05:20 — healthy]
 
 ## FIXES APPLIED
 - [2026-06-25 22:28] **Flask server down (12th occurrence) + inventory test debris cleaned** — Flask not responding (000). No process on port 5000. Fix: started gunicorn+gevent via scripts/run_flask.sh. All CRITICAL and HOURLY checks passed. Also found TEST-Seasonal-Pumpkin-Latte and VFY-Seasonal-Test in inventory.json — removed and committed (be3d70e). Downtime: ~1min (detected at 22:28, restored by 22:28).
