@@ -14202,5 +14202,112 @@
             "clock_out_time": "2026-06-26T10:48:49.091150",
             "duration_hours": 0.0
         }
+    },
+    {
+        "timestamp": "2026-06-26T11:12:21.359438",
+        "type": "add_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed",
+            "reason": "Missing data",
+            "new_user_id": null
+        }
+    },
+    {
+        "timestamp": "2026-06-26T11:12:21.425199",
+        "type": "delete_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed",
+            "reason": "Missing user ID to delete"
+        }
+    },
+    {
+        "timestamp": "2026-06-26T11:12:36.471013",
+        "type": "add_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "added_user_id": "9673",
+            "added_user_name": "RelBot Test User",
+            "added_user_role": "user"
+        }
+    },
+    {
+        "timestamp": "2026-06-26T11:12:36.536119",
+        "type": "login_failed",
+        "user_id": null,
+        "user_role": "unknown",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed",
+            "method": "pin",
+            "ip": "127.0.0.1",
+            "attempt": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-26T11:12:36.568306",
+        "type": "delete_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "deleted_user_id": "9673",
+            "deleted_user_name": "RelBot Test User",
+            "deleted_user_role": "user"
+        }
+    },
+    {
+        "timestamp": "2026-06-26T11:12:50.201410",
+        "type": "shift_edited",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "shift_index": 0,
+            "user_id": "1111",
+            "user_name": "Owner",
+            "changes": {
+                "clock_out_time": {
+                    "old": "2026-06-23T01:15:00",
+                    "new": "2026-06-23T01:20:00"
+                }
+            },
+            "reason": "RelBot shift edit test"
+        }
+    },
+    {
+        "timestamp": "2026-06-26T11:12:50.272412",
+        "type": "shift_edited",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "shift_index": 0,
+            "user_id": "1111",
+            "user_name": "Owner",
+            "changes": {
+                "clock_out_time": {
+                    "old": "2026-06-23T01:20:00",
+                    "new": "2026-06-23T01:15:00"
+                }
+            },
+            "reason": "RelBot restore original"
+        }
     }
 ]
