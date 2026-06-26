@@ -14580,5 +14580,118 @@
             "user_name": "Owner",
             "ip": "127.0.0.1"
         }
+    },
+    {
+        "timestamp": "2026-06-26T14:42:14.295856",
+        "type": "add_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "failed",
+            "reason": "Guessable PIN",
+            "new_user_id": "8888"
+        }
+    },
+    {
+        "timestamp": "2026-06-26T14:42:19.228088",
+        "type": "add_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "failed",
+            "reason": "Invalid user role",
+            "new_user_id": "9753"
+        }
+    },
+    {
+        "timestamp": "2026-06-26T14:42:22.859190",
+        "type": "add_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "added_user_id": "9753",
+            "added_user_name": "RelBotTest",
+            "added_user_role": "user"
+        }
+    },
+    {
+        "timestamp": "2026-06-26T14:42:27.705683",
+        "type": "get_users",
+        "user_id": "anonymous",
+        "user_role": "unauthorized",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "failed",
+            "reason": "Missing adminPin"
+        }
+    },
+    {
+        "timestamp": "2026-06-26T14:42:27.729010",
+        "type": "delete_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "deleted_user_id": "9753",
+            "deleted_user_name": "RelBotTest",
+            "deleted_user_role": "user"
+        }
+    },
+    {
+        "timestamp": "2026-06-26T14:42:27.749490",
+        "type": "get_users",
+        "user_id": "anonymous",
+        "user_role": "unauthorized",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "failed",
+            "reason": "Missing adminPin"
+        }
+    },
+    {
+        "timestamp": "2026-06-26T14:42:59.688330",
+        "type": "submit_order",
+        "user_id": null,
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "order_id": 114,
+            "subtotal": 8.99,
+            "tax_amount": 0.74,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 9.73,
+            "payment_method": "Cash",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-26T14:42:59.726437",
+        "type": "refund_order",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "order_id": 114,
+            "reason": "No reason provided",
+            "refunded_by_name": "Owner",
+            "order_total": 9.73,
+            "inventory_restored": [
+                "Pancakes x1"
+            ]
+        }
     }
 ]
