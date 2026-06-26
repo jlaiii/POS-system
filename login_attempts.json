@@ -2055,5 +2055,28 @@
         "details": {
             "reason": "invalid_credentials"
         }
+    },
+    {
+        "user_id": null,
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-26T12:49:03.128176",
+        "success": false,
+        "user_agent": "curl/8.5.0",
+        "method": "pin",
+        "details": {
+            "reason": "invalid_pin",
+            "attempt": 1
+        }
+    },
+    {
+        "user_id": "1111",
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-26T12:49:10.687451",
+        "success": true,
+        "user_agent": "curl/8.5.0",
+        "method": "pin",
+        "details": {
+            "status": "success"
+        }
     }
 ]
