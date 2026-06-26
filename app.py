@@ -15919,17 +15919,17 @@ def customer_account_reorder():
     order_id = data.get('order_id')
 
     if not customer_id or not token:
-        return jsonify({'message': 'Customer ID and token are required.'}, 400)
+        return jsonify({'message': 'Customer ID and token are required.'}), 400
     if not order_id:
-        return jsonify({'message': 'Order ID is required.'}, 400)
+        return jsonify({'message': 'Order ID is required.'}), 400
 
     accounts = load_json_data(CUSTOMER_ACCOUNTS_FILE)
     if not isinstance(accounts, dict):
         accounts = {}
     if customer_id not in accounts:
-        return jsonify({'message': 'Account not found.'}, 404)
+        return jsonify({'message': 'Account not found.'}), 404
     if accounts[customer_id].get('magic_link_token') != token:
-        return jsonify({'message': 'Invalid token.'}, 401)
+        return jsonify({'message': 'Invalid token.'}), 401
 
     all_orders = load_json_data(ORDERS_FILE) + load_json_data(CLEARED_ORDERS_FILE)
     order = None
@@ -15939,7 +15939,7 @@ def customer_account_reorder():
             break
 
     if not order:
-        return jsonify({'message': 'Order not found.'}, 404)
+        return jsonify({'message': 'Order not found.'}), 404
 
     items = []
     for item in order.get('items', []):
@@ -15966,22 +15966,22 @@ def customer_account_link_phone():
     phone = data.get('phone', '').strip()
 
     if not customer_id or not token:
-        return jsonify({'message': 'Customer ID and token are required.'}, 400)
+        return jsonify({'message': 'Customer ID and token are required.'}), 400
     if not phone:
-        return jsonify({'message': 'Phone number is required.'}, 400)
+        return jsonify({'message': 'Phone number is required.'}), 400
 
     accounts = load_json_data(CUSTOMER_ACCOUNTS_FILE)
     if not isinstance(accounts, dict):
         accounts = {}
     if customer_id not in accounts:
-        return jsonify({'message': 'Account not found.'}, 404)
+        return jsonify({'message': 'Account not found.'}), 404
     if accounts[customer_id].get('magic_link_token') != token:
-        return jsonify({'message': 'Invalid token.'}, 401)
+        return jsonify({'message': 'Invalid token.'}), 401
 
     # Check phone not linked elsewhere
     for cid, acc in accounts.items():
         if cid != customer_id and acc.get('phone', '') == phone:
-            return jsonify({'message': 'This phone is already linked to another account.'}, 409)
+            return jsonify({'message': 'This phone is already linked to another account.'}), 409
 
     accounts[customer_id]['phone'] = phone
     accounts[customer_id]['updated_at'] = datetime.now().isoformat()

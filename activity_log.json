@@ -12982,5 +12982,200 @@
             "has_email": true,
             "has_phone": true
         }
+    },
+    {
+        "timestamp": "2026-06-26T01:54:20.130336",
+        "type": "customer_account_register",
+        "user_id": "CUST-0002",
+        "user_role": "customer",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "name": "Maria Test",
+            "has_email": true,
+            "has_phone": true
+        }
+    },
+    {
+        "timestamp": "2026-06-26T01:54:25.775161",
+        "type": "customer_account_register",
+        "user_id": "CUST-0003",
+        "user_role": "customer",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "name": "Debug Test",
+            "has_email": true,
+            "has_phone": true
+        }
+    },
+    {
+        "timestamp": "2026-06-26T01:54:37.069340",
+        "type": "customer_account_register",
+        "user_id": "CUST-0004",
+        "user_role": "customer",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "name": "Final Test",
+            "has_email": true,
+            "has_phone": true
+        }
+    },
+    {
+        "timestamp": "2026-06-26T01:54:42.178416",
+        "type": "customer_account_register",
+        "user_id": "CUST-0005",
+        "user_role": "customer",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "name": "Profile Test",
+            "has_email": true,
+            "has_phone": true
+        }
+    },
+    {
+        "timestamp": "2026-06-26T01:54:57.513431",
+        "type": "customer_account_register",
+        "user_id": "CUST-0006",
+        "user_role": "customer",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "name": "Final Test",
+            "has_email": true,
+            "has_phone": true
+        }
+    },
+    {
+        "timestamp": "2026-06-26T01:55:04.915267",
+        "type": "customer_account_register",
+        "user_id": "CUST-0007",
+        "user_role": "customer",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "name": "Magic Test",
+            "has_email": true,
+            "has_phone": true
+        }
+    },
+    {
+        "timestamp": "2026-06-26T01:55:18.266928",
+        "type": "customer_account_register",
+        "user_id": "CUST-0008",
+        "user_role": "customer",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "name": "Final Test",
+            "has_email": true,
+            "has_phone": true
+        }
+    },
+    {
+        "timestamp": "2026-06-26T01:55:18.302684",
+        "type": "customer_account_update",
+        "user_id": "CUST-0008",
+        "user_role": "customer",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "updated_fields": [
+                "name"
+            ]
+        }
+    },
+    {
+        "timestamp": "2026-06-26T01:55:23.896247",
+        "type": "customer_account_register",
+        "user_id": "CUST-0009",
+        "user_role": "customer",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "name": "Phone Test",
+            "has_email": true,
+            "has_phone": true
+        }
+    },
+    {
+        "timestamp": "2026-06-26T01:55:58.183750",
+        "type": "customer_account_register",
+        "user_id": "CUST-0010",
+        "user_role": "customer",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "name": "Verify T",
+            "has_email": true,
+            "has_phone": true
+        }
+    },
+    {
+        "timestamp": "2026-06-26T01:55:58.213970",
+        "type": "customer_account_update",
+        "user_id": "CUST-0010",
+        "user_role": "customer",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "updated_fields": [
+                "name"
+            ]
+        }
+    },
+    {
+        "timestamp": "2026-06-26T01:56:32.486486",
+        "type": "customer_account_register",
+        "user_id": "CUST-0011",
+        "user_role": "customer",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "name": "Verify T",
+            "has_email": true,
+            "has_phone": true
+        }
+    },
+    {
+        "timestamp": "2026-06-26T01:56:32.526481",
+        "type": "customer_account_update",
+        "user_id": "CUST-0011",
+        "user_role": "customer",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "updated_fields": [
+                "name"
+            ]
+        }
+    },
+    {
+        "timestamp": "2026-06-26T01:57:20.061949",
+        "type": "customer_account_register",
+        "user_id": "CUST-0012",
+        "user_role": "customer",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "name": "Verify T",
+            "has_email": true,
+            "has_phone": true
+        }
+    },
+    {
+        "timestamp": "2026-06-26T01:57:20.100158",
+        "type": "customer_account_update",
+        "user_id": "CUST-0012",
+        "user_role": "customer",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "updated_fields": [
+                "name"
+            ]
+        }
     }
 ]
