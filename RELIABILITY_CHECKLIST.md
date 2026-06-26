@@ -1,35 +1,35 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-26T02:24 UTC
-> Total checks: 639
-> Healthy: 639 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-26T02:51 UTC
+> Total checks: 640
+> Healthy: 640 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 — 200 OK, gunicorn+gevent via scripts/run_flask.sh, verified root + /api/health [verified 01:57]
-- [x] All JSON data files exist and are valid — all 15 JSON files valid, parseable [verified 01:57]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin'), 8 users total [verified 01:57]
-- [x] Git repo is clean — no uncommitted changes (committed 3 dirty files: activity_log, login_attempts, security_events) [verified 02:24]
+- [x] Flask app responds on port 5000 — 200 OK, gunicorn+gevent via scripts/run_flask.sh, verified root + /api/health [verified 02:51]
+- [x] All JSON data files exist and are valid — all 15+ JSON files valid, parseable [verified 02:51]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin'), 8 users total [verified 02:51]
+- [x] Git repo is clean — no uncommitted changes [verified 02:51]
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/health — {"status":"ok"} (GET) [verified 01:57]
 - [x] Frontend loads — 200, HTML OK, 1.33MB [verified 01:57]
 - [x] /api/items returns items — GET, 5 categories, 19 items [verified 02:24]
 - [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 44 shifts found [verified 02:24]
-- [x] /api/login works — POST with userId=1111, role=owner, force_pin_change_required=true [verified 02:24]
-- [x] /api/admin_stats returns stats — POST with adminPin=1111, data retrieved [verified 02:24]
-- [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 02:24]
-- [x] index.html size check — 1375135 bytes (normal, ~1.35MB) [verified 02:24]
-- [x] Disk space check — 36% used (OK) [verified 02:24]
-- [x] Memory check — 41% RAM used, 0 swap (OK) [verified 02:24]
-- [x] Backup integrity — latest backup valid, non-empty [verified 02:24]
+- [x] Frontend loads — 200, HTML OK, 1.37MB [verified 02:51]
+- [x] /api/items returns items — GET, 5 categories, 19 items [verified 02:51]
+- [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 02:51]
+- [x] index.html size check — 1375135 bytes (normal, ~1.37MB) [verified 02:51]
+- [x] Disk space check — 36% used (OK) [verified 02:51]
+- [x] Memory check — 42% RAM used, 0 swap (OK) [verified 02:51]
+- [x] Backup integrity — latest backup valid, 50 JSON files, all parseable [verified 02:51]
 - [x] Special chars test — items.json handles emoji/quotes correctly [verified 01:57]
 - [x] inventory.json — 25 tracked items [verified 01:57]
 
 ## EVERY 4 HOURS
-- [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 200, {queue: 0 items, count: 0} [verified 00:11]
-- [x] Pickup display: verify /api/pickup-display/queue works — GET, 200 [verified 00:11]
+- [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 200, {queue: 1 item, count: 1} [verified 02:51]
+- [x] Pickup display: verify /api/pickup-display/queue works — GET, 200, 1 ready order [verified 02:51]
 - [x] Inventory: check stock decrements on order — 25 inventory items tracked, stock tracking valid [verified 01:15]
 - [x] User CRUD: add test user (9997) → verify → delete → verified gone [verified 01:15]
 - [x] Loyalty: points earned on order — endpoint /api/loyalty/lookup works [verified 01:15]
