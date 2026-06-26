@@ -983,6 +983,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
         <button onclick="switchAdminSection('giftcards')" id="asGiftcards" data-i18n="admin.giftcards">🎁 Gift Cards</button>
         <button onclick="switchAdminSection('feedback')" id="asFeedback">📝 Feedback</button>
         <button onclick="switchAdminSection('drivers')" id="asDrivers">🚚 Drivers</button>
+        <button onclick="switchAdminSection('deliveryplatforms')" id="asDeliveryplatforms">🚚 Delivery Platforms</button>
         <button onclick="switchAdminSection('expenses')" id="asExpenses" data-i18n="admin.expenses">💰 Expenses</button>
         <button onclick="switchAdminSection('payment')" id="asPayment" data-i18n="admin.payment_terminal">💳 Terminal</button>
         <button onclick="switchAdminSection('leaderboard')" id="asLeaderboard">🏆 Leaderboard</button>
@@ -3002,6 +3003,91 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
             <div class="empty-state">Loading drivers...</div>
           </div>
         </div>
+        <!-- Delivery Platform Integration -->
+        <div id="secDeliveryplatforms" class="admin-section">
+          <h3 style="margin:0 0 12px 0;">🚚 Delivery Platform Integration</h3>
+          <p style="color:var(--text2);margin-bottom:16px;font-size:14px;">Configure third-party delivery platform integrations (DoorDash, UberEats, Grubhub) to automatically receive and process incoming orders.</p>
+
+          <!-- Add Platform Form -->
+          <div class="card" style="margin-bottom:16px;padding:12px 16px;">
+            <h4 style="margin:0 0 10px 0;font-size:15px;" id="dpFormTitle">➕ Add Delivery Platform</h4>
+            <div id="dpFormFields">
+              <input type="hidden" id="dpEditId" value="">
+              <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
+                <div style="min-width:140px;flex:1;">
+                  <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;">Platform Name *</label>
+                  <input type="text" id="dpName" placeholder="DoorDash" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;" aria-label="Platform name"/>
+                </div>
+                <div style="min-width:140px;flex:1;">
+                  <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;">Platform Type</label>
+                  <select id="dpType" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;" aria-label="Platform type">
+                    <option value="">Custom</option>
+                    <option value="doordash">DoorDash</option>
+                    <option value="uber_eats">UberEats</option>
+                    <option value="grubhub">Grubhub</option>
+                  </select>
+                </div>
+                <div style="min-width:100px;flex:0.5;">
+                  <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;">Enabled</label>
+                  <select id="dpEnabled" style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;" aria-label="Enabled">
+                    <option value="true">✅ Yes</option>
+                    <option value="false">❌ No</option>
+                  </select>
+                </div>
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+                <div style="min-width:200px;flex:1;">
+                  <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;">API Key (for authenticating incoming webhooks)</label>
+                  <input type="text" id="dpApiKey" placeholder="sk_live_..." style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;" aria-label="API key"/>
+                </div>
+                <div style="min-width:200px;flex:1;">
+                  <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;">Webhook Secret</label>
+                  <input type="text" id="dpWebhookSecret" placeholder="whsec_..." style="width:100%;padding:8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;min-height:44px;" aria-label="Webhook secret"/>
+                </div>
+              </div>
+              <div style="margin-top:8px;">
+                <div style="min-width:200px;flex:1;">
+                  <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:2px;">Your Webhook URL (the URL to receive webhooks from this platform)</label>
+                  <code id="dpWebhookUrlDisplay" style="display:block;padding:10px 12px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);font-size:13px;word-break:break-all;"></code>
+                </div>
+              </div>
+              <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="accent" onclick="dpSavePlatform()" style="min-height:44px;padding:8px 20px;font-size:14px;">💾 Save Platform</button>
+                <button class="ghost" onclick="dpResetForm()" style="min-height:44px;padding:8px 16px;font-size:13px;">✕ Cancel</button>
+              </div>
+              <span id="dpFormStatus" style="font-size:13px;margin-top:6px;display:block;"></span>
+            </div>
+          </div>
+
+          <!-- Webhook Endpoint Info -->
+          <div class="card" style="margin-bottom:16px;padding:12px 16px;">
+            <h4 style="margin:0 0 8px 0;font-size:15px;">🔗 Webhook Endpoints</h4>
+            <p style="color:var(--text2);font-size:13px;margin-bottom:8px;">Configure your delivery platform to send orders to the following endpoint. The platform type in the URL matches the Platform Type selected above.</p>
+            <code style="display:block;padding:10px 12px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);font-size:13px;word-break:break-all;" id="dpBaseWebhookUrl">Loading...</code>
+          </div>
+
+          <!-- Item Name Mapping Section -->
+          <div id="dpItemMapSection" style="display:none;margin-bottom:16px;">
+            <div class="card" style="padding:12px 16px;">
+              <h4 style="margin:0 0 8px 0;font-size:15px;">📋 Item Name Mapping</h4>
+              <p style="color:var(--text2);font-size:13px;margin-bottom:8px;">Map delivery platform item names to your menu item names. Platform names that don't match are auto-attempted via fuzzy matching, but explicit mappings are more reliable.</p>
+              <div id="dpItemMapContainer">
+                <div class="empty-state">Select a platform above to manage its item name mappings.</div>
+              </div>
+              <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="outline" onclick="dpAddMappingRow()" style="min-height:44px;padding:8px 16px;font-size:13px;">➕ Add Mapping</button>
+                <button class="accent" onclick="dpSaveItemMap()" style="min-height:44px;padding:8px 16px;font-size:13px;">💾 Save Mappings</button>
+              </div>
+              <span id="dpItemMapStatus" style="font-size:13px;margin-top:6px;display:block;"></span>
+            </div>
+          </div>
+
+          <!-- Platform List -->
+          <h4 style="margin:0 0 10px 0;font-size:15px;">📋 Configured Platforms</h4>
+          <div id="dpPlatformsList" style="display:flex;flex-direction:column;gap:8px;">
+            <div class="empty-state">Loading delivery platforms...</div>
+          </div>
+        </div>
         <!-- Expense Tracking & Profit & Loss -->
         <div id="secExpenses" class="admin-section">
           <h3 style="margin:0 0 12px 0;" data-i18n="admin.expenses.title">💰 Expense Tracking & P&L</h3>
@@ -4958,6 +5044,7 @@ const L10N = {
     'admin.feedback.create_ticket': '🎫 Create Ticket',
     'admin.feedback.response_prompt': 'Enter your response note:',
     'admin.feedback.responded': '✅ Feedback response recorded.',
+    'admin.delivery_platforms': '🚚 Delivery Platforms',
     'admin.expenses': '💰 Expenses',
     'admin.expenses.title': '💰 Expense Tracking & P&L',
     'admin.expenses.desc': 'Record business expenses by category and view Profit & Loss reports.',
@@ -6009,6 +6096,7 @@ const L10N = {
     'admin.feedback.create_ticket': '🎫 Crear Ticket',
     'admin.feedback.response_prompt': 'Ingrese su nota de respuesta:',
     'admin.feedback.responded': '✅ Respuesta registrada.',
+    'admin.delivery_platforms': '🚚 Plataformas de Entrega',
     'admin.expenses': '💰 Gastos',
     'admin.expenses.title': '💰 Seguimiento de Gastos y G&P',
     'admin.expenses.desc': 'Registre gastos comerciales por categoría y vea informes de Ganancias y Pérdidas.',
@@ -24995,12 +25083,324 @@ async function unassignDriverFromOrder(orderId) {
   }
 }
 
-// Hook into switchAdminSection to load drivers when section is shown
+// ═══════════════════════════════════════════════════════════════════
+// Delivery Platform Integration — Third-party order ingestion
+// ═══════════════════════════════════════════════════════════════════
+let dpCurrentItemMap = {};
+let dpSelectedPlatformId = null;
+
+/** Get base URL for the webhook endpoint */
+function dpGetWebhookBaseUrl() {
+  return window.location.origin + '/api/delivery/webhook/';
+}
+
+/** Update the webhook URL display based on selected platform type */
+function dpUpdateWebhookDisplay() {
+  const type = document.getElementById('dpType').value;
+  const platform = type || '{platform_type}';
+  document.getElementById('dpBaseWebhookUrl').textContent = dpGetWebhookBaseUrl() + platform;
+  
+  // Also update the per-platform webhook URL
+  const name = document.getElementById('dpName').value.trim().toLowerCase().replace(/\\s+/g, '_');
+  const id = document.getElementById('dpEditId').value || name;
+  const displayUrl = dpGetWebhookBaseUrl() + (type || id || '{platform_type}');
+  document.getElementById('dpWebhookUrlDisplay').textContent = displayUrl;
+}
+
+// Update webhook URL display on type/name change
+document.addEventListener('DOMContentLoaded', function() {
+  const dpType = document.getElementById('dpType');
+  const dpName = document.getElementById('dpName');
+  if (dpType) dpType.addEventListener('change', dpUpdateWebhookDisplay);
+  if (dpName) dpName.addEventListener('input', dpUpdateWebhookDisplay);
+});
+
+/** Reset the add/edit form */
+function dpResetForm() {
+  document.getElementById('dpEditId').value = '';
+  document.getElementById('dpName').value = '';
+  document.getElementById('dpType').value = '';
+  document.getElementById('dpEnabled').value = 'true';
+  document.getElementById('dpApiKey').value = '';
+  document.getElementById('dpWebhookSecret').value = '';
+  document.getElementById('dpFormTitle').textContent = '➕ Add Delivery Platform';
+  document.getElementById('dpFormStatus').textContent = '';
+  document.getElementById('dpItemMapSection').style.display = 'none';
+  dpSelectedPlatformId = null;
+  dpCurrentItemMap = {};
+  dpUpdateWebhookDisplay();
+}
+
+/** Load all configured platforms */
+async function dpLoadPlatforms() {
+  const container = document.getElementById('dpPlatformsList');
+  if (!container) return;
+  container.innerHTML = '<div class="empty-state">Loading...</div>';
+  try {
+    const res = await fetchJSON('/api/delivery/platforms/list', {
+      method: 'POST',
+      body: JSON.stringify({ adminPin: currentUser ? currentUser.pin || currentUser.id : '' })
+    });
+    if (!res || !res.platforms) {
+      container.innerHTML = '<div class="empty-state">Failed to load platforms.</div>';
+      return;
+    }
+    const platforms = res.platforms;
+    const keys = Object.keys(platforms);
+    if (keys.length === 0) {
+      container.innerHTML = '<div class="empty-state">No delivery platforms configured yet. Add one above.</div>';
+      return;
+    }
+    let html = '';
+    keys.forEach(k => {
+      const p = platforms[k];
+      const enabled = p.enabled !== false;
+      html += '<div class="card" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:12px 16px;">';
+      html += '<div style="flex:1;min-width:160px;">';
+      html += '<strong>' + escHtml(p.name || '') + '</strong>';
+      html += ' <span class="badge" style="background:' + (enabled ? 'var(--success,#00cc66)' : 'var(--text2,#888)') + ';color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;">' + (enabled ? 'Active' : 'Disabled') + '</span>';
+      if (p.platform_type) html += '<br><span style="font-size:12px;color:var(--text2);">Type: ' + escHtml(p.platform_type) + '</span>';
+      if (p.api_key) html += '<br><span style="font-size:11px;color:var(--text2);">🔑 Has API key</span>';
+      if (p.webhook_secret) html += ' <span style="font-size:11px;color:var(--text2);">🔐 Has webhook secret</span>';
+      const mappingCount = p.item_name_map ? Object.keys(p.item_name_map).length : 0;
+      html += '<br><span style="font-size:11px;color:var(--text2);">📋 ' + mappingCount + ' item mapping(s)</span>';
+      if (p.created_at) html += '<br><span style="font-size:11px;color:var(--text2);">Created: ' + (p.created_at || '').split('T')[0] + '</span>';
+      html += '</div>';
+      html += '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">';
+      html += '<button class="ghost" onclick="dpEditPlatform(\'' + k + '\')" style="min-height:36px;font-size:12px;padding:6px 10px;" title="Edit">✏️</button>';
+      html += '<button class="ghost" onclick="dpTogglePlatform(\'' + k + '\')" style="min-height:36px;font-size:12px;padding:6px 10px;">' + (enabled ? '🔴' : '🟢') + '</button>';
+      html += '<button class="ghost" onclick="dpManageMappings(\'' + k + '\')" style="min-height:36px;font-size:12px;padding:6px 10px;" title="Item mappings">📋</button>';
+      html += '<button class="ghost" onclick="dpDeletePlatform(\'' + k + '\')" style="min-height:36px;font-size:12px;padding:6px 10px;color:var(--danger,#e94560);">🗑️</button>';
+      html += '</div></div>';
+    });
+    container.innerHTML = html;
+  } catch (e) {
+    container.innerHTML = '<div class="empty-state val-err">⚠️ ' + t('toast.network_error') + '</div>';
+  }
+}
+
+/** Save a platform (add or update) */
+async function dpSavePlatform() {
+  const editId = document.getElementById('dpEditId').value;
+  const name = document.getElementById('dpName').value.trim();
+  const type = document.getElementById('dpType').value;
+  const enabled = document.getElementById('dpEnabled').value === 'true';
+  const apiKey = document.getElementById('dpApiKey').value.trim();
+  const webhookSecret = document.getElementById('dpWebhookSecret').value.trim();
+  const statusEl = document.getElementById('dpFormStatus');
+  
+  if (!name) { statusEl.textContent = '❌ Platform name is required.'; return; }
+  
+  const payload = {
+    adminPin: currentUser ? currentUser.pin || currentUser.id : '',
+    id: editId || type || name.toLowerCase().replace(/\\s+/g, '_'),
+    name: name,
+    platform_type: type || name.toLowerCase().replace(/\\s+/g, '_'),
+    api_key: apiKey,
+    webhook_secret: webhookSecret,
+    enabled: enabled,
+    item_name_map: dpCurrentItemMap
+  };
+  
+  try {
+    const res = await fetchJSON('/api/delivery/platforms/save', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    if (res && res.message) {
+      showToast('✅ ' + res.message, 'success');
+      statusEl.textContent = '✅ ' + res.message;
+      dpResetForm();
+      dpLoadPlatforms();
+    } else {
+      statusEl.textContent = '❌ Save failed.';
+    }
+  } catch (e) {
+    statusEl.textContent = '❌ ' + t('toast.network_error');
+    showToast(t('toast.network_error'), 'danger');
+  }
+}
+
+/** Edit a platform — populate form with existing values */
+async function dpEditPlatform(platformId) {
+  try {
+    const res = await fetchJSON('/api/delivery/platforms/list', {
+      method: 'POST',
+      body: JSON.stringify({ adminPin: currentUser ? currentUser.pin || currentUser.id : '' })
+    });
+    if (!res || !res.platforms || !res.platforms[platformId]) return;
+    const p = res.platforms[platformId];
+    document.getElementById('dpEditId').value = platformId;
+    document.getElementById('dpName').value = p.name || '';
+    document.getElementById('dpType').value = p.platform_type || '';
+    document.getElementById('dpEnabled').value = p.enabled !== false ? 'true' : 'false';
+    document.getElementById('dpApiKey').value = p.api_key || '';
+    document.getElementById('dpWebhookSecret').value = p.webhook_secret || '';
+    document.getElementById('dpFormTitle').textContent = '✏️ Edit: ' + (p.name || platformId);
+    dpCurrentItemMap = p.item_name_map || {};
+    dpSelectedPlatformId = platformId;
+    dpUpdateWebhookDisplay();
+    
+    // Scroll to form
+    document.querySelector('#secDeliveryplatforms .card').scrollIntoView({ behavior: 'smooth' });
+  } catch (e) {
+    showToast(t('toast.network_error'), 'danger');
+  }
+}
+
+/** Toggle platform enabled/disabled */
+async function dpTogglePlatform(platformId) {
+  try {
+    const res = await fetchJSON('/api/delivery/platforms/toggle', {
+      method: 'POST',
+      body: JSON.stringify({ adminPin: currentUser ? currentUser.pin || currentUser.id : '', id: platformId })
+    });
+    if (res && res.message) {
+      showToast('✅ ' + res.message, 'success');
+      dpLoadPlatforms();
+    }
+  } catch (e) {
+    showToast(t('toast.network_error'), 'danger');
+  }
+}
+
+/** Delete a platform */
+async function dpDeletePlatform(platformId) {
+  if (!confirm('Delete this delivery platform integration? Order history remains intact.')) return;
+  try {
+    const res = await fetchJSON('/api/delivery/platforms/delete', {
+      method: 'POST',
+      body: JSON.stringify({ adminPin: currentUser ? currentUser.pin || currentUser.id : '', id: platformId })
+    });
+    if (res && res.message) {
+      showToast('✅ ' + res.message, 'success');
+      dpLoadPlatforms();
+    }
+  } catch (e) {
+    showToast(t('toast.network_error'), 'danger');
+  }
+}
+
+/** Manage item name mappings for a platform */
+async function dpManageMappings(platformId) {
+  try {
+    const res = await fetchJSON('/api/delivery/platforms/list', {
+      method: 'POST',
+      body: JSON.stringify({ adminPin: currentUser ? currentUser.pin || currentUser.id : '' })
+    });
+    if (!res || !res.platforms || !res.platforms[platformId]) return;
+    const p = res.platforms[platformId];
+    dpCurrentItemMap = p.item_name_map || {};
+    dpSelectedPlatformId = platformId;
+    document.getElementById('dpItemMapSection').style.display = 'block';
+    dpRenderMappingRows();
+    document.getElementById('dpItemMapSection').scrollIntoView({ behavior: 'smooth' });
+  } catch (e) {
+    showToast(t('toast.network_error'), 'danger');
+  }
+}
+
+/** Render the item name mapping rows */
+function dpRenderMappingRows() {
+  const container = document.getElementById('dpItemMapContainer');
+  const entries = Object.keys(dpCurrentItemMap);
+  if (entries.length === 0) {
+    container.innerHTML = '<div class="empty-state">No custom mappings defined. Add one below, or the system will auto-match by name.</div>';
+    return;
+  }
+  let html = '<div style="display:flex;flex-direction:column;gap:6px;">';
+  entries.forEach(k => {
+    const v = dpCurrentItemMap[k];
+    html += '<div class="mapping-row" style="display:flex;gap:6px;align-items:center;">';
+    html += '<input type="text" class="dpMapExternal" value="' + escHtml(k) + '" placeholder="Platform item name" style="flex:1;min-height:36px;padding:6px 8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:13px;" aria-label="External item name"/>';
+    html += '<span style="color:var(--text2);">→</span>';
+    html += '<input type="text" class="dpMapInternal" value="' + escHtml(v) + '" placeholder="Menu item name" style="flex:1;min-height:36px;padding:6px 8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:13px;" aria-label="Menu item name"/>';
+    html += '<button class="ghost" onclick="dpRemoveMappingRow(this)" style="min-height:36px;font-size:13px;padding:4px 8px;color:var(--danger,#e94560);">✕</button>';
+    html += '</div>';
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+/** Add a new empty mapping row */
+function dpAddMappingRow() {
+  const container = document.getElementById('dpItemMapContainer');
+  // If empty state, replace it
+  const emptyState = container.querySelector('.empty-state');
+  if (emptyState) {
+    container.innerHTML = '<div style="display:flex;flex-direction:column;gap:6px;"></div>';
+  }
+  const wrapper = container.querySelector('div') || container;
+  const row = document.createElement('div');
+  row.className = 'mapping-row';
+  row.style.cssText = 'display:flex;gap:6px;align-items:center;';
+  row.innerHTML = '<input type="text" class="dpMapExternal" placeholder="Platform item name" style="flex:1;min-height:36px;padding:6px 8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:13px;" aria-label="External item name"/>' +
+    '<span style="color:var(--text2);">→</span>' +
+    '<input type="text" class="dpMapInternal" placeholder="Menu item name" style="flex:1;min-height:36px;padding:6px 8px;border:2px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:13px;" aria-label="Menu item name"/>' +
+    '<button class="ghost" onclick="dpRemoveMappingRow(this)" style="min-height:36px;font-size:13px;padding:4px 8px;color:var(--danger,#e94560);">✕</button>';
+  wrapper.appendChild(row);
+}
+
+/** Remove a mapping row */
+function dpRemoveMappingRow(btn) {
+  const row = btn.closest('.mapping-row');
+  if (row) row.remove();
+}
+
+/** Save the item name mappings */
+async function dpSaveItemMap() {
+  const statusEl = document.getElementById('dpItemMapStatus');
+  if (!dpSelectedPlatformId) {
+    statusEl.textContent = '❌ No platform selected. Save the platform first.';
+    return;
+  }
+  
+  // Collect mappings from the UI
+  const rows = document.querySelectorAll('#dpItemMapContainer .mapping-row');
+  const newMap = {};
+  rows.forEach(row => {
+    const ext = row.querySelector('.dpMapExternal').value.trim();
+    const int = row.querySelector('.dpMapInternal').value.trim();
+    if (ext && int) {
+      newMap[ext] = int;
+    }
+  });
+  
+  try {
+    const res = await fetchJSON('/api/delivery/platforms/item_map', {
+      method: 'POST',
+      body: JSON.stringify({
+        adminPin: currentUser ? currentUser.pin || currentUser.id : '',
+        id: dpSelectedPlatformId,
+        item_name_map: newMap
+      })
+    });
+    if (res && res.message) {
+      showToast('✅ ' + res.message, 'success');
+      statusEl.textContent = '✅ ' + res.message;
+      dpCurrentItemMap = newMap;
+      dpLoadPlatforms();
+    } else {
+      statusEl.textContent = '❌ Save failed.';
+    }
+  } catch (e) {
+    statusEl.textContent = '❌ ' + t('toast.network_error');
+    showToast(t('toast.network_error'), 'danger');
+  }
+}
+
+// Hook into switchAdminSection to load platforms when section is shown
 const origSwitchAdminSection = window.switchAdminSection;
 window.switchAdminSection = function(section) {
   if (origSwitchAdminSection) origSwitchAdminSection(section);
   if (section === 'drivers') {
     setTimeout(() => { drvLoadDrivers(); }, 100);
+  }
+  if (section === 'deliveryplatforms') {
+    setTimeout(() => {
+      dpLoadPlatforms();
+      dpUpdateWebhookDisplay();
+    }, 100);
   }
 };
 </script>

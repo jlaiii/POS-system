@@ -176,6 +176,8 @@ EXPENSES_FILE = 'expenses.json'  # Business expense tracking
 PAYMENT_CONFIG_FILE = 'payment_config.json'  # Payment terminal configuration (gateway, IP, port, API keys)
 TIP_POOL_CONFIG_FILE = 'tip_pool_config.json'  # Tip pooling and distribution configuration
 
+DELIVERY_PLATFORMS_FILE = 'delivery_platforms.json'  # Third-party delivery platform integrations (DoorDash, UberEats, Grubhub)
+
 CUSTOMER_ACCOUNTS_FILE = 'customer_accounts.json'  # Customer accounts with login, favorites, addresses, payment methods
 
 # --- Platform / Multi-Tenant Constants ---
@@ -23276,6 +23278,502 @@ def expenses_pnl():
             'net_profit': round(net_profit, 2),
             'is_profitable': net_profit >= 0
         }
+    })
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Delivery Platform Integration — Third-party order ingestion
+# ═══════════════════════════════════════════════════════════════════════════
+SUPPORTED_PLATFORMS = ['doordash', 'uber_eats', 'grubhub']
+
+def get_delivery_platforms():
+    """Load delivery platforms config."""
+    platforms = load_json_data(DELIVERY_PLATFORMS_FILE)
+    if not isinstance(platforms, dict):
+        platforms = {}
+    return platforms
+
+def save_delivery_platforms(platforms):
+    """Save delivery platforms config."""
+    save_json_data(DELIVERY_PLATFORMS_FILE, platforms)
+
+def normalize_delivery_item(raw_name, platform_name, item_name_map):
+    """Map an external delivery platform item name to an internal menu item name.
+    
+    Args:
+        raw_name: The item name from the delivery platform
+        platform_name: e.g. 'doordash', 'uber_eats', 'grubhub'
+        item_name_map: Dict mapping external names -> internal names
+    
+    Returns:
+        (internal_name, was_mapped) tuple
+    """
+    if not raw_name:
+        return None, False
+    
+    # Direct lookup in the platform's item name map
+    if item_name_map and raw_name in item_name_map:
+        return item_name_map[raw_name], True
+    
+    # Try stripping common suffixes/prefixes
+    clean = raw_name.strip()
+    # Remove common platform suffixes like " - DoorDash", " (UberEats)"
+    for suffix in [' - Doordash', ' - DoorDash', ' - UberEats', ' - Grubhub',
+                   ' (Doordash)', ' (DoorDash)', ' (UberEats)', ' (Grubhub)']:
+        if clean.endswith(suffix):
+            clean = clean[:-len(suffix)].strip()
+            break
+    
+    # Check if the cleaned name or raw name exists in items
+    items_data = load_json_data(ITEMS_FILE)
+    for cat_items in items_data.values():
+        if isinstance(cat_items, list):
+            for item in cat_items:
+                if isinstance(item, dict):
+                    name = item.get('name', '')
+                    if name.lower() == clean.lower() or name.lower() == raw_name.lower():
+                        return name, True
+                    # Partial match: external name contains menu name or vice versa
+                    if len(clean) > 3 and len(name) > 3:
+                        if clean.lower() in name.lower() or name.lower() in clean.lower():
+                            return name, True
+    
+    return raw_name, False
+
+
+@app.route('/api/delivery/platforms/list', methods=['POST'])
+def delivery_platforms_list():
+    """List all configured delivery platform integrations. Requires manage_items permission."""
+    data = request.json or {}
+    admin_pin = data.get('adminPin')
+    if not check_perm(admin_pin, 'manage_items'):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+    
+    platforms = get_delivery_platforms()
+    return jsonify({'message': 'Delivery platforms retrieved', 'platforms': platforms})
+
+
+@app.route('/api/delivery/platforms/save', methods=['POST'])
+def delivery_platforms_save():
+    """Add or update a delivery platform integration. Requires manage_items permission."""
+    data = request.json or {}
+    admin_pin = data.get('adminPin')
+    if not check_perm(admin_pin, 'manage_items'):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+    
+    platform_id = (data.get('id') or '').strip().lower().replace(' ', '_')
+    platform_name = (data.get('name') or '').strip()
+    platform_type = (data.get('platform_type') or '').strip().lower().replace(' ', '_')
+    api_key = (data.get('api_key') or '').strip()
+    webhook_secret = (data.get('webhook_secret') or '').strip()
+    webhook_url = (data.get('webhook_url') or '').strip()
+    enabled = data.get('enabled', True)
+    item_name_map = data.get('item_name_map', {})
+    
+    if not platform_name:
+        return jsonify({'message': 'Platform name is required.'}), 400
+    if platform_type and platform_type not in SUPPORTED_PLATFORMS:
+        platform_type = platform_name.lower().replace(' ', '_')
+    if not platform_id:
+        platform_id = platform_type or platform_name.lower().replace(' ', '_')
+    
+    platforms = get_delivery_platforms()
+    
+    entry = {
+        'id': platform_id,
+        'name': platform_name,
+        'platform_type': platform_type or platform_id,
+        'api_key': api_key,
+        'webhook_secret': webhook_secret,
+        'webhook_url': webhook_url,
+        'enabled': enabled,
+        'item_name_map': item_name_map,
+        'updated_at': datetime.now().isoformat()
+    }
+    
+    if platform_id not in platforms:
+        entry['created_at'] = datetime.now().isoformat()
+    
+    platforms[platform_id] = entry
+    save_delivery_platforms(platforms)
+    
+    log_activity('delivery_platform_save', admin_pin, 'admin', {
+        'platform_id': platform_id,
+        'platform_name': platform_name,
+        'platform_type': platform_type
+    })
+    
+    return jsonify({'message': f'Platform "{platform_name}" saved successfully', 'platform': entry})
+
+
+@app.route('/api/delivery/platforms/delete', methods=['POST'])
+def delivery_platforms_delete():
+    """Delete a delivery platform integration. Requires manage_items permission."""
+    data = request.json or {}
+    admin_pin = data.get('adminPin')
+    if not check_perm(admin_pin, 'manage_items'):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+    
+    platform_id = (data.get('id') or '').strip()
+    if not platform_id:
+        return jsonify({'message': 'Platform ID is required.'}), 400
+    
+    platforms = get_delivery_platforms()
+    if platform_id not in platforms:
+        return jsonify({'message': 'Platform not found.'}), 404
+    
+    removed = platforms.pop(platform_id)
+    save_delivery_platforms(platforms)
+    
+    log_activity('delivery_platform_delete', admin_pin, 'admin', {
+        'platform_id': platform_id,
+        'platform_name': removed.get('name', '')
+    })
+    
+    return jsonify({'message': f'Platform "{removed.get("name", platform_id)}" deleted'})
+
+
+@app.route('/api/delivery/platforms/toggle', methods=['POST'])
+def delivery_platforms_toggle():
+    """Enable/disable a delivery platform. Requires manage_items permission."""
+    data = request.json or {}
+    admin_pin = data.get('adminPin')
+    if not check_perm(admin_pin, 'manage_items'):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+    
+    platform_id = (data.get('id') or '').strip()
+    if not platform_id:
+        return jsonify({'message': 'Platform ID is required.'}), 400
+    
+    platforms = get_delivery_platforms()
+    if platform_id not in platforms:
+        return jsonify({'message': 'Platform not found.'}), 404
+    
+    platforms[platform_id]['enabled'] = not platforms[platform_id].get('enabled', True)
+    save_delivery_platforms(platforms)
+    
+    status = 'enabled' if platforms[platform_id]['enabled'] else 'disabled'
+    log_activity('delivery_platform_toggle', admin_pin, 'admin', {
+        'platform_id': platform_id,
+        'platform_name': platforms[platform_id].get('name', ''),
+        'status': status
+    })
+    
+    return jsonify({'message': f'Platform {status}', 'platform': platforms[platform_id]})
+
+
+@app.route('/api/delivery/webhook/<platform>', methods=['POST'])
+def delivery_webhook_receive(platform):
+    """Receive an incoming order from a third-party delivery platform.
+    
+    Expected payload format (normalized):
+    {
+        "order_id": "DD-12345",
+        "items": [{"name": "Hamburger", "qty": 2, "modifiers": ["No onions"], "price": 9.99}],
+        "customer": {"name": "John", "phone": "555-1234", "email": "john@example.com"},
+        "delivery_address": {"street": "123 Main St", "city": "Anytown", "zip": "12345"},
+        "notes": "Leave at door",
+        "platform_fee": 2.99,
+        "subtotal": 19.98,
+        "tax": 1.65,
+        "total": 24.62
+    }
+    """
+    platform = platform.lower().strip().replace(' ', '_')
+    platforms = get_delivery_platforms()
+    
+    # Find the platform config (by platform_type or id)
+    pf_config = None
+    pf_id = None
+    for pid, p in platforms.items():
+        if p.get('platform_type', '').lower() == platform or pid == platform:
+            if p.get('enabled', True):
+                pf_config = p
+                pf_id = pid
+                break
+    
+    if not pf_config:
+        return jsonify({'message': f'Platform "{platform}" not found or not enabled.'}), 404
+    
+    # Verify authentication
+    auth_header = request.headers.get('Authorization', '')
+    api_key = pf_config.get('api_key', '')
+    webhook_secret = pf_config.get('webhook_secret', '')
+    
+    authenticated = False
+    if api_key:
+        # Check Authorization header: "Bearer <api_key>" or "ApiKey <api_key>"
+        if auth_header.startswith('Bearer ') and auth_header[7:] == api_key:
+            authenticated = True
+        elif auth_header.startswith('ApiKey ') and auth_header[7:] == api_key:
+            authenticated = True
+        elif auth_header == api_key:
+            authenticated = True
+    
+    if not authenticated and webhook_secret:
+        # Also check X-Webhook-Secret header
+        if request.headers.get('X-Webhook-Secret', '') == webhook_secret:
+            authenticated = True
+    
+    if not authenticated:
+        # In dev/test mode, allow if no API key is configured yet (soft auth)
+        if not api_key and not webhook_secret:
+            authenticated = True
+        else:
+            return jsonify({'message': 'Authentication failed. Invalid API key or webhook secret.'}), 401
+    
+    data = request.json
+    if not data:
+        return jsonify({'message': 'Invalid JSON payload.'}), 400
+    
+    # Extract order details from payload
+    external_order_id = str(data.get('order_id', '')) or f'{platform}-{int(datetime.now().timestamp())}'
+    external_items = data.get('items', [])
+    if not external_items:
+        return jsonify({'message': 'Order must contain at least one item.'}), 400
+    
+    customer = data.get('customer', {})
+    delivery_address = data.get('delivery_address', {})
+    notes = (data.get('notes') or '').strip()
+    platform_fee = float(data.get('platform_fee', 0))
+    subtotal_from_platform = float(data.get('subtotal', 0))
+    
+    # Normalize item names using the platform's item_name_map
+    item_name_map = pf_config.get('item_name_map', {})
+    mapped_items = []
+    unmapped_names = []
+    total_mapped = 0
+    
+    for ext_item in external_items:
+        raw_name = ext_item.get('name', '').strip()
+        if not raw_name:
+            continue
+        qty = int(ext_item.get('qty', 1))
+        price = float(ext_item.get('price', 0))
+        modifiers = ext_item.get('modifiers', [])
+        
+        internal_name, was_mapped = normalize_delivery_item(raw_name, platform, item_name_map)
+        
+        if was_mapped:
+            total_mapped += 1
+        
+        if internal_name != raw_name:
+            unmapped_names.append(raw_name)
+        
+        # Look up the internal price from items DB for accurate pricing
+        items_data = load_json_data(ITEMS_FILE)
+        internal_price = price
+        for cat_items in items_data.values():
+            if isinstance(cat_items, list):
+                for item in cat_items:
+                    if isinstance(item, dict) and item.get('name', '') == internal_name:
+                        internal_price = float(item.get('price', price))
+                        break
+        
+        item_entry = {
+            'name': internal_name,
+            'qty': qty,
+            'price': internal_price,
+            'modifiers': [],
+            'notes': ', '.join(modifiers) if isinstance(modifiers, list) else str(modifiers),
+            '_source_platform': pf_config.get('name', platform),
+            '_external_name': raw_name
+        }
+        mapped_items.append(item_entry)
+    
+    if not mapped_items:
+        return jsonify({'message': 'No items could be mapped from the delivery payload.'}), 400
+    
+    # Build delivery address string
+    addr_parts = []
+    if delivery_address:
+        if isinstance(delivery_address, dict):
+            for key in ['street', 'line2', 'city', 'state', 'zip', 'country']:
+                if delivery_address.get(key):
+                    addr_parts.append(delivery_address[key])
+        elif isinstance(delivery_address, str):
+            addr_parts.append(delivery_address)
+    delivery_addr_str = ', '.join(addr_parts) if addr_parts else ''
+    
+    # Calculate subtotal from items
+    calculated_subtotal = sum(float(i.get('price', 0)) * int(i.get('qty', 1)) for i in mapped_items)
+    
+    # Create the internal order and submit it
+    # Reuse the existing order submission logic by calling the internal flow
+    # We'll create the order directly to avoid circular dependencies
+    orders = load_json_data(ORDERS_FILE)
+    counter_data = load_json_data(ORDER_COUNTER_FILE)
+    if not isinstance(counter_data, dict):
+        counter_data = {"counter": 1}
+    order_id = counter_data.get("counter", 1)
+    
+    tax_config = load_json_data(TAX_CONFIG_FILE)
+    calculated_tax = 0.0
+    for idx, item in enumerate(mapped_items):
+        item_name = item.get('name', '')
+        item_category = item.get('category', '')
+        item_qty = int(item.get('qty', 1))
+        item_price = float(item.get('price', 0))
+        line_total = item_price * item_qty
+        rate = get_effective_tax_rate(item_name, item_category, tax_config)
+        calculated_tax += round(line_total * rate, 2)
+    tax_amount = round(calculated_tax, 2)
+    
+    total = round(calculated_subtotal + tax_amount + platform_fee, 2)
+    
+    order_details = {
+        'order_id': order_id,
+        'status': 'pending',
+        'claimed_by': None,
+        'claimed_at': None,
+        'completed_at': None,
+        'date': datetime.now().isoformat(),
+        'user': 'delivery_system',  # System user for auto-imported orders
+        'payment': 'Other',
+        'payment_splits': None,
+        'items': mapped_items,
+        'subtotal': round(calculated_subtotal, 2),
+        'tax_amount': tax_amount,
+        'tip_amount': 0,
+        'service_charge_amount': 0,
+        'discount_code': None,
+        'discount_amount': 0,
+        'item_tax_details': [],
+        'total': total,
+        'notes': notes,
+        'item_notes': {},
+        'table_number': None,
+        'delivery_address': delivery_addr_str,
+        'customer_email': customer.get('email', '') if isinstance(customer, dict) else '',
+        'customer_phone': customer.get('phone', '') if isinstance(customer, dict) else '',
+        'order_type': 'delivery',
+        'party_size': None,
+        'packaging_fee': 0,
+        'packaging_fee_label': '',
+        'priority': None,
+        'assigned_driver': None,
+        'delivery_status': 'pending',
+        '_source': pf_config.get('name', platform),
+        '_source_platform_type': platform,
+        '_external_order_id': external_order_id,
+        '_platform_fee': platform_fee,
+        'manager_approval': None
+    }
+    
+    orders.append(order_details)
+    save_json_data(ORDERS_FILE, orders)
+    
+    # Update order counter
+    counter_data["counter"] = order_id + 1
+    save_json_data(ORDER_COUNTER_FILE, counter_data)
+    
+    # Log the activity
+    log_activity('delivery_order_import', 'delivery_system', 'system', {
+        'order_id': order_id,
+        'platform': pf_config.get('name', platform),
+        'external_order_id': external_order_id,
+        'items_count': len(mapped_items),
+        'total': total,
+        'unmapped_names': unmapped_names[:5]  # Log first 5 unmapped names
+    })
+    
+    # Emit SocketIO events to notify kitchen and terminals
+    try:
+        emit_kitchen_update()
+        emit_pos_sync('order_submitted', order_id=order_id, table_number=None,
+                      waiter_id='delivery_system', items_count=len(mapped_items), order_total=total,
+                      _source=pf_config.get('name', platform))
+    except Exception:
+        pass
+    
+    return jsonify({
+        'message': f'Order #{order_id} imported from {pf_config.get("name", platform)} successfully',
+        'order_id': order_id,
+        'total': total,
+        'items_count': len(mapped_items),
+        'unmapped_names': unmapped_names[:10],
+        'total_mapped': total_mapped,
+        'total_unmapped': len(unmapped_names)
+    })
+
+
+@app.route('/api/delivery/platforms/test', methods=['POST'])
+def delivery_platforms_test():
+    """Test a delivery platform webhook configuration. Requires manage_items permission."""
+    data = request.json or {}
+    admin_pin = data.get('adminPin')
+    if not check_perm(admin_pin, 'manage_items'):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+    
+    platform_id = (data.get('id') or '').strip()
+    if not platform_id:
+        return jsonify({'message': 'Platform ID is required.'}), 400
+    
+    platforms = get_delivery_platforms()
+    if platform_id not in platforms:
+        return jsonify({'message': 'Platform not found.'}), 404
+    
+    pf = platforms[platform_id]
+    webhook_url = pf.get('webhook_url', '')
+    
+    if not webhook_url:
+        return jsonify({'message': 'No webhook URL configured. This platform receives webhooks from the delivery service.'}), 400
+    
+    test_payload = {
+        'event': 'test',
+        'timestamp': datetime.now().isoformat(),
+        'platform': pf.get('name', platform_id),
+        'data': {'message': 'This is a test from POS System'}
+    }
+    
+    try:
+        payload = json.dumps(test_payload).encode('utf-8')
+        req = urllib.request.Request(webhook_url, data=payload,
+            headers={'Content-Type': 'application/json'},
+            method='POST')
+        urllib.request.urlopen(req, timeout=10)
+        return jsonify({'message': 'Test webhook sent successfully'})
+    except urllib.error.HTTPError as e:
+        return jsonify({'message': f'HTTP error: {e.code} {e.reason}'}), 400
+    except urllib.error.URLError as e:
+        return jsonify({'message': f'Connection error: {e.reason}'}), 400
+    except Exception as e:
+        return jsonify({'message': f'Error: {str(e)}'}), 400
+
+
+@app.route('/api/delivery/platforms/item_map', methods=['POST'])
+def delivery_platforms_item_map():
+    """Update item name mappings for a delivery platform. Requires manage_items permission."""
+    data = request.json or {}
+    admin_pin = data.get('adminPin')
+    if not check_perm(admin_pin, 'manage_items'):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+    
+    platform_id = (data.get('id') or '').strip()
+    if not platform_id:
+        return jsonify({'message': 'Platform ID is required.'}), 400
+    
+    item_name_map = data.get('item_name_map', {})
+    if not isinstance(item_name_map, dict):
+        return jsonify({'message': 'item_name_map must be an object/dict.'}), 400
+    
+    platforms = get_delivery_platforms()
+    if platform_id not in platforms:
+        return jsonify({'message': 'Platform not found.'}), 404
+    
+    platforms[platform_id]['item_name_map'] = item_name_map
+    platforms[platform_id]['updated_at'] = datetime.now().isoformat()
+    save_delivery_platforms(platforms)
+    
+    log_activity('delivery_platform_item_map', admin_pin, 'admin', {
+        'platform_id': platform_id,
+        'platform_name': platforms[platform_id].get('name', ''),
+        'mapping_count': len(item_name_map)
+    })
+    
+    return jsonify({
+        'message': f'Item name mappings updated ({len(item_name_map)} entries)',
+        'item_name_map': item_name_map
     })
 
 
