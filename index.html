@@ -595,7 +595,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
   background: var(--card);
   border-bottom: 1px solid var(--border);
 }
-.low-stock-header:hover { background: rgba(233,69,96,0.08); }
+@media (hover: hover) { .low-stock-header:hover { background: rgba(233,69,96,0.08); } }
 .low-stock-header .collapse-icon.rotated { transform: rotate(180deg); }
 .low-stock-body {
   max-height: 0; overflow: hidden;
@@ -618,11 +618,11 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 
 /* Analytics Dashboard */
 .analytics-bar-wrapper { position: relative; }
-.analytics-bar:hover { opacity: 0.85; filter: brightness(1.2); transform: scaleX(1.05); }
+@media (hover: hover) { .analytics-bar:hover { opacity: 0.85; filter: brightness(1.2); transform: scaleX(1.05); } }
 .analytics-hourly-bar-wrapper { position: relative; }
-.analytics-hourly-bar:hover { opacity: 0.85; filter: brightness(1.2); transform: scaleX(1.08); }
+@media (hover: hover) { .analytics-hourly-bar:hover { opacity: 0.85; filter: brightness(1.2); transform: scaleX(1.08); } }
 .analytics-period-card { transition: border-color 0.2s; }
-.analytics-period-card:hover { border-color: var(--accent) !important; }
+@media (hover: hover) { .analytics-period-card:hover { border-color: var(--accent) !important; } }
 .analytics-chart-card h4 { display: flex; align-items: center; gap: 6px; }
 /* Smooth bar chart appearance animation */
 .analytics-bar, .analytics-hourly-bar { animation: barGrow 0.5s ease-out forwards; transform-origin: bottom; }
