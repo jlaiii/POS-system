@@ -1,41 +1,41 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-26T12:48 UTC
-> Total checks: 843
-> Healthy: 843 | Broken: 0 | Fixed this cycle: 1
+> Last full cycle: 2026-06-26T13:16 UTC
+> Total checks: 853
+> Healthy: 853 | Broken: 0 | Fixed this cycle: 1
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-|- [x] Flask app responds on port 5000 — 200 OK [verified 12:48]
-|||- [x] All JSON data files exist and are valid — all 8 core JSON files valid, parseable [verified 12:48]
-|||- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', role='owner') [verified 12:48]
-|||- [x] Git repo is clean — clean (no dirty files) [verified 12:48]
+- [x] Flask app responds on port 5000 — 200 OK [verified 13:16]
+- [x] All JSON data files exist and are valid — all 15 core JSON files valid, parseable [verified 13:16]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', role='owner') [verified 13:16]
+- [x] Git repo is clean — clean (no dirty files) [verified 13:16]
 
 ## HOURLY (check if last check was >1h ago)
-- [x] /api/health — {"status":"ok"} (GET) [verified 11:59]
-- [x] Frontend loads — 200, HTML OK, 1.37MB [verified 12:48]
+- [x] /api/health — {"status":"ok"} (GET) [verified 13:16]
+- [x] Frontend loads — 200, HTML OK, 1.37MB [verified 13:16]
 - [x] /api/items returns items — 5 categories (Foods/Drinks/Snacks/Breakfast/Salads), 19 items total [verified 12:48]
 - [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 49 shifts [verified 12:48]
 - [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 12:48]
-- [x] index.html size check — normal (1375135 bytes) [verified 12:48]
-- [x] Disk space check — 36% used (OK) [verified 12:48]
-- [x] Memory check — ~35% RAM used (OK) [verified 12:48]
+- [x] index.html size check — normal (1375135 bytes) [verified 13:16]
+- [x] Disk space check — 36% used (OK) [verified 13:16]
+- [x] Memory check — ~35% RAM used (OK) [verified 13:16]
 - [x] Backup integrity — latest backup (12:05, JSON valid + DB backups) [verified 12:48]
-- [x] CSV export — /api/export/shifts_csv returns CSV, 49 shifts [verified 12:26]
+- [x] CSV export — /api/export/shifts_csv returns CSV, 49 shifts [verified 13:16]
 - [x] Offline queue — /api/sync_orders exists, returns 'No orders provided' [verified 12:26]
 - [x] /api/login works — POST with userId=1111, Login successful [verified 12:48]
 
 ## EVERY 4 HOURS
 |- [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 200, 1 order (pending) [verified 12:48]
 ||- [x] Pickup display: verify /api/pickup-display/queue works — GET, 200, 1 order (#94, ready) [verified 12:48]
-- [x] Inventory: check stock decrements on order — 25 inventory items tracked, stock tracking valid [verified 09:13]
-|- [x] User CRUD: add test user (9673) → verify → login (PIN+role) → delete → confirmed gone [verified 11:11]
-- [x] Loyalty: points earned on order — 14 loyalty entries, endpoint working [verified 09:13]
-|- [x] Cash register: /api/cash_drawer/status (POST) returns active=false, last closed Jun 24, 0 active sessions [verified 10:48]
-|- [x] Webhook: verify webhook config endpoint works — /api/security/discord_webhook returns config, not set (expected) [verified 11:11]
-|- [x] Clock-in late detection: Maria PIN 3344, scheduled 09:00, clocked in at 10:48 → late_minutes=109 [verified 10:48]
-- [x] Break tracking: start break → end break → verify break subtracted — 48 shifts, 4 with breaks, tracking active [verified 09:13]
+- [x] Inventory: check stock decrements on order — 25 inventory items tracked, stock tracking valid [verified 13:16]
+- [x] User CRUD: add test user (9673) → verify → login (PIN+role) → delete → confirmed gone [verified 11:11]
+- [x] Loyalty: points earned on order — 14 loyalty entries, endpoint working [verified 13:16]
+- [x] Cash register: /api/cash_drawer/status (POST) returns active=false, last closed Jun 24, 0 active sessions [verified 10:48]
+- [x] Webhook: verify webhook config endpoint works — /api/security/discord_webhook returns config, not set (expected) [verified 11:11]
+- [x] Clock-in late detection: Maria PIN 3344, scheduled 09:00, clocked in at 10:48 → late_minutes=109 [verified 10:48]
+- [x] Break tracking: start break → end break → verify break subtracted — 49 shifts, 4 with breaks, tracking active [verified 13:16]
 |- [x] Shift edit: edit a shift time → verify audit trail → restore → audit trail shows both edits — 6 edits on shift 0, all tracked [verified 11:11]
 - [x] CSV export: verify /api/export/shifts_csv returns CSV — POST, 200, CSV content returned [verified 05:53]
 - [x] Offline queue: verify /api/sync_orders endpoint exists — POST, 200, "No orders provided" [verified 05:53]
@@ -53,10 +53,10 @@
 - [x] Backup integrity: verify latest backup is valid and not empty — 2026-06-26_08-04-27.tar.gz (49 JSON files, all valid) + DB backup valid [verified 08:21]
 
 ## DISCOVERED (failures you've seen before — check every 2h)
-- [x] **Flask process dying between runs** — Now on gunicorn+gevent via scripts/run_flask.sh, stable. [verified 09:13 — running, gunicorn+gevent, single listener]
-- [x] **Dual Flask instances on port 5000** — Single gunicorn master+worker. No recurrence. [verified 09:13 — single master+worker (PIDs 1370113/1382629), clean]
-- [x] **items.json + users.json simultaneous data corruption** — Items (5 cats, 19 items) and users (8 users) intact. Monitor every 2h. [verified 09:13 — healthy]
-- [x] **Owner username changed to 'testuser' (3rd data corruption incident)** — Owner PIN 1111 username='jayadmin', name='Owner'. No corruption. [verified 09:13 — healthy]
+- [x] **Flask process dying between runs** — Now on gunicorn+gevent via scripts/run_flask.sh, stable. [verified 13:16 — running, gunicorn+gevent, single listener]
+- [x] **Dual Flask instances on port 5000** — Single gunicorn master+worker. No recurrence. [verified 13:16 — single master+worker (PIDs 1646084/1646085), clean]
+- [x] **items.json + users.json simultaneous data corruption** — Items (5 cats, 19 items) and users (8 users) intact. Monitor every 2h. [verified 13:16 — healthy]
+- [x] **Owner username changed to 'testuser' (3rd data corruption incident)** — Owner PIN 1111 username='jayadmin', name='Owner'. No corruption. [verified 13:16 — healthy]
 - [x] **items.json schema changed to category-keyed format** — Items now stored as {Foods:[...], Drinks:[...], ...} instead of {categories:[], items:[]}. Used by /api/items (GET). [verified 09:13]
 
 ## FIXES APPLIED
