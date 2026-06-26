@@ -14430,5 +14430,141 @@
             "user_name": "Employee Two",
             "ip": "127.0.0.1"
         }
+    },
+    {
+        "timestamp": "2026-06-26T14:03:28.642126",
+        "type": "login_failed",
+        "user_id": null,
+        "user_role": "unknown",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed",
+            "method": "pin",
+            "ip": "127.0.0.1",
+            "attempt": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-26T14:03:33.520994",
+        "type": "login",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "2fa_required",
+            "method": "pin",
+            "user_name": "Employee One",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-26T14:08:46.605303",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-26T14:08:52.022429",
+        "type": "clock_in",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "user_name": "Owner",
+            "clock_in_time": "2026-06-26T14:08:52.022241",
+            "late_minutes": null,
+            "scheduled_start": null
+        }
+    },
+    {
+        "timestamp": "2026-06-26T14:09:02.252350",
+        "type": "submit_order",
+        "user_id": null,
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 112,
+            "subtotal": 21.0,
+            "tax_amount": 1.73,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 22.73,
+            "payment_method": {
+                "method": "split",
+                "amounts": {
+                    "cash": 15,
+                    "card": 10
+                }
+            },
+            "item_count": 3
+        }
+    },
+    {
+        "timestamp": "2026-06-26T14:09:13.928138",
+        "type": "submit_order",
+        "user_id": null,
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 113,
+            "subtotal": 21.0,
+            "tax_amount": 1.82,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 22.82,
+            "payment_method": "card",
+            "item_count": 3
+        }
+    },
+    {
+        "timestamp": "2026-06-26T14:09:39.609836",
+        "type": "clock_out",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "user_name": "Owner",
+            "clock_in_time": "2026-06-26T14:08:52.022241",
+            "clock_out_time": "2026-06-26T14:09:39.608471",
+            "duration_hours": 0.01
+        }
+    },
+    {
+        "timestamp": "2026-06-26T14:09:39.641701",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-26T14:09:45.719063",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
     }
 ]

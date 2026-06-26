@@ -20,7 +20,7 @@
         "unit_cost": 3.25
     },
     "Coke": {
-        "stock": 85,
+        "stock": 83,
         "low_stock_threshold": 10,
         "unit_cost": 0.75
     },
@@ -35,12 +35,12 @@
         "unit_cost": 2.0
     },
     "Lemonade": {
-        "stock": 96,
+        "stock": 94,
         "low_stock_threshold": 10,
         "unit_cost": 0.85
     },
     "Chocolate Bar": {
-        "stock": 100,
+        "stock": 99,
         "low_stock_threshold": 10,
         "unit_cost": 1.1
     },
@@ -50,7 +50,7 @@
         "unit_cost": 1.75
     },
     "Taco - Chicken with Salsa": {
-        "stock": 95,
+        "stock": 93,
         "low_stock_threshold": 10,
         "unit_cost": 3.5
     },
@@ -60,12 +60,12 @@
         "unit_cost": 0.95
     },
     "Chips (Large Bag)": {
-        "stock": 95,
+        "stock": 94,
         "low_stock_threshold": 10,
         "unit_cost": 1.2
     },
     "Hamburger - Normal": {
-        "stock": 85,
+        "stock": 83,
         "low_stock_threshold": 10,
         "unit_cost": 3.5
     },

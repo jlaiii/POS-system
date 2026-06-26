@@ -5779,5 +5779,183 @@
         "refund_reason": "No reason provided",
         "refunded_at": "2026-06-26T10:48:27.912326",
         "refunded_by": "1111"
+    },
+    {
+        "order_id": 112,
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-26T14:09:02.244565",
+        "user": null,
+        "payment": {
+            "method": "split",
+            "amounts": {
+                "cash": 15,
+                "card": 10
+            }
+        },
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Hamburger - Normal",
+                "price": 6,
+                "qty": 2,
+                "modifiers": [
+                    {
+                        "name": "Size",
+                        "option": "Large",
+                        "price_mod": 2.0
+                    },
+                    {
+                        "name": "Extras",
+                        "option": "Extra Cheese",
+                        "price_mod": 0.5
+                    }
+                ],
+                "course_send_at": "2026-06-26T14:09:02.244644",
+                "course_fired": true
+            },
+            {
+                "name": "Lemonade",
+                "price": 3,
+                "qty": 2,
+                "course_send_at": "2026-06-26T14:09:02.244644",
+                "course_fired": true
+            },
+            {
+                "name": "Chips (Large Bag)",
+                "price": 3,
+                "qty": 1,
+                "course_send_at": "2026-06-26T14:09:02.244644",
+                "course_fired": true
+            }
+        ],
+        "subtotal": 21.0,
+        "tax_amount": 1.73,
+        "tip_amount": 0.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "item_tax_details": [
+            {
+                "name": "Hamburger - Normal",
+                "category": "",
+                "qty": 2,
+                "price": 6.0,
+                "tax_rate": 8.25,
+                "tax_amount": 0.99
+            },
+            {
+                "name": "Lemonade",
+                "category": "",
+                "qty": 2,
+                "price": 3.0,
+                "tax_rate": 8.25,
+                "tax_amount": 0.49
+            },
+            {
+                "name": "Chips (Large Bag)",
+                "category": "",
+                "qty": 1,
+                "price": 3.0,
+                "tax_rate": 8.25,
+                "tax_amount": 0.25
+            }
+        ],
+        "total": 22.73,
+        "notes": "",
+        "item_notes": {},
+        "table_number": 5,
+        "delivery_address": null,
+        "customer_email": "",
+        "order_type": "dine_in",
+        "party_size": null,
+        "packaging_fee": 0.0,
+        "packaging_fee_label": "",
+        "priority": null,
+        "assigned_driver": null,
+        "delivery_status": "pending",
+        "manager_approval": null
+    },
+    {
+        "order_id": 113,
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-26T14:09:13.919799",
+        "user": null,
+        "payment": "card",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Taco - Chicken with Salsa",
+                "price": 7,
+                "qty": 2,
+                "course_send_at": "2026-06-26T14:09:13.919876",
+                "course_fired": true
+            },
+            {
+                "name": "Coke",
+                "price": 3,
+                "qty": 2,
+                "course_send_at": "2026-06-26T14:09:13.919876",
+                "course_fired": true
+            },
+            {
+                "name": "Chocolate Bar",
+                "price": 2,
+                "qty": 1,
+                "course_send_at": "2026-06-26T14:09:13.919876",
+                "course_fired": true
+            }
+        ],
+        "subtotal": 21.0,
+        "tax_amount": 1.82,
+        "tip_amount": 0.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "item_tax_details": [
+            {
+                "name": "Taco - Chicken with Salsa",
+                "category": "",
+                "qty": 2,
+                "price": 7.0,
+                "tax_rate": 8.25,
+                "tax_amount": 1.16
+            },
+            {
+                "name": "Coke",
+                "category": "",
+                "qty": 2,
+                "price": 3.0,
+                "tax_rate": 8.25,
+                "tax_amount": 0.49
+            },
+            {
+                "name": "Chocolate Bar",
+                "category": "",
+                "qty": 1,
+                "price": 2.0,
+                "tax_rate": 8.25,
+                "tax_amount": 0.17
+            }
+        ],
+        "total": 22.82,
+        "notes": "",
+        "item_notes": {},
+        "table_number": 6,
+        "delivery_address": null,
+        "customer_email": "",
+        "order_type": "dine_in",
+        "party_size": null,
+        "packaging_fee": 0.0,
+        "packaging_fee_label": "",
+        "priority": null,
+        "assigned_driver": null,
+        "delivery_status": "pending",
+        "manager_approval": null
     }
 ]

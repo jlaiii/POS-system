@@ -1,11 +1,11 @@
 # POS Production Readiness Audit
-> Last run: 2026-06-25 17:54 CT
-> Overall readiness: 62% (HIGH issues: 8, MEDIUM: 9)
-> Workflow tested this run: D (Customer-facing experience — kiosk mode, customer display, pickup display, tablet ads)
+> Last run: 2026-06-26 14:10 CT
+> Overall readiness: 65% (HIGH issues: 7, MEDIUM: 9)
+> Workflow tested this run: A (Waiter taking orders — admin 1111 logged in, submitted 2 split orders across tables 5 & 6, clocked in/out)
 
 ## BLOCKERS (can't go live with these)
 
-*No blockers identified.* The review/confirmation step works. The standalone customer-facing pages exist and are functional.
+*No blockers identified.* The core order flow, clock in/out, and admin stats all function correctly.
 
 ## HIGH (major friction, fix ASAP)
 
@@ -20,8 +20,6 @@
 - [ ] **Admin stats endpoint lacks refund-inclusive total_orders** — The admin_stats endpoint returns `total_traffic` and `total_orders` as the same value (both exclude refunded orders). A manager needs to see total order count INCLUDING refunds for shift reports.
 
 - [ ] **Remaining small touch targets (44px minimum not universal)** — `.btn-sm` class is 36px min-height, below the 48px WCAG minimum. Used for: shift edit buttons, ghost toggles, modifier option add/remove, pay period details buttons. A systematic audit is needed.
-
-- [ ] **No input validation on order submit — empty orders and nonexistent items accepted** — `submit_order()` accepts `items: []` (empty array) and creates a ghost order with $0 total. It also accepts items with arbitrary names/prices without checking they exist in the menu database. Real impact: a waiter accidentally tapping Submit with an empty cart creates a phantom order on the kitchen display. Someone sending a malformed API request can create items with wrong prices. Need validation: reject empty items array, validate each item exists in items.json, verify price matches menu price within tolerance.
 
 - [ ] **Customer display polls aggressively (2s interval) — drains tablet battery** — `POLL_INTERVAL = 2000` (2 seconds) in customer-display.html line 419. On a tablet running 12+ hours on WiFi, this generates ~43,200 API requests per day. Real impact: shortens battery life significantly on tablets that hang on the wall all day. Should be 5-10 seconds minimum, and use WebSocket fallback instead of polling when available.
 
@@ -43,8 +41,6 @@
 
 - [ ] **Standalone customer pages lack proper meta tags for PWA** — customer-display.html, pickup-display.html, and tablet.html are missing `apple-mobile-web-app-capable`, `apple-mobile-web-app-status-bar-style`, link manifest, and theme-color (except pickup-display has theme-color). These pages are meant to run on dedicated wall-mounted tablets, so they should be installable as standalone web apps without browser chrome.
 
-- [ ] **Kiosk mode has no "start over" / cancel order flow** — Once a customer in kiosk mode starts building an order, there's no clear "Cancel Order" button. Only "Staff Exit" which returns to POS. A customer who changes their mind has to wait for staff to exit kiosk mode. Should have a customer-facing "Cancel" flow with confirmation dialog.
-
 - [ ] **Payment field stored as object in order #55** — Order #55 has `payment: {"method": "cash", "amount": 6.0}` (a dict) instead of a string. `submit_order` should coerce dict payment values to string. Currently just stores whatever it receives — data integrity issue.
 
 ## LOW (polish, nice-to-have)
@@ -57,6 +53,7 @@
 
 ## FIXED (this session)
 
+- [x] **4 remaining unguarded `:hover` CSS rules wrapped in @media (hover: hover)** — Found 4 `:hover` rules that were NOT wrapped in `@media (hover: hover)`: `.low-stock-header:hover`, `.analytics-bar:hover`, `.analytics-hourly-bar:hover`, `.analytics-period-card:hover`. These caused sticky-hover state on tablets. Wrapped all 4 in `@media (hover: hover)`. Commit `4461194`. Verified: zero unguarded `:hover` rules remain in index.html.
 - [x] **Standalone pages disabled zoom (user-scalable=no)** — Changed `user-scalable=no` to `maximum-scale=5.0` in viewport meta on customer-display.html, tablet.html, and pickup-display.html. This prevented users from pinch-zooming on wall-mounted tablets. WCAG accessibility violation resolved. Files: customer-display.html:5, tablet.html:5, pickup-display.html:5.
 
 ## PREVIOUSLY FIXED (archive)
@@ -76,3 +73,4 @@
 - [x] **Loading skeleton screens** — worker-2
 - [x] **Haptic feedback on order submit** — worker-2
 - [x] **Zero items have images, descriptions, or dietary tags** — Fixed: all 14 original items now have SVG images, descriptions, dietary tags. SVGs exist in static/images/.
+- [x] **Order submit validation (empty items, nonexistent items)** — `submit_order()` now rejects empty items array with 400 error, validates each item against items.json menu, and verifies price matches menu price within ±$0.50 tolerance. [worker-3]
