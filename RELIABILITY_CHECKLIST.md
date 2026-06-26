@@ -1,5 +1,5 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-26T21:14 UTC
+> Last full cycle: 2026-06-26T21:42 UTC
 > Total checks: 985
 > Healthy: 985 | Broken: 0 | Fixed this cycle: 0
 
@@ -7,24 +7,26 @@
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 — 200 OK [verified 21:14]
-- [x] All JSON data files exist and are valid — all 15 core JSON files valid, parseable [verified 21:14]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', role=owner) [verified 21:14]
-- [x] Git repo is clean — clean [verified 21:14]
+- [x] Flask app responds on port 5000 — 200 OK [verified 21:42]
+- [x] All JSON data files exist and are valid — all 15 core JSON files valid, parseable [verified 21:42]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', role=owner) [verified 21:42]
+- [x] Git repo is clean — clean (dirty activity_log/login_attempts committed) [verified 21:42]
 
 ## HOURLY (check if last check was >1h ago)
-- [x] /api/health — {"status":"ok"} (GET) [verified 20:27]
-- [x] Frontend loads — 200, HTML OK, 1.37MB [verified 20:27]
-- [x] /api/items returns items — GET, 200 OK, categories with items [verified 20:27]
-- [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 50 shifts in range [verified 20:27]
-- [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 20:27]
-- [x] index.html size check — normal (1375239 bytes) [verified 20:27]
-- [x] Disk space check — 36% used (14G/38G, OK) [verified 20:27]
-- [x] Memory check — ~39% RAM used (1532/3915 MB, OK) [verified 20:27]
-- [x] Backup integrity — latest backup (19:28, db.gz valid) [verified 20:27]
+- [x] /api/health — {"status":"ok"} (GET) [verified 21:42]
+- [x] Frontend loads — 200, HTML OK, 1.37MB [verified 21:42]
+- [x] /api/items returns items — GET, 200 OK, 5 categories (19 items) [verified 21:42]
+- [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 53 shifts in range [verified 21:42]
+- [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 21:42]
+- [x] index.html size check — 1375239 bytes (normal) [verified 21:42]
+- [x] Disk space check — 36% used (14G/38G, OK) [verified 21:42]
+- [x] Memory check — ~39% RAM used (1528/3915 MB, OK) [verified 21:42]
+- [x] Backup integrity — latest backups valid (json 21:36 tar.gz w/50 files, db 21:36 db.gz integrity ok) [verified 21:42]
 - [x] CSV export — /api/export/shifts_csv returns CSV [verified 20:27]
 - [x] Offline queue — /api/sync_orders exists, returns 400 "No orders provided" [verified 20:27]
-- [x] /api/login works — POST userId=1111, Login successful, role=owner, permissions=[*] [verified 20:27]
+- [x] /api/login works — POST userId=1111, Login successful, role=owner, permissions=[*] [verified 21:42]
+- [x] Clock-in/out: employee 1234 clocked in → clocked out, both 200 OK [verified 21:42]
+- [x] /api/admin_stats — stats returned, average_sale=$13.23, 8 users [verified 21:42]
 
 ## EVERY 4 HOURS
 - [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 200, 3 pending orders [verified 21:14]
@@ -53,11 +55,11 @@
 - [x] Backup integrity: verify latest backup is valid and not empty — 2026-06-26_18-28-06.db.gz (valid, 303KB uncompressed) + JSON backups intact [verified 19:06]
 
 ## DISCOVERED (failures you've seen before — check every 2h)
-- [x] **Flask process dying between runs** — Now on gunicorn+gevent via scripts/run_flask.sh, stable. [verified 20:27 — running, gunicorn+gevent, single listener, ~9h uptime]
-- [x] **Dual Flask instances on port 5000** — Single gunicorn master+worker. No recurrence. [verified 20:27 — single master+worker, clean]
-- [x] **items.json + users.json simultaneous data corruption** — Items (5 cats, 19 items) and users (8 users) intact. Monitor every 2h. [verified 20:27 — healthy]
-- [x] **Owner username changed to 'testuser' (3rd data corruption incident)** — Owner PIN 1111 username='jayadmin', name='Owner'. No corruption. [verified 20:27 — healthy]
-- [x] **items.json schema changed to category-keyed format** — Items now stored as {Foods:[...], Drinks:[...], ...} instead of {categories:[], items:[]}. Used by /api/items (GET). [verified 20:27]
+- [x] **Flask process dying between runs** — Now on gunicorn+gevent via scripts/run_flask.sh, stable. [verified 21:42 — running, gunicorn+gevent, single listener, ~10h uptime]
+- [x] **Dual Flask instances on port 5000** — Single gunicorn master+worker. No recurrence. [verified 21:42 — single master+worker, clean]
+- [x] **items.json + users.json simultaneous data corruption** — Items (5 cats, 19 items) and users (8 users) intact. Monitor every 2h. [verified 21:42 — healthy]
+- [x] **Owner username changed to 'testuser' (3rd data corruption incident)** — Owner PIN 1111 username='jayadmin', name='Owner'. No corruption. [verified 21:42 — healthy]
+- [x] **items.json schema changed to category-keyed format** — Items now stored as {Foods:[...], Drinks:[...], ...} instead of {categories:[], items:[]}. Used by /api/items (GET). [verified 21:42]
 
 ## FIXES APPLIED
 - [2026-06-26 12:48] **Committed dirty data files from workers** — activity_log.json (28 lines) and login_attempts.json (23 lines) were dirty from Security Watchdog run. Committed as 4bb6aa1. No downtime.
