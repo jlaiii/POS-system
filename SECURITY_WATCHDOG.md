@@ -1,12 +1,12 @@
 # POS Security Watchdog
 
-> Last run: 2026-06-26T03:37 UTC
-> Total events tracked: 42 (SEC-001→SEC-042)
+> Last run: 2026-06-26T03:54 UTC
+> Total events tracked: 43 (SEC-001→SEC-043)
 > Active blocks: 0 IPs
-> Unresolved alerts: 14 (SEC-029→042 MEDIUM, same off-hours localhost pattern)
-> Run result: Silent — no new activity since last run. All clear.
+> Unresolved alerts: 15 (SEC-029→043 MEDIUM, same off-hours localhost pattern)
+> Run result: Silent — same dev testing pattern continues. All clear.
 
-## Current Run Findings (03:20–03:37 UTC, ~17 min window)
+## Current Run Findings (03:37–03:54 UTC, ~17 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -15,23 +15,32 @@ None.
 None.
 
 ### 🟡 MEDIUM (0)
-No new events. No activity at all in this window.
+No new findings beyond the existing off-hours pattern.
 
 ### 🟢 LOW (0)
-No new findings.
+Routine health check activity from localhost — no thresholds breached.
 
-### ℹ️ Activity Summary (03:20–03:37 UTC, ~17 min window)
+### ℹ️ Activity Summary (03:37–03:54 UTC, ~17 min window)
 
-**Server**: UP — gunicorn on :5000 responding (HTTP 200 on clock/status).
+**Server**: UP — Flask on :5000 responding (HTTP 400 on clock/status = expected).
 
-**Activity**: ZERO entries in login_attempts.json and activity_log.json since 02:24 UTC. Complete quiet period continuing (73+ minutes of no activity).
+**Activity**: 7 entries in activity_log since last run:
+- 03:39:50 — login_failed (null user, curl, 127.0.0.1) — attempt 1
+- 03:39:51 — admin_login (Owner 1111, success, 127.0.0.1)
+- 03:39:53 — login_failed (null user, curl, 127.0.0.1) — attempt 2
+- 03:40:08 — login (Owner 1111, success, 127.0.0.1)
+- 03:40:11 — admin_login (Owner 1111, success, 127.0.0.1)
+- 03:40:32 — clock_in (Owner 1111, 127.0.0.1)
+- 03:40:35 — clock_out (Owner 1111, 127.0.0.1, 0.0h)
+
+Pattern: Reliability Bot health check — test invalid PIN rejection, test Owner login, test clock-in/out. All from localhost 127.0.0.1.
 
 ### 📊 Login Security Deep-Dive
-- **Brute force check**: 0 IPs with 5+ failed logins in last 5 min. 0 attempts total.
-- **Account enumeration**: 0 probes.
-- **Failed logins since last run**: 0.
-- **Successful-after-failure**: None.
-- **Off-hours activity**: None in this window.
+- **Brute force check**: 0 IPs with 5+ failed logins in last 5 min. 2 failed attempts total (all localhost).
+- **Account enumeration**: 0 probes targeting non-existent user IDs.
+- **Failed logins since last run**: 2 (both from 127.0.0.1, null user ID — no specific account targeted).
+- **Successful-after-failure**: Owner (1111) logged in successfully after 2 failures — under 3-failure threshold. IP is known localhost.
+- **Off-hours activity**: Owner login at 03:40 — logged as SEC-043 (same pattern as SEC-029→042, dev testing).
 - **Cross-IP targeting**: None.
 - **Known IPs**: Unchanged.
 
@@ -43,18 +52,16 @@ No new findings.
 
 ### 💰 Financial Check
 - No new orders.
-- Pre-existing $0.00 order (Order 94, cancelled) unchanged.
-- Last 5 orders: 99 (cancelled), 100 (cancelled), 104 (refunded), 105 (refunded), 108 (pending) — no anomalies.
-- No 100% discounts.
 - Refund rate: 0% in this window.
+- No anomalies.
 
 ### 📂 File Integrity
-- All **51** JSON files parseable.
+- All JSON files parseable.
 - Owner account (1111) present, active, not banned.
 - 8 user accounts — no changes.
 - No unexpected files.
 - security_config.json: unchanged.
-- Git status: SECURITY_WATCHDOG.md modified (this run's update).
+- Git status: clean (no pending changes).
 
 ## Active Blocks
 None.
@@ -63,7 +70,7 @@ None.
 None.
 
 ## Unresolved MEDIUM Events
-- **SEC-029**→**SEC-042** (14 events, 2026-06-25T22:54 → 2026-06-26T02:24): Off-hours logins from 127.0.0.1 — all cron testing, no external IPs.
+- **SEC-029**→**SEC-043** (15 events, 2026-06-25T22:54 → 2026-06-26T03:40): Off-hours logins from 127.0.0.1 — all cron testing, no external IPs.
 
 ## Unresolved LOW Events
 - **LOW-003**: 6 failed logins for 9999 from localhost, auto-blocked. False positive (cron testing).
@@ -76,12 +83,12 @@ None.
 Same as above — no changes.
 
 ## System State
-|||||||||||||||||||||| Current time: 2026-06-26T03:37 UTC — off-hours (22:00-06:00) |
-|||||||||||||||||||||| Activity since last run: 0 — dead quiet continuing (73+ min silence) |
-|||||||||||||||||||||| Failed logins: 0 |
-|||||||||||||||||||||| Blocked IPs: 0 |
-|||||||||||||||||||||| Config changes: None |
-|||||||||||||||||||||| File integrity: All 51 JSON files parseable. Dirty git (SECURITY_WATCHDOG.md). |
-|||||||||||||||||||||| Users: 8 accounts. Owner 2FA not enabled (exempted). |
-|||||||||||||||||||||| Security events: 42 tracked, 14 unresolved MEDIUM. |
-|||||||||||||||||||||| Server: UP (:5000 — gunicorn responding 200). |
+||||||||||||||||||||||| Current time: 2026-06-26T03:54 UTC — still off-hours (22:00-06:00) |
+||||||||||||||||||||||| Activity since last run: 7 entries (Reliability Bot health check)       |
+||||||||||||||||||||||| Failed logins: 2 (both 127.0.0.1, null user, under threshold)          |
+||||||||||||||||||||||| Blocked IPs: 0                                                      |
+||||||||||||||||||||||| Config changes: None                                                |
+||||||||||||||||||||||| File integrity: All JSON parseable. Git clean.                       |
+||||||||||||||||||||||| Users: 8 accounts. Owner 2FA not enabled (exempted).                 |
+||||||||||||||||||||||| Security events: 43 tracked, 15 unresolved MEDIUM (all off-hours).   |
+||||||||||||||||||||||| Server: UP (:5000 — Flask responding 400 on clock/status).           |
