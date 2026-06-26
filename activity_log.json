@@ -15007,5 +15007,176 @@
             "user_name": "Owner",
             "ip": "127.0.0.1"
         }
+    },
+    {
+        "timestamp": "2026-06-26T20:51:21.550115",
+        "type": "clock_in",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee One",
+            "clock_in_time": "2026-06-26T20:51:21.549925",
+            "late_minutes": null,
+            "scheduled_start": null
+        }
+    },
+    {
+        "timestamp": "2026-06-26T20:51:22.645233",
+        "type": "clock_in",
+        "user_id": "5678",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee Two",
+            "clock_in_time": "2026-06-26T20:51:22.644928",
+            "late_minutes": null,
+            "scheduled_start": null
+        }
+    },
+    {
+        "timestamp": "2026-06-26T20:51:38.388253",
+        "type": "clock_out",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee One",
+            "clock_in_time": "2026-06-26T20:51:21.549925",
+            "clock_out_time": "2026-06-26T20:51:38.385616",
+            "duration_hours": 0.0
+        }
+    },
+    {
+        "timestamp": "2026-06-26T20:51:39.522872",
+        "type": "clock_out",
+        "user_id": "5678",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee Two",
+            "clock_in_time": "2026-06-26T20:51:22.644928",
+            "clock_out_time": "2026-06-26T20:51:39.521137",
+            "duration_hours": 0.0
+        }
+    },
+    {
+        "timestamp": "2026-06-26T20:52:14.365328",
+        "type": "submit_order",
+        "user_id": null,
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 116,
+            "subtotal": 582.25,
+            "tax_amount": 48.03,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 630.28,
+            "payment_method": "Cash",
+            "item_count": 50
+        }
+    },
+    {
+        "timestamp": "2026-06-26T20:52:17.195945",
+        "type": "refund_order",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 116,
+            "reason": "No reason provided",
+            "refunded_by_name": "Owner",
+            "order_total": 630.28,
+            "inventory_restored": [
+                "Hotdog - Plain x2",
+                "Taco - Beef & Cheese x1",
+                "Hamburger - Normal x2",
+                "Caesar Salad x1",
+                "Raspia (Fruit Slush) x3",
+                "Mixed Nuts (Small Pack) x1",
+                "Hotdog - Plain x2",
+                "Grilled Chicken Salad x1",
+                "Hamburger - Normal x2",
+                "French Toast x1",
+                "Taco - Beef & Cheese x2",
+                "Taco - Chicken with Salsa x1",
+                "Bacon & Eggs x2",
+                "Bacon & Eggs x2",
+                "Water Bottle x3",
+                "Pancakes x2",
+                "Granola Bar x3",
+                "Taco - Beef & Cheese x3",
+                "Hotdog - Plain x3",
+                "Caesar Salad x1",
+                "Grilled Chicken Salad x3",
+                "Taco - Beef & Cheese x3",
+                "Bacon & Eggs x1",
+                "Mixed Nuts (Small Pack) x1",
+                "Coke x3",
+                "Taco - Beef & Cheese x1",
+                "Bacon & Eggs x1",
+                "Hotdog - Plain x3",
+                "Chocolate Bar x3",
+                "Pancakes x2",
+                "Taco - Beef & Cheese x3",
+                "Mixed Nuts (Small Pack) x2",
+                "Water Bottle x2",
+                "Hotdog - Loaded x1",
+                "Water Bottle x1",
+                "Coke x3",
+                "Hamburger - Normal x1",
+                "Hotdog - Plain x3",
+                "Grilled Chicken Salad x2",
+                "Grilled Chicken Salad x1",
+                "Lemonade x3",
+                "Hamburger - Normal x1",
+                "Taco - Beef & Cheese x1",
+                "Bacon & Eggs x1",
+                "Granola Bar x3",
+                "Granola Bar x1",
+                "Mixed Nuts (Small Pack) x3",
+                "Raspia (Fruit Slush) x2",
+                "Grilled Chicken Salad x3",
+                "Pancakes x1"
+            ]
+        }
+    },
+    {
+        "timestamp": "2026-06-26T20:52:31.016022",
+        "type": "add_item",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "category": "Snacks",
+            "name": "Test \"Special\" \ud83c\udf89 Item",
+            "price": 5.99
+        }
+    },
+    {
+        "timestamp": "2026-06-26T20:52:36.859395",
+        "type": "delete_item",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "category": "Snacks",
+            "name": "Test \"Special\" \ud83c\udf89 Item"
+        }
     }
 ]

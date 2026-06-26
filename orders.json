@@ -6065,5 +6065,793 @@
         "refund_reason": "No reason provided",
         "refunded_at": "2026-06-26T19:07:02.847781",
         "refunded_by": "1111"
+    },
+    {
+        "order_id": 116,
+        "status": "refunded",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-26T20:52:14.355409",
+        "user": null,
+        "payment": "Cash",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Hotdog - Plain",
+                "price": 5.0,
+                "qty": 2,
+                "course_send_at": "2026-06-26T20:52:14.355479",
+                "course_fired": true
+            },
+            {
+                "name": "Taco - Beef & Cheese",
+                "price": 7.0,
+                "qty": 1,
+                "course_send_at": "2026-06-26T20:52:14.355479",
+                "course_fired": true
+            },
+            {
+                "name": "Hamburger - Normal",
+                "price": 6.0,
+                "qty": 2,
+                "course_send_at": "2026-06-26T20:52:14.355479",
+                "course_fired": true
+            },
+            {
+                "name": "Caesar Salad",
+                "price": 7.99,
+                "qty": 1,
+                "course_send_at": "2026-06-26T20:52:14.355479",
+                "course_fired": true
+            },
+            {
+                "name": "Raspia (Fruit Slush)",
+                "price": 4.0,
+                "qty": 3,
+                "course_send_at": "2026-06-26T20:52:14.355479",
+                "course_fired": true
+            },
+            {
+                "name": "Mixed Nuts (Small Pack)",
+                "price": 4.0,
+                "qty": 1,
+                "course_send_at": "2026-06-26T20:52:14.355479",
+                "course_fired": true
+            },
+            {
+                "name": "Hotdog - Plain",
+                "price": 5.0,
+                "qty": 2,
+                "course_send_at": "2026-06-26T20:52:14.355479",
+                "course_fired": true
+            },
+            {
+                "name": "Grilled Chicken Salad",
+                "price": 11.49,
+                "qty": 1,
+                "course_send_at": "2026-06-26T20:52:14.355479",
+                "course_fired": true
+            },
+            {
+                "name": "Hamburger - Normal",
+                "price": 6.0,
+                "qty": 2,
+                "course_send_at": "2026-06-26T20:52:14.355479",
+                "course_fired": true
+            },
+            {
+                "name": "French Toast",
+                "price": 9.49,
+                "qty": 1,
+                "course_send_at": "2026-06-26T20:52:14.355479",
+                "course_fired": true
+            },
+            {
+                "name": "Taco - Beef & Cheese",
+                "price": 7.0,
+                "qty": 2,
+                "course_send_at": "2026-06-26T20:52:14.355479",
+                "course_fired": true
+            },
+            {
+                "name": "Taco - Chicken with Salsa",
+                "price": 7.0,
+                "qty": 1,
+                "course_send_at": "2026-06-26T20:52:14.355479",
+                "course_fired": true
+            },
+            {
+                "name": "Bacon & Eggs",
+                "price": 10.99,
+                "qty": 2,
+                "course_send_at": "2026-06-26T20:52:14.355479",
+                "course_fired": true
+            },
+            {
+                "name": "Bacon & Eggs",
+                "price": 10.99,
+                "qty": 2,
+                "course_send_at": "2026-06-26T20:52:14.355479",
+                "course_fired": true
+            },
+            {
+                "name": "Water Bottle",
+                "price": 2.0,
+                "qty": 3,
+                "course_send_at": "2026-06-26T20:52:14.355479",
+                "course_fired": true
+            },
+            {
+                "name": "Pancakes",
+                "price": 8.99,
+                "qty": 2,
+                "course_send_at": "2026-06-26T20:52:14.355479",
+                "course_fired": true
+            },
+            {
+                "name": "Granola Bar",
+                "price": 2.0,
+                "qty": 3,
+                "course_send_at": "2026-06-26T20:52:14.355479",
+                "course_fired": true
+            },
+            {
+                "name": "Taco - Beef & Cheese",
+                "price": 7.0,
+                "qty": 3,
+                "course_send_at": "2026-06-26T20:52:14.355479",
+                "course_fired": true
+            },
+            {
+                "name": "Hotdog - Plain",
+                "price": 5.0,
+                "qty": 3,
+                "course_send_at": "2026-06-26T20:52:14.355479",
+                "course_fired": true
+            },
+            {
+                "name": "Caesar Salad",
+                "price": 7.99,
+                "qty": 1,
+                "course_send_at": "2026-06-26T20:52:14.355479",
+                "course_fired": true
+            },
+            {
+                "name": "Grilled Chicken Salad",
+                "price": 11.49,
+                "qty": 3,
+                "course_send_at": "2026-06-26T20:52:14.355479",
+                "course_fired": true
+            },
+            {
+                "name": "Taco - Beef & Cheese",
+                "price": 7.0,
+                "qty": 3,
+                "course_send_at": "2026-06-26T20:52:14.355479",
+                "course_fired": true
+            },
+            {
+                "name": "Bacon & Eggs",
+                "price": 10.99,
+                "qty": 1,
+                "course_send_at": "2026-06-26T20:52:14.355479",
+                "course_fired": true
+            },
+            {
+                "name": "Mixed Nuts (Small Pack)",
+                "price": 4.0,
+                "qty": 1,
+                "course_send_at": "2026-06-26T20:52:14.355479",
+                "course_fired": true
+            },
+            {
+                "name": "Coke",
+                "price": 3.0,
+                "qty": 3,
+                "course_send_at": "2026-06-26T20:52:14.355479",
+                "course_fired": true
+            },
+            {
+                "name": "Taco - Beef & Cheese",
+                "price": 7.0,
+                "qty": 1,
+                "course_send_at": "2026-06-26T20:52:14.355479",
+                "course_fired": true
+            },
+            {
+                "name": "Bacon & Eggs",
+                "price": 10.99,
+                "qty": 1,
+                "course_send_at": "2026-06-26T20:52:14.355479",
+                "course_fired": true
+            },
+            {
+                "name": "Hotdog - Plain",
+                "price": 5.0,
+                "qty": 3,
+                "course_send_at": "2026-06-26T20:52:14.355479",
+                "course_fired": true
+            },
+            {
+                "name": "Chocolate Bar",
+                "price": 2.0,
+                "qty": 3,
+                "course_send_at": "2026-06-26T20:52:14.355479",
+                "course_fired": true
+            },
+            {
+                "name": "Pancakes",
+                "price": 8.99,
+                "qty": 2,
+                "course_send_at": "2026-06-26T20:52:14.355479",
+                "course_fired": true
+            },
+            {
+                "name": "Taco - Beef & Cheese",
+                "price": 7.0,
+                "qty": 3,
+                "course_send_at": "2026-06-26T20:52:14.355479",
+                "course_fired": true
+            },
+            {
+                "name": "Mixed Nuts (Small Pack)",
+                "price": 4.0,
+                "qty": 2,
+                "course_send_at": "2026-06-26T20:52:14.355479",
+                "course_fired": true
+            },
+            {
+                "name": "Water Bottle",
+                "price": 2.0,
+                "qty": 2,
+                "course_send_at": "2026-06-26T20:52:14.355479",
+                "course_fired": true
+            },
+            {
+                "name": "Hotdog - Loaded",
+                "price": 7.0,
+                "qty": 1,
+                "course_send_at": "2026-06-26T20:52:14.355479",
+                "course_fired": true
+            },
+            {
+                "name": "Water Bottle",
+                "price": 2.0,
+                "qty": 1,
+                "course_send_at": "2026-06-26T20:52:14.355479",
+                "course_fired": true
+            },
+            {
+                "name": "Coke",
+                "price": 3.0,
+                "qty": 3,
+                "course_send_at": "2026-06-26T20:52:14.355479",
+                "course_fired": true
+            },
+            {
+                "name": "Hamburger - Normal",
+                "price": 6.0,
+                "qty": 1,
+                "course_send_at": "2026-06-26T20:52:14.355479",
+                "course_fired": true
+            },
+            {
+                "name": "Hotdog - Plain",
+                "price": 5.0,
+                "qty": 3,
+                "course_send_at": "2026-06-26T20:52:14.355479",
+                "course_fired": true
+            },
+            {
+                "name": "Grilled Chicken Salad",
+                "price": 11.49,
+                "qty": 2,
+                "course_send_at": "2026-06-26T20:52:14.355479",
+                "course_fired": true
+            },
+            {
+                "name": "Grilled Chicken Salad",
+                "price": 11.49,
+                "qty": 1,
+                "course_send_at": "2026-06-26T20:52:14.355479",
+                "course_fired": true
+            },
+            {
+                "name": "Lemonade",
+                "price": 3.0,
+                "qty": 3,
+                "course_send_at": "2026-06-26T20:52:14.355479",
+                "course_fired": true
+            },
+            {
+                "name": "Hamburger - Normal",
+                "price": 6.0,
+                "qty": 1,
+                "course_send_at": "2026-06-26T20:52:14.355479",
+                "course_fired": true
+            },
+            {
+                "name": "Taco - Beef & Cheese",
+                "price": 7.0,
+                "qty": 1,
+                "course_send_at": "2026-06-26T20:52:14.355479",
+                "course_fired": true
+            },
+            {
+                "name": "Bacon & Eggs",
+                "price": 10.99,
+                "qty": 1,
+                "course_send_at": "2026-06-26T20:52:14.355479",
+                "course_fired": true
+            },
+            {
+                "name": "Granola Bar",
+                "price": 2.0,
+                "qty": 3,
+                "course_send_at": "2026-06-26T20:52:14.355479",
+                "course_fired": true
+            },
+            {
+                "name": "Granola Bar",
+                "price": 2.0,
+                "qty": 1,
+                "course_send_at": "2026-06-26T20:52:14.355479",
+                "course_fired": true
+            },
+            {
+                "name": "Mixed Nuts (Small Pack)",
+                "price": 4.0,
+                "qty": 3,
+                "course_send_at": "2026-06-26T20:52:14.355479",
+                "course_fired": true
+            },
+            {
+                "name": "Raspia (Fruit Slush)",
+                "price": 4.0,
+                "qty": 2,
+                "course_send_at": "2026-06-26T20:52:14.355479",
+                "course_fired": true
+            },
+            {
+                "name": "Grilled Chicken Salad",
+                "price": 11.49,
+                "qty": 3,
+                "course_send_at": "2026-06-26T20:52:14.355479",
+                "course_fired": true
+            },
+            {
+                "name": "Pancakes",
+                "price": 8.99,
+                "qty": 1,
+                "course_send_at": "2026-06-26T20:52:14.355479",
+                "course_fired": true
+            }
+        ],
+        "subtotal": 582.25,
+        "tax_amount": 48.03,
+        "tip_amount": 0.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "item_tax_details": [
+            {
+                "name": "Hotdog - Plain",
+                "category": "",
+                "qty": 2,
+                "price": 5.0,
+                "tax_rate": 8.25,
+                "tax_amount": 0.83
+            },
+            {
+                "name": "Taco - Beef & Cheese",
+                "category": "",
+                "qty": 1,
+                "price": 7.0,
+                "tax_rate": 8.25,
+                "tax_amount": 0.58
+            },
+            {
+                "name": "Hamburger - Normal",
+                "category": "",
+                "qty": 2,
+                "price": 6.0,
+                "tax_rate": 8.25,
+                "tax_amount": 0.99
+            },
+            {
+                "name": "Caesar Salad",
+                "category": "",
+                "qty": 1,
+                "price": 7.99,
+                "tax_rate": 8.25,
+                "tax_amount": 0.66
+            },
+            {
+                "name": "Raspia (Fruit Slush)",
+                "category": "",
+                "qty": 3,
+                "price": 4.0,
+                "tax_rate": 8.25,
+                "tax_amount": 0.99
+            },
+            {
+                "name": "Mixed Nuts (Small Pack)",
+                "category": "",
+                "qty": 1,
+                "price": 4.0,
+                "tax_rate": 8.25,
+                "tax_amount": 0.33
+            },
+            {
+                "name": "Hotdog - Plain",
+                "category": "",
+                "qty": 2,
+                "price": 5.0,
+                "tax_rate": 8.25,
+                "tax_amount": 0.83
+            },
+            {
+                "name": "Grilled Chicken Salad",
+                "category": "",
+                "qty": 1,
+                "price": 11.49,
+                "tax_rate": 8.25,
+                "tax_amount": 0.95
+            },
+            {
+                "name": "Hamburger - Normal",
+                "category": "",
+                "qty": 2,
+                "price": 6.0,
+                "tax_rate": 8.25,
+                "tax_amount": 0.99
+            },
+            {
+                "name": "French Toast",
+                "category": "",
+                "qty": 1,
+                "price": 9.49,
+                "tax_rate": 8.25,
+                "tax_amount": 0.78
+            },
+            {
+                "name": "Taco - Beef & Cheese",
+                "category": "",
+                "qty": 2,
+                "price": 7.0,
+                "tax_rate": 8.25,
+                "tax_amount": 1.16
+            },
+            {
+                "name": "Taco - Chicken with Salsa",
+                "category": "",
+                "qty": 1,
+                "price": 7.0,
+                "tax_rate": 8.25,
+                "tax_amount": 0.58
+            },
+            {
+                "name": "Bacon & Eggs",
+                "category": "",
+                "qty": 2,
+                "price": 10.99,
+                "tax_rate": 8.25,
+                "tax_amount": 1.81
+            },
+            {
+                "name": "Bacon & Eggs",
+                "category": "",
+                "qty": 2,
+                "price": 10.99,
+                "tax_rate": 8.25,
+                "tax_amount": 1.81
+            },
+            {
+                "name": "Water Bottle",
+                "category": "",
+                "qty": 3,
+                "price": 2.0,
+                "tax_rate": 8.25,
+                "tax_amount": 0.49
+            },
+            {
+                "name": "Pancakes",
+                "category": "",
+                "qty": 2,
+                "price": 8.99,
+                "tax_rate": 8.25,
+                "tax_amount": 1.48
+            },
+            {
+                "name": "Granola Bar",
+                "category": "",
+                "qty": 3,
+                "price": 2.0,
+                "tax_rate": 8.25,
+                "tax_amount": 0.49
+            },
+            {
+                "name": "Taco - Beef & Cheese",
+                "category": "",
+                "qty": 3,
+                "price": 7.0,
+                "tax_rate": 8.25,
+                "tax_amount": 1.73
+            },
+            {
+                "name": "Hotdog - Plain",
+                "category": "",
+                "qty": 3,
+                "price": 5.0,
+                "tax_rate": 8.25,
+                "tax_amount": 1.24
+            },
+            {
+                "name": "Caesar Salad",
+                "category": "",
+                "qty": 1,
+                "price": 7.99,
+                "tax_rate": 8.25,
+                "tax_amount": 0.66
+            },
+            {
+                "name": "Grilled Chicken Salad",
+                "category": "",
+                "qty": 3,
+                "price": 11.49,
+                "tax_rate": 8.25,
+                "tax_amount": 2.84
+            },
+            {
+                "name": "Taco - Beef & Cheese",
+                "category": "",
+                "qty": 3,
+                "price": 7.0,
+                "tax_rate": 8.25,
+                "tax_amount": 1.73
+            },
+            {
+                "name": "Bacon & Eggs",
+                "category": "",
+                "qty": 1,
+                "price": 10.99,
+                "tax_rate": 8.25,
+                "tax_amount": 0.91
+            },
+            {
+                "name": "Mixed Nuts (Small Pack)",
+                "category": "",
+                "qty": 1,
+                "price": 4.0,
+                "tax_rate": 8.25,
+                "tax_amount": 0.33
+            },
+            {
+                "name": "Coke",
+                "category": "",
+                "qty": 3,
+                "price": 3.0,
+                "tax_rate": 8.25,
+                "tax_amount": 0.74
+            },
+            {
+                "name": "Taco - Beef & Cheese",
+                "category": "",
+                "qty": 1,
+                "price": 7.0,
+                "tax_rate": 8.25,
+                "tax_amount": 0.58
+            },
+            {
+                "name": "Bacon & Eggs",
+                "category": "",
+                "qty": 1,
+                "price": 10.99,
+                "tax_rate": 8.25,
+                "tax_amount": 0.91
+            },
+            {
+                "name": "Hotdog - Plain",
+                "category": "",
+                "qty": 3,
+                "price": 5.0,
+                "tax_rate": 8.25,
+                "tax_amount": 1.24
+            },
+            {
+                "name": "Chocolate Bar",
+                "category": "",
+                "qty": 3,
+                "price": 2.0,
+                "tax_rate": 8.25,
+                "tax_amount": 0.49
+            },
+            {
+                "name": "Pancakes",
+                "category": "",
+                "qty": 2,
+                "price": 8.99,
+                "tax_rate": 8.25,
+                "tax_amount": 1.48
+            },
+            {
+                "name": "Taco - Beef & Cheese",
+                "category": "",
+                "qty": 3,
+                "price": 7.0,
+                "tax_rate": 8.25,
+                "tax_amount": 1.73
+            },
+            {
+                "name": "Mixed Nuts (Small Pack)",
+                "category": "",
+                "qty": 2,
+                "price": 4.0,
+                "tax_rate": 8.25,
+                "tax_amount": 0.66
+            },
+            {
+                "name": "Water Bottle",
+                "category": "",
+                "qty": 2,
+                "price": 2.0,
+                "tax_rate": 8.25,
+                "tax_amount": 0.33
+            },
+            {
+                "name": "Hotdog - Loaded",
+                "category": "",
+                "qty": 1,
+                "price": 7.0,
+                "tax_rate": 8.25,
+                "tax_amount": 0.58
+            },
+            {
+                "name": "Water Bottle",
+                "category": "",
+                "qty": 1,
+                "price": 2.0,
+                "tax_rate": 8.25,
+                "tax_amount": 0.17
+            },
+            {
+                "name": "Coke",
+                "category": "",
+                "qty": 3,
+                "price": 3.0,
+                "tax_rate": 8.25,
+                "tax_amount": 0.74
+            },
+            {
+                "name": "Hamburger - Normal",
+                "category": "",
+                "qty": 1,
+                "price": 6.0,
+                "tax_rate": 8.25,
+                "tax_amount": 0.49
+            },
+            {
+                "name": "Hotdog - Plain",
+                "category": "",
+                "qty": 3,
+                "price": 5.0,
+                "tax_rate": 8.25,
+                "tax_amount": 1.24
+            },
+            {
+                "name": "Grilled Chicken Salad",
+                "category": "",
+                "qty": 2,
+                "price": 11.49,
+                "tax_rate": 8.25,
+                "tax_amount": 1.9
+            },
+            {
+                "name": "Grilled Chicken Salad",
+                "category": "",
+                "qty": 1,
+                "price": 11.49,
+                "tax_rate": 8.25,
+                "tax_amount": 0.95
+            },
+            {
+                "name": "Lemonade",
+                "category": "",
+                "qty": 3,
+                "price": 3.0,
+                "tax_rate": 8.25,
+                "tax_amount": 0.74
+            },
+            {
+                "name": "Hamburger - Normal",
+                "category": "",
+                "qty": 1,
+                "price": 6.0,
+                "tax_rate": 8.25,
+                "tax_amount": 0.49
+            },
+            {
+                "name": "Taco - Beef & Cheese",
+                "category": "",
+                "qty": 1,
+                "price": 7.0,
+                "tax_rate": 8.25,
+                "tax_amount": 0.58
+            },
+            {
+                "name": "Bacon & Eggs",
+                "category": "",
+                "qty": 1,
+                "price": 10.99,
+                "tax_rate": 8.25,
+                "tax_amount": 0.91
+            },
+            {
+                "name": "Granola Bar",
+                "category": "",
+                "qty": 3,
+                "price": 2.0,
+                "tax_rate": 8.25,
+                "tax_amount": 0.49
+            },
+            {
+                "name": "Granola Bar",
+                "category": "",
+                "qty": 1,
+                "price": 2.0,
+                "tax_rate": 8.25,
+                "tax_amount": 0.17
+            },
+            {
+                "name": "Mixed Nuts (Small Pack)",
+                "category": "",
+                "qty": 3,
+                "price": 4.0,
+                "tax_rate": 8.25,
+                "tax_amount": 0.99
+            },
+            {
+                "name": "Raspia (Fruit Slush)",
+                "category": "",
+                "qty": 2,
+                "price": 4.0,
+                "tax_rate": 8.25,
+                "tax_amount": 0.66
+            },
+            {
+                "name": "Grilled Chicken Salad",
+                "category": "",
+                "qty": 3,
+                "price": 11.49,
+                "tax_rate": 8.25,
+                "tax_amount": 2.84
+            },
+            {
+                "name": "Pancakes",
+                "category": "",
+                "qty": 1,
+                "price": 8.99,
+                "tax_rate": 8.25,
+                "tax_amount": 0.74
+            }
+        ],
+        "total": 630.28,
+        "notes": "",
+        "item_notes": {},
+        "table_number": null,
+        "delivery_address": null,
+        "customer_email": "",
+        "order_type": "dine_in",
+        "party_size": null,
+        "packaging_fee": 0.0,
+        "packaging_fee_label": "",
+        "priority": null,
+        "assigned_driver": null,
+        "delivery_status": "pending",
+        "manager_approval": null,
+        "refund_reason": "No reason provided",
+        "refunded_at": "2026-06-26T20:52:17.181121",
+        "refunded_by": "1111"
     }
 ]
