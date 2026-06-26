@@ -1,16 +1,16 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-26T10:24 UTC
-> Total checks: 785
-> Healthy: 785 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-26T10:48 UTC
+> Total checks: 794
+> Healthy: 794 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-|- [x] Flask app responds on port 5000 — 200 OK, gunicorn+gevent (master PID 1370113, worker PID 1382629, single instance) [verified 10:24]
-|- [x] All JSON data files exist and are valid — all 15 JSON files valid, parseable [verified 10:24]
-|- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin'), 8 users total [verified 10:24]
-|- [x] Git repo is clean — clean (no dirty files) [verified 10:24]
+|- [x] Flask app responds on port 5000 — 200 OK [verified 10:48]
+|- [x] All JSON data files exist and are valid — all 15 JSON files valid, parseable [verified 10:48]
+|- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner') [verified 10:48]
+|- [x] Git repo is clean — clean (no dirty files) [verified 10:48]
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/health — {"status":"ok"} (GET) [verified 10:24]
@@ -27,19 +27,19 @@
 - [x] Offline queue — /api/sync_orders exists, returns 200 [verified 10:24]
 
 ## EVERY 4 HOURS
-- [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 200, 1 pending order [verified 08:45]
-- [x] Pickup display: verify /api/pickup-display/queue works — GET, 200, 1 order in queue [verified 08:45]
+|- [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 200, 1 order (Grubhub order) [verified 10:48]
+|- [x] Pickup display: verify /api/pickup-display/queue works — GET, 200, 1 order (#93, ready) [verified 10:48]
 - [x] Inventory: check stock decrements on order — 25 inventory items tracked, stock tracking valid [verified 09:13]
 - [x] User CRUD: add test user (9937) → verify → delete → confirmed gone [verified 04:07]
 - [x] Loyalty: points earned on order — 14 loyalty entries, endpoint working [verified 09:13]
-- [x] Cash register: /api/cash_drawer/status (POST) returns active=false, last session closed, 10 sessions total [verified 07:40]
-- [x] Webhook: verify webhook config endpoint works — /api/security/discord_webhook returns config, not set (expected) [verified 06:44]
-- [x] Clock-in late detection: set scheduled_time, clock in late, verify late flag — late tracking confirmed working (06:44 before 09:00 = no late, expected) [verified 06:44]
+|- [x] Cash register: /api/cash_drawer/status (POST) returns active=false, last closed Jun 24, 0 active sessions [verified 10:48]
+|- [x] Webhook: verify webhook config endpoint works — /api/security/discord_webhook returns config, not set (expected) [verified 06:44]
+|- [x] Clock-in late detection: Maria PIN 3344, scheduled 09:00, clocked in at 10:48 → late_minutes=109 [verified 10:48]
 - [x] Break tracking: start break → end break → verify break subtracted — 48 shifts, 4 with breaks, tracking active [verified 09:13]
 - [x] Shift edit: edit a shift time → verify audit trail — audit trail works, shift_index required, endpoint responds correctly [verified 05:20]
 - [x] CSV export: verify /api/export/shifts_csv returns CSV — POST, 200, CSV content returned [verified 05:53]
 - [x] Offline queue: verify /api/sync_orders endpoint exists — POST, 200, "No orders provided" [verified 05:53]
-- [x] Order lifecycle: create order via /api/submit_order → order 109 submitted → refunded via /api/orders/refund, 200 OK [verified 07:40]
+|- [x] Order lifecycle: create order via /api/submit_order → order 111 submitted → refunded via /api/orders/refund, 200 OK [verified 10:48]
 - [x] Special chars test: added "Test \"Special\" 🎉 Item" (emoji+quotes) → verified in items.json → deleted via /api/delete_item, 200 OK [verified 06:44]
 ## EVERY 12 HOURS
 - [x] Full app restart test: kill Flask → restart → verify all critical endpoints — Completed, gunicorn+gevent stable [verified 17:11]
@@ -60,6 +60,7 @@
 - [x] **items.json schema changed to category-keyed format** — Items now stored as {Foods:[...], Drinks:[...], ...} instead of {categories:[], items:[]}. Used by /api/items (GET). [verified 09:13]
 
 ## FIXES APPLIED
+|- [2026-06-26 10:48] **Routine run — all healthy** — Flask 200, disk 36%, RAM 41%. Verified CRITICAL (15 JSON files, owner OK, git clean). Order lifecycle: order 111 created & refunded (200 OK). Late detection: Maria clocked in at 10:48 vs 09:00 scheduled → 109min late (correct). Kitchen display (1 Grubhub order), pickup display (order #93 ready), cash drawer (inactive since Jun 24). Committed dirty files from lifecycle test (26a2c85). Total checks: 794, all healthy. No downtime.
 |- [2026-06-26 10:24] **Routine run — all healthy** — Flask 200, disk 36%, RAM 41%. All 15 JSON files valid. Owner PIN 1111 intact. Committed dirty SECURITY_WATCHDOG.md (ba5da91). Verified overdue HOURLY items: frontend (1.37MB), /api/items (5 cats, 19 items, GET), admin_shifts (48), backup integrity (10:04, 49 files all valid), inventory (25 items). CSV export and offline queue both working. app.py syntax OK. Total checks: 785, all healthy. No downtime.
 ||- [2026-06-26 09:40] **Routine run — all healthy** — Flask 200 (gunicorn+gevent), disk 36%, RAM 41%. All 15 JSON files valid. Owner PIN 1111 intact. Committed dirty files from previous worker runs (RELIABILITY_CHECKLIST.md + SECURITY_WATCHDOG.md) as 4e7f847. Updated HOURLY timestamps. Cleaned duplicate entries. Total checks: 779, all healthy. No downtime.
 |- [2026-06-26 09:13] **Routine run — all healthy** — Flask 200 (gunicorn+gevent, single master+worker), disk 36%, RAM 41%. All 15 JSON files valid. Owner PIN 1111 intact (name='Owner', username='jayadmin'). Git clean (no dirty files). app.py syntax OK. Backup verified (09:04, 50 files, 49 valid JSON). Updated timestamps for overdue 4H items (inventory 25 items, break tracking 48 shifts/4 w/breaks, loyalty 14 entries). Total checks: 777, all healthy. No downtime.
