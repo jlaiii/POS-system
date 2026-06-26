@@ -1,16 +1,16 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-26T13:16 UTC
-> Total checks: 853
-> Healthy: 853 | Broken: 0 | Fixed this cycle: 1
+> Last full cycle: 2026-06-26T13:39 UTC
+> Total checks: 858
+> Healthy: 858 | Broken: 0 | Fixed this cycle: 1
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 — 200 OK [verified 13:16]
-- [x] All JSON data files exist and are valid — all 15 core JSON files valid, parseable [verified 13:16]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', role='owner') [verified 13:16]
-- [x] Git repo is clean — clean (no dirty files) [verified 13:16]
+- [x] Flask app responds on port 5000 — 200 OK [verified 13:39]
+- [x] All JSON data files exist and are valid — all 15 core JSON files valid, parseable [verified 13:39]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', role='owner') [verified 13:39]
+- [x] Git repo is clean — clean (committed dirty SECURITY_WATCHDOG.md) [verified 13:39]
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/health — {"status":"ok"} (GET) [verified 13:16]
@@ -23,7 +23,7 @@
 - [x] Memory check — ~35% RAM used (OK) [verified 13:16]
 - [x] Backup integrity — latest backup (12:05, JSON valid + DB backups) [verified 12:48]
 - [x] CSV export — /api/export/shifts_csv returns CSV, 49 shifts [verified 13:16]
-- [x] Offline queue — /api/sync_orders exists, returns 'No orders provided' [verified 12:26]
+|- [x] Offline queue — /api/sync_orders exists, returns 'No orders provided' [verified 13:39]
 - [x] /api/login works — POST with userId=1111, Login successful [verified 12:48]
 
 ## EVERY 4 HOURS
@@ -40,7 +40,7 @@
 - [x] CSV export: verify /api/export/shifts_csv returns CSV — POST, 200, CSV content returned [verified 05:53]
 - [x] Offline queue: verify /api/sync_orders endpoint exists — POST, 200, "No orders provided" [verified 05:53]
 |- [x] Order lifecycle: create order via /api/submit_order → order 111 submitted → refunded via /api/orders/refund, 200 OK [verified 10:48]
-- [x] Special chars test: added "Test \"Special\" 🎉 Item" (emoji+quotes) → verified in items.json → deleted via /api/delete_item, 200 OK [verified 06:44]
+|- [x] Special chars test: added "Test \"Special\" 🎉 Item" (emoji+quotes) → verified in items.json → deleted via /api/delete_item, 200 OK [verified 13:39]
 ## EVERY 12 HOURS
 - [x] Full app restart test: kill Flask → restart → verify all critical endpoints — Completed, gunicorn+gevent stable [verified 17:11]
 - [x] Concurrent write test: two rapid clock-ins → both succeeded, no data loss [verified 21:11]
@@ -57,7 +57,7 @@
 - [x] **Dual Flask instances on port 5000** — Single gunicorn master+worker. No recurrence. [verified 13:16 — single master+worker (PIDs 1646084/1646085), clean]
 - [x] **items.json + users.json simultaneous data corruption** — Items (5 cats, 19 items) and users (8 users) intact. Monitor every 2h. [verified 13:16 — healthy]
 - [x] **Owner username changed to 'testuser' (3rd data corruption incident)** — Owner PIN 1111 username='jayadmin', name='Owner'. No corruption. [verified 13:16 — healthy]
-- [x] **items.json schema changed to category-keyed format** — Items now stored as {Foods:[...], Drinks:[...], ...} instead of {categories:[], items:[]}. Used by /api/items (GET). [verified 09:13]
+|- [x] **items.json schema changed to category-keyed format** — Items now stored as {Foods:[...], Drinks:[...], ...} instead of {categories:[], items:[]}. Used by /api/items (GET). [verified 13:39]
 
 ## FIXES APPLIED
 |- [2026-06-26 12:48] **Committed dirty data files from workers** — activity_log.json (28 lines) and login_attempts.json (23 lines) were dirty from Security Watchdog run. Committed as 4bb6aa1. No downtime.
