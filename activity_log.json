@@ -13202,5 +13202,159 @@
         "details": {
             "status": "success"
         }
+    },
+    {
+        "timestamp": "2026-06-26T02:15:24.184771",
+        "type": "delivery_platform_save",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "platform_id": "doordash_test",
+            "platform_name": "DoorDash Test",
+            "platform_type": "doordash"
+        }
+    },
+    {
+        "timestamp": "2026-06-26T02:15:24.214172",
+        "type": "delivery_platform_save",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "platform_id": "doordash_test",
+            "platform_name": "DoorDash Updated",
+            "platform_type": "doordash"
+        }
+    },
+    {
+        "timestamp": "2026-06-26T02:15:24.239135",
+        "type": "delivery_platform_toggle",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "platform_id": "doordash_test",
+            "platform_name": "DoorDash Updated",
+            "status": "enabled"
+        }
+    },
+    {
+        "timestamp": "2026-06-26T02:15:24.254301",
+        "type": "delivery_platform_item_map",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "platform_id": "doordash_test",
+            "platform_name": "DoorDash Updated",
+            "mapping_count": 2
+        }
+    },
+    {
+        "timestamp": "2026-06-26T02:15:24.281220",
+        "type": "delivery_order_import",
+        "user_id": "delivery_system",
+        "user_role": "system",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "order_id": 106,
+            "platform": "DoorDash Updated",
+            "external_order_id": "DD-VERIFY-001",
+            "items_count": 2,
+            "total": 21.38,
+            "unmapped_names": []
+        }
+    },
+    {
+        "timestamp": "2026-06-26T02:15:24.307381",
+        "type": "delivery_platform_save",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "platform_id": "grubhub_test",
+            "platform_name": "Grubhub",
+            "platform_type": "grubhub"
+        }
+    },
+    {
+        "timestamp": "2026-06-26T02:15:24.337394",
+        "type": "delivery_order_import",
+        "user_id": "delivery_system",
+        "user_role": "system",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "order_id": 107,
+            "platform": "Grubhub",
+            "external_order_id": "GH-TEST-001",
+            "items_count": 1,
+            "total": 7.58,
+            "unmapped_names": [
+                "Hotdog"
+            ]
+        }
+    },
+    {
+        "timestamp": "2026-06-26T02:15:24.358516",
+        "type": "delivery_order_import",
+        "user_id": "delivery_system",
+        "user_role": "system",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "order_id": 108,
+            "platform": "Grubhub",
+            "external_order_id": "grubhub-1782440124",
+            "items_count": 1,
+            "total": 1.08,
+            "unmapped_names": []
+        }
+    },
+    {
+        "timestamp": "2026-06-26T02:15:24.379593",
+        "type": "delivery_platform_save",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "platform_id": "uber_test",
+            "platform_name": "UberEats",
+            "platform_type": "uber_eats"
+        }
+    },
+    {
+        "timestamp": "2026-06-26T02:15:24.397890",
+        "type": "delivery_platform_delete",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Werkzeug/3.1.8",
+        "details": {
+            "platform_id": "doordash_test",
+            "platform_name": "DoorDash Updated"
+        }
+    },
+    {
+        "timestamp": "2026-06-26T02:23:40.675689",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
     }
 ]
