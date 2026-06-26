@@ -14416,5 +14416,19 @@
             "category": "Snacks",
             "name": "Test \"Special\" \ud83c\udf89 Item"
         }
+    },
+    {
+        "timestamp": "2026-06-26T13:57:12.280623",
+        "type": "login",
+        "user_id": "5678",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Employee Two",
+            "ip": "127.0.0.1"
+        }
     }
 ]
