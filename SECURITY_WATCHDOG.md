@@ -1,12 +1,12 @@
 # POS Security Watchdog
 
-> Last run: 2026-06-26T07:50 UTC
+> Last run: 2026-06-26T08:12 UTC
 > Total events tracked: 45 (SEC-001→SEC-045)
 > Active blocks: 0 IPs
 > Unresolved alerts: 17 (SEC-029→045 MEDIUM, same off-hours localhost pattern)
 > Run result: [SILENT] — no threats detected, light localhost activity.
 
-## Current Run Findings (06:59–07:50 UTC, ~51 min window)
+## Current Run Findings (07:50–08:12 UTC, ~22 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -20,24 +20,22 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (06:59–07:50 UTC, ~51 min window)
+### ℹ️ Activity Summary (07:50–08:12 UTC, ~22 min window)
 
-**Server**: UP — Flask on :5000 responding (200).
+**Server**: UP — Flask on :5000 responding (200 root, 400 on POST /api/clock/status w/out pin).
 
-**Activity**: 4 events logged since last run:
-- 07:35:59 — Failed login (null PIN, single attempt), 127.0.0.1
-- 07:36:02 — Admin login (1111, Owner), 127.0.0.1
-- 07:36:08 — Failed login (null PIN, single attempt), 127.0.0.1
-- 07:36:19 — Login (1111, Owner), 127.0.0.1
+**Activity**: 2 events logged since last run (both Reliability Bot test cycle):
+- 07:59:28 — submit_order (Order #109, Coke $3.25, Cash), unauthenticated user
+- 07:59:33 — refund_order (Order #109 refunded by Owner 1111, "Reliability Bot test cycle")
 
-All from localhost (127.0.0.1) — expected cron testing pattern.
+All from localhost (127.0.0.1) — expected cron testing pattern. No login attempts at all.
 
 ### 📊 Login Security Deep-Dive
-- **Brute force check**: 2 failed logins (both null PIN, single attempts each) — below threshold. 0 IPs with ≥5 failures in last 5 min. 0 IPs in last 15 min too.
-- **Account enumeration**: 2 probes (null PIN), not a pattern (need 10+).
-- **Failed logins since last run**: 2.
-- **Successful-after-failure**: Null-user failures followed by Owner success at 07:36:19 — different user_ids (null vs 1111), only 2 fails (threshold is 3+), not a brute force pattern.
-- **Off-hours activity**: None — current time 07:50 is past the 06:00 off-hours end.
+- **Brute force check**: 0 failed logins in the last 5 min. 0 in the last 15 min. No activity at all.
+- **Account enumeration**: No probes detected.
+- **Failed logins since last run**: 0.
+- **Successful-after-failure**: None — no logins occurred.
+- **Off-hours activity**: None — current time 08:12 is past the 06:00 off-hours end.
 - **Cross-IP targeting**: None.
 - **Known IPs**: Unchanged (last update 2026-06-24).
 
@@ -47,19 +45,19 @@ All from localhost (127.0.0.1) — expected cron testing pattern.
 - `require_2fa_for_admins: true` — unchanged.
 
 ### 💰 Financial Check
-- 26 orders since 2026-06-25. Last order: #108 (Test/Grubhub) at 02:15.
-- Refunded/void orders: 14 (pre-existing).
+- Order #109 added and refunded ($3.25, Coke, Cash) — Reliability Bot lifecycle test.
+- 27 total orders since 2026-06-25. Last active order: #109.
+- Refunded/void orders: 15 (including #109 test refund).
 - Zero-total orders: none. Large-tip-on-small-order: none. Full discount: none.
-- No new orders since last run.
+- Rapid submit-refund cycle (5 sec gap) consistent with automated testing — not suspicious.
 
 ### 📂 File Integrity
-- All 16+ JSON files parseable and intact.
+- All JSON files parseable and intact.
 - Owner account (1111) present, active, not banned.
 - 8 user accounts — data unchanged.
 - No unexpected files.
 - security_config.json: unchanged.
 - Git status: clean — no pending changes.
-
 ## Active Blocks
 None.
 
