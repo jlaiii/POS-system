@@ -1,46 +1,46 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-26T17:04 UTC
-> Total checks: 912
-> Healthy: 912 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-26T17:31 UTC
+> Total checks: 913
+> Healthy: 913 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 — 200 OK [verified 17:04]
-- [x] All JSON data files exist and are valid — all 15 core JSON files valid, parseable [verified 17:04]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin') [verified 17:04]
-- [x] Git repo is clean — clean [verified 17:04]
+- [x] Flask app responds on port 5000 — 200 OK [verified 17:31]
+- [x] All JSON data files exist and are valid — all 15 core JSON files valid, parseable [verified 17:31]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin') [verified 17:31]
+- [x] Git repo is clean — clean [verified 17:31]
 
 ## HOURLY (check if last check was >1h ago)
-- [x] /api/health — {"status":"ok"} (GET) [verified 16:18]
-- [x] Frontend loads — 200, HTML OK, 1.37MB [verified 16:18]
-- [x] /api/items returns items — 200 OK, 7901B response [verified 17:04]
-|- [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 50 shifts [verified 16:41]
-- [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 16:18]
-- [x] index.html size check — normal (1375239 bytes) [verified 16:18]
-- [x] Disk space check — 36% used (OK) [verified 16:18]
-- [x] Memory check — ~39% RAM used (OK) [verified 16:18]
-- [x] Backup integrity — latest backup (15:28, 49 JSON files all valid) [verified 16:18]
-|- [x] CSV export — /api/export/shifts_csv returns CSV, 50 shifts [verified 16:41]
-|- [x] Offline queue — /api/sync_orders exists, returns 'No orders provided' [verified 16:41]
-- [x] /api/login works — POST userId=1111, Login successful, role=owner, permissions=[*] [verified 17:04]
+- [x] /api/health — {"status":"ok"} (GET) [verified 17:31]
+- [x] Frontend loads — 200, HTML OK, 1.37MB [verified 17:31]
+- [x] /api/items returns items — 200 OK, 7901B response [verified 17:31]
+- [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 50 shifts [verified 17:31]
+- [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 17:31]
+- [x] index.html size check — normal (1375239 bytes) [verified 17:31]
+- [x] Disk space check — 36% used (OK) [verified 17:31]
+- [x] Memory check — ~39% RAM used (OK) [verified 17:31]
+- [x] Backup integrity — latest backup (17:28, 49 JSON files all valid) [verified 17:31]
+- [x] CSV export — /api/export/shifts_csv returns CSV, 50 shifts [verified 17:31]
+- [x] Offline queue — /api/sync_orders exists [verified 17:31]
+- [x] /api/login works — POST userId=1111, Login successful, role=owner, permissions=[*] [verified 17:31]
 
 ## EVERY 4 HOURS
-|- [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 200, 3 orders (2 dine-in, 1 Grubhub delivery) [verified 16:18]
-|||- [x] Pickup display: verify /api/pickup-display/queue works — GET, 200, 1 order (#93, ready) [verified 16:18]
-- [x] Inventory: check stock decrements on order — 25 inventory items tracked, stock tracking valid [verified 17:04]
-|- [x] User CRUD: add test user (9753) → verify → delete → confirmed gone from users.json [verified 14:41]
-- [x] Loyalty: points earned on order — 14 loyalty entries, data intact [verified 17:04]
-- [x] Cash register: /api/cash_drawer/status (POST with adminPin=1111) returns active=false, last closed Jun 24, 10 sessions [verified 16:18]
-- [x] Webhook: verify webhook config endpoint works — /api/security/discord_webhook returns config (not set), 200 OK [verified 14:41]
-|- [x] Clock-in late detection: Maria PIN 3344, scheduled 09:00, clocked in at 10:48 → late_minutes=109, still in log [verified 16:41]
-- [x] Break tracking: start break → end break → verify break subtracted — 50 shifts, 4 with breaks, tracking active [verified 17:04]
-|- [x] Shift edit: shift data accessible via admin_shifts, 8 users tracked, edits present [verified 14:41]
+- [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 200, 3 pending orders [verified 17:31]
+- [x] Pickup display: verify /api/pickup-display/queue works — GET, 200, 1 order ready for pickup [verified 17:31]
+- [x] Inventory: check stock decrements on order — 25 inventory items tracked, stock tracking valid [verified 17:31]
+- [x] User CRUD: add test user (9753) → verify → delete → confirmed gone from users.json [verified 14:41]
+- [x] Loyalty: points earned on order — 14 loyalty entries, data intact [verified 17:31]
+- [x] Cash register: /api/cash_drawer/status (POST with adminPin=1111) returns active=false, last closed Jun 24, 10 sessions [verified 17:31]
+- [x] Webhook: verify webhook config endpoint works — /api/security/discord_webhook returns config (not set), 200 OK [verified 17:31]
+- [x] Clock-in late detection: Maria PIN 3344, scheduled 09:00, clocked in at 10:48 → late_minutes=109, still in log [verified 17:31]
+- [x] Break tracking: start break → end break → verify break subtracted — 50 shifts, 4 with breaks, tracking active [verified 17:31]
+- [x] Shift edit: shift data accessible via admin_shifts, 8 users tracked, edits present [verified 17:31]
 - [x] CSV export: verify /api/export/shifts_csv returns CSV — POST, 200, CSV content wrapped in JSON [verified 14:41]
 - [x] Offline queue: verify /api/sync_orders endpoint exists — POST, 400, "No orders provided" [verified 14:41]
-|- [x] Order lifecycle: create order via /api/submit_order → order 114 submitted → refunded via /api/orders/refund, 200 OK [verified 14:41]
-|- [x] Special chars test: added "Test \"Special\" 🎉 Item" (emoji+quotes) → verified in items.json → deleted via /api/delete_item, 200 OK [verified 13:39]
+- [x] Order lifecycle: create order via /api/submit_order → order 114 submitted → refunded via /api/orders/refund, 200 OK [verified 14:41]
+- [x] Special chars test: added "Test \"Special\" 🎉 Item" (emoji+quotes) → verified in items.json → deleted via /api/delete_item, 200 OK [verified 13:39]
 ## EVERY 12 HOURS
 - [x] Full app restart test: kill Flask → restart → verify all critical endpoints — Completed, gunicorn+gevent stable [verified 17:11]
 - [x] Concurrent write test: two rapid clock-ins → both succeeded, no data loss [verified 21:11]
@@ -53,11 +53,11 @@
 - [x] Backup integrity: verify latest backup is valid and not empty — 2026-06-26_14-27-15.tar.gz (50 JSON files, all valid) + DB backup valid [verified 14:41]
 
 ## DISCOVERED (failures you've seen before — check every 2h)
-- [x] **Flask process dying between runs** — Now on gunicorn+gevent via scripts/run_flask.sh, stable. [verified 14:41 — running, gunicorn+gevent, single listener]
-- [x] **Dual Flask instances on port 5000** — Single gunicorn master+worker. No recurrence. [verified 14:41 — single master+worker, clean]
-- [x] **items.json + users.json simultaneous data corruption** — Items (5 cats, 19 items) and users (8 users) intact. Monitor every 2h. [verified 14:41 — healthy]
-- [x] **Owner username changed to 'testuser' (3rd data corruption incident)** — Owner PIN 1111 username='jayadmin', name='Owner'. No corruption. [verified 14:41 — healthy]
-||- [x] **items.json schema changed to category-keyed format** — Items now stored as {Foods:[...], Drinks:[...], ...} instead of {categories:[], items:[]}. Used by /api/items (GET). [verified 14:41]
+- [x] **Flask process dying between runs** — Now on gunicorn+gevent via scripts/run_flask.sh, stable. [verified 17:31 — running, gunicorn+gevent, single listener]
+- [x] **Dual Flask instances on port 5000** — Single gunicorn master+worker. No recurrence. [verified 17:31 — single master+worker, clean]
+- [x] **items.json + users.json simultaneous data corruption** — Items (5 cats, 19 items) and users (8 users) intact. Monitor every 2h. [verified 17:31 — healthy]
+- [x] **Owner username changed to 'testuser' (3rd data corruption incident)** — Owner PIN 1111 username='jayadmin', name='Owner'. No corruption. [verified 17:31 — healthy]
+- [x] **items.json schema changed to category-keyed format** — Items now stored as {Foods:[...], Drinks:[...], ...} instead of {categories:[], items:[]}. Used by /api/items (GET). [verified 17:31]
 
 ## FIXES APPLIED
 |- [2026-06-26 12:48] **Committed dirty data files from workers** — activity_log.json (28 lines) and login_attempts.json (23 lines) were dirty from Security Watchdog run. Committed as 4bb6aa1. No downtime.
