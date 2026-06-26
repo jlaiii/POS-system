@@ -1,16 +1,16 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-26T07:40 UTC
-> Total checks: 753
-> Healthy: 753 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-26T08:21 UTC
+> Total checks: 761
+> Healthy: 761 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 — 200 OK, gunicorn+gevent via scripts/run_flask.sh, health endpoint {"status":"ok"} [verified 07:35]
-- [x] All JSON data files exist and are valid — all 15 JSON files valid, parseable [verified 07:35]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin'), 8 users total [verified 07:35]
-- [x] Git repo is clean — clean, no dirty files [verified 07:35]
+- [x] Flask app responds on port 5000 — 200 OK, gunicorn+gevent via scripts/run_flask.sh [verified 08:21]
+- [x] All JSON data files exist and are valid — all 15 JSON files valid, parseable [verified 08:21]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin'), 8 users total [verified 08:21]
+- [x] Git repo is clean — clean, committed SECURITY_WATCHDOG.md (dirty from Watchdog run) [verified 08:21]
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/health — {"status":"ok"} (GET) [verified 07:35]
@@ -45,21 +45,22 @@
 ## EVERY 12 HOURS
 - [x] Full app restart test: kill Flask → restart → verify all critical endpoints — Completed, gunicorn+gevent stable [verified 17:11]
 - [x] Concurrent write test: two rapid clock-ins → both succeeded, no data loss [verified 21:11]
-- [x] Large payload test: submit order with 50 items — Order 84 (50 items) → 200 OK → refunded [verified 12:37]
-- [x] Special chars test: user name with emoji, item name with quotes — Added and deleted Test "Special" 🎉 Item, handled correctly [verified 01:15]
-- [x] app.py syntax check (python3 -m py_compile app.py) — SYNTAX OK [verified 01:15]
-- [x] index.html size check (alert if shrunk dramatically — possible corruption) — 1333039 bytes (normal, ~1.33MB) [verified 01:15]
+- [x] Large payload test: submit order with 50 items — Order 110 (50 items) → 200 OK → refunded [verified 08:21]
+- [x] Special chars test: user name with emoji, item name with quotes — Added and deleted Test "Special" 🎉 Item, handled correctly [verified 06:44]
+- [x] app.py syntax check (python3 -m py_compile app.py) — SYNTAX OK [verified 08:21]
+- [x] index.html size check (alert if shrunk dramatically — possible corruption) — 1375135 bytes (normal, ~1.37MB) [verified 08:21]
 - [x] Disk space check: df -h, alert if >80% full — 35% used (OK) [verified 01:15]
 - [x] Memory check: free -m, alert if swap used — 40% RAM used, 0 swap (OK) [verified 01:15]
-- [x] Backup integrity: verify latest backup is valid and not empty — 2026-06-26_00-30-16.tar.gz (51KB, 47 JSON files, valid) [verified 01:15]
+- [x] Backup integrity: verify latest backup is valid and not empty — 2026-06-26_08-04-27.tar.gz (49 JSON files, all valid) + DB backup valid [verified 08:21]
 
 ## DISCOVERED (failures you've seen before — check every 2h)
-- [x] **Flask process dying between runs** — Now on gunicorn+gevent via scripts/run_flask.sh, stable. [verified 07:40 — running, gunicorn+gevent, single listener]
-- [x] **Dual Flask instances on port 5000** — Single gunicorn master+worker. No recurrence. [verified 07:40 — single master+worker, clean]
-- [x] **items.json + users.json simultaneous data corruption** — Items (5 cats, 19 items) and users (8 users) intact. Monitor every 2h. [verified 07:40 — healthy]
-- [x] **Owner username changed to 'testuser' (3rd data corruption incident)** — Owner PIN 1111 username='jayadmin', name='Owner'. No corruption. [verified 07:40 — healthy]
+- [x] **Flask process dying between runs** — Now on gunicorn+gevent via scripts/run_flask.sh, stable. [verified 08:21 — running, gunicorn+gevent, single listener]
+- [x] **Dual Flask instances on port 5000** — Single gunicorn master+worker. No recurrence. [verified 08:21 — single master+worker, clean]
+- [x] **items.json + users.json simultaneous data corruption** — Items (5 cats, 19 items) and users (8 users) intact. Monitor every 2h. [verified 08:21 — healthy]
+- [x] **Owner username changed to 'testuser' (3rd data corruption incident)** — Owner PIN 1111 username='jayadmin', name='Owner'. No corruption. [verified 08:21 — healthy]
 
 ## FIXES APPLIED
+|- [2026-06-26 08:21] **Routine run — all healthy** — Flask 200, disk 36%, RAM 41%. Committed dirty SECURITY_WATCHDOG.md (8b4bf0a). Verified large payload test (Order 110, 50 items → created & refunded, 200 OK). app.py syntax OK. index.html 1,375,135B (normal). Backup integrity OK (49 JSON files, 08:04 backup). All CRITICAL/12H/DISCOVERED green. Total checks: 761, all healthy. No downtime.
 - [2026-06-26 07:40] **Routine run — all healthy** — Flask 200, disk 36%, RAM 41%. Verified order lifecycle (order 109 created & refunded), cash drawer (10 sessions, POST), kitchen queue (1 pending). Cleaned stale test item from inventory (Test Special 🎉 Item, zero stock). Committed dirty data from other workers. All CRITICAL/4H/DISCOVERED green. Total checks: 753, all healthy. No downtime.
 |- [2026-06-26 06:44] **Routine run — all healthy** — CRITICAL checks all pass. Verified 4H items: clock-in late detection, special chars test, kitchen/pickup display, webhook config. Committed dirty data files (activity_log, login_attempts). Cleaned up test artifacts. Total checks: 720, all healthy. No downtime.
 |- [2026-06-26 07:12] **Routine run — all healthy** — Flask 200, disk 36%, RAM 41%. All 15 JSON files valid. Owner PIN 1111 intact. Committed 4 dirty files from Security Watchdog (9d5e5bf). Verified 5 HOURLY items: frontend loads (1.37MB), admin_shifts (48 shifts), index.html size (1,375,135B), backup integrity (2026-06-26_07-04-25, 50 files all valid), inventory (26 items). Total checks: 735, all healthy. No downtime.
