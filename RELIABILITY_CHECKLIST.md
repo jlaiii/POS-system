@@ -1,16 +1,16 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-26T19:35 UTC
-> Total checks: 950
-> Healthy: 950 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-26T19:59 UTC
+> Total checks: 956
+> Healthy: 956 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 — 200 OK [verified 19:06]
-- [x] All JSON data files exist and are valid — all 15 core JSON files valid, parseable [verified 19:06]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', role=owner) [verified 19:06]
-- [x] Git repo is clean — clean (committed dirty SECURITY_WATCHDOG.md at 6955f9e) [verified 19:35]
+- [x] Flask app responds on port 5000 — 200 OK [verified 19:59]
+- [x] All JSON data files exist and are valid — all 15 core JSON files valid, parseable [verified 19:59]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', role=owner) [verified 19:59]
+- [x] Git repo is clean — clean [verified 19:59]
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/health — {"status":"ok"} (GET) [verified 19:06]
@@ -31,7 +31,7 @@
 - [x] Pickup display: verify /api/pickup-display/queue works — GET, 200, 1 order ready for pickup [verified 19:06]
 - [x] Inventory: check stock decrements on order — 25 inventory items tracked, stock tracking valid [verified 19:06]
 - [x] User CRUD: add test user (8523) → verify → delete → confirmed gone from users.json [verified 19:35]
-- [x] Loyalty: points earned on order — 14 loyalty entries, data intact [verified 17:31]
+- [x] Loyalty: points earned on order — 14 loyalty entries, data intact [verified 19:59]
 - [x] Cash register: /api/cash_drawer/status (POST with adminPin=1111) returns active=false, last closed Jun 24, 10 sessions [verified 19:06]
 - [x] Webhook: verify webhook config endpoint works — /api/security/discord_webhook returns config (not set), 200 OK [verified 19:06]
 - [x] Clock-in late detection: 8 late records across shifts, data intact [verified 19:06]
@@ -53,11 +53,11 @@
 - [x] Backup integrity: verify latest backup is valid and not empty — 2026-06-26_18-28-06.db.gz (valid, 303KB uncompressed) + JSON backups intact [verified 19:06]
 
 ## DISCOVERED (failures you've seen before — check every 2h)
-- [x] **Flask process dying between runs** — Now on gunicorn+gevent via scripts/run_flask.sh, stable. [verified 17:31 — running, gunicorn+gevent, single listener]
-- [x] **Dual Flask instances on port 5000** — Single gunicorn master+worker. No recurrence. [verified 17:31 — single master+worker, clean]
-- [x] **items.json + users.json simultaneous data corruption** — Items (5 cats, 19 items) and users (8 users) intact. Monitor every 2h. [verified 17:31 — healthy]
-- [x] **Owner username changed to 'testuser' (3rd data corruption incident)** — Owner PIN 1111 username='jayadmin', name='Owner'. No corruption. [verified 17:31 — healthy]
-- [x] **items.json schema changed to category-keyed format** — Items now stored as {Foods:[...], Drinks:[...], ...} instead of {categories:[], items:[]}. Used by /api/items (GET). [verified 17:31]
+- [x] **Flask process dying between runs** — Now on gunicorn+gevent via scripts/run_flask.sh, stable. [verified 19:59 — running, gunicorn+gevent, single listener, 8.5h uptime]
+- [x] **Dual Flask instances on port 5000** — Single gunicorn master+worker. No recurrence. [verified 19:59 — single master+worker, clean]
+- [x] **items.json + users.json simultaneous data corruption** — Items (5 cats, 19 items) and users (8 users) intact. Monitor every 2h. [verified 19:59 — healthy]
+- [x] **Owner username changed to 'testuser' (3rd data corruption incident)** — Owner PIN 1111 username='jayadmin', name='Owner'. No corruption. [verified 19:59 — healthy]
+- [x] **items.json schema changed to category-keyed format** — Items now stored as {Foods:[...], Drinks:[...], ...} instead of {categories:[], items:[]}. Used by /api/items (GET). [verified 19:59]
 
 ## FIXES APPLIED
 - [2026-06-26 12:48] **Committed dirty data files from workers** — activity_log.json (28 lines) and login_attempts.json (23 lines) were dirty from Security Watchdog run. Committed as 4bb6aa1. No downtime.
