@@ -1,10 +1,10 @@
 # POS Security Watchdog
 
-> Last run: 2026-06-26T11:14 UTC
+> Last run: 2026-06-26T11:31 UTC
 > Total events tracked: 45 (SEC-001→SEC-045, SEC-004 missing — never created)
 > Active blocks: 0 IPs
 > Unresolved alerts: 17 (SEC-029→SEC-045 MEDIUM, same off-hours localhost pattern)
-> Run result: [SILENT] — no new threats, all cron testing activity.
+> Run result: [SILENT] — no new activity since last run. Server :5000 went down (Reliability Bot domain).
 
 ## Current Run Findings (10:57–11:14 UTC, ~17 min window)
 
