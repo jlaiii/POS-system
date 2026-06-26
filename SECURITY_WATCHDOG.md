@@ -1,12 +1,12 @@
 # POS Security Watchdog
 
-> Last run: 2026-06-26T18:57 UTC
+> Last run: 2026-06-26T19:22 UTC
 > Total events tracked: 45 (SEC-001→SEC-045, SEC-004 absent; all resolved)
 > Active blocks: 0 IPs
 > Unresolved alerts: 0
 > Run result: [SILENT] — no security issues detected.
 
-## Current Run Findings (18:40–18:57 UTC, ~17 min window)
+## Current Run Findings (18:57–19:22 UTC, ~25 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -20,26 +20,26 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (18:40–18:57 UTC, ~17 min window)
+### ℹ️ Activity Summary (18:57–19:22 UTC, ~25 min window)
 
 **Server**: UP — serving HTTP 200 on port 5000 (root endpoint).
 
-**Activity**: 1 login event — Owner (1111) from localhost.
-- 1 successful login (Owner at 18:43:37 from 127.0.0.1, curl/8.5.0).
+**Activity**: 4 events — 2 logins + 1 order + 1 refund (Owner, all localhost).
+- 2 successful logins (Owner at 19:07:26 and 19:07:32 from 127.0.0.1, curl/8.5.0).
 - 0 failed logins.
-- 0 API requests other than login.
-- 0 orders created.
+- 1 order created (Order 115, $6.49, 1 item, submit_order at 19:06:53 via python-requests).
+- 1 refund processed (Order 115 refunded by Owner at 19:07:02 — normal test/cron activity).
 - No external IPs.
-- Git status: 2 dirty files (activity_log.json, login_attempts.json) — system-logged Owner login, not worker changes.
+- Git status: clean — no dirty files.
 - No suspicious files detected.
 
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: 0 failed logins in last 5 min window. Clean.
 - **Account enumeration**: 0 probes against non-existent user IDs.
 - **Successful-after-failure**: No pattern — no preceding failures.
-- **Off-hours activity**: Current time 13:57 CT (normal business hours). Login at 13:43 CT — normal.
+- **Off-hours activity**: Current time 19:22 UTC (normal business hours). No off-hours logins.
 - **Cross-IP targeting**: None.
-- **Known IPs**: No new IPs tracked.
+- **Known IPs**: No new IPs tracked. All logins from known 127.0.0.1.
 
 ### 🔒 Security Config
 - `blocked_ips`: [] — no active blocks.
@@ -48,13 +48,14 @@ None.
 - No config changes detected.
 
 ### 💰 Financial Check
-- No new orders in this window.
+- 1 order (115, $6.49, 1 item, Cash) — created and refunded same minute. Normal dev/cron test.
+- No other new orders.
 - 25 pre-existing subtotal discrepancies in historical orders (all noted in prior runs — no new anomalies).
 
 ### 📂 File Integrity
 - All 49 JSON files parseable and intact.
 - Owner account (1111) present, active, not banned.
-- Git status: 2 dirty files (activity_log + login_attempts were updated by system-logged Owner login at 18:43).
+- Git status: clean.
 - security_config.json: unchanged.
 - No suspicious files detected.
 
@@ -71,13 +72,13 @@ None.
 - Admin 2FA gap remains: Manager (2222) and Manager Sarah (7788) lack 2FA despite `require_2fa_for_admins: true`. Owner (1111) is exempted via config. Pre-existing — no change.
 
 ## System State
-||||||||||||||||||||||||||||||||||||||||||| Current time: 2026-06-26T18:57 UTC — 13:57 CT (normal business hours)                      |
-|||||||||||||||||||||||||||||||||||||||||| Activity since last run: 1 Owner login (localhost, business hours)                         |
-|||||||||||||||||||||||||||||||||||||||||| Failed logins: 0 (last 5 min), 0 (this window)                       |
-|||||||||||||||||||||||||||||||||||||||||| Successful logins: 1 (Owner 1111, 18:43 UTC)                                          |
-|||||||||||||||||||||||||||||||||||||||||| Blocked IPs: 0                                                                       |
-|||||||||||||||||||||||||||||||||||||||||| Config changes: None                                                                 |
-||||||||||||||||||||||||||||||||||||||||||| File integrity: OK — all JSON parseable. Git: 2 dirty (system data).                        |
-|||||||||||||||||||||||||||||||||||||||||| Users: 8 accounts. Owner 2FA exempted. Admin 2FA: 2222=no, 7788=no (pre-existing gap). |
-||||||||||||||||||||||||||||||||||||||||| Security events: 45 tracked, 0 unresolved. All resolved.                                    |
-||||||||||||||||||||||||||||||||||||||||| Server: UP (:5000 — HTTP 200).                                                         |
+||||||||||||||||||||||||||||||||||||||||||| Current time: 2026-06-26T19:22 UTC — normal business hours                                    |
+||||||||||||||||||||||||||||||||||||||||||| Activity since last run: 2 Owner logins + 1 order + 1 refund (all localhost, normal dev)    |
+||||||||||||||||||||||||||||||||||||||||||| Failed logins: 0 (last 5 min), 0 (this window)                                              |
+||||||||||||||||||||||||||||||||||||||||||| Successful logins: 2 (Owner 1111, 19:07 UTC)                                               |
+||||||||||||||||||||||||||||||||||||||||||| Blocked IPs: 0                                                                              |
+||||||||||||||||||||||||||||||||||||||||||| Config changes: None                                                                        |
+||||||||||||||||||||||||||||||||||||||||||| File integrity: OK — all JSON parseable. Git: clean.                                          |
+||||||||||||||||||||||||||||||||||||||||||| Users: 8 accounts. Owner 2FA exempted. Admin 2FA: 2222=no, 7788=no (pre-existing gap).        |
+||||||||||||||||||||||||||||||||||||||||||| Security events: 45 tracked, 0 unresolved. All resolved.                                       |
+||||||||||||||||||||||||||||||||||||||||||| Server: UP (:5000 — HTTP 200).                                                                |
