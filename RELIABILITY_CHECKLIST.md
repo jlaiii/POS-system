@@ -10,7 +10,7 @@
 - [x] Flask app responds on port 5000 — 200 OK [verified 15:06]
 - [x] All JSON data files exist and are valid — all 15 core JSON files valid, parseable [verified 15:06]
 - [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin') [verified 15:06]
-- [x] Git repo is clean — clean (committed dirty SECURITY_WATCHDOG.md from Security Watchdog run) [verified 15:06]
+- [x] Git repo is clean — clean (committed dirty SECURITY_WATCHDOG.md + activity_log + login_attempts from workers) [verified 15:06]
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/health — {"status":"ok"} (GET) [verified 15:06]
