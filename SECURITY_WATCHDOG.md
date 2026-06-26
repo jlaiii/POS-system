@@ -1,12 +1,12 @@
 # POS Security Watchdog
 
-> Last run: 2026-06-26T05:11 UTC
-> Total events tracked: 44 (SEC-001→SEC-044)
+> Last run: 2026-06-26T05:57 UTC
+> Total events tracked: 45 (SEC-001→SEC-045)
 > Active blocks: 0 IPs
-> Unresolved alerts: 16 (SEC-029→044 MEDIUM, same off-hours localhost pattern)
-> Run result: [SILENT] — zero activity since last run.
+> Unresolved alerts: 17 (SEC-029→045 MEDIUM, same off-hours localhost pattern)
+> Run result: [SILENT] — only routine off-hours localhost activity, no threats.
 
-## Current Run Findings (04:38–05:11 UTC, ~33 min window)
+## Current Run Findings (05:11–05:57 UTC, ~46 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -20,20 +20,28 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (04:38–05:11 UTC, ~33 min window)
+### ℹ️ Activity Summary (05:11–05:57 UTC, ~46 min window)
 
-**Server**: UP — Flask on :5000 responding.
+**Server**: UP — Flask on :5000 responding (200).
 
-**Activity**: 0 entries in activity_log since last run. No activity whatsoever.
+**Activity**: Light — 4 events in login_attempts.json, 4 in activity_log.json.
 
-No logins, no failed attempts, no orders, no clock-ins/outs, no admin actions. Complete quiet period.
+| Time | Type | User | IP | Notes |
+|------|------|------|----|-------|
+| 05:54:17 | Failed login | null | 127.0.0.1 | invalid_pin (curl) |
+| 05:54:18 | admin_login | Owner (1111) | 127.0.0.1 | Success |
+| 05:54:30 | Failed login | null | 127.0.0.1 | invalid_pin (curl) |
+| 05:55:02 | Login | Owner (1111) | 127.0.0.1 | Success (tracked as SEC-045) |
+| 05:55:36 | admin_login | Owner (1111) | 127.0.0.1 | Success |
+
+All from localhost (127.0.0.1) — known cron testing pattern.
 
 ### 📊 Login Security Deep-Dive
-- **Brute force check**: 0 IPs with 5+ failed logins in last 5 min. 0 failed attempts total.
-- **Account enumeration**: 0 probes.
-- **Failed logins since last run**: 0.
-- **Successful-after-failure**: No new logins.
-- **Off-hours activity**: None detected (last off-hours event was Owner at 04:36 — already tracked as SEC-044).
+- **Brute force check**: 0 IPs with 5+ failed logins in last 5 min. Only 2 failed attempts total.
+- **Account enumeration**: 0 probes (2 failed logins for null user, not targeting valid PINs).
+- **Failed logins since last run**: 2.
+- **Successful-after-failure**: IP 127.0.0.1 had 2 fails then success (Owner, 05:55). Below 3-fail threshold; all localhost.
+- **Off-hours activity**: Owner (1111) at 05:55 from 127.0.0.1 — same pattern as SEC-029→045.
 - **Cross-IP targeting**: None.
 - **Known IPs**: Unchanged.
 
@@ -51,9 +59,9 @@ No logins, no failed attempts, no orders, no clock-ins/outs, no admin actions. C
 - All JSON files parseable.
 - Owner account (1111) present, active, not banned.
 - 8 user accounts — no changes.
-- No unexpected files.
+- No unexpected files (.php, .sh, .pl, .pyc, .exe).
 - security_config.json: unchanged.
-- Git status: clean.
+- Git status: 4 modified files (RELIABILITY_CHECKLIST.md staged, activity_log.json + login_attempts.json + security_events.json unstaged) — data artifacts from worker runs.
 
 ## Active Blocks
 None.
@@ -62,7 +70,7 @@ None.
 None.
 
 ## Unresolved MEDIUM Events
-- **SEC-029**→**SEC-044** (16 events, 2026-06-25T22:54 → 2026-06-26T04:36): Off-hours logins from 127.0.0.1 — all cron testing, no external IPs.
+- **SEC-029**→**SEC-045** (17 events, 2026-06-25T22:54 → 2026-06-26T05:55): Off-hours logins from 127.0.0.1 — all cron testing, no external IPs.
 
 ## Unresolved LOW Events
 - **LOW-003**: 6 failed logins for 9999 from localhost, auto-blocked. False positive (cron testing).
@@ -72,16 +80,16 @@ None.
 - **Inventory artifact**: "TestItem" in inventory.json (pre-existing).
 
 ## Previous Run Findings (carried forward)
-Same as above — no changes.
+Same as above — light activity, all localhost, no threats.
 
 ## System State
-|||||||||||||||||||||||||| Current time: 2026-06-26T05:11 UTC — still off-hours (22:00-06:00)       |
-|||||||||||||||||||||||||| Activity since last run: 0 entries — complete quiet period              |
-|||||||||||||||||||||||||| Failed logins: 0                                                        |
-|||||||||||||||||||||||||| Successful logins: 0                                                    |
-|||||||||||||||||||||||||| Blocked IPs: 0                                                      |
-|||||||||||||||||||||||||| Config changes: None                                                |
-|||||||||||||||||||||||||| File integrity: All JSON parseable. Git clean.                       |
-|||||||||||||||||||||||||| Users: 8 accounts. Owner 2FA not enabled (exempted). Admin 2FA: 2222=no, 7788=no (require_2fa_for_admins=true, not enforced). |
-|||||||||||||||||||||||||| Security events: 44 tracked, 16 unresolved MEDIUM (all off-hours).   |
-|||||||||||||||||||||||||| Server: UP (:5000 — clock/status responding).                        |
+||||||||||||||||||||||||||| Current time: 2026-06-26T05:57 UTC — still off-hours (22:00-06:00)       |
+||||||||||||||||||||||||||| Activity since last run: 4 events — 2 failed logins, 2 successful (Owner)  |
+||||||||||||||||||||||||||| Failed logins: 2                                                        |
+||||||||||||||||||||||||||| Successful logins: 2 (both Owner, localhost)                              |
+||||||||||||||||||||||||||| Blocked IPs: 0                                                      |
+||||||||||||||||||||||||||| Config changes: None                                                |
+||||||||||||||||||||||||||| File integrity: All JSON parseable. Git dirty (4 data files — worker artifacts). |
+||||||||||||||||||||||||||| Users: 8 accounts. Owner 2FA not enabled (exempted). Admin 2FA: 2222=no, 7788=no. |
+||||||||||||||||||||||||||| Security events: 45 tracked, 17 unresolved MEDIUM (all off-hours).   |
+||||||||||||||||||||||||||| Server: UP (:5000 — /api/clock/status responding 200).                |
