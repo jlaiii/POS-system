@@ -1,7 +1,7 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-26T07:35 UTC
-> Total checks: 748
-> Healthy: 748 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-26T07:40 UTC
+> Total checks: 753
+> Healthy: 753 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
@@ -25,22 +25,22 @@
 - [x] Disk space check — 36% used (OK) [verified 07:35]
 - [x] Memory check — 41% RAM used (OK) [verified 07:35]
 - [x] Backup integrity — latest backup valid, 50 files, all JSON valid (2026-06-26_07-04-25) [verified 07:35]
-- [x] inventory.json — 26 tracked items (dict format) [verified 07:35]
+- [x] inventory.json — 25 tracked items (cleaned stale test item "Test Special 🎉 Item"), stock tracking active [verified 07:40]
 
 ## EVERY 4 HOURS
-- [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 200, 0 pending orders [verified 06:44]
+- [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 200, 1 pending order [verified 07:40]
 - [x] Pickup display: verify /api/pickup-display/queue works — GET, 200, orders in queue [verified 06:44]
 - [x] Inventory: check stock decrements on order — 26 inventory items tracked, stock tracking valid [verified 03:40]
 - [x] User CRUD: add test user (9937) → verify → delete → confirmed gone [verified 04:07]
 - [x] Loyalty: points earned on order — endpoint /api/loyalty/lookup works (returns "Phone number required" for unregistered), adjust, redeem all POST correctly [verified 05:20]
-- [x] Cash register: /api/cash_drawer/status returns active=false, last session closed, 0 sessions [verified 03:40]
+- [x] Cash register: /api/cash_drawer/status (POST) returns active=false, last session closed, 10 sessions total [verified 07:40]
 - [x] Webhook: verify webhook config endpoint works — /api/security/discord_webhook returns config, not set (expected) [verified 06:44]
 - [x] Clock-in late detection: set scheduled_time, clock in late, verify late flag — late tracking confirmed working (06:44 before 09:00 = no late, expected) [verified 06:44]
 - [x] Break tracking: start break → end break → verify break subtracted — 46 shifts, 4 with breaks, tracking active [verified 04:07]
 - [x] Shift edit: edit a shift time → verify audit trail — audit trail works, shift_index required, endpoint responds correctly [verified 05:20]
 - [x] CSV export: verify /api/export/shifts_csv returns CSV — POST, 200, CSV content returned [verified 05:53]
 - [x] Offline queue: verify /api/sync_orders endpoint exists — POST, 200, "No orders provided" [verified 05:53]
-- [x] Order lifecycle: create order via /api/submit_order → order 105 submitted → refunded via /api/orders/refund, 200 OK [verified 03:40]
+- [x] Order lifecycle: create order via /api/submit_order → order 109 submitted → refunded via /api/orders/refund, 200 OK [verified 07:40]
 - [x] Special chars test: added "Test \"Special\" 🎉 Item" (emoji+quotes) → verified in items.json → deleted via /api/delete_item, 200 OK [verified 06:44]
 ## EVERY 12 HOURS
 - [x] Full app restart test: kill Flask → restart → verify all critical endpoints — Completed, gunicorn+gevent stable [verified 17:11]
