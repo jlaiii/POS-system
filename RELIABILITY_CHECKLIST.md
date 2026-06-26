@@ -54,12 +54,13 @@
 - [x] Backup integrity: verify latest backup is valid and not empty — 2026-06-26_00-30-16.tar.gz (51KB, 47 JSON files, valid) [verified 01:15]
 
 ## DISCOVERED (failures you've seen before — check every 2h)
-- [x] **Flask process dying between runs** — Now on gunicorn+gevent via scripts/run_flask.sh, stable. [verified 06:44 — running, gunicorn+gevent, single listener]
-- [x] **Dual Flask instances on port 5000** — Single gunicorn master+worker. No recurrence. [verified 06:44 — single master+worker, clean]
-- [x] **items.json + users.json simultaneous data corruption** — Items (5 cats, 19 items) and users (8 users) intact. Monitor every 2h. [verified 06:44 — healthy]
-- [x] **Owner username changed to 'testuser' (3rd data corruption incident)** — Owner PIN 1111 username='jayadmin', name='Owner'. No corruption. [verified 06:44 — healthy]
+- [x] **Flask process dying between runs** — Now on gunicorn+gevent via scripts/run_flask.sh, stable. [verified 07:40 — running, gunicorn+gevent, single listener]
+- [x] **Dual Flask instances on port 5000** — Single gunicorn master+worker. No recurrence. [verified 07:40 — single master+worker, clean]
+- [x] **items.json + users.json simultaneous data corruption** — Items (5 cats, 19 items) and users (8 users) intact. Monitor every 2h. [verified 07:40 — healthy]
+- [x] **Owner username changed to 'testuser' (3rd data corruption incident)** — Owner PIN 1111 username='jayadmin', name='Owner'. No corruption. [verified 07:40 — healthy]
 
 ## FIXES APPLIED
+- [2026-06-26 07:40] **Routine run — all healthy** — Flask 200, disk 36%, RAM 41%. Verified order lifecycle (order 109 created & refunded), cash drawer (10 sessions, POST), kitchen queue (1 pending). Cleaned stale test item from inventory (Test Special 🎉 Item, zero stock). Committed dirty data from other workers. All CRITICAL/4H/DISCOVERED green. Total checks: 753, all healthy. No downtime.
 |- [2026-06-26 06:44] **Routine run — all healthy** — CRITICAL checks all pass. Verified 4H items: clock-in late detection, special chars test, kitchen/pickup display, webhook config. Committed dirty data files (activity_log, login_attempts). Cleaned up test artifacts. Total checks: 720, all healthy. No downtime.
 |- [2026-06-26 07:12] **Routine run — all healthy** — Flask 200, disk 36%, RAM 41%. All 15 JSON files valid. Owner PIN 1111 intact. Committed 4 dirty files from Security Watchdog (9d5e5bf). Verified 5 HOURLY items: frontend loads (1.37MB), admin_shifts (48 shifts), index.html size (1,375,135B), backup integrity (2026-06-26_07-04-25, 50 files all valid), inventory (26 items). Total checks: 735, all healthy. No downtime.
 - [2026-06-25 22:28] **Flask server down (12th occurrence) + inventory test debris cleaned** — Flask not responding (000). No process on port 5000. Fix: started gunicorn+gevent via scripts/run_flask.sh. All CRITICAL and HOURLY checks passed. Also found TEST-Seasonal-Pumpkin-Latte and VFY-Seasonal-Test in inventory.json — removed and committed (be3d70e). Downtime: ~1min (detected at 22:28, restored by 22:28).
