@@ -1,16 +1,16 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-26T21:42 UTC
-> Total checks: 985
-> Healthy: 985 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-26T22:05 UTC
+> Total checks: 990
+> Healthy: 990 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 — 200 OK [verified 21:42]
-- [x] All JSON data files exist and are valid — all 15 core JSON files valid, parseable [verified 21:42]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', role=owner) [verified 21:42]
-- [x] Git repo is clean — clean (dirty activity_log/login_attempts committed) [verified 21:42]
+- [x] Flask app responds on port 5000 — 200 OK [verified 22:05]
+- [x] All JSON data files exist and are valid — all 15 core JSON files valid, parseable [verified 22:05]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', role=owner) [verified 22:05]
+- [x] Git repo is clean — clean (SECURITY_WATCHDOG.md dirty committed 27b95f7) [verified 22:05]
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/health — {"status":"ok"} (GET) [verified 21:42]
@@ -22,8 +22,8 @@
 - [x] Disk space check — 36% used (14G/38G, OK) [verified 21:42]
 - [x] Memory check — ~39% RAM used (1528/3915 MB, OK) [verified 21:42]
 - [x] Backup integrity — latest backups valid (json 21:36 tar.gz w/50 files, db 21:36 db.gz integrity ok) [verified 21:42]
-- [x] CSV export — /api/export/shifts_csv returns CSV [verified 20:27]
-- [x] Offline queue — /api/sync_orders exists, returns 400 "No orders provided" [verified 20:27]
+- [x] CSV export — /api/export/shifts_csv returns CSV [verified 22:05]
+- [x] Offline queue — /api/sync_orders exists, returns 400 "No orders provided" [verified 22:05]
 - [x] /api/login works — POST userId=1111, Login successful, role=owner, permissions=[*] [verified 21:42]
 - [x] Clock-in/out: employee 1234 clocked in → clocked out, both 200 OK [verified 21:42]
 - [x] /api/admin_stats — stats returned, average_sale=$13.23, 8 users [verified 21:42]
