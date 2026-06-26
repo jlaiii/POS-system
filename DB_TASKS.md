@@ -73,7 +73,7 @@
 - [x] **migrate_login_attempts.py** — Migrated 102 login attempts from login_attempts.json to SQLite. Added user_agent + details columns to schema. Updated db.py with schema migration entries. Idempotency tested. Commit: a280b28
 - [x] **migrate_security_events.py** — Migrated 24 security events from security_events.json to SQLite. Mapped category→event_type, affected_user→user_id, with full incident metadata in details JSON. Idempotency tested. Commit: 3352888
 - [x] **migrate_refunded_orders.py** — Migrated 17 refunded orders from refunded_orders.json to SQLite. Full original_order preserved as JSON TEXT. Idempotency tested. Commit: 3949dbb
-- [x] **migrate_known_ips.py** — Migrated 7 known IPs from known_ips.json to SQLite. Flattened per-user IP arrays into individual rows. Handled edge case (user 123456 with empty IPs array — skipped). Idempotency tested. Commit: PENDING
+- [x] **migrate_known_ips.py** — Migrated 7 known IPs from known_ips.json to SQLite. Flattened per-user IP arrays into individual rows. Handled edge case (user 123456 with empty IPs array — skipped). Idempotency tested. Commit: bfab6d5
 
 ## ROLLBACK PLAN (always keep current)
 How to revert to JSON mode if DB breaks:
