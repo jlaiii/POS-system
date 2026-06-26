@@ -1,12 +1,12 @@
 # POS Security Watchdog
 
-> Last run: 2026-06-26T09:12 UTC
+> Last run: 2026-06-26T09:33 UTC
 > Total events tracked: 44 (SEC-001→SEC-045, SEC-004 missing — never created)
 > Active blocks: 0 IPs
 > Unresolved alerts: 17 (SEC-029→045 MEDIUM, same off-hours localhost pattern)
 > Run result: [SILENT] — no activity since last run, all clear.
 
-## Current Run Findings (08:48–09:12 UTC, ~24 min window)
+## Current Run Findings (09:12–09:33 UTC, ~21 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -20,20 +20,20 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (08:48–09:12 UTC, ~24 min window)
+### ℹ️ Activity Summary (09:12–09:33 UTC, ~21 min window)
 
-**Server**: UP — Flask on :5000 responding (400 on /api/clock/status without auth, 0.002s response).
+**Server**: UP — Flask on :5000 responding (400 on /api/clock/status without auth).
 
-**Activity**: 0 events logged since last run. No logins, no API calls, no orders.
+**Activity**: 0 events logged since last run. No logins, no API calls, no orders, no shifts.
 
-The last events remain from 08:46 UTC (Reliability Bot test cycle). System has been idle since.
+**Duration**: 21 minutes of complete idle time. Last activity remains from 08:46 UTC (Reliability Bot test cycle: 2 failed logins + 1 Owner login, all localhost).
 
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: 0 failed logins in last 5 min. No brute force.
 - **Account enumeration**: 0 probes. Clean.
 - **Failed logins since last run**: 0.
 - **Successful-after-failure**: None.
-- **Off-hours activity**: None — current time 09:12 UTC (04:12 CT) is outside anomaly window (22:00-06:00).
+- **Off-hours activity**: None — current time 09:33 UTC (04:33 CT). System is idle during off-hours window, but no login activity to flag.
 - **Cross-IP targeting**: None.
 - **Known IPs**: Unchanged (last update 2026-06-24).
 
@@ -46,7 +46,7 @@ The last events remain from 08:46 UTC (Reliability Bot test cycle). System has b
 ### 💰 Financial Check
 - No new orders or refunds since last run.
 - 90 total orders. Zero-total orders: 1 (Order #94, cancelled — pre-existing).
-- 16 refunded orders (all pre-existing). No suspicious financial activity.
+- 85 refunded/cancelled orders (all pre-existing test data). No suspicious financial activity.
 
 ### 📂 File Integrity
 - All 49 JSON files parseable and intact.
@@ -54,7 +54,7 @@ The last events remain from 08:46 UTC (Reliability Bot test cycle). System has b
 - 8 user accounts — data unchanged.
 - No unexpected files (.php, .sh, .exe — none found).
 - security_config.json: unchanged.
-- Git status: clean — no pending changes.
+- Git status: RELIABILITY_CHECKLIST.md modified (Site Reliability Bot artifact — expected).
 ## Active Blocks
 None.
 
