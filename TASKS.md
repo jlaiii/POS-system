@@ -701,3 +701,19 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 ### Priority: MEDIUM
 
 - [x] **Enable 2FA for Owner (1111) to comply with mandatory 2FA policy** — Added Owner (1111) to `exempted_users` in `security_config.json`. Owner can now access admin features without 2FA blocking. Owner should set up 2FA via Security settings and then remove themselves from the exemption list for full compliance. [worker-2]
+
+## New Tasks (from Task Generator — 2026-06-26)
+
+### Priority: HIGH
+
+- [ ] **Add automatic tip pooling and distribution** — Configurable tip pool rules for tip-sharing restaurants: pool based on hours worked, role weight multipliers (waiter=1.0, busser=0.5, bartender=0.8), or equal split per shift. Auto-calculate each employee's tip share per pay period from pooled tips recorded on orders. Show tip pool breakdown in pay period summary, employee My Pay view, and PDF pay stubs. Manager override to assign manual tip amounts. Audit trail for all pool calculations. Essential for full-service restaurants where tips are shared among front-of-house staff. i18n EN+ES. Backward compatible.
+
+- [ ] **Add customer accounts with email/phone login, saved favorites, and order history** — Full customer-facing account system: register/login via email+password or phone+PIN. Customer profile stores saved favorite items, address book for delivery orders, tokenized saved payment methods, and complete order history with reorder ability. Integrate with existing phone-based loyalty points so customers see their balance, transaction history, and birthday/anniversary rewards. Customer login link in receipt emails and QR code on table. Essential for retention and personalized marketing. i18n EN+ES.
+
+- [ ] **Add third-party delivery platform order ingestion (DoorDash/UberEats/Grubhub)** — Webhook/API endpoints to receive incoming orders from external delivery platforms. Map standardized delivery order payload (items, modifiers, customer info, delivery address, platform fee, order ID) into internal POS order model with `order_type=delivery` and source tag (`_source: doordash`). Handle item name normalization when platform names don't match menu names. Auto-notify kitchen display and staff with sound on new delivery orders. Configurable per-platform API keys and webhook URLs in admin settings. Saves manual order entry for high-volume delivery restaurants. i18n EN+ES.
+
+### Priority: MEDIUM
+
+- [ ] **Add table merge/split for large parties** — Allow waiters to merge adjacent tables into a single logical table (e.g., Tables 5+6 → "Table 5-6"). Merged tables show in table status dashboard with chain-link icon and combined capacity. Orders under merged tables grouped in kitchen display. Split function separates back into individual tables. Prevent double-booking on merged tables. Essential floor management feature for busy restaurants handling walk-in large parties. i18n EN+ES.
+
+- [ ] **Add void/refund reason analytics and reporting** — Categorized reason codes for voids and refunds: customer changed mind, preparation error, quality issue, wrong item entered, long wait, duplicate order, other. Track reason per voided/refunded item on order records. New admin analytics report with void frequency by reason, by employee, by time of day, by day of week. Configurable required-reason enforcement in admin settings. Export as CSV for operational review. Helps identify training needs, menu design issues, and process bottlenecks. i18n EN+ES.
