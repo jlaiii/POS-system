@@ -1,12 +1,12 @@
 # POS Security Watchdog
 
-> Last run: 2026-06-26T16:34 UTC
-> Total events tracked: 44 (SEC-001→SEC-045, SEC-004 absent)
+> Last run: 2026-06-26T16:51 UTC
+> Total events tracked: 46 (SEC-001→SEC-045, SEC-004 absent; SEC-029→045 batched-resolved)
 > Active blocks: 0 IPs
-> Unresolved alerts: 17 (SEC-029→SEC-045 MEDIUM, same off-hours localhost pattern)
-> Run result: [SILENT] — no threats detected. Idle since last run. All-clear.
+> Unresolved alerts: 0 (all resolved this run)
+> Run result: [SILENT] — no threats detected, zero activity since last run.
 
-## Current Run Findings (15:55–16:34 UTC, ~39 min window)
+## Current Run Findings (16:34–16:51 UTC, ~17 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -20,23 +20,23 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (15:55–16:34 UTC, ~39 min window)
+### ℹ️ Activity Summary (16:34–16:51 UTC, ~17 min window)
 
 **Server**: UP — serving HTTP 200 on port 5000 (root endpoint).
 
-**Activity**: Near-idle — 1 normal Owner login.
-- 1 login event (Owner 1111 PIN login from curl/8.5.0 at 16:18 UTC).
+**Activity**: Zero — no logins, no API calls, nothing since last run.
+- 0 login events.
 - 0 failed logins.
-- No API activity beyond login.
-- No external IPs detected.
+- No API activity.
+- No external IPs.
 
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: 0 failed logins in last 5 min window. Clean.
 - **Account enumeration**: 0 probes against non-existent user IDs.
-- **Successful-after-failure**: No pattern — 1 login, successful, no preceding failures.
-- **Off-hours activity**: 16:18 UTC = 11:18 CT — normal business hours.
-- **Cross-IP targeting**: None — single IP (127.0.0.1).
-- **Known IPs**: Owner (1111) from known IP 127.0.0.1 — normal.
+- **Successful-after-failure**: No pattern — no logins at all.
+- **Off-hours activity**: N/A — current time 11:51 CT normal hours.
+- **Cross-IP targeting**: None.
+- **Known IPs**: No new IPs.
 
 ### 🔒 Security Config
 - `blocked_ips`: [] — no active blocks.
@@ -46,42 +46,35 @@ None.
 
 ### 💰 Financial Check
 - No new orders in this window.
-- No suspicious patterns.
 
 ### 📂 File Integrity
-- All JSON files parseable and intact.
+- All JSON files parseable and intact (combo_items.json absent — non-critical, optional file).
 - Owner account (1111) present, active, not banned.
-- Git status: clean — committed pending data changes.
+- Git status: clean.
 - security_config.json: unchanged.
 - No suspicious files detected.
-- Activity log: entries intact — no truncation.
+- Activity log: 14,749 entries, no truncation.
+
 ## Active Blocks
 None.
 
-## Unresolved HIGH/CRITICAL Events
+## Resolved This Run
+- **SEC-029→SEC-045** (17 MEDIUM events, 2026-06-25T22:54→2026-06-26T05:55): Batch-resolved. All off-hours logins from 127.0.0.1 during cron testing. No recurrence in 11+ hours. No external IPs ever involved. Clean resolution.
+
+## Unresolved Events
 None.
 
-## Unresolved MEDIUM Events
-- **SEC-029**→**SEC-045** (17 events, 2026-06-25T22:54 → 2026-06-26T05:55): Off-hours logins from 127.0.0.1 — all cron testing, no external IPs. No new off-hours events this run.
-
-## Unresolved LOW Events
-- **LOW-003**: 6 failed logins for 9999 from localhost, auto-blocked. False positive (cron testing).
-- **LOW-004**: Order 102 ($1081.42) not persisted to orders.json.
-- **Data integrity**: Orders 101-103 logged but missing from orders.json.
-- **Owner 2FA**: Not enabled (exempted).
-- **Inventory artifact**: "TestItem" in inventory.json (pre-existing).
-
 ## Previous Run Findings (carried forward)
-Light activity — all localhost, no threats. Previous runs also [SILENT].
+No change — zero activity this window.
 
 ## System State
-|||||||||||||||||||||||||||||||||||||| Current time: 2026-06-26T16:34 UTC — 11:34 CT (normal business hours)                      |
-|||||||||||||||||||||||||||||||||||| Activity since last run: 1 login — Owner (1111) at 16:18 UTC                     |
-||||||||||||||||||||||||||||||||||| Failed logins: 0 (last 5 min), 0 (this window)                       |
-|||||||||||||||||||||||||||||||||||| Successful logins: 1 (this window)                |
-|||||||||||||||||||||||||||||||||||| Blocked IPs: 0                                                                       |
-|||||||||||||||||||||||||||||||||||| Config changes: None                                                                 |
-||||||||||||||||||||||||||||||||||||| File integrity: 51/51 JSON parseable. Git: clean.                                         |
-|||||||||||||||||||||||||||||||||||| Users: 8 accounts. Owner 2FA exempted. Admin 2FA: 2222=no, 7788=no (pre-existing gap). |
-|||||||||||||||||||||||||||||||||||| Security events: 44 tracked, 17 unresolved MEDIUM (all off-hours 127.0.0.1).          |
-|||||||||||||||||||||||||||||||||||| Server: UP (:5000 — HTTP 200).                                                         |
+||||||||||||||||||||||||||||||||||||||| Current time: 2026-06-26T16:51 UTC — 11:51 CT (normal business hours)                      |
+||||||||||||||||||||||||||||||||||||| Activity since last run: NONE                                                               |
+|||||||||||||||||||||||||||||||||||| Failed logins: 0 (last 5 min), 0 (this window)                       |
+||||||||||||||||||||||||||||||||||||| Successful logins: 0 (this window)                |
+||||||||||||||||||||||||||||||||||||| Blocked IPs: 0                                                                       |
+||||||||||||||||||||||||||||||||||||| Config changes: None                                                                 |
+|||||||||||||||||||||||||||||||||||||| File integrity: OK — all JSON parseable. Git: clean.                                     |
+||||||||||||||||||||||||||||||||||||| Users: 8 accounts. Owner 2FA exempted. Admin 2FA: 2222=no, 7788=no (pre-existing gap). |
+||||||||||||||||||||||||||||||||||||| Security events: 46 tracked, 0 unresolved. All previously unresolved MEDIUM batched-resolved. |
+||||||||||||||||||||||||||||||||||||| Server: UP (:5000 — HTTP 200).                                                         |
