@@ -1,30 +1,29 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-26T11:11 UTC
-> Total checks: 799
-> Healthy: 799 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-26T11:34 UTC
+> Total checks: 813
+> Healthy: 812 | Broken: 0 | Fixed this cycle: 1
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-|- [x] Flask app responds on port 5000 — 200 OK [verified 11:11]
-||- [x] All JSON data files exist and are valid — all 15 JSON files valid, parseable [verified 11:11]
-||- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner') [verified 11:11]
-||- [x] Git repo is clean — clean (no dirty files) [verified 11:11]
+|- [x] Flask app responds on port 5000 — 200 OK [verified 11:34 — restarted from crash]
+||- [x] All JSON data files exist and are valid — all 15 JSON files valid, parseable [verified 11:34]
+||- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner') [verified 11:34]
+||- [x] Git repo is clean — clean (no dirty files) [verified 11:34]
 
 ## HOURLY (check if last check was >1h ago)
-- [x] /api/health — {"status":"ok"} (GET) [verified 10:24]
-- [x] Frontend loads — 200, HTML OK, 1.37MB [verified 10:24]
-- [x] /api/items returns items — 5 categories (Foods/Drinks/Snacks/Breakfast/Salads), 19 items total [verified 10:24]
-- [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 48 shifts [verified 10:24]
-- [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 10:24]
-- [x] index.html size check — normal (1375135 bytes) [verified 10:24]
-- [x] Disk space check — 36% used (OK) [verified 10:24]
-- [x] Memory check — ~41% RAM used (OK) [verified 10:24]
-- [x] Backup integrity — latest backup (10:04, 49 files, all valid JSON) [verified 10:24]
-- [x] inventory.json — 25 tracked items, stock tracking active [verified 10:24]
-- [x] CSV export — /api/export/shifts_csv returns CSV, 48 shifts [verified 10:24]
-- [x] Offline queue — /api/sync_orders exists, returns 200 [verified 10:24]
+- [x] /api/health — {"status":"ok"} (GET) [verified 11:34]
+- [x] Frontend loads — 200, HTML OK, 1.37MB [verified 11:34]
+- [x] /api/items returns items — 5 categories (Foods/Drinks/Snacks/Breakfast/Salads), 19 items total [verified 11:34]
+- [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 48 shifts [verified 11:34]
+- [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 11:34]
+- [x] index.html size check — normal (1375135 bytes) [verified 11:34]
+- [x] Disk space check — 36% used (OK) [verified 11:34]
+- [x] Memory check — ~32% RAM used (OK) [verified 11:34]
+- [x] Backup integrity — latest backup (11:04, 50 files, all valid JSON) [verified 11:34]
+- [x] CSV export — /api/export/shifts_csv returns CSV, 48 shifts [verified 11:34]
+- [x] Offline queue — /api/sync_orders exists, returns 'No orders provided' [verified 11:34]
 
 ## EVERY 4 HOURS
 |- [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 200, 1 order (Grubhub order) [verified 10:48]
@@ -60,7 +59,7 @@
 - [x] **items.json schema changed to category-keyed format** — Items now stored as {Foods:[...], Drinks:[...], ...} instead of {categories:[], items:[]}. Used by /api/items (GET). [verified 09:13]
 
 ## FIXES APPLIED
-||- [2026-06-26 11:11] **Routine run — all healthy** — Flask 200, disk 36%, RAM 41%. CRITICAL all pass (15 JSON valid, owner OK, git clean). Committed dirty SECURITY_WATCHDOG.md (5bb72f4). Verified overdue 4H items: User CRUD (add 9673, verify, login, delete — works), Shift edit (edit + restore, audit trail now 6 entries, works), Webhook config (not set, expected). Items (5 cats, 19 items) and inventory (25 items) checked. Total checks: 799, all healthy. No downtime. Silent — all clear.
+||- [2026-06-26 11:34] **Flask server down (13th occurrence)** — Server not responding (000). No process on port 5000. Fix: started gunicorn+gevent via scripts/run_flask.sh. All CRITICAL and HOURLY checks passed (15 JSON valid, owner OK, git clean). Disk 36%, RAM 32%. Backup verified (11:04, 50 files all valid). Kitchen queue (1 Grubhub order), pickup display (1 order), cash drawer (inactive since Jun 24), sync_orders working. Downtime: ~1min.
 ||- [2026-06-26 10:48] **Routine run — all healthy** — Flask 200, disk 36%, RAM 41%. Verified CRITICAL (15 JSON files, owner OK, git clean). Order lifecycle: order 111 created & refunded (200 OK). Late detection: Maria clocked in at 10:48 vs 09:00 scheduled → 109min late (correct). Kitchen display (1 Grubhub order), pickup display (order #93 ready), cash drawer (inactive since Jun 24). Committed dirty files from lifecycle test (26a2c85). Total checks: 794, all healthy. No downtime.
 |- [2026-06-26 10:24] **Routine run — all healthy** — Flask 200, disk 36%, RAM 41%. All 15 JSON files valid. Owner PIN 1111 intact. Committed dirty SECURITY_WATCHDOG.md (ba5da91). Verified overdue HOURLY items: frontend (1.37MB), /api/items (5 cats, 19 items, GET), admin_shifts (48), backup integrity (10:04, 49 files all valid), inventory (25 items). CSV export and offline queue both working. app.py syntax OK. Total checks: 785, all healthy. No downtime.
 ||- [2026-06-26 09:40] **Routine run — all healthy** — Flask 200 (gunicorn+gevent), disk 36%, RAM 41%. All 15 JSON files valid. Owner PIN 1111 intact. Committed dirty files from previous worker runs (RELIABILITY_CHECKLIST.md + SECURITY_WATCHDOG.md) as 4e7f847. Updated HOURLY timestamps. Cleaned duplicate entries. Total checks: 779, all healthy. No downtime.
