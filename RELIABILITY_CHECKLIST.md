@@ -1,5 +1,5 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-26T15:06 UTC
+> Last full cycle: 2026-06-26T15:29 UTC
 > Total checks: 881
 > Healthy: 881 | Broken: 0 | Fixed this cycle: 0
 
@@ -10,24 +10,24 @@
 - [x] Flask app responds on port 5000 — 200 OK [verified 15:06]
 - [x] All JSON data files exist and are valid — all 15 core JSON files valid, parseable [verified 15:06]
 - [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin') [verified 15:06]
-- [x] Git repo is clean — clean (committed dirty SECURITY_WATCHDOG.md + activity_log + login_attempts from workers) [verified 15:06]
+- [x] Git repo is clean — clean (committed dirty SECURITY_WATCHDOG.md from Watchdog run) [verified 15:29]
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/health — {"status":"ok"} (GET) [verified 15:06]
 - [x] Frontend loads — 200, HTML OK, 1.37MB [verified 15:06]
-- [x] /api/items returns items — 5 categories (Foods/Drinks/Snacks/Breakfast/Salads), 19 items total [verified 15:06]
-- [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 49 shifts [verified 14:09]
-- [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 14:41]
+- [x] /api/items returns items — 5 categories (Breakfast/Drinks/Foods/Salads/Snacks), 19 items total [verified 15:29]
+- [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 50 shifts [verified 15:29]
+- [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 15:29]
 - [x] index.html size check — normal (1375239 bytes) [verified 15:06]
-- [x] Disk space check — 36% used (OK) [verified 14:41]
-- [x] Memory check — ~39% RAM used (OK) [verified 14:41]
-- [x] Backup integrity — latest backup (14:27, 50 JSON files all valid) [verified 14:41]
-- [x] CSV export — /api/export/shifts_csv returns CSV, 49 shifts [verified 14:09]
-- [x] Offline queue — /api/sync_orders exists, returns 'No orders provided' [verified 14:09]
+- [x] Disk space check — 36% used (OK) [verified 15:29]
+- [x] Memory check — ~39% RAM used (OK) [verified 15:29]
+- [x] Backup integrity — latest backup (15:28, 50 JSON files all valid) [verified 15:29]
+- [x] CSV export — /api/export/shifts_csv returns CSV, 50 shifts [verified 15:29]
+- [x] Offline queue — /api/sync_orders exists, returns 'No orders provided' [verified 15:29]
 - [x] /api/login works — POST with userId=1111, Login successful [verified 15:06]
 
 ## EVERY 4 HOURS
-|- [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 200, 1 order (pending) [verified 12:48]
+|- [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 200, 3 orders (2 dine-in, 1 Grubhub delivery) [verified 15:29]
 ||- [x] Pickup display: verify /api/pickup-display/queue works — GET, 200, 1 order (#94, ready) [verified 12:48]
 - [x] Inventory: check stock decrements on order — 25 inventory items tracked, stock tracking valid [verified 13:16]
 |- [x] User CRUD: add test user (9753) → verify → delete → confirmed gone from users.json [verified 14:41]
