@@ -1,21 +1,21 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-26T22:05 UTC
-> Total checks: 990
-> Healthy: 990 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-26T22:28 UTC
+> Total checks: 998
+> Healthy: 998 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 — 200 OK [verified 22:05]
-- [x] All JSON data files exist and are valid — all 15 core JSON files valid, parseable [verified 22:05]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', role=owner) [verified 22:05]
-- [x] Git repo is clean — clean (SECURITY_WATCHDOG.md dirty committed 27b95f7) [verified 22:05]
+- [x] Flask app responds on port 5000 — 200 OK [verified 22:28]
+- [x] All JSON data files exist and are valid — all 15 core JSON files valid, parseable [verified 22:28]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', role=owner) [verified 22:28]
+- [x] Git repo is clean — clean [verified 22:28]
 
 ## HOURLY (check if last check was >1h ago)
-- [x] /api/health — {"status":"ok"} (GET) [verified 21:42]
+- [x] /api/health — {"status":"ok"} (GET) [verified 22:28]
 - [x] Frontend loads — 200, HTML OK, 1.37MB [verified 21:42]
-- [x] /api/items returns items — GET, 200 OK, 5 categories (19 items) [verified 21:42]
+- [x] /api/items returns items — GET, 200 OK, 5 categories (19 items) [verified 22:28]
 - [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 53 shifts in range [verified 21:42]
 - [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 21:42]
 - [x] index.html size check — 1375239 bytes (normal) [verified 21:42]
@@ -24,7 +24,7 @@
 - [x] Backup integrity — latest backups valid (json 21:36 tar.gz w/50 files, db 21:36 db.gz integrity ok) [verified 21:42]
 - [x] CSV export — /api/export/shifts_csv returns CSV [verified 22:05]
 - [x] Offline queue — /api/sync_orders exists, returns 400 "No orders provided" [verified 22:05]
-- [x] /api/login works — POST userId=1111, Login successful, role=owner, permissions=[*] [verified 21:42]
+- [x] /api/login works — POST userId=1111, Login successful, role=owner, permissions=[*] [verified 22:28]
 - [x] Clock-in/out: employee 1234 clocked in → clocked out, both 200 OK [verified 21:42]
 - [x] /api/admin_stats — stats returned, average_sale=$13.23, 8 users [verified 21:42]
 
