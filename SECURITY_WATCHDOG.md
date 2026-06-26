@@ -1,12 +1,12 @@
 # POS Security Watchdog
 
-> Last run: 2026-06-26T03:03 UTC
+> Last run: 2026-06-26T03:37 UTC
 > Total events tracked: 42 (SEC-001→SEC-042)
 > Active blocks: 0 IPs
 > Unresolved alerts: 14 (SEC-029→042 MEDIUM, same off-hours localhost pattern)
 > Run result: Silent — no new activity since last run. All clear.
 
-## Current Run Findings (02:43–03:03 UTC, ~20 min window)
+## Current Run Findings (03:20–03:37 UTC, ~17 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -20,11 +20,11 @@ No new events. No activity at all in this window.
 ### 🟢 LOW (0)
 No new findings.
 
-### ℹ️ Activity Summary (02:43–03:03 UTC, ~20 min window)
+### ℹ️ Activity Summary (03:20–03:37 UTC, ~17 min window)
 
-**Server**: UP — Flask running on :5000 (HTTP 200).
+**Server**: UP — gunicorn on :5000 responding (HTTP 200 on clock/status).
 
-**Activity**: ZERO entries in login_attempts.json and activity_log.json since 02:24 UTC. Complete quiet period.
+**Activity**: ZERO entries in login_attempts.json and activity_log.json since 02:24 UTC. Complete quiet period continuing (73+ minutes of no activity).
 
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: 0 IPs with 5+ failed logins in last 5 min. 0 attempts total.
@@ -43,17 +43,18 @@ No new findings.
 
 ### 💰 Financial Check
 - No new orders.
-- Pre-existing $0.00 order (Order 90) unchanged.
+- Pre-existing $0.00 order (Order 94, cancelled) unchanged.
+- Last 5 orders: 99 (cancelled), 100 (cancelled), 104 (refunded), 105 (refunded), 108 (pending) — no anomalies.
 - No 100% discounts.
-- Refund rate: 0%.
+- Refund rate: 0% in this window.
 
 ### 📂 File Integrity
-- All **49** JSON files parseable.
+- All **51** JSON files parseable.
 - Owner account (1111) present, active, not banned.
 - 8 user accounts — no changes.
 - No unexpected files.
 - security_config.json: unchanged.
-- Git status: clean.
+- Git status: SECURITY_WATCHDOG.md modified (this run's update).
 
 ## Active Blocks
 None.
@@ -75,12 +76,12 @@ None.
 Same as above — no changes.
 
 ## System State
-|||||||||||||||||||| Current time: 2026-06-26T03:03 UTC — off-hours (22:00-06:00) |
-|||||||||||||||||||| Activity since last run: 0 — dead quiet |
-|||||||||||||||||||| Failed logins: 0 |
-|||||||||||||||||||| Blocked IPs: 0 |
-|||||||||||||||||||| Config changes: None |
-|||||||||||||||||||| File integrity: All 49 JSON files parseable. Clean git. |
-|||||||||||||||||||| Users: 8 accounts. Owner 2FA not enabled (exempted). |
-|||||||||||||||||||| Security events: 42 tracked, 14 unresolved MEDIUM. |
-|||||||||||||||||||| Server: UP (:5000 — Flask running). |
+|||||||||||||||||||||| Current time: 2026-06-26T03:37 UTC — off-hours (22:00-06:00) |
+|||||||||||||||||||||| Activity since last run: 0 — dead quiet continuing (73+ min silence) |
+|||||||||||||||||||||| Failed logins: 0 |
+|||||||||||||||||||||| Blocked IPs: 0 |
+|||||||||||||||||||||| Config changes: None |
+|||||||||||||||||||||| File integrity: All 51 JSON files parseable. Dirty git (SECURITY_WATCHDOG.md). |
+|||||||||||||||||||||| Users: 8 accounts. Owner 2FA not enabled (exempted). |
+|||||||||||||||||||||| Security events: 42 tracked, 14 unresolved MEDIUM. |
+|||||||||||||||||||||| Server: UP (:5000 — gunicorn responding 200). |
