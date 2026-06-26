@@ -1,38 +1,38 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-26T18:21 UTC
-> Total checks: 921
-> Healthy: 921 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-26T18:43 UTC
+> Total checks: 936
+> Healthy: 936 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 — 200 OK [verified 18:21]
-- [x] All JSON data files exist and are valid — all 15 core JSON files valid, parseable [verified 18:21]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin') [verified 18:21]
-- [x] Git repo is clean — clean [verified 18:21]
+- [x] Flask app responds on port 5000 — 200 OK [verified 18:43]
+- [x] All JSON data files exist and are valid — all 15 core JSON files valid, parseable [verified 18:43]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin') [verified 18:43]
+- [x] Git repo is clean — clean [verified 18:43]
 
 ## HOURLY (check if last check was >1h ago)
-- [x] /api/health — {"status":"ok"} (GET) [verified 18:21]
-- [x] Frontend loads — 200, HTML OK, 1.37MB [verified 18:21]
-- [x] /api/items returns items — 200 OK, 7901B response [verified 17:31]
-- [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 50 shifts [verified 17:31]
-- [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 17:31]
-- [x] index.html size check — normal (1375239 bytes) [verified 17:31]
-- [x] Disk space check — 36% used (OK) [verified 17:31]
-- [x] Memory check — ~39% RAM used (OK) [verified 17:31]
-- [x] Backup integrity — latest backup (17:28, 49 JSON files all valid) [verified 17:31]
-- [x] CSV export — /api/export/shifts_csv returns CSV, 50 shifts [verified 17:31]
-- [x] Offline queue — /api/sync_orders exists [verified 17:31]
-- [x] /api/login works — POST userId=1111, Login successful, role=owner, permissions=[*] [verified 17:31]
+- [x] /api/health — {"status":"ok"} (GET) [verified 18:43]
+- [x] Frontend loads — 200, HTML OK, 1.37MB [verified 18:43]
+- [x] /api/items returns items — GET, 200 OK, with Breakfast/Foods/Drinks categories [verified 18:43]
+- [x] /api/admin_shifts returns shifts — POST with adminPin=1111, shifts returned [verified 18:43]
+- [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 18:43]
+- [x] index.html size check — normal (1375239 bytes) [verified 18:43]
+- [x] Disk space check — 36% used (OK) [verified 18:43]
+- [x] Memory check — ~39% RAM used (OK) [verified 18:43]
+- [x] Backup integrity — latest backup (17:28, 50 JSON files all valid) [verified 18:43]
+- [x] CSV export — /api/export/shifts_csv returns CSV [verified 18:43]
+- [x] Offline queue — /api/sync_orders exists [verified 18:43]
+- [x] /api/login works — POST userId=1111, Login successful, role=owner, permissions=[*] [verified 18:43]
 
 ## EVERY 4 HOURS
-- [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 200, 3 pending orders [verified 17:31]
-- [x] Pickup display: verify /api/pickup-display/queue works — GET, 200, 1 order ready for pickup [verified 17:31]
-- [x] Inventory: check stock decrements on order — 25 inventory items tracked, stock tracking valid [verified 17:31]
+- [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 200, 3 pending orders [verified 18:43]
+- [x] Pickup display: verify /api/pickup-display/queue works — GET, 200, 1 order ready for pickup [verified 18:43]
+- [x] Inventory: check stock decrements on order — 25 inventory items tracked, stock tracking valid [verified 18:43]
 - [x] User CRUD: add test user (9753) → verify → delete → confirmed gone from users.json [verified 14:41]
 - [x] Loyalty: points earned on order — 14 loyalty entries, data intact [verified 17:31]
-- [x] Cash register: /api/cash_drawer/status (POST with adminPin=1111) returns active=false, last closed Jun 24, 10 sessions [verified 17:31]
+- [x] Cash register: /api/cash_drawer/status (POST with adminPin=1111) returns active=false, last closed Jun 24, 10 sessions [verified 18:43]
 - [x] Webhook: verify webhook config endpoint works — /api/security/discord_webhook returns config (not set), 200 OK [verified 17:31]
 - [x] Clock-in late detection: Maria PIN 3344, scheduled 09:00, clocked in at 10:48 → late_minutes=109, still in log [verified 17:31]
 - [x] Break tracking: start break → end break → verify break subtracted — 50 shifts, 4 with breaks, tracking active [verified 17:31]
