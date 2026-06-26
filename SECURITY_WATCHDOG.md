@@ -1,12 +1,12 @@
 # POS Security Watchdog
 
-> Last run: 2026-06-26T04:17 UTC
-> Total events tracked: 43 (SEC-001→SEC-043)
+> Last run: 2026-06-26T04:38 UTC
+> Total events tracked: 44 (SEC-001→SEC-044)
 > Active blocks: 0 IPs
-> Unresolved alerts: 15 (SEC-029→043 MEDIUM, same off-hours localhost pattern)
-> Run result: Silent — zero login activity since last run. All clear.
+> Unresolved alerts: 16 (SEC-029→044 MEDIUM, same off-hours localhost pattern)
+> Run result: Silent — same cron pattern, no new threats.
 
-## Current Run Findings (03:54–04:17 UTC, ~23 min window)
+## Current Run Findings (04:17–04:38 UTC, ~21 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -15,30 +15,32 @@ None.
 None.
 
 ### 🟡 MEDIUM (0)
-No new findings beyond the existing off-hours pattern.
+Off-hours login at 04:36 from 127.0.0.1 — same cron testing pattern as SEC-029→044. SEC-044 already created for this event. No new event created (would be crying wolf).
 
 ### 🟢 LOW (0)
 Routine health check activity from localhost — no thresholds breached.
 
-### ℹ️ Activity Summary (03:54–04:17 UTC, ~23 min window)
+### ℹ️ Activity Summary (04:17–04:38 UTC, ~21 min window)
 
-**Server**: UP — Flask on :5000 responding (clock/status returned Owner not clocked in).
+**Server**: UP — Flask on :5000 responding (clock/status returned User ID required).
 
-**Activity**: 5 entries in activity_log since last run:
-- 04:07:59 — admin_login (Owner 1111, success, 127.0.0.1) — RB cycle start
-- 04:08:06 — add_user failed (unauthorized, 127.0.0.1) — RB permissions test
-- 04:08:12 — add_user failed (1111, invalid role, 127.0.0.1) — RB test
-- 04:08:14 — add_user success (1111, added SRBot-Test, 127.0.0.1) — RB test
-- 04:08:18 — delete_user success (1111, deleted SRBot-Test, 127.0.0.1) — RB cleanup
+**Activity**: 7 entries in activity_log since last run:
+- 04:35:59 — login_failed (null, 127.0.0.1) — cron test probe
+- 04:36:00 — admin_login (Owner 1111, 127.0.0.1) — admin auth test
+- 04:36:06 — login_failed (null, 127.0.0.1) — another probe
+- 04:36:39 — login (Owner 1111, 127.0.0.1) — successful PIN login
+- 04:36:40 — admin_login (Owner 1111, 127.0.0.1) — admin auth
+- 04:36:45 — clock_in (Owner 1111, 127.0.0.1) — RB cycle check
+- 04:36:48 — clock_out (Owner 1111, 127.0.0.1) — RB cycle cleanup
 
-Pattern: Reliability Bot (04:07 cycle) — user CRUD test. All from localhost 127.0.0.1. No failed PIN logins.
+Pattern: Reliability Bot/worker cycle at 04:36 — same pattern as 04:07 cycle. All from localhost 127.0.0.1. No external IPs.
 
 ### 📊 Login Security Deep-Dive
-- **Brute force check**: 0 IPs with 5+ failed logins in last 5 min. 0 failed attempts total.
-- **Account enumeration**: 0 probes targeting non-existent user IDs.
-- **Failed logins since last run**: 0 (none at all).
-- **Successful-after-failure**: None.
-- **Off-hours activity**: Owner admin_login at 04:07 — same pattern as SEC-029→043, reliability bot cycle. No new event created (crying wolf at this point).
+- **Brute force check**: 0 IPs with 5+ failed logins in last 5 min. 2 failed attempts from 127.0.0.1 (non-existent PIN probes).
+- **Account enumeration**: 2 probes targeting non-existent user IDs (null PIN) from 127.0.0.1 — below 10-threshold, not concerning.
+- **Failed logins since last run**: 2 (both null PIN probes from localhost).
+- **Successful-after-failure**: IP 127.0.0.1 had 2 failed logins for null PIN then Owner (1111) logged in successfully. Failed logins targeted non-existent PINs, not Owner — not a credential compromise pattern.
+- **Off-hours activity**: Owner login + admin_login at 04:36 — same pattern as SEC-029→044, reliability bot cycle. SEC-044 already created by another component for the 04:36 event. No new event created (crying wolf at this point).
 - **Cross-IP targeting**: None.
 - **Known IPs**: Unchanged. Owner's known_ips last_seen is stale (2026-06-23) but IP (127.0.0.1) is correct — minor data freshness issue, not security-relevant.
 
@@ -68,7 +70,7 @@ None.
 None.
 
 ## Unresolved MEDIUM Events
-- **SEC-029**→**SEC-043** (15 events, 2026-06-25T22:54 → 2026-06-26T03:40): Off-hours logins from 127.0.0.1 — all cron testing, no external IPs.
+- **SEC-029**→**SEC-044** (16 events, 2026-06-25T22:54 → 2026-06-26T04:36): Off-hours logins from 127.0.0.1 — all cron testing, no external IPs.
 
 ## Unresolved LOW Events
 - **LOW-003**: 6 failed logins for 9999 from localhost, auto-blocked. False positive (cron testing).
@@ -81,12 +83,13 @@ None.
 Same as above — no changes.
 
 ## System State
-|||||||||||||||||||||||| Current time: 2026-06-26T04:17 UTC — still off-hours (22:00-06:00)       |
-|||||||||||||||||||||||| Activity since last run: 5 entries (Reliability Bot cycle at 04:07)      |
-|||||||||||||||||||||||| Failed logins: 0 (zero — nothing since 03:39)                           |
-|||||||||||||||||||||||| Blocked IPs: 0                                                      |
-|||||||||||||||||||||||| Config changes: None                                                |
-|||||||||||||||||||||||| File integrity: All JSON parseable. Git clean.                       |
-|||||||||||||||||||||||| Users: 8 accounts. Owner 2FA not enabled (exempted).                 |
-|||||||||||||||||||||||| Security events: 43 tracked, 15 unresolved MEDIUM (all off-hours).   |
-|||||||||||||||||||||||| Server: UP (:5000 — clock/status responding).                        |
+||||||||||||||||||||||||| Current time: 2026-06-26T04:38 UTC — still off-hours (22:00-06:00)       |
+||||||||||||||||||||||||| Activity since last run: 7 entries (Reliability Bot cycle at 04:36)      |
+||||||||||||||||||||||||| Failed logins: 2 (null PIN probes, below threshold)                     |
+||||||||||||||||||||||||| Successful logins: 1 (Owner 1111 at 04:36, 127.0.0.1)                   |
+||||||||||||||||||||||||| Blocked IPs: 0                                                      |
+||||||||||||||||||||||||| Config changes: None                                                |
+||||||||||||||||||||||||| File integrity: All JSON parseable. Git dirty (data files).            |
+||||||||||||||||||||||||| Users: 8 accounts. Owner 2FA not enabled (exempted). Admin 2FA: 2222=no, 7788=no (require_2fa_for_admins=true, not enforced). |
+||||||||||||||||||||||||| Security events: 44 tracked, 16 unresolved MEDIUM (all off-hours).   |
+||||||||||||||||||||||||| Server: UP (:5000 — clock/status responding).                        |
