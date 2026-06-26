@@ -13535,5 +13535,69 @@
             "clock_out_time": "2026-06-26T03:40:36.314230",
             "duration_hours": 0.0
         }
+    },
+    {
+        "timestamp": "2026-06-26T04:07:59.898850",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-26T04:08:06.790773",
+        "type": "add_user",
+        "user_id": null,
+        "user_role": "unauthorized",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed",
+            "reason": "Insufficient permissions"
+        }
+    },
+    {
+        "timestamp": "2026-06-26T04:08:12.037906",
+        "type": "add_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed",
+            "reason": "Invalid user role",
+            "new_user_id": "9937"
+        }
+    },
+    {
+        "timestamp": "2026-06-26T04:08:14.148392",
+        "type": "add_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "added_user_id": "9937",
+            "added_user_name": "SRBot-Test",
+            "added_user_role": "user"
+        }
+    },
+    {
+        "timestamp": "2026-06-26T04:08:18.887350",
+        "type": "delete_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "deleted_user_id": "9937",
+            "deleted_user_name": "SRBot-Test",
+            "deleted_user_role": "user"
+        }
     }
 ]
