@@ -2582,5 +2582,67 @@
         "reason": "Reliability Bot large payload test \u2014 cleanup",
         "refunded_at": "2026-06-26T08:22:36.516915",
         "refunded_by": "1111"
+    },
+    {
+        "order_id": 111,
+        "original_order": {
+            "order_id": 111,
+            "status": "refunded",
+            "claimed_by": null,
+            "claimed_at": null,
+            "completed_at": null,
+            "date": "2026-06-26T10:48:25.479800",
+            "user": null,
+            "payment": {
+                "method": "cash",
+                "amount": 10.0
+            },
+            "payment_splits": null,
+            "items": [
+                {
+                    "name": "Pancakes",
+                    "price": 8.99,
+                    "quantity": 1,
+                    "course_send_at": "2026-06-26T10:48:25.479861",
+                    "course_fired": true
+                }
+            ],
+            "subtotal": 8.99,
+            "tax_amount": 0.74,
+            "tip_amount": 0.0,
+            "service_charge_amount": 0.0,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "item_tax_details": [
+                {
+                    "name": "Pancakes",
+                    "category": "",
+                    "qty": 1,
+                    "price": 8.99,
+                    "tax_rate": 8.25,
+                    "tax_amount": 0.74
+                }
+            ],
+            "total": 9.73,
+            "notes": "",
+            "item_notes": {},
+            "table_number": null,
+            "delivery_address": null,
+            "customer_email": "",
+            "order_type": "dine_in",
+            "party_size": null,
+            "packaging_fee": 0.0,
+            "packaging_fee_label": "",
+            "priority": null,
+            "assigned_driver": null,
+            "delivery_status": "pending",
+            "manager_approval": null,
+            "refund_reason": "No reason provided",
+            "refunded_at": "2026-06-26T10:48:27.912326",
+            "refunded_by": "1111"
+        },
+        "reason": "No reason provided",
+        "refunded_at": "2026-06-26T10:48:27.912326",
+        "refunded_by": "1111"
     }
 ]

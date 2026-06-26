@@ -14134,5 +14134,73 @@
             "user_name": "Owner",
             "ip": "127.0.0.1"
         }
+    },
+    {
+        "timestamp": "2026-06-26T10:48:25.487460",
+        "type": "submit_order",
+        "user_id": null,
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 111,
+            "subtotal": 8.99,
+            "tax_amount": 0.74,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 9.73,
+            "payment_method": {
+                "method": "cash",
+                "amount": 10.0
+            },
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-26T10:48:27.926853",
+        "type": "refund_order",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 111,
+            "reason": "No reason provided",
+            "refunded_by_name": "Owner",
+            "order_total": 9.73,
+            "inventory_restored": [
+                "Pancakes x1"
+            ]
+        }
+    },
+    {
+        "timestamp": "2026-06-26T10:48:46.461231",
+        "type": "clock_in",
+        "user_id": "3344",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "user_name": "Maria",
+            "clock_in_time": "2026-06-26T10:48:46.460951",
+            "late_minutes": 109,
+            "scheduled_start": "09:00"
+        }
+    },
+    {
+        "timestamp": "2026-06-26T10:48:49.092927",
+        "type": "clock_out",
+        "user_id": "3344",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "user_name": "Maria",
+            "clock_in_time": "2026-06-26T10:48:46.460951",
+            "clock_out_time": "2026-06-26T10:48:49.091150",
+            "duration_hours": 0.0
+        }
     }
 ]
