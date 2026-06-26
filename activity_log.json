@@ -12466,5 +12466,186 @@
         "timestamp": "2026-06-25T23:22:04.210382",
         "user": "1111",
         "user_name": "Owner"
+    },
+    {
+        "timestamp": "2026-06-25T23:26:20.950160",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Python-urllib/3.11",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T23:26:27.333557",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Python-urllib/3.11",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T23:48:44.292768",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-25T23:48:46.541278",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-26T00:10:39.420269",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-26T00:10:42.747574",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-26T00:39:54.229984",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-26T01:16:04.038530",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-26T01:16:22.406206",
+        "type": "submit_order",
+        "user_id": null,
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 105,
+            "subtotal": 6.0,
+            "tax_amount": 0.49,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 6.49,
+            "payment_method": {
+                "method": "cash",
+                "amount": 10.0
+            },
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-26T01:16:22.982839",
+        "type": "refund_order",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 105,
+            "reason": "No reason provided",
+            "refunded_by_name": "Owner",
+            "order_total": 6.49,
+            "inventory_restored": [
+                "Hamburger - Normal x1"
+            ]
+        }
+    },
+    {
+        "timestamp": "2026-06-26T01:16:39.257754",
+        "type": "add_item",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "category": "Drinks",
+            "name": "Test \"Special\" \ud83c\udf89 Item",
+            "price": 4.99
+        }
+    },
+    {
+        "timestamp": "2026-06-26T01:16:39.839010",
+        "type": "delete_item",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed",
+            "reason": "Missing data",
+            "item_data": {
+                "name": "Test \"Special\" \ud83c\udf89 Item",
+                "adminPin": "1111"
+            }
+        }
+    },
+    {
+        "timestamp": "2026-06-26T01:16:45.662177",
+        "type": "delete_item",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "category": "Drinks",
+            "name": "Test \"Special\" \ud83c\udf89 Item"
+        }
     }
 ]

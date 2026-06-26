@@ -123,5 +123,9 @@
         "stock": 200,
         "low_stock_threshold": 40,
         "unit_cost": 0.2
+    },
+    "Test \"Special\" \ud83c\udf89 Item": {
+        "stock": 0,
+        "low_stock_threshold": 10
     }
 }
