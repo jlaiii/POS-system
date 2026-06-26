@@ -1,5 +1,5 @@
 # POS Security Tasks
-> Last run: 2026-06-25 22:52 UTC
+> Last run: 2026-06-26 13:48 UTC
 
 ## CRITICAL — LOGIN & AUTH SECURITY (check every run)
 
@@ -100,6 +100,16 @@
 - [x] **Verify dependency versions** — Flask 3.1.3, pyotp 2.9.0, qrcode 7.4.2, Werkzeug 3.1.8, eventlet 0.41.0. All current stable versions.
 
 ## COMPLETED (this session)
+
+### Run: 2026-06-26 13:48 UTC
+- [x] **Force PIN change for 4 users with predictable PINs** — Maria(3344), Chef Diego(5566), Manager Sarah(7788), and Employee Two(5678) all had PINs equal to their user IDs (predictable 4-digit numbers) with `force_pin_change` either missing or `false`. Set `force_pin_change: true` on all four. Verified via python inspection — all 8 users now have `force_pin_change=True`.
+- [x] **Fix world-readable watchdog file** — `.watchdog_file_sizes.json` was 644 (world-readable). Changed to 600.
+- [x] **PCI compliance check** — Zero full card numbers stored in orders.json or activity_log. Only card_last4 used. No cvv/track data stored.
+- [x] **Login rate limiting verified** — 5 attempts per PIN per 60s window, 10-minute lockout on 5th failure. Working correctly.
+- [x] **Debug mode confirmed disabled** — debug=False, allow_unsafe_werkzeug=False.
+- [x] **No hardcoded credentials** — Scanned for password/secret/token/key patterns. Zero false positives.
+- [x] **Session security verified** — Sessions use secrets.token_hex(32), 8h active/24h idle expiry, logout invalidation working.
+- [x] **File permissions verified** — All 40+ JSON data files at 0600. Backup dirs at 700.
 
 ### Run: 2026-06-25 22:52 UTC
 - [x] **Fix force_pin_change bypass in 3x 2FA login paths** — CRITICAL: TOTP login, backup code login, and email recovery login all cleared force_pin_change after showing the prompt. Removed the clear+save from all three. Re-set force_pin_change for Owner (1111) and Manager (2222). Verified with curl.

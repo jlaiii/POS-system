@@ -91,7 +91,7 @@
         "totp_backup_codes": [],
         "totp_setup_at": null,
         "pin_reset_notification": null,
-        "force_pin_change": false,
+        "force_pin_change": true,
         "temp_pin": null,
         "temp_pin_expiry": null
     },
@@ -105,7 +105,8 @@
         "scheduled_start": "09:00",
         "email": "",
         "pto_balance": 0.0,
-        "pto_log": []
+        "pto_log": [],
+        "force_pin_change": true
     },
     "5566": {
         "name": "Chef Diego",
@@ -117,7 +118,8 @@
         "scheduled_start": "10:00",
         "email": "",
         "pto_balance": 0.0,
-        "pto_log": []
+        "pto_log": [],
+        "force_pin_change": true
     },
     "7788": {
         "name": "Manager Sarah",
@@ -138,7 +140,8 @@
         "scheduled_start": "08:30",
         "email": "",
         "pto_balance": 0.0,
-        "pto_log": []
+        "pto_log": [],
+        "force_pin_change": true
     },
     "987654": {
         "name": "Carlos",
