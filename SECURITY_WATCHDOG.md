@@ -1,12 +1,12 @@
 # POS Security Watchdog
 
-> Last run: 2026-06-26T13:25 UTC
+> Last run: 2026-06-26T13:42 UTC
 > Total events tracked: 45 (SEC-001→SEC-045)
 > Active blocks: 0 IPs
 > Unresolved alerts: 17 (SEC-029→SEC-045 MEDIUM, same off-hours localhost pattern)
-> Run result: [SILENT] — no activity since last run. Complete idle.
+> Run result: [SILENT] — no threats detected. Light localhost activity (Owner testing).
 
-## Current Run Findings (13:08–13:25 UTC, ~17 min window)
+## Current Run Findings (13:25–13:42 UTC, ~17 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -20,20 +20,22 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (13:08–13:25 UTC, ~17 min window)
+### ℹ️ Activity Summary (13:25–13:42 UTC, ~17 min window)
 
 **Server**: UP — responding correctly on port 5000 (HTTP 200).
 
-**Activity**: No activity at all since last run. Complete idle.
-- 0 login attempts (failed or successful) since 13:08 UTC
-- System quiet.
+**Activity**: Light localhost-only activity from Owner (1111) testing.
+- 0 login attempts in this window (1 failed + 1 successful from 12:49 — before last run)
+- Owner added a test item via curl at 13:40, then deleted it at 13:40
+- inventory.json auto-updated at 13:41 from item add/delete
+- All activity from 127.0.0.1 — no external IPs
 
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: 0 failed logins in last 5 min window. Clean.
-- **Account enumeration**: 0 probes against non-existent user IDs.
-- **Successful-after-failure**: No logins of any kind.
-- **Off-hours activity**: 13:25 UTC = 08:25 CT — normal business hours. None flagged.
-- **Cross-IP targeting**: None — zero traffic.
+- **Account enumeration**: 0 probes against non-existent user IDs in this window (1 probe at 12:49 — before last run, already accounted for).
+- **Successful-after-failure**: 1 failed login (null user) followed by Owner (1111) success at 12:49. Different targets — not a credential compromise. From localhost.
+- **Off-hours activity**: 13:42 UTC = 08:42 CT — normal business hours. None flagged.
+- **Cross-IP targeting**: None — zero external traffic.
 - **Known IPs**: Unchanged.
 
 ### 🔒 Security Config
@@ -44,13 +46,14 @@ None.
 
 ### 💰 Financial Check
 - No new orders, refunds, or transactions since last run.
-- Orders.json last modified 10:48 UTC (no change).
+- 3 large orders (>$500) all pre-existing and cancelled.
+- 1 zero-total order pre-existing and cancelled.
 - No suspicious patterns.
 
 ### 📂 File Integrity
-- All 51 JSON files parseable and intact.
+- All 49 JSON files parseable and intact.
 - Owner account (1111) present, active, not banned.
-- Git status: SECURITY_WATCHDOG.md modified (this run).
+- Git status: Clean (SECURITY_WATCHDOG.md modified this run).
 - security_config.json: unchanged.
 - No suspicious files detected.
 ## Active Blocks
@@ -73,13 +76,13 @@ None.
 Same as above — light activity, all localhost, no threats.
 
 ## System State
-||||||||||||||||||||||||||||||| Current time: 2026-06-26T13:25 UTC — 08:25 CT (normal business hours)                      |
-|||||||||||||||||||||||||||||| Activity since last run: 0 events — complete idle                                  |
-|||||||||||||||||||||||||||||| Failed logins: 0                                                                      |
-|||||||||||||||||||||||||||||| Successful logins: 0                                                                  |
-|||||||||||||||||||||||||||||| Blocked IPs: 0                                                                       |
-|||||||||||||||||||||||||||||| Config changes: None                                                                 |
-|||||||||||||||||||||||||||||| File integrity: All 51 JSON parseable. Git dirty (SECURITY_WATCHDOG.md).               |
-|||||||||||||||||||||||||||||| Users: 8 accounts. Owner 2FA not enabled (exempted). Admin 2FA: 2222=no, 7788=no.     |
-|||||||||||||||||||||||||||||| Security events: 45 tracked, 17 unresolved MEDIUM (all off-hours 127.0.0.1).          |
-|||||||||||||||||||||||||||||| Server: UP (:5000 — gunicorn responding correctly).                                   |
+|||||||||||||||||||||||||||||||| Current time: 2026-06-26T13:42 UTC — 08:42 CT (normal business hours)                      |
+||||||||||||||||||||||||||||||| Activity since last run: Owner testing — add/delete item, 0 logins this window         |
+||||||||||||||||||||||||||||||| Failed logins: 0 (last 5 min), 1 (in last hour, before this run)                       |
+||||||||||||||||||||||||||||||| Successful logins: 0 (last 5 min), 1 (Owner, before this run)                          |
+||||||||||||||||||||||||||||||| Blocked IPs: 0                                                                       |
+||||||||||||||||||||||||||||||| Config changes: None                                                                 |
+||||||||||||||||||||||||||||||| File integrity: All 49 JSON parseable. Git clean (SECURITY_WATCHDOG.md staged).          |
+||||||||||||||||||||||||||||||| Users: 8 accounts. Owner 2FA exempted. Admin 2FA: 2222=no, 7788=no (pre-existing gap). |
+||||||||||||||||||||||||||||||| Security events: 45 tracked, 17 unresolved MEDIUM (all off-hours 127.0.0.1).          |
+||||||||||||||||||||||||||||||| Server: UP (:5000 — HTTP 200).                                                         |
