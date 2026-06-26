@@ -1,29 +1,29 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-26T11:34 UTC
-> Total checks: 813
-> Healthy: 812 | Broken: 0 | Fixed this cycle: 1
+> Last full cycle: 2026-06-26T11:59 UTC
+> Total checks: 822
+> Healthy: 822 | Broken: 0 | Fixed this cycle: 1
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-|- [x] Flask app responds on port 5000 — 200 OK [verified 11:34 — restarted from crash]
-||- [x] All JSON data files exist and are valid — all 15 JSON files valid, parseable [verified 11:34]
-||- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner') [verified 11:34]
-||- [x] Git repo is clean — clean (no dirty files) [verified 11:34]
+|- [x] Flask app responds on port 5000 — 200 OK [verified 11:59]
+||- [x] All JSON data files exist and are valid — all 15 JSON files valid, parseable [verified 11:59]
+||- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner') [verified 11:59]
+||- [x] Git repo is clean — clean (no dirty files) [verified 11:59]
 
 ## HOURLY (check if last check was >1h ago)
-- [x] /api/health — {"status":"ok"} (GET) [verified 11:34]
+- [x] /api/health — {"status":"ok"} (GET) [verified 11:59]
 - [x] Frontend loads — 200, HTML OK, 1.37MB [verified 11:34]
-- [x] /api/items returns items — 5 categories (Foods/Drinks/Snacks/Breakfast/Salads), 19 items total [verified 11:34]
-- [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 48 shifts [verified 11:34]
+- [x] /api/items returns items — 5 categories (Foods/Drinks/Snacks/Breakfast/Salads), 19 items total [verified 11:59]
+- [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 49 shifts [verified 11:59]
 - [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 11:34]
 - [x] index.html size check — normal (1375135 bytes) [verified 11:34]
-- [x] Disk space check — 36% used (OK) [verified 11:34]
-- [x] Memory check — ~32% RAM used (OK) [verified 11:34]
-- [x] Backup integrity — latest backup (11:04, 50 files, all valid JSON) [verified 11:34]
-- [x] CSV export — /api/export/shifts_csv returns CSV, 48 shifts [verified 11:34]
-- [x] Offline queue — /api/sync_orders exists, returns 'No orders provided' [verified 11:34]
+- [x] Disk space check — 36% used (OK) [verified 11:59]
+- [x] Memory check — ~34% RAM used (OK) [verified 11:59]
+- [x] Backup integrity — latest backup (11:04, 4 JSON + 4 DB backups) [verified 11:59]
+- [x] CSV export — /api/export/shifts_csv returns CSV, 49 shifts [verified 11:59]
+- [x] Offline queue — /api/sync_orders exists, returns 'No orders provided' [verified 11:59]
 
 ## EVERY 4 HOURS
 |- [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 200, 1 order (Grubhub order) [verified 10:48]
