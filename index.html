@@ -983,6 +983,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
         <button onclick="switchAdminSection('expenses')" id="asExpenses" data-i18n="admin.expenses">💰 Expenses</button>
         <button onclick="switchAdminSection('payment')" id="asPayment" data-i18n="admin.payment_terminal">💳 Terminal</button>
         <button onclick="switchAdminSection('leaderboard')" id="asLeaderboard">🏆 Leaderboard</button>
+        <button onclick="switchAdminSection('tippool')" id="asTippool" style="display:none;">💰 Tip Pool</button>
       </div>
       <div id="adminContent">
         <!-- Stats -->
@@ -3219,6 +3220,73 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
           </div>
         </div>
 
+        <!-- ═══════════ TIP POOL CONFIG ═══════════ -->
+        <div id="secTippool" class="admin-section">
+          <h3 style="margin:0 0 8px 0;">💰 Tip Pool Configuration</h3>
+          <p style="color:var(--text2);font-size:14px;margin-bottom:16px;">Configure automatic tip pooling and distribution among eligible employees.</p>
+
+          <div class="card" style="margin-bottom:16px;padding:16px 20px;">
+            <div class="form-row" style="flex-wrap:wrap;gap:10px;margin-bottom:12px;align-items:center;">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:15px;">
+                <input type="checkbox" id="tpEnabled" style="width:22px;height:22px;accent-color:var(--accent);"/>
+                <span data-i18n="tippool.enabled">✅ Enable Tip Pooling</span>
+              </label>
+            </div>
+            <div class="form-row" style="flex-wrap:wrap;gap:10px;margin-bottom:12px;align-items:center;">
+              <label style="font-size:14px;color:var(--text2);min-width:120px;" data-i18n="tippool.method">Pooling Method</label>
+              <select id="tpMethod" style="flex:1;min-width:160px;font-size:14px;padding:8px 12px;">
+                <option value="hours" data-i18n="tippool.method_hours">⏱️ Hours-based (hours × role weight)</option>
+                <option value="equal" data-i18n="tippool.method_equal">🔄 Equal split per employee</option>
+              </select>
+            </div>
+            <div class="form-row" style="flex-wrap:wrap;gap:10px;margin-bottom:12px;align-items:center;">
+              <label style="font-size:14px;color:var(--text2);min-width:120px;" data-i18n="tippool.pool_percent">Pool % of Tips</label>
+              <input type="number" id="tpPoolPercent" value="100" min="1" max="100" style="flex:1;min-width:100px;max-width:120px;font-size:14px;padding:8px 12px;" aria-label="Percent of tips to pool"/>
+              <span style="font-size:13px;color:var(--text2);" data-i18n="tippool.pool_percent_hint">% of total tips distributed to pool</span>
+            </div>
+            <div class="form-row" style="flex-wrap:wrap;gap:10px;margin-bottom:12px;align-items:center;">
+              <label style="font-size:14px;color:var(--text2);min-width:120px;" data-i18n="tippool.eligible_roles">Eligible Roles</label>
+              <div id="tpRolesContainer" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+            </div>
+            <div id="tpWeightsSection" style="margin-bottom:12px;">
+              <label style="font-size:14px;color:var(--text2);margin-bottom:8px;display:block;" data-i18n="tippool.weights">Role Weight Multipliers</label>
+              <div id="tpWeightsContainer" style="display:flex;gap:10px;flex-wrap:wrap;"></div>
+            </div>
+            <button class="accent" onclick="saveTipPoolConfig()" style="min-height:44px;font-size:14px;padding:10px 24px;" data-i18n="tippool.save">💾 Save Tip Pool Config</button>
+            <span id="tpSaveMsg" style="margin-left:12px;font-size:14px;"></span>
+          </div>
+
+          <!-- Preview / Calculate -->
+          <div class="card" style="margin-bottom:16px;padding:16px 20px;">
+            <h4 style="margin:0 0 8px 0;" data-i18n="tippool.preview_title">🔍 Preview Pool Calculation</h4>
+            <p style="color:var(--text2);font-size:13px;margin-bottom:12px;" data-i18n="tippool.preview_hint">Calculate tip pool distribution for a date range to see how tips would be shared.</p>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center;">
+              <input type="date" id="tpPreviewFrom" style="flex:1;min-width:130px;" aria-label="Date from"/>
+              <span style="color:var(--text2);">→</span>
+              <input type="date" id="tpPreviewTo" style="flex:1;min-width:130px;" aria-label="Date to"/>
+              <button class="accent" onclick="previewTipPool()" style="min-height:40px;padding:8px 16px;font-size:13px;" data-i18n="tippool.preview_btn">🔍 Calculate</button>
+            </div>
+            <div id="tpPreviewResult"></div>
+          </div>
+
+          <!-- Manual Overrides -->
+          <div class="card" style="margin-bottom:16px;padding:16px 20px;">
+            <h4 style="margin:0 0 8px 0;" data-i18n="tippool.overrides_title">✏️ Manual Overrides</h4>
+            <p style="color:var(--text2);font-size:13px;margin-bottom:12px;" data-i18n="tippool.overrides_hint">Set a custom tip amount for an employee for a specific period, overriding calculated values.</p>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;align-items:center;">
+              <select id="tpOverrideUser" style="flex:1;min-width:140px;font-size:14px;padding:8px 12px;" aria-label="Select employee">
+                <option value="">— Select Employee —</option>
+              </select>
+              <input type="date" id="tpOverrideFrom" style="flex:1;min-width:120px;" aria-label="Date from"/>
+              <span style="color:var(--text2);">→</span>
+              <input type="date" id="tpOverrideTo" style="flex:1;min-width:120px;" aria-label="Date to"/>
+              <input type="number" id="tpOverrideAmount" placeholder="Tip amount" min="0" step="0.01" style="flex:1;min-width:100px;max-width:120px;font-size:14px;padding:8px 12px;" aria-label="Tip amount"/>
+              <button class="accent" onclick="saveTipPoolOverride()" style="min-height:40px;padding:8px 16px;font-size:13px;" data-i18n="tippool.override_btn">💾 Set Override</button>
+            </div>
+            <div id="tpOverridesList" style="margin-top:8px;"></div>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
@@ -3371,6 +3439,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
           <div style="font-size:12px;color:var(--text2);margin-top:4px;" data-i18n="mypay.current_tips">Tips</div>
         </div>
       </div>
+      <div id="myPayTipPool"></div>
       <!-- Progress bar for current period -->
       <div style="margin-top:12px;">
         <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:4px;">
@@ -4989,6 +5058,25 @@ const L10N = {
     'order_sync.refunded': 'Order refunded from another terminal',
     'order_sync.updated': 'Order updated from another terminal',
     'order_sync.table': 'Table {number}',
+    'tippool.enabled': '✅ Enable Tip Pooling',
+    'tippool.method': 'Pooling Method',
+    'tippool.method_hours': '⏱️ Hours-based (hours × role weight)',
+    'tippool.method_equal': '🔄 Equal split per employee',
+    'tippool.pool_percent': 'Pool % of Tips',
+    'tippool.pool_percent_hint': '% of total tips distributed to pool',
+    'tippool.eligible_roles': 'Eligible Roles',
+    'tippool.weights': 'Role Weight Multipliers',
+    'tippool.save': '💾 Save Tip Pool Config',
+    'tippool.preview_title': '🔍 Preview Pool Calculation',
+    'tippool.preview_hint': 'Calculate tip pool distribution for a date range to see how tips would be shared.',
+    'tippool.preview_btn': '🔍 Calculate',
+    'tippool.overrides_title': '✏️ Manual Overrides',
+    'tippool.overrides_hint': 'Set a custom tip amount for an employee for a specific period, overriding calculated values.',
+    'tippool.override_btn': '💾 Set Override',
+    'mypay.tip_pool_title': '💰 Tip Pool Share',
+    'mypay.pooled_tips': 'Total pooled tips this period',
+    'mypay.your_tip_share': 'Your tip share',
+    'mypay.tip_pool_method': 'Pool method',
   },
   es: {
     'app.title': '🍽️ Sistema POS',
@@ -6021,6 +6109,25 @@ const L10N = {
     'order_sync.refunded': 'Pedido reembolsado de otro terminal',
     'order_sync.updated': 'Pedido actualizado de otro terminal',
     'order_sync.table': 'Mesa {number}',
+    'tippool.enabled': '✅ Activar Agrupación de Propinas',
+    'tippool.method': 'Método de Agrupación',
+    'tippool.method_hours': '⏱️ Basado en horas (horas × peso del rol)',
+    'tippool.method_equal': '🔄 División igualitaria por empleado',
+    'tippool.pool_percent': '% del Fondo de Propinas',
+    'tippool.pool_percent_hint': '% de propinas totales distribuidas al fondo',
+    'tippool.eligible_roles': 'Roles Elegibles',
+    'tippool.weights': 'Multiplicadores de Peso por Rol',
+    'tippool.save': '💾 Guardar Configuración',
+    'tippool.preview_title': '🔍 Vista Previa del Cálculo',
+    'tippool.preview_hint': 'Calcule la distribución del fondo de propinas para un rango de fechas.',
+    'tippool.preview_btn': '🔍 Calcular',
+    'tippool.overrides_title': '✏️ Anulaciones Manuales',
+    'tippool.overrides_hint': 'Establezca un monto de propina personalizado para un empleado en un período específico.',
+    'tippool.override_btn': '💾 Establecer Anulación',
+    'mypay.tip_pool_title': '💰 Participación en Fondo de Propinas',
+    'mypay.pooled_tips': 'Propinas totales agrupadas este período',
+    'mypay.your_tip_share': 'Su participación',
+    'mypay.tip_pool_method': 'Método de agrupación',
   }
 };
 
@@ -8312,6 +8419,7 @@ function showApp() {
     'asPrinter': perms.includes('manage_items'),  // Printer settings uses manage_items permission
     'asAds': perms.includes('manage_items'),  // Table-side ads uses manage_items permission
     'asCategories': perms.includes('manage_items'),  // Category management uses manage_items permission
+    'asTippool': perms.includes('manage_users'),  // Tip pool config uses manage_users permission
   };
   
   // Show/hide each sub-tab button
@@ -13414,6 +13522,7 @@ function switchAdminSection(sec) {
   else if (sec === 'drivers') { drvLoadDrivers(); }
   else if (sec === 'expenses') { loadExpenseList(); loadPnLReport(true); }
   else if (sec === 'payment') { loadPaymentConfig(); }
+  else if (sec === 'tippool') { loadTipPoolConfig(); }
 }
 
 // ═══════════ TIMESHEET CONFIG ═══════════
@@ -18852,6 +18961,30 @@ function renderMyPay(data) {
     cpTipsEl.textContent = cpTipsVal != null && cpTipsVal > 0 ? '$' + cpTipsVal.toFixed(2) : '$0.00';
   }
 
+  // Tip Pool section (current period)
+  const tpContainer = document.getElementById('myPayTipPool');
+  if (tpContainer) {
+    if (data.tip_pool_enabled && data.tip_pool_current) {
+      const tp = data.tip_pool_current;
+      const methodLabel = tp.method === 'hours' ? 'Hours-based' : 'Equal split';
+      tpContainer.style.display = '';
+      tpContainer.innerHTML = `
+        <div style="margin-top:8px;padding:12px;background:rgba(46,204,113,0.08);border:1px solid rgba(46,204,113,0.2);border-radius:var(--radius);">
+          <div style="font-size:14px;font-weight:600;color:#2ecc71;margin-bottom:6px;">💰 ${t('mypay.tip_pool_title')}</div>
+          <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:13px;">
+            <span>📊 ${t('mypay.pooled_tips')}: <strong>$${(tp.total_pool || 0).toFixed(2)}</strong></span>
+            <span>🎯 ${t('mypay.your_tip_share')}: <strong style="color:#2ecc71;">$${(tp.tip_share || 0).toFixed(2)}</strong></span>
+            <span style="color:var(--text2);">${t('mypay.tip_pool_method')}: ${methodLabel}</span>
+          </div>
+        </div>`;
+    } else if (data.tip_pool_enabled) {
+      tpContainer.style.display = '';
+      tpContainer.innerHTML = `<div style="margin-top:8px;padding:12px;background:rgba(46,204,113,0.05);border-radius:var(--radius);font-size:13px;color:var(--text2);">💰 ${t('mypay.tip_pool_title')}: No tips pooled this period yet.</div>`;
+    } else {
+      tpContainer.style.display = 'none';
+    }
+  }
+
   // Clock status banner
   const clockStatusEl = document.getElementById('myPayClockStatus');
   if (cp.is_clocked_in) {
@@ -19944,6 +20077,236 @@ function testKitchenSound() {
   // Restore after a short delay
   setTimeout(() => { kitchenSoundConfig = savedConfig; }, 500);
   showToast('🔊 Playing test sound at ' + Math.round(vol * 100) + '% volume', 'info');
+}
+
+
+// ═══════════ TIP POOL CONFIGURATION ═══════════
+
+/** Load tip pool configuration into the admin form */
+async function loadTipPoolConfig() {
+  if (!currentUser) return;
+  try {
+    const r = await fetch(BACKEND_URL + '/api/tip_pool/config', { method: 'GET' });
+    if (!r.ok) return;
+    const config = await r.json();
+    
+    document.getElementById('tpEnabled').checked = config.enabled === true;
+    document.getElementById('tpMethod').value = config.method || 'hours';
+    document.getElementById('tpPoolPercent').value = config.pool_percent || 100;
+    
+    // Build eligible roles checkboxes
+    const rolesContainer = document.getElementById('tpRolesContainer');
+    if (rolesContainer) {
+      const allRoles = ['user', 'admin', 'cook', 'owner'];
+      const eligible = config.eligible_roles || ['user', 'cook'];
+      rolesContainer.innerHTML = allRoles.map(role => {
+        const checked = eligible.includes(role) ? 'checked' : '';
+        const label = role.charAt(0).toUpperCase() + role.slice(1);
+        return `<label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:6px 10px;background:var(--card-alt);border-radius:var(--radius);font-size:13px;">
+          <input type="checkbox" class="tp-role-cb" value="${role}" ${checked} style="width:18px;height:18px;accent-color:var(--accent);"/>
+          ${label}
+        </label>`;
+      }).join('');
+    }
+    
+    // Build weights inputs
+    const weightsContainer = document.getElementById('tpWeightsContainer');
+    if (weightsContainer) {
+      const weights = config.weights || { user: 1.0, admin: 0.5, cook: 0.4, owner: 0.0 };
+      weightsContainer.innerHTML = Object.entries(weights).map(([role, weight]) => {
+        const label = role.charAt(0).toUpperCase() + role.slice(1);
+        return `<div style="display:flex;align-items:center;gap:6px;background:var(--card-alt);padding:6px 10px;border-radius:var(--radius);">
+          <span style="font-size:13px;min-width:50px;">${label}</span>
+          <input type="number" class="tp-weight-input" data-role="${role}" value="${weight}" min="0" max="5" step="0.1" style="width:70px;font-size:13px;padding:4px 8px;" aria-label="Weight for ${role}"/>
+        </div>`;
+      }).join('');
+    }
+    
+    // Load overrides list
+    loadTipPoolOverrides(config);
+    
+    // Populate override user dropdown from users
+    const overrideSelect = document.getElementById('tpOverrideUser');
+    if (overrideSelect && currentUser) {
+      try {
+        const r2 = await fetch(BACKEND_URL + '/api/users', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ adminPin: currentUser.id })
+        });
+        if (r2.ok) {
+          const usersData = await r2.json();
+          const userList = usersData.users || usersData || {};
+          let opts = '<option value="">— Select Employee —</option>';
+          Object.entries(userList).forEach(([id, u]) => {
+            if (u.name) opts += `<option value="${id}">${escHtml(u.name)} (${id})</option>`;
+          });
+          overrideSelect.innerHTML = opts;
+        }
+      } catch(e) { /* silent */ }
+    }
+    
+  } catch(e) {
+    showToast(t('network_error'), 'danger');
+  }
+}
+
+/** Load override list */
+function loadTipPoolOverrides(config) {
+  const container = document.getElementById('tpOverridesList');
+  if (!container) return;
+  const overrides = (config || {}).manual_overrides || [];
+  if (!overrides.length) {
+    container.innerHTML = '<div style="color:var(--text2);font-size:13px;padding:8px 0;">No manual overrides configured.</div>';
+    return;
+  }
+  container.innerHTML = '<div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:4px;">Existing Overrides:</div>' +
+    overrides.map((o, i) => {
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:var(--card-alt);border-radius:var(--radius);margin-bottom:4px;font-size:13px;">
+        <span>👤 ${o.user_id || '?'} • ${o.date_from || ''} → ${o.date_to || ''} • <strong>$${parseFloat(o.tip_amount || 0).toFixed(2)}</strong></span>
+        <span style="color:var(--text2);font-size:11px;">${o.set_at ? new Date(o.set_at).toLocaleDateString() : ''}</span>
+      </div>`;
+    }).join('');
+}
+
+/** Save tip pool configuration from form */
+async function saveTipPoolConfig() {
+  if (!currentUser) { showToast(t('login_required', 'Please log in first.'), 'warning'); return; }
+  
+  const enabled = document.getElementById('tpEnabled').checked;
+  const method = document.getElementById('tpMethod').value;
+  const poolPercent = parseFloat(document.getElementById('tpPoolPercent').value) || 100;
+  
+  // Collect eligible roles
+  const roleCbs = document.querySelectorAll('.tp-role-cb:checked');
+  const eligibleRoles = Array.from(roleCbs).map(cb => cb.value);
+  
+  // Collect weights
+  const weightInputs = document.querySelectorAll('.tp-weight-input');
+  const weights = {};
+  weightInputs.forEach(inp => {
+    weights[inp.dataset.role] = parseFloat(inp.value) || 0;
+  });
+  
+  try {
+    const r = await fetch(BACKEND_URL + '/api/tip_pool/config', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        adminPin: currentUser.id,
+        enabled, method, pool_percent: poolPercent,
+        eligible_roles: eligibleRoles,
+        weights
+      })
+    });
+    const data = await r.json();
+    if (!r.ok) { showToast(data.message || 'Failed to save', 'danger'); return; }
+    document.getElementById('tpSaveMsg').textContent = '✅ Saved!';
+    setTimeout(() => document.getElementById('tpSaveMsg').textContent = '', 3000);
+    showToast('Tip pool configuration saved!', 'success');
+    loadTipPoolOverrides(data.config);
+  } catch(e) {
+    showToast(t('network_error'), 'danger');
+  }
+}
+
+/** Preview tip pool calculation */
+async function previewTipPool() {
+  if (!currentUser) { showToast(t('login_required', 'Please log in first.'), 'warning'); return; }
+  
+  const from = document.getElementById('tpPreviewFrom').value;
+  const to = document.getElementById('tpPreviewTo').value;
+  
+  if (!from || !to) {
+    showToast('Please select a date range.', 'warning');
+    return;
+  }
+  
+  try {
+    const r = await fetch(BACKEND_URL + '/api/tip_pool/calculate', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin: currentUser.id, date_from: from, date_to: to })
+    });
+    const data = await r.json();
+    if (!r.ok) { showToast(data.message || 'Failed to calculate', 'danger'); return; }
+    
+    const resultDiv = document.getElementById('tpPreviewResult');
+    
+    if (!data.enabled) {
+      resultDiv.innerHTML = '<div class="empty-state">Tip pooling is not enabled.</div>';
+      return;
+    }
+    
+    if (!data.eligible_employees || !data.eligible_employees.length) {
+      resultDiv.innerHTML = `<div class="empty-state">${data.message || 'No eligible employees found.'}</div>`;
+      return;
+    }
+    
+    const methodLabel = data.method === 'hours' ? 'Hours-based (hours × weight)' : 'Equal split';
+    let rows = data.eligible_employees.map(e => `
+      <tr>
+        <td style="padding:6px 8px;">${e.user_name || e.user_id}</td>
+        <td style="padding:6px 8px;">${e.role || '—'}</td>
+        <td style="padding:6px 8px;text-align:right;">${(e.hours || 0).toFixed(2)}</td>
+        <td style="padding:6px 8px;text-align:right;">${e.weight || 1}</td>
+        <td style="padding:6px 8px;text-align:right;">${(e.share_weight || 0).toFixed(2)}</td>
+        <td style="padding:6px 8px;text-align:right;font-weight:600;color:var(--accent);">$${(e.tip_share || 0).toFixed(2)}${e.manual_override ? ' ✏️' : ''}</td>
+      </tr>
+    `).join('');
+    
+    resultDiv.innerHTML = `
+      <div style="background:var(--card-alt);border-radius:var(--radius);padding:12px;margin-bottom:8px;">
+        <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+          <span style="font-size:15px;font-weight:600;">💰 Total Pool: <span style="color:var(--accent);">$${(data.total_pool || 0).toFixed(2)}</span></span>
+          <span style="font-size:13px;color:var(--text2);">Method: ${methodLabel}</span>
+        </div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+          <thead><tr style="background:var(--bg2);">
+            <th style="padding:6px 8px;text-align:left;">Employee</th>
+            <th style="padding:6px 8px;text-align:left;">Role</th>
+            <th style="padding:6px 8px;text-align:right;">Hours</th>
+            <th style="padding:6px 8px;text-align:right;">Weight</th>
+            <th style="padding:6px 8px;text-align:right;">Share Wt</th>
+            <th style="padding:6px 8px;text-align:right;">Tip Share</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+  } catch(e) {
+    showToast(t('network_error'), 'danger');
+  }
+}
+
+/** Save a manual tip pool override */
+async function saveTipPoolOverride() {
+  if (!currentUser) { showToast(t('login_required', 'Please log in first.'), 'warning'); return; }
+  
+  const userId = document.getElementById('tpOverrideUser').value;
+  const from = document.getElementById('tpOverrideFrom').value;
+  const to = document.getElementById('tpOverrideTo').value;
+  const amount = parseFloat(document.getElementById('tpOverrideAmount').value) || 0;
+  
+  if (!userId || !from || !to) {
+    showToast('Please select an employee and date range.', 'warning');
+    return;
+  }
+  
+  try {
+    const r = await fetch(BACKEND_URL + '/api/tip_pool/override', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        adminPin: currentUser.id,
+        user_id: userId, date_from: from, date_to: to, tip_amount: amount
+      })
+    });
+    const data = await r.json();
+    if (!r.ok) { showToast(data.message || 'Failed to save override', 'danger'); return; }
+    showToast('Tip pool override saved!', 'success');
+    // Refresh
+    loadTipPoolConfig();
+  } catch(e) {
+    showToast(t('network_error'), 'danger');
+  }
 }
 
 

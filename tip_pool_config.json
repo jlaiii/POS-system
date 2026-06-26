@@ -1,0 +1,16 @@
+{
+    "enabled": false,
+    "method": "hours",
+    "pool_percent": 100.0,
+    "eligible_roles": [
+        "user",
+        "cook"
+    ],
+    "weights": {
+        "admin": 0.5,
+        "cook": 0.4,
+        "owner": 0.0,
+        "user": 1.0
+    },
+    "manual_overrides": []
+}

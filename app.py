@@ -174,6 +174,7 @@ DRIVERS_FILE = 'drivers.json'  # Delivery driver management
 EXPENSES_FILE = 'expenses.json'  # Business expense tracking
 
 PAYMENT_CONFIG_FILE = 'payment_config.json'  # Payment terminal configuration (gateway, IP, port, API keys)
+TIP_POOL_CONFIG_FILE = 'tip_pool_config.json'  # Tip pooling and distribution configuration
 
 # --- Platform / Multi-Tenant Constants ---
 GLOCAL_DIR = 'data/global'  # Global platform data directory
@@ -1047,6 +1048,208 @@ def save_timesheet_config(config):
             config[k] = v
     save_json_data(TIMESHEET_CONFIG_FILE, config)
 
+
+# ═══════════ TIP POOL CONFIGURATION ═══════════
+
+def get_tip_pool_config():
+    """Load tip pool configuration with defaults."""
+    config = load_json_data(TIP_POOL_CONFIG_FILE)
+    if not isinstance(config, dict):
+        config = {}
+    defaults = {
+        'enabled': False,
+        'method': 'hours',
+        'pool_percent': 100,
+        'eligible_roles': ['user', 'cook'],
+        'weights': {'user': 1.0, 'admin': 0.5, 'cook': 0.4, 'owner': 0.0},
+        'manual_overrides': []
+    }
+    for k, v in defaults.items():
+        if k not in config:
+            config[k] = v
+    return config
+
+
+def save_tip_pool_config(config):
+    """Save tip pool config with defaults."""
+    defaults = {
+        'enabled': False,
+        'method': 'hours',
+        'pool_percent': 100,
+        'eligible_roles': ['user', 'cook'],
+        'weights': {'user': 1.0, 'admin': 0.5, 'cook': 0.4, 'owner': 0.0},
+        'manual_overrides': []
+    }
+    for k, v in defaults.items():
+        if k not in config:
+            config[k] = v
+    save_json_data(TIP_POOL_CONFIG_FILE, config)
+
+
+def calculate_tip_pool(date_from, date_to, shift_log, orders, users):
+    """Core tip pool calculation engine.
+    
+    Args:
+        date_from, date_to: ISO date strings for the period
+        shift_log: list of completed shift records
+        orders: list of order records
+        users: dict of user records keyed by user_id
+    
+    Returns:
+        dict with:
+            - total_pool: total tips collected in period
+            - eligible_employees: list of {user_id, user_name, role, hours, weight, share_weight, tip_share}
+            - method: the pooling method used
+            - pool_percent: % of tips pooled
+    """
+    tp_config = get_tip_pool_config()
+    if not tp_config.get('enabled'):
+        return {'enabled': False, 'message': 'Tip pooling is not enabled.'}
+
+    method = tp_config.get('method', 'hours')
+    pool_percent = float(tp_config.get('pool_percent', 100))
+    eligible_roles = tp_config.get('eligible_roles', ['user', 'cook'])
+    weights = tp_config.get('weights', {})
+    manual_overrides = tp_config.get('manual_overrides', [])
+
+    # Build override map: user_id -> manual_tip_share
+    override_map = {}
+    for ov in manual_overrides:
+        if ov.get('date_from') and ov.get('date_to'):
+            # Check if override period overlaps with query period
+            if date_from <= ov.get('date_to', '') and date_to >= ov.get('date_from', ''):
+                override_map[ov.get('user_id')] = float(ov.get('tip_amount', 0))
+
+    # Filter orders by date range
+    def in_range(dt_str):
+        if not dt_str:
+            return False
+        try:
+            dt = datetime.fromisoformat(dt_str)
+        except (ValueError, TypeError):
+            return False
+        if date_from:
+            try:
+                if dt < datetime.fromisoformat(date_from):
+                    return False
+            except ValueError:
+                pass
+        if date_to:
+            try:
+                dt_end = datetime.fromisoformat(date_to + 'T23:59:59') if 'T' not in date_to else datetime.fromisoformat(date_to)
+                if dt > dt_end:
+                    return False
+            except ValueError:
+                pass
+        return True
+
+    # Calculate total pooled tips from orders in range
+    total_pool = 0.0
+    for o in orders:
+        if in_range(o.get('date', '')):
+            tip = float(o.get('tip_amount') or 0)
+            total_pool += tip
+
+    # Only pool a percentage of tips
+    total_pool = round(total_pool * pool_percent / 100, 2)
+
+    if total_pool <= 0:
+        return {
+            'enabled': True,
+            'method': method,
+            'pool_percent': pool_percent,
+            'total_pool': 0,
+            'eligible_employees': [],
+            'message': 'No tips to pool in this period.'
+        }
+
+    # Gather eligible employees with shifts in range
+    employee_data = {}  # user_id -> {name, role, hours, weight}
+
+    # Build a reverse mapping: role is stored on user record
+    for s in shift_log:
+        uid = s.get('user_id', '')
+        if not uid or uid not in users:
+            continue
+        if not in_range(s.get('clock_in_time', '')):
+            continue
+
+        u = users[uid]
+        role = u.get('role', 'user')
+        name = u.get('name', 'Unknown')
+
+        if role not in eligible_roles:
+            continue
+
+        paid = s.get('paid_hours', s.get('duration_hours', 0))
+        if uid not in employee_data:
+            employee_data[uid] = {
+                'user_id': uid,
+                'user_name': name,
+                'role': role,
+                'hours': 0.0,
+                'weight': float(weights.get(role, 1.0)),
+                'shift_count': 0
+            }
+        employee_data[uid]['hours'] += paid
+        employee_data[uid]['shift_count'] += 1
+
+    if not employee_data:
+        return {
+            'enabled': True,
+            'method': method,
+            'pool_percent': pool_percent,
+            'total_pool': total_pool,
+            'eligible_employees': [],
+            'message': 'No eligible employees with shifts in this period.'
+        }
+
+    # Calculate shares
+    eligible_list = list(employee_data.values())
+    for e in eligible_list:
+        e['hours'] = round(e['hours'], 2)
+
+    if method == 'equal':
+        # Equal split per employee (everyone gets same amount)
+        share_per_employee = round(total_pool / len(eligible_list), 2)
+        for e in eligible_list:
+            e['share_weight'] = 1
+            e['tip_share'] = share_per_employee
+
+    elif method == 'hours':
+        # Weighted by hours * role weight
+        total_weighted = sum(e['hours'] * e['weight'] for e in eligible_list)
+        if total_weighted <= 0:
+            total_weighted = 1
+        for e in eligible_list:
+            e['share_weight'] = round(e['hours'] * e['weight'], 2)
+            e['tip_share'] = round((e['hours'] * e['weight'] / total_weighted) * total_pool, 2)
+
+    else:
+        # Default to equal
+        share_per_employee = round(total_pool / max(len(eligible_list), 1), 2)
+        for e in eligible_list:
+            e['share_weight'] = 1
+            e['tip_share'] = share_per_employee
+
+    # Apply manual overrides if any
+    for e in eligible_list:
+        uid = e['user_id']
+        if uid in override_map:
+            e['tip_share'] = override_map[uid]
+            e['manual_override'] = True
+
+    # Round shares and adjust for rounding
+    for e in eligible_list:
+        e['tip_share'] = round(e['tip_share'], 2)
+
+    return {
+        'enabled': True,
+        'method': method,
+        'pool_percent': pool_percent,
+        'total_pool': total_pool,
+        'eligible_employees': eligible_list
+    }
 
 
 def fire_webhooks(order_data):
@@ -10694,6 +10897,30 @@ def employee_my_pay():
         'tip_count': ytd_tip_count
     }
 
+    # Calculate tip pool share for current period (if enabled)
+    tip_pool_current = None
+    tp_cfg = get_tip_pool_config()
+    if tp_cfg.get('enabled'):
+        try:
+            pool_result = calculate_tip_pool(
+                monday.strftime('%Y-%m-%d'),
+                sunday.strftime('%Y-%m-%d'),
+                user_shifts,
+                orders_data,
+                users
+            )
+            if pool_result.get('enabled') and pool_result.get('eligible_employees'):
+                for emp in pool_result['eligible_employees']:
+                    if emp.get('user_id') == user_id:
+                        tip_pool_current = {
+                            'total_pool': pool_result.get('total_pool', 0),
+                            'tip_share': emp.get('tip_share', 0),
+                            'method': pool_result.get('method', 'hours')
+                        }
+                        break
+        except Exception:
+            tip_pool_current = None
+
     return jsonify({
         'message': 'Employee pay data retrieved',
         'user_name': user_name,
@@ -10707,7 +10934,9 @@ def employee_my_pay():
         },
         'current_period': current_period,
         'pay_history': past_periods,
-        'ytd': ytd
+        'ytd': ytd,
+        'tip_pool_enabled': get_tip_pool_config().get('enabled', False),
+        'tip_pool_current': tip_pool_current if get_tip_pool_config().get('enabled') else None
     })
 
 
@@ -10901,6 +11130,33 @@ def employee_pay_stub_pdf():
     safe_name = _html.escape(user_name)
     safe_id = _html.escape(user_id)
 
+    # Tip pool data for this period
+    tip_pool_html = ''
+    tp_config = get_tip_pool_config()
+    if tp_config.get('enabled'):
+        date_from_str = week_start.strftime('%Y-%m-%d')
+        date_to_str = week_end.strftime('%Y-%m-%d')
+        all_shifts = load_json_data(SHIFT_FILE)
+        all_orders = load_json_data(ORDERS_FILE)
+        pool_result = calculate_tip_pool(date_from_str, date_to_str, all_shifts, all_orders, users)
+        if pool_result.get('enabled') and pool_result.get('total_pool', 0) > 0:
+            user_share = 0
+            for emp in pool_result.get('eligible_employees', []):
+                if emp.get('user_id') == user_id:
+                    user_share = emp.get('tip_share', 0)
+                    break
+            pool_total = pool_result.get('total_pool', 0)
+            pool_method = pool_result.get('method', 'hours')
+            method_label = 'Hours-based' if pool_method == 'hours' else 'Equal split'
+            tip_pool_html = f'''<div style="margin-top:20px;padding-top:14px;border-top:1px solid #ddd;">
+  <h3 style="font-size:11pt;color:#1a1a2e;margin:0 0 8px;">💰 Tip Pool Distribution ({method_label})</h3>
+  <table>
+    <tr><td>Total Pooled Tips</td><td class="right">${pool_total:.2f}</td></tr>
+    <tr><td>Pool Method</td><td class="right">{method_label}</td></tr>
+    <tr style="font-weight:700;color:#1a1a2e;"><td>Your Tip Share</td><td class="right">${user_share:.2f}</td></tr>
+  </table>
+</div>'''
+
     html = f'''<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11012,6 +11268,9 @@ def employee_pay_stub_pdf():
     <tr style="font-weight:700;color:#1a1a2e;"><td>YTD Gross Pay</td><td class="right">{ytd_gross_str}</td></tr>
   </table>
 </div>
+
+<!-- Tip Pool Section -->
+{tip_pool_html}
 
 <div class="footer">
   <strong>POS System</strong> — Pay Stub generated on {now_str}<br>
@@ -11127,6 +11386,108 @@ def employee_pay_history_csv():
         'csv': csv_content,
         'filename': f'pay_history_{user_id}.csv'
     })
+
+
+# ═══════════ TIP POOL API ENDPOINTS ═══════════
+
+@app.route('/api/tip_pool/config', methods=['GET', 'POST'])
+def tip_pool_config():
+    """Get or save tip pool configuration."""
+    if request.method == 'GET':
+        return jsonify(get_tip_pool_config())
+
+    data = request.json or {}
+    admin_pin = (data.get('adminPin') or '').strip()
+
+    if not check_perm(admin_pin, 'manage_users'):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    # Validate and save
+    new_config = {
+        'enabled': bool(data.get('enabled', False)),
+        'method': str(data.get('method', 'hours')),
+        'pool_percent': float(data.get('pool_percent', 100)),
+        'eligible_roles': data.get('eligible_roles', ['user', 'cook']),
+        'weights': data.get('weights', {'user': 1.0, 'admin': 0.5, 'cook': 0.4, 'owner': 0.0}),
+        'manual_overrides': data.get('manual_overrides', [])
+    }
+    save_tip_pool_config(new_config)
+    log_activity('tip_pool_config_updated', admin_pin, 'admin', {'config': new_config})
+    return jsonify({'message': 'Tip pool configuration saved.', 'config': new_config})
+
+
+@app.route('/api/tip_pool/calculate', methods=['POST'])
+def tip_pool_calculate():
+    """Calculate tip pool for a given date range."""
+    data = request.json or {}
+    admin_pin = (data.get('adminPin') or '').strip()
+
+    if not check_perm(admin_pin, 'view_timesheet'):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    date_from = (data.get('date_from') or '').strip()
+    date_to = (data.get('date_to') or '').strip()
+
+    if not date_from or not date_to:
+        return jsonify({'message': 'date_from and date_to are required.'}), 400
+
+    shift_log = load_json_data(SHIFT_FILE)
+    orders = load_json_data(ORDERS_FILE)
+    users = load_json_data(USERS_FILE)
+
+    result = calculate_tip_pool(date_from, date_to, shift_log, orders, users)
+    return jsonify(result)
+
+
+@app.route('/api/tip_pool/override', methods=['POST'])
+def tip_pool_override():
+    """Manager override for manual tip amounts per employee."""
+    data = request.json or {}
+    admin_pin = (data.get('adminPin') or '').strip()
+
+    if not check_perm(admin_pin, 'manage_users'):
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
+    user_id = (data.get('user_id') or '').strip()
+    date_from = (data.get('date_from') or '').strip()
+    date_to = (data.get('date_to') or '').strip()
+    tip_amount = float(data.get('tip_amount', 0))
+
+    if not user_id or not date_from or not date_to:
+        return jsonify({'message': 'user_id, date_from, and date_to are required.'}), 400
+
+    tip_amount = max(0, tip_amount)
+
+    config = get_tip_pool_config()
+    overrides = config.get('manual_overrides', [])
+
+    # Remove existing override for this user + period
+    overrides = [
+        o for o in overrides
+        if not (o.get('user_id') == user_id and o.get('date_from') == date_from and o.get('date_to') == date_to)
+    ]
+
+    if tip_amount > 0:
+        overrides.append({
+            'user_id': user_id,
+            'date_from': date_from,
+            'date_to': date_to,
+            'tip_amount': tip_amount,
+            'set_by': admin_pin,
+            'set_at': datetime.now().isoformat()
+        })
+
+    config['manual_overrides'] = overrides
+    save_tip_pool_config(config)
+
+    log_activity('tip_pool_override', admin_pin, 'admin', {
+        'user_id': user_id,
+        'date_from': date_from,
+        'date_to': date_to,
+        'tip_amount': tip_amount
+    })
+
+    return jsonify({'message': 'Tip pool override saved.', 'overrides': overrides})
 
 
 @app.route('/api/employee/leaderboard', methods=['POST'])
@@ -15874,6 +16235,9 @@ def timesheet_pay_period():
         default_pay_rate = users.get(uid, {}).get('pay_rate', None)
         has_any_rate = default_pay_rate is not None and default_pay_rate > 0
 
+        # Sort shifts by clock_in_time before calculating pay
+        shifts_sorted = sorted(ud['shifts'], key=lambda s: s.get('clock_in_time', ''))
+
         # Calculate estimated pay using per-shift pay_rate overrides
         # If a shift has its own pay_rate, use that; otherwise use the user's default rate
         estimated_pay = None
@@ -15889,9 +16253,6 @@ def timesheet_pay_period():
 
         # Effective rate (weighted average for display)
         effective_rate = round(per_shift_earnings / total_hours, 2) if has_any_rate and total_hours > 0 else (default_pay_rate or 0)
-
-        # Sort shifts by clock_in_time
-        shifts_sorted = sorted(ud['shifts'], key=lambda s: s.get('clock_in_time', ''))
 
         # Add per-shift OT flags
         shifts_with_ot = []
@@ -15936,10 +16297,24 @@ def timesheet_pay_period():
     # Sort by total_hours descending
     results.sort(key=lambda r: r['total_hours'], reverse=True)
 
+    # Include tip pool data if enabled
+    tip_pool_result = None
+    tp_config = get_tip_pool_config()
+    if tp_config.get('enabled'):
+        orders = load_json_data(ORDERS_FILE)
+        users = load_json_data(USERS_FILE)
+        tip_pool_result = calculate_tip_pool(date_from or '2000-01-01', date_to or '2099-12-31', shift_log, orders, users)
+        # Attach tip_share to each employee result
+        if tip_pool_result.get('eligible_employees'):
+            pool_map = {e['user_id']: e['tip_share'] for e in tip_pool_result['eligible_employees']}
+            for emp in results:
+                emp['tip_share'] = pool_map.get(emp['user_id'], 0)
+
     return jsonify({
         'message': 'Pay period summary retrieved',
         'employees': results,
-        'total_employees': len(results)
+        'total_employees': len(results),
+        'tip_pool': tip_pool_result
     })
 
 
