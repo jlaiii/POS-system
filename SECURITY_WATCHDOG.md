@@ -1,12 +1,12 @@
 # POS Security Watchdog
 
-> Last run: 2026-06-26T00:58 UTC
+> Last run: 2026-06-26T01:23 UTC
 > Total events tracked: 38 (SEC-001 → SEC-038)
 > Active blocks: 0 IPs
 > Unresolved alerts: 10 (SEC-029→038 MEDIUM, same off-hours localhost pattern)
-> Run result: Silent — 0 new events since last run (00:42 UTC). No activity detected. All clear.
+> Run result: Silent — same known cron-testing pattern continues. No new security threats.
 
-## Current Run Findings (00:42 UTC — ~16 min window)
+## Current Run Findings (00:58–01:23 UTC, ~25 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -15,25 +15,30 @@ None.
 None.
 
 ### 🟡 MEDIUM (0 — this window)
-No new MEDIUM findings this window. Owner admin_login at 00:39 is same known pattern as SEC-029→038. See Unresolved list below.
+No new MEDIUM findings. Same off-hours Owner login pattern continues (now 11 events logged since 22:54). See Unresolved list.
 
 ### 🟢 LOW (0)
 No new LOW findings.
 
-### ℹ️ Activity Summary (00:10–00:42 UTC, ~32 min window)
+### ℹ️ Activity Summary (00:58–01:23 UTC, ~25 min window)
 
-**Server**: UP — Flask running on :5000.
+**Server**: UP — Flask running on :5000 (HTTP 200).
 
 | Time (UTC) | Event | Detail |
 |---|---|---|
-| 00:39:54 | admin_login — Owner (1111) | success, 127.0.0.1, curl/8.5.0 — same pattern as SEC-029→038 |
+| 01:16:04 | login — Owner (1111) | success, 127.0.0.1, curl/8.5.0 — same pattern as SEC-029→038 |
+| 01:16:22 | submit_order (Order 105) | user=null (unauthenticated), $6.49, cash $10 — Reliability Bot order lifecycle test |
+| 01:16:22 | refund_order — Owner (1111) | Immediate refund of Order 105, tracked in refunded_orders.json |
+| 01:16:39 | add_item — Owner (1111) | Test item add via curl |
+| 01:16:39 | delete_item — Owner (1111) | Test item delete |
+| 01:16:45 | delete_item — Owner (1111) | Test item delete |
 
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: 0 IPs with 5+ failed logins in last 5 min. 0 failed logins in window.
 - **Account enumeration**: 0 new probes this window.
 - **Failed logins since last run**: 0 new fails.
 - **Successful-after-failure**: None — no account had 3+ failures then a success.
-- **Off-hours activity**: 1 event — Owner admin_login at 00:39 from localhost. Same known pattern.
+- **Off-hours activity**: 1 event — Owner login at 01:16 from localhost. Same known pattern (11th occurrence).
 - **Cross-IP targeting**: None. All 127.0.0.1.
 - **Known IPs**: Unchanged.
 
@@ -44,17 +49,18 @@ No new LOW findings.
 - **Owner 2FA still NOT enabled** (totp_enabled=false) — persistent known issue. Owner is exempted in security_config (`exempted_users: ["1111"]`).
 
 ### 💰 Financial Check
-- No new orders this window.
-- No suspicious financial activity.
-- Zero $0.00 orders: 1 (pre-existing).
+- **Order 105** ($6.49: 1 Hamburger - Normal, cash $10) submitted and immediately refunded — Reliability Bot lifecycle test. No financial impact.
+- Zero $0.00 orders: 1 (pre-existing Order 90).
 - Zero 100% discounts: 0.
+- Refund rate per employee: N/A (test orders by Owner/system).
 
 ### 📂 File Integrity
-- All 47 JSON files parseable. No unexpected shrinkage.
+- All **49** JSON files parseable (was 47, now 49 with .watchdog_file_sizes.json). No unexpected shrinkage.
 - Owner account (1111) present, active, not banned.
 - 8 user accounts — no changes.
 - No unexpected files (.php, .sh outside scripts/).
 - security_config.json: unchanged since 2026-06-25T23:23:44.
+- Order 105 correctly saved in both orders.json (status=refunded) and refunded_orders.json.
 
 ## Active Blocks
 None.
@@ -73,6 +79,7 @@ None.
 - **SEC-036** (2026-06-25T23:26:27): Off-hours login — Owner (1111) from 127.0.0.1. Cron testing.
 - **SEC-037** (2026-06-25T23:48:44): Off-hours login — Owner (1111) from 127.0.0.1. Cron testing.
 - **SEC-038** (2026-06-26T00:10:39): Off-hours login — Owner (1111) from 127.0.0.1. Cron testing.
+- *(01:16 login not escalated — same known pattern, 11th occurrence, localhost only)*
 
 ## Unresolved LOW Events
 - **LOW-003** (prev run): 6 failed logins for 9999 from localhost, auto-blocked. False positive — cron testing.
@@ -88,13 +95,13 @@ None.
 - **Inventory artifact**: "TestItem" in inventory.json (stock=100, unit_cost=0.5) — pre-existing dev entry.
 
 ## System State
-||||||||||||||| Current time: 2026-06-26T00:58 UTC — off-hours (22:00-06:00) |
-||||||||||||||| Activity entries since last run: 0 (none) |
-||||||||||||||| Failed logins since last run: 0 |
-||||||||||||||| Known IPs: Unchanged. All localhost. |
-||||||||||||||| Blocked IPs: 0 |
-||||||||||||||| Config changes: None |
-||||||||||||||| File integrity: All 47 JSON files parseable. No unexpected files. |
-||||||||||||||| Users: 8 accounts. Owner 2FA still NOT enabled (totp_enabled=false, exempted). |
-||||||||||||||| Security events: 38 tracked (SEC-001→038). 10 unresolved MEDIUM. |
-||||||||||||||| Server: UP (:5000 — Flask running). |
+|||||||||||||||| Current time: 2026-06-26T01:23 UTC — off-hours (22:00-06:00) |
+|||||||||||||||| Activity entries since last run: 6 (Owner cron testing) |
+|||||||||||||||| Failed logins since last run: 0 |
+|||||||||||||||| Known IPs: Unchanged. All localhost. |
+|||||||||||||||| Blocked IPs: 0 |
+|||||||||||||||| Config changes: None |
+|||||||||||||||| File integrity: All 49 JSON files parseable. No unexpected files. Order 105 lifecycle intact. |
+|||||||||||||||| Users: 8 accounts. Owner 2FA still NOT enabled (totp_enabled=false, exempted). |
+|||||||||||||||| Security events: 38 tracked (SEC-001→038). 10 unresolved MEDIUM. |
+|||||||||||||||| Server: UP (:5000 — Flask running). |
