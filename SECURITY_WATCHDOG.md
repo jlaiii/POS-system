@@ -1,12 +1,12 @@
 # POS Security Watchdog
 
-> Last run: 2026-06-26T16:51 UTC
+> Last run: 2026-06-26T17:29 UTC
 > Total events tracked: 46 (SEC-001→SEC-045, SEC-004 absent; SEC-029→045 batched-resolved)
 > Active blocks: 0 IPs
 > Unresolved alerts: 0 (all resolved this run)
-> Run result: [SILENT] — no threats detected, zero activity since last run.
+> Run result: [SILENT] — no threats detected, minimal activity since last run.
 
-## Current Run Findings (16:34–16:51 UTC, ~17 min window)
+## Current Run Findings (16:51–17:11 UTC, ~20 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -20,12 +20,12 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (16:34–16:51 UTC, ~17 min window)
+### ℹ️ Activity Summary (16:51–17:11 UTC, ~20 min window)
 
 **Server**: UP — serving HTTP 200 on port 5000 (root endpoint).
 
-**Activity**: Zero — no logins, no API calls, nothing since last run.
-- 0 login events.
+**Activity**: Minimal — 1 Owner login from localhost, no API calls, no failed attempts.
+- 1 login event (Owner/1111, 127.0.0.1, successful).
 - 0 failed logins.
 - No API activity.
 - No external IPs.
@@ -33,10 +33,10 @@ None.
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: 0 failed logins in last 5 min window. Clean.
 - **Account enumeration**: 0 probes against non-existent user IDs.
-- **Successful-after-failure**: No pattern — no logins at all.
-- **Off-hours activity**: N/A — current time 11:51 CT normal hours.
+- **Successful-after-failure**: No pattern — no failed logins to follow.
+- **Off-hours activity**: N/A — current time 12:11 CT normal hours.
 - **Cross-IP targeting**: None.
-- **Known IPs**: No new IPs.
+- **Known IPs**: No new IPs. All known (127.0.0.1 only).
 
 ### 🔒 Security Config
 - `blocked_ips`: [] — no active blocks.
@@ -48,33 +48,33 @@ None.
 - No new orders in this window.
 
 ### 📂 File Integrity
-- All JSON files parseable and intact (combo_items.json absent — non-critical, optional file).
+- All JSON files parseable and intact.
 - Owner account (1111) present, active, not banned.
-- Git status: clean.
+- Git status: activity_log.json + login_attempts.json dirty (1 login event, uncommitted).
 - security_config.json: unchanged.
 - No suspicious files detected.
-- Activity log: 14,749 entries, no truncation.
+- Activity log: 14,763 entries, no truncation.
 
 ## Active Blocks
 None.
 
 ## Resolved This Run
-- **SEC-029→SEC-045** (17 MEDIUM events, 2026-06-25T22:54→2026-06-26T05:55): Batch-resolved. All off-hours logins from 127.0.0.1 during cron testing. No recurrence in 11+ hours. No external IPs ever involved. Clean resolution.
+None.
 
 ## Unresolved Events
 None.
 
 ## Previous Run Findings (carried forward)
-No change — zero activity this window.
+No change — minimal activity this window (1 normal Owner login).
 
 ## System State
-||||||||||||||||||||||||||||||||||||||| Current time: 2026-06-26T16:51 UTC — 11:51 CT (normal business hours)                      |
-||||||||||||||||||||||||||||||||||||| Activity since last run: NONE                                                               |
-|||||||||||||||||||||||||||||||||||| Failed logins: 0 (last 5 min), 0 (this window)                       |
-||||||||||||||||||||||||||||||||||||| Successful logins: 0 (this window)                |
-||||||||||||||||||||||||||||||||||||| Blocked IPs: 0                                                                       |
-||||||||||||||||||||||||||||||||||||| Config changes: None                                                                 |
-|||||||||||||||||||||||||||||||||||||| File integrity: OK — all JSON parseable. Git: clean.                                     |
-||||||||||||||||||||||||||||||||||||| Users: 8 accounts. Owner 2FA exempted. Admin 2FA: 2222=no, 7788=no (pre-existing gap). |
-||||||||||||||||||||||||||||||||||||| Security events: 46 tracked, 0 unresolved. All previously unresolved MEDIUM batched-resolved. |
-||||||||||||||||||||||||||||||||||||| Server: UP (:5000 — HTTP 200).                                                         |
+|||||||||||||||||||||||||||||||||||||||| Current time: 2026-06-26T17:11 UTC — 12:11 CT (normal business hours)                      |
+|||||||||||||||||||||||||||||||||||||| Activity since last run: Minimal (1 Owner login from localhost)                             |
+||||||||||||||||||||||||||||||||||||| Failed logins: 0 (last 5 min), 0 (this window)                       |
+|||||||||||||||||||||||||||||||||||||| Successful logins: 1 (Owner/1111, this window)                |
+|||||||||||||||||||||||||||||||||||||| Blocked IPs: 0                                                                       |
+|||||||||||||||||||||||||||||||||||||| Config changes: None                                                                 |
+||||||||||||||||||||||||||||||||||||||| File integrity: OK — all JSON parseable. Git: 2 dirty files (normal runtime data).      |
+|||||||||||||||||||||||||||||||||||||| Users: 8 accounts. Owner 2FA exempted. Admin 2FA: 2222=no, 7788=no (pre-existing gap). |
+|||||||||||||||||||||||||||||||||||||| Security events: 46 tracked, 0 unresolved. All previously unresolved MEDIUM batched-resolved. |
+|||||||||||||||||||||||||||||||||||||| Server: UP (:5000 — HTTP 200).                                                         |
