@@ -1938,5 +1938,40 @@
         "details": {
             "status": "success"
         }
+    },
+    {
+        "user_id": null,
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-26T07:35:59.155183",
+        "success": false,
+        "user_agent": "curl/8.5.0",
+        "method": "pin",
+        "details": {
+            "reason": "invalid_pin",
+            "attempt": 1
+        }
+    },
+    {
+        "user_id": null,
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-26T07:36:08.629805",
+        "success": false,
+        "user_agent": "curl/8.5.0",
+        "method": "pin",
+        "details": {
+            "reason": "invalid_pin",
+            "attempt": 1
+        }
+    },
+    {
+        "user_id": "1111",
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-26T07:36:19.593702",
+        "success": true,
+        "user_agent": "curl/8.5.0",
+        "method": "pin",
+        "details": {
+            "status": "success"
+        }
     }
 ]

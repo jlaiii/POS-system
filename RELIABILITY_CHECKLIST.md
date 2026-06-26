@@ -1,31 +1,31 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-26T07:12 UTC
-> Total checks: 735
-> Healthy: 735 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-26T07:35 UTC
+> Total checks: 748
+> Healthy: 748 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 — 200 OK, gunicorn+gevent via scripts/run_flask.sh, health endpoint {"status":"ok"} [verified 07:12]
-- [x] All JSON data files exist and are valid — all 15 JSON files valid, parseable [verified 07:12]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin'), 8 users total [verified 07:12]
-- [x] Git repo is clean — committed dirty data files (9d5e5bf), repo clean [verified 07:12]
+- [x] Flask app responds on port 5000 — 200 OK, gunicorn+gevent via scripts/run_flask.sh, health endpoint {"status":"ok"} [verified 07:35]
+- [x] All JSON data files exist and are valid — all 15 JSON files valid, parseable [verified 07:35]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin'), 8 users total [verified 07:35]
+- [x] Git repo is clean — clean, no dirty files [verified 07:35]
 
 ## HOURLY (check if last check was >1h ago)
-- [x] /api/health — {"status":"ok"} (GET) [verified 06:18]
-- [x] Frontend loads — 200, HTML OK, 1.37MB [verified 07:12]
-- [x] /api/items returns items — 5 categories, 19 items (GET), pancakes visible [verified 06:18]
-- [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 48 shifts [verified 07:12]
-- [x] /api/admin_stats returns stats — POST, 200 OK, stats include avg $9.41 sale [verified 06:18]
-- [x] /api/login works with valid PIN — userId=1111, login OK, owner role, force_pin_change flag [verified 06:18]
-- [x] /api/clock/status works — Owner not clocked in (adminPin=1111) [verified 06:18]
-- [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 06:18]
-- [x] index.html size check — 1375135 bytes (normal, ~1.37MB) [verified 07:12]
-- [x] Disk space check — 36% used (OK) [verified 06:18]
-- [x] Memory check — 41% RAM used, swap active (OK) [verified 06:18]
-- [x] Backup integrity — latest backup valid, 50 files, all JSON valid (2026-06-26_07-04-25) [verified 07:12]
-- [x] inventory.json — 26 tracked items (dict format) [verified 07:12]
+- [x] /api/health — {"status":"ok"} (GET) [verified 07:35]
+- [x] Frontend loads — 200, HTML OK, 1.37MB [verified 07:35]
+- [x] /api/items returns items — 5 categories, 19 items (GET), all present [verified 07:35]
+- [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 48 shifts [verified 07:35]
+- [x] /api/admin_stats returns stats — POST, 200 OK, stats include message + stats keys [verified 07:35]
+- [x] /api/login works with valid PIN — userId=1111, login OK, owner role, force_pin_change flag [verified 07:35]
+- [x] /api/clock/status works — Owner not clocked in (adminPin=1111) [verified 07:35]
+- [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 07:35]
+- [x] index.html size check — 1375135 bytes (normal, ~1.37MB) [verified 07:35]
+- [x] Disk space check — 36% used (OK) [verified 07:35]
+- [x] Memory check — 41% RAM used (OK) [verified 07:35]
+- [x] Backup integrity — latest backup valid, 50 files, all JSON valid (2026-06-26_07-04-25) [verified 07:35]
+- [x] inventory.json — 26 tracked items (dict format) [verified 07:35]
 
 ## EVERY 4 HOURS
 - [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 200, 0 pending orders [verified 06:44]
