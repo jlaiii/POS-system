@@ -1,7 +1,7 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-26T16:18 UTC
-> Total checks: 900
-> Healthy: 900 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-26T16:41 UTC
+> Total checks: 906
+> Healthy: 906 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
@@ -16,14 +16,14 @@
 - [x] /api/health — {"status":"ok"} (GET) [verified 16:18]
 - [x] Frontend loads — 200, HTML OK, 1.37MB [verified 16:18]
 - [x] /api/items returns items — 5 categories (Breakfast/Drinks/Foods/Salads/Snacks), 19 items total [verified 16:18]
-- [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 50 shifts [verified 15:29]
+|- [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 50 shifts [verified 16:41]
 - [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 16:18]
 - [x] index.html size check — normal (1375239 bytes) [verified 16:18]
 - [x] Disk space check — 36% used (OK) [verified 16:18]
 - [x] Memory check — ~39% RAM used (OK) [verified 16:18]
 - [x] Backup integrity — latest backup (15:28, 49 JSON files all valid) [verified 16:18]
-- [x] CSV export — /api/export/shifts_csv returns CSV, 50 shifts [verified 15:29]
-- [x] Offline queue — /api/sync_orders exists, returns 'No orders provided' [verified 15:29]
+|- [x] CSV export — /api/export/shifts_csv returns CSV, 50 shifts [verified 16:41]
+|- [x] Offline queue — /api/sync_orders exists, returns 'No orders provided' [verified 16:41]
 - [x] /api/login works — POST with userId=1111, Login successful [verified 16:18]
 
 ## EVERY 4 HOURS
@@ -34,7 +34,7 @@
 - [x] Loyalty: points earned on order — 14 loyalty entries, endpoint working [verified 13:16]
 - [x] Cash register: /api/cash_drawer/status (POST with adminPin=1111) returns active=false, last closed Jun 24, 10 sessions [verified 16:18]
 - [x] Webhook: verify webhook config endpoint works — /api/security/discord_webhook returns config (not set), 200 OK [verified 14:41]
-- [x] Clock-in late detection: Maria PIN 3344, scheduled 09:00, clocked in at 10:48 → late_minutes=109 [verified 10:48]
+|- [x] Clock-in late detection: Maria PIN 3344, scheduled 09:00, clocked in at 10:48 → late_minutes=109, still in log [verified 16:41]
 - [x] Break tracking: start break → end break → verify break subtracted — 49 shifts, 4 with breaks, tracking active [verified 13:16]
 |- [x] Shift edit: shift data accessible via admin_shifts, 8 users tracked, edits present [verified 14:41]
 - [x] CSV export: verify /api/export/shifts_csv returns CSV — POST, 200, CSV content wrapped in JSON [verified 14:41]
