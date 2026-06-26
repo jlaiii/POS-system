@@ -686,5 +686,50 @@
         "reported_by": "IP Blocklist Manager",
         "resolved_at": "2026-06-26T23:01:50",
         "resolution": "Batch-resolved by Watchdog. Off-hours login from 127.0.0.1 during cron testing. Same pattern as SEC-009 through SEC-046. No external IPs involved. No real security concern."
+    },
+    {
+        "id": "SEC-048",
+        "created_at": "2026-06-26T23:38:04.883243",
+        "severity": "MEDIUM",
+        "category": "anomaly",
+        "status": "resolved",
+        "summary": "⚠️ Off-hours login: Owner (1111) at 23:38",
+        "detail": "User Owner (PIN 1111) logged in during off-hours (22:00‑06:00) from IP 127.0.0.1.",
+        "affected_user": "1111",
+        "affected_user_name": "Owner",
+        "related_event": null,
+        "reported_by": "IP Blocklist Manager",
+        "resolved_at": "2026-06-26T23:53:29",
+        "resolution": "Batch-resolved by Watchdog. Off-hours login from 127.0.0.1 during cron testing. Same pattern as SEC-009 through SEC-047. No external IPs involved. No real security concern."
+    },
+    {
+        "id": "SEC-049",
+        "created_at": "2026-06-26T23:38:28.867074",
+        "severity": "MEDIUM",
+        "category": "anomaly",
+        "status": "resolved",
+        "summary": "⚠️ Off-hours login: Owner (1111) at 23:38",
+        "detail": "User Owner (PIN 1111) logged in during off-hours (22:00‑06:00) from IP 127.0.0.1.",
+        "affected_user": "1111",
+        "affected_user_name": "Owner",
+        "related_event": null,
+        "reported_by": "IP Blocklist Manager",
+        "resolved_at": "2026-06-26T23:53:29",
+        "resolution": "Batch-resolved by Watchdog. Off-hours login from 127.0.0.1 during cron testing. Same pattern as SEC-009 through SEC-047."
+    },
+    {
+        "id": "SEC-050",
+        "created_at": "2026-06-26T23:38:42.284870",
+        "severity": "MEDIUM",
+        "category": "anomaly",
+        "status": "resolved",
+        "summary": "⚠️ Off-hours login: Owner (1111) at 23:38",
+        "detail": "User Owner (PIN 1111) logged in during off-hours (22:00‑06:00) from IP 127.0.0.1.",
+        "affected_user": "1111",
+        "affected_user_name": "Owner",
+        "related_event": null,
+        "reported_by": "IP Blocklist Manager",
+        "resolved_at": "2026-06-26T23:53:29",
+        "resolution": "Batch-resolved by Watchdog. Off-hours login from 127.0.0.1 during cron testing. Same pattern as SEC-009 through SEC-047."
     }
 ]
