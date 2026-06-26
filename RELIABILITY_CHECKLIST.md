@@ -1,16 +1,16 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-26T20:27 UTC
-> Total checks: 970
-> Healthy: 970 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-26T20:50 UTC
+> Total checks: 973
+> Healthy: 973 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 — 200 OK [verified 20:27]
-- [x] All JSON data files exist and are valid — all 15 core JSON files valid, parseable [verified 20:27]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', role=owner) [verified 20:27]
-- [x] Git repo is clean — clean [verified 20:27]
+- [x] Flask app responds on port 5000 — 200 OK [verified 20:50]
+- [x] All JSON data files exist and are valid — all 15 core JSON files valid, parseable [verified 20:50]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', role=owner) [verified 20:50]
+- [x] Git repo is clean — clean [verified 20:50]
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/health — {"status":"ok"} (GET) [verified 20:27]
@@ -43,9 +43,9 @@
 - [x] Special chars test: added \"Test \\\"Special\\\" 🎉 Item\" (emoji+quotes) → verified in items.json → deleted via /api/delete_item, 200 OK [verified 19:35]
 ## EVERY 12 HOURS
 - [x] Full app restart test: kill Flask → restart → verify all critical endpoints — Completed, gunicorn+gevent stable [verified 17:11]
-- [x] Concurrent write test: two rapid clock-ins → both succeeded, no data loss [verified 21:11]
-- [x] Large payload test: submit order with 50 items — Order 110 (50 items) → 200 OK → refunded [verified 08:21]
-- [x] Special chars test: user name with emoji, item name with quotes — Added and deleted Test "Special" 🎉 Item, handled correctly [verified 06:44]
+- [x] Concurrent write test: two rapid clock-ins (1234+5678, 1s apart) → both succeeded, shift_log.json has 52 records, no data loss [verified 20:50]
+- [x] Large payload test: submit order with 50 items — Order 116 (50 items) → 200 OK → refunded [verified 20:50]
+- [x] Special chars test: user name with emoji, item name with quotes — Added "Test \"Special\" 🎉 Item" (Snacks, $5.99) → verified in items.json → deleted, handled correctly [verified 20:50]
 - [x] app.py syntax check (python3 -m py_compile app.py) — SYNTAX OK [verified 19:06]
 - [x] index.html size check (alert if shrunk dramatically — possible corruption) — 1375239 bytes (normal, ~1.37MB) [verified 19:06]
 - [x] Disk space check: df -h, alert if >80% full — 36% used (14G/38G, OK) [verified 19:06]
