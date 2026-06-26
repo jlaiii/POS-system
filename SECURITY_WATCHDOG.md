@@ -1,12 +1,12 @@
 # POS Security Watchdog
 
-> Last run: 2026-06-26T21:12 UTC
+> Last run: 2026-06-26T21:29 UTC
 > Total events tracked: 46 (SEC-001→SEC-046, SEC-004 absent; all resolved)
 > Active blocks: 0 IPs
 > Unresolved alerts: 0
 > Run result: [SILENT] — no activity since last run.
 
-## Current Run Findings (20:54–21:12 UTC, ~18 min window)
+## Current Run Findings (21:12–21:29 UTC, ~17 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -20,7 +20,7 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (20:54–21:12 UTC, ~18 min window)
+### ℹ️ Activity Summary (21:12–21:29 UTC, ~17 min window)
 
 **Server**: UP — serving HTTP 200 on port 5000 (root endpoint).
 
@@ -69,7 +69,7 @@ None.
 - Admin 2FA gap remains: Manager (2222) and Manager Sarah (7788) lack 2FA despite `require_2fa_for_admins: true`. Owner (1111) is exempted via config. Pre-existing — no change.
 
 ## System State
-||||||||||||||||||||||||||||||||||||||||||||||||| Current time: 2026-06-26T21:12 UTC — normal business hours                                    |
+|||||||||||||||||||||||||||||||||||||||||||||||||| Current time: 2026-06-26T21:29 UTC — normal business hours                                    |
 ||||||||||||||||||||||||||||||||||||||||||||||||| Activity since last run: 0 logins, 0 activity events (none)                                |
 ||||||||||||||||||||||||||||||||||||||||||||||||| Failed logins: 0 (last 5 min), 0 (this window)                                              |
 ||||||||||||||||||||||||||||||||||||||||||||||||| Successful logins: 0 new (last successful at 20:27, previously reported)                    |
