@@ -1,12 +1,12 @@
 # POS Security Watchdog
 
-> Last run: 2026-06-26T11:31 UTC
-> Total events tracked: 45 (SEC-001→SEC-045, SEC-004 missing — never created)
-> Active blocks: 0 IPs
-> Unresolved alerts: 17 (SEC-029→SEC-045 MEDIUM, same off-hours localhost pattern)
-> Run result: [SILENT] — no new activity since last run. Server :5000 went down (Reliability Bot domain).
+|> Last run: 2026-06-26T11:48 UTC
+|> Total events tracked: 45 (SEC-001→SEC-045, SEC-004 missing — never created)
+|> Active blocks: 0 IPs
+|> Unresolved alerts: 17 (SEC-029→SEC-045 MEDIUM, same off-hours localhost pattern)
+|> Run result: [SILENT] — no new threats. Server crashed (13th Flask crash) but RelBot already fixed it.
 
-## Current Run Findings (10:57–11:14 UTC, ~17 min window)
+## Current Run Findings (11:31–11:48 UTC, ~17 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -20,36 +20,36 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (10:57–11:14 UTC, ~17 min window)
+### ℹ️ Activity Summary (11:31–11:48 UTC, ~17 min window)
 
-**Server**: UP — Flask on :5000 responding.
+**Server**: WAS DOWN at 11:31 UTC (13th Flask/gunicorn crash per git commit fa735f5). Fixed by Reliability Bot — gunicorn restarted, now responding 400 on /api/clock/status as expected.
 
-**Activity**: 3 events since last run — all from 127.0.0.1, all Reliability Bot testing:
-- **11:12:36** — login_failed (null user, 127.0.0.1) — RelBot testing invalid PIN before user deletion
-- **11:12:36** — delete_user (1111/Owner deleted RelBot Test User 9673, 127.0.0.1)
-- **11:12:50** — shift_edited (1111/Owner, RelBot shift edit test + restore original)
+**Activity**: 4 events since last run — all from 127.0.0.1, all within 33 seconds (11:34:54–11:35:27):
+- **11:34:54** — login_failed (null user, pin attempt 1, 127.0.0.1)
+- **11:34:55** — admin_login success (1111/Owner, 127.0.0.1) — 1s after null-user fail, different user
+- **11:35:03** — login_failed (null user, pin attempt 2, 127.0.0.1) — 8s after
+- **11:35:27** — login_failed (jayadmin, password method, invalid_credentials, 127.0.0.1) — 24s later
 
-All 3 events are Reliability Bot test pattern — same localhost cron testing as previous runs. Not real activity.
+All 4 events are localhost cron testing pattern — no external IPs involved.
 
 ### 📊 Login Security Deep-Dive
-- **Brute force check**: 1 failed login in last 5 min (127.0.0.1, 1 attempt only). No brute force.
-- **Account enumeration**: 1 probe from localhost (null user). Below 10-threshold.
-- **Failed logins since last run**: 1 new failed login at 11:12:36 — part of RelBot user deletion test.
-- **Successful-after-failure**: None. No successful login after the 1 failed attempt.
-- **Off-hours activity**: None. Current time 06:14 CT is outside the off-hours window (22:00-06:00 CT).
-- **Cross-IP targeting**: None. All activity from 127.0.0.1.
-- **Known IPs**: Unchanged. All known IPs are localhost/testing.
+- **Brute force check**: 3 failed logins in last ~17 min, all from 127.0.0.1. Below 5-threshold. No brute force.
+- **Account enumeration**: 2 null-PIN probes + 1 username probe (jayadmin). Below 10-threshold.
+- **Successful-after-failure**: admin_login (1111) at 11:34:55 was 1s after a null-user PIN fail. Different users — not a credential compromise scenario.
+- **Off-hours activity**: 11:34 UTC = 06:34 CT — technically in off-hours window (22:00-06:00 CT). However, this is Owner (1111) from 127.0.0.1, same cron testing pattern as SEC-029→SEC-045. Not a new finding — Owner exemption applies (exempted_users includes 1111).
+- **Cross-IP targeting**: None. All from 127.0.0.1.
+- **Known IPs**: Unchanged.
 
 ### 🔒 Security Config
 - `blocked_ips`: [] — no active blocks.
 - `auto_block_threshold`: 5 — unchanged.
 - `require_2fa_for_admins`: true — unchanged.
-- Config last modified: 2026-06-25T23:23 UTC (unchanged since last run).
+- Config last modified: 2026-06-25T23:23 UTC (unchanged).
 
 ### 💰 Financial Check
-- No new orders since last run. Order 111 remains refunded ($9.73 test).
-- 90 total orders in system (including cancelled/refunded). No suspicious patterns.
-- Order 108 remains pending (stale Grubhub test order — now ~17h old). No change.
+- No new orders, refunds, or transactions since last run.
+- Order 111 remains refunded ($9.73 test). No changes.
+- No suspicious patterns detected.
 
 ### 📂 File Integrity
 - All 49 JSON files parseable and intact.
@@ -57,7 +57,7 @@ All 3 events are Reliability Bot test pattern — same localhost cron testing as
 - 8 user accounts — data unchanged.
 - No unexpected files (.php, .sh, .exe).
 - security_config.json: unchanged.
-- Git status: clean — no dirty files. Last commit by Reliability Bot at 11:14 UTC.
+- Git status: clean — no dirty files. RelBot committed dirty activity_log + login_attempts at 11:37 UTC.
 ## Active Blocks
 None.
 
