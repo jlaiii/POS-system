@@ -1,12 +1,12 @@
 # POS Security Watchdog
 
-> Last run: 2026-06-26T09:33 UTC
+> Last run: 2026-06-26T09:55 UTC
 > Total events tracked: 44 (SEC-001→SEC-045, SEC-004 missing — never created)
 > Active blocks: 0 IPs
 > Unresolved alerts: 17 (SEC-029→045 MEDIUM, same off-hours localhost pattern)
 > Run result: [SILENT] — no activity since last run, all clear.
 
-## Current Run Findings (09:12–09:33 UTC, ~21 min window)
+## Current Run Findings (09:33–09:55 UTC, ~22 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -20,20 +20,20 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (09:12–09:33 UTC, ~21 min window)
+### ℹ️ Activity Summary (09:33–09:55 UTC, ~22 min window)
 
-**Server**: UP — Flask on :5000 responding (400 on /api/clock/status without auth).
+**Server**: UP — Flask on :5000 responding (400 on /api/clock/status).
 
 **Activity**: 0 events logged since last run. No logins, no API calls, no orders, no shifts.
 
-**Duration**: 21 minutes of complete idle time. Last activity remains from 08:46 UTC (Reliability Bot test cycle: 2 failed logins + 1 Owner login, all localhost).
+**Duration**: 22 minutes of complete idle time. Last activity remains from 08:46 UTC (Reliability Bot test cycle: 2 failed logins + 1 Owner login, all localhost).
 
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: 0 failed logins in last 5 min. No brute force.
 - **Account enumeration**: 0 probes. Clean.
 - **Failed logins since last run**: 0.
 - **Successful-after-failure**: None.
-- **Off-hours activity**: None — current time 09:33 UTC (04:33 CT). System is idle during off-hours window, but no login activity to flag.
+- **Off-hours activity**: None — current time 09:55 UTC (04:55 CT). Still in off-hours window (22:00-06:00 CT) but no login activity at all.
 - **Cross-IP targeting**: None.
 - **Known IPs**: Unchanged (last update 2026-06-24).
 
@@ -75,13 +75,13 @@ None.
 Same as above — light activity, all localhost, no threats.
 
 ## System State
-||||||||||||||||||||||||||| Current time: 2026-06-26T06:59 UTC — past off-hours window (06:00 end).    |
-||||||||||||||||||||||||||| Activity since last run: 11 events — 7 clock, 2 add_item, 1 failed login, 1 successful  |
-||||||||||||||||||||||||||| Failed logins: 1 (single, not a pattern)                                        |
-||||||||||||||||||||||||||| Successful logins: 2 (Owner, localhost)                                          |
-||||||||||||||||||||||||||| Blocked IPs: 0                                                      |
-||||||||||||||||||||||||||| Config changes: None                                                |
-||||||||||||||||||||||||||| File integrity: All JSON parseable. Git dirty (3 data files — worker artifacts). |
-||||||||||||||||||||||||||| Users: 8 accounts. Owner 2FA not enabled (exempted). Admin 2FA: 2222=no, 7788=no. |
-||||||||||||||||||||||||||| Security events: 45 tracked, 17 unresolved MEDIUM (all off-hours).   |
-||||||||||||||||||||||||||| Server: UP (:5000 — /api/clock/status responding 200).                |
+|||||||||||||||||||||||||||| Current time: 2026-06-26T09:55 UTC — still in off-hours window (22:00-06:00 CT)   |
+|||||||||||||||||||||||||||| Activity since last run: 0 events — complete idle                                 |
+|||||||||||||||||||||||||||| Failed logins: 0                                                                      |
+|||||||||||||||||||||||||||| Successful logins: 0                                                                  |
+|||||||||||||||||||||||||||| Blocked IPs: 0                                                                       |
+|||||||||||||||||||||||||||| Config changes: None                                                                 |
+|||||||||||||||||||||||||||| File integrity: All 49 JSON parseable. Git clean.                                     |
+|||||||||||||||||||||||||||| Users: 8 accounts. Owner 2FA not enabled (exempted). Admin 2FA: 2222=no, 7788=no.     |
+|||||||||||||||||||||||||||| Security events: 45 tracked, 17 unresolved MEDIUM (all off-hours 127.0.0.1).          |
+|||||||||||||||||||||||||||| Server: UP (:5000 — /api/clock/status responding 400).                                |
