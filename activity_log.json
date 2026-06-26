@@ -14389,5 +14389,32 @@
             "user_name": "Owner",
             "ip": "127.0.0.1"
         }
+    },
+    {
+        "timestamp": "2026-06-26T13:40:02.993940",
+        "type": "add_item",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "category": "Snacks",
+            "name": "Test \"Special\" \ud83c\udf89 Item",
+            "price": 5.99
+        }
+    },
+    {
+        "timestamp": "2026-06-26T13:40:08.820438",
+        "type": "delete_item",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "category": "Snacks",
+            "name": "Test \"Special\" \ud83c\udf89 Item"
+        }
     }
 ]
