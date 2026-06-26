@@ -14873,5 +14873,111 @@
             "user_name": "Owner",
             "ip": "127.0.0.1"
         }
+    },
+    {
+        "timestamp": "2026-06-26T19:36:01.657566",
+        "type": "add_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "failed",
+            "reason": "Missing data",
+            "new_user_id": null
+        }
+    },
+    {
+        "timestamp": "2026-06-26T19:36:08.271197",
+        "type": "add_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "failed",
+            "reason": "Guessable PIN",
+            "new_user_id": "9999"
+        }
+    },
+    {
+        "timestamp": "2026-06-26T19:36:12.388574",
+        "type": "add_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "failed",
+            "reason": "Invalid user role",
+            "new_user_id": "8523"
+        }
+    },
+    {
+        "timestamp": "2026-06-26T19:36:16.211242",
+        "type": "add_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "added_user_id": "8523",
+            "added_user_name": "TestBot",
+            "added_user_role": "user"
+        }
+    },
+    {
+        "timestamp": "2026-06-26T19:36:16.234739",
+        "type": "delete_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "failed",
+            "reason": "Missing user ID to delete"
+        }
+    },
+    {
+        "timestamp": "2026-06-26T19:36:21.862728",
+        "type": "delete_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "deleted_user_id": "8523",
+            "deleted_user_name": "TestBot",
+            "deleted_user_role": "user"
+        }
+    },
+    {
+        "timestamp": "2026-06-26T19:36:34.988656",
+        "type": "add_item",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "category": "Foods",
+            "name": "Test \"Special\" \ud83c\udf89 Item",
+            "price": 5.99
+        }
+    },
+    {
+        "timestamp": "2026-06-26T19:36:35.017666",
+        "type": "delete_item",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "category": "Foods",
+            "name": "Test \"Special\" \ud83c\udf89 Item"
+        }
     }
 ]
