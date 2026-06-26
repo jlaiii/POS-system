@@ -1,16 +1,16 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-26T20:50 UTC
-> Total checks: 973
-> Healthy: 973 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-26T21:14 UTC
+> Total checks: 985
+> Healthy: 985 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 — 200 OK [verified 20:50]
-- [x] All JSON data files exist and are valid — all 15 core JSON files valid, parseable [verified 20:50]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', role=owner) [verified 20:50]
-- [x] Git repo is clean — clean [verified 20:50]
+- [x] Flask app responds on port 5000 — 200 OK [verified 21:14]
+- [x] All JSON data files exist and are valid — all 15 core JSON files valid, parseable [verified 21:14]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', role=owner) [verified 21:14]
+- [x] Git repo is clean — clean [verified 21:14]
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/health — {"status":"ok"} (GET) [verified 20:27]
@@ -27,20 +27,20 @@
 - [x] /api/login works — POST userId=1111, Login successful, role=owner, permissions=[*] [verified 20:27]
 
 ## EVERY 4 HOURS
-- [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 200, 3 pending orders [verified 20:27]
-- [x] Pickup display: verify /api/pickup-display/queue works — GET, 200, 1 order ready for pickup [verified 20:27]
-- [x] Inventory: check stock decrements on order — 25 inventory items tracked, stock tracking valid [verified 19:06]
-- [x] User CRUD: add test user (8523) → verify → delete → confirmed gone from users.json [verified 19:35]
+- [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 200, 3 pending orders [verified 21:14]
+- [x] Pickup display: verify /api/pickup-display/queue works — GET, 200, 1 order ready for pickup [verified 21:14]
+- [x] Inventory: check stock decrements on order — 26 inventory items tracked, stock tracking valid [verified 21:14]
+- [x] Cash register: /api/cash_drawer/status (POST with adminPin=1111) returns active=false, 0 sessions [verified 21:14]
+- [x] User CRUD: add test user → verify → delete → confirmed gone from users.json [verified 19:35]
 - [x] Loyalty: points earned on order — 14 loyalty entries, data intact [verified 19:59]
-- [x] Cash register: /api/cash_drawer/status (POST with adminPin=1111) returns active=false, last closed Jun 24, 10 sessions [verified 19:06]
 - [x] Webhook: verify webhook config endpoint works — /api/security/discord_webhook returns config (not set), 200 OK [verified 19:06]
 - [x] Clock-in late detection: 8 late records across shifts, data intact [verified 19:06]
 - [x] Break tracking: start break → end break → verify break subtracted — 50 shifts, 4 with breaks, tracking active [verified 19:06]
 - [x] Shift edit: shift data accessible via admin_shifts, 8 users tracked, 5 shifts with edits [verified 19:06]
-- [x] CSV export: verify /api/export/shifts_csv returns CSV — POST, 200, CSV content [verified 19:06]
+- [x] CSV export: verify /api/export/shifts_csv returns CSV — POST, 200, CSV content [verified 21:14]
 - [x] Offline queue: verify /api/sync_orders endpoint exists — POST, 400, "No orders provided" [verified 19:06]
 - [x] Order lifecycle: create order via /api/submit_order → order 115 submitted → refunded via /api/orders/refund, 200 OK [verified 19:06]
-- [x] Special chars test: added \"Test \\\"Special\\\" 🎉 Item\" (emoji+quotes) → verified in items.json → deleted via /api/delete_item, 200 OK [verified 19:35]
+- [x] Special chars test: added \"Test \"Special\" 🎉 Item\" (emoji+quotes) → verified in items.json → deleted via /api/delete_item, 200 OK [verified 19:35]
 ## EVERY 12 HOURS
 - [x] Full app restart test: kill Flask → restart → verify all critical endpoints — Completed, gunicorn+gevent stable [verified 17:11]
 - [x] Concurrent write test: two rapid clock-ins (1234+5678, 1s apart) → both succeeded, shift_log.json has 52 records, no data loss [verified 20:50]
