@@ -1,29 +1,26 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-26T09:13 UTC
-> Total checks: 777
-> Healthy: 777 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-26T09:40 UTC
+> Total checks: 779
+> Healthy: 779 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 — 200 OK, gunicorn+gevent (master PID 1370113, worker PID 1382629, single instance) [verified 09:13]
-- [x] All JSON data files exist and are valid — all 15 JSON files valid, parseable [verified 09:13]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin'), 8 users total [verified 09:13]
-- [x] Git repo is clean — clean (no dirty files from other workers this run) [verified 09:13]
+- [x] Flask app responds on port 5000 — 200 OK, gunicorn+gevent (master PID 1370113, worker PID 1382629, single instance) [verified 09:40]
+- [x] All JSON data files exist and are valid — all 15 JSON files valid, parseable [verified 09:40]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin'), 8 users total [verified 09:40]
+- [x] Git repo is clean — clean (committed dirty files 4e7f847) [verified 09:40]
 
 ## HOURLY (check if last check was >1h ago)
-- [x] /api/health — {"status":"ok"} (GET) [verified 08:45]
-- [x] Frontend loads — 200, HTML OK, 1.37MB [verified 08:45]
-- [x] /api/items returns items — 5 categories, 19 items (GET, category-keyed schema), all present [verified 08:45]
-- [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 48 shifts [verified 08:45]
-- [x] /api/health — {"status":"ok"} (GET) [verified 09:13]
+- [x] /api/health — {"status":"ok"} (GET) [verified 09:40]
 - [x] Frontend loads — 200, HTML OK, 1.37MB [verified 09:13]
 - [x] /api/items returns items — 5 categories (Foods/Drinks/Snacks/Breakfast/Salads), 19 items total [verified 09:13]
-- [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 09:13]
+- [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 48 shifts [verified 09:13]
+- [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 09:40]
 - [x] index.html size check — normal (serving correctly) [verified 09:13]
-- [x] Disk space check — 36% used (OK) [verified 09:13]
-- [x] Memory check — ~41% RAM used (OK) [verified 09:13]
+- [x] Disk space check — 36% used (OK) [verified 09:40]
+- [x] Memory check — ~41% RAM used (OK) [verified 09:40]
 - [x] Backup integrity — latest backup (09:04, 50 files, 49 valid JSON + metadata, all valid) [verified 09:13]
 - [x] inventory.json — 25 tracked items, stock tracking active [verified 08:45]
 
@@ -61,6 +58,7 @@
 - [x] **items.json schema changed to category-keyed format** — Items now stored as {Foods:[...], Drinks:[...], ...} instead of {categories:[], items:[]}. Used by /api/items (GET). [verified 09:13]
 
 ## FIXES APPLIED
+|- [2026-06-26 09:40] **Routine run — all healthy** — Flask 200 (gunicorn+gevent), disk 36%, RAM 41%. All 15 JSON files valid. Owner PIN 1111 intact. Committed dirty files from previous worker runs (RELIABILITY_CHECKLIST.md + SECURITY_WATCHDOG.md) as 4e7f847. Updated HOURLY timestamps. Cleaned duplicate entries. Total checks: 779, all healthy. No downtime.
 |- [2026-06-26 09:13] **Routine run — all healthy** — Flask 200 (gunicorn+gevent, single master+worker), disk 36%, RAM 41%. All 15 JSON files valid. Owner PIN 1111 intact (name='Owner', username='jayadmin'). Git clean (no dirty files). app.py syntax OK. Backup verified (09:04, 50 files, 49 valid JSON). Updated timestamps for overdue 4H items (inventory 25 items, break tracking 48 shifts/4 w/breaks, loyalty 14 entries). Total checks: 777, all healthy. No downtime.
 |- [2026-06-26 08:45] **Routine run — all healthy** — Flask 200, disk 36%, RAM 41%. Verified all CRITICAL (15 JSON files, owner OK) and all HOURLY items. Noted items.json schema changed to category-keyed format (Foods/Drinks/Snacks/Breakfast/Salads). Kitchen queue verified as GET-only. Committed dirty SECURITY_WATCHDOG.md. Backup verified (08:04, 50 files). Total checks: 769, all healthy. No downtime.
 |- [2026-06-26 08:21] **Routine run — all healthy** — Flask 200, disk 36%, RAM 41%. Committed dirty SECURITY_WATCHDOG.md (8b4bf0a). Verified large payload test (Order 110, 50 items → created & refunded, 200 OK). app.py syntax OK. index.html 1,375,135B (normal). Backup integrity OK (49 JSON files, 08:04 backup). All CRITICAL/12H/DISCOVERED green. Total checks: 761, all healthy. No downtime.
