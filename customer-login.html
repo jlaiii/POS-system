@@ -107,26 +107,29 @@ input, select, textarea { font-size: 16px; }
 <body>
 
 <div class="container">
-  <h1>🍽️ My Account</h1>
+  <div style="display:flex;justify-content:space-between;align-items:center;">
+    <h1 data-i18n="page.title">🍽️ My Account</h1>
+    <button id="langToggleCustomer" class="btn-sm btn-secondary" onclick="switchLanguage(currentLang === 'en' ? 'es' : 'en')" style="font-size:16px;padding:6px 12px;min-height:40px;">🇪🇸</button>
+  </div>
 
   <!-- LOGIN VIEW -->
   <div id="loginView">
     <div class="card">
-      <h2>🔐 Sign In</h2>
-      <p class="text-sm text-muted mb-8">Sign in with your email &amp; password or phone &amp; PIN</p>
+      <h2 data-i18n="sign.in">🔐 Sign In</h2>
+      <p class="text-sm text-muted mb-8" data-i18n="sign.in.desc">Sign in with your email &amp; password or phone &amp; PIN</p>
       <div class="tabs" id="loginTabSelector">
-        <div class="tab active" data-tab="email" onclick="switchLoginTab('email')">📧 Email</div>
-        <div class="tab" data-tab="phone" onclick="switchLoginTab('phone')">📱 Phone</div>
+        <div class="tab active" data-tab="email" onclick="switchLoginTab('email')"><span data-i18n="email.tab">📧 Email</span></div>
+        <div class="tab" data-tab="phone" onclick="switchLoginTab('phone')"><span data-i18n="phone.tab">📱 Phone</span></div>
       </div>
 
       <!-- Email Login -->
       <div id="loginEmailSection">
         <div class="form-group">
-          <label for="loginEmail">Email</label>
+          <label for="loginEmail" data-i18n="email.label">Email</label>
           <input type="email" id="loginEmail" placeholder="you@example.com" inputmode="email">
         </div>
         <div class="form-group">
-          <label for="loginPassword">Password</label>
+          <label for="loginPassword" data-i18n="password.label">Password</label>
           <input type="password" id="loginPassword" placeholder="Enter password">
         </div>
       </div>
@@ -134,55 +137,55 @@ input, select, textarea { font-size: 16px; }
       <!-- Phone Login -->
       <div id="loginPhoneSection" class="hidden">
         <div class="form-group">
-          <label for="loginPhone">Phone Number</label>
+          <label for="loginPhone" data-i18n="phone.reg">Phone Number</label>
           <input type="tel" id="loginPhone" placeholder="+1 (555) 123-4567" inputmode="tel">
         </div>
         <div class="form-group">
-          <label for="loginPin">PIN (4 digits)</label>
+          <label for="loginPin" data-i18n="pin.reg">PIN (4 digits)</label>
           <input type="password" id="loginPin" placeholder="Enter PIN" inputmode="numeric" pattern="[0-9]*" maxlength="4">
         </div>
       </div>
 
-      <button class="btn-primary mt-8" onclick="doLogin()">Sign In</button>
+      <button class="btn-primary mt-8" onclick="doLogin()" data-i18n="sign.in.btn">Sign In</button>
       <p class="text-center mt-8 text-sm">
-        <span class="text-muted">Don't have an account?</span>
-        <span class="link" onclick="showRegister()">Register here</span>
+        <span class="text-muted" data-i18n="no.account">Don't have an account?</span>
+        <span class="link" onclick="showRegister()" data-i18n="register.link">Register here</span>
       </p>
     </div>
     <div class="card text-center">
-      <p class="text-muted text-sm">Or sign in with a magic link from your email</p>
+      <p class="text-muted text-sm" data-i18n="magic.link.hint">Or sign in with a magic link from your email</p>
     </div>
   </div>
 
   <!-- REGISTER VIEW -->
   <div id="registerView" class="hidden">
     <div class="card">
-      <h2>📝 Create Account</h2>
-      <p class="text-sm text-muted mb-8">Register to save favorites, track orders, earn rewards</p>
+      <h2 data-i18n="create.account">📝 Create Account</h2>
+      <p class="text-sm text-muted mb-8" data-i18n="create.account.desc">Register to save favorites, track orders, earn rewards</p>
       <div class="form-group">
-        <label for="regName">Full Name *</label>
+        <label for="regName" data-i18n="name.label">Full Name *</label>
         <input type="text" id="regName" placeholder="Your name">
       </div>
       <div class="form-group">
-        <label for="regEmail">Email</label>
+        <label for="regEmail" data-i18n="email.reg">Email</label>
         <input type="email" id="regEmail" placeholder="you@example.com" inputmode="email">
       </div>
       <div class="form-group">
-        <label for="regPassword">Password (required with email)</label>
+        <label for="regPassword" data-i18n="password.reg">Password (required with email)</label>
         <input type="password" id="regPassword" placeholder="Create a password">
       </div>
       <div class="form-group">
-        <label for="regPhone">Phone Number</label>
+        <label for="regPhone" data-i18n="phone.reg">Phone Number</label>
         <input type="tel" id="regPhone" placeholder="+1 (555) 123-4567" inputmode="tel">
       </div>
       <div class="form-group">
-        <label for="regPin">PIN (4 digits, required with phone)</label>
+        <label for="regPin" data-i18n="pin.reg">PIN (4 digits, required with phone)</label>
         <input type="password" id="regPin" placeholder="4-digit PIN" inputmode="numeric" pattern="[0-9]*" maxlength="4">
       </div>
-      <button class="btn-primary" onclick="doRegister()">Create Account</button>
+      <button class="btn-primary" onclick="doRegister()" data-i18n="create.btn">Create Account</button>
       <p class="text-center mt-8 text-sm">
-        <span class="text-muted">Already have an account?</span>
-        <span class="link" onclick="showLogin()">Sign in</span>
+        <span class="text-muted" data-i18n="have.account">Already have an account?</span>
+        <span class="link" onclick="showLogin()" data-i18n="sign.in.link">Sign in</span>
       </p>
     </div>
   </div>
@@ -352,7 +355,178 @@ let CUSTOMER_DATA = null;
 let LOGIN_TAB = 'email';
 
 // --- i18n ---
-function t(key) { return key; } // Simple pass-through for now, EN only
+const L10N = {
+  en: {
+    'page.title': '🍽️ My Account',
+    'sign.in': '🔐 Sign In',
+    'sign.in.desc': 'Sign in with your email &amp; password or phone &amp; PIN',
+    'email.tab': '📧 Email',
+    'phone.tab': '📱 Phone',
+    'email.label': 'Email',
+    'email.placeholder': 'you@example.com',
+    'password.label': 'Password',
+    'password.placeholder': 'Enter password',
+    'phone.placeholder': '+1 (555) 123-4567',
+    'pin.placeholder': 'Enter PIN',
+    'sign.in.btn': 'Sign In',
+    'no.account': "Don't have an account?",
+    'register.link': 'Register here',
+    'magic.link.hint': 'Or sign in with a magic link from your email',
+    'create.account': '📝 Create Account',
+    'create.account.desc': 'Register to save favorites, track orders, earn rewards',
+    'name.label': 'Full Name *',
+    'email.reg': 'Email',
+    'password.reg': 'Password (required with email)',
+    'phone.reg': 'Phone Number',
+    'pin.reg': 'PIN (4 digits, required with phone)',
+    'create.btn': 'Create Account',
+    'have.account': 'Already have an account?',
+    'sign.in.link': 'Sign in',
+    'welcome': 'Welcome',
+    'sign.out': 'Sign Out',
+    'overview.tab': '📊 Overview',
+    'orders.tab': '📋 Orders',
+    'favs.tab': '⭐ Favorites',
+    'profile.tab': '👤 Profile',
+    'stat.points': '⭐ Points',
+    'stat.orders': '📋 Orders',
+    'stat.spent': '💰 Spent',
+    'stat.favs': '⭐ Favorites',
+    'loyalty.rewards': '🥇 Loyalty Rewards',
+    'total.earned': '🌟 Total Earned',
+    'redeemed': '🔄 Redeemed',
+    'order.history': '📋 Order History',
+    'no.orders': 'No orders yet.',
+    'my.favorites': '⭐ My Favorites',
+    'no.favorites': 'No favorite items yet.',
+    'remove.fav.hint': 'Tap a favorite to remove it',
+    'profile.title': '👤 Profile',
+    'update.profile': 'Update Profile',
+    'delivery.addresses': '🏠 Delivery Addresses',
+    'no.addresses': 'No saved addresses.',
+    'add.address': '+ Add Address',
+    'payment.methods': '💳 Saved Payment Methods',
+    'no.payment': 'No saved payment methods.',
+    'add.payment': '+ Add Payment Method',
+    'link.phone': '📱 Link Phone to Account',
+    'link.phone.desc': 'Link your loyalty phone number to earn points on orders',
+    'link.btn': 'Link',
+    'toast.network': 'Network error',
+    'toast.session.expired': 'Session expired',
+    'toast.signed.out': 'Signed out',
+    'addr.modal.title': 'Add Address',
+    'addr.label': 'Label (Home, Work, etc.)',
+    'addr.street': 'Street Address *',
+    'addr.city': 'City',
+    'addr.state': 'State',
+    'addr.zip': 'ZIP Code',
+    'addr.instructions': 'Delivery Instructions',
+    'cancel': 'Cancel',
+    'save': 'Save',
+    'payment.modal.title': 'Add Payment Method',
+    'card.type': 'Card Type',
+    'card.brand': 'Card Brand',
+    'card.last4': 'Last 4 Digits',
+    'card.expiry': 'Expiry',
+    'reorder': '🔄 Reorder'
+  },
+  es: {
+    'page.title': '🍽️ Mi Cuenta',
+    'sign.in': '🔐 Iniciar Sesión',
+    'sign.in.desc': 'Inicia sesión con tu email y contraseña o teléfono y PIN',
+    'email.tab': '📧 Email',
+    'phone.tab': '📱 Teléfono',
+    'email.label': 'Email',
+    'email.placeholder': 'tu@ejemplo.com',
+    'password.label': 'Contraseña',
+    'password.placeholder': 'Ingresa contraseña',
+    'phone.placeholder': '+1 (555) 123-4567',
+    'pin.placeholder': 'Ingresa PIN',
+    'sign.in.btn': 'Iniciar Sesión',
+    'no.account': '¿No tienes cuenta?',
+    'register.link': 'Regístrate aquí',
+    'magic.link.hint': 'O inicia sesión con un enlace mágico de tu email',
+    'create.account': '📝 Crear Cuenta',
+    'create.account.desc': 'Regístrate para guardar favoritos, rastrear pedidos, ganar recompensas',
+    'name.label': 'Nombre Completo *',
+    'email.reg': 'Email',
+    'password.reg': 'Contraseña (requerida con email)',
+    'phone.reg': 'Número de Teléfono',
+    'pin.reg': 'PIN (4 dígitos, requerido con teléfono)',
+    'create.btn': 'Crear Cuenta',
+    'have.account': '¿Ya tienes cuenta?',
+    'sign.in.link': 'Inicia sesión',
+    'welcome': 'Bienvenido',
+    'sign.out': 'Cerrar Sesión',
+    'overview.tab': '📊 Resumen',
+    'orders.tab': '📋 Pedidos',
+    'favs.tab': '⭐ Favoritos',
+    'profile.tab': '👤 Perfil',
+    'stat.points': '⭐ Puntos',
+    'stat.orders': '📋 Pedidos',
+    'stat.spent': '💰 Gastado',
+    'stat.favs': '⭐ Favoritos',
+    'loyalty.rewards': '🥇 Recompensas',
+    'total.earned': '🌟 Ganados',
+    'redeemed': '🔄 Canjeados',
+    'order.history': '📋 Historial de Pedidos',
+    'no.orders': 'Sin pedidos aún.',
+    'my.favorites': '⭐ Mis Favoritos',
+    'no.favorites': 'Sin favoritos aún.',
+    'remove.fav.hint': 'Toca un favorito para eliminarlo',
+    'profile.title': '👤 Perfil',
+    'update.profile': 'Actualizar Perfil',
+    'delivery.addresses': '🏠 Direcciones de Entrega',
+    'no.addresses': 'Sin direcciones guardadas.',
+    'add.address': '+ Agregar Dirección',
+    'payment.methods': '💳 Métodos de Pago',
+    'no.payment': 'Sin métodos de pago guardados.',
+    'add.payment': '+ Agregar Método',
+    'link.phone': '📱 Vincular Teléfono',
+    'link.phone.desc': 'Vincula tu número de fidelidad para ganar puntos',
+    'link.btn': 'Vincular',
+    'toast.network': 'Error de red',
+    'toast.session.expired': 'Sesión expirada',
+    'toast.signed.out': 'Sesión cerrada',
+    'addr.modal.title': 'Agregar Dirección',
+    'addr.label': 'Etiqueta (Casa, Trabajo, etc.)',
+    'addr.street': 'Dirección *',
+    'addr.city': 'Ciudad',
+    'addr.state': 'Estado',
+    'addr.zip': 'Código Postal',
+    'addr.instructions': 'Instrucciones de Entrega',
+    'cancel': 'Cancelar',
+    'save': 'Guardar',
+    'payment.modal.title': 'Agregar Método de Pago',
+    'card.type': 'Tipo de Tarjeta',
+    'card.brand': 'Marca',
+    'card.last4': 'Últimos 4 Dígitos',
+    'card.expiry': 'Vencimiento',
+    'reorder': '🔄 Repedir'
+  }
+};
+let currentLang = localStorage.getItem('customerLang') || 'en';
+
+function t(key) {
+  const lang = L10N[currentLang] || L10N.en;
+  return lang[key] || key;
+}
+
+function applyTranslations() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.dataset.i18n;
+    el.textContent = t(key);
+  });
+}
+
+function switchLanguage(lang) {
+  currentLang = lang;
+  localStorage.setItem('customerLang', lang);
+  applyTranslations();
+  // Update lang toggle text
+  const toggle = document.getElementById('langToggleCustomer');
+  if (toggle) toggle.textContent = currentLang === 'en' ? '🇪🇸' : '🇺🇸';
+}
 
 // --- Toast ---
 function showToast(msg, type) {
