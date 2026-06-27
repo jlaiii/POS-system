@@ -798,7 +798,7 @@
         "severity": "LOW",
         "category": "anomaly",
         "status": "resolved",
-        "summary": "⚠️ Off-hours login attempts: Employee One (1234) at 02:06-02:08",
+        "summary": "\u26a0\ufe0f Off-hours login attempts: Employee One (1234) at 02:06-02:08",
         "detail": "User Employee One (PIN 1234) had 4 login attempts during off-hours (22:00-06:00) from IP 127.0.0.1. All attempts returned 2fa_required (PIN correct, 2FA step needed). Interleaved with Owner (1111) successful logins from same IP. Pattern matches cron worker testing the 2FA flow.",
         "affected_user": "1234",
         "affected_user_name": "Employee One",
@@ -806,5 +806,20 @@
         "reported_by": "Security Watchdog",
         "resolved_at": "2026-06-27T02:35:00",
         "resolution": "Auto-resolved by Watchdog. No recurrence in 27 min. Pattern confirmed as cron worker testing 2FA flow from localhost. No external IPs involved. No real security concern."
+    },
+    {
+        "id": "SEC-056",
+        "created_at": "2026-06-27T03:24:56.329304",
+        "severity": "MEDIUM",
+        "category": "anomaly",
+        "status": "resolved",
+        "summary": "⚠ Off-hours login: Owner (1111) at 03:24",
+        "detail": "User Owner (PIN 1111) logged in during off-hours (22:00–06:00) from IP 127.0.0.1.",
+        "affected_user": "1111",
+        "affected_user_name": "Owner",
+        "related_event": null,
+        "reported_by": "IP Blocklist Manager",
+        "resolved_at": "2026-06-27T03:27:42",
+        "resolution": "Resolved by Watchdog. Off-hours login from 127.0.0.1 — Owner dev activity during cron window. Same pattern as SEC-009 through SEC-055. No external IPs, no failed attempts, no real security concern."
     }
 ]
