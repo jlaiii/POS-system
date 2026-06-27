@@ -1,7 +1,7 @@
 # POS Security Watchdog
 
 | Last run: 2026-06-27T00:53 UTC
-| Total events tracked: 51 (SEC-001→SEC-051, no SEC-004; all resolved)
+| Total events tracked: 50 (SEC-001→SEC-051, no SEC-004; all resolved)
 | Active blocks: 0 IPs
 | Unresolved alerts: 0
 | Run result: [SILENT] — 1 Owner login from 127.0.0.1 at 00:51 UTC (off-hours, auto-resolved SEC-051). 0 failed logins. Clean.
@@ -82,5 +82,5 @@ None.
 | Config changes | None |
 | File integrity | OK — all 49 JSON files parseable |
 | Users | 8 accounts. Admin 2FA: 2222=no, 7788=no (pre-existing gap) |
-| Security events | 51 tracked, 0 unresolved. All resolved. |
+| Security events | 50 tracked, 0 unresolved. All resolved. |
 | Server | UP (:5000 — HTTP 200) |
