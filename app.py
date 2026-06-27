@@ -5912,6 +5912,12 @@ def submit_order():
     payment_splits = data.get('payment_splits')
     payment_display = data.get('payment', '')
 
+    # Coerce non-string payment values to prevent storing dicts/objects as payment (data integrity)
+    if isinstance(payment_display, dict):
+        payment_display = str(payment_display.get('method', 'Cash'))
+    elif not isinstance(payment_display, str):
+        payment_display = str(payment_display)
+
     if payment_splits and isinstance(payment_splits, list) and len(payment_splits) > 0:
         # Build a readable payment summary from splits
         if len(payment_splits) == 1:
@@ -6604,6 +6610,12 @@ def sync_orders():
         # Handle payment splits
         payment_splits = order_data.get('payment_splits')
         payment_display = order_data.get('payment', '')
+
+        # Coerce non-string payment values to prevent storing dicts/objects as payment (data integrity)
+        if isinstance(payment_display, dict):
+            payment_display = str(payment_display.get('method', 'Cash'))
+        elif not isinstance(payment_display, str):
+            payment_display = str(payment_display)
 
         if payment_splits and isinstance(payment_splits, list) and len(payment_splits) > 0:
             if len(payment_splits) == 1:

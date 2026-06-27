@@ -2015,10 +2015,7 @@
         "completed_at": null,
         "date": "2026-06-23T19:22:09.915855",
         "user": "1111",
-        "payment": {
-            "method": "cash",
-            "amount": 6.0
-        },
+        "payment": "cash",
         "payment_splits": null,
         "items": [
             {
@@ -2893,10 +2890,7 @@
         "completed_at": null,
         "date": "2026-06-25T11:38:46.862072",
         "user": null,
-        "payment": {
-            "method": "cash",
-            "amount": 5
-        },
+        "payment": "cash",
         "payment_splits": null,
         "items": [
             {
@@ -4705,10 +4699,7 @@
         "completed_at": null,
         "date": "2026-06-26T01:16:22.400080",
         "user": null,
-        "payment": {
-            "method": "cash",
-            "amount": 10.0
-        },
+        "payment": "cash",
         "payment_splits": null,
         "items": [
             {
@@ -5732,10 +5723,7 @@
         "completed_at": null,
         "date": "2026-06-26T10:48:25.479800",
         "user": null,
-        "payment": {
-            "method": "cash",
-            "amount": 10.0
-        },
+        "payment": "cash",
         "payment_splits": null,
         "items": [
             {
@@ -5788,13 +5776,7 @@
         "completed_at": null,
         "date": "2026-06-26T14:09:02.244565",
         "user": null,
-        "payment": {
-            "method": "split",
-            "amounts": {
-                "cash": 15,
-                "card": 10
-            }
-        },
+        "payment": "split",
         "payment_splits": null,
         "items": [
             {
@@ -6862,10 +6844,7 @@
         "completed_at": null,
         "date": "2026-06-26T23:15:08.152053",
         "user": "1234",
-        "payment": {
-            "method": "cash",
-            "amount": 3
-        },
+        "payment": "cash",
         "payment_splits": null,
         "items": [
             {
