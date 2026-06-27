@@ -1,32 +1,32 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-27T04:56 UTC
-> Total checks: 1150
-> Healthy: 1150 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-27T05:18 UTC
+> Total checks: 1166
+> Healthy: 1166 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 — 200 OK [verified 04:56]
-- [x] All JSON data files exist and are valid — all 15 core JSON files valid, parseable [verified 04:56]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', role=owner, username='jayadmin') [verified 04:56]
-- [x] Git repo is clean — clean [verified 04:56]
+- [x] Flask app responds on port 5000 — 200 OK [verified 05:18]
+- [x] All JSON data files exist and are valid — all 15 core JSON files valid, parseable [verified 05:18]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', role=owner, username='jayadmin') [verified 05:18]
+- [x] Git repo is clean — clean [verified 05:18]
 
 ## HOURLY (check if last check was >1h ago)
-- [x] /api/health — {"status":"ok"} (GET) [verified 04:09]
-- [x] Frontend loads — 200, HTML OK, 1.37MB [verified 04:09]
-- [x] /api/items returns items — GET, 200 OK, 5 categories (Breakfast, Drinks, Foods, Salads, Snacks) [verified 04:09]
-- [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 55 shifts, 200 OK [verified 04:09]
-- [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 04:33]
-- [x] index.html size check — 1375239 bytes (normal) [verified 04:09]
-- [x] Disk space check — 36% used (14G/38G, OK) [verified 04:09]
-- [x] Memory check — ~39% RAM used (1528/3915 MB, OK) [verified 04:09]
-- [x] Backup integrity — latest backups valid (json 03:38 + db 03:38, 50 files all valid, tar.gz subdir) [verified 04:33]
+- [x] /api/health — {"status":"ok"} (GET) [verified 05:18]
+- [x] Frontend loads — 200, HTML OK, 1.37MB [verified 05:18]
+- [x] /api/items returns items — GET, 200 OK, 5 categories (Breakfast, Drinks, Foods, Salads, Snacks) [verified 05:18]
+- [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 55 shifts, 200 OK [verified 05:18]
+- [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 05:18]
+- [x] index.html size check — 1375239 bytes (normal) [verified 05:18]
+- [x] Disk space check — 36% used (14G/38G, OK) [verified 05:18]
+- [x] Memory check — ~39% RAM used (1528/3915 MB, OK) [verified 05:18]
+- [x] Backup integrity — latest backups valid (json 04:38 + db 04:38, 50 files all valid, tar.gz subdir) [verified 05:18]
 - [x] CSV export — /api/export/shifts_csv returns expected permission error w/o adminPin [verified 04:33]
 - [x] Offline queue — /api/sync_orders exists, returns "No orders provided" [verified 04:33]
-- [x] /api/login works — POST userId=1111, role=owner, permissions=[*] [verified 04:33]
-- [x] Clock-in/out: employee 1234 status checked (not clocked in), clock-in/out endpoint live [verified 03:24]
-- [x] /api/admin_stats — stats returned, average_sale=$15.25, 8 users, backup_health=green [verified 04:09]
+- [x] /api/login works — POST userId=1111, role=owner, permissions=[*] [verified 05:18]
+- [x] Clock-in/out: employee 1234 status checked (not clocked in), clock-in/out endpoint live [verified 05:18]
+- [x] /api/admin_stats — stats returned, average_sale=$15.25, 8 users, backup_health=green [verified 05:18]
 
 ## EVERY 4 HOURS
 - [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 200, 2 pending orders [verified 03:24]
@@ -55,14 +55,14 @@
 - [x] Backup integrity: verify latest backup is valid and not empty — 2026-06-26_18-28-06.db.gz (valid, 303KB uncompressed) + JSON backups intact [verified 19:06]
 
 ## DISCOVERED (failures you've seen before — check every 2h)
-- [x] **Flask process dying between runs** — Now on gunicorn+gevent via scripts/run_flask.sh, stable. [verified 04:33 — running, gunicorn+gevent, single listener, ~stable]
-- [x] **Dual Flask instances on port 5000** — Single gunicorn master+worker. No recurrence. [verified 04:33 — single master+worker, clean]
-- [x] **items.json + users.json simultaneous data corruption** — Items (5 categories) and users (8 users) intact. Monitor every 2h. [verified 04:33 — healthy]
-- [x] **Owner username changed to 'testuser' (3rd data corruption incident)** — Owner PIN 1111 username='jayadmin', name='Owner'. No corruption. [verified 04:33 — healthy]
-- [x] **items.json schema changed to category-keyed format** — Items now stored as {Foods:[...], Drinks:[...], ...} instead of {categories:[], items:[]}. Used by /api/items (GET). [verified 04:33]
+- [x] **Flask process dying between runs** — Now on gunicorn+gevent via scripts/run_flask.sh, stable. [verified 05:18 — running, gunicorn+gevent, single listener, ~stable]
+- [x] **Dual Flask instances on port 5000** — Single gunicorn master+worker. No recurrence. [verified 05:18 — single master+worker, clean]
+- [x] **items.json + users.json simultaneous data corruption** — Items (5 categories) and users (8 users) intact. Monitor every 2h. [verified 05:18 — healthy]
+- [x] **Owner username changed to 'testuser' (3rd data corruption incident)** — Owner PIN 1111 username='jayadmin', name='Owner'. No corruption. [verified 05:18 — healthy]
+- [x] **items.json schema changed to category-keyed format** — Items now stored as {Foods:[...], Drinks:[...], ...} instead of {categories:[], items:[]}. Used by /api/items (GET). [verified 05:18]
 
 ## FIXES APPLIED
-- [2026-06-27 04:09] **Routine run — all healthy** — Flask 200 (gunicorn+gevent), disk 36%, RAM 39%. All 15 JSON files valid. Owner PIN 1111 intact (name='Owner', username='jayadmin'). Git clean. Backup verified (03:38, 50 JSON files all valid + SQLite 303KB). Verified CRITICAL + overdue HOURLY items (health, frontend, items, login, admin_stats, admin_shifts, index.html size, backup integrity, disk, memory). Fixed stray `|` pipe formatting in HOURLY and 4H sections. Total checks: 1129, all healthy. No downtime.
+- [2026-06-27 05:18] **Routine run — all healthy** — Flask 200 (gunicorn+gevent), disk 36%, RAM 39%. All 15 JSON files valid. Owner PIN 1111 intact. Git: committed dirty data files from workers (activity_log, login_attempts, security_events). Verified all CRITICAL + full HOURLY sweep (health, frontend, items, login, admin_stats, admin_shifts, clock status, app.py syntax, index.html size, backup integrity). Backup 04:38 valid (50 files, users+items intact). Single gunicorn master+worker, no dual instances. Total checks: 1166, all healthy. No downtime.
 |- [2026-06-27 01:42] **Cleaned up 4 leftover test inventory entries** — TestItem, "Test \"Special\" 🎉 Item", "🎉 Special \"Test\" Item &#9731;", "Test \"Special\" 🎉 Drink" leftover in inventory.json from previous special chars test runs. Removed from inventory.json. Committed dirty data from Security Watchdog. All CRITICAL + selected HOURLY (frontend, syntax, index.html size, backup integrity) + 4H (inventory 24 items, cash register 10 sessions) verified. Total checks: 1090, all healthy. No downtime.
 |- [2026-06-27 00:51] **Routine run — all healthy** — Flask 200 (gunicorn+gevent, ~13h uptime), disk 36%, RAM 39%. All 15 JSON files valid. Owner PIN 1111 intact (username='jayadmin'). Git: committed dirty SECURITY_WATCHDOG.md from Security Watchdog (0e4617c). Verified CRITICAL + overdue HOURLY (health, items, login, disk, memory, CSV export, offline queue, admin_shifts, app.py syntax, admin_stats) + 4H (kitchen display 3 orders, pickup display 1 order) + DISCOVERED (all healthy, single gunicorn, no corruption). app.py syntax OK. No issues found. Total checks: 1060, all healthy. No downtime.
 - [2026-06-26 22:50] **Routine run — all healthy** — Flask 200, disk 36%, RAM 39%. All 15 JSON files valid. Owner PIN 1111 intact. Verified CRITICAL + 5 overdue HOURLY items: frontend loads (1.37MB), admin_shifts (53 shifts), app.py syntax OK, index.html size (1,375,239B normal), backup integrity (22:37 JSON backup 50 files valid, DB backup 303KB ok, pos.db integrity ok). Clock-in/out cycle: employee 1234 in/out both 200 OK. admin_stats returned (avg sale $13.23). Committed dirty activity_log.json (d6e5d8d). All 12 checks passed. Total checks: 1010, all healthy. No downtime.

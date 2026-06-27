@@ -896,5 +896,20 @@
         "reported_by": "IP Blocklist Manager",
         "resolved_at": null,
         "resolution": null
+    },
+    {
+        "id": "SEC-062",
+        "created_at": "2026-06-27T05:19:00.139010",
+        "severity": "MEDIUM",
+        "category": "anomaly",
+        "status": "unresolved",
+        "summary": "\u26a0\ufe0f Off-hours login: Owner (1111) at 05:19",
+        "detail": "User Owner (PIN 1111) logged in during off-hours (22:00\u201306:00) from IP 127.0.0.1.",
+        "affected_user": "1111",
+        "affected_user_name": "Owner",
+        "related_event": null,
+        "reported_by": "IP Blocklist Manager",
+        "resolved_at": null,
+        "resolution": null
     }
 ]
