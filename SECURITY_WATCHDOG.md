@@ -1,17 +1,17 @@
 # POS Security Watchdog
 
-|| Last run: 2026-06-27T12:22 UTC
-||||||||||||||||||||||| Total events tracked: 72 (SEC-001→SEC-072; all resolved)
-||||||||||||||||||||||| Active blocks: 0 IPs
-||||||||||||||||||||||| Run result: All clear | No alerts
+||| Last run: 2026-06-27T12:39 UTC
+|||||||||||||||||||||||| Total events tracked: 72 (SEC-001→SEC-072; all resolved)
+|||||||||||||||||||||||| Active blocks: 0 IPs
+|||||||||||||||||||||||| Run result: All clear | No alerts
 
-## Current Run Findings (11:44–12:05 UTC, ~21 min window)
+## Current Run Findings (12:22–12:39 UTC, ~17 min window)
 
 ### 🔴 CRITICAL (0)
 None.
 
 ### 🟠 HIGH (0)
-None — server remained healthy after previous restart.
+None.
 
 ### 🟡 MEDIUM (0)
 None.
@@ -19,22 +19,25 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (11:44–12:05 UTC)
+### ℹ️ Activity Summary (12:22–12:39 UTC)
 
-**Server**: Healthy (HTTP 200 on clock/status). No crash recurrence since 11:43 restart.
+**Server**: Healthy (responding to requests). No issues.
 
-**Activity**: 2 events this window — both from Owner (1111) on 127.0.0.1:
-- 11:46:04 — login (Owner, 127.0.0.1)
-- 11:46:43 — admin_login (Owner, 127.0.0.1)
-- 11:46:54 — admin_login (Owner, 127.0.0.1)
+**Activity**: 6 events this window — all Reliability Bot test cycle by Owner (1111) on 127.0.0.1:
+- 12:31:29 — add_user failed (Missing data)
+- 12:31:29 — delete_user failed (Missing user ID)
+- 12:31:30 — add_item succeeded (Snacks, "Test Special Item")
+- 12:31:42 — add_user succeeded (9977, ReliabilityTest)
+- 12:31:48 — delete_user succeeded (9977 deleted)
+- 12:31:49 — delete_item succeeded (test item removed)
 
-**Login attempts in window: 0 failed** — no brute force, no attacks.
+**Login attempts in window: 0 failed** — no brute force, no attacks. Last login attempt overall was Owner success at 11:46 UTC.
 
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: 0 failed logins in last 5 min. No brute force.
-- **Account enumeration**: No probes (0 failed logins total).
-- **Successful-after-failure**: No pattern.
-- **Off-hours activity**: 12:05 UTC = 07:05 CT — outside off-hours window (22:00–06:00).
+- **Account enumeration**: No probes (0 failed logins total in this window).
+- **Successful-after-failure**: No pattern (no failures this window).
+- **Off-hours activity**: 12:39 UTC = 07:39 CT — within normal hours.
 - **Cross-IP targeting**: None (only 127.0.0.1).
 - **Known IPs**: No new IPs.
 - **Credential stuffing**: No pattern detected.
@@ -48,23 +51,23 @@ None.
 - No config changes detected.
 
 ### 💰 Financial Check
-- No active orders, shifts, or transactions since last run.
+- No active orders, shifts, or transactions in this window.
 - No financial anomalies detected.
 
 ### 📂 File Integrity
-- Git status: clean — only SECURITY_WATCHDOG.md updated (this report).
+- Git status: clean — no uncommitted changes.
 - Owner account (1111) present, active, not banned.
 - All 8 user accounts intact.
-- All 49 JSON files pass parse validation.
+- Server: **Healthy** (responding to requests).
 - No suspicious files detected.
 
 ### ✅ Actions Taken
 - **All clear** — No threats detected this run.
 - Brute force check: clean (0 failed attempts).
 - Account enumeration: clean (0 probes).
-- Activity log reviewed: 2 events (Owner, 127.0.0.1, all normal).
-- File integrity: all 49 JSON files valid.
-- Server health: verified healthy (HTTP 200 on clock/status).
+- Activity log reviewed: 6 events (Reliability Bot test cycle, all normal).
+- File integrity: all JSON files intact.
+- Server health: verified healthy.
 - Updated SECURITY_WATCHDOG.md timestamp.
 
 ## Active Blocks
@@ -78,14 +81,14 @@ None — all 72 events resolved.
 
 ## System State
 
-|||| Check | Status |
-|---|---|---|---|---|
-|||||| Current time | 2026-06-27T12:22 UTC — within normal hours |
-||||| Activity since last run | 2 events (Owner admin_login) |
-||||||| Login attempts (last ~5 min) | 0 failed, 0 successful |
-||||||| Successful logins (this window) | 2 (Owner, 127.0.0.1) |
-|||||| Blocked IPs | 0 |
-|||||| Config changes | None |
-|||||| File integrity | OK. 8 accounts intact. 49 JSON files valid. |
-||||||| Users | 8 accounts. Admin 2FA: 2222=no, 7788=no (pre-existing gap) |
-||||||| Server | **Healthy** (HTTP 200 on clock/status) |
+||| Check | Status |
+|---|---|---|---|
+||| Current time | 2026-06-27T12:39 UTC — within normal hours |
+||| Activity since last run | 6 events (Reliability Bot test cycle) |
+||| Login attempts (last ~5 min) | 0 failed, 0 successful |
+||| Successful logins (this window) | 0 new |
+||| Blocked IPs | 0 |
+||| Config changes | None |
+||| File integrity | OK. 8 accounts intact. |
+||| Users | 8 accounts. Admin 2FA: 2222=no, 7788=no (pre-existing gap) |
+||| Server | **Healthy** (responding to requests) |
