@@ -32,7 +32,7 @@
         "banned_reason": "",
         "pay_rate": null,
         "scheduled_start": null,
-        "totp_secret": "OMBOZ5HKPNYGW3KQYNBAXR3U7LMTU5S7",
+        "totp_secret": "gAAAAABqPzA4QP0AEdY0EXZ6PzQqHxei6cg8kVjUegXxyM9rnfZfUy4EpDJuZ-24QPcK82CpN3brW66WPT8JaH6n-3eqDZNcoqh_AbpG_3BGxqoxdCChI7D6Xiq-rY-wLjSqC1Hv--2x",
         "totp_enabled": true,
         "totp_backup_codes": [
             "b7f3d9a8e5374e229cb8e68021b0c6fcc72fb547568673dfb27c5db3e4685d89",

@@ -23,6 +23,7 @@ import re
 from functools import wraps
 import zipfile
 import io
+from cryptography.fernet import Fernet
 
 # Threading lock for file I/O — prevents race conditions when multiple
 # requests modify and save the same data file concurrently.
@@ -589,6 +590,45 @@ def get_business_context():
     # In the future, this will extract business_id from the request/session
     return None
 
+
+def _get_totp_encryption_key():
+    """Get TOTP encryption key from environment variable or local key file.
+    Returns bytes key suitable for Fernet, or None if no key is configured (plaintext fallback)."""
+    key_str = os.environ.get('TOTP_ENCRYPTION_KEY')
+    if key_str:
+        return key_str.encode() if isinstance(key_str, str) else key_str
+    key_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.totp_encryption_key')
+    if os.path.exists(key_file):
+        with open(key_file, 'r') as f:
+            return f.read().strip().encode()
+    return None
+
+def _encrypt_totp(plaintext):
+    """Encrypt a TOTP secret for storage at rest.
+    Returns encrypted string, or plaintext if no encryption key is configured."""
+    if not plaintext:
+        return plaintext
+    key = _get_totp_encryption_key()
+    if not key:
+        return plaintext
+    f = Fernet(key)
+    return f.encrypt(plaintext.encode()).decode()
+
+def _decrypt_totp(ciphertext):
+    """Decrypt a TOTP secret for use.
+    Handles backward compatibility: if the value is not a valid Fernet token,
+    returns it as-is (plaintext from before encryption was added)."""
+    if not ciphertext:
+        return ciphertext
+    key = _get_totp_encryption_key()
+    if not key:
+        return ciphertext
+    try:
+        f = Fernet(key)
+        return f.decrypt(ciphertext.encode()).decode()
+    except Exception:
+        # Not encrypted or wrong key — return plaintext for backward compat
+        return ciphertext
 
 def hash_password(password, salt=None):
     """Hash a password with SHA-256 + salt. Returns (hash_hex, salt_hex)."""
@@ -3242,7 +3282,7 @@ def twofa_setup():
     qr_data_uri = 'data:image/png;base64,' + base64.b64encode(buf.getvalue()).decode('ascii')
 
     # Store the secret (but totp_enabled stays False until verified)
-    user_data['totp_secret'] = secret
+    user_data['totp_secret'] = _encrypt_totp(secret)
     users[user_id] = user_data
     save_json_data(USERS_FILE, users)
 
@@ -3284,7 +3324,7 @@ def twofa_verify():
     if user_data.get('totp_enabled', False):
         return jsonify({'message': '2FA is already enabled.'}), 409
 
-    secret = user_data.get('totp_secret')
+    secret = _decrypt_totp(user_data.get('totp_secret'))
     if not secret:
         return jsonify({'message': '2FA not initialized. Call /api/auth/2fa/setup first.'}), 400
 
@@ -3367,7 +3407,7 @@ def twofa_verify_login():
     if not user_data.get('totp_enabled', False):
         return jsonify({'message': '2FA is not enabled for this user.'}), 400
 
-    secret = user_data.get('totp_secret')
+    secret = _decrypt_totp(user_data.get('totp_secret'))
     if not secret:
         return jsonify({'message': '2FA not properly configured. Contact admin.'}), 400
 
@@ -4623,7 +4663,7 @@ def change_pin():
             return jsonify({'message': '2FA is enabled. Please provide your 6-digit TOTP code.'}), 400
         if not totp_code.isdigit() or len(totp_code) != 6:
             return jsonify({'message': 'TOTP code must be 6 digits.'}), 400
-        secret = user_data.get('totp_secret')
+        secret = _decrypt_totp(user_data.get('totp_secret'))
         if not secret:
             return jsonify({'message': '2FA configuration error. Contact admin.'}), 500
         totp = pyotp.TOTP(secret)

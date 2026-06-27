@@ -1,5 +1,5 @@
 # POS Security Tasks
-> Last run: 2026-06-26 13:48 UTC
+> Last run: 2026-06-27 02:00 UTC
 
 ## CRITICAL — LOGIN & AUTH SECURITY (check every run)
 
@@ -53,8 +53,8 @@
 ### HIGH: No session tokens for all endpoints — PIN sent in every request — OPEN
 - [ ] **Require session tokens on all endpoints** — Most endpoints accept raw PIN (`adminPin`) instead of requiring a session token. Sessions exist (8h active, 24h idle timeout) but most endpoints bypass them.
 
-### HIGH: TOTP secrets stored in plaintext in users.json — OPEN
-- [ ] **Protect TOTP secrets** — `totp_secret` is stored in plaintext in users.json. MITIGATED: file permissions enforced to 0600. Encrypt TOTP secrets at rest with a server-side key.
+### HIGH: TOTP secrets stored in plaintext in users.json — FIXED this run
+- [x] **Protect TOTP secrets at rest with Fernet encryption** — `totp_secret` was stored in plaintext in users.json. Added `_encrypt_totp()`/`_decrypt_totp()` using Fernet (AES-128-CBC with HMAC). Key sourced from `TOTP_ENCRYPTION_KEY` env var or `.totp_encryption_key` file (0600 permissions). All 4 read/write points updated. Existing plaintext secret for Employee One migrated to encrypted. Backward-compatible: unencrypted values decrypt as plaintext fallback.
 
 ### HIGH: require_2fa_for_admins is disabled by default (RESOLVED)
 - [x] **Enable mandatory 2FA for admin accounts** — Set `require_2fa_for_admins=true`, added session-restore re-check.
@@ -100,6 +100,15 @@
 - [x] **Verify dependency versions** — Flask 3.1.3, pyotp 2.9.0, qrcode 7.4.2, Werkzeug 3.1.8, eventlet 0.41.0. All current stable versions.
 
 ## COMPLETED (this session)
+
+### Run: 2026-06-27 02:00 UTC
+- [x] **Encrypt TOTP secrets at rest with Fernet** — Added `_encrypt_totp()`/`_decrypt_totp()` using Fernet (cryptography). Key sourced from `TOTP_ENCRYPTION_KEY` env var or `.totp_encryption_key` file (0600). All 4 read/write points updated. Existing Employee One secret migrated. Login verification confirmed working.
+- [x] **File permissions verified** — All 45+ JSON data files at 0600. Key file at 0600. No new world-readable sensitive files.
+- [x] **PCI compliance check** — Zero full card numbers stored. Only card_last4 used. No cvv/track data stored.
+- [x] **No eval/exec in codebase** — Zero instances of eval/exec/os.system/subprocess with user input.
+- [x] **Activity log sensitive data check** — No PINs or passwords logged in details fields. Only method names ("pin", "password") appear, not actual credentials.
+- [x] **Login rate limiting verified** — 5 attempts per PIN per 60s window, 10-minute lockout. Working correctly.
+- [x] **Session security verified** — Sessions use secrets.token_hex(32), 8h active/24h idle expiry, logout invalidation working.
 
 ### Run: 2026-06-26 13:48 UTC
 - [x] **Force PIN change for 4 users with predictable PINs** — Maria(3344), Chef Diego(5566), Manager Sarah(7788), and Employee Two(5678) all had PINs equal to their user IDs (predictable 4-digit numbers) with `force_pin_change` either missing or `false`. Set `force_pin_change: true` on all four. Verified via python inspection — all 8 users now have `force_pin_change=True`.
