@@ -1,38 +1,38 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-27T15:37 UTC
-> Total checks: 1430
-> Healthy: 1430 | Broken: 0 | Fixed this cycle: 1
+> Last full cycle: 2026-06-27T15:59 UTC
+> Total checks: 1445
+> Healthy: 1445 | Broken: 0 | Fixed this cycle: 1
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 — 200 OK (/api/health → {"status":"ok"}) [verified 15:37]
-- [x] All JSON data files exist and are valid — all 15 core JSON files valid, parseable, Owner PIN 1111 intact (name='Owner', username='jayadmin') [verified 15:37]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', 8 users) [verified 15:37]
-- [x] Git repo is clean — clean (committed dirty SECURITY_WATCHDOG.md from Security Watchdog run) [verified 15:37]
+- [x] Flask app responds on port 5000 — 200 OK (/api/health → {"status":"ok"}) [verified 15:59]
+- [x] All JSON data files exist and are valid — all 8 core + extras JSON files valid, parseable, Owner PIN 1111 intact (name='Owner', username='jayadmin') [verified 15:59]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', 8 users) [verified 15:59]
+- [x] Git repo is clean — clean (no uncommitted changes) [verified 15:59]
 
 ## HOURLY (check if last check was >1h ago)
-- [x] /api/health — {"status":"ok"} (GET) [verified 15:37]
+- [x] /api/health — {"status":"ok"} (GET) [verified 15:59]
 - [x] Frontend loads — 200, HTML OK, 1.37MB [verified 15:37]
-- [x] /api/items returns items — GET, 200 OK, 5 categories (Breakfast, Drinks, Foods, Salads, Snacks), 19 items [verified 15:37]
+- [x] /api/items returns items — GET, 200 OK, 5 categories (Breakfast, Drinks, Foods, Salads, Snacks) [verified 15:59]
 - [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 55 shifts, 200 OK [verified 15:37]
 - [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 15:37]
 - [x] index.html size check — 1375239 bytes (normal, ~1.37MB) [verified 15:37]
 - [x] Disk space check — 37% used (14G/38G, OK) [verified 15:37]
 - [x] Memory check — ~37% RAM used, 0 swap [verified 15:37]
-- [x] /api/login works — POST userId=1111, pin=1111, role=owner, permissions=[*], force_pin_change_required [verified 15:37]
+- [x] /api/login works — POST userId=1111, pin=1111, role=owner, permissions=[*], force_pin_change_required [verified 15:59]
 - [x] CSV export — /api/export/shifts_csv returns CSV with adminPin=1111, 55 shifts [verified 15:37]
 - [x] Offline queue — /api/sync_orders exists, returns 400 "No orders provided" [verified 15:37]
-- [x] Clock-in/out: employee 1234 status checked (not clocked in, valid response) [verified 15:37]
-- [x] /api/admin_stats — full stats, avg_sale=$15.25, backup green (116 backups, 4.3MB, healthy), 2 pending orders [verified 15:37]
-- [x] Backup integrity — latest JSON backup 14:46 valid (50 files, owner 1111 intact, 5 categories), DB backup (14:46, integrity=ok, 25 tables) [verified 15:37]
+- [x] Clock-in/out: employee 1234 status checked (not clocked in, valid response) [verified 15:59]
+- [x] /api/admin_stats — full stats, avg_sale=$11.49, backup green (118 backups, 4.5MB, healthy), 0 pending orders [verified 15:59]
+- [x] Backup integrity — latest JSON backup 15:46 valid (50 files, owner 1111 intact, 8 users, 5 categories, 102 orders, 55 shifts), DB backup (15:46, integrity=ok, 25 tables) [verified 15:59]
 
 ## EVERY 4 HOURS
-- [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 200, 2 pending orders [verified 11:45]
-- [x] Pickup display: verify /api/pickup-display/queue works — GET, 200, 1 order ready (order #93) [verified 11:45]
-- [x] Inventory: check stock decrements on order — 24 items tracked, no negative stock, stock tracking valid [verified 11:45]
-- [x] Cash register: /api/cash_drawer/status (POST with adminPin=1111) returns active=false, last closed Jun 24, 10 sessions [verified 11:45]
+- [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 200, 0 pending orders [verified 15:59]
+- [x] Pickup display: verify /api/pickup-display/queue works — GET, 200, 1 order ready (order #93) [verified 15:59]
+- [x] Inventory: check stock decrements on order — 24 items tracked, no negative stock, stock tracking valid [verified 15:59]
+- [x] Cash register: /api/cash_drawer/status (POST with adminPin=1111) returns active=false, last closed Jun 24, inactive [verified 15:59]
 - [x] User CRUD: add test user (9977 via /api/add_user) → verify → delete → confirmed gone [verified 12:25]
 - [x] Loyalty: points earned on order — 14 loyalty entries, data intact [verified 11:45]
 - [x] Webhook: verify webhook config endpoint works — /api/security/discord_webhook returns config (not set), 200 OK [verified 14:29]
@@ -41,7 +41,7 @@
 - [x] Shift edit: 5 shifts with edits, audit trail intact (Owner + Employee One) [verified 14:29]
 - [x] CSV export: verify /api/export/shifts_csv returns CSV — POST, 200, CSV headers + data [verified 12:25]
 - [x] Offline queue: verify /api/sync_orders endpoint exists — POST, 400, "No orders provided" [verified 12:25]
-- [x] Order lifecycle: create order via /api/submit_order → order 122 submitted → refunded via /api/orders/refund, 200 OK [verified 11:11]
+- [x] Order lifecycle: create order via /api/submit_order → order 123 submitted → refunded via /api/orders/refund, 200 OK [verified 15:59]
 - [x] Special chars test: add item with emoji+quotes via /api/add_item → verify in items.json → delete → confirmed gone [verified 12:25]
 
 ## EVERY 12 HOURS
