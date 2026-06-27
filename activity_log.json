@@ -15404,5 +15404,68 @@
             "user_name": "Owner",
             "ip": "127.0.0.1"
         }
+    },
+    {
+        "timestamp": "2026-06-26T23:59:59.353086",
+        "type": "clock_in",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee One",
+            "clock_in_time": "2026-06-26T23:59:59.352885",
+            "late_minutes": null,
+            "scheduled_start": null
+        }
+    },
+    {
+        "timestamp": "2026-06-26T23:59:59.376540",
+        "type": "clock_out",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee One",
+            "clock_in_time": "2026-06-26T23:59:59.352885",
+            "clock_out_time": "2026-06-26T23:59:59.375133",
+            "duration_hours": 0.0
+        }
+    },
+    {
+        "timestamp": "2026-06-27T00:00:00.561808",
+        "type": "admin_login",
+        "user_id": null,
+        "user_role": "unauthorized",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed"
+        }
+    },
+    {
+        "timestamp": "2026-06-27T00:05:08.786500",
+        "type": "admin_login",
+        "user_id": null,
+        "user_role": "unauthorized",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed"
+        }
+    },
+    {
+        "timestamp": "2026-06-27T00:05:13.982093",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
     }
 ]
