@@ -297,10 +297,14 @@ def init_db():
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS combos (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            combo_id TEXT UNIQUE,
             name TEXT,
-            items TEXT DEFAULT '[]',
-            price REAL DEFAULT 0,
-            visible INTEGER DEFAULT 1
+            combo_price REAL DEFAULT 0,
+            description TEXT DEFAULT '',
+            child_items TEXT DEFAULT '[]',
+            active INTEGER DEFAULT 1,
+            created_at TEXT,
+            updated_at TEXT
         )
     """)
 
@@ -562,6 +566,14 @@ def _migrate_schemas():
         # login_attempts: added user_agent, details in schema update
         ('login_attempts', 'user_agent', 'TEXT DEFAULT ""'),
         ('login_attempts', 'details', 'TEXT DEFAULT "{}"'),
+        # combos: schema update from basic (items/price/visible) to rich (combo_id/combo_price/description/child_items/active/timestamps)
+        ('combos', 'combo_id', 'TEXT'),
+        ('combos', 'combo_price', 'REAL DEFAULT 0'),
+        ('combos', 'description', 'TEXT DEFAULT ""'),
+        ('combos', 'child_items', 'TEXT DEFAULT "[]"'),
+        ('combos', 'active', 'INTEGER DEFAULT 1'),
+        ('combos', 'created_at', 'TEXT'),
+        ('combos', 'updated_at', 'TEXT'),
     ]
 
     for table, column, col_def in migrations:

@@ -1,6 +1,6 @@
 # POS Database Migration Tasks
-> Last run: 2026-06-27 01:xx UTC
-> Current phase: Phase 2 — Migration Scripts (12/24 complete)
+> Last run: 2026-06-27 14:xx UTC
+> Current phase: Phase 2 — Migration Scripts (13/24 complete)
 
 ## Phase 1: Schema Design
 - [x] Design all SQLite table schemas (users, shift_log, orders, items, inventory, etc.)
@@ -16,7 +16,7 @@
 - [x] Write migrate_inventory.py — inventory table migration (16 rows verified ✓)
 - [x] Write migrate_loyalty_points.py — loyalty_points table migration (2 records verified ✓)
 - [x] Write migrate_orders.py — orders table migration (66 rows verified ✓)
-- [ ] Write migrate_combos.py — combos table migration
+- [x] Write migrate_combos.py — combos table migration (1 row verified ✓)
 - [ ] Write migrate_favorites.py — favorites table migration
 - [ ] Write migrate_waste_log.py — waste_log table migration
 - [x] Write migrate_tickets.py — tickets table migration (2 rows verified ✓)
@@ -75,6 +75,7 @@
 - [x] **migrate_refunded_orders.py** — Migrated 17 refunded orders from refunded_orders.json to SQLite. Full original_order preserved as JSON TEXT. Idempotency tested. Commit: 3949dbb
 - [x] **migrate_known_ips.py** — Migrated 7 known IPs from known_ips.json to SQLite. Flattened per-user IP arrays into individual rows. Handled edge case (user 123456 with empty IPs array — skipped). Idempotency tested. Commit: bfab6d5
 - [x] **migrate_tickets.py** — Migrated 2 tickets from tickets.json to SQLite. Mapped subject→title, user_id→created_by, extra fields (user_name, type) stored in metadata JSON. Idempotency tested. Commit: ad249b2
+- [x] **migrate_combos.py** — Migrated 1 combo from combos.json to SQLite. Updated combos schema to match JSON structure (combo_id, combo_price, description, child_items, active, created_at, updated_at). Added schema migration entries for existing installs. Idempotency tested. Commit: tbd
 
 ## ROLLBACK PLAN (always keep current)
 How to revert to JSON mode if DB breaks:
@@ -96,7 +97,7 @@ How to revert to JSON mode if DB breaks:
 | loyalty_points.json | loyalty_points | dict (key=phone) | 2 | ✓ |
 | orders.json | orders | array | 66 | ✓ |
 | cleared_orders.json | cleared_orders | array | 0 | ✓ |
-| combos.json | combos | object {combos:[]} | 0 | |
+| combos.json | combos | object {combos:[]} | 1 | ✓ |
 | favorites.json | favorites | dict | 0 | |
 | waste_log.json | waste_log | array | 0 | |
 | tickets.json | tickets | array | 2 | ✓ |
