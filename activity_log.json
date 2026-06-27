@@ -17648,5 +17648,16 @@
             "deleted_user_name": "Reliability Test",
             "deleted_user_role": "user"
         }
+    },
+    {
+        "timestamp": "2026-06-27T22:26:19.805807",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
     }
 ]
