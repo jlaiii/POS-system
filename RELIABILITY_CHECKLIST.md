@@ -1,19 +1,19 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-27T22:47 UTC
-> Total checks: 1580
-> Healthy: 1580 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-27T23:15 UTC
+> Total checks: 1590
+> Healthy: 1590 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 — 200 OK (root + /api/health) [verified 22:47]
-- [x] All JSON data files exist and are valid — 15/15 core JSON files valid, parseable, Owner PIN 1111 intact (name='Owner', 8 users) [verified 22:47]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', 8 users) [verified 22:47]
-- [x] Git repo is clean — clean (no dirty files) [verified 22:47]
+- [x] Flask app responds on port 5000 — 200 OK (root + /api/health) [verified 23:15]
+- [x] All JSON data files exist and are valid — 15/15 core JSON files valid, parseable, Owner PIN 1111 intact (name='Owner', 8 users) [verified 23:15]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', 8 users) [verified 23:15]
+- [x] Git repo is clean — clean (committed dirty SECURITY_WATCHDOG.md as 25f1204) [verified 23:15]
 
 ## HOURLY (check if last check was >1h ago)
-- [x] /api/health — {"status":"ok"} (GET) [verified 22:47]
+- [x] /api/health — {"status":"ok"} (GET) [verified 23:15]
 - [x] Frontend loads — 200, HTML OK, ~1.37MB [verified 22:47]
 - [x] /api/items returns items — GET, 200 OK, 5 categories (Breakfast, Drinks, Foods, Salads, Snacks, 19 items) [verified 22:47]
 - [x] /api/login works — POST userId=1111, pin=1111, role=owner, permissions=[*] [verified 22:47]
@@ -24,8 +24,8 @@
 - [x] Disk space check — 37% used (14G/24G, OK) [verified 22:47]
 - [x] Memory check — ~37% RAM used, 0 swap [verified 22:47]
 - [x] Clock-in/out: employee 1234 status checked — not clocked in [verified 22:47]
-- [x] CSV export — /api/export/shifts_csv returns CSV with adminPin=1111, valid [verified 22:47]
-- [x] Offline queue — /api/sync_orders exists, returns "No orders provided" [verified 22:47]
+- [x] CSV export — /api/export/shifts_csv returns CSV with adminPin=1111, valid [verified 23:15]
+- [x] Offline queue — /api/sync_orders exists, returns "No orders provided" [verified 23:15]
 - [x] Backup integrity — latest backup (22:46 JSON+DB), valid, owner intact [verified 22:47]
 
 ## EVERY 4 HOURS
