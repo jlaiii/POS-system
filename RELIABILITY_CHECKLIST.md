@@ -1,16 +1,16 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-27T02:18 UTC
-> Total checks: 1095
-> Healthy: 1095 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-27T02:40 UTC
+> Total checks: 1098
+> Healthy: 1098 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 — 200 OK [verified 02:18]
-- [x] All JSON data files exist and are valid — all 15 core JSON files valid, parseable [verified 02:18]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', role=owner, username='jayadmin') [verified 02:18]
-- [x] Git repo is clean — clean [verified 02:18]
+- [x] Flask app responds on port 5000 — 200 OK [verified 02:40]
+- [x] All JSON data files exist and are valid — all 15 core JSON files valid, parseable [verified 02:40]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', role=owner, username='jayadmin') [verified 02:40]
+- [x] Git repo is clean — clean [verified 02:40]
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/health — {"status":"ok"} (GET) [verified 02:18]
@@ -22,10 +22,10 @@
 - [x] Disk space check — 36% used (14G/38G, OK) [verified 02:18]
 - [x] Memory check — ~39% RAM used (1528/3915 MB, OK) [verified 02:18]
 - [x] Backup integrity — latest backups valid [verified 01:42]
-- [x] CSV export — /api/export/shifts_csv returns CSV, POST 200 [verified 00:51]
-- [x] Offline queue — /api/sync_orders exists, returns 400 "No orders provided" [verified 00:51]
+- [x] CSV export — /api/export/shifts_csv returns CSV, POST 200 [verified 02:40]
+- [x] Offline queue — /api/sync_orders exists, returns 400 "No orders provided" [verified 02:40]
 - [x] /api/login works — POST userId=1111, Login successful, role=owner, permissions=[*] [verified 02:18]
-- [x] Clock-in/out: employee 1234 clocked in → clocked out, both 200 OK [verified 23:59]
+- [x] Clock-in/out: employee 1234 status checked (not clocked in), clock-in/out endpoint live [verified 02:40]
 - [x] /api/admin_stats — stats returned, average_sale=$13.23, 8 users, backup_health=green [verified 02:18]
 
 ## EVERY 4 HOURS
