@@ -1,12 +1,12 @@
 # POS Security Watchdog
 
-| Last run: 2026-06-27T02:52 UTC
-|| Total events tracked: 55 (SEC-001→SEC-055; 55 resolved, 0 unresolved)
-|| Active blocks: 0 IPs
-|| Unresolved alerts: 0
-|| Run result: [SILENT] — nothing new to report.
+| Last run: 2026-06-27T03:10 UTC
+||| Total events tracked: 55 (SEC-001→SEC-055; 55 resolved, 0 unresolved)
+||| Active blocks: 0 IPs
+||| Unresolved alerts: 0
+||| Run result: [SILENT] — nothing new to report.
 
-## Current Run Findings (02:35–02:52 UTC, ~17 min window)
+## Current Run Findings (02:52–03:10 UTC, ~18 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -18,22 +18,22 @@ None.
 None.
 
 ### 🟢 LOW (0)
-None — SEC-055 auto-resolved (no recurrence in 27 min, confirmed test pattern).
+None.
 
-### ℹ️ Activity Summary (02:15–02:35 UTC, ~20 min window)
+### ℹ️ Activity Summary (02:52–03:10 UTC, ~18 min window)
 
 **Server**: UP — serving HTTP 200 on port 5000 (root endpoint).
 
-**Activity**: 0 new login events since last run. Last login was at 02:08:17 — 27 min ago.
-- Production Auditor worker created 2 test orders (#119, #120) at 02:31:43, both immediately refunded with reason "Production Auditor verification test".
-- 0 admin actions beyond order creation.
-- 0 shifts.
+**Activity**: 0 new login events in login_attempts.json since last run. Last login attempt at 02:08:17 — 62 min ago.
+- 2 admin_logins by Owner (1111) from 127.0.0.1 at 02:53:48 and 02:53:50 (activity_log only — not PIN logins, these are admin session logins).
+- 0 new orders, 0 new shifts.
+- No other activity detected.
 
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: 0 failed logins. No brute force.
 - **Account enumeration**: No probes — no failed login attempts at all.
 - **Successful-after-failure**: No pattern detected.
-- **Off-hours activity**: No new off-hours logins this window.
+- **Off-hours activity**: Owner admin_logins at 02:53 from localhost — same pattern as SEC-009 through SEC-055. Expected dev behavior, not re-alerted.
 - **Cross-IP targeting**: None — all from 127.0.0.1.
 - **Known IPs**: No new IPs tracked.
 
@@ -44,27 +44,25 @@ None — SEC-055 auto-resolved (no recurrence in 27 min, confirmed test pattern)
 - No config changes detected.
 
 ### 💰 Financial Check
-- Orders #119 ($3.25) and #120 ($3.25) created then refunded by Owner — Production Auditor verification test.
+- No new orders or refunds since last run.
 - No $0 orders, no 100% discounts, no unusual patterns.
 
 ### 📂 File Integrity
 - All JSON files parseable and intact.
 - Owner account (1111) present, active, not banned.
-- Git status: dirty — need to commit Production Auditor test order data.
+- Git status: clean — no uncommitted changes.
 - security_config.json: unchanged.
 - No suspicious files detected.
 - No unexpected file shrinkage.
 
 ### ✅ Actions Taken
-- Resolved SEC-055 (Employee One off-hours 2fa_required attempts — auto-resolved, test pattern confirmed, no recurrence)
-- Updated security_events.json with resolution timestamp
-- Committed dirty files from Production Auditor test orders
+- None required — no anomalies to address.
 
 ## Active Blocks
 None.
 
 ## Resolved This Run
-- **SEC-055** — Employee One (1234) off-hours during cron testing. Auto-resolved after 27 min with no recurrence. Pattern confirmed as cron worker testing 2FA flow from localhost.
+None — no new events.
 
 ## Unresolved Events
 None.
@@ -76,10 +74,10 @@ None.
 
 | Check | Status |
 |---|---|
-| Current time | 2026-06-27T02:52 UTC — off-hours (22:00-06:00) |
-| Activity since last run | 0 new events — quiet system |
+| Current time | 2026-06-27T03:10 UTC — off-hours (22:00-06:00) |
+| Activity since last run | 2 admin_logins (Owner, localhost) — no new login_attempts entries |
 | Login attempts (last 15 min) | 0 |
-| Successful logins (this window) | 0 |
+| Successful logins (this window) | 0 (2 admin_logins in activity_log) |
 | Blocked IPs | 0 |
 | Config changes | None |
 | File integrity | OK — all JSON parseable. Git clean. |
