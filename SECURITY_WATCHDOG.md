@@ -1,12 +1,12 @@
 # POS Security Watchdog
 
-| Last run: 2026-06-27T02:35 UTC
+| Last run: 2026-06-27T02:52 UTC
 || Total events tracked: 55 (SEC-001→SEC-055; 55 resolved, 0 unresolved)
 || Active blocks: 0 IPs
 || Unresolved alerts: 0
 || Run result: [SILENT] — nothing new to report.
 
-## Current Run Findings (02:15–02:35 UTC, ~20 min window)
+## Current Run Findings (02:35–02:52 UTC, ~17 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -76,13 +76,13 @@ None.
 
 | Check | Status |
 |---|---|
-| Current time | 2026-06-27T02:35 UTC — off-hours (22:00-06:00) |
-| Activity since last run | 2 test orders (Production Auditor) — 0 login events |
+| Current time | 2026-06-27T02:52 UTC — off-hours (22:00-06:00) |
+| Activity since last run | 0 new events — quiet system |
 | Login attempts (last 15 min) | 0 |
 | Successful logins (this window) | 0 |
 | Blocked IPs | 0 |
 | Config changes | None |
-| File integrity | OK — all JSON parseable. Git dirty (test orders). |
+| File integrity | OK — all JSON parseable. Git clean. |
 | Users | 8 accounts. Admin 2FA: 2222=no, 7788=no (pre-existing gap) |
 | Security events | 55 tracked, 0 unresolved |
 | Server | UP (:5000 — HTTP 200) |
