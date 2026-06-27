@@ -16886,5 +16886,152 @@
         "details": {
             "status": "success"
         }
+    },
+    {
+        "timestamp": "2026-06-27T14:33:25.758701",
+        "type": "login_failed",
+        "user_id": null,
+        "user_role": "unknown",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "failed",
+            "method": "pin",
+            "ip": "127.0.0.1",
+            "attempt": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-27T14:33:25.791621",
+        "type": "clock_in",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee One",
+            "clock_in_time": "2026-06-27T14:33:25.791421",
+            "late_minutes": null,
+            "scheduled_start": null
+        }
+    },
+    {
+        "timestamp": "2026-06-27T14:34:03.058002",
+        "type": "login",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "2fa_required",
+            "method": "pin",
+            "user_name": "Employee One",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-27T14:34:34.208032",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-27T14:34:34.246839",
+        "type": "submit_order",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "order_id": 123,
+            "subtotal": 23.49,
+            "tax_amount": 1.93,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 25.42,
+            "payment_method": "split",
+            "item_count": 3
+        }
+    },
+    {
+        "timestamp": "2026-06-27T14:36:08.816189",
+        "type": "submit_order",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "order_id": 124,
+            "subtotal": 17.0,
+            "tax_amount": 1.41,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 21.41,
+            "payment_method": "Card",
+            "item_count": 2
+        }
+    },
+    {
+        "timestamp": "2026-06-27T14:36:22.538256",
+        "type": "submit_order",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "order_id": 125,
+            "subtotal": 10.99,
+            "tax_amount": 0.91,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 13.9,
+            "payment_method": "Cash",
+            "item_count": 2
+        }
+    },
+    {
+        "timestamp": "2026-06-27T14:36:50.254178",
+        "type": "submit_order",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "order_id": 126,
+            "subtotal": 16.0,
+            "tax_amount": 1.33,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 20.33,
+            "payment_method": "Card",
+            "item_count": 2
+        }
+    },
+    {
+        "timestamp": "2026-06-27T14:37:28.189641",
+        "type": "submit_order",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "order_id": 127,
+            "subtotal": 7.0,
+            "tax_amount": 0.58,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 8.58,
+            "payment_method": "Cash",
+            "item_count": 2
+        }
     }
 ]
