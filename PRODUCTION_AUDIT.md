@@ -1,7 +1,7 @@
 # POS Production Readiness Audit
-> Last run: 2026-06-26 14:10 CT
-> Overall readiness: 65% (HIGH issues: 7, MEDIUM: 9)
-> Workflow tested this run: A (Waiter taking orders — admin 1111 logged in, submitted 2 split orders across tables 5 & 6, clocked in/out)
+> Last run: 2026-06-27 02:29 CT
+> Overall readiness: 63% (HIGH issues: 8, MEDIUM: 10)
+> Workflow tested this run: B (Manager closing shift — admin login, stats review, cash drawer status, employee shifts, pay period summary, CSV export)
 
 ## BLOCKERS (can't go live with these)
 
@@ -23,6 +23,8 @@
 
 - [ ] **Customer display polls aggressively (2s interval) — drains tablet battery** — `POLL_INTERVAL = 2000` (2 seconds) in customer-display.html line 419. On a tablet running 12+ hours on WiFi, this generates ~43,200 API requests per day. Real impact: shortens battery life significantly on tablets that hang on the wall all day. Should be 5-10 seconds minimum, and use WebSocket fallback instead of polling when available.
 
+- [ ] **admin_stats returns raw_orders with full item details — massive payload on slow WiFi** — The `/api/admin_stats` endpoint includes every order's full items array with tax breakdowns, modifiers, and timestamps. This can be 100KB+ JSON for a restaurant with 100+ orders. On a restaurant tablet on consumer WiFi, this takes several seconds to download and parse. The frontend already has paginated order history — stats should return summary data only (counts, totals, averages) and omit `raw_orders` entirely or provide it only via a separate paginated endpoint. [app.py ~9150, submit_order response construction]
+
 ## MEDIUM (annoying but workable)
 
 - [ ] **"Call Server" button on tablet has no notification in POS** — The tablet page has a "📞 Call Server" button that calls the backend endpoint. Waiters never know a customer needs them. The backend stores calls and a `server_call` WebSocket event is emitted, but POS has no listener. Worker-3 added polling fallback + endpoint but this remains partially functional.
@@ -41,7 +43,9 @@
 
 - [ ] **Standalone customer pages lack proper meta tags for PWA** — customer-display.html, pickup-display.html, and tablet.html are missing `apple-mobile-web-app-capable`, `apple-mobile-web-app-status-bar-style`, link manifest, and theme-color (except pickup-display has theme-color). These pages are meant to run on dedicated wall-mounted tablets, so they should be installable as standalone web apps without browser chrome.
 
-- [ ] **Payment field stored as object in order #55** — Order #55 has `payment: {"method": "cash", "amount": 6.0}` (a dict) instead of a string. `submit_order` should coerce dict payment values to string. Currently just stores whatever it receives — data integrity issue.
+- [ ] **Cash drawer has no active session prompt — no "start of day" workflow** — The cash drawer system exists (open/close/transactions) but there's no automatic prompt to open the drawer when the first order of the day is placed. When tested with Workflow B, the last session was 3 days old (June 24). A manager must independently remember to open a cash drawer session at shift start. Without this, end-of-day reconciliation has no baseline. In a real restaurant, the manager opens the drawer at the start of every shift — the system should prompt or auto-create a session.
+
+- [ ] **Pay period summary shows null estimated_pay for all employees — no pay rates configured** — When testing Workflow B, the pay period summary returned `estimated_pay: null` for every employee because `pay_rate` is not set for most users. Manager Sarah (7788), Maria (3344), and Chef Diego (5566) have no pay rate. A restaurant can't run payroll without configuring pay rates. The pay period UI should warn when pay rates are missing, or better, auto-assign a default rate on user creation.
 
 ## LOW (polish, nice-to-have)
 
@@ -53,8 +57,7 @@
 
 ## FIXED (this session)
 
-- [x] **4 remaining unguarded `:hover` CSS rules wrapped in @media (hover: hover)** — Found 4 `:hover` rules that were NOT wrapped in `@media (hover: hover)`: `.low-stock-header:hover`, `.analytics-bar:hover`, `.analytics-hourly-bar:hover`, `.analytics-period-card:hover`. These caused sticky-hover state on tablets. Wrapped all 4 in `@media (hover: hover)`. Commit `4461194`. Verified: zero unguarded `:hover` rules remain in index.html.
-- [x] **Standalone pages disabled zoom (user-scalable=no)** — Changed `user-scalable=no` to `maximum-scale=5.0` in viewport meta on customer-display.html, tablet.html, and pickup-display.html. This prevented users from pinch-zooming on wall-mounted tablets. WCAG accessibility violation resolved. Files: customer-display.html:5, tablet.html:5, pickup-display.html:5.
+- [x] **Payment field stored as dict (data integrity) — 6 orders had payment stored as `{"method": "cash", "amount": N}` instead of a plain string** — Found during Workflow B testing. Order #117 had `payment: {"method": "cash", "amount": 3}` and 5 other orders had similar dict values. Root cause: `submit_order()` and `sync_orders()` endpoints stored `data.get('payment', '')` without type-checking. If the frontend sent a dict, it was stored as-is. Fix: added type coercion in both endpoints — if `payment` is a dict, extract the `method` field as a string; otherwise convert to string. Cleaned up all 6 existing malformed records. This prevents frontend rendering crashes when `order.payment` is assumed to be a string. Commit `1392b24`.
 
 ## PREVIOUSLY FIXED (archive)
 
@@ -74,3 +77,5 @@
 - [x] **Haptic feedback on order submit** — worker-2
 - [x] **Zero items have images, descriptions, or dietary tags** — Fixed: all 14 original items now have SVG images, descriptions, dietary tags. SVGs exist in static/images/.
 - [x] **Order submit validation (empty items, nonexistent items)** — `submit_order()` now rejects empty items array with 400 error, validates each item against items.json menu, and verifies price matches menu price within ±$0.50 tolerance. [worker-3]
+- [x] **4 remaining unguarded `:hover` CSS rules wrapped in @media (hover: hover)** — Found 4 `:hover` rules that were NOT wrapped in `@media (hover: hover)`. Commit `4461194`.
+- [x] **Standalone pages disabled zoom (user-scalable=no)** — Changed `user-scalable=no` to `maximum-scale=5.0` in viewport meta. Commit `4461194`.
