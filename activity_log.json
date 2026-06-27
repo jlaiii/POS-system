@@ -15467,5 +15467,148 @@
         "details": {
             "status": "success"
         }
+    },
+    {
+        "timestamp": "2026-06-27T00:27:54.135826",
+        "type": "add_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "failed",
+            "reason": "Missing data",
+            "new_user_id": null
+        }
+    },
+    {
+        "timestamp": "2026-06-27T00:28:01.924625",
+        "type": "add_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "added_user_id": "9911",
+            "added_user_name": "Reliability Test",
+            "added_user_role": "user"
+        }
+    },
+    {
+        "timestamp": "2026-06-27T00:28:07.644095",
+        "type": "get_users",
+        "user_id": "anonymous",
+        "user_role": "unauthorized",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "failed",
+            "reason": "Missing adminPin"
+        }
+    },
+    {
+        "timestamp": "2026-06-27T00:28:13.595675",
+        "type": "delete_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "failed",
+            "reason": "Missing user ID to delete"
+        }
+    },
+    {
+        "timestamp": "2026-06-27T00:28:20.528903",
+        "type": "delete_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "deleted_user_id": "9911",
+            "deleted_user_name": "Reliability Test",
+            "deleted_user_role": "user"
+        }
+    },
+    {
+        "timestamp": "2026-06-27T00:28:39.490442",
+        "type": "add_item",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "category": "Snacks",
+            "name": "\ud83c\udf89 Special \"Test\" Item &#9731;",
+            "price": 9.99
+        }
+    },
+    {
+        "timestamp": "2026-06-27T00:28:39.513694",
+        "type": "delete_item",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "failed",
+            "reason": "Missing data",
+            "item_data": {
+                "adminPin": "1111",
+                "itemId": "\ud83c\udf89 Special \"Test\" Item &#9731;"
+            }
+        }
+    },
+    {
+        "timestamp": "2026-06-27T00:28:46.821217",
+        "type": "delete_item",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "category": "Snacks",
+            "name": "\ud83c\udf89 Special \"Test\" Item &#9731;"
+        }
+    },
+    {
+        "timestamp": "2026-06-27T00:29:06.635454",
+        "type": "submit_order",
+        "user_id": null,
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "order_id": 118,
+            "subtotal": 8.99,
+            "tax_amount": 0.74,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 9.73,
+            "payment_method": "Cash",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-27T00:29:13.460177",
+        "type": "refund_order",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "order_id": 118,
+            "reason": "Reliability Bot lifecycle test",
+            "refunded_by_name": "Owner",
+            "order_total": 9.73,
+            "inventory_restored": [
+                "Pancakes x1"
+            ]
+        }
     }
 ]
