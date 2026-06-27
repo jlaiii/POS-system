@@ -1,11 +1,11 @@
 # POS Security Watchdog
 
-|||| Last run: 2026-06-27T12:56 UTC
-||||||||||||||||||||||||| Total events tracked: 72 (SEC-001→SEC-072; all resolved)
-||||||||||||||||||||||||| Active blocks: 0 IPs
-||||||||||||||||||||||||| Run result: All clear | No alerts
+||||| Last run: 2026-06-27T13:14 UTC
+|||||||||||||||||||||||||| Total events tracked: 72 (SEC-001→SEC-072; all resolved)
+|||||||||||||||||||||||||| Active blocks: 0 IPs
+|||||||||||||||||||||||||| Run result: All clear | No alerts | Zero activity since last run
 
-## Current Run Findings (12:39–12:56 UTC, ~17 min window)
+## Current Run Findings (12:56–13:14 UTC, ~18 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -19,22 +19,19 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (12:39–12:56 UTC)
+### ℹ️ Activity Summary (12:56–13:14 UTC)
 
-**Server**: Healthy (responding to requests). No issues.
+**Server**: Healthy (responding to requests — HTTP 200).
 
-**Activity**: 3 events this window — Owner (1111) login + admin_logins from localhost:
-- 12:54:08 — Owner login via PIN (127.0.0.1, curl/8.5.0)
-- 12:54:12 — admin_login (Owner, 127.0.0.1)
-- 12:54:16 — admin_login (Owner, 127.0.0.1)
+**Activity**: 0 new events since last run. No activity at all.
 
-**Login attempts in window: 0 failed** — no brute force, no attacks.
+**Login attempts in window: 0** — no brute force, no attacks, no logins of any kind.
 
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: 0 failed logins in last 5 min. No brute force.
 - **Account enumeration**: No probes (0 failed logins total in this window).
 - **Successful-after-failure**: No pattern (no failures this window).
-- **Off-hours activity**: 12:56 UTC = 07:56 CT — within normal hours.
+- **Off-hours activity**: 13:14 UTC = 08:14 CT — within normal hours.
 - **Cross-IP targeting**: None (only 127.0.0.1).
 - **Known IPs**: No new IPs.
 - **Credential stuffing**: No pattern detected.
@@ -52,20 +49,21 @@ None.
 - No financial anomalies detected.
 
 ### 📂 File Integrity
-- Git status: clean — committed data changes (Owner login activity).
+- Git status: clean.
 - Owner account (1111) present, active, not banned.
 - All 8 user accounts intact.
-- Server: **Healthy** (responding to requests).
+- File sizes normal (baseline updated).
+- Server: **Healthy** (HTTP 200).
 - No suspicious files detected.
 
 ### ✅ Actions Taken
 - **All clear** — No threats detected this run.
-- Brute force check: clean (0 failed attempts).
+- Brute force check: clean (0 failed attempts in window).
 - Account enumeration: clean (0 probes).
-- Activity log reviewed: 3 events (Owner login, normal dev activity).
-- File integrity: all JSON files intact.
-- Committed data file changes (activity_log.json, login_attempts.json).
-- Server health: verified healthy.
+- Zero activity since last run — nothing to investigate.
+- File integrity: all JSON files intact, sizes normal.
+- Updated baseline file sizes in `.watchdog_file_sizes.json`.
+- Server health: verified healthy (HTTP 200).
 - Updated SECURITY_WATCHDOG.md timestamp.
 
 ## Active Blocks
@@ -79,14 +77,14 @@ None — all 72 events resolved.
 
 ## System State
 
-|||| Check | Status |
-|---|---|---|---|
-|||| Current time | 2026-06-27T12:56 UTC — within normal hours |
-|||| Activity since last run | 3 events (Owner login + admin_logins) |
-|||| Login attempts (last ~5 min) | 0 failed, 0 successful |
-|||| Successful logins (this window) | 1 (Owner, 127.0.0.1, 12:54) |
-|||| Blocked IPs | 0 |
-|||| Config changes | None |
-|||| File integrity | OK. 8 accounts intact. |
-|||| Users | 8 accounts. Admin 2FA: 2222=no, 7788=no (pre-existing gap) |
-|||| Server | **Healthy** (responding to requests) |
+||||| Check | Status |
+|---|---|---|---|---|
+||||| Current time | 2026-06-27T13:14 UTC — within normal hours |
+||||| Activity since last run | 0 new events (zero activity) |
+||||| Login attempts (last ~5 min) | 0 failed, 0 successful |
+||||| Successful logins (this window) | 0 |
+||||| Blocked IPs | 0 |
+||||| Config changes | None |
+||||| File integrity | OK. All files present, sizes normal. 8 accounts intact. |
+||||| Users | 8 accounts. Admin 2FA: 2222=no, 7788=no (pre-existing gap) |
+||||| Server | **Healthy** (HTTP 200) |
