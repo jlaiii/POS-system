@@ -1,16 +1,16 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-26T23:59 UTC
-> Total checks: 1037
-> Healthy: 1037 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-27T00:15 UTC
+> Total checks: 1045
+> Healthy: 1045 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 — 200 OK [verified 23:59]
-- [x] All JSON data files exist and are valid — all 15 core JSON files valid, parseable [verified 23:59]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', role=owner) [verified 23:59]
-- [x] Git repo is clean — clean [verified 23:59]
+- [x] Flask app responds on port 5000 — 200 OK [verified 00:15]
+- [x] All JSON data files exist and are valid — all 15 core JSON files valid, parseable [verified 00:15]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', role=owner) [verified 00:15]
+- [x] Git repo is clean — clean [verified 00:15]
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/health — {"status":"ok"} (GET) [verified 23:37]
@@ -90,4 +90,5 @@
 - [2026-06-23 11:41] **Flask server down (2nd occurrence)** — Server not responding (000). Restarted via `cd /root/pos-system-work && python3 app.py &`. Verified 200 on root. All critical and hourly checks passed. Downtime: ~1min.
 - [2026-06-23 18:22] **Flask server down (4th occurrence)** — Server not responding (000). 4th crash — same pattern as before. Werkzeug dev server silently stopped. Restarted via `cd /root/pos-system-work && python3 app.py &`. Verified 200 on root and all critical endpoints. Downtime: ~2min (caught by this run).
 - [2026-06-23 21:50] **Dual Flask instances causing clock-in/out state mismatch** — Two Flask processes (gunicorn via run_flask.sh + stray python3 app.py) listening on port 5000, causing requests to randomly hit different instances with separate `active_shifts` in-memory state. Root cause: previous reliability bot runs started `python3 app.py &` as a manual restart step, not checking for existing `scripts/run_flask.sh` launcher. Fix: killed both extra instances, let run_flask.sh auto-restart gunicorn. Verified single listener and clock-in/out cycle works correctly. Commit: (pending — standard operational fix, RELIABILITY_CHECKLIST.md only). Downtime: 0s (no downtime, just state inconsistency between endpoints).
-- [2026-06-23 23:31] **4× Flask dev server instances on port 5000** — 4 separate `python3 app.py` processes all listening on port 5000 (pids 298359, 306102, 324385, 324580). This is a recurrence/escalation of the dual-instance issue. Root cause: multiple cron workers independently spawn `python3 app.py &` without checking for existing instances, leading to accumulation. Fix: killed all 4 dev server instances, started single gunicorn instance via `scripts/run_flask.sh`. Verified single listener, all critical endpoints working. Downtime: ~5s (during instance switchover).
+|- [2026-06-23 23:31] **4× Flask dev server instances on port 5000** — 4 separate `python3 app.py` processes all listening on port 5000 (pids 298359, 306102, 324385, 324580). This is a recurrence/escalation of the dual-instance issue. Root cause: multiple cron workers independently spawn `python3 app.py &` without checking for existing instances, leading to accumulation. Fix: killed all 4 dev server instances, started single gunicorn instance via `scripts/run_flask.sh`. Verified single listener, all critical endpoints working. Downtime: ~5s (during instance switchover).
+|- [2026-06-27 00:15] **Routine run — all healthy** — Flask 200 (gunicorn+gevent, single master+worker), disk 36%, RAM 39%. All 15 JSON files valid. Owner PIN 1111 intact. Git: committed dirty SECURITY_WATCHDOG.md from Security Watchdog (46d57d4). Verified overdue 4H items: User CRUD (add/delete test user 9911, PASSED), Loyalty lookup (200, 14 entries intact), Special chars test (emoji+quotes item created & deleted, PASSED), Offline queue (sync_orders returns 400 'No orders provided' — working). Order lifecycle: order 118 created & refunded (200 OK). Single gunicorn master+worker, no dual instances. Total checks: 1045, all healthy. No downtime.
