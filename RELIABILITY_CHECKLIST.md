@@ -1,32 +1,32 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-27T05:18 UTC
-> Total checks: 1166
-> Healthy: 1166 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-27T05:43 UTC
+> Total checks: 1170
+> Healthy: 1170 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 — 200 OK [verified 05:18]
-- [x] All JSON data files exist and are valid — all 15 core JSON files valid, parseable [verified 05:18]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', role=owner, username='jayadmin') [verified 05:18]
-- [x] Git repo is clean — clean [verified 05:18]
+- [x] Flask app responds on port 5000 — 200 OK [verified 05:43]
+- [x] All JSON data files exist and are valid — all 15 core JSON files valid, parseable [verified 05:43]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', role=owner, username='jayadmin') [verified 05:43]
+- [x] Git repo is clean — clean [verified 05:43]
 
 ## HOURLY (check if last check was >1h ago)
-- [x] /api/health — {"status":"ok"} (GET) [verified 05:18]
-- [x] Frontend loads — 200, HTML OK, 1.37MB [verified 05:18]
-- [x] /api/items returns items — GET, 200 OK, 5 categories (Breakfast, Drinks, Foods, Salads, Snacks) [verified 05:18]
-- [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 55 shifts, 200 OK [verified 05:18]
-- [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 05:18]
-- [x] index.html size check — 1375239 bytes (normal) [verified 05:18]
-- [x] Disk space check — 36% used (14G/38G, OK) [verified 05:18]
-- [x] Memory check — ~39% RAM used (1528/3915 MB, OK) [verified 05:18]
-- [x] Backup integrity — latest backups valid (json 04:38 + db 04:38, 50 files all valid, tar.gz subdir) [verified 05:18]
+- [x] /api/health — {"status":"ok"} (GET) [verified 05:43]
+- [x] Frontend loads — 200, HTML OK, 1.37MB [verified 05:43]
+- [x] /api/items returns items — GET, 200 OK, 5 categories (Breakfast, Drinks, Foods, Salads, Snacks) [verified 05:43]
+- [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 55 shifts, 200 OK [verified 05:43]
+- [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 05:43]
+- [x] index.html size check — 1375239 bytes (normal) [verified 05:43]
+- [x] Disk space check — 36% used (14G/38G, OK) [verified 05:43]
+- [x] Memory check — ~39% RAM used (1528/3915 MB, OK) [verified 05:43]
+- [x] /api/login works — POST userId=1111, role=owner, permissions=[*] [verified 05:43]
 - [x] CSV export — /api/export/shifts_csv returns expected permission error w/o adminPin [verified 04:33]
 - [x] Offline queue — /api/sync_orders exists, returns "No orders provided" [verified 04:33]
-- [x] /api/login works — POST userId=1111, role=owner, permissions=[*] [verified 05:18]
 - [x] Clock-in/out: employee 1234 status checked (not clocked in), clock-in/out endpoint live [verified 05:18]
 - [x] /api/admin_stats — stats returned, average_sale=$15.25, 8 users, backup_health=green [verified 05:18]
+- [x] Backup integrity — latest backups valid (json 04:38 + db 04:38, 50 files all valid, tar.gz subdir) [verified 05:18]
 
 ## EVERY 4 HOURS
 - [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 200, 2 pending orders [verified 03:24]
