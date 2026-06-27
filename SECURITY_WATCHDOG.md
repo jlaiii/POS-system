@@ -1,11 +1,11 @@
 # POS Security Watchdog
 
-| | | | | | | | | | Last run: 2026-06-27T17:58 UTC
+| | | | | | | | | | | Last run: 2026-06-27T18:30 UTC
 | | | | | | | | | | | | | | | Total events tracked: 72 (SEC-001→SEC-072; all resolved)
 | | | | | | | | | | | | | | | Active blocks: 0 IPs
 | | | | | | | | | | | | | | Run result: All clear | No activity since last run
 
-## Current Run Findings (17:41–17:58 UTC, ~17 min window)
+## Current Run Findings (17:58–18:30 UTC, ~32 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -19,13 +19,13 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (17:41–17:58 UTC)
+### ℹ️ Activity Summary (17:58–18:30 UTC)
 
 **Server**: Healthy (HTTP 200 on root).
 
-**Activity**: 1 login event from Owner (1111) at 17:43 UTC from 127.0.0.1 (curl/8.5.0) — normal cron worker activity. Zero failed attempts, zero orders, zero refunds.
+**Activity**: No activity since last run. Zero logins, zero failed attempts, zero orders, zero refunds.
 
-**Login attempts in window**: 1 (all successful). Clean.
+**Login attempts in window**: 0. Clean.
 
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: 0 failed logins in window. No brute force.
@@ -74,10 +74,10 @@ None.
 
 | | | | | | | | | | | Check | Status |
 |---|---|---|---|---|---|---|---|---|---|---|
-| | | | | | | | | | | | | | | Current time | 2026-06-27T17:58 UTC — 12:58 CT (normal hours, Saturday) |
-| | | | | | | | | | | | | | | Activity since last run | 1 login (Owner, 127.0.0.1) — normal |
-| | | | | | | | | | | | | | | Login attempts (last ~17 min) | 1 (0 failed) |
-| | | | | | | | | | | | | | | Successful logins (this window) | 1 (Owner) |
+| | | | | | | | | | | | | | | Current time | 2026-06-27T18:30 UTC — 13:30 CT (normal hours, Saturday) |
+| | | | | | | | | | | | | | | Activity since last run | None |
+| | | | | | | | | | | | | | | Login attempts (last ~32 min) | 0 (0 failed) |
+| | | | | | | | | | | | | | | Successful logins (this window) | 0 |
 | | | | | | | | | | | | | | | Blocked IPs | 0 |
 | | | | | | | | | | | | | | | Config changes | None |
 | | | | | | | | | | | | | | | File integrity | OK. All JSON files parseable, sizes stable. 8 accounts intact. |
