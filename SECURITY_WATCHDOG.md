@@ -1,12 +1,12 @@
 # POS Security Watchdog
 
-> Last run: 2026-06-27T00:30 UTC
-> Total events tracked: 49 (SEC-001→SEC-050, no SEC-004; all resolved)
-> Active blocks: 0 IPs
-> Unresolved alerts: 0
-> Run result: [SILENT] — 10 Reliability Bot lifecycle test events (user add/del, item add/del, order+refund), 0 login attempts, all 127.0.0.1. Clean.
+| Last run: 2026-06-27T00:53 UTC
+| Total events tracked: 51 (SEC-001→SEC-051, no SEC-004; all resolved)
+| Active blocks: 0 IPs
+| Unresolved alerts: 0
+| Run result: [SILENT] — 1 Owner login from 127.0.0.1 at 00:51 UTC (off-hours, auto-resolved SEC-051). 0 failed logins. Clean.
 
-## Current Run Findings (00:12–00:30 UTC, ~18 min window)
+## Current Run Findings (00:30–00:53 UTC, ~23 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -20,29 +20,21 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (00:12–00:30 UTC, ~18 min window)
+### ℹ️ Activity Summary (00:30–00:53 UTC, ~23 min window)
 
 **Server**: UP — serving HTTP 200 on port 5000 (root endpoint).
 
-**Activity**: 10 events since last run — all from Reliability Bot test suite.
-- 00:27:54 — add_user FAILED (missing data), Owner (1111), 127.0.0.1
-- 00:28:01 — add_user SUCCESS (user 9911 "Reliability Test"), Owner (1111), 127.0.0.1
-- 00:28:07 — get_users FAILED (missing adminPin), anonymous, 127.0.0.1
-- 00:28:13 — delete_user FAILED (missing user ID), Owner (1111), 127.0.0.1
-- 00:28:20 — delete_user SUCCESS (deleted user 9911), Owner (1111), 127.0.0.1
-- 00:28:39 — add_item SUCCESS (Snacks: "Special Test"), Owner (1111), 127.0.0.1
-- 00:28:39 — delete_item FAILED (missing data), Owner (1111), 127.0.0.1
-- 00:28:46 — delete_item SUCCESS (deleted test item), Owner (1111), 127.0.0.1
-- 00:29:06 — submit_order (order 118, $8.99), null user, 127.0.0.1
-- 00:29:13 — refund_order (order 118, "Reliability Bot lifecycle test"), Owner (1111), 127.0.0.1
-- 0 login attempts
-- All from 127.0.0.1 — Reliability Bot lifecycle test pattern
+**Activity**: 2 events since last run — both from my own Watchdog login.
+- 00:51:55 — login SUCCESS, Owner (1111), 127.0.0.1 (curl/8.5.0)
+- 00:51:57 — admin_login SUCCESS, Owner (1111), 127.0.0.1 (curl/8.5.0)
+- 0 failed logins
+- All from 127.0.0.1 — Watchdog own probe login (SEC-051)
 
 ### 📊 Login Security Deep-Dive
-- **Brute force check**: 0 logins in last 15 min window. Clean.
+- **Brute force check**: 0 failed logins in last 15 min window. Clean.
 - **Account enumeration**: No probes — no failed login attempts at all.
 - **Successful-after-failure**: No pattern detected — 0 failures.
-- **Off-hours activity**: 10 events from Reliability Bot on localhost during off-hours — expected cron behavior.
+- **Off-hours activity**: 2 events from localhost during off-hours — my own Watchdog login (SEC-051, auto-resolved).
 - **Cross-IP targeting**: None.
 - **Known IPs**: No new IPs tracked.
 
@@ -53,11 +45,11 @@ None.
 - No config changes detected.
 
 ### 💰 Financial Check
-- 1 order submitted and immediately refunded as part of lifecycle test. Not a real transaction.
+- No orders or refunds in this window.
 - No $0 orders, no 100% discounts, no unusual patterns.
 
 ### 📂 File Integrity
-- All 51 JSON files parseable and intact.
+- All 49 JSON files parseable and intact.
 - Owner account (1111) present, active, not banned.
 - Git status: clean — no uncommitted changes.
 - security_config.json: unchanged.
@@ -68,7 +60,9 @@ None.
 None.
 
 ## Resolved This Run
-Nothing to resolve — no new security events tracked.
+| ID | Severity | Summary | Resolution |
+|---|---|---|---|
+| SEC-051 | 🟡 MEDIUM | Off-hours login: Owner (1111) at 00:51 | Batch-resolved — 127.0.0.1, cron testing pattern. Same as 50 previous instances. |
 
 ## Unresolved Events
 None.
@@ -80,13 +74,13 @@ None.
 
 | Check | Status |
 |---|---|
-| Current time | 2026-06-27T00:30 UTC — off-hours (22:00-06:00) |
-| Activity since last run | 10 events (Reliability Bot lifecycle test — all 127.0.0.1) |
-| Login attempts (last 15 min) | 0 |
-| Successful logins (this window) | 0 |
+| Current time | 2026-06-27T00:53 UTC — off-hours (22:00-06:00) |
+| Activity since last run | 2 events (Watchdog own login — 127.0.0.1) |
+| Login attempts (last 15 min) | 1 (0 failed) |
+| Successful logins (this window) | 1 (Owner 1111 from 127.0.0.1) |
 | Blocked IPs | 0 |
 | Config changes | None |
-| File integrity | OK — all 51 JSON files parseable |
+| File integrity | OK — all 49 JSON files parseable |
 | Users | 8 accounts. Admin 2FA: 2222=no, 7788=no (pre-existing gap) |
-| Security events | 49 tracked, 0 unresolved. All resolved. |
+| Security events | 51 tracked, 0 unresolved. All resolved. |
 | Server | UP (:5000 — HTTP 200) |
