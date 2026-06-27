@@ -16391,5 +16391,44 @@
             "deleted_user_name": "Test RB User",
             "deleted_user_role": "user"
         }
+    },
+    {
+        "timestamp": "2026-06-27T07:18:52.775826",
+        "type": "login_failed",
+        "user_id": null,
+        "user_role": "unknown",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed",
+            "method": "pin",
+            "ip": "127.0.0.1",
+            "attempt": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-27T07:19:01.112755",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-27T07:19:12.567703",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
     }
 ]
