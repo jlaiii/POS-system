@@ -1,11 +1,11 @@
 # POS Security Watchdog
 
-| Last run: 2026-06-27T22:35 UTC
-|| | | | | | | | | | | | | | | Total events tracked: 72 (SEC-001→SEC-072; all resolved)
-|| | | | | | | | | | | | | | Active blocks: 0 IPs
-||| | | | | | | | | | | | | | Run result: All clear | 1 event: off-hours admin_login by Owner(1111) from localhost at 22:26 UTC
+|| Last run: 2026-06-27T22:58 UTC
+||| | | | | | | | | | | | | | | Total events tracked: 72 (SEC-001→SEC-072; all resolved)
+||| | | | | | | | | | | | | | Active blocks: 0 IPs
+|||| | | | | | | | | | | | | | Run result: All clear | 1 event: off-hours login by Owner(1111) from localhost at 22:47 UTC
 
-## Current Run Findings (22:15–22:35 UTC, ~20 min window)
+## Current Run Findings (22:35–22:58 UTC, ~23 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -19,19 +19,19 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (22:15–22:35 UTC)
+### ℹ️ Activity Summary (22:35–22:58 UTC)
 
 **Server**: Healthy (HTTP 200 on root).
 
-**Activity**: 1 event — off-hours admin_login by Owner (1111) from 127.0.0.1 at 22:26 UTC. Benign — same pattern as all previous off-hours logins (localhost, dev/testing by cron workers).
+**Activity**: 1 event — off-hours login by Owner (1111) from 127.0.0.1 at 22:47 UTC. Benign — same pattern as all previous off-hours logins (localhost, dev/testing by cron workers).
 
-**Login attempts in window**: 0 failed, 0 successful.
+**Login attempts in window**: 0 failed, 1 successful.
 
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: 0 failed logins in window. No brute force.
 - **Account enumeration**: 0 probes in window.
 - **Successful-after-failure**: No failed logins in window. Clean.
-- **Off-hours activity**: 22:26 UTC = off-hours (22:00–06:00 window). Owner (1111) admin_login from 127.0.0.1 (localhost) — same pattern as all previous off-hours logins, batch-resolved as expected dev/testing behavior. Not a security concern.
+- **Off-hours activity**: 22:47 UTC = off-hours (22:00–06:00 window). Owner (1111) login from 127.0.0.1 (localhost) — same pattern as all previous off-hours logins, batch-resolved as expected dev/testing behavior. Not a security concern.
 - **Cross-IP targeting**: No activity. Clean.
 - **Known IPs**: No new IPs seen. Owner's IP (127.0.0.1) is known.
 - **Credential stuffing**: No pattern detected.
@@ -59,8 +59,7 @@ None.
 
 ### ✅ Actions Taken
 - **All clear** — No security threats detected this run.
-- Off-hours admin_login by Owner (1111) from 127.0.0.1 at 22:26 UTC — same pattern as all previous off-hours logins, expected dev/testing behavior. Flagged as LOW.
-- Committed dirty activity_log.json to git.
+- Off-hours login by Owner (1111) from 127.0.0.1 at 22:47 UTC — same pattern as all previous off-hours logins, expected dev/testing behavior. Flagged as LOW.
 - Updated SECURITY_WATCHDOG.md timestamp and findings.
 
 ## Previous Run Findings (carried forward)
