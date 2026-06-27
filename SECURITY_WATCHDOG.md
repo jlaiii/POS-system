@@ -1,11 +1,11 @@
 # POS Security Watchdog
 
-||||||| Last run: 2026-06-27T13:50 UTC
-|||||||||||||||||||||||||| Total events tracked: 72 (SEC-001→SEC-072; all resolved)
-|||||||||||||||||||||||||| Active blocks: 0 IPs
-|||||||||||||||||||||||||| Run result: All clear | No alerts | Zero activity since last run
+|||||| Last run: 2026-06-27T14:08 UTC
+||||||||||||||||||||||||||| Total events tracked: 72 (SEC-001→SEC-072; all resolved)
+||||||||||||||||||||||||||| Active blocks: 0 IPs
+||||||||||||||||||||||||||| Run result: All clear | Normal activity — no threats
 
-## Current Run Findings (12:56–13:14 UTC, ~18 min window)
+## Current Run Findings (13:50–14:08 UTC, ~18 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -19,19 +19,19 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (12:56–13:14 UTC)
+### ℹ️ Activity Summary (13:50–14:08 UTC)
 
 **Server**: Healthy (responding to requests — HTTP 200).
 
-**Activity**: 0 new events since last run. No activity at all.
+**Activity**: 2 events since last run — both normal.
 
-**Login attempts in window: 0** — no brute force, no attacks, no logins of any kind.
+**Login attempts in window: 2** (0 failed, 2 successful) — no brute force, no attacks.
 
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: 0 failed logins in last 5 min. No brute force.
 - **Account enumeration**: No probes (0 failed logins total in this window).
 - **Successful-after-failure**: No pattern (no failures this window).
-- **Off-hours activity**: 13:14 UTC = 08:14 CT — within normal hours.
+- **Off-hours activity**: 14:08 UTC = 09:08 CT — within normal hours.
 - **Cross-IP targeting**: None (only 127.0.0.1).
 - **Known IPs**: No new IPs.
 - **Credential stuffing**: No pattern detected.
@@ -52,7 +52,7 @@ None.
 - Git status: clean.
 - Owner account (1111) present, active, not banned.
 - All 8 user accounts intact.
-- File sizes normal (baseline updated).
+- File sizes normal (login_attempts.json +267B, activity_log.json +660B — consistent with 2 new events).
 - Server: **Healthy** (HTTP 200).
 - No suspicious files detected.
 
@@ -60,8 +60,8 @@ None.
 - **All clear** — No threats detected this run.
 - Brute force check: clean (0 failed attempts in window).
 - Account enumeration: clean (0 probes).
-- Zero activity since last run — nothing to investigate.
-- File integrity: all JSON files intact, sizes normal.
+- 2 normal events logged: Owner (1111) login + admin_login from 127.0.0.1 at 14:07.
+- File integrity: all JSON files intact, sizes consistent with logged activity.
 - Updated baseline file sizes in `.watchdog_file_sizes.json`.
 - Server health: verified healthy (HTTP 200).
 - Updated SECURITY_WATCHDOG.md timestamp.
@@ -77,14 +77,14 @@ None — all 72 events resolved.
 
 ## System State
 
-||||| Check | Status |
+|||||| Check | Status |
 |---|---|---|---|---|
-||||| Current time | 2026-06-27T13:14 UTC — within normal hours |
-||||| Activity since last run | 0 new events (zero activity) |
-||||| Login attempts (last ~5 min) | 0 failed, 0 successful |
-||||| Successful logins (this window) | 0 |
-||||| Blocked IPs | 0 |
-||||| Config changes | None |
-||||| File integrity | OK. All files present, sizes normal. 8 accounts intact. |
-||||| Users | 8 accounts. Admin 2FA: 2222=no, 7788=no (pre-existing gap) |
-||||| Server | **Healthy** (HTTP 200) |
+|||||| Current time | 2026-06-27T14:08 UTC — within normal hours |
+|||||| Activity since last run | 2 events (Owner login + admin_login, both normal) |
+|||||| Login attempts (last ~5 min) | 0 failed, 0 successful |
+|||||| Successful logins (this window) | 2 (Owner from 127.0.0.1) |
+|||||| Blocked IPs | 0 |
+|||||| Config changes | None |
+|||||| File integrity | OK. All files present, sizes consistent with logged activity. 8 accounts intact. |
+|||||| Users | 8 accounts. Admin 2FA: 2222=no, 7788=no (pre-existing gap) |
+|||||| Server | **Healthy** (HTTP 200) |
