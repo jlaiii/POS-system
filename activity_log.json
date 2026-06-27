@@ -17320,5 +17320,163 @@
         "details": {
             "status": "success"
         }
+    },
+    {
+        "timestamp": "2026-06-27T19:34:55.149834",
+        "type": "add_item",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "category": "Snacks",
+            "name": "Test \"Special\" \ud83c\udf89 Item",
+            "price": 5.99
+        }
+    },
+    {
+        "timestamp": "2026-06-27T19:35:00.611205",
+        "type": "clock_in",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Python-urllib/3.11",
+        "details": {
+            "status": "success",
+            "user_name": "Employee One",
+            "clock_in_time": "2026-06-27T19:35:00.611012",
+            "late_minutes": null,
+            "scheduled_start": null
+        }
+    },
+    {
+        "timestamp": "2026-06-27T19:35:00.634212",
+        "type": "clock_in",
+        "user_id": "5678",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Python-urllib/3.11",
+        "details": {
+            "status": "success",
+            "user_name": "Employee Two",
+            "clock_in_time": "2026-06-27T19:35:00.634049",
+            "late_minutes": null,
+            "scheduled_start": null
+        }
+    },
+    {
+        "timestamp": "2026-06-27T19:35:26.697145",
+        "type": "clock_out",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Python-urllib/3.11",
+        "details": {
+            "status": "success",
+            "user_name": "Employee One",
+            "clock_in_time": "2026-06-27T19:35:00.611012",
+            "clock_out_time": "2026-06-27T19:35:26.694823",
+            "duration_hours": 0.01
+        }
+    },
+    {
+        "timestamp": "2026-06-27T19:35:26.727724",
+        "type": "clock_out",
+        "user_id": "5678",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Python-urllib/3.11",
+        "details": {
+            "status": "success",
+            "user_name": "Employee Two",
+            "clock_in_time": "2026-06-27T19:35:00.634049",
+            "clock_out_time": "2026-06-27T19:35:26.724880",
+            "duration_hours": 0.01
+        }
+    },
+    {
+        "timestamp": "2026-06-27T19:35:40.415910",
+        "type": "submit_order",
+        "user_id": null,
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 124,
+            "subtotal": 287.88,
+            "tax_amount": 23.8,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 311.68,
+            "payment_method": "Cash",
+            "item_count": 50
+        }
+    },
+    {
+        "timestamp": "2026-06-27T19:35:44.250134",
+        "type": "refund_order",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 124,
+            "reason": "No reason provided",
+            "refunded_by_name": "Owner",
+            "order_total": 311.68,
+            "inventory_restored": [
+                "Hamburger - Normal x1",
+                "Hamburger - All the Fixings x1",
+                "Hotdog - Loaded x1",
+                "Hotdog - Plain x1",
+                "Taco - Beef & Cheese x1",
+                "Taco - Chicken with Salsa x1",
+                "Lemonade x1",
+                "Coke x1",
+                "Water Bottle x1",
+                "Raspia (Fruit Slush) x1",
+                "Chips (Large Bag) x1",
+                "Chocolate Bar x1",
+                "Mixed Nuts (Small Pack) x1",
+                "Granola Bar x1",
+                "Test \"Special\" \ud83c\udf89 Item x1",
+                "Pancakes x1",
+                "Bacon & Eggs x1",
+                "French Toast x1",
+                "Caesar Salad x1",
+                "Grilled Chicken Salad x1",
+                "Hamburger - Normal x1",
+                "Hamburger - All the Fixings x1",
+                "Hotdog - Loaded x1",
+                "Hotdog - Plain x1",
+                "Taco - Beef & Cheese x1",
+                "Taco - Chicken with Salsa x1",
+                "Lemonade x1",
+                "Coke x1",
+                "Water Bottle x1",
+                "Raspia (Fruit Slush) x1",
+                "Chips (Large Bag) x1",
+                "Chocolate Bar x1",
+                "Mixed Nuts (Small Pack) x1",
+                "Granola Bar x1",
+                "Test \"Special\" \ud83c\udf89 Item x1",
+                "Pancakes x1",
+                "Bacon & Eggs x1",
+                "French Toast x1",
+                "Caesar Salad x1",
+                "Grilled Chicken Salad x1",
+                "Hamburger - Normal x1",
+                "Hamburger - All the Fixings x1",
+                "Hotdog - Loaded x1",
+                "Hotdog - Plain x1",
+                "Taco - Beef & Cheese x1",
+                "Taco - Chicken with Salsa x1",
+                "Lemonade x1",
+                "Coke x1",
+                "Water Bottle x1",
+                "Raspia (Fruit Slush) x1"
+            ]
+        }
     }
 ]
