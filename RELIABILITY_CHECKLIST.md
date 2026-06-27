@@ -1,16 +1,16 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-27T20:20 UTC
-> Total checks: 1558
-> Healthy: 1558 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-27T20:44 UTC
+> Total checks: 1565
+> Healthy: 1565 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 — 200 OK (root + /api/health) [verified 20:20]
-- [x] All JSON data files exist and are valid — 8/8 core JSON files valid, parseable, Owner PIN 1111 intact (name='Owner', 8 users) [verified 20:20]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', 8 users) [verified 20:20]
-- [x] Git repo is clean — clean (no dirty files) [verified 20:20]
+- [x] Flask app responds on port 5000 — 200 OK (root + /api/health) [verified 20:44]
+- [x] All JSON data files exist and are valid — 15/15 core JSON files valid, parseable, Owner PIN 1111 intact (name='Owner', 8 users) [verified 20:44]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', 8 users) [verified 20:44]
+- [x] Git repo is clean — clean (no dirty files) [verified 20:44]
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/health — {"status":"ok"} (GET) [verified 20:20]
@@ -29,12 +29,12 @@
 - [x] Backup integrity — latest JSON backup (19:46) valid (50 files, 8 users, owner intact), DB integrity=ok (25 tables) [verified 20:20]
 
 ## EVERY 4 HOURS
-- [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 200, 0 pending orders [verified 18:05]
-- [x] Pickup display: verify /api/pickup-display/queue works — GET, 200, 1 order ready (order #93 or similar) [verified 16:37]
+- [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 200, 0 pending orders [verified 20:44]
+- [x] Pickup display: verify /api/pickup-display/queue works — GET, 200, 1 order ready [verified 20:44]
 - [x] Inventory: check stock decrements on order — 24 items tracked, no negative stock, stock tracking valid [verified 17:11]
 - [x] Cash register: /api/cash_drawer/status (POST with adminPin=1111) returns active=false, last closed Jun 24, 10 sessions [verified 19:58]
 - [x] User CRUD: add test user (9977 via /api/add_user) -> verify -> delete -> confirmed gone [verified 17:11]
-- [x] Loyalty: points earned on order — 14 loyalty entries, data intact [verified 16:37]
+- [x] Loyalty: points earned on order — 14 loyalty entries (phone-keyed dict), data intact [verified 20:44]
 - [x] Webhook: verify webhook config endpoint works — /api/security/discord_webhook returns config (not set), 200 OK [verified 18:26]
 - [x] Clock-in late detection: 8 late records (up to 563min across shifts), data intact [verified 19:10]
 - [x] Break tracking: 4 shifts with breaks, break data intact [verified 19:10]
