@@ -16290,5 +16290,106 @@
         "details": {
             "status": "success"
         }
+    },
+    {
+        "timestamp": "2026-06-27T06:29:09.211585",
+        "type": "submit_order",
+        "user_id": null,
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 121,
+            "subtotal": 6.0,
+            "tax_amount": 0.25,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 6.25,
+            "payment_method": "Cash",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-27T06:29:20.632294",
+        "type": "refund_order",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 121,
+            "reason": "No reason provided",
+            "refunded_by_name": "Owner",
+            "order_total": 6.25,
+            "inventory_restored": [
+                "Coke x1"
+            ]
+        }
+    },
+    {
+        "timestamp": "2026-06-27T06:29:28.452695",
+        "type": "add_user",
+        "user_id": null,
+        "user_role": "unauthorized",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed",
+            "reason": "Insufficient permissions"
+        }
+    },
+    {
+        "timestamp": "2026-06-27T06:29:33.306124",
+        "type": "add_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed",
+            "reason": "Guessable PIN",
+            "new_user_id": "9999"
+        }
+    },
+    {
+        "timestamp": "2026-06-27T06:29:35.761857",
+        "type": "add_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed",
+            "reason": "Invalid user role",
+            "new_user_id": "9973"
+        }
+    },
+    {
+        "timestamp": "2026-06-27T06:29:37.675658",
+        "type": "add_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "added_user_id": "9973",
+            "added_user_name": "Test RB User",
+            "added_user_role": "user"
+        }
+    },
+    {
+        "timestamp": "2026-06-27T06:29:41.767459",
+        "type": "delete_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "deleted_user_id": "9973",
+            "deleted_user_name": "Test RB User",
+            "deleted_user_role": "user"
+        }
     }
 ]
