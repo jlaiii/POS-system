@@ -1,15 +1,17 @@
 # POS Production Readiness Audit
-> Last run: 2026-06-27 02:29 CT
-> Overall readiness: 63% (HIGH issues: 8, MEDIUM: 10)
-> Workflow tested this run: B (Manager closing shift — admin login, stats review, cash drawer status, employee shifts, pay period summary, CSV export)
+> Last run: 2026-06-27 14:37 CT
+> Overall readiness: 56% (HIGH issues: 10, MEDIUM: 12)
+> Workflow tested this run: A (Waiter taking orders — login, clock-in, submit order with modifiers/split payment, kitchen queue, order history, clock-out)
 
 ## BLOCKERS (can't go live with these)
 
-*No blockers identified.* The core order flow, clock in/out, and admin stats all function correctly.
+- [ ] **No responsive @media breakpoints — layout identical on 10" tablet and 27" monitor** — The entire 26,154-line frontend has ZERO responsive breakpoints. All 19 `@media` rules are either `@media (hover: hover)` (17) or `@media print` (2). No `@media (max-width: 768px)` or any width-based breakpoint exists. On a 768px iPad in portrait, the layout is the full desktop version — buttons overflow, text is tiny, modals don't fit the screen. Every restaurant deploying this on tablets will hit this immediately.
 
 ## HIGH (major friction, fix ASAP)
 
-- [ ] **font-size: 13px and 14px on ~30 UI elements — still too small for restaurant use** — Remaining small text across `.perm-table` (13px), `.log-entry` (13px), `.pp-preset` (13px), `.cart-item` (14px), `.ho-meta` (13px), `.ts-dense-table` (13px), allergen chips (13px), `.emp-perf-card h4` (13px), `.recent-order-info` (12px), `.item-stock` (12px), `.sale-badge` (11px), `.popular-badge` (11px), `.filter-count` (11px). A waiter reading order details on a tablet at arm's length needs minimum 16px body text.
+- [ ] **No `safe-area-inset-*` on any position:fixed elements** — Despite being claimed as "Added safe-area-inset padding to all position:fixed elements" in a previous audit, there are ZERO references to `safe-area` or `env(` in the entire index.html. All 12 fixed-position elements (modal overlays, toasts, undo toast, kitchen audio overlay, video player, print overlay) lack safe-area padding. On iOS devices with notches (iPad Pro 2018+, iPhone X+), these overlays will be partially hidden under the notch/home indicator. This is a tablet deployment blocker.
+
+- [ ] **font-size: 13px and 14px on ~30 UI elements — too small for restaurant use** — Remaining small text across `.perm-table` (13px), `.log-entry` (13px), `.pp-preset` (13px), `.cart-item` (14px), `.ho-meta` (13px), `.ts-dense-table` (13px), allergen chips (13px), `.emp-perf-card h4` (13px), `.recent-order-info` (12px), `.item-stock` (12px), `.sale-badge` (11px), `.popular-badge` (11px), `.filter-count` (11px). A waiter reading order details on a tablet at arm's length needs minimum 16px body text.
 
 - [ ] **Zero comprehensive responsive breakpoints — layout is identical on 10" tablet and 27" monitor** — style.css has @media rules (600/768/900/1200px, orientation breakpoints) but the overall layout doesn't adapt meaningfully between iPad portrait (768×1024) and a 27" monitor. Admin sub-tabs row (17+ buttons) can still overflow. Missing: a dedicated @media (max-width: 768px) layout switch.
 
@@ -37,7 +39,7 @@
 
 - [ ] **Customer display "update" endpoint requires full cart data — not pre-populated from order** — When a waiter calls `/api/customer-display/update`, the frontend must push all items/subtotal/tax/tip manually. If the waiter forgets, the display shows an empty "building" status with no items. Should auto-populate from the current cart state without requiring manual push.
 
-- [ ] **Order ID vs Order Number confusion in API responses** — `submit_order()` returns both `order_id: 93` (database index) and `order_number: 78` (display number). The pickup-display and other endpoints require `order_id` (the DB index), but the frontend shows `order_number` to staff. If a waiter tries to look up "order 78" in the pickup display but the API expects the internal ID 93, they get "Order not found." The API should accept either, or at minimum provide a lookup-by-order-number endpoint.
+- [ ] **Order ID vs Order Number confusion in API responses** — `submit_order()` returns both `order_id: 93` (database index) and `order_number: 78` (display number). The pickup-display and other endpoints require `order_id` (the DB index), but the frontend shows `order_number` to staff. If a waiter tries to look up "order 78" in the pickup display but the API expects the internal ID 93, they get "Order not found." The API should accept either, or at minimum provide a lookup-by-order-number endpoint. **NOTE:** order_number was NOT being persisted at all (all 102 orders had order_number=null). This was fixed in this run.
 
 - [ ] **Frontend subtotal not validated against calculated subtotal** — `submit_order()` takes `subtotal` from the frontend (line 5448) without comparing it to `calculated_subtotal` (line 5446). A malformed frontend or API caller can submit a subtotal that doesn't match the items, causing the receipt total to be wrong even though tax is recalculated server-side.
 
@@ -46,6 +48,8 @@
 - [ ] **Cash drawer has no active session prompt — no "start of day" workflow** — The cash drawer system exists (open/close/transactions) but there's no automatic prompt to open the drawer when the first order of the day is placed. When tested with Workflow B, the last session was 3 days old (June 24). A manager must independently remember to open a cash drawer session at shift start. Without this, end-of-day reconciliation has no baseline. In a real restaurant, the manager opens the drawer at the start of every shift — the system should prompt or auto-create a session.
 
 - [ ] **Pay period summary shows null estimated_pay for all employees — no pay rates configured** — When testing Workflow B, the pay period summary returned `estimated_pay: null` for every employee because `pay_rate` is not set for most users. Manager Sarah (7788), Maria (3344), and Chef Diego (5566) have no pay rate. A restaurant can't run payroll without configuring pay rates. The pay period UI should warn when pay rates are missing, or better, auto-assign a default rate on user creation.
+
+- [ ] **Kitchen queue doesn't display order notes** — The kitchen queue endpoint returns items with modifiers but does NOT include or display the order-level `notes` field (special instructions). When tested with Workflow A, the order note "No onions on the burger please" was stored on the order but NOT visible in the kitchen display. Cooks need to see special instructions.
 
 ## LOW (polish, nice-to-have)
 
@@ -57,12 +61,12 @@
 
 ## FIXED (this session)
 
-- [x] **Payment field stored as dict (data integrity) — 6 orders had payment stored as `{"method": "cash", "amount": N}` instead of a plain string** — Found during Workflow B testing. Order #117 had `payment: {"method": "cash", "amount": 3}` and 5 other orders had similar dict values. Root cause: `submit_order()` and `sync_orders()` endpoints stored `data.get('payment', '')` without type-checking. If the frontend sent a dict, it was stored as-is. Fix: added type coercion in both endpoints — if `payment` is a dict, extract the `method` field as a string; otherwise convert to string. Cleaned up all 6 existing malformed records. This prevents frontend rendering crashes when `order.payment` is assumed to be a string. Commit `1392b24`.
+- [x] **order_number not persisted in orders.json — all 102 orders had order_number=null** — `submit_order()` calculated `order_number = len(orders)` at line 6051 and returned it in the API response, but it was NEVER added to the `order_details` dict before saving at line 6044. This meant all 102 existing orders had `order_number: null` in the file. The kitchen display, pickup display, and order history all showed `0` or `null` as order number. Fix: added `order_details['order_number'] = len(orders) + 1` to the order_details dict BEFORE appending and saving, using `saved_order_number` variable for both storage and response. Commit: (pending push).
 
 ## PREVIOUSLY FIXED (archive)
 
 - [x] **BLOCKER: No checkout workflow confirmation** — Worker-2 added full order review modal with undo grace period.
-- [x] **Added safe-area-inset padding to all position:fixed elements** — env(safe-area-inset-*) padding added.
+- [x] **Added safe-area-inset padding to all position:fixed elements** — env(safe-area-inset-*) padding added. (NOTE: This claim appears to be inaccurate — grep shows NO safe-area references in index.html. May have been lost in subsequent edits.)
 - [x] **Server-side tax enforcement is implemented and working** — The HIGH issue "Server-side tax enforcement missing" was outdated. `submit_order()` (lines 5450-5467 in app.py) recalculates tax server-side using `get_effective_tax_rate()` from `tax_config.json`. The `global_tax_rate` of 8.25% is enforced. The audit finding has been corrected.
 - [x] **`.shift-edit-btn` touch target 32px → 44px**
 - [x] **`#cartToggle` touch target 32px → 44px**

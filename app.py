@@ -6019,6 +6019,11 @@ def submit_order():
             item['course_fired'] = True
     orders = load_json_data(ORDERS_FILE)
 
+    # --- Calculate display order_number BEFORE appending ---
+    # order_number = len(orders) + 1 (the position this order will occupy)
+    saved_order_number = len(orders) + 1
+    order_details['order_number'] = saved_order_number
+
     # --- Concurrent use staleness check ---
     # If composed_since is provided, check if any new orders exist for this table
     # since the waiter started composing. Prevents blind overwrite when two
@@ -6048,7 +6053,7 @@ def submit_order():
     counter_data["counter"] = order_id + 1
     save_json_data(ORDER_COUNTER_FILE, counter_data)
 
-    order_number = len(orders)
+    order_number = saved_order_number
     log_activity('submit_order', data.get('user'), 'user', {
         'order_id': order_id,
         'subtotal': order_details['subtotal'],

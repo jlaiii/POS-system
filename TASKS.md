@@ -704,6 +704,22 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 
 - [x] **Enable 2FA for Owner (1111) to comply with mandatory 2FA policy** — Added Owner (1111) to `exempted_users` in `security_config.json`. Owner can now access admin features without 2FA blocking. Owner should set up 2FA via Security settings and then remove themselves from the exemption list for full compliance. [worker-2]
 
+## New Tasks (from Production Auditor — 2026-06-27)
+
+### Priority: HIGH
+
+- [ ] **Add responsive @media breakpoints for tablet deployment** — The entire 26,154-line index.html has ZERO responsive breakpoints. All 19 @media rules are hover/print only. No @media (max-width:) rules exist. On a 768px iPad in portrait, the layout is identical to a 27" desktop — buttons overflow, modals don't fit, text is tiny. This is the #1 blocker for real restaurant tablet deployment. Scope: (1) Add viewport-adaptive column counts for item grid (2 cols at <600px). (2) Make admin sub-tabs wrap to multiple rows. (3) Collapse cart to a slide-up sheet on portrait tablets. (4) Ensure all modals are full-width at <600px. (5) Add responsive font sizing (min 16px on body). See PRODUCTION_AUDIT.md for full findings. [Production Auditor]
+
+- [ ] **Add safe-area-inset-* padding to all position:fixed elements** — Zero references to `safe-area` or `env(` in index.html. All 12 fixed-position elements (modal overlays, toasts, kitchen audio overlay, video player) lack safe-area padding. On iOS devices with notches (iPad Pro 2018+, iPhone X+), overlays will be partially hidden. Fix: add `padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)` to all position:fixed overlays and modals. [Production Auditor]
+
+### Priority: MEDIUM
+
+- [ ] **Kitchen display: show order-level notes** — The kitchen queue endpoint returns items with modifiers but does NOT include or display the order-level `notes` field (special instructions). When tested with Workflow A, the order note "No onions on the burger" was stored on the order but NOT visible in the kitchen display. Cooks need to see special instructions. Fix: add `notes` field to kitchen queue response and display it prominently in the kitchen view. [Production Auditor]
+
+### Priority: LOW
+
+- [ ] **order_number should also be backfilled for existing orders** — The order_number persistence bug was fixed for new orders, but all 102 existing orders have order_number=null. Backfill script needed to assign sequential order_numbers to existing orders based on their date.
+
 ## New Tasks (from Task Generator — 2026-06-26)
 
 ### Priority: HIGH
