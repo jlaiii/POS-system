@@ -1,11 +1,11 @@
 # POS Security Watchdog
 
-|| Last run: 2026-06-27T04:01 UTC
-||||| Total events tracked: 57 (SEC-001→SEC-057; 57 resolved, 0 unresolved — SEC-004 removed historically)
-|||||| Active blocks: 0 IPs
-|||||| Run result: [SILENT] — nothing new to report.
+||| Last run: 2026-06-27T04:41 UTC
+|||||| Total events tracked: 60 (SEC-001→SEC-060; 60 resolved, 0 unresolved — SEC-004 removed historically)
+||||||| Active blocks: 0 IPs
+||||||| Run result: 3 off-hours logins resolved (SEC-058→SEC-060) — same pattern as SEC-009→SEC-057
 
-## Current Run Findings (03:44–04:01 UTC, ~17 min window)
+## Current Run Findings (04:01–04:41 UTC, ~40 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -19,21 +19,26 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (03:44–04:01 UTC, ~17 min window)
+### ℹ️ Activity Summary (04:01–04:41 UTC, ~40 min window)
 
 **Server**: UP — serving HTTP 200 on port 5000 (root endpoint).
 
-**Activity**: 1 event since last run.
-- Owner (1111) login at 03:47 from 127.0.0.1 (curl/8.5.0) — off-hours, same pattern as previous runs
-- No failed logins, no brute force, no anomalies beyond the standard off-hours Owner login
+**Activity**: 3 events since last run.
+- Owner (1111) login at 04:10 from 127.0.0.1 (curl/8.5.0) — off-hours, same pattern
+- Owner (1111) login at 04:10:36 from 127.0.0.1 (curl/8.5.0) — off-hours, same pattern
+- Owner (1111) login at 04:33 from 127.0.0.1 (curl/8.5.0) — off-hours, same pattern
+- No failed logins, no brute force, no anomalies beyond the standard off-hours Owner logins
+
+**4-hour summary (00:41–04:41 UTC):** 13 logins, 0 failed, 1 IP (127.0.0.1), 2 users (1111, 1234). All clean.
 
 ### 📊 Login Security Deep-Dive
-- **Brute force check**: 0 failed logins. No brute force.
+- **Brute force check**: 0 failed logins in window. No brute force.
 - **Account enumeration**: No probes — no failed login attempts at all.
-- **Successful-after-failure**: No pattern detected.
-- **Off-hours activity**: 1 Owner login (03:47) from localhost — standard dev activity.
+- **Successful-after-failure**: No recent pattern. The 47 historical failures for 127.0.0.1 are from old dev testing (June 23-25), none recent.
+- **Off-hours activity**: 3 Owner logins (04:10, 04:10:36, 04:33) from localhost — standard dev/cron worker activity.
 - **Cross-IP targeting**: None.
 - **Known IPs**: No new IPs tracked.
+- **Credential stuffing**: No — single IP, single user, all successful. No pattern.
 
 ### 🔒 Security Config
 - `blocked_ips`: [] — no active blocks.
@@ -43,24 +48,33 @@ None.
 
 ### 💰 Financial Check
 - No new orders since last run.
-- No $0 orders, no 100% discounts, no unusual patterns.
+- No $0 orders, no 100% discounts active.
+- 1 pre-existing artifact (Order ? with $0 total) — old dev artifact, not new.
 
 ### 📂 File Integrity
-- All JSON files parseable and intact.
+- All JSON files parseable and intact (50 files checked).
 - Owner account (1111) present, active, not banned.
-- Git status: 3 dirty files (activity_log.json, login_attempts.json, security_events.json) — pending commit of this run's data.
+- Git status: clean (after this run's commit).
 - security_config.json: unchanged.
 - No suspicious files detected.
 - No unexpected file shrinkage.
 
 ### ✅ Actions Taken
-- Resolved SEC-057 (Owner off-hours login at 03:47) — same pattern as SEC-009 through SEC-056. No external IPs, no failed attempts, no real security concern.
+- Resolved SEC-058 (Owner off-hours login at 04:10) — same pattern as SEC-009 through SEC-057. No external IPs, no failed attempts, no real security concern.
+- Resolved SEC-059 (Owner off-hours login at 04:10:36) — same pattern.
+- Resolved SEC-060 (Owner off-hours login at 04:33) — same pattern.
+- Verified server UP on port 5000.
+- Verified all 50 JSON files parseable.
+- Verified no blocked IPs, no config changes, no suspicious files.
+- Committed all data changes to git.
 
 ## Active Blocks
 None.
 
 ## Resolved This Run
-- SEC-057 — Owner off-hours login at 03:47 from localhost
+- SEC-058 — Owner off-hours login at 04:10 from localhost
+- SEC-059 — Owner off-hours login at 04:10:36 from localhost
+- SEC-060 — Owner off-hours login at 04:33 from localhost
 
 ## Unresolved Events
 None.
@@ -72,13 +86,13 @@ None.
 
 | Check | Status |
 |---|---|
-| Current time | 2026-06-27T04:01 UTC — off-hours (22:00-06:00) |
-| Activity since last run | 1 event (Owner login at 03:47) |
-| Login attempts (last 15 min) | 0 failed, 1 successful |
-| Successful logins (this window) | 1 — Owner (1111) at 03:47 from 127.0.0.1 |
-| Blocked IPs | 0 |
-| Config changes | None |
-| File integrity | OK — all JSON parseable. 3 dirty files (data only). |
-| Users | 8 accounts. Admin 2FA: 2222=no, 7788=no (pre-existing gap) |
-| Security events | 57 tracked, 0 unresolved |
-| Server | UP (:5000 — HTTP 200) |
+|| Current time | 2026-06-27T04:41 UTC — off-hours (22:00-06:00) |
+|| Activity since last run | 3 events (Owner logins at 04:10, 04:10:36, 04:33) |
+|| Login attempts (last 15 min) | 0 failed, 1 successful (Owner at 04:33) |
+|| Successful logins (this window) | 3 — Owner (1111) at 04:10, 04:10:36, 04:33 from 127.0.0.1 |
+|| Blocked IPs | 0 |
+|| Config changes | None |
+|| File integrity | OK — all 50 JSON parseable. Git clean. |
+|| Users | 8 accounts. Admin 2FA: 2222=no, 7788=no (pre-existing gap) |
+|| Security events | 60 tracked, 0 unresolved |
+|| Server | UP (:5000 — HTTP 200) |
