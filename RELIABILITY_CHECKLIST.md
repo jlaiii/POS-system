@@ -1,32 +1,32 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-26T23:37 UTC
-> Total checks: 1029
-> Healthy: 1029 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-26T23:59 UTC
+> Total checks: 1037
+> Healthy: 1037 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 — 200 OK [verified 23:14]
-- [x] All JSON data files exist and are valid — all 15 core JSON files valid, parseable [verified 23:14]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', role=owner) [verified 23:14]
-- [x] Git repo is clean — clean [verified 23:14]
+- [x] Flask app responds on port 5000 — 200 OK [verified 23:59]
+- [x] All JSON data files exist and are valid — all 15 core JSON files valid, parseable [verified 23:59]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', role=owner) [verified 23:59]
+- [x] Git repo is clean — clean [verified 23:59]
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/health — {"status":"ok"} (GET) [verified 23:37]
-- [x] Frontend loads — 200, HTML OK, 1.37MB [verified 22:50]
+- [x] Frontend loads — 200, HTML OK, 1.37MB [verified 23:59]
 - [x] /api/items returns items — GET, 200 OK, 5 categories (19 items) [verified 23:37]
-- [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 53 shifts in range [verified 22:50]
-- [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 22:50]
-- [x] index.html size check — 1375239 bytes (normal) [verified 22:50]
+- [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 54 shifts in range [verified 23:59]
+- [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 23:59]
+- [x] index.html size check — 1375239 bytes (normal) [verified 23:59]
 - [x] Disk space check — 36% used (14G/38G, OK) [verified 23:14]
 - [x] Memory check — ~39% RAM used (1528/3915 MB, OK) [verified 23:14]
-- [x] Backup integrity — latest backups valid (json 22:37 tar.gz w/50 files, db 22:37 db.gz integrity ok) [verified 22:50]
+- [x] Backup integrity — latest backups valid (json 23:37 tar.gz w/50 files, db 23:37 db.gz integrity ok) [verified 23:59]
 - [x] CSV export — /api/export/shifts_csv returns CSV, POST 200 [verified 23:14]
 - [x] Offline queue — /api/sync_orders exists, returns 400 "No orders provided" [verified 23:14]
 - [x] /api/login works — POST userId=1111, Login successful, role=owner, permissions=[*] [verified 23:37]
-- [x] Clock-in/out: employee 1234 clocked in → clocked out, both 200 OK [verified 22:50]
-- [x] /api/admin_stats — stats returned, average_sale=$13.23, 8 users [verified 22:50]
+- [x] Clock-in/out: employee 1234 clocked in → clocked out, both 200 OK [verified 23:59]
+- [x] /api/admin_stats — stats returned, average_sale=$13.23, 8 users, backup_health=green [verified 23:59]
 
 ## EVERY 4 HOURS
 - [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 200, 3 pending orders [verified 21:14]
