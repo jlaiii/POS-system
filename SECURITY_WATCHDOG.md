@@ -1,11 +1,11 @@
 # POS Security Watchdog
 
-|| Last run: 2026-06-27T22:58 UTC
+||| Last run: 2026-06-27T23:15 UTC
 ||| | | | | | | | | | | | | | | Total events tracked: 72 (SEC-001→SEC-072; all resolved)
 ||| | | | | | | | | | | | | | Active blocks: 0 IPs
-|||| | | | | | | | | | | | | | Run result: All clear | 1 event: off-hours login by Owner(1111) from localhost at 22:47 UTC
+|||| | | | | | | | | | | | | | | Run result: All clear | Zero activity in window (22:58–23:15 UTC)
 
-## Current Run Findings (22:35–22:58 UTC, ~23 min window)
+## Current Run Findings (22:58–23:15 UTC, ~17 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -19,13 +19,13 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (22:35–22:58 UTC)
+### ℹ️ Activity Summary (22:58–23:15 UTC)
 
 **Server**: Healthy (HTTP 200 on root).
 
-**Activity**: 1 event — off-hours login by Owner (1111) from 127.0.0.1 at 22:47 UTC. Benign — same pattern as all previous off-hours logins (localhost, dev/testing by cron workers).
+**Activity**: No events in this window. Zero login attempts, zero API calls, zero activity.
 
-**Login attempts in window**: 0 failed, 1 successful.
+**Login attempts in window**: 0 total (0 failed, 0 successful).
 
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: 0 failed logins in window. No brute force.
@@ -59,7 +59,7 @@ None.
 
 ### ✅ Actions Taken
 - **All clear** — No security threats detected this run.
-- Off-hours login by Owner (1111) from 127.0.0.1 at 22:47 UTC — same pattern as all previous off-hours logins, expected dev/testing behavior. Flagged as LOW.
+- Zero activity in window 22:58–23:15 UTC. No logins, no API calls, no anomalies.
 - Updated SECURITY_WATCHDOG.md timestamp and findings.
 
 ## Previous Run Findings (carried forward)
@@ -69,10 +69,10 @@ None.
 
 ||| | | | | | | | | | | | | Check | Status |
 |||---|---|---|---|---|---|---|---|---|---|---|
-||||| Current time | 2026-06-27T22:35 UTC — 22:35 CT (off-hours, Saturday) |
-||||| Activity since last run | 1 event: off-hours admin_login by Owner(1111) from localhost — benign |
-||||||| | | | | | | | | | | | | | Login attempts (last ~20 min) | 0 (0 failed) |
-|||||| | | | | | | | | | | | | | Successful logins (this window) | 0 |
+|||||| Current time | 2026-06-27T23:15 UTC — 18:15 CT (off-hours, Saturday) |
+|||||| Activity since last run | No activity — zero events in window 22:58–23:15 UTC |
+|||||||| | | | | | | | | | | | | | | Login attempts (last ~17 min) | 0 (0 failed) |
+||||||| | | | | | | | | | | | | | Successful logins (this window) | 0 |
 ||||| | | | | | | | | | | | | Blocked IPs | 0 |
 ||||| | | | | | | | | | | | | Config changes | None |
 ||||| | | | | | | | | | | | | File integrity | OK. All JSON files parseable. 8 accounts intact. |
