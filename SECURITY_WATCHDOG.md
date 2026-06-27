@@ -1,11 +1,11 @@
 # POS Security Watchdog
 
-| | | | | | Last run: 2026-06-27T14:45 UTC
+| | | | | | | Last run: 2026-06-27T15:06 UTC
 | | | | | | | | | | | | | | Total events tracked: 72 (SEC-001→SEC-072; all resolved)
 | | | | | | | | | | | | | | Active blocks: 0 IPs
 | | | | | | | | | | | | | | Run result: All clear | Normal activity — no threats
 
-## Current Run Findings (14:28–14:45 UTC, ~17 min window)
+## Current Run Findings (14:45–15:06 UTC, ~21 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -19,23 +19,23 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (14:28–14:45 UTC)
+### ℹ️ Activity Summary (14:45–15:06 UTC)
 
 **Server**: Healthy (HTTP 200 on root).
 
-**Activity**: 2 orders submitted, 3 login attempts (1 failed, 2 successful).
+**Activity**: 0 new orders, 1 login attempt (0 failed, 1 successful).
 
-**Login attempts in window: 3** (1 failed, 2 successful) — all from localhost (127.0.0.1).
+**Login attempts in window: 1** (0 failed, 1 successful) — all from localhost (127.0.0.1).
 
 ### 📊 Login Security Deep-Dive
-- **Brute force check**: 1 failed login in last ~12 min. No brute force (threshold: 5).
-- **Account enumeration**: 1 probe for non-existent PIN (null user_id) at 14:33 — single probe, not a pattern (threshold: 10).
-- **Successful-after-failure**: 1 failure (null user, invalid PIN) followed by 2 successes (Employee One via 2FA, Owner direct). The failed attempt targeted a non-existent PIN, not either succeeding account. No credential compromise pattern.
-- **Off-hours activity**: 14:45 UTC = 09:45 CT — within normal hours.
-- **Cross-IP targeting**: Single IP only (127.0.0.1).
+- **Brute force check**: 0 failed logins in window. No brute force.
+- **Account enumeration**: 0 probes for non-existent PINs. Clean.
+- **Successful-after-failure**: No failed logins preceding the successful one. Clean.
+- **Off-hours activity**: 15:06 UTC = 10:06 CT — within normal hours.
+- **Cross-IP targeting**: Single IP (127.0.0.1) — clean.
 - **Known IPs**: No new IPs.
 - **Credential stuffing**: No pattern detected.
-- **2FA check**: Employee One (1234) correctly got `2fa_required` response — their 2FA is enabled. Working correctly.
+- **2FA check**: No 2FA-bound logins in this window. Previous run confirmed Employee One 2FA working correctly.
 
 ### 🔒 Security Config
 - `blocked_ips`: [] — no active blocks.
@@ -45,13 +45,13 @@ None.
 - No config changes detected.
 
 ### 💰 Financial Check
-- Order 126: $20.33 (2 items, Card) — Employee One (1234), normal.
-- Order 127: $8.58 (2 items, Cash) — Employee One (1234), normal.
+- No new orders since last run.
+- Last order from 11:12 UTC (Order 122, refunded — already covered in prior runs).
 - No zero-dollar orders, no 100% discounts, no refunds in window.
 - No financial anomalies detected.
 
 ### 📂 File Integrity
-- Git status: cleaned — committed pending data changes (activity_log.json, login_attempts.json, inventory.json).
+- Git status: clean (no dirty files).
 - Owner account (1111) present, active, not banned.
 - All 8 user accounts intact.
 - All 14 JSON files parseable and valid.
@@ -61,11 +61,11 @@ None.
 
 ### ✅ Actions Taken
 - **All clear** — No threats detected this run.
-- Brute force check: clean (1 failed attempt, under threshold).
-- Account enumeration: clean (1 probe, under threshold of 10).
-- Committed dirty data files from other workers (activity_log.json, login_attempts.json, inventory.json — 3 files, +301/-120 lines).
+- Brute force check: clean (0 failed attempts).
+- Account enumeration: clean (0 probes).
 - File integrity: all 14 JSON files intact, parseable, sizes stable.
 - Server health: verified healthy (HTTP 200 on root).
+- Git: clean — no dirty data files to commit.
 - Updated SECURITY_WATCHDOG.md timestamp and findings.
 
 ## Active Blocks
@@ -81,10 +81,10 @@ None — all 72 events resolved.
 
 | | | | | | | Check | Status |
 |---|---|---|---|---|---|---|
-| | | | | | | | | Current time | 2026-06-27T14:45 UTC — 09:45 CT (normal hours) |
-| | | | | | | | | Activity since last run | 3 login attempts (1 fail, 2 success), 2 orders submitted |
-| | | | | | | | | Login attempts (last ~12 min) | 1 failed, 2 successful — all localhost |
-| | | | | | | | | Successful logins (this window) | 2 (Employee One via 2FA, Owner) |
+| | | | | | | | | Current time | 2026-06-27T15:06 UTC — 10:06 CT (normal hours) |
+| | | | | | | | | Activity since last run | 1 login attempt (0 fail, 1 success), 0 orders |
+| | | | | | | | | Login attempts (last ~22 min) | 0 failed, 1 successful — all localhost |
+| | | | | | | | | Successful logins (this window) | 1 (Owner) |
 | | | | | | | | | Blocked IPs | 0 |
 | | | | | | | | | Config changes | None |
 | | | | | | | | | File integrity | OK. All 14 JSON files parseable, sizes stable. 8 accounts intact. |
