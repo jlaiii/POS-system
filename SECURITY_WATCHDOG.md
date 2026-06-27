@@ -1,11 +1,11 @@
 # POS Security Watchdog
 
-||| Last run: 2026-06-27T09:41 UTC
-||||||||||||||||||||| Total events tracked: 72 (SEC-001→SEC-072; all resolved)
-||||||||||||||||||||| Active blocks: 0 IPs
-||||||||||||||||||||| Run result: Clean — no threats detected
+| Last run: 2026-06-27T10:05 UTC
+|||||||||||||||||||||| Total events tracked: 72 (SEC-001→SEC-072; all resolved)
+|||||||||||||||||||||| Active blocks: 0 IPs
+|||||||||||||||||||||| Run result: Clean — no threats detected
 
-## Current Run Findings (09:25–09:41 UTC, ~16 min window)
+## Current Run Findings (09:41–10:05 UTC, ~24 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -19,23 +19,21 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (09:25–09:41 UTC, ~16 min window)
+### ℹ️ Activity Summary (09:41–10:05 UTC, ~24 min window)
 
 **Server**: UP — serving HTTP 200 on port 5000.
 
-**Activity**: 2 events this window (normal).
-- 09:35:33 — Owner (1111) admin_login from 127.0.0.1 (curl)
-- 09:35:47 — Owner (1111) login from 127.0.0.1 (curl)
+**Activity**: 0 new events this window (none).
 
-**Login attempts in window: 1** — 0 failed, 1 successful (Owner 1111, 127.0.0.1).
+**Login attempts in window: 0** — 0 failed, 0 successful.
 
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: 0 failed logins. No brute force.
 - **Account enumeration**: No probes. Not actionable.
-- **Successful-after-failure**: No pattern (0 failed, 1 success — single clean login).
-- **Off-hours activity**: 09:41 UTC is normal hours (06:00-22:00).
-- **Cross-IP targeting**: None (single user, single IP).
-- **Known IPs**: 127.0.0.1 is known for user 1111. No new IPs.
+- **Successful-after-failure**: No pattern (0 logins total).
+- **Off-hours activity**: 10:05 UTC is normal hours (06:00-22:00).
+- **Cross-IP targeting**: None (no logins).
+- **Known IPs**: No new IPs.
 - **Credential stuffing**: No pattern detected.
 
 ### 🔒 Security Config
@@ -43,7 +41,7 @@ None.
 - `auto_block_threshold`: 5 — unchanged.
 - `require_2fa_for_admins`: true — unchanged.
 - `exempted_users`: ["1111"] — unchanged.
-- `allow_self_registration`: key not present (unchanged).
+- `allow_self_registration`: not applicable — unchanged.
 - No config changes detected.
 
 ### 💰 Financial Check
@@ -60,10 +58,10 @@ None.
 
 ### ✅ Actions Taken
 - Verified server UP on port 5000 (HTTP 200).
-- Brute force check: clean (0 failed attempts, 1 successful).
+- Brute force check: clean (0 attempts total).
 - Account enumeration: clean (0 probes).
 - Successful-after-failure: no pattern.
-- Committed pending data changes (activity_log.json, login_attempts.json).
+- No pending data changes to commit.
 - No new security events — nothing to report.
 
 ## Active Blocks
@@ -79,10 +77,10 @@ None — all 72 events resolved.
 
 || Check | Status |
 ||---|---|
-||| Current time | 2026-06-27T09:25 UTC — normal hours |
-|||| Activity since last run | 0 events |
-||||| Login attempts (last ~5 min) | 0 failed, 0 successful |
-|||| Successful logins (this window) | 0 |
+|||| Current time | 2026-06-27T10:05 UTC — normal hours |
+||||| Activity since last run | 0 events |
+|||||| Login attempts (last ~5 min) | 0 failed, 0 successful |
+||||| Successful logins (this window) | 0 |
 |||| Blocked IPs | 0 |
 |||| Config changes | None |
 |||| File integrity | OK. 8 accounts intact. |
