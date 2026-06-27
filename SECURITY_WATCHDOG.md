@@ -1,11 +1,11 @@
 # POS Security Watchdog
 
-||||||| Last run: 2026-06-27T06:07 UTC
-|||||||||||| Total events tracked: 72 (SEC-001→SEC-072; all resolved)
-|||||||||||| Active blocks: 0 IPs
-|||||||||||| Run result: Clean — no new activity beyond 1 routine Owner login
+||||||| Last run: 2026-06-27T06:34 UTC
+||||||||||||| Total events tracked: 72 (SEC-001→SEC-072; all resolved)
+||||||||||||| Active blocks: 0 IPs
+||||||||||||| Run result: Clean — no login attempts in window
 
-## Current Run Findings (05:59–06:07 UTC, ~8 min window)
+## Current Run Findings (06:19–06:34 UTC, ~15 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -19,46 +19,48 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (05:59–06:07 UTC, ~8 min window)
+### ℹ️ Activity Summary (06:19–06:34 UTC, ~15 min window)
 
-**Server**: UP — serving HTTP 200 on port 5000 (root endpoint).
+**Server**: UP — serving HTTP 200 on port 5000.
 
-**Activity**: 3 events since last run.
-- Owner (1111) curl login from 127.0.0.1 at 06:06:02 — just past off-hours (06:06 > 06:00 end). Normal cron-worker test pattern.
-- Owner admin_login from 127.0.0.1 at 06:06:11 — success.
-- Owner admin_login from 127.0.0.1 at 06:06:19 — success.
+**Activity**: 7 events since last run, all from Site Reliability Bot test cycle at 06:29 UTC:
+- Order 121 submitted (anonymous, $6.25 Cash) and immediately refunded by Owner (1111) — test pattern
+- User management tests: add_user failed x3 (unauthorized, guessable PIN, invalid role), add_user success (9973/Test RB User), delete_user success — reliability bot testing RBAC
+- All from 127.0.0.1, all established test pattern. No security concern.
+
+**Login attempts in window: 0** — zero failed, zero successful. No login activity at all in the last 15 minutes.
 
 ### 📊 Login Security Deep-Dive
-- **Brute force check**: 0 failed logins in window. No brute force.
+- **Brute force check**: 0 failed logins. No brute force.
 - **Account enumeration**: No probes.
 - **Successful-after-failure**: No pattern.
-- **Off-hours activity**: 1 login at 06:06 — borderline (06:06 is just past 06:00 off-hours end). All 127.0.0.1, established cron testing pattern.
+- **Off-hours activity**: None in window (current time 06:34 is within normal hours).
 - **Cross-IP targeting**: None.
-- **Known IPs**: No new IPs tracked.
+- **Known IPs**: No new IPs.
 - **Credential stuffing**: None.
 
 ### 🔒 Security Config
 - `blocked_ips`: [] — no active blocks.
 - `auto_block_threshold`: 5 — unchanged.
 - `require_2fa_for_admins`: true — unchanged.
+- `exempted_users`: ["1111"] — unchanged.
 - No config changes detected.
 
 ### 💰 Financial Check
-- No new orders since last run.
-- Last 3 orders are all refunded test orders (pre-existing).
+- Order 121 ($6.25) created and refunded — test pattern, already noted above.
 - No $0 orders, no 100% discounts active.
+- No unusual refund patterns.
 
 ### 📂 File Integrity
-- All 79 JSON files parseable and intact.
+- Git status: clean (no dirty files).
 - Owner account (1111) present, active, not banned.
-- Git status: 2 dirty files — activity_log.json, login_attempts.json (runtime data).
-- security_config.json: unchanged since Jun 25.
+- All 8 user accounts intact.
+- security_config.json: unchanged.
 - No suspicious files detected.
-- No unexpected file shrinkage.
 
 ### ✅ Actions Taken
 - Verified server UP on port 5000.
-- Verified all 79 JSON files parseable.
+- Verified zero failed logins in window (clean).
 - Verified no blocked IPs, no config changes, no suspicious files.
 - No new security events to create — all activity is established cron testing pattern.
 - Updated SECURITY_WATCHDOG.md for continuity.
@@ -76,13 +78,13 @@ None — all 72 events resolved.
 
 | Check | Status |
 |---|---|
-|| Current time | 2026-06-27T06:07 UTC — normal hours (06:06 > 06:00) |
-|| Activity since last run | 3 events (Owner/127.0.0.1) |
-|| Login attempts (last 8 min) | 3 total, 0 failed |
-|| Successful logins (this window) | 3 (1 PIN + 2 admin) |
+|| Current time | 2026-06-27T06:34 UTC — normal hours |
+|| Activity since last run | 7 events (Reliability Bot test cycle at 06:29) |
+|| Login attempts (last 15 min) | 0 total, 0 failed |
+|| Successful logins (this window) | 0 |
 || Blocked IPs | 0 |
 || Config changes | None |
-|| File integrity | OK — all 79 JSON parseable. 2 dirty files (runtime data). |
+|| File integrity | OK — git clean. 8 accounts intact. |
 || Users | 8 accounts. Admin 2FA: 2222=no, 7788=no (pre-existing gap, needs Sentinel) |
 || Security events | 72 tracked, 0 unresolved |
 || Server | UP (:5000 — HTTP 200) |
