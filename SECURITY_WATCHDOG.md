@@ -1,12 +1,12 @@
 # POS Security Watchdog
 
-| Last run: 2026-06-27T00:53 UTC
-| Total events tracked: 50 (SEC-001→SEC-051, no SEC-004; all resolved)
-| Active blocks: 0 IPs
-| Unresolved alerts: 0
-| Run result: [SILENT] — 1 Owner login from 127.0.0.1 at 00:51 UTC (off-hours, auto-resolved SEC-051). 0 failed logins. Clean.
+| Last run: 2026-06-27T01:11 UTC
+|| Total events tracked: 50 (SEC-001→SEC-051, no SEC-004; all resolved)
+|| Active blocks: 0 IPs
+|| Unresolved alerts: 0
+|| Run result: [SILENT] — No activity since last run. 0 logins, 0 failed attempts. Clean.
 
-## Current Run Findings (00:30–00:53 UTC, ~23 min window)
+## Current Run Findings (00:53–01:11 UTC, ~18 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -20,21 +20,21 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (00:30–00:53 UTC, ~23 min window)
+### ℹ️ Activity Summary (00:53–01:11 UTC, ~18 min window)
 
 **Server**: UP — serving HTTP 200 on port 5000 (root endpoint).
 
-**Activity**: 2 events since last run — both from my own Watchdog login.
-- 00:51:55 — login SUCCESS, Owner (1111), 127.0.0.1 (curl/8.5.0)
-- 00:51:57 — admin_login SUCCESS, Owner (1111), 127.0.0.1 (curl/8.5.0)
-- 0 failed logins
-- All from 127.0.0.1 — Watchdog own probe login (SEC-051)
+**Activity**: 0 events since last run. Complete inactivity.
+- 0 logins (successful or failed)
+- 0 admin actions
+- 0 orders
+- 0 shifts
 
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: 0 failed logins in last 15 min window. Clean.
 - **Account enumeration**: No probes — no failed login attempts at all.
 - **Successful-after-failure**: No pattern detected — 0 failures.
-- **Off-hours activity**: 2 events from localhost during off-hours — my own Watchdog login (SEC-051, auto-resolved).
+- **Off-hours activity**: None in this window.
 - **Cross-IP targeting**: None.
 - **Known IPs**: No new IPs tracked.
 
@@ -74,13 +74,13 @@ None.
 
 | Check | Status |
 |---|---|
-| Current time | 2026-06-27T00:53 UTC — off-hours (22:00-06:00) |
-| Activity since last run | 2 events (Watchdog own login — 127.0.0.1) |
-| Login attempts (last 15 min) | 1 (0 failed) |
-| Successful logins (this window) | 1 (Owner 1111 from 127.0.0.1) |
-| Blocked IPs | 0 |
-| Config changes | None |
-| File integrity | OK — all 49 JSON files parseable |
-| Users | 8 accounts. Admin 2FA: 2222=no, 7788=no (pre-existing gap) |
-| Security events | 50 tracked, 0 unresolved. All resolved. |
-| Server | UP (:5000 — HTTP 200) |
+| Current time | 2026-06-27T01:11 UTC — off-hours (22:00-06:00) |
+|| Activity since last run | 0 events |
+|| Login attempts (last 15 min) | 0 (0 failed) |
+|| Successful logins (this window) | 0 |
+|| Blocked IPs | 0 |
+|| Config changes | None |
+|| File integrity | OK — all 49 JSON files parseable |
+|| Users | 8 accounts. Admin 2FA: 2222=no, 7788=no (pre-existing gap) |
+|| Security events | 50 tracked, 0 unresolved. All resolved. |
+|| Server | UP (:5000 — HTTP 200) |
