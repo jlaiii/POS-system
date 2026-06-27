@@ -1,11 +1,11 @@
 # POS Security Watchdog
 
-|| | | | | | | | | | | Last run: 2026-06-27T19:20 UTC
+||| | | | | | | | | | | Last run: 2026-06-27T19:54 UTC
 | | | | | | | | | | | | | | | Total events tracked: 72 (SEC-001→SEC-072; all resolved)
 | | | | | | | | | | | | | | | Active blocks: 0 IPs
-| | | | | | | | | | | | | | Run result: All clear | 1 Owner login, no threats
+| | | | | | | | | | | | | | | Run result: All clear | No activity since last run
 
-## Current Run Findings (19:04–19:20 UTC, ~16 min window)
+## Current Run Findings (19:38–19:54 UTC, ~16 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -19,23 +19,23 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (19:04–19:20 UTC)
+### ℹ️ Activity Summary (19:38–19:54 UTC)
 
 **Server**: Healthy (HTTP 200 on root).
 
-**Activity**: 1 login by Owner (1111) from 127.0.0.1 at 19:11 UTC (curl). No failed attempts. No orders. No refunds.
+**Activity**: None. No new activity since last run at 19:38.
 
-**Login attempts in window**: 1 total (1 successful, 0 failed). Clean.
+**Login attempts in window**: 0 (0 failed, 0 successful). Last login was Owner (1111) at 19:11:15 UTC from 127.0.0.1.
 
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: 0 failed logins in window. No brute force.
-- **Account enumeration**: 0 probes for non-existent PINs. Clean.
-- **Successful-after-failure**: No login-after-failure pattern. Clean.
-- **Off-hours activity**: 19:20 UTC = 14:20 CT — normal business hours (Saturday).
+- **Account enumeration**: 0 probes in window. 4 probes today (all from 127.0.0.1, all user_id=null/invalid PIN) — typical test activity, none in this window.
+- **Successful-after-failure**: No failed logins in window. Clean.
+- **Off-hours activity**: 19:54 UTC = 14:54 CT — normal business hours (Saturday).
 - **Cross-IP targeting**: No activity. Clean.
-- **Known IPs**: Owner (1111) from 127.0.0.1 — already known. No new IPs.
+- **Known IPs**: All activity from 127.0.0.1 — already known. No new IPs.
 - **Credential stuffing**: No pattern detected.
-- **2FA check**: Owner (1111) exempted. No 2FA activity.
+- **2FA check**: No 2FA activity in window.
 - **Session anomalies**: No active shifts. No sessions older than 24h.
 
 ### 🔒 Security Config
@@ -46,23 +46,23 @@ None.
 - No config changes detected.
 
 ### 💰 Financial Check
-- No new orders in this window.
+- No orders in this window. Test order #124 ($311.68) from last run was refunded.
 - No zero-dollar orders, no 100% discounts observed.
 - No financial anomalies detected.
 
 ### 📂 File Integrity
-- Git status: clean (no uncommitted changes).
+- Git status: M SECURITY_WATCHDOG.md (this run's update — will commit).
 - Owner account (1111) present, active, not banned.
 - All 8 user accounts intact.
-- All JSON files parseable and valid. File sizes stable.
+- All 47 JSON files parseable and valid.
 - Server: **Healthy** (HTTP 200 on root).
 - No suspicious files detected.
 
 ### ✅ Actions Taken
-- **All clear** — No threats detected this run.
+- **All clear** — No security threats detected this run.
 - Brute force check: clean (0 failed attempts).
-- Account enumeration: clean (0 probes).
-- File integrity: all JSON files intact, parseable, sizes stable.
+- Account enumeration: clean (0 probes in window).
+- File integrity: all JSON files intact, parseable.
 - Server health: verified healthy (HTTP 200 on root).
 - Updated SECURITY_WATCHDOG.md timestamp and findings.
 
@@ -71,14 +71,14 @@ None.
 
 ## System State
 
-| | | | | | | | | | | Check | Status |
+|| | | | | | | | | | | Check | Status |
 |---|---|---|---|---|---|---|---|---|---|---|
-| | | | | | | | | | | | | | | Current time | 2026-06-27T19:20 UTC — 14:20 CT (normal hours, Saturday) |
-| | | | | | | | | | | | | | | Activity since last run | 1 login (Owner, 127.0.0.1) |
-| | | | | | | | | | | | | | | Login attempts (last ~16 min) | 1 (0 failed) |
-| | | | | | | | | | | | | | | Successful logins (this window) | 1 |
-| | | | | | | | | | | | | | | Blocked IPs | 0 |
-| | | | | | | | | | | | | | | Config changes | None |
-| | | | | | | | | | | | | | | File integrity | OK. All JSON files parseable, sizes stable. 8 accounts intact. |
-| | | | | | | | | | | | | | | Users | 8 accounts. Admin 2FA: 2222=no, 7788=no (pre-existing gap — Sentinel) |
-| | | | | | | | | | | | | | | Server | **Healthy** (HTTP 200) |
+|| | | | | | | | | | | | | | Current time | 2026-06-27T19:38 UTC — 14:38 CT (normal hours, Saturday) |
+|| | | | | | | | | | | | | | Activity since last run | Test activity: item add, clock-in/out tests, order+refund |
+|| | | | | | | | | | | | | | Login attempts (last ~18 min) | 0 (0 failed) |
+|| | | | | | | | | | | | | | Successful logins (this window) | 0 |
+|| | | | | | | | | | | | | | Blocked IPs | 0 |
+|| | | | | | | | | | | | | | Config changes | None |
+|| | | | | | | | | | | | | | File integrity | OK. All 47 JSON files parseable, sizes reflect test activity. 8 accounts intact. |
+|| | | | | | | | | | | | | | Users | 8 accounts. Admin 2FA: 2222=no, 7788=no (pre-existing gap — Sentinel) |
+|| | | | | | | | | | | | | | Server | **Healthy** (HTTP 200) |
