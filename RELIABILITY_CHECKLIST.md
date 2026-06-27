@@ -1,16 +1,16 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-27T08:47 UTC
-> Total checks: 1245
-> Healthy: 1245 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-27T09:11 UTC
+> Total checks: 1255
+> Healthy: 1255 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 — 200 OK [verified 08:47]
-- [x] All JSON data files exist and are valid — all 15 JSON files valid, parseable [verified 08:47]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', 8 users) [verified 08:47]
-- [x] Git repo is clean — clean [verified 08:47]
+- [x] Flask app responds on port 5000 — 200 OK [verified 09:11]
+- [x] All JSON data files exist and are valid — all 15 JSON files valid, parseable [verified 09:11]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', 8 users) [verified 09:11]
+- [x] Git repo is clean — clean [verified 09:11]
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/health — {"status":"ok"} (GET) [verified 08:47]
@@ -49,20 +49,21 @@
 - [x] Concurrent write test: two rapid clock-ins (1234+5678, 1s apart) → both succeeded, shift_log.json has 52 records, no data loss [verified 20:50]
 - [x] Large payload test: submit order with 50 items — Order 116 (50 items) → 200 OK → refunded [verified 20:50]
 - [x] Special chars test: user name with emoji, item name with quotes — Added "Test \"Special\" 🎉 Item" (Snacks, $5.99) → verified in items.json → deleted, handled correctly [verified 20:50]
-- [x] app.py syntax check (python3 -m py_compile app.py) — SYNTAX OK [verified 19:06]
-- [x] index.html size check (alert if shrunk dramatically — possible corruption) — 1375239 bytes (normal, ~1.37MB) [verified 19:06]
-- [x] Disk space check: df -h, alert if >80% full — 36% used (14G/38G, OK) [verified 19:06]
-- [x] Memory check: free -m, alert if swap used — 39% RAM used, 0 swap (OK) [verified 19:06]
-- [x] Backup integrity: verify latest backup is valid and not empty — 2026-06-27_06-38-23.tar.gz (valid, 8 users, 15+ files, SQLite header OK) [verified 06:53]
+- [x] app.py syntax check (python3 -m py_compile app.py) — SYNTAX OK [verified 09:11]
+- [x] index.html size check (alert if shrunk dramatically — possible corruption) — 1375239 bytes (normal, ~1.37MB) [verified 09:11]
+- [x] Disk space check: df -h, alert if >80% full — 36% used (14G/38G, OK) [verified 09:11]
+- [x] Memory check: free -m, alert if swap used — 39% RAM used, 0 swap (OK) [verified 09:11]
+- [x] Backup integrity: verify latest backup is valid and not empty — 2026-06-27_08-38-25.tar.gz (valid, 8 users, 5 categories, 55 shifts, 101 orders) [verified 09:11]
 
 ## DISCOVERED (failures you've seen before — check every 2h)
-- [x] **Flask process dying between runs** — Now on gunicorn+gevent via scripts/run_flask.sh, stable. [verified 08:47 — running, gunicorn+gevent, single master+worker, up since 02:31 UTC, ~6h uptime, stable]
-- [x] **Dual Flask instances on port 5000** — Single gunicorn master+worker. No recurrence. [verified 08:25 — single master+worker, clean]
-- [x] **items.json + users.json simultaneous data corruption** — Items (5 categories) and users (8 users) intact. Monitor every 2h. [verified 08:25 — healthy]
-- [x] **Owner username changed to 'testuser' (3rd data corruption incident)** — Owner PIN 1111 username='jayadmin', name='Owner'. No corruption. [verified 08:25 — healthy]
-- [x] **items.json schema changed to category-keyed format** — Items now stored as {Foods:[...], Drinks:[...], ...} instead of {categories:[], items:[]}. Used by /api/items (GET). [verified 08:25]
+- [x] **Flask process dying between runs** — Now on gunicorn+gevent via scripts/run_flask.sh, stable. [verified 09:11 — running, gunicorn+gevent, single master+worker, up since 02:31 UTC, ~6.7h uptime, stable]
+- [x] **Dual Flask instances on port 5000** — Single gunicorn master+worker. No recurrence. [verified 09:11 — single master+worker, clean]
+- [x] **items.json + users.json simultaneous data corruption** — Items (5 categories) and users (8 users) intact. Monitor every 2h. [verified 09:11 — healthy]
+- [x] **Owner username changed to 'testuser' (3rd data corruption incident)** — Owner PIN 1111 username='jayadmin', name='Owner'. No corruption. [verified 09:11 — healthy]
+- [x] **items.json schema changed to category-keyed format** — Items now stored as {Foods:[...], Drinks:[...], ...} instead of {categories:[], items:[]}. Used by /api/items (GET). [verified 09:11]
 
 ## FIXES APPLIED
+|- [2026-06-27 09:11] **Routine run — all healthy** — Flask 200 (gunicorn+gevent, up 6.7h), disk 36%, RAM 39%. All 15 JSON files valid. Owner PIN 1111 intact (name='Owner', username='jayadmin'). Git: committed dirty SECURITY_WATCHDOG.md from Security Watchdog (584f82d). Verified CRITICAL (Flask, JSON, owner, clean repo) + 12H overdue items: app.py syntax OK, index.html 1,375,239B normal, backup integrity (08:38, 50 files, 8 users/5 cats/55 shifts/101 orders valid). Single gunicorn master+worker, no dual instances. Total checks: 1255, all healthy. No downtime.
 |- [2026-06-27 07:41] **Routine run — all healthy** — Flask 200 (gunicorn+gevent), disk 36%, RAM 39%. All 15 JSON files valid. Owner PIN 1111 intact (name='Owner', username='jayadmin'). Git: committed dirty SECURITY_WATCHDOG.md from Security Watchdog (7988d03). Verified CRITICAL + full HOURLY sweep (admin_shifts 55, CSV valid, sync_orders 400, clock/status 1234 not clocked in, health 200, frontend 1.37MB, items 5 cats 19 items, login owner, admin_stats avg_sale=$15.25, app.py syntax OK, index.html size normal). Kitchen display (2 orders). Single gunicorn+gevent, no dual instances. Total checks: 1220, all healthy. No downtime.
 |- [2026-06-27 07:19] **Routine run — all healthy**
 - [2026-06-27 06:53] **Routine run — all healthy** — Flask 200 (gunicorn+gevent), disk 36%, RAM 39%. All 15 JSON files valid. Owner PIN 1111 intact. Git clean. Verified CRITICAL + 4H overdue items: CSV export (200, 5115 bytes), offline queue (400, working), loyalty (14 entries intact), shift edit (5 shifts w/ edits, audit trail OK), special chars (clean). Backup integrity: latest 06:38 tar.gz valid (8 users, SQLite header OK). Total checks: 1201, all healthy. No downtime.
