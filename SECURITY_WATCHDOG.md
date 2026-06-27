@@ -1,12 +1,12 @@
 # POS Security Watchdog
 
-| Last run: 2026-06-27T01:29 UTC
-||| Total events tracked: 51 (SEC-001→SEC-051; all resolved)
-||| Active blocks: 0 IPs
-||| Unresolved alerts: 0
-||| Run result: [SILENT] — 12 activity events, all localhost cron testing. 0 failed logins. Clean.
+| Last run: 2026-06-27T01:48 UTC
+|||| Total events tracked: 51 (SEC-001→SEC-051; all resolved)
+|||| Active blocks: 0 IPs
+|||| Unresolved alerts: 0
+|||| Run result: [SILENT] — 0 activity events. Zero failed logins. Clean.
 
-## Current Run Findings (01:11–01:29 UTC, ~18 min window)
+## Current Run Findings (01:29–01:48 UTC, ~19 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -20,21 +20,21 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (01:11–01:29 UTC, ~18 min window)
+### ℹ️ Activity Summary (01:29–01:48 UTC, ~19 min window)
 
 **Server**: UP — serving HTTP 200 on port 5000 (root endpoint).
 
-**Activity**: 12 events since last run (all localhost cron worker activity).
+**Activity**: 0 events since last run (no activity at all).
 - 0 logins (successful or failed)
-- 12 admin actions (Owner 1111 from 127.0.0.1): add_user/delete_user tests, add_item/delete_item tests
+- 0 admin actions
 - 0 orders
-- 0 shifts (1 zero-duration shift from 23:59:59 on prev day — existing, unchanged)
+- 0 shifts
 
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: 0 failed logins in last 15 min window. Clean.
 - **Account enumeration**: No probes — no failed login attempts at all.
 - **Successful-after-failure**: No pattern detected — 0 failures.
-- **Off-hours activity**: The 12 admin actions occurred during off-hours (22:00-06:00), but all from 127.0.0.1 by Owner (1111). This is the established cron worker testing pattern — not a security concern.
+- **Off-hours activity**: None.
 - **Cross-IP targeting**: None.
 - **Known IPs**: No new IPs tracked.
 
@@ -49,9 +49,9 @@ None.
 - No $0 orders, no 100% discounts, no unusual patterns.
 
 ### 📂 File Integrity
-- All 49 JSON files parseable and intact.
+- All 51 JSON files parseable and intact. Note: grew from 49 → 51 since last run.
 - Owner account (1111) present, active, not banned.
-- Git status: dirty — activity_log.json (12 new events), inventory.json (+1 test item), 2 menu_backups deleted. All from cron worker testing. No security concern.
+- Git status: clean — no uncommitted changes.
 - security_config.json: unchanged.
 - No suspicious files detected.
 - No unexpected file shrinkage.
@@ -72,13 +72,13 @@ None.
 
 | Check | Status |
 |---|---|
-| Current time | 2026-06-27T01:29 UTC — off-hours (22:00-06:00) |
-|| Activity since last run | 12 events (all 127.0.0.1 cron testing) |
+| Current time | 2026-06-27T01:48 UTC — off-hours (22:00-06:00) |
+|| Activity since last run | 0 events — complete silence |
 || Login attempts (last 15 min) | 0 (0 failed) |
 || Successful logins (this window) | 0 |
 || Blocked IPs | 0 |
 || Config changes | None |
-|| File integrity | OK — all 49 JSON files parseable. Git has uncommitted changes (worker data). |
+|| File integrity | OK — all 51 JSON files parseable. Git clean. |
 || Users | 8 accounts. Admin 2FA: 2222=no, 7788=no (pre-existing gap) |
 || Security events | 51 tracked, 0 unresolved. All resolved. |
 || Server | UP (:5000 — HTTP 200) |
