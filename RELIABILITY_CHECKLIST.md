@@ -1,5 +1,5 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-27T07:41 UTC
+> Last full cycle: 2026-06-27T08:03 UTC
 > Total checks: 1220
 > Healthy: 1220 | Broken: 0 | Fixed this cycle: 0
 
@@ -7,13 +7,13 @@
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 — 200 OK [verified 07:41]
-- [x] All JSON data files exist and are valid — all 15 core JSON files valid, parseable [verified 07:41]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin') [verified 07:41]
-- [x] Git repo is clean — clean [verified 07:41]
+- [x] Flask app responds on port 5000 — 200 OK [verified 08:03]
+- [x] All JSON data files exist and are valid — all 8 core JSON files valid, parseable [verified 08:03]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin') [verified 08:03]
+- [x] Git repo is clean — clean [verified 08:03]
 
 ## HOURLY (check if last check was >1h ago)
-- [x] /api/health — {"status":"ok"} (GET) [verified 07:41]
+- [x] /api/health — {"status":"ok"} (GET) [verified 08:03]
 - [x] Frontend loads — 200, HTML OK, 1.37MB [verified 07:41]
 - [x] /api/items returns items — GET, 200 OK, 5 categories (Breakfast, Drinks, Foods, Salads, Snacks), 19 items [verified 07:41]
 - [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 55 shifts, 200 OK [verified 07:41]
