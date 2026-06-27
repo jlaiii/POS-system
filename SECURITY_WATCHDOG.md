@@ -1,11 +1,11 @@
 # POS Security Watchdog
 
-| | | | | | | | | | | Last run: 2026-06-27T18:30 UTC
+| | | | | | | | | | | Last run: 2026-06-27T18:47 UTC
 | | | | | | | | | | | | | | | Total events tracked: 72 (SEC-001→SEC-072; all resolved)
 | | | | | | | | | | | | | | | Active blocks: 0 IPs
 | | | | | | | | | | | | | | Run result: All clear | No activity since last run
 
-## Current Run Findings (17:58–18:30 UTC, ~32 min window)
+## Current Run Findings (18:30–18:47 UTC, ~17 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -19,11 +19,11 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (17:58–18:30 UTC)
+### ℹ️ Activity Summary (18:30–18:47 UTC)
 
 **Server**: Healthy (HTTP 200 on root).
 
-**Activity**: No activity since last run. Zero logins, zero failed attempts, zero orders, zero refunds.
+**Activity**: No activity since last run (17 min window). Zero logins, zero failed attempts, zero orders, zero refunds.
 
 **Login attempts in window**: 0. Clean.
 
@@ -31,7 +31,7 @@ None.
 - **Brute force check**: 0 failed logins in window. No brute force.
 - **Account enumeration**: 0 probes for non-existent PINs. Clean.
 - **Successful-after-failure**: No login-after-failure pattern. Clean.
-- **Off-hours activity**: 17:58 UTC = 12:58 CT — normal business hours (Saturday).
+- **Off-hours activity**: 18:47 UTC = 13:47 CT — normal business hours (Saturday).
 - **Cross-IP targeting**: No activity. Clean.
 - **Known IPs**: No new IPs.
 - **Credential stuffing**: No pattern detected.
@@ -74,9 +74,9 @@ None.
 
 | | | | | | | | | | | Check | Status |
 |---|---|---|---|---|---|---|---|---|---|---|
-| | | | | | | | | | | | | | | Current time | 2026-06-27T18:30 UTC — 13:30 CT (normal hours, Saturday) |
+| | | | | | | | | | | | | | | Current time | 2026-06-27T18:47 UTC — 13:47 CT (normal hours, Saturday) |
 | | | | | | | | | | | | | | | Activity since last run | None |
-| | | | | | | | | | | | | | | Login attempts (last ~32 min) | 0 (0 failed) |
+| | | | | | | | | | | | | | | Login attempts (last ~17 min) | 0 (0 failed) |
 | | | | | | | | | | | | | | | Successful logins (this window) | 0 |
 | | | | | | | | | | | | | | | Blocked IPs | 0 |
 | | | | | | | | | | | | | | | Config changes | None |
