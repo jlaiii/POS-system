@@ -75,7 +75,7 @@
 - [x] **migrate_refunded_orders.py** — Migrated 17 refunded orders from refunded_orders.json to SQLite. Full original_order preserved as JSON TEXT. Idempotency tested. Commit: 3949dbb
 - [x] **migrate_known_ips.py** — Migrated 7 known IPs from known_ips.json to SQLite. Flattened per-user IP arrays into individual rows. Handled edge case (user 123456 with empty IPs array — skipped). Idempotency tested. Commit: bfab6d5
 - [x] **migrate_tickets.py** — Migrated 2 tickets from tickets.json to SQLite. Mapped subject→title, user_id→created_by, extra fields (user_name, type) stored in metadata JSON. Idempotency tested. Commit: ad249b2
-- [x] **migrate_combos.py** — Migrated 1 combo from combos.json to SQLite. Updated combos schema to match JSON structure (combo_id, combo_price, description, child_items, active, created_at, updated_at). Added schema migration entries for existing installs. Idempotency tested. Commit: tbd
+- [x] **migrate_combos.py** — Migrated 1 combo from combos.json to SQLite. Updated combos schema to match JSON structure (combo_id, combo_price, description, child_items, active, created_at, updated_at). Added schema migration entries for existing installs. Idempotency tested. Commit: a1fd348
 
 ## ROLLBACK PLAN (always keep current)
 How to revert to JSON mode if DB breaks:

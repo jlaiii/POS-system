@@ -5773,7 +5773,7 @@
     },
     {
         "order_id": 112,
-        "status": "pending",
+        "status": "cancelled",
         "claimed_by": null,
         "claimed_at": null,
         "completed_at": null,
@@ -5861,11 +5861,14 @@
         "priority": null,
         "assigned_driver": null,
         "delivery_status": "pending",
-        "manager_approval": null
+        "manager_approval": null,
+        "cancelled_reason": "Auto-cancelled (stale \u2014 no kitchen action)",
+        "cancelled_at": "2026-06-27T14:27:50.768434",
+        "cancelled_by": "system"
     },
     {
         "order_id": 113,
-        "status": "pending",
+        "status": "cancelled",
         "claimed_by": null,
         "claimed_at": null,
         "completed_at": null,
@@ -5941,7 +5944,10 @@
         "priority": null,
         "assigned_driver": null,
         "delivery_status": "pending",
-        "manager_approval": null
+        "manager_approval": null,
+        "cancelled_reason": "Auto-cancelled (stale \u2014 no kitchen action)",
+        "cancelled_at": "2026-06-27T14:27:50.768434",
+        "cancelled_by": "system"
     },
     {
         "order_id": 114,
