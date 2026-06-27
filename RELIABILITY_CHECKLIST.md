@@ -1,7 +1,7 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-27T21:35 UTC
-> Total checks: 1567
-> Healthy: 1567 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-27T21:59 UTC
+> Total checks: 1571
+> Healthy: 1571 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
@@ -24,8 +24,8 @@
 - [x] Disk space check — 37% used (14G/24G, OK) [verified 21:35]
 - [x] Memory check — ~38% RAM used, 0 swap [verified 21:35]
 - [x] Clock-in/out: employee 1234 status checked — not clocked in [verified 21:35]
-- [x] CSV export — /api/export/shifts_csv returns CSV with adminPin=1111, valid [verified 20:20]
-- [x] Offline queue — /api/sync_orders exists, returns "No orders provided" [verified 20:20]
+- [x] CSV export — /api/export/shifts_csv returns CSV with adminPin=1111, valid [verified 21:59]
+- [x] Offline queue — /api/sync_orders exists, returns "No orders provided" [verified 21:59]
 - [x] Backup integrity — latest JSON (20:46, 8 users, owner intact), DB (20:46, integrity=ok, 25 tables) [verified 21:35]
 
 ## EVERY 4 HOURS
@@ -33,7 +33,7 @@
 - [x] Pickup display: verify /api/pickup-display/queue works — GET, 200, 1 order ready [verified 20:44]
 - [x] Inventory: check stock decrements on order — 24 items tracked, no negative stock, stock tracking valid [verified 21:35]
 - [x] Cash register: /api/cash_drawer/status (POST with adminPin=1111) returns active=false, last closed Jun 24, 10 sessions [verified 19:58]
-- [x] User CRUD: add test user (9977 via /api/add_user) -> verify -> delete -> confirmed gone [verified 17:11]
+- [x] User CRUD: add test user (9977 via /api/add_user) -> verify -> delete -> confirmed gone [verified 21:59]
 - [x] Loyalty: points earned on order — 14 loyalty entries (phone-keyed dict), data intact [verified 20:44]
 - [x] Webhook: verify webhook config endpoint works — /api/security/discord_webhook returns config (not set), 200 OK [verified 18:26]
 - [x] Clock-in late detection: 8 late records (up to 563min across shifts), data intact [verified 19:10]
