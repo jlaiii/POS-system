@@ -1,6 +1,6 @@
 # POS Database Migration Tasks
-> Last run: 2026-06-26 13:xx UTC
-> Current phase: Phase 2 — Migration Scripts (11/24 complete)
+> Last run: 2026-06-27 01:xx UTC
+> Current phase: Phase 2 — Migration Scripts (12/24 complete)
 
 ## Phase 1: Schema Design
 - [x] Design all SQLite table schemas (users, shift_log, orders, items, inventory, etc.)
@@ -19,7 +19,7 @@
 - [ ] Write migrate_combos.py — combos table migration
 - [ ] Write migrate_favorites.py — favorites table migration
 - [ ] Write migrate_waste_log.py — waste_log table migration
-- [ ] Write migrate_tickets.py — tickets table migration
+- [x] Write migrate_tickets.py — tickets table migration (2 rows verified ✓)
 - [ ] Write migrate_timesheet.py — timesheet table migration
 - [ ] Write migrate_timesheet_approvals.py — timesheet_approvals table migration
 - [ ] Write migrate_cash_drawer.py — cash_drawer table migration
@@ -74,6 +74,7 @@
 - [x] **migrate_security_events.py** — Migrated 24 security events from security_events.json to SQLite. Mapped category→event_type, affected_user→user_id, with full incident metadata in details JSON. Idempotency tested. Commit: 3352888
 - [x] **migrate_refunded_orders.py** — Migrated 17 refunded orders from refunded_orders.json to SQLite. Full original_order preserved as JSON TEXT. Idempotency tested. Commit: 3949dbb
 - [x] **migrate_known_ips.py** — Migrated 7 known IPs from known_ips.json to SQLite. Flattened per-user IP arrays into individual rows. Handled edge case (user 123456 with empty IPs array — skipped). Idempotency tested. Commit: bfab6d5
+- [x] **migrate_tickets.py** — Migrated 2 tickets from tickets.json to SQLite. Mapped subject→title, user_id→created_by, extra fields (user_name, type) stored in metadata JSON. Idempotency tested. Commit: ad249b2
 
 ## ROLLBACK PLAN (always keep current)
 How to revert to JSON mode if DB breaks:
