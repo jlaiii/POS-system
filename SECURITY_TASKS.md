@@ -1,5 +1,5 @@
 # POS Security Tasks
-> Last run: 2026-06-27 02:00 UTC
+> Last run: 2026-06-27 14:10 UTC
 
 ## CRITICAL — LOGIN & AUTH SECURITY (check every run)
 
@@ -100,6 +100,13 @@
 - [x] **Verify dependency versions** — Flask 3.1.3, pyotp 2.9.0, qrcode 7.4.2, Werkzeug 3.1.8, eventlet 0.41.0. All current stable versions.
 
 ## COMPLETED (this session)
+
+### Run: 2026-06-27 14:10 UTC
+- [x] **Full security audit — all clean** — Verified: login rate limiting (5/60s + 10min lockout), session security (secrets.token_hex(32), 8h active/24h idle), TOTP encryption (Fernet key valid at 0600), file permissions (all JSON 0600), XSS (escHtml consistently used), payment data (only card_last4 stored, no CVV/track), no eval/exec vectors, debug disabled, CORS restricted, error handlers JSON-only. Multi-tenant platform endpoints properly secured. 336 routes scanned — all sensitive endpoints have auth checks. No new vulnerabilities found. All 6 open issues are pre-existing architectural items.
+- [x] **TOTP encryption key verified** — 44-byte valid Fernet key at 0600 permissions.
+- [x] **Gunicorn worker count** — Single worker (-w 1) confirmed: in-memory rate limiting is effective.
+- [x] **Activity log sensitive data check** — No PINs or passwords logged. Only method names (pin/password) and login success/failure status recorded.
+- [x] **GitHub token security** — /tmp/gh_token_new at 0600 permissions, root-only.
 
 ### Run: 2026-06-27 02:00 UTC
 - [x] **Encrypt TOTP secrets at rest with Fernet** — Added `_encrypt_totp()`/`_decrypt_totp()` using Fernet (cryptography). Key sourced from `TOTP_ENCRYPTION_KEY` env var or `.totp_encryption_key` file (0600). All 4 read/write points updated. Existing Employee One secret migrated. Login verification confirmed working.
