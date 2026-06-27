@@ -1,32 +1,32 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-27T01:42 UTC
-> Total checks: 1090
-> Healthy: 1090 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-27T02:18 UTC
+> Total checks: 1095
+> Healthy: 1095 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 — 200 OK [verified 01:42]
-- [x] All JSON data files exist and are valid — all 15 core JSON files valid, parseable [verified 01:42]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', role=owner, username='jayadmin') [verified 01:42]
-- [x] Git repo is clean — clean (committed dirty data as ac219e1) [verified 01:42]
+- [x] Flask app responds on port 5000 — 200 OK [verified 02:18]
+- [x] All JSON data files exist and are valid — all 15 core JSON files valid, parseable [verified 02:18]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', role=owner, username='jayadmin') [verified 02:18]
+- [x] Git repo is clean — clean [verified 02:18]
 
 ## HOURLY (check if last check was >1h ago)
-- [x] /api/health — {"status":"ok"} (GET) [verified 00:51]
+- [x] /api/health — {"status":"ok"} (GET) [verified 02:18]
 - [x] Frontend loads — 200, HTML OK, 1.37MB [verified 01:42]
-- [x] /api/items returns items — GET, 200 OK, categories returned [verified 00:51]
-- [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 200 OK [verified 00:51]
+- [x] /api/items returns items — GET, 200 OK, categories returned [verified 02:18]
+- [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 200 OK [verified 01:42]
 - [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 01:42]
 - [x] index.html size check — 1375239 bytes (normal) [verified 01:42]
-- [x] Disk space check — 36% used (14G/38G, OK) [verified 00:51]
-- [x] Memory check — ~39% RAM used (1528/3915 MB, OK) [verified 00:51]
+- [x] Disk space check — 36% used (14G/38G, OK) [verified 02:18]
+- [x] Memory check — ~39% RAM used (1528/3915 MB, OK) [verified 02:18]
 - [x] Backup integrity — latest backups valid [verified 01:42]
 - [x] CSV export — /api/export/shifts_csv returns CSV, POST 200 [verified 00:51]
 - [x] Offline queue — /api/sync_orders exists, returns 400 "No orders provided" [verified 00:51]
-- [x] /api/login works — POST userId=1111, Login successful, role=owner, permissions=[*] [verified 00:51]
+- [x] /api/login works — POST userId=1111, Login successful, role=owner, permissions=[*] [verified 02:18]
 - [x] Clock-in/out: employee 1234 clocked in → clocked out, both 200 OK [verified 23:59]
-- [x] /api/admin_stats — stats returned, average_sale=$13.23, 8 users, backup_health=green [verified 00:51]
+- [x] /api/admin_stats — stats returned, average_sale=$13.23, 8 users, backup_health=green [verified 02:18]
 
 ## EVERY 4 HOURS
 - [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 200, 3 pending orders [verified 00:51]
@@ -38,10 +38,10 @@
 - [x] Webhook: verify webhook config endpoint works — /api/security/discord_webhook returns config (not set), 200 OK [verified 23:14]
 - [x] Clock-in late detection: 8 late records (109/63/57min across shifts), data intact [verified 23:14]
 - [x] Break tracking: 4 shifts with breaks, break data intact [verified 23:14]
-- [x] Shift edit: 5 shifts with edits, audit trail intact (Owner + Employee One + Carlos) [verified 23:14]
+- [x] Shift edit: 5 shifts with edits, audit trail intact (Owner + Employee One + Carlos) [verified 02:18]
 - [x] CSV export: verify /api/export/shifts_csv returns CSV — POST, 200, CSV content [verified 21:14]
 - [x] Offline queue: verify /api/sync_orders endpoint exists — POST, 400, "No orders provided" [verified 01:06]
-- [x] Order lifecycle: create order via /api/submit_order → order 117 submitted → refunded via /api/orders/refund, 200 OK [verified 23:14]
+- [x] Order lifecycle: create order via /api/submit_order → order 117 submitted → refunded via /api/orders/refund, 200 OK [verified 02:18]
 - [x] Special chars test: added \"Test \"Special\" 🎉 Drink\" (emoji+quotes) → verified in items.json → deleted via /api/delete_item, 200 OK [verified 01:06]
 ## EVERY 12 HOURS
 - [x] Full app restart test: kill Flask → restart → verify all critical endpoints — Completed, gunicorn+gevent stable [verified 17:11]
