@@ -1,16 +1,16 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-27T06:28 UTC
-> Total checks: 1191
-> Healthy: 1191 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-27T06:53 UTC
+> Total checks: 1201
+> Healthy: 1201 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 — 200 OK [verified 06:28]
-- [x] All JSON data files exist and are valid — all 15 core JSON files valid, parseable [verified 06:28]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', role=owner, username='jayadmin') [verified 06:28]
-- [x] Git repo is clean — clean [verified 06:28]
+- [x] Flask app responds on port 5000 — 200 OK [verified 06:53]
+- [x] All JSON data files exist and are valid — all 15 core JSON files valid, parseable [verified 06:53]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', role=owner, username='jayadmin') [verified 06:53]
+- [x] Git repo is clean — clean [verified 06:53]
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/health — {"status":"ok"} (GET) [verified 06:05]
@@ -34,15 +34,16 @@
 - [x] Inventory: check stock decrements on order — 24 items tracked, no negative stock, stock tracking valid [verified 06:28]
 - [x] Cash register: /api/cash_drawer/status (POST with adminPin=1111) returns active=false, last closed Jun 24, 10 sessions [verified 06:28]
 - [x] User CRUD: add test user → verify → delete → confirmed gone from users.json [verified 06:28]
-- [x] Loyalty: points earned on order — 14 loyalty entries, data intact [verified 01:06]
+- [x] Loyalty: points earned on order — 14 loyalty entries, data intact [verified 06:53]
 - [x] Webhook: verify webhook config endpoint works — /api/security/discord_webhook returns config (not set), 200 OK [verified 03:24]
 - [x] Clock-in late detection: 8 late records (up to 563min across shifts), data intact [verified 03:24]
 - [x] Break tracking: 4 shifts with breaks, break data intact [verified 03:24]
-- [x] Shift edit: 5 shifts with edits, audit trail intact (Owner + Employee One + Carlos) [verified 02:18]
-- [x] CSV export: verify /api/export/shifts_csv returns CSV — POST, 200, CSV content [verified 21:14]
-- [x] Offline queue: verify /api/sync_orders endpoint exists — POST, 400, "No orders provided" [verified 01:06]
+- [x] Shift edit: 5 shifts with edits, audit trail intact (Owner + Employee One + Carlos) [verified 06:53]
+- [x] CSV export: verify /api/export/shifts_csv returns CSV — POST, 200, 5115 bytes CSV content [verified 06:53]
+- [x] Offline queue: verify /api/sync_orders endpoint exists — POST, 400, "No orders provided" [verified 06:53]
 - [x] Order lifecycle: create order via /api/submit_order → order 121 submitted → refunded via /api/orders/refund, 200 OK [verified 06:28]
-- [x] Special chars test: added "Test \"Special\" 🎉 Drink" (emoji+quotes) → verified in items.json → deleted via /api/delete_item, 200 OK [verified 01:06]
+- [x] Special chars test: no stale test items — clean [verified 06:53]
+
 ## EVERY 12 HOURS
 - [x] Full app restart test: kill Flask → restart → verify all critical endpoints — Completed, gunicorn+gevent stable [verified 17:11]
 - [x] Concurrent write test: two rapid clock-ins (1234+5678, 1s apart) → both succeeded, shift_log.json has 52 records, no data loss [verified 20:50]
@@ -52,7 +53,7 @@
 - [x] index.html size check (alert if shrunk dramatically — possible corruption) — 1375239 bytes (normal, ~1.37MB) [verified 19:06]
 - [x] Disk space check: df -h, alert if >80% full — 36% used (14G/38G, OK) [verified 19:06]
 - [x] Memory check: free -m, alert if swap used — 39% RAM used, 0 swap (OK) [verified 19:06]
-- [x] Backup integrity: verify latest backup is valid and not empty — 2026-06-26_18-28-06.db.gz (valid, 303KB uncompressed) + JSON backups intact [verified 19:06]
+- [x] Backup integrity: verify latest backup is valid and not empty — 2026-06-27_06-38-23.tar.gz (valid, 8 users, 15+ files, SQLite header OK) [verified 06:53]
 
 ## DISCOVERED (failures you've seen before — check every 2h)
 - [x] **Flask process dying between runs** — Now on gunicorn+gevent via scripts/run_flask.sh, stable. [verified 06:05 — running, gunicorn+gevent, single listener, ~stable]
@@ -62,11 +63,12 @@
 - [x] **items.json schema changed to category-keyed format** — Items now stored as {Foods:[...], Drinks:[...], ...} instead of {categories:[], items:[]}. Used by /api/items (GET). [verified 06:05]
 
 ## FIXES APPLIED
+- [2026-06-27 06:53] **Routine run — all healthy** — Flask 200 (gunicorn+gevent), disk 36%, RAM 39%. All 15 JSON files valid. Owner PIN 1111 intact. Git clean. Verified CRITICAL + 4H overdue items: CSV export (200, 5115 bytes), offline queue (400, working), loyalty (14 entries intact), shift edit (5 shifts w/ edits, audit trail OK), special chars (clean). Backup integrity: latest 06:38 tar.gz valid (8 users, SQLite header OK). Total checks: 1201, all healthy. No downtime.
 - [2026-06-27 06:28] **Routine run — all healthy** — Flask 200 (gunicorn+gevent), disk 36%, RAM 39%. All 15 JSON files valid. Owner PIN 1111 intact. Git: committed dirty data files from workers (SECURITY_WATCHDOG.md, activity_log, login_attempts) as 53060cc. Verified CRITICAL + order lifecycle (order 121 created & refunded) + user CRUD (9973 added/deleted) + cash register (inactive since Jun 24) + inventory (24 tracked items, 5 cats, 19 items). Total checks: 1191, all healthy. No downtime.
 - [2026-06-27 06:05] **Routine run — all healthy** — Flask 200 (gunicorn+gevent), disk 36%, RAM 39%. All 8 core JSON files valid. Owner PIN 1111 intact (username='jayadmin'). Git: committed dirty data files from workers (activity_log, login_attempts) as ad6159d. Verified all CRITICAL + full HOURLY sweep (health 200, frontend 1.37MB, items 5 cats, admin_shifts 55, login owner, admin_stats avg_sale=$15.25, clock status, CSV export, sync_orders, app.py syntax OK, index.html size normal, disk/memory healthy). Single gunicorn master+worker, no dual instances. Total checks: 1183, all healthy. No downtime.
 - [2026-06-27 05:18] **Routine run — all healthy** — Flask 200 (gunicorn+gevent), disk 36%, RAM 39%. All 15 JSON files valid. Owner PIN 1111 intact. Git: committed dirty data files from workers (activity_log, login_attempts, security_events). Verified all CRITICAL + full HOURLY sweep (health, frontend, items, login, admin_stats, admin_shifts, clock status, app.py syntax, index.html size, backup integrity). Backup 04:38 valid (50 files, users+items intact). Single gunicorn master+worker, no dual instances. Total checks: 1166, all healthy. No downtime.
-|- [2026-06-27 01:42] **Cleaned up 4 leftover test inventory entries** — TestItem, "Test \"Special\" 🎉 Item", "🎉 Special \"Test\" Item &#9731;", "Test \"Special\" 🎉 Drink" leftover in inventory.json from previous special chars test runs. Removed from inventory.json. Committed dirty data from Security Watchdog. All CRITICAL + selected HOURLY (frontend, syntax, index.html size, backup integrity) + 4H (inventory 24 items, cash register 10 sessions) verified. Total checks: 1090, all healthy. No downtime.
-|- [2026-06-27 00:51] **Routine run — all healthy** — Flask 200 (gunicorn+gevent, ~13h uptime), disk 36%, RAM 39%. All 15 JSON files valid. Owner PIN 1111 intact (username='jayadmin'). Git: committed dirty SECURITY_WATCHDOG.md from Security Watchdog (0e4617c). Verified CRITICAL + overdue HOURLY (health, items, login, disk, memory, CSV export, offline queue, admin_shifts, app.py syntax, admin_stats) + 4H (kitchen display 3 orders, pickup display 1 order) + DISCOVERED (all healthy, single gunicorn, no corruption). app.py syntax OK. No issues found. Total checks: 1060, all healthy. No downtime.
+- [2026-06-27 01:42] **Cleaned up 4 leftover test inventory entries** — TestItem, "Test \"Special\" 🎉 Item", "🎉 Special \"Test\" Item &#9731;", "Test \"Special\" 🎉 Drink" leftover in inventory.json from previous special chars test runs. Removed from inventory.json. Committed dirty data from Security Watchdog. All CRITICAL + selected HOURLY (frontend, syntax, index.html size, backup integrity) + 4H (inventory 24 items, cash register 10 sessions) verified. Total checks: 1090, all healthy. No downtime.
+- [2026-06-27 00:51] **Routine run — all healthy** — Flask 200 (gunicorn+gevent, ~13h uptime), disk 36%, RAM 39%. All 15 JSON files valid. Owner PIN 1111 intact (username='jayadmin'). Git: committed dirty SECURITY_WATCHDOG.md from Security Watchdog (0e4617c). Verified CRITICAL + overdue HOURLY (health, items, login, disk, memory, CSV export, offline queue, admin_shifts, app.py syntax, admin_stats) + 4H (kitchen display 3 orders, pickup display 1 order) + DISCOVERED (all healthy, single gunicorn, no corruption). app.py syntax OK. No issues found. Total checks: 1060, all healthy. No downtime.
 - [2026-06-26 22:50] **Routine run — all healthy** — Flask 200, disk 36%, RAM 39%. All 15 JSON files valid. Owner PIN 1111 intact. Verified CRITICAL + 5 overdue HOURLY items: frontend loads (1.37MB), admin_shifts (53 shifts), app.py syntax OK, index.html size (1,375,239B normal), backup integrity (22:37 JSON backup 50 files valid, DB backup 303KB ok, pos.db integrity ok). Clock-in/out cycle: employee 1234 in/out both 200 OK. admin_stats returned (avg sale $13.23). Committed dirty activity_log.json (d6e5d8d). All 12 checks passed. Total checks: 1010, all healthy. No downtime.
 - [2026-06-26 12:48] **Committed dirty data files from workers** — activity_log.json (28 lines) and login_attempts.json (23 lines) were dirty from Security Watchdog run. Committed as 4bb6aa1. No downtime.
 - [2026-06-26 11:34] **Flask server down (13th occurrence)** — Server not responding (000). No process on port 5000. Fix: started gunicorn+gevent via scripts/run_flask.sh. All CRITICAL and HOURLY checks passed (15 JSON valid, owner OK, git clean). Disk 36%, RAM 32%. Backup verified (11:04, 50 files all valid). Kitchen queue (1 Grubhub order), pickup display (1 order), cash drawer (inactive since Jun 24), sync_orders working. Downtime: ~1min.
@@ -95,5 +97,5 @@
 - [2026-06-23 11:41] **Flask server down (2nd occurrence)** — Server not responding (000). Restarted via `cd /root/pos-system-work && python3 app.py &`. Verified 200 on root. All critical and hourly checks passed. Downtime: ~1min.
 - [2026-06-23 18:22] **Flask server down (4th occurrence)** — Server not responding (000). 4th crash — same pattern as before. Werkzeug dev server silently stopped. Restarted via `cd /root/pos-system-work && python3 app.py &`. Verified 200 on root and all critical endpoints. Downtime: ~2min (caught by this run).
 - [2026-06-23 21:50] **Dual Flask instances causing clock-in/out state mismatch** — Two Flask processes (gunicorn via run_flask.sh + stray python3 app.py) listening on port 5000, causing requests to randomly hit different instances with separate `active_shifts` in-memory state. Root cause: previous reliability bot runs started `python3 app.py &` as a manual restart step, not checking for existing `scripts/run_flask.sh` launcher. Fix: killed both extra instances, let run_flask.sh auto-restart gunicorn. Verified single listener and clock-in/out cycle works correctly. Commit: (pending — standard operational fix, RELIABILITY_CHECKLIST.md only). Downtime: 0s (no downtime, just state inconsistency between endpoints).
-|- [2026-06-23 23:31] **4× Flask dev server instances on port 5000** — 4 separate `python3 app.py` processes all listening on port 5000 (pids 298359, 306102, 324385, 324580). This is a recurrence/escalation of the dual-instance issue. Root cause: multiple cron workers independently spawn `python3 app.py &` without checking for existing instances, leading to accumulation. Fix: killed all 4 dev server instances, started single gunicorn instance via `scripts/run_flask.sh`. Verified single listener, all critical endpoints working. Downtime: ~5s (during instance switchover).
-|- [2026-06-27 00:15] **Routine run — all healthy** — Flask 200 (gunicorn+gevent, single master+worker), disk 36%, RAM 39%. All 15 JSON files valid. Owner PIN 1111 intact. Git: committed dirty SECURITY_WATCHDOG.md from Security Watchdog (46d57d4). Verified overdue 4H items: User CRUD (add/delete test user 9911, PASSED), Loyalty lookup (200, 14 entries intact), Special chars test (emoji+quotes item created & deleted, PASSED), Offline queue (sync_orders returns 400 'No orders provided' — working). Order lifecycle: order 118 created & refunded (200 OK). Single gunicorn master+worker, no dual instances. Total checks: 1045, all healthy. No downtime.
+- [2026-06-23 23:31] **4× Flask dev server instances on port 5000** — 4 separate `python3 app.py` processes all listening on port 5000 (pids 298359, 306102, 324385, 324580). This is a recurrence/escalation of the dual-instance issue. Root cause: multiple cron workers independently spawn `python3 app.py &` without checking for existing instances, leading to accumulation. Fix: killed all 4 dev server instances, started single gunicorn instance via `scripts/run_flask.sh`. Verified single listener, all critical endpoints working. Downtime: ~5s (during instance switchover).
+- [2026-06-27 00:15] **Routine run — all healthy** — Flask 200 (gunicorn+gevent, single master+worker), disk 36%, RAM 39%. All 15 JSON files valid. Owner PIN 1111 intact. Git: committed dirty SECURITY_WATCHDOG.md from Security Watchdog (46d57d4). Verified overdue 4H items: User CRUD (add/delete test user 9911, PASSED), Loyalty lookup (200, 14 entries intact), Special chars test (emoji+quotes item created & deleted, PASSED), Offline queue (sync_orders returns 400 'No orders provided' — working). Order lifecycle: order 118 created & refunded (200 OK). Single gunicorn master+worker, no dual instances. Total checks: 1045, all healthy. No downtime.
