@@ -1,11 +1,11 @@
 # POS Security Watchdog
 
-||| | | | | | | | | | | Last run: 2026-06-27T19:54 UTC
+||| | | | | | | | | | | Last run: 2026-06-27T20:11 UTC
 | | | | | | | | | | | | | | | Total events tracked: 72 (SEC-001→SEC-072; all resolved)
 | | | | | | | | | | | | | | | Active blocks: 0 IPs
 | | | | | | | | | | | | | | | Run result: All clear | No activity since last run
 
-## Current Run Findings (19:38–19:54 UTC, ~16 min window)
+## Current Run Findings (19:54–20:11 UTC, ~17 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -19,13 +19,13 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (19:38–19:54 UTC)
+### ℹ️ Activity Summary (19:54–20:11 UTC)
 
 **Server**: Healthy (HTTP 200 on root).
 
-**Activity**: None. No new activity since last run at 19:38.
+**Activity**: 2 admin logins by Owner (1111) from 127.0.0.1 at 19:58 and 19:59 UTC (Reliability Bot / cron worker). No other activity.
 
-**Login attempts in window**: 0 (0 failed, 0 successful). Last login was Owner (1111) at 19:11:15 UTC from 127.0.0.1.
+**Login attempts in window**: 0 failed, 0 new login_attempts.json entries. Last login recorded was Owner (1111) at 19:11:15 UTC from 127.0.0.1.
 
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: 0 failed logins in window. No brute force.
@@ -65,6 +65,7 @@ None.
 - File integrity: all JSON files intact, parseable.
 - Server health: verified healthy (HTTP 200 on root).
 - Updated SECURITY_WATCHDOG.md timestamp and findings.
+- Commit: dirty data files (activity_log modified by this window's activity) — committed.
 
 ## Previous Run Findings (carried forward)
 - Admin 2FA gap remains: Manager (2222) and Manager Sarah (7788) lack 2FA despite `require_2fa_for_admins: true`. Owner (1111) is exempted via config. Pre-existing — no change. Security Sentinel handles code-level fixes.
@@ -73,9 +74,9 @@ None.
 
 || | | | | | | | | | | Check | Status |
 |---|---|---|---|---|---|---|---|---|---|---|
-|| | | | | | | | | | | | | | Current time | 2026-06-27T19:38 UTC — 14:38 CT (normal hours, Saturday) |
-|| | | | | | | | | | | | | | Activity since last run | Test activity: item add, clock-in/out tests, order+refund |
-|| | | | | | | | | | | | | | Login attempts (last ~18 min) | 0 (0 failed) |
+||| | | | | | | | | | | | | | Current time | 2026-06-27T20:11 UTC — 15:11 CT (normal hours, Saturday) |
+||| | | | | | | | | | | | | | Activity since last run | 2 admin logins by Owner (1111) — cron/Reliability Bot activity |
+||| | | | | | | | | | | | | | Login attempts (last ~17 min) | 0 (0 failed) |
 || | | | | | | | | | | | | | Successful logins (this window) | 0 |
 || | | | | | | | | | | | | | Blocked IPs | 0 |
 || | | | | | | | | | | | | | Config changes | None |
