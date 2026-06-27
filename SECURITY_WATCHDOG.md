@@ -1,11 +1,11 @@
 # POS Security Watchdog
 
-| Last run: 2026-06-27T09:08 UTC
-||||||||||||||||||| Total events tracked: 72 (SEC-001→SEC-072; all resolved)
-||||||||||||||||||| Active blocks: 0 IPs
-||||||||||||||||||| Run result: Clean — no threats detected
+|| Last run: 2026-06-27T09:25 UTC
+|||||||||||||||||||| Total events tracked: 72 (SEC-001→SEC-072; all resolved)
+|||||||||||||||||||| Active blocks: 0 IPs
+|||||||||||||||||||| Run result: Clean — no threats detected
 
-## Current Run Findings (08:51–09:08 UTC, ~17 min window)
+## Current Run Findings (09:10–09:25 UTC, ~15 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -19,7 +19,7 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (08:51–09:08 UTC, ~17 min window)
+### ℹ️ Activity Summary (09:10–09:25 UTC, ~15 min window)
 
 **Server**: UP — serving HTTP 200 on port 5000.
 
@@ -32,7 +32,7 @@ None.
 - **Brute force check**: No login attempts. No brute force.
 - **Account enumeration**: No probes. Not actionable.
 - **Successful-after-failure**: No activity.
-- **Off-hours activity**: 09:08 UTC is normal hours.
+- **Off-hours activity**: 09:25 UTC is normal hours.
 - **Cross-IP targeting**: None.
 - **Known IPs**: No new IPs seen.
 - **Credential stuffing**: No pattern detected.
@@ -75,14 +75,14 @@ None — all 72 events resolved.
 
 ## System State
 
-| Check | Status |
-|---|---|
-|| Current time | 2026-06-27T09:08 UTC — normal hours |
-||| Activity since last run | 0 events |
-|||| Login attempts (last ~5 min) | 0 failed, 0 successful |
-||| Successful logins (this window) | 0 |
-||| Blocked IPs | 0 |
-||| Config changes | None |
-||| File integrity | OK. 8 accounts intact. |
-|||| Users | 8 accounts. Admin 2FA: 2222=no, 7788=no (pre-existing gap, needs Sentinel) |
-|||| Server | UP (:5000 — HTTP 200) |
+|| Check | Status |
+||---|---|
+||| Current time | 2026-06-27T09:25 UTC — normal hours |
+|||| Activity since last run | 0 events |
+||||| Login attempts (last ~5 min) | 0 failed, 0 successful |
+|||| Successful logins (this window) | 0 |
+|||| Blocked IPs | 0 |
+|||| Config changes | None |
+|||| File integrity | OK. 8 accounts intact. |
+||||| Users | 8 accounts. Admin 2FA: 2222=no, 7788=no (pre-existing gap, needs Sentinel) |
+||||| Server | UP (:5000 — HTTP 200) |
