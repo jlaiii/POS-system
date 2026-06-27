@@ -99,7 +99,7 @@ How to revert to JSON mode if DB breaks:
 | combos.json | combos | object {combos:[]} | 0 | |
 | favorites.json | favorites | dict | 0 | |
 | waste_log.json | waste_log | array | 0 | |
-| tickets.json | tickets | array | 0 | |
+| tickets.json | tickets | array | 2 | ✓ |
 | timesheet.json | timesheet | array | ? | |
 | timesheet_approvals.json | timesheet_approvals | array | 0 | |
 | cash_drawer.json | cash_drawer | object | 0 | |
