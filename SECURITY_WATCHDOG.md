@@ -1,11 +1,11 @@
 # POS Security Watchdog
 
-| | | | | | | | | | | Last run: 2026-06-27T19:04 UTC
+|| | | | | | | | | | | Last run: 2026-06-27T19:20 UTC
 | | | | | | | | | | | | | | | Total events tracked: 72 (SEC-001→SEC-072; all resolved)
 | | | | | | | | | | | | | | | Active blocks: 0 IPs
-| | | | | | | | | | | | | | Run result: All clear | Minimal activity — Owner localhost login
+| | | | | | | | | | | | | | Run result: All clear | 1 Owner login, no threats
 
-## Current Run Findings (18:47–19:04 UTC, ~17 min window)
+## Current Run Findings (19:04–19:20 UTC, ~16 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -19,11 +19,11 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (18:47–19:04 UTC)
+### ℹ️ Activity Summary (19:04–19:20 UTC)
 
 **Server**: Healthy (HTTP 200 on root).
 
-**Activity**: 1 login by Owner (1111) from 127.0.0.1 at 18:49 UTC (curl). Two subsequent admin_login entries (same session). No failed attempts. No orders. No refunds.
+**Activity**: 1 login by Owner (1111) from 127.0.0.1 at 19:11 UTC (curl). No failed attempts. No orders. No refunds.
 
 **Login attempts in window**: 1 total (1 successful, 0 failed). Clean.
 
@@ -31,11 +31,11 @@ None.
 - **Brute force check**: 0 failed logins in window. No brute force.
 - **Account enumeration**: 0 probes for non-existent PINs. Clean.
 - **Successful-after-failure**: No login-after-failure pattern. Clean.
-- **Off-hours activity**: 19:04 UTC = 14:04 CT — normal business hours (Saturday).
+- **Off-hours activity**: 19:20 UTC = 14:20 CT — normal business hours (Saturday).
 - **Cross-IP targeting**: No activity. Clean.
 - **Known IPs**: Owner (1111) from 127.0.0.1 — already known. No new IPs.
 - **Credential stuffing**: No pattern detected.
-- **2FA check**: Owner (1111) is exempted. No 2FA activity.
+- **2FA check**: Owner (1111) exempted. No 2FA activity.
 - **Session anomalies**: No active shifts. No sessions older than 24h.
 
 ### 🔒 Security Config
@@ -73,10 +73,10 @@ None.
 
 | | | | | | | | | | | Check | Status |
 |---|---|---|---|---|---|---|---|---|---|---|
-| | | | | | | | | | | | | | | Current time | 2026-06-27T18:47 UTC — 13:47 CT (normal hours, Saturday) |
-| | | | | | | | | | | | | | | Activity since last run | None |
-| | | | | | | | | | | | | | | Login attempts (last ~17 min) | 0 (0 failed) |
-| | | | | | | | | | | | | | | Successful logins (this window) | 0 |
+| | | | | | | | | | | | | | | Current time | 2026-06-27T19:20 UTC — 14:20 CT (normal hours, Saturday) |
+| | | | | | | | | | | | | | | Activity since last run | 1 login (Owner, 127.0.0.1) |
+| | | | | | | | | | | | | | | Login attempts (last ~16 min) | 1 (0 failed) |
+| | | | | | | | | | | | | | | Successful logins (this window) | 1 |
 | | | | | | | | | | | | | | | Blocked IPs | 0 |
 | | | | | | | | | | | | | | | Config changes | None |
 | | | | | | | | | | | | | | | File integrity | OK. All JSON files parseable, sizes stable. 8 accounts intact. |
