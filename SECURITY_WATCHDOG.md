@@ -1,11 +1,11 @@
 # POS Security Watchdog
 
-|||||||| Last run: 2026-06-27T07:14 UTC
-||||||||||||||| Total events tracked: 72 (SEC-001→SEC-072; all resolved)
-||||||||||||||| Active blocks: 0 IPs
-||||||||||||||| Run result: Clean — no activity at all in window
+||||||||| Last run: 2026-06-27T07:31 UTC
+|||||||||||||||| Total events tracked: 72 (SEC-001→SEC-072; all resolved)
+|||||||||||||||| Active blocks: 0 IPs
+|||||||||||||||| Run result: Clean — minimal localhost activity, no threats
 
-## Current Run Findings (06:51–07:14 UTC, ~23 min window)
+## Current Run Findings (07:14–07:31 UTC, ~17 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -19,22 +19,25 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (06:51–07:14 UTC, ~23 min window)
+### ℹ️ Activity Summary (07:14–07:31 UTC, ~17 min window)
 
 **Server**: UP — serving HTTP 200 on port 5000.
 
-**Activity**: 0 events since last run. No logins, no orders, no API calls — complete silence.
+**Activity**: 3 events this window.
+- 07:18:52 — login_failed (null user, invalid PIN) from 127.0.0.1
+- 07:19:01 — login success (Owner 1111) from 127.0.0.1
+- 07:19:12 — admin_login success (Owner 1111) from 127.0.0.1
 
-**Login attempts in window: 0** — zero failed, zero successful.
+**Login attempts in window: 2** — 1 failed, 1 successful.
 
 ### 📊 Login Security Deep-Dive
-- **Brute force check**: 0 failed logins. No brute force.
-- **Account enumeration**: No probes.
-- **Successful-after-failure**: No pattern.
-- **Off-hours activity**: None.
-- **Cross-IP targeting**: None.
-- **Known IPs**: No new IPs.
-- **Credential stuffing**: None.
+- **Brute force check**: 1 failed login from 127.0.0.1. Way below threshold (5). No brute force.
+- **Account enumeration**: 1 null-PIN probe from 127.0.0.1. Below threshold (10). Not actionable.
+- **Successful-after-failure**: 1 fail then success from same IP (127.0.0.1). Below threshold (3+ required to flag).
+- **Off-hours activity**: None. 07:19 is within normal hours.
+- **Cross-IP targeting**: Single IP (127.0.0.1), single user (1111). None detected.
+- **Known IPs**: 127.0.0.1 is the known IP for Owner. No new IPs.
+- **Credential stuffing**: No pattern — 1 fail from 1 IP only.
 
 ### 🔒 Security Config
 - `blocked_ips`: [] — no active blocks.
@@ -44,21 +47,24 @@ None.
 - No config changes detected.
 
 ### 💰 Financial Check
-- No new orders.
+- No new orders this window.
 - No $0 orders, no 100% discounts active.
-- No unusual refund patterns.
+- Cash drawer: all sessions closed with 0 variance.
+- All existing orders are test/development (refunded/pending). No real-world patterns.
 
 ### 📂 File Integrity
 - Git status: clean.
 - Owner account (1111) present, active, not banned.
 - All 8 user accounts intact.
 - security_config.json: unchanged.
-- No suspicious files detected.
+- No suspicious files detected (.php, .sh, .exe, etc.).
 
 ### ✅ Actions Taken
 - Verified server UP on port 5000.
-- Verified zero login attempts in window (clean).
-- Verified zero activity in window.
+- Analyzed 3 events (1 failed login, 2 successful logins).
+- Brute force check: clean (1 fail only).
+- Account enumeration: 1 null probe — below threshold, single event from localhost.
+- Successful-after-failure: below 3-fail threshold, owner on known IP.
 - No new security events — nothing to report.
 
 ## Active Blocks
@@ -74,10 +80,10 @@ None — all 72 events resolved.
 
 | Check | Status |
 |---|---|
-|| Current time | 2026-06-27T07:14 UTC — normal hours |
-|| Activity since last run | 0 events (complete silence) |
-|| Login attempts (last 23 min) | 0 total, 0 failed |
-|| Successful logins (this window) | 0 |
+|| Current time | 2026-06-27T07:31 UTC — normal hours |
+|| Activity since last run | 3 events (1 fail + 2 success, all Owner @ localhost) |
+|| Login attempts (last 17 min) | 2 total, 1 failed |
+|| Successful logins (this window) | 2 (both Owner 1111 from 127.0.0.1) |
 || Blocked IPs | 0 |
 || Config changes | None |
 || File integrity | OK — git clean. 8 accounts intact. |
