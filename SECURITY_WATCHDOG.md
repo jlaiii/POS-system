@@ -1,11 +1,11 @@
 # POS Security Watchdog
 
-| Last run: 2026-06-27T08:51 UTC
+| Last run: 2026-06-27T09:08 UTC
 ||||||||||||||||||| Total events tracked: 72 (SEC-001→SEC-072; all resolved)
 ||||||||||||||||||| Active blocks: 0 IPs
 ||||||||||||||||||| Run result: Clean — no threats detected
 
-## Current Run Findings (08:29–08:51 UTC, ~22 min window)
+## Current Run Findings (08:51–09:08 UTC, ~17 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -19,25 +19,22 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (08:29–08:51 UTC, ~22 min window)
+### ℹ️ Activity Summary (08:51–09:08 UTC, ~17 min window)
 
 **Server**: UP — serving HTTP 200 on port 5000.
 
-**Activity**: 11 events this window.
-- 2 login_failed (null user, 127.0.0.1) — isolated, no pattern
-- 2 admin_login (1111, 127.0.0.1) — success
-- 4 login (1111, 127.0.0.1) — success
-- 3 admin_login (1111, 127.0.0.1) — success
+**Activity**: 0 events this window.
+- No login attempts, no failed logins, no API calls.
 
-**Login attempts in window: 13** — 2 failed, 11 successful.
+**Login attempts in window: 0** — 0 failed, 0 successful.
 
 ### 📊 Login Security Deep-Dive
-- **Brute force check**: 2 failed logins from 127.0.0.1 in last 5 min (08:48:13, 08:48:22). Below 5-fail threshold. No brute force.
-- **Account enumeration**: 2 null-PIN probes from 127.0.0.1. Below 10-probe threshold. Not actionable.
-- **Successful-after-failure**: 2 fails then success (08:48:30) from 127.0.0.1 — only 2 fails, threshold is 3+. Not flagged.
-- **Off-hours activity**: None (08:51 UTC is normal hours).
-- **Cross-IP targeting**: All from single IP (127.0.0.1). None detected.
-- **Known IPs**: 127.0.0.1 — known for Owner. No new IPs seen.
+- **Brute force check**: No login attempts. No brute force.
+- **Account enumeration**: No probes. Not actionable.
+- **Successful-after-failure**: No activity.
+- **Off-hours activity**: 09:08 UTC is normal hours.
+- **Cross-IP targeting**: None.
+- **Known IPs**: No new IPs seen.
 - **Credential stuffing**: No pattern detected.
 
 ### 🔒 Security Config
@@ -45,27 +42,26 @@ None.
 - `auto_block_threshold`: 5 — unchanged.
 - `require_2fa_for_admins`: true — unchanged.
 - `exempted_users`: ["1111"] — unchanged.
+- `allow_self_registration`: key not present (unchanged).
 - No config changes detected.
 
 ### 💰 Financial Check
 - No new orders this window.
-- No $0 orders, no 100% discounts active.
-- No active shifts today.
-- Cash drawer: all sessions closed with 0 variance.
+- No active shifts.
+- Cash drawer: all closed.
 
 ### 📂 File Integrity
-- Git status: committed dirty activity_log.json + login_attempts.json from this run.
+- Git status: clean (no dirty files).
 - Owner account (1111) present, active, not banned.
 - All 8 user accounts intact.
 - security_config.json: unchanged.
 - No suspicious files detected (.php, .sh, .exe, etc.).
 
 ### ✅ Actions Taken
-- Verified server UP on port 5000 (HTTP 200 + API responses).
-- Brute force check: clean (2 fails in window, under threshold).
-- Account enumeration: clean (2 probes, under threshold).
-- Successful-after-failure: under threshold (2 fails, need 3).
-- Committed dirty data files (activity_log.json, login_attempts.json).
+- Verified server UP on port 5000 (HTTP 200).
+- Brute force check: clean (0 attempts).
+- Account enumeration: clean (0 probes).
+- Successful-after-failure: no activity.
 - No new security events — nothing to report.
 
 ## Active Blocks
@@ -81,10 +77,10 @@ None — all 72 events resolved.
 
 | Check | Status |
 |---|---|
-|| Current time | 2026-06-27T08:51 UTC — normal hours |
-||| Activity since last run | 11 events (2 failed, 9 successful) |
-|||| Login attempts (last ~5 min) | 2 failed, 6 successful |
-||| Successful logins (this window) | 9 (Owner 1111) |
+|| Current time | 2026-06-27T09:08 UTC — normal hours |
+||| Activity since last run | 0 events |
+|||| Login attempts (last ~5 min) | 0 failed, 0 successful |
+||| Successful logins (this window) | 0 |
 ||| Blocked IPs | 0 |
 ||| Config changes | None |
 ||| File integrity | OK. 8 accounts intact. |
