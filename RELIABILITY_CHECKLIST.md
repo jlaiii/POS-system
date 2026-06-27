@@ -1,37 +1,37 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-27T21:08 UTC
-> Total checks: 1566
-> Healthy: 1566 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-27T21:35 UTC
+> Total checks: 1567
+> Healthy: 1567 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 — 200 OK (root + /api/health) [verified 21:08]
-- [x] All JSON data files exist and are valid — 15/15 core JSON files valid, parseable, Owner PIN 1111 intact (name='Owner', 8 users) [verified 21:08]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', 8 users) [verified 21:08]
-- [x] Git repo is clean — clean (no dirty files) [verified 21:08]
+- [x] Flask app responds on port 5000 — 200 OK (root + /api/health) [verified 21:35]
+- [x] All JSON data files exist and are valid — 15/15 core JSON files valid, parseable, Owner PIN 1111 intact (name='Owner', 8 users) [verified 21:35]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', 8 users) [verified 21:35]
+- [x] Git repo is clean — clean (no dirty files) [verified 21:35]
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/health — {"status":"ok"} (GET) [verified 21:08]
 - [x] Frontend loads — 200, HTML OK, ~1.37MB [verified 21:08]
-- [x] /api/items returns items — GET, 200 OK, 5 categories (Breakfast, Drinks, Foods, Salads, Snacks, 19 items) [verified 20:20]
-- [x] /api/login works — POST userId=1111, pin=1111, role=owner, permissions=[*] [verified 20:20]
+- [x] /api/items returns items — GET, 200 OK, 5 categories (Breakfast, Drinks, Foods, Salads, Snacks, 19 items) [verified 21:35]
+- [x] /api/login works — POST userId=1111, pin=1111, role=owner, permissions=[*] [verified 21:35]
 - [x] /api/admin_stats returns stats — avg_sale=$11.49, 123 backups, backup_health=green [verified 21:08]
 - [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 200 OK, 55 shifts [verified 21:08]
-- [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 21:08]
-- [x] index.html size check — 1375239 bytes (normal, ~1.37MB) [verified 20:20]
-- [x] Disk space check — 37% used (14G/24G, OK) [verified 21:08]
-- [x] Memory check — ~37% RAM used, 0 swap [verified 21:08]
-- [x] Clock-in/out: employee 1234 status checked — not clocked in [verified 21:08]
+- [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 21:35]
+- [x] index.html size check — 1375239 bytes (normal, ~1.37MB) [verified 21:35]
+- [x] Disk space check — 37% used (14G/24G, OK) [verified 21:35]
+- [x] Memory check — ~38% RAM used, 0 swap [verified 21:35]
+- [x] Clock-in/out: employee 1234 status checked — not clocked in [verified 21:35]
 - [x] CSV export — /api/export/shifts_csv returns CSV with adminPin=1111, valid [verified 20:20]
 - [x] Offline queue — /api/sync_orders exists, returns "No orders provided" [verified 20:20]
-- [x] Backup integrity — latest JSON backup (19:46) valid (50 files, 8 users, owner intact), DB integrity=ok (25 tables) [verified 20:20]
+- [x] Backup integrity — latest JSON (20:46, 8 users, owner intact), DB (20:46, integrity=ok, 25 tables) [verified 21:35]
 
 ## EVERY 4 HOURS
 - [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 200, 0 pending orders [verified 20:44]
 - [x] Pickup display: verify /api/pickup-display/queue works — GET, 200, 1 order ready [verified 20:44]
-- [x] Inventory: check stock decrements on order — 24 items tracked, no negative stock, stock tracking valid [verified 17:11]
+- [x] Inventory: check stock decrements on order — 24 items tracked, no negative stock, stock tracking valid [verified 21:35]
 - [x] Cash register: /api/cash_drawer/status (POST with adminPin=1111) returns active=false, last closed Jun 24, 10 sessions [verified 19:58]
 - [x] User CRUD: add test user (9977 via /api/add_user) -> verify -> delete -> confirmed gone [verified 17:11]
 - [x] Loyalty: points earned on order — 14 loyalty entries (phone-keyed dict), data intact [verified 20:44]
