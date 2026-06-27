@@ -15635,5 +15635,164 @@
         "details": {
             "status": "success"
         }
+    },
+    {
+        "timestamp": "2026-06-27T01:14:47.382639",
+        "type": "add_user",
+        "user_id": null,
+        "user_role": "unauthorized",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed",
+            "reason": "Insufficient permissions"
+        }
+    },
+    {
+        "timestamp": "2026-06-27T01:14:47.455489",
+        "type": "delete_user",
+        "user_id": null,
+        "user_role": "unauthorized",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed",
+            "reason": "Insufficient permissions",
+            "target_user_id": null
+        }
+    },
+    {
+        "timestamp": "2026-06-27T01:14:50.811269",
+        "type": "add_item",
+        "user_id": null,
+        "user_role": "unauthorized",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed",
+            "reason": "Insufficient permissions"
+        }
+    },
+    {
+        "timestamp": "2026-06-27T01:14:58.409837",
+        "type": "add_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed",
+            "reason": "Missing data",
+            "new_user_id": null
+        }
+    },
+    {
+        "timestamp": "2026-06-27T01:14:58.478191",
+        "type": "delete_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed",
+            "reason": "Missing user ID to delete"
+        }
+    },
+    {
+        "timestamp": "2026-06-27T01:14:59.714627",
+        "type": "add_item",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "category": "Drinks",
+            "name": "Test \"Special\" \ud83c\udf89 Drink",
+            "price": 4.99
+        }
+    },
+    {
+        "timestamp": "2026-06-27T01:15:10.806115",
+        "type": "add_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed",
+            "reason": "Invalid user role",
+            "new_user_id": "9900"
+        }
+    },
+    {
+        "timestamp": "2026-06-27T01:15:10.878208",
+        "type": "delete_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed",
+            "reason": "User ID not found",
+            "target_user_id": "9900"
+        }
+    },
+    {
+        "timestamp": "2026-06-27T01:15:13.893992",
+        "type": "add_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "added_user_id": "9900",
+            "added_user_name": "ReliabilityTest",
+            "added_user_role": "user"
+        }
+    },
+    {
+        "timestamp": "2026-06-27T01:15:13.965190",
+        "type": "delete_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "deleted_user_id": "9900",
+            "deleted_user_name": "ReliabilityTest",
+            "deleted_user_role": "user"
+        }
+    },
+    {
+        "timestamp": "2026-06-27T01:15:17.151650",
+        "type": "delete_item",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed",
+            "reason": "Missing data",
+            "item_data": {
+                "adminPin": "1111",
+                "itemId": "None"
+            }
+        }
+    },
+    {
+        "timestamp": "2026-06-27T01:15:25.078260",
+        "type": "delete_item",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "category": "Drinks",
+            "name": "Test \"Special\" \ud83c\udf89 Drink"
+        }
     }
 ]

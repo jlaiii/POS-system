@@ -131,5 +131,9 @@
     "\ud83c\udf89 Special \"Test\" Item &#9731;": {
         "stock": 0,
         "low_stock_threshold": 10
+    },
+    "Test \"Special\" \ud83c\udf89 Drink": {
+        "stock": 0,
+        "low_stock_threshold": 10
     }
 }
