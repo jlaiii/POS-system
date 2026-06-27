@@ -1,5 +1,5 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-27T18:05 UTC
+> Last full cycle: 2026-06-27T18:26 UTC
 > Total checks: 1492
 > Healthy: 1492 | Broken: 0 | Fixed this cycle: 0
 
@@ -7,13 +7,13 @@
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 — 200 OK (root + /api/health) [verified 18:05]
-- [x] All JSON data files exist and are valid — 10/10 core JSON files valid, parseable, Owner PIN 1111 intact (name='Owner', 8 users) [verified 18:05]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', 8 users) [verified 18:05]
-- [x] Git repo is clean — clean (no dirty files) [verified 18:05]
+- [x] Flask app responds on port 5000 — 200 OK (root + /api/health) [verified 18:26]
+- [x] All JSON data files exist and are valid — 10/10 core JSON files valid, parseable, Owner PIN 1111 intact (name='Owner', 8 users) [verified 18:26]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', 8 users) [verified 18:26]
+- [x] Git repo is clean — clean (no dirty files) [verified 18:26]
 
 ## HOURLY (check if last check was >1h ago)
-- [x] /api/health — {"status":"ok"} (GET) [verified 18:05]
+- [x] /api/health — {"status":"ok"} (GET) [verified 18:26]
 - [x] Frontend loads — 200, HTML OK, 1,375,239B [verified 18:05]
 - [x] /api/items returns items — GET, 200 OK, 5 categories (Breakfast, Drinks, Foods, Salads, Snacks, 19 items) [verified 18:05]
 - [x] /api/login works — POST userId=1111, pin=1111, role=owner, permissions=[*] [verified 17:29]
@@ -35,12 +35,12 @@
 - [x] Cash register: /api/cash_drawer/status (POST with adminPin=1111) returns active=false, last closed Jun 24, inactive [verified 15:59]
 - [x] User CRUD: add test user (9977 via /api/add_user) -> verify -> delete -> confirmed gone [verified 17:11]
 - [x] Loyalty: points earned on order — 14 loyalty entries, data intact [verified 16:37]
-- [x] Webhook: verify webhook config endpoint works — /api/security/discord_webhook returns config (not set), 200 OK [verified 14:29]
+- [x] Webhook: verify webhook config endpoint works — /api/security/discord_webhook returns config (not set), 200 OK [verified 18:26]
 - [x] Clock-in late detection: 8 late records (up to 563min across shifts), data intact [verified 14:29]
 - [x] Break tracking: 4 shifts with breaks, break data intact [verified 14:29]
 - [x] Shift edit: 5 shifts with edits, audit trail intact (Owner + Employee One) [verified 14:29]
-- [x] CSV export: verify /api/export/shifts_csv returns CSV — POST, 200, CSV headers + data [verified 12:25]
-- [x] Offline queue: verify /api/sync_orders endpoint exists — POST, 400, "No orders provided" [verified 12:25]
+- [x] CSV export: verify /api/export/shifts_csv returns CSV — POST, 200, CSV headers + data [verified 18:26]
+- [x] Offline queue: verify /api/sync_orders endpoint exists — POST, 400, "No orders provided" [verified 18:26]
 - [x] Order lifecycle: create order via /api/submit_order → order 123 submitted → refunded via /api/orders/refund, 200 OK [verified 15:59]
 - [x] Special chars test: add item with emoji+quotes via /api/add_item → verify in items.json → delete → confirmed gone [verified 12:25]
 
