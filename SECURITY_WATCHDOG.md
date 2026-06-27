@@ -1,11 +1,11 @@
 # POS Security Watchdog
 
-| | | | | | | | | | | Last run: 2026-06-27T18:47 UTC
+| | | | | | | | | | | Last run: 2026-06-27T19:04 UTC
 | | | | | | | | | | | | | | | Total events tracked: 72 (SEC-001→SEC-072; all resolved)
 | | | | | | | | | | | | | | | Active blocks: 0 IPs
-| | | | | | | | | | | | | | Run result: All clear | No activity since last run
+| | | | | | | | | | | | | | Run result: All clear | Minimal activity — Owner localhost login
 
-## Current Run Findings (18:30–18:47 UTC, ~17 min window)
+## Current Run Findings (18:47–19:04 UTC, ~17 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -19,24 +19,24 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (18:30–18:47 UTC)
+### ℹ️ Activity Summary (18:47–19:04 UTC)
 
 **Server**: Healthy (HTTP 200 on root).
 
-**Activity**: No activity since last run (17 min window). Zero logins, zero failed attempts, zero orders, zero refunds.
+**Activity**: 1 login by Owner (1111) from 127.0.0.1 at 18:49 UTC (curl). Two subsequent admin_login entries (same session). No failed attempts. No orders. No refunds.
 
-**Login attempts in window**: 0. Clean.
+**Login attempts in window**: 1 total (1 successful, 0 failed). Clean.
 
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: 0 failed logins in window. No brute force.
 - **Account enumeration**: 0 probes for non-existent PINs. Clean.
 - **Successful-after-failure**: No login-after-failure pattern. Clean.
-- **Off-hours activity**: 18:47 UTC = 13:47 CT — normal business hours (Saturday).
+- **Off-hours activity**: 19:04 UTC = 14:04 CT — normal business hours (Saturday).
 - **Cross-IP targeting**: No activity. Clean.
-- **Known IPs**: No new IPs.
+- **Known IPs**: Owner (1111) from 127.0.0.1 — already known. No new IPs.
 - **Credential stuffing**: No pattern detected.
-- **2FA check**: No 2FA activity.
-- **Session anomalies**: No active shifts detected. No sessions older than 24h.
+- **2FA check**: Owner (1111) is exempted. No 2FA activity.
+- **Session anomalies**: No active shifts. No sessions older than 24h.
 
 ### 🔒 Security Config
 - `blocked_ips`: [] — no active blocks.
@@ -51,7 +51,7 @@ None.
 - No financial anomalies detected.
 
 ### 📂 File Integrity
-- Git status: dirty (login_attempts.json + activity_log.json have uncommitted changes from Owner login at 17:43).
+- Git status: clean (no uncommitted changes).
 - Owner account (1111) present, active, not banned.
 - All 8 user accounts intact.
 - All JSON files parseable and valid. File sizes stable.
@@ -65,7 +65,6 @@ None.
 - File integrity: all JSON files intact, parseable, sizes stable.
 - Server health: verified healthy (HTTP 200 on root).
 - Updated SECURITY_WATCHDOG.md timestamp and findings.
-- Committed dirty data files (login_attempts.json, activity_log.json) and SECURITY_WATCHDOG.md.
 
 ## Previous Run Findings (carried forward)
 - Admin 2FA gap remains: Manager (2222) and Manager Sarah (7788) lack 2FA despite `require_2fa_for_admins: true`. Owner (1111) is exempted via config. Pre-existing — no change. Security Sentinel handles code-level fixes.
