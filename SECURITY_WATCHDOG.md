@@ -1,8 +1,7 @@
 # POS Security Watchdog
-# POS Security Watchdog
 
 || Last run: 2026-06-27T04:01 UTC
-||||| Total events tracked: 57 (SEC-001→SEC-057; 57 resolved, 0 unresolved)
+||||| Total events tracked: 57 (SEC-001→SEC-057; 57 resolved, 0 unresolved — SEC-004 removed historically)
 |||||| Active blocks: 0 IPs
 |||||| Run result: [SILENT] — nothing new to report.
 
