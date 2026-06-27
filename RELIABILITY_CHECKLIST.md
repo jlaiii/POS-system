@@ -17,7 +17,7 @@
 - [x] Frontend loads — 200, HTML OK, 1.37MB [verified 14:53]
 - [x] /api/items returns items — GET, 200 OK, 5 categories (Breakfast, Drinks, Foods, Salads, Snacks), 19 items [verified 14:53]
 - [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 55 shifts, 200 OK [verified 14:29]
-- [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 14:29]
+- [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 14:53]
 - [x] index.html size check — 1375239 bytes (normal, ~1.37MB) [verified 14:29]
 - [x] Disk space check — 37% used (14G/38G, OK) [verified 14:53]
 - [x] Memory check — ~34% RAM used, 0 swap [verified 14:53]
@@ -26,7 +26,7 @@
 - [x] Offline queue — /api/sync_orders exists, returns 400 [verified 14:07]
 - [x] Clock-in/out: employee 1234 status checked (not clocked in, valid response) [verified 14:53]
 - [x] /api/admin_stats — full stats, avg_sale=$15.25, backup green (116 backups, 4.3MB, healthy), 2 pending orders [verified 14:53]
-- [x] Backup integrity — latest JSON backup 12:45 valid (50 files, owner 1111 intact), DB backup (12:45, integrity=ok) [verified 13:41]
+- [x] Backup integrity — latest JSON backup 14:46 valid (50 files, owner 1111 intact, 5 categories), DB backup (14:46, integrity=ok, 25 tables) [verified 14:53]
 
 ## EVERY 4 HOURS
 - [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 200, 2 pending orders [verified 11:45]
