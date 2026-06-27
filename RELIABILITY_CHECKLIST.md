@@ -1,24 +1,24 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-27T16:37 UTC
-> Total checks: 1455
-> Healthy: 1455 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-27T16:58 UTC
+> Total checks: 1458
+> Healthy: 1458 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 — 200 OK (root, 1.37MB) [verified 16:37]
-- [x] All JSON data files exist and are valid — 15/15 JSON files valid, parseable, Owner PIN 1111 intact (name='Owner', username='jayadmin', 8 users) [verified 16:37]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', 8 users) [verified 16:37]
-- [x] Git repo is clean — clean (no uncommitted changes) [verified 16:37]
+- [x] Flask app responds on port 5000 — 200 OK (root, 1.37MB) [verified 16:58]
+- [x] All JSON data files exist and are valid — 10/10 core JSON files valid, parseable, Owner PIN 1111 intact (name='Owner', 8 users) [verified 16:58]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', 8 users) [verified 16:58]
+- [x] Git repo is clean — committed dirty worker files (cda31e0) [verified 16:58]
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/health — {"status":"ok"} (GET) [verified 16:37]
 - [x] Frontend loads — 200, HTML OK, 1.37MB [verified 16:37]
 - [x] /api/items returns items — GET, 200 OK, 5 categories (Breakfast, Drinks, Foods, Salads, Snacks) [verified 16:37]
 - [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 55 shifts, 200 OK [verified 16:37]
-- [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 16:37]
-- [x] index.html size check — 1375239 bytes (normal, ~1.37MB) [verified 16:37]
+- [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 16:58]
+- [x] index.html size check — 1375239 bytes (normal, ~1.37MB) [verified 16:58]
 - [x] Disk space check — 37% used (14G/24G, OK) [verified 16:37]
 - [x] Memory check — ~37% RAM used, 0 swap [verified 16:37]
 - [x] /api/login works — POST userId=1111, pin=1111, role=owner, permissions=[*] [verified 16:37]
