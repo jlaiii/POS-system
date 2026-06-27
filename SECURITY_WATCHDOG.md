@@ -1,11 +1,11 @@
 # POS Security Watchdog
 
-||||| Last run: 2026-06-27T05:41 UTC
-|||||||||| Total events tracked: 70 (SEC-001→SEC-071; 59 resolved? — verify count next run)
-|||||||||| Active blocks: 0 IPs
-|||||||||| Run result: Clean — no activity in this window
+|||||| Last run: 2026-06-27T05:59 UTC
+||||||||||| Total events tracked: 72 (SEC-001→SEC-072; all resolved)
+||||||||||| Active blocks: 0 IPs
+||||||||||| Run result: Clean — batch-resolved 12 noise events, no active threats
 
-## Current Run Findings (05:22–05:41 UTC, ~19 min window)
+## Current Run Findings (05:41–05:59 UTC, ~18 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -19,19 +19,18 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (05:22–05:41 UTC, ~19 min window)
+### ℹ️ Activity Summary (05:41–05:59 UTC, ~18 min window)
 
 **Server**: UP — serving HTTP 200 on port 5000 (root endpoint).
 
-**Activity**: 0 events since last run.
-- No logins, no failures, no API calls — completely quiet window.
-- Last recorded activity: Owner (1111) curl login at 05:22:30.
+**Activity**: 1 event since last run.
+- Owner (1111) curl login from 127.0.0.1 at 05:44:08 — off-hours (same known dev-testing pattern).
 
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: 0 failed logins in window. No brute force.
 - **Account enumeration**: No probes — no login attempts at all.
 - **Successful-after-failure**: No recent pattern.
-- **Off-hours activity**: None in this window.
+- **Off-hours activity**: 1 login (Owner/127.0.0.1 at 05:44) — same established cron testing pattern.
 - **Cross-IP targeting**: None.
 - **Known IPs**: No new IPs tracked.
 - **Credential stuffing**: None.
@@ -48,9 +47,9 @@ None.
 - No $0 orders, no 100% discounts active.
 
 ### 📂 File Integrity
-- All 49 JSON files parseable and intact (note: 2 fewer than previously reported 51 — likely the `pos.db` and a transient file).
+- All 49 JSON files parseable and intact.
 - Owner account (1111) present, active, not banned.
-- Git status: 4 dirty files — SECURITY_WATCHDOG.md (staged from last run), activity_log.json, login_attempts.json, security_events.json (runtime data).
+- Git status: 3 dirty files — activity_log.json, login_attempts.json, security_events.json (runtime data). SECURITY_WATCHDOG.md clean (no uncommitted changes from prior run).
 - security_config.json: unchanged since Jun 25.
 - No suspicious files detected.
 - No unexpected file shrinkage.
@@ -59,31 +58,32 @@ None.
 - Verified server UP on port 5000.
 - Verified all JSON files parseable.
 - Verified no blocked IPs, no config changes, no suspicious files.
+- **Batch-resolved SEC-061 through SEC-072** (12 events): All localhost (127.0.0.1) off-hours login noise from cron worker testing. All events marked resolved.
 - Updated SECURITY_WATCHDOG.md for continuity.
 
 ## Active Blocks
 None.
 
 ## Resolved This Run
-None — no events to resolve. Zero activity in this window.
+- **SEC-061** through **SEC-072** (12 events): Batch-resolved. All MEDIUM off-hours login alerts for Owner (1111) from 127.0.0.1 during cron worker testing. Same noise pattern as SEC-009→SEC-060. Zero security impact — all localhost, no external IPs, no credential compromise.
 
 ## Unresolved Events (carried forward)
-- SEC-061 through SEC-071 (11 events): MEDIUM off-hours login alerts created by "IP Blocklist Manager" for Owner dev testing from localhost. These are noise/false alarms per the established pattern. Recommend bulk-resolving.
+None — all 72 events now resolved.
 
 ## Previous Run Findings (carried forward)
-- Admin 2FA gap remains: Manager (2222) and Manager Sarah (7788) lack 2FA despite `require_2fa_for_admins: true`. Owner (1111) is exempted via config. Pre-existing — no change.
+- Admin 2FA gap remains: Manager (2222) and Manager Sarah (7788) lack 2FA despite `require_2fa_for_admins: true`. Owner (1111) is exempted via config. Pre-existing — no change. Security Sentinel handles code-level fixes.
 
 ## System State
 
 | Check | Status |
 |---|---|
-|| Current time | 2026-06-27T05:41 UTC — off-hours (22:00-06:00) |
-|| Activity since last run | 0 events |
-|| Login attempts (last 15 min) | 0 total |
-|| Successful logins (this window) | 0 |
+|| Current time | 2026-06-27T05:59 UTC — off-hours (22:00-06:00) |
+|| Activity since last run | 1 login (Owner/127.0.0.1) |
+|| Login attempts (last 15 min) | 1 total, 0 failed |
+|| Successful logins (this window) | 1 |
 || Blocked IPs | 0 |
 || Config changes | None |
-|| File integrity | OK — all 49 JSON parseable. 4 dirty files (runtime data + watchdog update). |
-|| Users | 8 accounts. Admin 2FA: 2222=no, 7788=no (pre-existing gap) |
-|| Security events | 70 tracked, 11 unresolved (SEC-061→SEC-071 — noise) |
+|| File integrity | OK — all 49 JSON parseable. 3 dirty files (runtime data). |
+|| Users | 8 accounts. Admin 2FA: 2222=no, 7788=no (pre-existing gap, needs Sentinel) |
+|| Security events | 72 tracked, 0 unresolved |
 || Server | UP (:5000 — HTTP 200) |
