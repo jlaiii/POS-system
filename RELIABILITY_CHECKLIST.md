@@ -1,21 +1,21 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-27T06:05 UTC
-> Total checks: 1183
-> Healthy: 1183 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-27T06:28 UTC
+> Total checks: 1191
+> Healthy: 1191 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 — 200 OK [verified 06:05]
-- [x] All JSON data files exist and are valid — all 8 core JSON files valid, parseable [verified 06:05]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', role=owner, username='jayadmin') [verified 06:05]
-- [x] Git repo is clean — clean [verified 06:05]
+- [x] Flask app responds on port 5000 — 200 OK [verified 06:28]
+- [x] All JSON data files exist and are valid — all 15 core JSON files valid, parseable [verified 06:28]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', role=owner, username='jayadmin') [verified 06:28]
+- [x] Git repo is clean — clean [verified 06:28]
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/health — {"status":"ok"} (GET) [verified 06:05]
 - [x] Frontend loads — 200, HTML OK, 1.37MB [verified 06:05]
-- [x] /api/items returns items — GET, 200 OK, 5 categories (Breakfast, Drinks, Foods, Salads, Snacks) [verified 06:05]
+- [x] /api/items returns items — GET, 200 OK, 5 categories (Breakfast, Drinks, Foods, Salads, Snacks), 19 items [verified 06:28]
 - [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 55 shifts, 200 OK [verified 06:05]
 - [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 06:05]
 - [x] index.html size check — 1375239 bytes (normal) [verified 06:05]
@@ -31,9 +31,9 @@
 ## EVERY 4 HOURS
 - [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 200, 2 pending orders [verified 03:24]
 - [x] Pickup display: verify /api/pickup-display/queue works — GET, 200, 1 order ready for pickup [verified 03:24]
-- [x] Inventory: check stock decrements on order — 24 items tracked, no negative stock, stock tracking valid [verified 01:42]
-- [x] Cash register: /api/cash_drawer/status (POST with adminPin=1111) returns active=false, last closed Jun 24, 10 sessions [verified 01:42]
-- [x] User CRUD: add test user → verify → delete → confirmed gone from users.json [verified 01:06]
+- [x] Inventory: check stock decrements on order — 24 items tracked, no negative stock, stock tracking valid [verified 06:28]
+- [x] Cash register: /api/cash_drawer/status (POST with adminPin=1111) returns active=false, last closed Jun 24, 10 sessions [verified 06:28]
+- [x] User CRUD: add test user → verify → delete → confirmed gone from users.json [verified 06:28]
 - [x] Loyalty: points earned on order — 14 loyalty entries, data intact [verified 01:06]
 - [x] Webhook: verify webhook config endpoint works — /api/security/discord_webhook returns config (not set), 200 OK [verified 03:24]
 - [x] Clock-in late detection: 8 late records (up to 563min across shifts), data intact [verified 03:24]
@@ -41,7 +41,7 @@
 - [x] Shift edit: 5 shifts with edits, audit trail intact (Owner + Employee One + Carlos) [verified 02:18]
 - [x] CSV export: verify /api/export/shifts_csv returns CSV — POST, 200, CSV content [verified 21:14]
 - [x] Offline queue: verify /api/sync_orders endpoint exists — POST, 400, "No orders provided" [verified 01:06]
-- [x] Order lifecycle: create order via /api/submit_order → order 117 submitted → refunded via /api/orders/refund, 200 OK [verified 02:18]
+- [x] Order lifecycle: create order via /api/submit_order → order 121 submitted → refunded via /api/orders/refund, 200 OK [verified 06:28]
 - [x] Special chars test: added "Test \"Special\" 🎉 Drink" (emoji+quotes) → verified in items.json → deleted via /api/delete_item, 200 OK [verified 01:06]
 ## EVERY 12 HOURS
 - [x] Full app restart test: kill Flask → restart → verify all critical endpoints — Completed, gunicorn+gevent stable [verified 17:11]
@@ -62,6 +62,7 @@
 - [x] **items.json schema changed to category-keyed format** — Items now stored as {Foods:[...], Drinks:[...], ...} instead of {categories:[], items:[]}. Used by /api/items (GET). [verified 06:05]
 
 ## FIXES APPLIED
+- [2026-06-27 06:28] **Routine run — all healthy** — Flask 200 (gunicorn+gevent), disk 36%, RAM 39%. All 15 JSON files valid. Owner PIN 1111 intact. Git: committed dirty data files from workers (SECURITY_WATCHDOG.md, activity_log, login_attempts) as 53060cc. Verified CRITICAL + order lifecycle (order 121 created & refunded) + user CRUD (9973 added/deleted) + cash register (inactive since Jun 24) + inventory (24 tracked items, 5 cats, 19 items). Total checks: 1191, all healthy. No downtime.
 - [2026-06-27 06:05] **Routine run — all healthy** — Flask 200 (gunicorn+gevent), disk 36%, RAM 39%. All 8 core JSON files valid. Owner PIN 1111 intact (username='jayadmin'). Git: committed dirty data files from workers (activity_log, login_attempts) as ad6159d. Verified all CRITICAL + full HOURLY sweep (health 200, frontend 1.37MB, items 5 cats, admin_shifts 55, login owner, admin_stats avg_sale=$15.25, clock status, CSV export, sync_orders, app.py syntax OK, index.html size normal, disk/memory healthy). Single gunicorn master+worker, no dual instances. Total checks: 1183, all healthy. No downtime.
 - [2026-06-27 05:18] **Routine run — all healthy** — Flask 200 (gunicorn+gevent), disk 36%, RAM 39%. All 15 JSON files valid. Owner PIN 1111 intact. Git: committed dirty data files from workers (activity_log, login_attempts, security_events). Verified all CRITICAL + full HOURLY sweep (health, frontend, items, login, admin_stats, admin_shifts, clock status, app.py syntax, index.html size, backup integrity). Backup 04:38 valid (50 files, users+items intact). Single gunicorn master+worker, no dual instances. Total checks: 1166, all healthy. No downtime.
 |- [2026-06-27 01:42] **Cleaned up 4 leftover test inventory entries** — TestItem, "Test \"Special\" 🎉 Item", "🎉 Special \"Test\" Item &#9731;", "Test \"Special\" 🎉 Drink" leftover in inventory.json from previous special chars test runs. Removed from inventory.json. Committed dirty data from Security Watchdog. All CRITICAL + selected HOURLY (frontend, syntax, index.html size, backup integrity) + 4H (inventory 24 items, cash register 10 sessions) verified. Total checks: 1090, all healthy. No downtime.
