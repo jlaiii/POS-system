@@ -1,12 +1,12 @@
 # POS Security Watchdog
 
-| Last run: 2026-06-27T02:15 UTC
-|| Total events tracked: 55 (SEC-002→SEC-055; 54 resolved, 1 new)
+| Last run: 2026-06-27T02:35 UTC
+|| Total events tracked: 55 (SEC-001→SEC-055; 55 resolved, 0 unresolved)
 || Active blocks: 0 IPs
-|| Unresolved alerts: 1 (SEC-055 — Employee One off-hours, LOW)
-|| Run result: [SILENT] — dev testing only, no real security concerns.
+|| Unresolved alerts: 0
+|| Run result: [SILENT] — nothing new to report.
 
-## Current Run Findings (01:48–02:15 UTC, ~27 min window)
+## Current Run Findings (02:15–02:35 UTC, ~20 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -17,26 +17,23 @@ None.
 ### 🟡 MEDIUM (0)
 None.
 
-### 🟢 LOW (1)
-- **SEC-055** — Employee One (1234) off-hours login attempts at 02:06-02:08. 4 PIN attempts all returned `2fa_required`. Interleaved with Owner (1111) from same IP (127.0.0.1) using python-requests. Pattern matches cron worker testing the 2FA flow on Employee One's account.
+### 🟢 LOW (0)
+None — SEC-055 auto-resolved (no recurrence in 27 min, confirmed test pattern).
 
-### ℹ️ Activity Summary (01:48–02:15 UTC, ~27 min window)
+### ℹ️ Activity Summary (02:15–02:35 UTC, ~20 min window)
 
 **Server**: UP — serving HTTP 200 on port 5000 (root endpoint).
 
-**Activity**: 7 login events since last run.
-- Employee One (1234): 4 login attempts → `2fa_required` (PIN correct, 2FA needed)
-- Owner (1111): 3 successful logins
-- 0 failed logins
-- 0 admin actions (beyond login)
-- 0 orders
-- 0 shifts
+**Activity**: 0 new login events since last run. Last login was at 02:08:17 — 27 min ago.
+- Production Auditor worker created 2 test orders (#119, #120) at 02:31:43, both immediately refunded with reason "Production Auditor verification test".
+- 0 admin actions beyond order creation.
+- 0 shifts.
 
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: 0 failed logins. No brute force.
 - **Account enumeration**: No probes — no failed login attempts at all.
-- **Successful-after-failure**: No pattern detected — 0 failures.
-- **Off-hours activity**: Owner (1111) logged in 3x at ~02:07-02:08 (off-hours 22:00-06:00) from 127.0.0.1. Employee One (1234) also attempted login 4x from same IP. Both are dev/cron testing patterns — all localhost.
+- **Successful-after-failure**: No pattern detected.
+- **Off-hours activity**: No new off-hours logins this window.
 - **Cross-IP targeting**: None — all from 127.0.0.1.
 - **Known IPs**: No new IPs tracked.
 
@@ -47,31 +44,30 @@ None.
 - No config changes detected.
 
 ### 💰 Financial Check
-- No orders or refunds in this window.
+- Orders #119 ($3.25) and #120 ($3.25) created then refunded by Owner — Production Auditor verification test.
 - No $0 orders, no 100% discounts, no unusual patterns.
 
 ### 📂 File Integrity
 - All JSON files parseable and intact.
 - Owner account (1111) present, active, not banned.
-- Git status: clean — no uncommitted changes.
+- Git status: dirty — need to commit Production Auditor test order data.
 - security_config.json: unchanged.
 - No suspicious files detected.
 - No unexpected file shrinkage.
 
 ### ✅ Actions Taken
-- Resolved SEC-052, SEC-053, SEC-054 (Owner off-hours — batch-resolved, same dev/testing pattern)
-- Created SEC-055 (Employee One off-hours 2fa_required attempts from 127.0.0.1 — LOW)
-- Updated security_events.json and committed
+- Resolved SEC-055 (Employee One off-hours 2fa_required attempts — auto-resolved, test pattern confirmed, no recurrence)
+- Updated security_events.json with resolution timestamp
+- Committed dirty files from Production Auditor test orders
 
 ## Active Blocks
 None.
 
 ## Resolved This Run
-- SEC-052, SEC-053, SEC-054 — Owner off-hours from localhost. Batch-resolved as dev/testing.
-- (SEC-055 created, still unresolved — will auto-resolve next run if no recurrence)
+- **SEC-055** — Employee One (1234) off-hours during cron testing. Auto-resolved after 27 min with no recurrence. Pattern confirmed as cron worker testing 2FA flow from localhost.
 
 ## Unresolved Events
-- **SEC-055** — Employee One (1234) off-hours during cron testing. LOW. Monitor next run.
+None.
 
 ## Previous Run Findings (carried forward)
 - Admin 2FA gap remains: Manager (2222) and Manager Sarah (7788) lack 2FA despite `require_2fa_for_admins: true`. Owner (1111) is exempted via config. Pre-existing — no change.
@@ -80,13 +76,13 @@ None.
 
 | Check | Status |
 |---|---|
-| Current time | 2026-06-27T02:15 UTC — off-hours (22:00-06:00) |
-| Activity since last run | 7 login events (0 failed, 0 attacks) |
-| Login attempts (last 15 min) | 7 (0 failed) |
-| Successful logins (this window) | 3 (Owner) + 4 2fa_required (Employee One) |
+| Current time | 2026-06-27T02:35 UTC — off-hours (22:00-06:00) |
+| Activity since last run | 2 test orders (Production Auditor) — 0 login events |
+| Login attempts (last 15 min) | 0 |
+| Successful logins (this window) | 0 |
 | Blocked IPs | 0 |
 | Config changes | None |
-| File integrity | OK — all JSON parseable. Git clean. |
+| File integrity | OK — all JSON parseable. Git dirty (test orders). |
 | Users | 8 accounts. Admin 2FA: 2222=no, 7788=no (pre-existing gap) |
-| Security events | 55 tracked, 1 unresolved (SEC-055, LOW) |
+| Security events | 55 tracked, 0 unresolved |
 | Server | UP (:5000 — HTTP 200) |
