@@ -17500,5 +17500,76 @@
         "details": {
             "status": "success"
         }
+    },
+    {
+        "timestamp": "2026-06-27T20:20:34.393858",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-27T20:20:37.599653",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-27T20:20:45.700700",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-27T20:22:20.497770",
+        "type": "submit_order",
+        "user_id": null,
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 125,
+            "subtotal": 3.0,
+            "tax_amount": 0.25,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 3.25,
+            "payment_method": "Cash",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-27T20:22:23.429162",
+        "type": "refund_order",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 125,
+            "reason": "No reason provided",
+            "refunded_by_name": "Owner",
+            "order_total": 3.25,
+            "inventory_restored": [
+                "Lemonade x1"
+            ]
+        }
     }
 ]
