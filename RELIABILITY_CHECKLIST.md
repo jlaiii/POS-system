@@ -1,29 +1,29 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-27T20:44 UTC
-> Total checks: 1565
-> Healthy: 1565 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-27T21:08 UTC
+> Total checks: 1566
+> Healthy: 1566 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 — 200 OK (root + /api/health) [verified 20:44]
-- [x] All JSON data files exist and are valid — 15/15 core JSON files valid, parseable, Owner PIN 1111 intact (name='Owner', 8 users) [verified 20:44]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', 8 users) [verified 20:44]
-- [x] Git repo is clean — clean (no dirty files) [verified 20:44]
+- [x] Flask app responds on port 5000 — 200 OK (root + /api/health) [verified 21:08]
+- [x] All JSON data files exist and are valid — 15/15 core JSON files valid, parseable, Owner PIN 1111 intact (name='Owner', 8 users) [verified 21:08]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', 8 users) [verified 21:08]
+- [x] Git repo is clean — clean (no dirty files) [verified 21:08]
 
 ## HOURLY (check if last check was >1h ago)
-- [x] /api/health — {"status":"ok"} (GET) [verified 20:20]
-- [x] Frontend loads — 200, HTML OK, 1,375,239B [verified 20:20]
+- [x] /api/health — {"status":"ok"} (GET) [verified 21:08]
+- [x] Frontend loads — 200, HTML OK, ~1.37MB [verified 21:08]
 - [x] /api/items returns items — GET, 200 OK, 5 categories (Breakfast, Drinks, Foods, Salads, Snacks, 19 items) [verified 20:20]
 - [x] /api/login works — POST userId=1111, pin=1111, role=owner, permissions=[*] [verified 20:20]
-- [x] /api/admin_stats returns stats — avg_sale=$11.49, 122 backups, backup_health=green [verified 20:20]
-- [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 200 OK, 55 shifts [verified 20:20]
-- [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 20:20]
+- [x] /api/admin_stats returns stats — avg_sale=$11.49, 123 backups, backup_health=green [verified 21:08]
+- [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 200 OK, 55 shifts [verified 21:08]
+- [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 21:08]
 - [x] index.html size check — 1375239 bytes (normal, ~1.37MB) [verified 20:20]
-- [x] Disk space check — 37% used (14G/24G, OK) [verified 20:20]
-- [x] Memory check — ~37% RAM used, 0 swap [verified 20:20]
-- [x] Clock-in/out: employee 1234 status checked (not clocked in, valid response) [verified 20:20]
+- [x] Disk space check — 37% used (14G/24G, OK) [verified 21:08]
+- [x] Memory check — ~37% RAM used, 0 swap [verified 21:08]
+- [x] Clock-in/out: employee 1234 status checked — not clocked in [verified 21:08]
 - [x] CSV export — /api/export/shifts_csv returns CSV with adminPin=1111, valid [verified 20:20]
 - [x] Offline queue — /api/sync_orders exists, returns "No orders provided" [verified 20:20]
 - [x] Backup integrity — latest JSON backup (19:46) valid (50 files, 8 users, owner intact), DB integrity=ok (25 tables) [verified 20:20]
