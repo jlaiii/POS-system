@@ -1,39 +1,39 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-27T16:58 UTC
-> Total checks: 1458
-> Healthy: 1458 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-27T17:11 UTC
+> Total checks: 1478
+> Healthy: 1478 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 — 200 OK (root, 1.37MB) [verified 16:58]
-- [x] All JSON data files exist and are valid — 10/10 core JSON files valid, parseable, Owner PIN 1111 intact (name='Owner', 8 users) [verified 16:58]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', 8 users) [verified 16:58]
-- [x] Git repo is clean — committed dirty worker files (cda31e0) [verified 16:58]
+- [x] Flask app responds on port 5000 — 200 OK (root, 1.37MB) [verified 17:11]
+- [x] All JSON data files exist and are valid — 10/10 core JSON files valid, parseable, Owner PIN 1111 intact (name='Owner', 8 users) [verified 17:11]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', 8 users) [verified 17:11]
+- [x] Git repo is clean — committed dirty worker files (a60d842) [verified 17:11]
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/health — {"status":"ok"} (GET) [verified 16:37]
 - [x] Frontend loads — 200, HTML OK, 1.37MB [verified 16:37]
-- [x] /api/items returns items — GET, 200 OK, 5 categories (Breakfast, Drinks, Foods, Salads, Snacks) [verified 16:37]
-- [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 55 shifts, 200 OK [verified 16:37]
-- [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 16:58]
-- [x] index.html size check — 1375239 bytes (normal, ~1.37MB) [verified 16:58]
+- [x] /api/items returns items — GET, 200 OK, 5 categories (Breakfast, Drinks, Foods, Salads, Snacks) [verified 17:11]
+- [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 55 shifts, 200 OK [verified 17:11]
+- [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 17:11]
+- [x] index.html size check — 1375239 bytes (normal, ~1.37MB) [verified 17:11]
 - [x] Disk space check — 37% used (14G/24G, OK) [verified 16:37]
 - [x] Memory check — ~37% RAM used, 0 swap [verified 16:37]
-- [x] /api/login works — POST userId=1111, pin=1111, role=owner, permissions=[*] [verified 16:37]
+- [x] /api/login works — POST userId=1111, pin=1111, role=owner, permissions=[*] [verified 17:11]
 - [x] CSV export — /api/export/shifts_csv returns CSV with adminPin=1111, 55 shifts [verified 16:37]
 - [x] Offline queue — /api/sync_orders exists, returns "No orders provided" [verified 16:37]
 - [x] Clock-in/out: employee 1234 status checked (not clocked in, valid response) [verified 16:37]
 - [x] /api/admin_stats — full stats, average_sale=$11.49, backup green (118 backups, 4.5MB), kitchen 0 pending, pickup 1 ready [verified 16:37]
-- [x] Backup integrity — latest JSON backup valid (owner 1111 intact, 8 users, 5 categories), DB backup integrity=ok [verified 16:37]
+- [x] Backup integrity — latest JSON backup valid (owner 1111 intact, 8 users, 5 categories, 50 files), DB backup integrity=ok (25 tables) [verified 17:11]
 
 ## EVERY 4 HOURS
 - [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 200, 0 pending orders [verified 16:37]
 - [x] Pickup display: verify /api/pickup-display/queue works — GET, 200, 1 order ready (order #93 or similar) [verified 16:37]
-- [x] Inventory: check stock decrements on order — 24 items tracked, no negative stock, stock tracking valid [verified 15:59]
+- [x] Inventory: check stock decrements on order — 24 items tracked, no negative stock, stock tracking valid [verified 17:11]
 - [x] Cash register: /api/cash_drawer/status (POST with adminPin=1111) returns active=false, last closed Jun 24, inactive [verified 15:59]
-- [x] User CRUD: add test user (9977 via /api/add_user) → verify → delete → confirmed gone [verified 12:25]
+- [x] User CRUD: add test user (9977 via /api/add_user) -> verify -> delete -> confirmed gone [verified 17:11]
 - [x] Loyalty: points earned on order — 14 loyalty entries, data intact [verified 16:37]
 - [x] Webhook: verify webhook config endpoint works — /api/security/discord_webhook returns config (not set), 200 OK [verified 14:29]
 - [x] Clock-in late detection: 8 late records (up to 563min across shifts), data intact [verified 14:29]
@@ -49,11 +49,11 @@
 - [x] Concurrent write test: two rapid clock-ins (1234+5678, 1s apart) → both succeeded, shift_log.json has 52 records, no data loss [verified 20:50]
 - [x] Large payload test: submit order with 50 items — Order 116 (50 items) → 200 OK → refunded [verified 20:50]
 - [x] Special chars test: user name with emoji, item name with quotes — Added "Test \"Special\" 🎉 Item" (Snacks, $5.99) → verified in items.json → deleted, handled correctly [verified 20:50]
-- [x] app.py syntax check (python3 -m py_compile app.py) — SYNTAX OK [verified 14:07]
-- [x] index.html size check (alert if shrunk dramatically — possible corruption) — 1375239 bytes (normal, ~1.37MB) [verified 09:34]
-- [x] Disk space check: df -h, alert if >80% full — 36% used (14G/38G, OK) [verified 09:34]
-- [x] Memory check: free -m, alert if swap used — 39% RAM used, 0 swap (OK) [verified 09:34]
-- [x] Backup integrity: verify latest backup is valid and not empty — 2026-06-27_12-45-38.tar.gz (valid, 50 files, owner 1111 intact), DB backup 12:45 (integrity=ok) [verified 12:53]
+- [x] app.py syntax check (python3 -m py_compile app.py) — SYNTAX OK [verified 17:11]
+- [x] index.html size check (alert if shrunk dramatically — possible corruption) — 1375239 bytes (normal, ~1.37MB) [verified 17:11]
+- [x] Disk space check: df -h, alert if >80% full — 37% used (14G/24G, OK) [verified 17:11]
+- [x] Memory check: free -m, alert if swap used — 37% RAM used, 0 swap (OK) [verified 17:11]
+- [x] Backup integrity: verify latest backup is valid and not empty — 2026-06-27_16-46-43.tar.gz (valid, 50 files, owner 1111 intact), DB backup 16:46 (integrity=ok, 25 tables) [verified 17:11]
 
 ## DISCOVERED (failures you've seen before — check every 2h)
 - [x] **Flask process dying between runs** — Now on gunicorn+gevent via scripts/run_flask.sh, stable. 14th occurrence: down at 14:53, restarted. [verified 16:37 — running, gunicorn+gevent, single master+worker]
