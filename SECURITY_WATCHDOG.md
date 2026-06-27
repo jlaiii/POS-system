@@ -1,11 +1,11 @@
 # POS Security Watchdog
 
-| Last run: 2026-06-27T22:15 UTC
+| Last run: 2026-06-27T22:35 UTC
 || | | | | | | | | | | | | | | Total events tracked: 72 (SEC-001→SEC-072; all resolved)
 || | | | | | | | | | | | | | Active blocks: 0 IPs
-||| | | | | | | | | | | | | | Run result: All clear | No new activity — Reliability Bot test ops only
+||| | | | | | | | | | | | | | Run result: All clear | 1 event: off-hours admin_login by Owner(1111) from localhost at 22:26 UTC
 
-## Current Run Findings (21:58–22:15 UTC, ~17 min window)
+## Current Run Findings (22:15–22:35 UTC, ~20 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -19,11 +19,11 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (21:58–22:15 UTC)
+### ℹ️ Activity Summary (22:15–22:35 UTC)
 
 **Server**: Healthy (HTTP 200 on root).
 
-**Activity**: 3 events — Reliability Bot test operations (add_user failed, add_user success, delete_user success). No security-relevant activity.
+**Activity**: 1 event — off-hours admin_login by Owner (1111) from 127.0.0.1 at 22:26 UTC. Benign — same pattern as all previous off-hours logins (localhost, dev/testing by cron workers).
 
 **Login attempts in window**: 0 failed, 0 successful.
 
@@ -31,9 +31,9 @@ None.
 - **Brute force check**: 0 failed logins in window. No brute force.
 - **Account enumeration**: 0 probes in window.
 - **Successful-after-failure**: No failed logins in window. Clean.
-- **Off-hours activity**: 22:15 UTC = 17:15 CT — normal hours (Saturday).
+- **Off-hours activity**: 22:26 UTC = off-hours (22:00–06:00 window). Owner (1111) admin_login from 127.0.0.1 (localhost) — same pattern as all previous off-hours logins, batch-resolved as expected dev/testing behavior. Not a security concern.
 - **Cross-IP targeting**: No activity. Clean.
-- **Known IPs**: No new IPs seen.
+- **Known IPs**: No new IPs seen. Owner's IP (127.0.0.1) is known.
 - **Credential stuffing**: No pattern detected.
 - **2FA check**: Owner (1111) is exempted from 2FA. No 2FA events in window.
 - **Session anomalies**: No active shifts. No sessions older than 24h.
@@ -59,8 +59,9 @@ None.
 
 ### ✅ Actions Taken
 - **All clear** — No security threats detected this run.
+- Off-hours admin_login by Owner (1111) from 127.0.0.1 at 22:26 UTC — same pattern as all previous off-hours logins, expected dev/testing behavior. Flagged as LOW.
+- Committed dirty activity_log.json to git.
 - Updated SECURITY_WATCHDOG.md timestamp and findings.
-- Committed changes to git.
 
 ## Previous Run Findings (carried forward)
 - Admin 2FA gap remains: Manager (2222) and Manager Sarah (7788) lack 2FA despite `require_2fa_for_admins: true`. Owner (1111) is exempted via config. Pre-existing — no change. Security Sentinel handles code-level fixes.
@@ -69,9 +70,9 @@ None.
 
 ||| | | | | | | | | | | | | Check | Status |
 |||---|---|---|---|---|---|---|---|---|---|---|
-|||| Current time | 2026-06-27T22:15 UTC — 17:15 CT (normal hours, Saturday) |
-|||| Activity since last run | Reliability Bot test operations — no security-relevant activity |
-||||||| | | | | | | | | | | | | | Login attempts (last ~17 min) | 0 (0 failed) |
+||||| Current time | 2026-06-27T22:35 UTC — 22:35 CT (off-hours, Saturday) |
+||||| Activity since last run | 1 event: off-hours admin_login by Owner(1111) from localhost — benign |
+||||||| | | | | | | | | | | | | | Login attempts (last ~20 min) | 0 (0 failed) |
 |||||| | | | | | | | | | | | | | Successful logins (this window) | 0 |
 ||||| | | | | | | | | | | | | Blocked IPs | 0 |
 ||||| | | | | | | | | | | | | Config changes | None |
