@@ -1,11 +1,11 @@
 # POS Security Watchdog
 
-| Last run: 2026-06-27T10:39 UTC
+| Last run: 2026-06-27T10:57 UTC
 |||||||||||||||||||||| Total events tracked: 72 (SEC-001→SEC-072; all resolved)
 |||||||||||||||||||||| Active blocks: 0 IPs
 |||||||||||||||||||||| Run result: Clean — no threats detected
 
-## Current Run Findings (10:05–10:39 UTC, ~34 min window)
+## Current Run Findings (10:39–10:57 UTC, ~18 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -19,20 +19,20 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (10:05–10:39 UTC, ~34 min window)
+### ℹ️ Activity Summary (10:39–10:57 UTC, ~18 min window)
 
 **Server**: UP — serving HTTP 200 on port 5000. Health check: OK.
 
-**Activity**: 0 new events this window.
+**Activity**: 3 events this window: login + 2 admin_logins (Owner 1111, localhost).
 
-**Login attempts in window: 0** — 0 failed, 0 successful.
+**Login attempts in window: 1** — 0 failed, 1 successful.
 
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: 0 failed logins. No brute force.
 - **Account enumeration**: No probes. Not actionable.
-- **Successful-after-failure**: No pattern (0 logins total).
-- **Off-hours activity**: 10:39 UTC is normal hours (06:00-22:00).
-- **Cross-IP targeting**: None (no logins).
+- **Successful-after-failure**: No pattern (1 login total, 0 prior failures from that IP).
+- **Off-hours activity**: 10:57 UTC = 05:57 CT — within off-hours window, but all from 127.0.0.1 (cron worker/dev activity).
+- **Cross-IP targeting**: None (1 IP, 1 user).
 - **Known IPs**: No new IPs.
 - **Credential stuffing**: No pattern detected.
 
@@ -49,7 +49,7 @@ None.
 - Cash drawer: all closed.
 
 ### 📂 File Integrity
-- Git status: clean (committed pending data changes).
+- Git status: clean.
 - Owner account (1111) present, active, not banned.
 - All 8 user accounts intact.
 - security_config.json: unchanged.
@@ -58,10 +58,10 @@ None.
 
 ### ✅ Actions Taken
 - Verified server UP on port 5000 (HTTP 200).
-- Brute force check: clean (0 attempts total).
+- Brute force check: clean (0 failed attempts).
 - Account enumeration: clean (0 probes).
 - Successful-after-failure: no pattern.
-- Committed dirty RELIABILITY_CHECKLIST.md from Reliability Bot.
+- Updated SECURITY_WATCHDOG.md timestamp.
 - No new security events — nothing to report.
 
 ## Active Blocks
