@@ -17182,5 +17182,46 @@
             "user_name": "Owner",
             "ip": "127.0.0.1"
         }
+    },
+    {
+        "timestamp": "2026-06-27T17:21:02.894434",
+        "type": "add_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Python-urllib/3.11",
+        "details": {
+            "status": "failed",
+            "reason": "Missing data",
+            "new_user_id": null
+        }
+    },
+    {
+        "timestamp": "2026-06-27T17:21:13.039707",
+        "type": "add_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Python-urllib/3.11",
+        "details": {
+            "status": "success",
+            "added_user_id": "9977",
+            "added_user_name": "ReliabilityTest",
+            "added_user_role": "user"
+        }
+    },
+    {
+        "timestamp": "2026-06-27T17:21:13.069404",
+        "type": "delete_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Python-urllib/3.11",
+        "details": {
+            "status": "success",
+            "deleted_user_id": "9977",
+            "deleted_user_name": "ReliabilityTest",
+            "deleted_user_role": "user"
+        }
     }
 ]
