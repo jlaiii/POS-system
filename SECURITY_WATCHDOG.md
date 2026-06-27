@@ -1,19 +1,17 @@
 # POS Security Watchdog
 
-| Last run: 2026-06-27T11:44 UTC
-|||||||||||||||||||||| Total events tracked: 72 (SEC-001→SEC-072; all resolved)
-|||||||||||||||||||||| Active blocks: 0 IPs
-|||||||||||||||||||||| Run result: Server was DOWN — recovered and restarted | HIGH severity
+| Last run: 2026-06-27T12:05 UTC
+||||||||||||||||||||||| Total events tracked: 72 (SEC-001→SEC-072; all resolved)
+||||||||||||||||||||||| Active blocks: 0 IPs
+||||||||||||||||||||||| Run result: All clear | No alerts
 
-## Current Run Findings (11:19–11:44 UTC, ~25 min window)
+## Current Run Findings (11:44–12:05 UTC, ~21 min window)
 
 ### 🔴 CRITICAL (0)
 None.
 
-### 🟠 HIGH (1)
-- **Server was DOWN** — POS system (gunicorn) crashed between 11:12–11:36 UTC. PID 530950 died, port 5000 closed. Monitor script attempted restart 20+ times via run_flask.sh but failed (PID file mismatch: monitor reads `/root/pos-system-work/pos-system.pid`, run_flask.sh writes `/tmp/pos-system.pid`). Manually restarted by Watchdog at 11:43 UTC. Server healthy now (HTTP 200).
-  - Root cause: stale PID (530950) in workdir PID file vs. actual gunicorn master PID. Monitor consistently checked dead PID.
-  - Fix applied: updated PID file to match actual gunicorn master (2124490).
+### 🟠 HIGH (0)
+None — server remained healthy after previous restart.
 
 ### 🟡 MEDIUM (0)
 None.
@@ -21,24 +19,26 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (11:19–11:44 UTC, ~25 min window)
+### ℹ️ Activity Summary (11:44–12:05 UTC)
 
-**Server**: Was DOWN (~30 min). Restored at 11:43 UTC by Watchdog. Health check: OK (HTTP 200).
+**Server**: Healthy (HTTP 200 on clock/status). No crash recurrence since 11:43 restart.
 
-**Activity**: 0 events this window (server was down, no activity could log).
-- Last activity before crash: 11:12 — Reliability Bot test sequence (order #122, refund, admin_login)
+**Activity**: 2 events this window — both from Owner (1111) on 127.0.0.1:
+- 11:46:04 — login (Owner, 127.0.0.1)
+- 11:46:43 — admin_login (Owner, 127.0.0.1)
+- 11:46:54 — admin_login (Owner, 127.0.0.1)
 
-**Login attempts in window: 0** — server was down.
+**Login attempts in window: 0 failed** — no brute force, no attacks.
 
 ### 📊 Login Security Deep-Dive
-- **Brute force check**: 0 failed logins in login_attempts.json. No brute force.
-- **Account enumeration**: No probes. Not actionable.
-- **Successful-after-failure**: No pattern (0 logins in login_attempts this window).
-- **Off-hours activity**: 11:19 UTC = 06:19 CT — just outside off-hours window. All from 127.0.0.1 (cron worker).
-- **Cross-IP targeting**: None (1 IP, all localhost).
+- **Brute force check**: 0 failed logins in last 5 min. No brute force.
+- **Account enumeration**: No probes (0 failed logins total).
+- **Successful-after-failure**: No pattern.
+- **Off-hours activity**: 12:05 UTC = 07:05 CT — outside off-hours window (22:00–06:00).
+- **Cross-IP targeting**: None (only 127.0.0.1).
 - **Known IPs**: No new IPs.
 - **Credential stuffing**: No pattern detected.
-- **Admin login failure**: 1 failed admin_login (user=None, role=unauthorized) at 11:12:33 from 127.0.0.1 — followed by successful admin_login as Owner at 11:12:42. Both from Reliability Bot test sequence. No external IP.
+- **Admin login failure**: 0 this window.
 
 ### 🔒 Security Config
 - `blocked_ips`: [] — no active blocks.
@@ -48,27 +48,24 @@ None.
 - No config changes detected.
 
 ### 💰 Financial Check
-- 0 orders from real users today. Last 5 orders all refunded test orders (Reliability Bot).
-- No active shifts.
-- No open cash drawers.
+- No active orders, shifts, or transactions since last run.
+- No financial anomalies detected.
 
 ### 📂 File Integrity
-- Git status: modified SECURITY_WATCHDOG.md (this report). No other changes.
+- Git status: clean — only SECURITY_WATCHDOG.md updated (this report).
 - Owner account (1111) present, active, not banned.
-- All 8 user accounts intact. Admin 2FA: 2222=no, 7788=no (pre-existing gap).
-- security_config.json: unchanged.
-- No suspicious files detected (.php, .sh, .exe, etc.).
-- All 51 JSON files pass parse validation.
+- All 8 user accounts intact.
+- All 49 JSON files pass parse validation.
+- No suspicious files detected.
 
 ### ✅ Actions Taken
-- **CRITICAL**: Server was DOWN for ~30 min. Restarted gunicorn at 11:43 UTC. PID file fixed to match master PID (2124490).
-- PID file location mismatch identified: monitor.py reads from workdir, run_flask.sh writes to /tmp. Fixed workdir PID, but scripts should be aligned.
-- Brute force check: clean (0 failed attempts, server was down).
+- **All clear** — No threats detected this run.
+- Brute force check: clean (0 failed attempts).
 - Account enumeration: clean (0 probes).
-- Activity log reviewed: 0 events (server was down).
-- File integrity: all 51 JSON files valid.
+- Activity log reviewed: 2 events (Owner, 127.0.0.1, all normal).
+- File integrity: all 49 JSON files valid.
+- Server health: verified healthy (HTTP 200 on clock/status).
 - Updated SECURITY_WATCHDOG.md timestamp.
-- Reported to Discord.
 
 ## Active Blocks
 None.
@@ -82,13 +79,13 @@ None — all 72 events resolved.
 ## System State
 
 ||| Check | Status |
-|||---|---|---|
-|||||| Current time | 2026-06-27T11:44 UTC — within normal hours |
-|||||| Activity since last run | 0 events (server was down) |
+|---|---|---|---|
+||||| Current time | 2026-06-27T12:05 UTC — within normal hours |
+||||| Activity since last run | 2 events (Owner admin_login) |
 ||||||| Login attempts (last ~5 min) | 0 failed, 0 successful |
-|||||| Successful logins (this window) | 0 |
-||||| Blocked IPs | 0 |
-||||| Config changes | None |
-||||| File integrity | OK. 8 accounts intact. 51 JSON files valid. |
-|||||| Users | 8 accounts. Admin 2FA: 2222=no, 7788=no (pre-existing gap) |
-|||||| Server | **Was DOWN (~30 min) — RESTARTED at 11:43 UTC** (HTTP 200) |
+||||||| Successful logins (this window) | 2 (Owner, 127.0.0.1) |
+|||||| Blocked IPs | 0 |
+|||||| Config changes | None |
+|||||| File integrity | OK. 8 accounts intact. 49 JSON files valid. |
+||||||| Users | 8 accounts. Admin 2FA: 2222=no, 7788=no (pre-existing gap) |
+||||||| Server | **Healthy** (HTTP 200 on clock/status) |
