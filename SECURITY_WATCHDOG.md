@@ -1,12 +1,12 @@
 # POS Security Watchdog
 
-| Last run: 2026-06-28T07:05 UTC
+| Last run: 2026-06-28T07:22 UTC
 
 | Total events tracked: 83 (SEC-001→SEC-083; all resolved)
 | Active blocks: 0 IPs
-| Run result: Idle — single Owner login, no threats
+| Run result: Idle — zero activity, no threats
 
-## Current Run Findings (06:43–07:05 UTC, ~22 min window)
+## Current Run Findings (07:05–07:22 UTC, ~17 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -20,26 +20,26 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (06:43–07:05 UTC)
+### ℹ️ Activity Summary (07:05–07:22 UTC)
 
 **Server**: Healthy (HTTP 200 on port 5000).
 
-**Activity**: 1 event in this window — Owner PIN login from 127.0.0.1 at 06:50 UTC.
+**Activity**: 0 events in this window. No new login attempts, orders, or shifts since last run at 06:50 UTC.
 
-**Login attempts in window**: 1 PIN login (1 success, 0 failed). 0 admin_logins.
+**Login attempts in window**: 0 PIN logins. 0 admin_logins. Nothing at all.
 
 **Active shifts**: 0. No active sessions.
 
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: 0 failed PIN logins in window. No brute force.
 - **Account enumeration**: 0 probes in window.
-- **Successful-after-failure**: No failed-then-successful pattern.
-- **Off-hours activity**: 1 PIN login at 01:50 CT — normal Owner dev pattern (consistent with prior week of late-night testing).
+- **Successful-after-failure**: No failed-then-successful pattern (no logins at all).
+- **Off-hours activity**: No logins this window. (02:05–02:22 CT — quiet Sunday morning.)
 - **Cross-IP targeting**: No activity. Clean.
 - **Known IPs**: All from 127.0.0.1 (known Owner IP). No new IPs.
 - **Credential stuffing**: No pattern detected.
 - **2FA check**: No 2FA events this window.
-- **Last 24h stats**: All activity from 127.0.0.1. No external IPs. 0 brute force.
+- **Last 24h stats**: 100% of activity from 127.0.0.1. No external IPs. 0 brute force.
 
 ### 🔒 Security Config
 - No changes since last run. All thresholds unchanged.
@@ -58,7 +58,6 @@ None.
 - Server: **Healthy** (HTTP 200 on localhost:5000).
 
 ### ✅ Actions Taken
-- Resolved SEC-081 (stale off-hours login event from 05:15 UTC — marked as resolved, multiple subsequent logins confirm standard dev activity).
 - 0 failed logins, 0 blocked IPs.
 - Updated SECURITY_WATCHDOG.md timestamp and findings.
 - Nothing to report — silent delivery.
@@ -70,13 +69,13 @@ None.
 
 | Check | Status |
 |---|---|
-| Current time | 2026-06-28T07:05 UTC — 02:05 CT (Sunday early morning) |
-| Activity since last run | 1 event — Owner PIN login (localhost) |
-| Login attempts (last ~22 min) | 1 PIN login (0 failed) |
-| Successful logins (this window) | 1 PIN login (Owner, 127.0.0.1) |
+| Current time | 2026-06-28T07:22 UTC — 02:22 CT (Sunday early morning) |
+| Activity since last run | 0 events — completely idle |
+| Login attempts (last ~17 min) | 0 attempts (0 PIN, 0 admin) |
+| Successful logins (this window) | 0 |
 | Blocked IPs | 0 |
 | Config changes | None |
-| File integrity | OK. All JSON parseable. 8 accounts intact. Git clean. |
+| File integrity | OK. All JSON parseable. 8 accounts intact. Git: RELIABILITY_CHECKLIST.md modified by Site Reliability Bot (timestamp update only, no security concern) |
 | Users | 8 accounts. Admin 2FA: 2222=no, 7788=no (pre-existing gap — Sentinel) |
-| Unresolved events | SEC-081 resolved this run (0 unresolved remaining) |
+| Unresolved events | 0 unresolved |
 | Server | **Healthy** (HTTP 200 on port 5000) |
