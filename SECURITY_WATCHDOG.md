@@ -1,12 +1,12 @@
 # POS Security Watchdog
 
-| Last run: 2026-06-28T08:13 UTC
+| Last run: 2026-06-28T08:46 UTC
 
-| Total events tracked: 83 (SEC-001→SEC-083; all resolved)
+| Total events tracked: 82 (SEC-001→SEC-083; all resolved)
 | Active blocks: 0 IPs
 | Run result: Idle — zero activity, no threats detected
 
-## Current Run Findings (07:39–07:57 UTC, ~18 min window)
+## Current Run Findings (08:29–08:46 UTC, ~17 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -20,13 +20,13 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (07:39–07:57 UTC)
+### ℹ️ Activity Summary (08:29–08:46 UTC)
 
 **Server**: Healthy (HTTP 200 on port 5000 root endpoint).
 
-**Activity**: 0 activity_log events in window. System idle for ~22 minutes since last activity at 07:35 UTC.
+**Activity**: 0 activity_log events in window. No new activity since 08:25.
 
-**Login attempts in window**: 0 PIN logins. 0 failed logins. 0 admin_logins.
+**Login attempts in window**: 0 logins. 0 failed logins. 0 admin_logins.
 
 **Active shifts**: 0. No active sessions.
 
@@ -34,7 +34,7 @@ None.
 - **Brute force check**: 0 failed logins. No activity.
 - **Account enumeration**: 0 probes.
 - **Successful-after-failure**: No pattern detected.
-- **Off-hours activity**: 07:57 UTC (02:57 CT) — quiet window. No logins in this period.
+- **Off-hours activity**: 08:46 UTC (03:46 CT) — still in off-hours window (22:00-06:00). Zero logins in this window.
 - **Cross-IP targeting**: No activity.
 - **Known IPs**: No new IPs. All known 127.0.0.1.
 - **Credential stuffing**: No pattern detected.
@@ -47,10 +47,9 @@ None.
 - `rate_limit_enabled`: true (active).
 
 ### 💰 Financial Check
-- 0 new orders in window.
+- 0 new orders in window (total: 107 orders).
 - 0 active shifts.
-- No financial anomalies.
-- Last 24h: 6 refunds by Owner (all Reliability Bot test cycles — expected).
+- No financial anomalies. 1 zero-dollar order (pre-existing). 4 large orders >$500 (pre-existing, all resolved).
 
 ### 📂 File Integrity
 - All JSON files parseable, sizes stable.
@@ -71,13 +70,13 @@ None.
 
 | Check | Status |
 |---|---|
-| Current time | 2026-06-28T07:57 UTC — 02:57 CT (Sunday early morning) |
-| Activity since last run | 0 events — system idle |
-| Login attempts (last ~18 min) | 0 |
+| Current time | 2026-06-28T08:46 UTC — 03:46 CT (Sunday early morning) |
+| Activity since last run | 0 events — complete quiet |
+| Login attempts (last ~17 min) | 0 |
 | Successful logins (this window) | 0 |
 | Blocked IPs | 0 |
 | Config changes | None |
-| File integrity | OK. All JSON parseable. 8 accounts intact. |
+| File integrity | OK. All JSON parseable. 8 accounts intact. pos.db and pos-system.pid present (expected). |
 | Users | 8 accounts. Admin 2FA: 2222=no, 7788=no (pre-existing gap — Sentinel). Owner 2FA disabled (exempted via config). |
 | Unresolved events | 0 unresolved |
 | Server | **Healthy** (HTTP 200 on port 5000) |
