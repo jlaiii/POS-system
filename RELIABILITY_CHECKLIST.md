@@ -1,16 +1,16 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-28T01:50 UTC
-> Total checks: 1644
-> Healthy: 1644 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-28T02:13 UTC
+> Total checks: 1648
+> Healthy: 1648 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 — 200 OK (root + /api/health) [verified 01:50]
-- [x] All JSON data files exist and are valid — 16/16 core files valid (15 JSON + 1 SQLite) [verified 01:50]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', 8 users) [verified 01:50]
-- [x] Git repo is clean — clean after commit (was dirty: SECURITY_WATCHDOG.md from Watchdog run) [verified 01:50]
+- [x] Flask app responds on port 5000 — 200 OK (root + /api/health) [verified 02:13]
+- [x] All JSON data files exist and are valid — 8/8 core files valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) [verified 02:13]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', 8 users, ['*'] permissions, role='owner') [verified 02:13]
+- [x] Git repo is clean — clean (committed SRE Bot test artifacts + pushed) [verified 02:13]
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/health — {"status":"ok"} (GET) [verified 01:50]
@@ -33,7 +33,7 @@
 - [x] Pickup display: verify /api/pickup-display/queue works — GET, 200, 1 order ready [verified 01:50]
 - [x] Webhook: verify webhook config endpoint works — /api/security/discord_webhook returns config, 200 OK, not set [verified 01:50]
 - [x] Cash register: /api/cash_drawer/status (POST with adminPin=1111) returns active=false, last closed Jun 24, 10 sessions [verified 22:47]
-- [x] User CRUD: add test user (9977 via /api/add_user) -> verify -> delete -> confirmed gone [verified 21:59]
+- [x] User CRUD: add test user (9977 via /api/add_user) -> verify -> delete -> confirmed gone [verified 02:13]
 - [x] Loyalty: points earned on order — 14 loyalty entries (phone-keyed dict), data intact [verified 01:06]
 - [x] Clock-in late detection: 8 late records (up to 563min across shifts), data intact [verified 22:47]
 - [x] Break tracking: 4 shifts with breaks, break data intact [verified 01:06]
@@ -41,7 +41,7 @@
 - [x] CSV export: verify /api/export/shifts_csv returns CSV — POST, 200, CSV headers + data [verified 18:26]
 - [x] Offline queue: verify /api/sync_orders endpoint exists — POST, 400, "No orders provided" [verified 18:26]
 - [x] Order lifecycle: create order via /api/submit_order → order 126 created → refunded via /api/orders/refund, 200 OK [verified 01:06]
-- [x] Special chars test: add item with emoji+quotes via /api/add_item → verify in items.json → delete → confirmed gone. Also cleaned test item from inventory.json. [verified 19:34]
+- [x] Special chars test: add item with emoji+quotes via /api/add_item → verify in items.json → delete → confirmed gone. Also cleaned test item from inventory.json. [verified 02:13]
 
 ## EVERY 12 HOURS
 - [x] Full app restart test: kill Flask → restart → verify all critical endpoints — Completed, gunicorn+gevent stable [verified 17:11]
