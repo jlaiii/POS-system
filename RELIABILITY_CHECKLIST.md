@@ -23,10 +23,10 @@
 ||- [x] index.html size check — 1375264 bytes (normal, ~1.38MB) [verified 07:34]
 ||- [x] Disk space check — 37% used (24G free, OK) [verified 07:34]
 ||- [x] Memory check — ~37% RAM used, 0 swap [verified 07:34]
-||- [x] Clock-in/out: employee 1234 status checked — not clocked in [verified 07:34]
-||- [x] CSV export — /api/export/shifts_csv returns CSV with adminPin=1111, valid [verified 06:50]
-||- [x] Offline queue — /api/sync_orders exists, returns 400 'No orders provided' [verified 06:50]
-||- [x] Backup integrity — latest backup (06:54, 50 files valid, 8 users/owner 1111/5 cats 19 items/55 shifts/107 orders intact) [verified 07:34]
+|- [x] Clock-in/out: employee 1234 status checked — not clocked in [verified 07:34]
+|- [x] CSV export — /api/export/shifts_csv returns CSV with adminPin=1111, valid, 5115 bytes [verified 07:58]
+|- [x] Offline queue — /api/sync_orders exists, returns 400 'No orders provided' [verified 07:58]
+|- [x] Backup integrity — latest backup (06:54, 50 files valid, 8 users/owner 1111/5 cats 19 items/55 shifts/107 orders intact) [verified 07:34]
 
 ## EVERY 4 HOURS
 |- [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 200, 0 pending orders [verified 07:34]
