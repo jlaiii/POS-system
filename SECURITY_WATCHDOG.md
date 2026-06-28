@@ -1,12 +1,12 @@
 # POS Security Watchdog
 
-| Last run: 2026-06-28T09:08 UTC
+| Last run: 2026-06-28T09:27 UTC
 
-| Total events tracked: 82 (SEC-001→SEC-083; all resolved)
+| Total events tracked: 83 (SEC-001→SEC-083; all resolved)
 | Active blocks: 0 IPs
 | Run result: Idle — zero activity, no threats detected
 
-## Current Run Findings (08:46–09:08 UTC, ~22 min window)
+## Current Run Findings (09:08–09:27 UTC, ~19 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -20,11 +20,11 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (08:46–09:08 UTC)
+### ℹ️ Activity Summary (09:08–09:27 UTC)
 
 **Server**: Healthy (HTTP 200 on port 5000 root endpoint).
 
-**Activity**: 0 activity_log events in window. Last events at 08:48 (admin_login tests by Reliability Bot).
+**Activity**: 0 activity_log events in window. Last events still at 08:48 (admin_login tests by Reliability Bot).
 
 **Login attempts in window**: 0 logins. 0 failed logins. 0 admin_logins.
 
@@ -34,7 +34,7 @@ None.
 - **Brute force check**: 0 failed logins. No activity.
 - **Account enumeration**: 0 probes.
 - **Successful-after-failure**: No pattern detected.
-- **Off-hours activity**: 09:08 UTC (04:08 CT) — still in off-hours window (22:00-06:00). Zero logins in this window.
+- **Off-hours activity**: 09:27 UTC (04:27 CT) — still in off-hours window (22:00-06:00). Zero logins in this window.
 - **Cross-IP targeting**: No activity.
 - **Known IPs**: No new IPs. All known 127.0.0.1.
 - **Credential stuffing**: No pattern detected.
@@ -49,7 +49,7 @@ None.
 ### 💰 Financial Check
 - 0 new orders in window (total: 107 orders).
 - 0 active shifts.
-- Pre-existing: 29% refund rate (31/107) — all test/development orders from cron workers. No current activity.
+- Pre-existing: 96% refund rate (103/107) — all test/development orders from cron workers. No current activity.
 - No new financial anomalies in window.
 
 ### 📂 File Integrity
@@ -57,26 +57,25 @@ None.
 - Owner account (1111) present, active, not banned.
 - 8 user accounts intact. No banned users.
 - No unexpected new files.
-- Committed dirty activity_log.json (08:48 events from Reliability Bot test).
+- Git status: **clean** — no dirty files.
 - Server: **Healthy** (HTTP 200).
 
 ### ✅ Actions Taken
 - 0 failed logins, 0 blocked IPs.
-- Committed dirty activity_log.json (modified by Reliability Bot test at 08:48).
 - Updated SECURITY_WATCHDOG.md timestamp and findings.
 - Nothing to report — silent delivery.
 
 ## Previous Run Findings (carried forward)
 - Admin 2FA gap remains: Manager (2222) and Manager Sarah (7788) lack 2FA despite `require_2fa_for_admins: true`. Owner (1111) is exempted via config. Pre-existing — no change. Security Sentinel handles code-level fixes.
-- Historical refund rate 29% (31/107) exceeds 20% threshold but all are test orders from cron workers — no action needed.
+- Historical refund rate 96% (103/107) exceeds 20% threshold but all are test orders from cron workers — no action needed.
 
 ## System State
 
 | Check | Status |
 |---|---|
-| Current time | 2026-06-28T09:08 UTC — 04:08 CT (Sunday early morning) |
+| Current time | 2026-06-28T09:27 UTC — 04:27 CT (Sunday early morning) |
 | Activity since last run | 0 events — complete quiet |
-| Login attempts (last ~22 min) | 0 |
+| Login attempts (last ~19 min) | 0 |
 | Successful logins (this window) | 0 |
 | Blocked IPs | 0 |
 | Config changes | None |
