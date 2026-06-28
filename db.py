@@ -448,7 +448,9 @@ def init_db():
             status TEXT DEFAULT 'available',
             tablet_id TEXT,
             section TEXT,
-            visible INTEGER DEFAULT 1
+            visible INTEGER DEFAULT 1,
+            created_at TEXT,
+            last_bussed_at TEXT
         )
     """)
 
@@ -574,6 +576,9 @@ def _migrate_schemas():
         ('combos', 'active', 'INTEGER DEFAULT 1'),
         ('combos', 'created_at', 'TEXT'),
         ('combos', 'updated_at', 'TEXT'),
+        # tables_config: added created_at, last_bussed_at for migration
+        ('tables_config', 'created_at', 'TEXT'),
+        ('tables_config', 'last_bussed_at', 'TEXT'),
     ]
 
     for table, column, col_def in migrations:
