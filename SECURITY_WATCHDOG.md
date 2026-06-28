@@ -1,12 +1,12 @@
 # POS Security Watchdog
 
-| Last run: 2026-06-28T15:12 UTC
+| Last run: 2026-06-28T15:55 UTC
 
 || Total events tracked: 82 (SEC-001→SEC-082; all resolved)
 || Active blocks: 0 IPs
-|| Run result: Quiet — 2 activity events (0 failed logins, 2 successful), all localhost cron testing, no threats
+|| Run result: Quiet — 0 activity events (0 logins, 0 failed), no activity whatsoever since last run
 
-## Current Run Findings (14:57–15:12 UTC, ~15 min window)
+## Current Run Findings (15:37–15:55 UTC, ~18 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -20,17 +20,13 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (14:57–15:12 UTC)
+### ℹ️ Activity Summary (15:37–15:55 UTC)
 
-**Server**: Healthy (HTTP 200 on port 5000 root endpoint).
+**Server**: Healthy (HTTP 200 on port 5000 root endpoint, /api/health returns {"status":"ok"}).
 
-**Activity**: 4 new activity_log events since last run:
-- 15:06:32 — login Owner (1111) from 127.0.0.1
-- 15:06:38 — (status: success) from 127.0.0.1
-- 15:07:17 — login Owner (1111) from 127.0.0.1
-- 15:07:17 — (status: success) from 127.0.0.1
+**Activity**: 0 new activity_log events since last run — completely silent period.
 
-**Login attempts in window**: 2 total. 0 failed. 2 successful. All from 127.0.0.1.
+**Login attempts in window**: 0 total. 0 failed. 0 successful. No login events at all.
 
 **Active shifts**: 0. No active sessions.
 
@@ -38,9 +34,9 @@ None.
 - **Brute force check**: 0 failed logins in 5 min. Threshold: 5. No alert.
 - **Account enumeration**: 0 probes. No alert.
 - **Successful-after-failure**: No failed logins. No alert.
-- **Off-hours activity**: N/A — 15:12 UTC (10:12 CT, Sunday morning). Regular hours.
-- **Cross-IP targeting**: No activity. Only 127.0.0.1.
-- **Known IPs**: No new IPs. All known 127.0.0.1.
+- **Off-hours activity**: Current time 15:55 UTC (10:55 CT Sunday morning) — regular hours. No off-hours activity.
+- **Cross-IP targeting**: No activity whatsoever.
+- **Known IPs**: No new IPs.
 - **Credential stuffing**: No pattern detected.
 - **2FA check**: No 2FA events in this window.
 - **Account lockouts**: None.
@@ -52,18 +48,17 @@ None.
 - `rate_limit_enabled`: true (active).
 
 ### 💰 Financial Check / Order Anomaly Scan
-- 0 new orders in this window. Last orders from 14:53 (Owner test orders).
-- 0 refunds in window.
+- 0 new orders in window.
 - No $0 orders, no 100% discounts, no unusual tip patterns.
 - No active cash drawer sessions.
 
 ### 📂 File Integrity
-- All JSON files parseable, stable sizes (some minor fluctuations from normal operations).
+- All JSON files parseable, stable sizes.
 - Owner account (1111) present, active, not banned. All 8 accounts intact.
 - No banned users.
-- Git status: **Clean** — no pending changes.
-- No new suspicious files — no .php, .exe, .bat, or other dangerous extensions found.
-- Server: **Healthy** (HTTP 200).
+- Git status: **SECURITY_WATCHDOG.md dirty** (this run's update — will commit).
+- No new suspicious files — only normal __pycache__ .pyc bytecode caches.
+- Server: **Healthy** (HTTP 200, /api/health → {"status":"ok"}).
 
 ### ✅ Actions Taken
 - 0 blocked IPs, 0 alerts fired.
@@ -79,13 +74,13 @@ None.
 
 | Check | Status |
 |---|---|
-| Current time | 2026-06-28T15:12 UTC — 10:12 CT (Sunday morning, regular hours) |
-| Activity since last run | 4 events — all from 127.0.0.1 (Owner cron testing) |
-| Login attempts (last ~15 min) | 2 total (0 failed, 2 successful) |
-| Successful logins (this window) | 2 (1111×2) |
+| Current time | 2026-06-28T15:55 UTC — 10:55 CT (Sunday morning, regular hours) |
+| Activity since last run | 0 events — completely silent period |
+| Login attempts (last ~18 min) | 0 total (0 failed, 0 successful) |
+| Successful logins (this window) | 0 |
 | Blocked IPs | 0 |
 | Config changes | None |
 | File integrity | OK. All JSON files parseable. 8 accounts intact. No new suspicious files. |
 | Users | 8 accounts. Admin 2FA: 2222=no, 7788=no (pre-existing gap — Sentinel). Owner 2FA disabled (exempted via config). |
 | Unresolved events | 0 unresolved out of 82 total |
-| Server | **Healthy** (HTTP 200 on port 5000) |
+| Server | **Healthy** (HTTP 200 on port 5000, /api/health → {"status":"ok"}) |
