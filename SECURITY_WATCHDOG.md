@@ -1,12 +1,12 @@
 # POS Security Watchdog
 
-| Last run: 2026-06-28T00:52 UTC
+| Last run: 2026-06-28T01:10 UTC
 
 | | | | | | | | | | | | | | | | | | | Total events tracked: 75 (SEC-001→SEC-075; all resolved)
 | | | | | | | | | | | | | | | | | | | Active blocks: 0 IPs
-| Run result: All clear | No new activity since 00:30 UTC — still clean
+| Run result: All clear | Activity detected but all benign (Reliability Bot test cycle)
 
-## Current Run Findings (00:30–00:52 UTC, ~22 min window)
+## Current Run Findings (00:52–01:10 UTC, ~18 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -18,26 +18,26 @@ None.
 None.
 
 ### 🟢 LOW (0)
-None — no activity in this window.
+None.
 
-### ℹ️ Activity Summary (00:30–00:52 UTC)
+### ℹ️ Activity Summary (00:52–01:10 UTC)
 
 **Server**: Healthy (HTTP 200 on /).
 
-**Activity**: 0 events in this window. System idle.
+**Activity**: 2 events in this window. All benign.
 
 **Login attempts in window**: 0 total (0 failed, 0 successful).
 
 ### 📊 Login Security Deep-Dive
-- **Brute force check**: 0 failed logins in window. No brute force.
+- **Brute force check**: 0 failed logins in window (0 in last 24h from activity_log). No brute force.
 - **Account enumeration**: 0 probes in window.
 - **Successful-after-failure**: No failed logins in window. Clean.
-- **Off-hours activity**: No activity in this window.
+- **Off-hours activity**: No logins in this window. Last login was Owner (1111) from 127.0.0.1 at 00:21 UTC — normal cron/owner activity.
 - **Cross-IP targeting**: No activity. Clean.
-- **Known IPs**: No activity in window.
+- **Known IPs**: No logins in this window.
 - **Credential stuffing**: No pattern detected.
 - **2FA check**: No 2FA events in window.
-- **Session anomalies**: No active shifts. No sessions older than 24h.
+- **Session anomalies**: 0 active shifts. No sessions older than 24h.
 
 ### 🔒 Security Config
 - `blocked_ips`: [] — no active blocks.
@@ -48,7 +48,7 @@ None — no activity in this window.
 - No config changes detected.
 
 ### 💰 Financial Check
-- No new orders in window (last order #125, refunded).
+- New order #126 submitted at 01:07 UTC ($9.73, Pancakes x1) — Reliability Bot lifecycle test. Refunded at 01:07 UTC.
 - 0 active shifts.
 - 1 order with total=$0.00 — order #94 (cancelled, ghost cleanup artifact). No concern.
 - No financial anomalies detected.
@@ -61,9 +61,9 @@ None — no activity in this window.
 - No suspicious files detected (.php, .sh, .exe, etc.).
 - Server: **Healthy** (HTTP 200).
 
-### ✅ Actions Taken
+| ✅ Actions Taken
 - **All clear** — No security threats detected this run.
-- 0 activity events since last watchdog run (00:30 UTC). System idle.
+- Reliability Bot test cycle (order #126 created and refunded) — expected behavior, no concern.
 - Updated SECURITY_WATCHDOG.md timestamp and findings.
 
 ## Previous Run Findings (carried forward)
@@ -73,9 +73,9 @@ None — no activity in this window.
 
 | | | | | | | | | | | | | | | | | | Check | Status |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Current time | 2026-06-28T00:52 UTC — 19:52 CT (Saturday evening) |
-| Activity since last run | 0 events — system idle since last watchdog run |
-| | | | | | | | | | | | | | | | Login attempts (last ~22 min) | 0 (0 failed) |
+| Current time | 2026-06-28T01:10 UTC — 20:10 CT (Saturday evening) |
+| Activity since last run | 2 events — Reliability Bot test cycle (order + refund) |
+| | | | | | | | | | | | | | | | Login attempts (last ~18 min) | 0 (0 failed) |
 | | | | | | | | | | | | | | | | Successful logins (this window) | 0 |
 | | | | | | | | | | | | | | | | Blocked IPs | 0 |
 | | | | | | | | | | | | | | | | Config changes | None |
