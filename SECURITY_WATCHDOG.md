@@ -1,12 +1,12 @@
 # POS Security Watchdog
 
-| Last run: 2026-06-28T14:57 UTC
+| Last run: 2026-06-28T15:12 UTC
 
-||| Total events tracked: 82 (SEC-001→SEC-082; all resolved)
-||| Active blocks: 0 IPs
-||| Run result: Quiet — 10 activity events (2 failed logins, 3 successful, 2 test orders), all localhost cron testing, no threats
+|| Total events tracked: 82 (SEC-001→SEC-082; all resolved)
+|| Active blocks: 0 IPs
+|| Run result: Quiet — 2 activity events (0 failed logins, 2 successful), all localhost cron testing, no threats
 
-## Current Run Findings (14:37–14:57 UTC, ~20 min window)
+## Current Run Findings (14:57–15:12 UTC, ~15 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -20,35 +20,29 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (14:37–14:57 UTC)
+### ℹ️ Activity Summary (14:57–15:12 UTC)
 
 **Server**: Healthy (HTTP 200 on port 5000 root endpoint).
 
-**Activity**: 10 new activity_log events since last run:
-- 14:49:43 — admin_login Owner (1111) from 127.0.0.1
-- 14:49:44 — login_failed (anonymous) from 127.0.0.1
-- 14:49:51 — login_failed (anonymous, attempt 2) from 127.0.0.1
-- 14:49:58 — login Employee One (1234) from 127.0.0.1 (2fa_required)
-- 14:49:59 — login Owner (1111) from 127.0.0.1
-- 14:50:04 — login Owner (1111) from 127.0.0.1
-- 14:50:04 — submit_order Owner (1111)
-- 14:50:08 — pickup_mark_ready unknown
-- 14:53:49 — submit_order Owner (1111)
-- 14:53:49 — pickup_mark_ready unknown
+**Activity**: 4 new activity_log events since last run:
+- 15:06:32 — login Owner (1111) from 127.0.0.1
+- 15:06:38 — (status: success) from 127.0.0.1
+- 15:07:17 — login Owner (1111) from 127.0.0.1
+- 15:07:17 — (status: success) from 127.0.0.1
 
-**Login attempts in window**: 5 total. 2 failed. 3 successful. All from 127.0.0.1.
+**Login attempts in window**: 2 total. 0 failed. 2 successful. All from 127.0.0.1.
 
 **Active shifts**: 0. No active sessions.
 
 ### 📊 Login Security Deep-Dive
-- **Brute force check**: 2 failed logins from 127.0.0.1 in 5 min. Threshold: 5. No alert.
-- **Account enumeration**: 2 anonymous probes (no user_id) from 127.0.0.1. Threshold: 10. No alert.
-- **Successful-after-failure**: Only 2 failures before successful logins — below 3 threshold. No alert.
-- **Off-hours activity**: N/A — 14:57 UTC (09:57 CT, Sunday morning). Regular hours.
+- **Brute force check**: 0 failed logins in 5 min. Threshold: 5. No alert.
+- **Account enumeration**: 0 probes. No alert.
+- **Successful-after-failure**: No failed logins. No alert.
+- **Off-hours activity**: N/A — 15:12 UTC (10:12 CT, Sunday morning). Regular hours.
 - **Cross-IP targeting**: No activity. Only 127.0.0.1.
-- **Known IPs**: No new IPs. All known 127.0.0.1. known_ips.json unchanged.
-- **Credential stuffing**: No pattern detected (only 1 anonymous user probed).
-- **2FA check**: Employee One (1234) triggered 2fa_required at 14:49:58 — correct behavior (totp_enabled=true).
+- **Known IPs**: No new IPs. All known 127.0.0.1.
+- **Credential stuffing**: No pattern detected.
+- **2FA check**: No 2FA events in this window.
 - **Account lockouts**: None.
 
 ### 🔒 Security Config
@@ -58,22 +52,22 @@ None.
 - `rate_limit_enabled`: true (active).
 
 ### 💰 Financial Check / Order Anomaly Scan
-- 2 test orders submitted by Owner (1111) via curl (14:50, 14:53) — marked ready for pickup immediately. Standard cron testing pattern.
+- 0 new orders in this window. Last orders from 14:53 (Owner test orders).
 - 0 refunds in window.
 - No $0 orders, no 100% discounts, no unusual tip patterns.
 - No active cash drawer sessions.
 
 ### 📂 File Integrity
-- All JSON files parseable, stable sizes.
+- All JSON files parseable, stable sizes (some minor fluctuations from normal operations).
 - Owner account (1111) present, active, not banned. All 8 accounts intact.
 - No banned users.
 - Git status: **Clean** — no pending changes.
-- No new suspicious files. Standard project files only.
+- No new suspicious files — no .php, .exe, .bat, or other dangerous extensions found.
 - Server: **Healthy** (HTTP 200).
 
 ### ✅ Actions Taken
 - 0 blocked IPs, 0 alerts fired.
-- 2 failed logins from 127.0.0.1 (below threshold). Activity is normal cron testing.
+- 0 failed logins — all clear.
 - Updated SECURITY_WATCHDOG.md timestamp and findings with current run data.
 - Nothing actionable — silent delivery.
 
@@ -85,13 +79,13 @@ None.
 
 | Check | Status |
 |---|---|
-| Current time | 2026-06-28T14:57 UTC — 09:57 CT (Sunday morning, regular hours) |
-| Activity since last run | 10 events — all from 127.0.0.1 (cron testing) |
-| Login attempts (last ~20 min) | 5 total (2 failed, 3 successful) |
-| Successful logins (this window) | 3 (1111×2, 1234×1) |
+| Current time | 2026-06-28T15:12 UTC — 10:12 CT (Sunday morning, regular hours) |
+| Activity since last run | 4 events — all from 127.0.0.1 (Owner cron testing) |
+| Login attempts (last ~15 min) | 2 total (0 failed, 2 successful) |
+| Successful logins (this window) | 2 (1111×2) |
 | Blocked IPs | 0 |
 | Config changes | None |
 | File integrity | OK. All JSON files parseable. 8 accounts intact. No new suspicious files. |
 | Users | 8 accounts. Admin 2FA: 2222=no, 7788=no (pre-existing gap — Sentinel). Owner 2FA disabled (exempted via config). |
-| Unresolved events | 0 unresolved |
+| Unresolved events | 0 unresolved out of 82 total |
 | Server | **Healthy** (HTTP 200 on port 5000) |
