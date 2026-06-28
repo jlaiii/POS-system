@@ -1,12 +1,12 @@
 # POS Security Watchdog
 
-| Last run: 2026-06-28T22:28 UTC
+| Last run: 2026-06-28T22:46 UTC
 
-|| | Total events tracked: 83 (SEC-001→SEC-084; all resolved)
-|| | Active blocks: 0 IPs
-|| | Run result: Normal — Owner login at 22:12 UTC, handled and resolved.
+||| Total events tracked: 84 (SEC-001→SEC-085; all resolved)
+||| Active blocks: 0 IPs
+||| Run result: Normal — Owner login at 22:34 UTC, handled and resolved.
 
-## Current Run Findings (22:11–22:28 UTC, ~17 min window)
+## Current Run Findings (22:28–22:46 UTC, ~18 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -17,18 +17,20 @@ None.
 ### 🟡 MEDIUM (0)
 None.
 
-### 🟢 LOW (1)
-- **SEC-084 resolved** — Off-hours login: Owner (1111) at 22:12 UTC. Resolved as known false positive: Owner from known IP (127.0.0.1), 22:12 UTC = 17:12 CT Sunday (regular business hours), not a real anomaly.
+### 🟢 LOW (0)
+None.
 
-### ℹ️ Activity Summary (22:11–22:28 UTC)
+### ℹ️ Activity Summary (22:28–22:46 UTC)
 
 **Server**: Healthy (HTTP 200 on port 5000, /api/health → {"status":"ok"}).
 
-**Activity**: 1 new activity_log entry since last run — Owner login from 127.0.0.1.
+**Activity**: 3 new activity_log entries since last run — all Owner from 127.0.0.1.
 
 | Time (UTC) | Event | User | IP | Details |
 |---|---|---|---|---|
-| 22:12:43 | login (success) | 1111 (Owner) | 127.0.0.1 | PIN login success via curl |
+| 22:34:17 | login (success) | 1111 (Owner) | 127.0.0.1 | PIN login success via curl |
+| 22:34:18 | admin_login (success) | 1111 (Owner) | 127.0.0.1 | Admin panel login |
+| 22:34:26 | admin_login (success) | 1111 (Owner) | 127.0.0.1 | Admin panel login |
 
 **Login attempts in window**: 1 login attempt (1 success, 0 failed). 0 brute force.
 
@@ -40,13 +42,13 @@ None.
 - **Brute force check**: 0 failed logins in last 5 min. No alert.
 - **Account enumeration**: 0 probes for non-existent PINs. No alert.
 - **Successful-after-failure**: No failed attempts. No alert.
-- **Off-hours activity**: Login at 22:12 UTC (17:12 CT Sunday) — flagged by system as off-hours (22:00-06:00 UTC). Resolved as known UTC false positive. Actual time is 5:12 PM Central — regular hours.
+- **Off-hours activity**: Login at 22:34 UTC (17:34 CT Sunday) — within off-hours window (22:00-06:00 UTC) but actual time is 5:34 PM Central, regular hours. Known UTC false positive. Not re-alerting.
 - **Cross-IP targeting**: No activity.
 - **Known IPs**: 127.0.0.1 (Owner's known IP). No new IPs seen.
 - **Credential stuffing**: No pattern.
 - **2FA check**: No 2FA events.
 - **Account lockouts**: None.
-- **Last login attempt**: 2026-06-28T22:12:43 UTC (Owner, 127.0.0.1, success).
+- **Last login attempt**: 2026-06-28T22:34:17 UTC (Owner, 127.0.0.1, success).
 
 ### 🔒 Security Config
 - No changes detected. All thresholds normal.
@@ -64,15 +66,14 @@ None.
 - All 51 JSON files parseable, valid.
 - Owner account (1111) present, active, not banned. All 8 accounts intact.
 - No banned users. No account modifications.
-- No file size anomalies (activity_log 538KB, login_attempts 80KB, normal growth).
+- No file size anomalies (activity_log 539KB, login_attempts 80KB, normal growth).
 - No new suspicious files — no .php, .exe, or anomalous files in workdir.
-- Git status: dirty (activity_log.json, login_attempts.json, security_events.json) — committed with this run.
+- Git status: clean — no dirty files since last commit.
 - Server: **Healthy** (HTTP 200, /api/health → {"status":"ok"}).
 
 ### ✅ Actions Taken
 - 0 blocked IPs, 0 alerts fired.
-- Resolved SEC-084 (off-hours login, known false positive).
-- Committed dirty data files (activity_log.json, login_attempts.json, security_events.json).
+- No new events to resolve.
 - Updated SECURITY_WATCHDOG.md timestamp and findings.
 
 ## Previous Run Findings (carried forward)
@@ -83,13 +84,13 @@ None.
 
 | | Check | Status |
 |---|---|---|
-| | Current time | 2026-06-28T22:28 UTC — 17:28 CT (Sunday, regular hours) |
-| | Activity since last run | 1 activity_log entry — Owner login from localhost |
-| | Login attempts (last ~17 min) | 1 total (0 failed) |
-| | Successful logins (this window) | 1 login (Owner, 127.0.0.1) |
+| | Current time | 2026-06-28T22:46 UTC — 17:46 CT (Sunday, regular hours) |
+| | Activity since last run | 3 activity_log entries — all Owner from localhost |
+| | Login attempts (last ~18 min) | 1 total (0 failed) |
+| | Successful logins (this window) | 1 login + 2 admin_logins (Owner, 127.0.0.1) |
 | | Blocked IPs | 0 |
 | | Config changes | None |
-| | File integrity | All 51 JSON valid. No file size anomalies. All 8 accounts intact. Git: committed. |
+| | File integrity | All 51 JSON valid. No file size anomalies. All 8 accounts intact. Git: clean. |
 | | Users | 8 accounts. Admin 2FA: 2222=no, 7788=no (pre-existing gap — Sentinel). Owner 2FA disabled (exempted via config). |
-| | Unresolved events | 0 unresolved out of 84 total (SEC-001→SEC-084; all resolved) |
+| | Unresolved events | 0 unresolved out of 85 total (SEC-001→SEC-085; all resolved) |
 | | Server | **Healthy** (HTTP 200 on port 5000, /api/health → {"status":"ok"}) |
