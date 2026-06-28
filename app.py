@@ -13998,7 +13998,7 @@ def pickup_display_queue():
             ready_at = o.get('ready_for_pickup_at', o.get('completed_at', o.get('date', '')))
             pickup_orders.append({
                 'order_id': o.get('order_id'),
-                'order_number': o.get('order_id'),
+                'order_number': o.get('order_number', o.get('order_id')),
                 'customer_name': o.get('customer_name', ''),
                 'items': o.get('items', []),
                 'item_count': len(o.get('items', [])),
@@ -16233,7 +16233,7 @@ def kiosk_pay():
                 'message': 'Payment successful',
                 'order_id': order_id,
                 'total': order['total'],
-                'order_number': order_id
+                'order_number': order.get('order_number', order_id)
             })
 
     return jsonify({'message': f'Order #{order_id} not found'}), 404

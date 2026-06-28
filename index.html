@@ -19622,6 +19622,7 @@ function toggleKitchenTableGroup(headerEl) {
 
 function renderKitchenOrderCard(o, inGroup) {
   const oid = o.id || o.order_id || '?';
+  const displayNum = o.order_number || oid;
   const status = (o.status || 'pending').toLowerCase();
   const items = o.items || [];
   const notes = o.notes || '';
@@ -19760,7 +19761,7 @@ function renderKitchenOrderCard(o, inGroup) {
 
   return '<div class="kitchen-order-card ' + statusClass + ' ' + finalCardClass + ' ' + pendingTapClass + '"' + cardClick + '>' +
     '<div class="koc-header">' +
-      '<span class="koc-id">#' + escHtml(String(oid)) + tableBadge + '</span>' +
+      '<span class="koc-id">#' + escHtml(String(displayNum)) + tableBadge + '</span>' +
       timeHtml +
     '</div>' +
     statusBadge +

@@ -30,7 +30,7 @@
         "unit_cost": 2.0
     },
     "Lemonade": {
-        "stock": 93,
+        "stock": 92,
         "low_stock_threshold": 10,
         "unit_cost": 0.85
     },
@@ -60,7 +60,7 @@
         "unit_cost": 1.2
     },
     "Hamburger - Normal": {
-        "stock": 83,
+        "stock": 80,
         "low_stock_threshold": 10,
         "unit_cost": 3.5
     },
