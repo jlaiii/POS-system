@@ -21165,8 +21165,12 @@ def waitlist_add():
 
 @app.route('/api/waitlist/list', methods=['POST'])
 def waitlist_list():
-    """List waitlist entries with optional filters."""
+    """List waitlist entries with optional filters. Requires valid user with pos_access."""
     data = request.json or {}
+    user_id = data.get('user_id', '')
+    if not user_id or not check_perm(user_id, 'pos_access'):
+        return jsonify({'message': 'Permission denied.'}), 403
+
     filter_status = data.get('filter_status', '')
     filter_search = data.get('filter_search', '')
 
@@ -21210,23 +21214,25 @@ def waitlist_list():
 
 @app.route('/api/waitlist/update', methods=['POST'])
 def waitlist_update():
-    """Update a waitlist entry (name, phone, party size, notes)."""
+    """Update a waitlist entry (name, phone, party size, notes). Requires pos_access."""
     data = request.json
     if not data:
         return jsonify({'message': 'No data provided.'}), 400
 
     user_id = data.get('user_id', '')
-    entry_id = data.get('entry_id', '')
-
     if not user_id:
         return jsonify({'message': 'User ID is required.'}), 400
-    if not entry_id:
-        return jsonify({'message': 'Entry ID is required.'}), 400
 
     users = load_json_data(USERS_FILE)
     user_data = users.get(user_id)
     if not user_data:
         return jsonify({'message': 'User not found.'}), 403
+    if not check_perm(user_id, 'pos_access'):
+        return jsonify({'message': 'Permission denied.'}), 403
+
+    entry_id = data.get('entry_id', '')
+    if not entry_id:
+        return jsonify({'message': 'Entry ID is required.'}), 400
 
     waitlist = load_json_data(WAITLIST_FILE)
     found = None
@@ -21280,24 +21286,27 @@ def waitlist_update():
 
 @app.route('/api/waitlist/check_in', methods=['POST'])
 def waitlist_check_in():
-    """Mark a waitlist entry as seated (checked in). Assigns a table number."""
+    """Mark a waitlist entry as seated (checked in). Requires pos_access."""
     data = request.json
     if not data:
         return jsonify({'message': 'No data provided.'}), 400
 
     user_id = data.get('user_id', '')
-    entry_id = data.get('entry_id', '')
-    table_number = data.get('table_number')
-
     if not user_id:
         return jsonify({'message': 'User ID is required.'}), 400
-    if not entry_id:
-        return jsonify({'message': 'Entry ID is required.'}), 400
 
     users = load_json_data(USERS_FILE)
     user_data = users.get(user_id)
     if not user_data:
         return jsonify({'message': 'User not found.'}), 403
+    if not check_perm(user_id, 'pos_access'):
+        return jsonify({'message': 'Permission denied.'}), 403
+
+    entry_id = data.get('entry_id', '')
+    table_number = data.get('table_number')
+
+    if not entry_id:
+        return jsonify({'message': 'Entry ID is required.'}), 400
 
     waitlist = load_json_data(WAITLIST_FILE)
     found = None
@@ -21346,23 +21355,25 @@ def waitlist_check_in():
 
 @app.route('/api/waitlist/no_show', methods=['POST'])
 def waitlist_no_show():
-    """Mark a waitlist entry as no-show."""
+    """Mark a waitlist entry as no-show. Requires pos_access."""
     data = request.json
     if not data:
         return jsonify({'message': 'No data provided.'}), 400
 
     user_id = data.get('user_id', '')
-    entry_id = data.get('entry_id', '')
-
     if not user_id:
         return jsonify({'message': 'User ID is required.'}), 400
-    if not entry_id:
-        return jsonify({'message': 'Entry ID is required.'}), 400
 
     users = load_json_data(USERS_FILE)
     user_data = users.get(user_id)
     if not user_data:
         return jsonify({'message': 'User not found.'}), 403
+    if not check_perm(user_id, 'pos_access'):
+        return jsonify({'message': 'Permission denied.'}), 403
+
+    entry_id = data.get('entry_id', '')
+    if not entry_id:
+        return jsonify({'message': 'Entry ID is required.'}), 400
 
     waitlist = load_json_data(WAITLIST_FILE)
     found = None
@@ -21397,24 +21408,26 @@ def waitlist_no_show():
 
 @app.route('/api/waitlist/cancel', methods=['POST'])
 def waitlist_cancel():
-    """Cancel a waitlist entry."""
+    """Cancel a waitlist entry. Requires pos_access."""
     data = request.json
     if not data:
         return jsonify({'message': 'No data provided.'}), 400
 
     user_id = data.get('user_id', '')
-    entry_id = data.get('entry_id', '')
-    reason = (data.get('reason') or '').strip()
-
     if not user_id:
         return jsonify({'message': 'User ID is required.'}), 400
-    if not entry_id:
-        return jsonify({'message': 'Entry ID is required.'}), 400
 
     users = load_json_data(USERS_FILE)
     user_data = users.get(user_id)
     if not user_data:
         return jsonify({'message': 'User not found.'}), 403
+    if not check_perm(user_id, 'pos_access'):
+        return jsonify({'message': 'Permission denied.'}), 403
+
+    entry_id = data.get('entry_id', '')
+    reason = (data.get('reason') or '').strip()
+    if not entry_id:
+        return jsonify({'message': 'Entry ID is required.'}), 400
 
     waitlist = load_json_data(WAITLIST_FILE)
     found = None
@@ -21451,24 +21464,26 @@ def waitlist_cancel():
 @app.route('/api/waitlist/notify', methods=['POST'])
 def waitlist_notify():
     """Send a notification (email) to the customer that their table is ready.
-    Falls back gracefully if email is not configured.
+    Falls back gracefully if email is not configured. Requires pos_access.
     """
     data = request.json
     if not data:
         return jsonify({'message': 'No data provided.'}), 400
 
     user_id = data.get('user_id', '')
-    entry_id = data.get('entry_id', '')
-
     if not user_id:
         return jsonify({'message': 'User ID is required.'}), 400
-    if not entry_id:
-        return jsonify({'message': 'Entry ID is required.'}), 400
 
     users = load_json_data(USERS_FILE)
     user_data = users.get(user_id)
     if not user_data:
         return jsonify({'message': 'User not found.'}), 403
+    if not check_perm(user_id, 'pos_access'):
+        return jsonify({'message': 'Permission denied.'}), 403
+
+    entry_id = data.get('entry_id', '')
+    if not entry_id:
+        return jsonify({'message': 'Entry ID is required.'}), 400
 
     waitlist = load_json_data(WAITLIST_FILE)
     found = None
@@ -22158,8 +22173,15 @@ def gift_card_sell():
 
 @app.route('/api/gift-cards/redeem', methods=['POST'])
 def gift_card_redeem():
-    """Redeem a gift card. Deducts from balance."""
+    """Redeem a gift card. Deducts from balance. Requires manage_items or owner role."""
     data = request.json
+    admin_pin = data.get('adminPin', data.get('user'))
+    users = load_json_data(USERS_FILE)
+    if admin_pin not in users:
+        return jsonify({'message': 'User not found.'}), 404
+    if not check_perm(admin_pin, 'manage_items') and users[admin_pin].get('role') != 'owner':
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
     code = data.get('code', '').strip().upper()
     amount = float(data.get('amount', 0))
     order_id = data.get('order_id')
@@ -22215,8 +22237,15 @@ def gift_card_redeem():
 
 @app.route('/api/gift-cards/balance', methods=['POST'])
 def gift_card_balance():
-    """Check a gift card balance."""
+    """Check a gift card balance. Requires valid authenticated user."""
     data = request.json
+    admin_pin = data.get('adminPin', data.get('user'))
+    users = load_json_data(USERS_FILE)
+    if admin_pin not in users:
+        return jsonify({'message': 'User not found.'}), 404
+    if not check_perm(admin_pin, 'manage_items') and users[admin_pin].get('role') != 'owner':
+        return jsonify({'message': 'Insufficient permissions.'}), 403
+
     code = data.get('code', '').strip().upper()
 
     if not code:

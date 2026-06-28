@@ -1,5 +1,5 @@
 # POS Security Tasks
-> Last run: 2026-06-27 14:10 UTC
+> Last run: 2026-06-28 02:45 UTC
 
 ## CRITICAL — LOGIN & AUTH SECURITY (check every run)
 
@@ -38,6 +38,15 @@
 
 ### CRITICAL: force_pin_change bypass in 3x 2FA login paths — FIXED this run
 - [x] **Fix force_pin_change cleared in 2FA TOTP login, backup code login, email recovery login** — The previous fix only addressed the login() endpoint (PIN + password paths). Three 2FA handlers had IDENTICAL bug: they checked `force_pin_change`, set `force_pin_change_required: true`, then IMMEDIATELY cleared the flag to false and saved. Employee with weak PIN + 2FA could bypass forced PIN change by: login → 2fa_required → complete 2FA → flag cleared → logout → login again (no prompt). Fixed by removing the clear+save from all three 2FA handlers. Re-set force_pin_change=true for Owner (1111) and Manager (2222) whose flags were cleared before the original fix was in place. Verified: login returns force_pin_change_required: true and flag persists.
+
+### CRITICAL: Gift card redeem had NO authentication / anyone who knew a card code could debit money — FIXED this run
+- [x] **Require auth on /api/gift-cards/redeem** — `/api/gift-cards/redeem` accepted a gift card code + amount with zero authentication. No PIN, no session, no permission check. Anyone who knew a valid gift card code could drain its balance. Added `adminPin` with `check_perm(adminPin, 'manage_items') or owner role` check. Verified: no adminPin → 404, invalid user → 404, weak user → 403 Insufficient permissions, Owner → passes auth check.
+
+### CRITICAL: Gift card balance endpoint had NO authentication / exposed customer purchase data — FIXED this run
+- [x] **Require auth on /api/gift-cards/balance** — `/api/gift-cards/balance` returned gift card codes, balances, initial amounts, and customer names with zero auth. Added `adminPin` with `check_perm(adminPin, 'manage_items') or owner role` check. Verified: no auth → 404, Owner → passes auth check.
+
+### CRITICAL: Waitlist list endpoint had NO authentication / exposed PII — FIXED this run
+- [x] **Require auth on /api/waitlist/list** — `/api/waitlist/list` returned customer names, phone numbers, email addresses, party sizes, and notes with zero authentication. Added `user_id` with `check_perm(user_id, 'pos_access')` check. Verified: no auth → 403, Owner → passes.
 
 ## HIGH — DATA PROTECTION & COMPLIANCE
 
@@ -88,6 +97,9 @@
 ### MEDIUM: app.static_folder used as root for backup/restore — OPEN
 - [ ] **Review backup/restore file path scoping** — Backup and restore endpoints use `app.static_folder` as root directory. Could potentially overwrite non-JSON files in multi-tenant mode.
 
+### MEDIUM: Waitlist write endpoints had weak auth — FIXED this run
+- [x] **Add pos_access permission checks to waitlist write endpoints** — `waitlist_update`, `waitlist_check_in`, `waitlist_no_show`, `waitlist_cancel`, `waitlist_notify` only checked that `user_id` existed in users.json (no permission check). Any employee could manipulate the waitlist without needing POS access. Added `check_perm(user_id, 'pos_access')` to all five endpoints. Verified with curl: all return 403 for non-POS users.
+
 ## LOW — POLISH
 
 ### LOW: Password complexity — FIXED
@@ -101,7 +113,18 @@
 
 ## COMPLETED (this session)
 
-### Run: 2026-06-27 14:10 UTC
+### Run: 2026-06-28 02:45 UTC
+- [x] **Full security audit — gift card endpoints had NO auth on redeem + balance** — `/api/gift-cards/redeem` accepted any code+amount with zero authentication (attacker could drain gift card balances). `/api/gift-cards/balance` exposed card codes, balances, customer names with zero auth. Both now require `manage_items` or owner role. Verified with curl.
+- [x] **Fix waitlist endpoints with weak/no auth** — `/api/waitlist/list` had zero auth (exposed customer PII: names, phones, emails). `/api/waitlist/update`, `check_in`, `no_show`, `cancel`, `notify` only checked user_id exists (no permission check). Added `pos_access` permission check to all six endpoints. Verified with curl.
+- [x] **Endpoint auth coverage scan** — Scanned all 336 routes. No new unprotected sensitive endpoints found beyond the fixed gift card and waitlist issues. Payment/webhook/tables/delivery/gift card list/disable/report endpoints all have proper auth.
+- [x] **Payment data check** — Only `card_last4` and `card_type` stored in orders/payment transactions. No full card numbers, CVV, or track data stored. PCI DSS compliant.
+- [x] **File permissions** — All JSON data files at 0600. No world-readable sensitive files.
+- [x] **Login rate limiting** — 5/60s PIN attempts + 10min lockout. Working correctly.
+- [x] **Session security** — secrets.token_hex(32), 8h active/24h idle expiry. Logout invalidates sessions.
+- [x] **Debug mode** — debug=False, allow_unsafe_werkzeug=False.
+- [x] **No eval/exec or hardcoded credentials** — Clean scan.
+- [x] **XSS vectors** — `escHtml()` and `escapeHtml()` both use DOM-safe escaping (createTextNode/textContent). No unescaped user data found.
+- [x] **Activity log** — No PINs or passwords logged. Only method names and status flags.
 - [x] **Full security audit — all clean** — Verified: login rate limiting (5/60s + 10min lockout), session security (secrets.token_hex(32), 8h active/24h idle), TOTP encryption (Fernet key valid at 0600), file permissions (all JSON 0600), XSS (escHtml consistently used), payment data (only card_last4 stored, no CVV/track), no eval/exec vectors, debug disabled, CORS restricted, error handlers JSON-only. Multi-tenant platform endpoints properly secured. 336 routes scanned — all sensitive endpoints have auth checks. No new vulnerabilities found. All 6 open issues are pre-existing architectural items.
 - [x] **TOTP encryption key verified** — 44-byte valid Fernet key at 0600 permissions.
 - [x] **Gunicorn worker count** — Single worker (-w 1) confirmed: in-memory rate limiting is effective.
