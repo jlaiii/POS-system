@@ -1,12 +1,12 @@
 # POS Security Watchdog
 
-| Last run: 2026-06-28T19:01 UTC
+| Last run: 2026-06-28T19:37 UTC
 
-|| Total events tracked: 83 (SEC-001→SEC-083; all resolved)
+|| Total events tracked: 82 (SEC-001→SEC-083; all resolved)
 || Active blocks: 0 IPs
-|| Run result: Normal — 1 successful login (Owner), no threats.
+|| Run result: Normal — no activity since last run.
 
-## Current Run Findings (18:44–19:01 UTC, ~17 min window)
+## Current Run Findings (19:22–19:37 UTC, ~15 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -17,35 +17,33 @@ None.
 ### 🟡 MEDIUM (0)
 None.
 
-### 🟢 LOW (1)
-- **shift_log.json size decreased** — Baseline at 17:54 UTC: 31,532 bytes. Current: 26,712 bytes (~15% reduction). File not git-tracked. All 55 shifts are sub-6-minute test entries from cron workers. No shifts added after 17:54. Likely cleanup by Reliability Bot during clock-in/out test cycles. Low concern — all test data.
+### 🟢 LOW (0)
+None.
 
-### ℹ️ Activity Summary (18:44–19:01 UTC)
+### ℹ️ Activity Summary (19:22–19:37 UTC)
 
 **Server**: Healthy (HTTP 200 on port 5000 root endpoint, /api/health → {"status":"ok"}).
 
-**Activity**: 3 new activity_log entries since last run.
+**Activity**: 0 new activity_log entries since last run. No activity at all.
 
 | Time (UTC) | Event | User | IP | Details |
 |---|---|---|---|---|
-| 18:53:31 | login | Owner (1111) | 127.0.0.1 | curl/8.5.0, success |
-| 18:53:32 | admin_login | Owner (1111) | 127.0.0.1 | curl/8.5.0, success |
-| 18:53:38 | admin_login | Owner (1111) | 127.0.0.1 | curl/8.5.0, success |
+| — | No events | — | — | — |
 
-**Login attempts in window**: 1 total (0 failed, 1 successful).
+**Login attempts in window**: 0 total (0 failed, 0 successful).
 
 **Active shifts**: 0. No one clocked in.
 
-**Orders**: No new orders. 2 pending pre-existing orders (#128, #129). No change.
+**Orders**: No new orders. Same 2 pending pre-existing orders (Coke $3.25, Hamburger+Lemonade $16.24). No change.
 
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: 0 failed logins in 5 min window. Threshold: 5. No alert.
 - **Account enumeration**: 0 probes for non-existent PINs. No alert.
 - **Successful-after-failure**: No failed logins in window. No alert.
-- **Off-hours activity**: Current time 19:01 UTC (14:01 CT Sunday) — regular hours. No off-hours activity.
-- **Cross-IP targeting**: No activity — single user, single IP.
-- **Known IPs**: 127.0.0.1 is known for Owner (1111). No new IPs.
-- **Credential stuffing**: No pattern — single user, single IP, all successful.
+- **Off-hours activity**: Current time 19:37 UTC (14:37 CT Sunday) — regular hours. No off-hours activity.
+- **Cross-IP targeting**: No activity.
+- **Known IPs**: No new IPs seen.
+- **Credential stuffing**: No pattern.
 - **2FA check**: No 2FA events in this window.
 - **Account lockouts**: None.
 
@@ -57,25 +55,24 @@ None.
 - `require_2fa_for_admins`: true (unchanged).
 
 ### 💰 Financial Check / Order Anomaly Scan
-- 0 new orders in this ~17-min window.
+- 0 new orders in this ~15-min window.
 - No $0 orders, no 100% discounts, no unusual tip patterns.
 - No active cash drawer sessions.
-- 2 pending orders: #128 (Coke, $3.25, since 10:05 UTC — Reliability Bot test) and #129 (Hamburger+Lemonade, $16.24, since 14:50 UTC — Owner dine-in, ready_for_pickup). Neither anomalous.
-- Last order activity: Order #131 refunded at 15:30 UTC (Reliability Bot test).
+- 2 pending orders unchanged (Coke test-order, Owner dine-in). Neither anomalous.
+- Last order activity: Order #131 refunded at 15:30 UTC (Reliability Bot test — historical, unchanged).
 
 ### 📂 File Integrity
-- All 13 core JSON files parseable, valid.
+- All 13+ JSON files parseable, valid.
 - Owner account (1111) present, active, not banned. All 8 accounts intact.
 - No banned users. No account modifications.
-- **⚠ shift_log.json**: 31,532→26,712 bytes since 17:54 baseline (~15% decrease). No shifts added in this window. All 55 shifts are test entries (sub-6-min). Likely Reliability Bot cleanup. File not in git — no history to compare.
-- Git status: activity_log.json, login_attempts.json modified (from Owner login at 18:53). SECURITY_WATCHDOG.md being updated now.
+- No file size anomalies. shift_log.json stable at 26,712 bytes (unchanged).
+- Git status: clean — no uncommitted changes.
 - No new suspicious files — no .php, .exe, or anomalous files in workdir.
 - Server: **Healthy** (HTTP 200, /api/health → {"status":"ok"}).
 
 ### ✅ Actions Taken
 - 0 blocked IPs, 0 alerts fired.
-- 1 successful login (Owner, localhost, normal dev activity).
-- Logged shift_log.json size decrease as LOW finding.
+- 0 events to process. Quiet run.
 - Updated SECURITY_WATCHDOG.md timestamp and findings.
 
 ## Previous Run Findings (carried forward)
@@ -86,13 +83,13 @@ None.
 
 || Check | Status |
 |---|---|---|
-|| Current time | 2026-06-28T19:01 UTC — 14:01 CT (Sunday, regular hours) |
-|| Activity since last run | 3 events (Owner login + 2 admin_logins) |
-|| Login attempts (last ~17 min) | 1 total (0 failed, 1 successful) |
-|| Successful logins (this window) | 1 (Owner, 127.0.0.1) |
-|| Blocked IPs | 0 |
-|| Config changes | None |
-|| File integrity | 13/13 JSON valid. shift_log.json ↓ 15% (LOW, likely test data cleanup). All 8 accounts intact. No new suspicious files. Git: activity_log.json, login_attempts.json modified. |
-|| Users | 8 accounts. Admin 2FA: 2222=no, 7788=no (pre-existing gap — Sentinel). Owner 2FA disabled (exempted via config). |
-|| Unresolved events | 0 unresolved out of 83 total (SEC-001→SEC-083; all resolved) |
-|| Server | **Healthy** (HTTP 200 on port 5000, /api/health → {"status":"ok"}) |
+|| Current time | 2026-06-28T19:37 UTC — 14:37 CT (Sunday, regular hours) |
+||| Activity since last run | 0 events — no activity at all (since 18:53 UTC, 44 min ago) |
+||| Login attempts (last ~15 min) | 0 total (0 failed, 0 successful) |
+||| Successful logins (this window) | 0 |
+||| Blocked IPs | 0 |
+||| Config changes | None |
+||| File integrity | All JSON valid. No file size anomalies. All 8 accounts intact. Git: clean. No suspicious files. |
+||| Users | 8 accounts. Admin 2FA: 2222=no, 7788=no (pre-existing gap — Sentinel). Owner 2FA disabled (exempted via config). |
+||| Unresolved events | 0 unresolved out of 82 total (SEC-001→SEC-083; all resolved) |
+||| Server | **Healthy** (HTTP 200 on port 5000, /api/health → {"status":"ok"}) |
