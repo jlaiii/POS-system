@@ -1241,5 +1241,20 @@
         "reported_by": "IP Blocklist Manager",
         "resolved_at": "2026-06-28T22:28:46",
         "resolution": "Owner (1111) login from known IP (127.0.0.1) at 22:12 UTC. 22:12 UTC = 17:12 CT Sunday \u2014 regular business hours in US Central. No failed attempts, no brute force, no suspicious patterns. This is a known false positive from UTC-based off-hours detection. Same pattern as SEC-009 through SEC-083."
+    },
+    {
+        "id": "SEC-085",
+        "created_at": "2026-06-28T22:34:17.052198",
+        "severity": "MEDIUM",
+        "category": "anomaly",
+        "status": "unresolved",
+        "summary": "\u26a0\ufe0f Off-hours login: Owner (1111) at 22:34",
+        "detail": "User Owner (PIN 1111) logged in during off-hours (22:00\u201306:00) from IP 127.0.0.1.",
+        "affected_user": "1111",
+        "affected_user_name": "Owner",
+        "related_event": null,
+        "reported_by": "IP Blocklist Manager",
+        "resolved_at": null,
+        "resolution": null
     }
 ]
