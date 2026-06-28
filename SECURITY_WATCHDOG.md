@@ -1,12 +1,12 @@
 # POS Security Watchdog
 
-| Last run: 2026-06-28T23:28 UTC
+| Last run: 2026-06-28T23:49 UTC
 
-|||| Total events tracked: 85 (SEC-001→SEC-085; all resolved)
-|||| Active blocks: 0 IPs
-|||| Run result: Normal — no activity since last run. Resolved SEC-085 (off-hours Owner login).
+||||| Total events tracked: 86 (SEC-001→SEC-086; all resolved)
+||||| Active blocks: 0 IPs
+||||| Run result: Normal — 1 off-hours Owner login from localhost. Resolved SEC-086.
 
-## Current Run Findings (23:03–23:28 UTC, ~25 min window)
+## Current Run Findings (23:28–23:49 UTC, ~21 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -14,35 +14,35 @@ None.
 ### 🟠 HIGH (0)
 None.
 
-### 🟡 MEDIUM (0)
-None.
+### 🟡 MEDIUM (1)
+- **SEC-086** — ⚠️ Off-hours login: Owner (1111) at 23:44 from 127.0.0.1. Same pattern as SEC-009→SEC-085. Expected cron worker dev activity. ➡️ **Resolved**.
 
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (23:03–23:28 UTC)
+### ℹ️ Activity Summary (23:28–23:49 UTC)
 
 **Server**: Healthy (HTTP 200 on port 5000, /api/health → {"status":"ok"}).
 
-**Activity**: 0 new activity_log entries since last run. No system activity detected.
+**Activity**: 4 new activity_log entries — Owner (1111) PIN login + 3 admin_login events via Python-urllib/3.11 at 23:44:25–23:44:40. Rapid admin_login calls suggest a cron worker making multiple API requests.
 
-**Login attempts in window**: 0 login attempts. 0 brute force.
+**Login attempts in window**: 1 login attempt (Owner, 23:44, 127.0.0.1, success). 0 failed.
 
 **Active shifts**: 0. No one clocked in.
 
 **Orders**: None in this window.
 
 ### 📊 Login Security Deep-Dive
-- **Brute force check**: 0 failed logins in last 5 min. No alert.
+- **Brute force check**: 0 failed logins in last 15 min. No alert.
 - **Account enumeration**: 0 probes for non-existent PINs. No alert.
 - **Successful-after-failure**: No failed attempts. No alert.
-- **Off-hours activity**: None.
+- **Off-hours activity**: Owner login at 23:44 UTC (22:00–06:00 window) from 127.0.0.1 — same routine dev pattern.
 - **Cross-IP targeting**: No activity.
 - **Known IPs**: No new IPs seen.
 - **Credential stuffing**: No pattern.
 - **2FA check**: No 2FA events.
 - **Account lockouts**: None.
-- **Last login attempt**: 2026-06-28T22:34:17 UTC (Owner, 127.0.0.1, success) — unchanged since last run.
+- **Last login attempt**: 2026-06-28T23:44:26 UTC (Owner, 127.0.0.1, success).
 
 ### 🔒 Security Config
 - No changes detected. All thresholds normal.
@@ -67,7 +67,7 @@ None.
 
 ### ✅ Actions Taken
 - 0 blocked IPs, 0 alerts fired.
-- Resolved SEC-085 (Owner off-hours login at 22:34 from 127.0.0.1 — same pattern as SEC-009→SEC-084).
+- Resolved SEC-086 (Owner off-hours login at 23:44 from 127.0.0.1 — same pattern as SEC-009→SEC-085).
 - Updated SECURITY_WATCHDOG.md timestamp and findings.
 
 ## Previous Run Findings (carried forward)
@@ -78,13 +78,13 @@ None.
 
 | | Check | Status |
 |---|---|---|
-| | Current time | 2026-06-28T23:28 UTC — 18:28 CT (Sunday, regular hours) |
-| | Activity since last run | 0 activity_log entries — no activity |
-| | Login attempts (last ~25 min) | 0 total (0 failed) |
-| | Successful logins (this window) | 0 |
+| | Current time | 2026-06-28T23:49 UTC — 18:49 CT (Sunday, regular hours) |
+| | Activity since last run | 4 activity_log entries — Owner login + admin_logins at 23:44 via Python-urllib (cron worker) |
+| | Login attempts (last ~21 min) | 1 total (0 failed, 1 successful) |
+| | Successful logins (this window) | 1 (Owner, 23:44, 127.0.0.1) |
 | | Blocked IPs | 0 |
 | | Config changes | None |
-| | File integrity | All 51 JSON valid. No file size anomalies. All 8 accounts intact. Git: clean. |
+| | File integrity | All JSON valid. No file size anomalies. All 8 accounts intact. Git: clean. |
 | | Users | 8 accounts. Admin 2FA: 2222=no, 7788=no (pre-existing gap — Sentinel). Owner 2FA disabled (exempted via config). |
-| | Unresolved events | 0 unresolved out of 85 total (SEC-001→SEC-085; all resolved) |
+| | Unresolved events | 0 unresolved out of 86 total (SEC-001→SEC-086; all resolved) |
 | | Server | **Healthy** (HTTP 200 on port 5000, /api/health → {"status":"ok"}) |
