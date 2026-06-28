@@ -1,12 +1,12 @@
 # POS Security Watchdog
 
-| Last run: 2026-06-28T17:54 UTC
+| Last run: 2026-06-28T18:27 UTC
 
-|| Total events tracked: 83 (SEC-001→SEC-083; all resolved)
-|| Active blocks: 0 IPs
-|| Run result: Quiet — 1 admin_login since last run (Owner, localhost, normal)
+||| Total events tracked: 83 (SEC-001→SEC-083; all resolved)
+||| Active blocks: 0 IPs
+||| Run result: Silent — 0 logins in window. Nothing to report.
 
-## Current Run Findings (17:30–17:54 UTC, ~24 min window)
+## Current Run Findings (18:10–18:27 UTC, ~17 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -20,23 +20,23 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (17:26–17:54 UTC)
+### ℹ️ Activity Summary (18:10–18:27 UTC)
 
 **Server**: Healthy (HTTP 200 on port 5000 root endpoint, /api/health → {"status":"ok"}).
 
-**Activity**: 3 new entries since last run. Owner (1111) login + 2 admin_logins at 17:47:08–17:47:21 from 127.0.0.1 — normal batch of admin commands via curl.
+**Activity**: 0 new entries since last run. Zero activity of any kind.
 
-**Login attempts in window**: 0 total (0 failed, 3 successful).
+**Login attempts in window**: 0 total (0 failed, 0 successful).
 
 **Active shifts**: 0. No one clocked in.
 
-**Orders**: No new orders. All existing orders settled.
+**Orders**: No new orders. 2 pending pre-existing orders (#128, #129) — both Reliability Bot test/lifecycle orders from earlier.
 
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: 0 failed logins in 5 min window. Threshold: 5. No alert.
 - **Account enumeration**: 0 probes. No alert.
 - **Successful-after-failure**: No failed logins in window. No alert.
-- **Off-hours activity**: Current time 17:54 UTC (12:54 CT Sunday) — regular hours. No off-hours activity.
+- **Off-hours activity**: Current time 18:27 UTC (13:27 CT Sunday) — regular hours. No off-hours activity.
 - **Cross-IP targeting**: No activity whatsoever.
 - **Known IPs**: No new IPs. All activity from 127.0.0.1 (known).
 - **Credential stuffing**: No pattern detected.
@@ -51,22 +51,23 @@ None.
 - `require_2fa_for_admins`: true (unchanged).
 
 ### 💰 Financial Check / Order Anomaly Scan
-- 0 new orders in this ~24-min window.
-- No $0 orders (one cancelled test order from earlier with $0 total — not actionable), no 100% discounts, no unusual tip patterns.
+- 0 new orders in this ~17-min window.
+- No $0 orders, no 100% discounts, no unusual tip patterns.
 - No active cash drawer sessions.
-- Last order activity: Reliability Bot test cycle at 15:30 (Order #129 by Owner, #131 by Reliability Bot). Both settled.
+- 2 pending orders: #128 (Coke, $3.25, since 10:05 UTC — Reliability Bot test) and #129 (Hamburger+Lemonade, $16.24, since 14:50 UTC — Owner dine-in, ready_for_pickup). Neither is anomalous.
+- Last order activity: Reliability Bot test cycle at 15:30 (Order #131). Refunded.
 
 ### 📂 File Integrity
 - All 51 JSON files parseable, stable sizes.
 - Owner account (1111) present, active, not banned. All 8 accounts intact.
 - No banned users.
-- Git status: Clean (no uncommitted changes).
+- Git status: SECURITY_WATCHDOG.md modified (this run's update).
 - No new suspicious files — no .php, .exe, or anomalous files found.
 - Server: **Healthy** (HTTP 200, /api/health → {"status":"ok"}).
 
 ### ✅ Actions Taken
 - 0 blocked IPs, 0 alerts fired.
-- 0 failed logins — all clear.
+- 0 logins of any kind — all clear.
 - Updated SECURITY_WATCHDOG.md timestamp and findings with current run data.
 - Nothing actionable — silent delivery.
 
@@ -76,15 +77,15 @@ None.
 
 ## System State
 
-|| Check | Status |
+||| Check | Status |
 |---|---|---|
-|| Current time | 2026-06-28T17:54 UTC — 12:54 CT (Sunday, regular hours) |
-|| Activity since last run | 3 events — Owner logins at 17:47 UTC |
-|| Login attempts (last ~24 min) | 3 total (0 failed, 3 successful) |
-|| Successful logins (this window) | 3 |
-|| Blocked IPs | 0 |
-|| Config changes | None |
-|| File integrity | OK. All 51 JSON files parseable. All 8 accounts intact. No new suspicious files. Git clean. |
-|| Users | 8 accounts. Admin 2FA: 2222=no, 7788=no (pre-existing gap — Sentinel). Owner 2FA disabled (exempted via config). |
-|| Unresolved events | 0 unresolved out of 83 total (SEC-001→SEC-083; all resolved) |
-|| Server | **Healthy** (HTTP 200 on port 5000, /api/health → {"status":"ok"}) |
+||| Current time | 2026-06-28T18:27 UTC — 13:27 CT (Sunday, regular hours) |
+||| Activity since last run | 0 events — zero activity of any kind |
+||| Login attempts (last ~17 min) | 0 total (0 failed, 0 successful) |
+||| Successful logins (this window) | 0 |
+||| Blocked IPs | 0 |
+||| Config changes | None |
+||| File integrity | OK. All 51 JSON files parseable. All 8 accounts intact. No new suspicious files. Git: SECURITY_WATCHDOG.md modified. |
+||| Users | 8 accounts. Admin 2FA: 2222=no, 7788=no (pre-existing gap — Sentinel). Owner 2FA disabled (exempted via config). |
+||| Unresolved events | 0 unresolved out of 83 total (SEC-001→SEC-083; all resolved) |
+||| Server | **Healthy** (HTTP 200 on port 5000, /api/health → {"status":"ok"}) |
