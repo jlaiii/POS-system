@@ -150,7 +150,7 @@
             "pos_access"
         ],
         "pay_rate": 14.0,
-        "scheduled_start": "11:00",
+        "scheduled_start": null,
         "totp_secret": null,
         "totp_enabled": false,
         "totp_backup_codes": [],
@@ -158,7 +158,6 @@
         "pin_reset_notification": null,
         "force_pin_change": true,
         "temp_pin": null,
-        "temp_pin_expiry": null,
-        "scheduled_start": null
+        "temp_pin_expiry": null
     }
 }
