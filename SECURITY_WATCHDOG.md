@@ -1,12 +1,12 @@
 # POS Security Watchdog
 
-| Last run: 2026-06-28T17:30 UTC
+| Last run: 2026-06-28T17:54 UTC
 
 || Total events tracked: 83 (SEC-001→SEC-083; all resolved)
 || Active blocks: 0 IPs
 || Run result: Quiet — 1 admin_login since last run (Owner, localhost, normal)
 
-## Current Run Findings (17:20–17:30 UTC, ~10 min window)
+## Current Run Findings (17:30–17:54 UTC, ~24 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -20,23 +20,23 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (17:02–17:20 UTC)
+### ℹ️ Activity Summary (17:26–17:54 UTC)
 
 **Server**: Healthy (HTTP 200 on port 5000 root endpoint, /api/health → {"status":"ok"}).
 
-**Activity**: 1 new entry since last run. Owner (1111) admin_login at 17:26:09 from 127.0.0.1 — normal single successful login.
+**Activity**: 3 new entries since last run. Owner (1111) login + 2 admin_logins at 17:47:08–17:47:21 from 127.0.0.1 — normal batch of admin commands via curl.
 
-**Login attempts in window**: 0 total (0 failed, 0 successful).
+**Login attempts in window**: 0 total (0 failed, 3 successful).
 
 **Active shifts**: 0. No one clocked in.
 
-**Orders**: No new orders since last run. Existing orders #128 (pending) and #129 (pending) unchanged.
+**Orders**: No new orders. All existing orders settled.
 
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: 0 failed logins in 5 min window. Threshold: 5. No alert.
 - **Account enumeration**: 0 probes. No alert.
 - **Successful-after-failure**: No failed logins in window. No alert.
-- **Off-hours activity**: Current time 17:20 UTC (12:20 CT Sunday) — regular hours. No off-hours activity.
+- **Off-hours activity**: Current time 17:54 UTC (12:54 CT Sunday) — regular hours. No off-hours activity.
 - **Cross-IP targeting**: No activity whatsoever.
 - **Known IPs**: No new IPs. All activity from 127.0.0.1 (known).
 - **Credential stuffing**: No pattern detected.
@@ -48,15 +48,16 @@ None.
 - `blocked_ips`: [] — no active blocks.
 - `auto_block_threshold`: 5 (normal).
 - `rate_limit_enabled`: true (active).
+- `require_2fa_for_admins`: true (unchanged).
 
 ### 💰 Financial Check / Order Anomaly Scan
-- 0 new orders in this ~18-min window.
-- No $0 orders, no 100% discounts, no unusual tip patterns.
+- 0 new orders in this ~24-min window.
+- No $0 orders (one cancelled test order from earlier with $0 total — not actionable), no 100% discounts, no unusual tip patterns.
 - No active cash drawer sessions.
-- Last order activity: Reliability Bot test cycle at 15:30 (Order #129 by Owner at 14:50, #131 by Reliability Bot at 15:30). Both settled — no active impact.
+- Last order activity: Reliability Bot test cycle at 15:30 (Order #129 by Owner, #131 by Reliability Bot). Both settled.
 
 ### 📂 File Integrity
-- All 49 JSON files parseable, stable sizes.
+- All 51 JSON files parseable, stable sizes.
 - Owner account (1111) present, active, not banned. All 8 accounts intact.
 - No banned users.
 - Git status: Clean (no uncommitted changes).
@@ -77,13 +78,13 @@ None.
 
 || Check | Status |
 |---|---|---|
-|| Current time | 2026-06-28T17:30 UTC — 12:30 CT (Sunday, regular hours) |
-|| Activity since last run | 1 event — Owner admin_login at 17:26 UTC |
-|| Login attempts (last ~10 min) | 0 total (0 failed, 0 successful) |
-|| Successful logins (this window) | 0 |
+|| Current time | 2026-06-28T17:54 UTC — 12:54 CT (Sunday, regular hours) |
+|| Activity since last run | 3 events — Owner logins at 17:47 UTC |
+|| Login attempts (last ~24 min) | 3 total (0 failed, 3 successful) |
+|| Successful logins (this window) | 3 |
 || Blocked IPs | 0 |
 || Config changes | None |
-|| File integrity | OK. All 49 JSON files parseable. All 8 accounts intact. No new suspicious files. Git clean. |
+|| File integrity | OK. All 51 JSON files parseable. All 8 accounts intact. No new suspicious files. Git clean. |
 || Users | 8 accounts. Admin 2FA: 2222=no, 7788=no (pre-existing gap — Sentinel). Owner 2FA disabled (exempted via config). |
 || Unresolved events | 0 unresolved out of 83 total (SEC-001→SEC-083; all resolved) |
 || Server | **Healthy** (HTTP 200 on port 5000, /api/health → {"status":"ok"}) |
