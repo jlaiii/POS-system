@@ -18331,5 +18331,19 @@
             "deleted_user_name": "RelBot Test User",
             "deleted_user_role": "user"
         }
+    },
+    {
+        "timestamp": "2026-06-28T08:25:12.253255",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
     }
 ]
