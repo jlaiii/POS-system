@@ -17862,5 +17862,71 @@
             "category": "Snacks",
             "name": "SRE Test \"Special\" \ud83c\udf89 Item"
         }
+    },
+    {
+        "timestamp": "2026-06-28T02:42:23.798421",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-28T02:42:25.847607",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-28T02:42:33.913095",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-28T02:42:51.081189",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-28T02:43:21.005456",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-28T02:43:28.516838",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
     }
 ]

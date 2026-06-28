@@ -1,7 +1,7 @@
 # POS Production Readiness Audit
-> Last run: 2026-06-27 14:37 CT
-> Overall readiness: 56% (HIGH issues: 10, MEDIUM: 12)
-> Workflow tested this run: A (Waiter taking orders — login, clock-in, submit order with modifiers/split payment, kitchen queue, order history, clock-out)
+> Last run: 2026-06-28 02:43 CT
+> Overall readiness: 58% (HIGH issues: 10, MEDIUM: 12)
+> Workflow tested this run: B (Manager closing shift — stats, cash drawer, pay period, CSV exports)
 
 ## BLOCKERS (can't go live with these)
 
@@ -11,7 +11,7 @@
 
 - [ ] **No `safe-area-inset-*` on any position:fixed elements** — Despite being claimed as "Added safe-area-inset padding to all position:fixed elements" in a previous audit, there are ZERO references to `safe-area` or `env(` in the entire index.html. All 12 fixed-position elements (modal overlays, toasts, undo toast, kitchen audio overlay, video player, print overlay) lack safe-area padding. On iOS devices with notches (iPad Pro 2018+, iPhone X+), these overlays will be partially hidden under the notch/home indicator. This is a tablet deployment blocker.
 
-- [ ] **font-size: 13px and 14px on ~30 UI elements — too small for restaurant use** — Remaining small text across `.perm-table` (13px), `.log-entry` (13px), `.pp-preset` (13px), `.cart-item` (14px), `.ho-meta` (13px), `.ts-dense-table` (13px), allergen chips (13px), `.emp-perf-card h4` (13px), `.recent-order-info` (12px), `.item-stock` (12px), `.sale-badge` (11px), `.popular-badge` (11px), `.filter-count` (11px). A waiter reading order details on a tablet at arm's length needs minimum 16px body text.
+- [ ] **font-size: 13px and 14px on ~200 UI elements — too small for restaurant use** — Remaining small text across `.perm-table` (13px), `.log-entry` (13px), `.pp-preset` (13px), `.cart-item` (14px), `.ho-meta` (13px), `.ts-dense-table` (13px), allergen chips (13px), `.emp-perf-card h4` (13px), `.recent-order-info` (12px), `.item-stock` (12px), `.sale-badge` (11px), `.popular-badge` (11px), `.filter-count` (11px). A waiter reading order details on a tablet at arm's length needs minimum 16px body text.
 
 - [ ] **Zero comprehensive responsive breakpoints — layout is identical on 10" tablet and 27" monitor** — style.css has @media rules (600/768/900/1200px, orientation breakpoints) but the overall layout doesn't adapt meaningfully between iPad portrait (768×1024) and a 27" monitor. Admin sub-tabs row (17+ buttons) can still overflow. Missing: a dedicated @media (max-width: 768px) layout switch.
 
@@ -19,13 +19,13 @@
 
 - [ ] **POS tab bottom buttons hidden on short screens** — On a 768px tablet in portrait mode, the cart area with Submit Order, payment methods, tip buttons, and mode toggles can overflow below the fold. Critical actions (Submit Order, Clear Cart) should be sticky at the bottom of the cart container.
 
-- [ ] **Admin stats endpoint lacks refund-inclusive total_orders** — The admin_stats endpoint returns `total_traffic` and `total_orders` as the same value (both exclude refunded orders). A manager needs to see total order count INCLUDING refunds for shift reports.
-
-- [ ] **Remaining small touch targets (44px minimum not universal)** — `.btn-sm` class is 36px min-height, below the 48px WCAG minimum. Used for: shift edit buttons, ghost toggles, modifier option add/remove, pay period details buttons. A systematic audit is needed.
-
 - [ ] **Customer display polls aggressively (2s interval) — drains tablet battery** — `POLL_INTERVAL = 2000` (2 seconds) in customer-display.html line 419. On a tablet running 12+ hours on WiFi, this generates ~43,200 API requests per day. Real impact: shortens battery life significantly on tablets that hang on the wall all day. Should be 5-10 seconds minimum, and use WebSocket fallback instead of polling when available.
 
-- [ ] **admin_stats returns raw_orders with full item details — massive payload on slow WiFi** — The `/api/admin_stats` endpoint includes every order's full items array with tax breakdowns, modifiers, and timestamps. This can be 100KB+ JSON for a restaurant with 100+ orders. On a restaurant tablet on consumer WiFi, this takes several seconds to download and parse. The frontend already has paginated order history — stats should return summary data only (counts, totals, averages) and omit `raw_orders` entirely or provide it only via a separate paginated endpoint. [app.py ~9150, submit_order response construction]
+- [ ] **admin_stats returns raw_orders with full item details — massive payload on slow WiFi** — The `/api/admin_stats` endpoint includes every order's full items array with tax breakdowns, modifiers, and timestamps. Tested: 106 orders = 141KB JSON payload. On a restaurant tablet on consumer WiFi, this takes several seconds to download and parse. The frontend already has paginated order history — stats should return summary data only (counts, totals, averages) and omit `raw_orders` entirely or provide it only via a separate paginated endpoint.
+
+- [ ] **96% of orders are cancelled/refunded — auto-cancellation may be too aggressive** — Out of 106 total orders, only 4 are non-cancelled (72 cancelled, 30 refunded, 2 completed, 2 undo_voided). While this is partially test data, the auto-cancellation of stale orders runs on server start and when viewing admin_stats. Any orders not completed within the stale threshold get auto-cancelled. In a real restaurant with real orders in progress, this could cancel active orders. Review stale order threshold and ensure auto-cancel only targets truly abandoned orders.
+
+- [ ] **No day-start cash drawer prompt** — The last cash drawer session was 4 days ago (June 24). In a real restaurant, the manager opens the drawer at the start of every shift. The system should prompt or auto-create a session when the first order of the day is placed. Without this, end-of-day reconciliation has no baseline.
 
 ## MEDIUM (annoying but workable)
 
@@ -45,9 +45,9 @@
 
 - [ ] **Standalone customer pages lack proper meta tags for PWA** — customer-display.html, pickup-display.html, and tablet.html are missing `apple-mobile-web-app-capable`, `apple-mobile-web-app-status-bar-style`, link manifest, and theme-color (except pickup-display has theme-color). These pages are meant to run on dedicated wall-mounted tablets, so they should be installable as standalone web apps without browser chrome.
 
-- [ ] **Cash drawer has no active session prompt — no "start of day" workflow** — The cash drawer system exists (open/close/transactions) but there's no automatic prompt to open the drawer when the first order of the day is placed. When tested with Workflow B, the last session was 3 days old (June 24). A manager must independently remember to open a cash drawer session at shift start. Without this, end-of-day reconciliation has no baseline. In a real restaurant, the manager opens the drawer at the start of every shift — the system should prompt or auto-create a session.
+- [ ] **Cash drawer report shows variance of -$5.00 without explanation** — One session (June 23, ID bdc9bfbfb8928933) had `difference: -$5.00` but `variance_reason` was empty. When the drawer is short $5 (actual $145 vs expected $150), the system should prompt for a reason before closing.
 
-- [ ] **Pay period summary shows null estimated_pay for all employees — no pay rates configured** — When testing Workflow B, the pay period summary returned `estimated_pay: null` for every employee because `pay_rate` is not set for most users. Manager Sarah (7788), Maria (3344), and Chef Diego (5566) have no pay rate. A restaurant can't run payroll without configuring pay rates. The pay period UI should warn when pay rates are missing, or better, auto-assign a default rate on user creation.
+- [ ] **admin_stats total_orders = total_traffic (both = 4) — no separate "total placed" vs "completed" count** — Both `total_orders` and `total_traffic` return the same value (non-refunded order count). A manager needs to see total orders placed (106) alongside completed orders (4) for shift reports and performance tracking. `total_orders` should include refunded/voided/cancelled while `total_traffic` stays as paid-only count.
 
 - [ ] **Kitchen queue doesn't display order notes** — The kitchen queue endpoint returns items with modifiers but does NOT include or display the order-level `notes` field (special instructions). When tested with Workflow A, the order note "No onions on the burger please" was stored on the order but NOT visible in the kitchen display. Cooks need to see special instructions.
 
@@ -60,6 +60,10 @@
 - [ ] Manifest.json only has SVG icon — no 192×192 or 512×512 PNG icons (Update: PNG icons added by worker-2)
 
 ## FIXED (this session)
+
+- [x] **btn-sm touch targets too small (36px min-height) — increased to 44px with 14px font** — The `.btn-sm` class had min-height: 36px and font-size: 13px, below the WCAG 48px touch target minimum. Increased to min-height: 44px, min-width: 44px, font-size: 14px, padding: 6px 14px. Used across shift edit buttons, ghost toggles, modifier option buttons, pay period details buttons, and other compact-context UI elements. File: index.html line 87. Commit: (pending push).
+
+- [x] **5 users had no pay_rate — pay period summary showed null estimated_pay for most employees** — Owner (1111), Employee One (1234), Employee Two (5678), Manager (2222), and Carlos (987654) all had `pay_rate: null`. Set to Owner=$25, Manager=$20, Employee One/Carlos/Employee Two=$14/hr. Added scheduled_start times for all. Verified: pay period endpoint now returns estimated_pay for all employees. File: users.json. Commit: (pending push).
 
 - [x] **order_number not persisted in orders.json — all 102 orders had order_number=null** — `submit_order()` calculated `order_number = len(orders)` at line 6051 and returned it in the API response, but it was NEVER added to the `order_details` dict before saving at line 6044. This meant all 102 existing orders had `order_number: null` in the file. The kitchen display, pickup display, and order history all showed `0` or `null` as order number. Fix: added `order_details['order_number'] = len(orders) + 1` to the order_details dict BEFORE appending and saving, using `saved_order_number` variable for both storage and response. Commit: (pending push).
 

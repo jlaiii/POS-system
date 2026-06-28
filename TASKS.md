@@ -736,3 +736,15 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 - [ ] **Add table merge/split for large parties** — Allow waiters to merge adjacent tables into a single logical table (e.g., Tables 5+6 → "Table 5-6"). Merged tables show in table status dashboard with chain-link icon and combined capacity. Orders under merged tables grouped in kitchen display. Split function separates back into individual tables. Prevent double-booking on merged tables. Essential floor management feature for busy restaurants handling walk-in large parties. i18n EN+ES.
 
 - [ ] **Add void/refund reason analytics and reporting** — Categorized reason codes for voids and refunds: customer changed mind, preparation error, quality issue, wrong item entered, long wait, duplicate order, other. Track reason per voided/refunded item on order records. New admin analytics report with void frequency by reason, by employee, by time of day, by day of week. Configurable required-reason enforcement in admin settings. Export as CSV for operational review. Helps identify training needs, menu design issues, and process bottlenecks. i18n EN+ES.
+
+## New Tasks (from Production Auditor — 2026-06-28)
+
+### Priority: HIGH
+
+- [ ] **Prompt cash drawer open at day start / first order** — The cash drawer system works (open/close/transactions/report) but there is no automatic prompt to open the drawer when the first order of the day is placed. When tested with Workflow B, the last session was 4 days old. A manager must independently remember to open a cash drawer session at shift start — easy to forget on a busy morning. Without a baseline opening, end-of-day reconciliation has no starting balance. Fix: auto-create a cash drawer session if none is active and the last closed session was >12h ago, or prompt the first POS user to open the drawer. [Production Auditor — Workflow B: verified last session was June 24, no active session, no prompt.]
+
+### Priority: MEDIUM
+
+- [ ] **admin_stats: add total_placed_orders (all orders) separate from total_traffic (paid only)** — Both `total_orders` and `total_traffic` in the admin_stats response currently return identical values (both count only non-refunded/non-voided/non-cancelled orders). A manager needs to see total orders placed including refunds/voids/cancelled to assess order volume and cancellation rate. Fix: add `total_placed_orders` field counting ALL orders before filtering, keep `total_orders` as the "good" count. Frontend: show both numbers on the dashboard stat cards. [Production Auditor — Verified: 106 raw orders, only 4 counted in total_orders/total_traffic.]
+
+- [ ] **Enforce variance_reason when cash drawer short/over** — One session (June 23) had `difference: -$5.00` but `variance_reason` was empty string. When closing the drawer with non-zero variance, the system should require a reason before closing. Without this, there's no accountability for cash discrepancies. [Production Auditor — Workflow B: found variance of -$5.00 with no explanation.]
