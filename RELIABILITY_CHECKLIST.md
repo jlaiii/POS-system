@@ -1,16 +1,16 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-28T02:13 UTC
-> Total checks: 1648
-> Healthy: 1648 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-28T02:40 UTC
+> Total checks: 1655
+> Healthy: 1655 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 — 200 OK (root + /api/health) [verified 02:13]
-- [x] All JSON data files exist and are valid — 8/8 core files valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) [verified 02:13]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', 8 users, ['*'] permissions, role='owner') [verified 02:13]
-- [x] Git repo is clean — clean (committed SRE Bot test artifacts + pushed) [verified 02:13]
+- [x] Flask app responds on port 5000 — 200 OK (root + /api/health) [verified 02:40]
+- [x] All JSON data files exist and are valid — 8/8 core files valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) [verified 02:40]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', 8 users, ['*'] permissions, role='owner') [verified 02:40]
+- [x] Git repo is clean — clean (committed dirty DB_TASKS.md) [verified 02:40]
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/health — {"status":"ok"} (GET) [verified 01:50]
@@ -29,17 +29,17 @@
 - [x] Backup integrity — latest backup (01:46, 50 files, valid DB, owner 1111 intact) [verified 01:50]
 
 ## EVERY 4 HOURS
-- [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 200, 0 pending orders [verified 01:50]
-- [x] Pickup display: verify /api/pickup-display/queue works — GET, 200, 1 order ready [verified 01:50]
-- [x] Webhook: verify webhook config endpoint works — /api/security/discord_webhook returns config, 200 OK, not set [verified 01:50]
-- [x] Cash register: /api/cash_drawer/status (POST with adminPin=1111) returns active=false, last closed Jun 24, 10 sessions [verified 22:47]
+|- [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 200, 0 pending orders [verified 02:40]
+|- [x] Pickup display: verify /api/pickup-display/queue works — GET, 200, 200 OK [verified 02:40]
+|- [x] Webhook: verify webhook config endpoint works — /api/security/discord_webhook returns config, 200 OK, not set [verified 01:50]
+|- [x] Cash register: /api/cash_drawer/status (POST with adminPin=1111) returns active=false, 200 OK [verified 02:40]
 - [x] User CRUD: add test user (9977 via /api/add_user) -> verify -> delete -> confirmed gone [verified 02:13]
 - [x] Loyalty: points earned on order — 14 loyalty entries (phone-keyed dict), data intact [verified 01:06]
 - [x] Clock-in late detection: 8 late records (up to 563min across shifts), data intact [verified 22:47]
 - [x] Break tracking: 4 shifts with breaks, break data intact [verified 01:06]
 - [x] Shift edit: 5 shifts with edits, audit trail intact (Owner + Employee One) [verified 01:06]
-- [x] CSV export: verify /api/export/shifts_csv returns CSV — POST, 200, CSV headers + data [verified 18:26]
-- [x] Offline queue: verify /api/sync_orders endpoint exists — POST, 400, "No orders provided" [verified 18:26]
+|- [x] CSV export: verify /api/export/shifts_csv returns CSV — POST, 200, CSV headers + data [verified 02:40]
+|- [x] Offline queue: verify /api/sync_orders endpoint exists — POST, 400, "No orders provided" [verified 02:40]
 - [x] Order lifecycle: create order via /api/submit_order → order 126 created → refunded via /api/orders/refund, 200 OK [verified 01:06]
 - [x] Special chars test: add item with emoji+quotes via /api/add_item → verify in items.json → delete → confirmed gone. Also cleaned test item from inventory.json. [verified 02:13]
 
@@ -55,11 +55,11 @@
 - [x] Backup integrity: verify latest backup is valid and not empty — 2026-06-27_16-46-43.tar.gz (valid, 50 files, owner 1111 intact), DB backup 16:46 (integrity=ok, 25 tables) [verified 17:11]
 
 ## DISCOVERED (failures you've seen before — check every 2h)
-- [x] **Flask process dying between runs** — Now on gunicorn+gevent via scripts/run_flask.sh, stable. [verified 00:22 — running, gunicorn+gevent, single master+worker]
-- [x] **Dual Flask instances on port 5000** — Single gunicorn master+worker. No recurrence. [verified 00:22 — single master+worker, clean]
-- [x] **items.json + users.json simultaneous data corruption** — Items (5 categories) and users (8 users) intact. Monitor every 2h. [verified 00:22 — healthy]
-- [x] **Owner username changed to 'testuser' (3rd data corruption incident)** — Owner PIN 1111 username='jayadmin', name='Owner'. No corruption. [verified 00:22 — healthy]
-- [x] **items.json schema changed to category-keyed format** — Items stored as {Foods:[...], Drinks:[...], ...}. Used by /api/items (GET). [verified 00:22]
+|- [x] **Flask process dying between runs** — Now on gunicorn+gevent via scripts/run_flask.sh, stable. [verified 02:40 — running, gunicorn+gevent, single master+worker]
+|- [x] **Dual Flask instances on port 5000** — Single gunicorn master+worker. No recurrence. [verified 02:40 — single master+worker, clean]
+|- [x] **items.json + users.json simultaneous data corruption** — Items (5 categories, 19 items) and users (8 users) intact. Monitor every 2h. [verified 02:40 — healthy]
+|- [x] **Owner username changed to 'testuser' (3rd data corruption incident)** — Owner PIN 1111 username='jayadmin', name='Owner'. No corruption. [verified 02:40 — healthy]
+|- [x] **items.json schema changed to category-keyed format** — Items stored as {Foods:[...], Drinks:[...], ...}. Used by /api/items (GET). [verified 02:40]
 
 ## FIXES APPLIED
 ||- [2026-06-27 14:53] **Flask server down (14th occurrence)** — Server not responding (000). No process on port 5000 despite gunicorn/run_flask.sh being the launcher. Fix: started gunicorn+gevent via scripts/run_flask.sh. All CRITICAL and HOURLY checks passed (51 JSON files valid, Owner PIN 1111 intact, git clean). Disk 37%, RAM 34%. Downtime: ~1min.
