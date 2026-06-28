@@ -1,28 +1,28 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-28T05:59 UTC
-> Total checks: 1748
-> Healthy: 1748 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-28T06:27 UTC
+> Total checks: 1762
+> Healthy: 1762 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 — 200 OK (root + /api/health) [verified 05:59]
-- [x] All JSON data files exist and are valid — 9/9 core files valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points, cleared_orders) [verified 05:59]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', 8 users, ['*'] permissions, role='owner') [verified 05:59]
-- [x] Git repo is clean — clean (committed dirty activity_log.json + SECURITY_WATCHDOG.md) [verified 05:59]
+- [x] Flask app responds on port 5000 — 200 OK (root + /api/health) [verified 06:27]
+- [x] All JSON data files exist and are valid — 9/9 core files valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points, cleared_orders) [verified 06:27]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', 8 users, ['*'] permissions, role='owner') [verified 06:27]
+- [x] Git repo is clean — clean (no uncommitted changes) [verified 06:27]
 
 ## HOURLY (check if last check was >1h ago)
-||- [x] /api/health — {"status":"ok"} (GET) [verified 05:37]
-||- [x] Frontend loads — 200, HTML OK, ~1.38MB [verified 05:37]
-||- [x] /api/items returns items — GET, 200 OK, 5 categories (Breakfast, Drinks, Foods, Salads, Snacks), 19 items [verified 05:21]
+||- [x] /api/health — {"status":"ok"} (GET) [verified 06:27]
+||- [x] Frontend loads — 200, HTML OK, ~1.38MB [verified 06:27]
+||- [x] /api/items returns items — GET, 200 OK, 5 categories (Breakfast, Drinks, Foods, Salads, Snacks), 19 items [verified 06:27]
 ||- [x] /api/login works — POST userId=1111, pin=1111, role=owner, message="Login successful", permissions=['*'], totp_enabled=false, force_pin_change_required=true [verified 05:37]
-||- [x] /api/admin_stats returns stats — 200 OK, total_orders=4, total_sales=$45.96, avg_sale=$11.49, backup_health=green [verified 05:59]
-||- [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 200 OK, 55 shifts [verified 05:59]
-||- [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 05:59]
-||- [x] index.html size check — 1375264 bytes (normal, ~1.38MB) [verified 05:59]
-||- [x] Disk space check — 37% used (24G free, OK) [verified 05:59]
-||- [x] Memory check — ~37% RAM used, 0 swap [verified 05:59]
+||- [x] /api/admin_stats returns stats — 200 OK, avg_sale=$11.49, backup_health=green, 4 cash sales [verified 06:27]
+||- [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 200 OK, 55 shifts [verified 06:27]
+||- [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 06:27]
+||- [x] index.html size check — 1375264 bytes (normal, ~1.38MB) [verified 06:27]
+||- [x] Disk space check — 37% used (24G free, OK) [verified 06:27]
+||- [x] Memory check — ~37% RAM used, 0 swap [verified 06:27]
 ||- [x] Clock-in/out: employee 1234 status checked — not clocked in [verified 05:37]
 ||- [x] CSV export — /api/export/shifts_csv returns CSV with adminPin=1111, valid, 5115 bytes [verified 05:37]
 ||- [x] Offline queue — /api/sync_orders exists, returns 400 'No orders provided' [verified 05:37]
@@ -31,7 +31,7 @@
 ## EVERY 4 HOURS
 |- [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 200, 0 pending orders [verified 02:40]
 |- [x] Pickup display: verify /api/pickup-display/queue works — GET, 200, 200 OK [verified 02:40]
-|- [x] Webhook: verify webhook config endpoint works — /api/security/discord_webhook returns config, 200 OK, not set [verified 01:50]
+|- [x] Webhook: verify webhook config endpoint works — /api/security/discord_webhook returns config, 200 OK, not set [verified 06:27]
 |- [x] Cash register: /api/cash_drawer/status (POST with adminPin=1111) returns active=false, 200 OK [verified 02:40]
 |- [x] User CRUD: add test user (9977 via /api/add_user) -> verify -> delete -> confirmed gone [verified 02:13]
 |- [x] Loyalty: points earned on order — 14 loyalty entries (phone-keyed dict), data intact [verified 05:21]
