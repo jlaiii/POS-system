@@ -1,12 +1,12 @@
 # POS Security Watchdog
 
-| Last run: 2026-06-28T23:03 UTC
+| Last run: 2026-06-28T23:28 UTC
 
-||| Total events tracked: 84 (SEC-001→SEC-085; all resolved)
-||| Active blocks: 0 IPs
-||| Run result: Normal — Owner login at 22:34 UTC, handled and resolved.
+|||| Total events tracked: 85 (SEC-001→SEC-085; all resolved)
+|||| Active blocks: 0 IPs
+|||| Run result: Normal — no activity since last run. Resolved SEC-085 (off-hours Owner login).
 
-## Current Run Findings (22:46–23:03 UTC, ~17 min window)
+## Current Run Findings (23:03–23:28 UTC, ~25 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -20,7 +20,7 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (22:46–23:03 UTC)
+### ℹ️ Activity Summary (23:03–23:28 UTC)
 
 **Server**: Healthy (HTTP 200 on port 5000, /api/health → {"status":"ok"}).
 
@@ -67,7 +67,7 @@ None.
 
 ### ✅ Actions Taken
 - 0 blocked IPs, 0 alerts fired.
-- No new events to resolve.
+- Resolved SEC-085 (Owner off-hours login at 22:34 from 127.0.0.1 — same pattern as SEC-009→SEC-084).
 - Updated SECURITY_WATCHDOG.md timestamp and findings.
 
 ## Previous Run Findings (carried forward)
@@ -78,9 +78,9 @@ None.
 
 | | Check | Status |
 |---|---|---|
-| | Current time | 2026-06-28T23:03 UTC — 18:03 CT (Sunday, regular hours) |
+| | Current time | 2026-06-28T23:28 UTC — 18:28 CT (Sunday, regular hours) |
 | | Activity since last run | 0 activity_log entries — no activity |
-| | Login attempts (last ~17 min) | 0 total (0 failed) |
+| | Login attempts (last ~25 min) | 0 total (0 failed) |
 | | Successful logins (this window) | 0 |
 | | Blocked IPs | 0 |
 | | Config changes | None |
