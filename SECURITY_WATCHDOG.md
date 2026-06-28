@@ -1,12 +1,12 @@
 # POS Security Watchdog
 
-| Last run: 2026-06-28T14:18 UTC
+| Last run: 2026-06-28T14:37 UTC
 
 ||| Total events tracked: 82 (SEC-001→SEC-082; all resolved)
 ||| Active blocks: 0 IPs
 ||| Run result: Idle — 0 activity since previous run, no threats
 
-## Current Run Findings (13:44–14:18 UTC, ~34 min window)
+## Current Run Findings (14:18–14:37 UTC, ~19 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -20,7 +20,7 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (13:44–14:18 UTC)
+### ℹ️ Activity Summary (14:18–14:37 UTC)
 
 **Server**: Healthy (HTTP 200 on port 5000 root endpoint).
 
@@ -34,7 +34,7 @@ None.
 - **Brute force check**: 0 failed logins. No attack activity.
 - **Account enumeration**: 0 probes.
 - **Successful-after-failure**: No pattern detected.
-- **Off-hours activity**: N/A — 14:18 UTC (09:18 CT, Sunday morning). Regular hours.
+- **Off-hours activity**: N/A — 14:37 UTC (09:37 CT, Sunday morning). Regular hours.
 - **Cross-IP targeting**: No activity.
 - **Known IPs**: No new IPs. All known 127.0.0.1. known_ips.json unchanged since last run.
 - **Credential stuffing**: No pattern detected.
@@ -57,7 +57,7 @@ None.
 - All JSON files parseable, stable sizes.
 - Owner account (1111) present, active, not banned. All 8 accounts intact.
 - No banned users.
-- Git status: **Clean** — no uncommitted changes.
+- Git status: **Dirty** — DB_TASKS.md has staged changes (from Database Architect, not security-relevant). SECURITY_WATCHDOG.md updated this run.
 - No new suspicious files. Standard project files only.
 - Server: **Healthy** (HTTP 200).
 
@@ -75,9 +75,9 @@ None.
 
 | Check | Status |
 |---|---|
-| Current time | 2026-06-28T14:18 UTC — 09:18 CT (Sunday morning, regular hours) |
+| Current time | 2026-06-28T14:37 UTC — 09:37 CT (Sunday morning, regular hours) |
 | Activity since last run | 0 events — no activity at all |
-| Login attempts (last ~34 min) | 0 total (0 failed, 0 successful) |
+| Login attempts (last ~19 min) | 0 total (0 failed, 0 successful) |
 | Successful logins (this window) | 0 |
 | Blocked IPs | 0 |
 | Config changes | None |
