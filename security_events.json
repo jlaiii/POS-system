@@ -1181,5 +1181,20 @@
         "reported_by": "IP Blocklist Manager",
         "resolved_at": "2026-06-28T04:56:30",
         "resolution": "Batch-resolved by Security Watchdog. Off-hours login from 127.0.0.1 (localhost) \u2014 same pattern as SEC-009 through SEC-079. Owner/cron activity at 04:53 UTC (early Sunday morning). No external IPs, no failed attempts, no real security concern. 3 activity events in window (all successful, Owner, localhost)."
+    },
+    {
+        "id": "SEC-081",
+        "created_at": "2026-06-28T05:15:51.054879",
+        "severity": "MEDIUM",
+        "category": "anomaly",
+        "status": "unresolved",
+        "summary": "\u26a0\ufe0f Off-hours login: Owner (1111) at 05:15",
+        "detail": "User Owner (PIN 1111) logged in during off-hours (22:00\u201306:00) from IP 127.0.0.1.",
+        "affected_user": "1111",
+        "affected_user_name": "Owner",
+        "related_event": null,
+        "reported_by": "IP Blocklist Manager",
+        "resolved_at": null,
+        "resolution": null
     }
 ]
