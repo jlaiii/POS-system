@@ -1,12 +1,12 @@
 # POS Security Watchdog
 
-| Last run: 2026-06-28T01:10 UTC
+| Last run: 2026-06-28T01:27 UTC
 
 | | | | | | | | | | | | | | | | | | | Total events tracked: 75 (SEC-001→SEC-075; all resolved)
 | | | | | | | | | | | | | | | | | | | Active blocks: 0 IPs
-| Run result: All clear | Activity detected but all benign (Reliability Bot test cycle)
+| Run result: All clear | No activity this window
 
-## Current Run Findings (00:52–01:10 UTC, ~18 min window)
+## Current Run Findings (01:10–01:27 UTC, ~17 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -20,19 +20,19 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (00:52–01:10 UTC)
+### ℹ️ Activity Summary (01:10–01:27 UTC)
 
 **Server**: Healthy (HTTP 200 on /).
 
-**Activity**: 2 events in this window. All benign.
+**Activity**: No events in this window. Quiet.
 
 **Login attempts in window**: 0 total (0 failed, 0 successful).
 
 ### 📊 Login Security Deep-Dive
-- **Brute force check**: 0 failed logins in window (0 in last 24h from activity_log). No brute force.
+- **Brute force check**: 0 failed logins in window (0 since 00:21 UTC). No brute force.
 - **Account enumeration**: 0 probes in window.
 - **Successful-after-failure**: No failed logins in window. Clean.
-- **Off-hours activity**: No logins in this window. Last login was Owner (1111) from 127.0.0.1 at 00:21 UTC — normal cron/owner activity.
+- **Off-hours activity**: No logins in this window (it's 20:27 CT — within off-hours window but no activity).
 - **Cross-IP targeting**: No activity. Clean.
 - **Known IPs**: No logins in this window.
 - **Credential stuffing**: No pattern detected.
@@ -48,13 +48,11 @@ None.
 - No config changes detected.
 
 ### 💰 Financial Check
-- New order #126 submitted at 01:07 UTC ($9.73, Pancakes x1) — Reliability Bot lifecycle test. Refunded at 01:07 UTC.
-- 0 active shifts.
-- 1 order with total=$0.00 — order #94 (cancelled, ghost cleanup artifact). No concern.
-- No financial anomalies detected.
+- Last order activity was at 01:07 UTC (Reliability Bot test cycle). No new orders this window.
+- 0 active shifts. No financial anomalies.
 
 ### 📂 File Integrity
-- Git status: Clean (no uncommitted changes).
+- Git status: Clean (committed prior run, no new changes).
 - 49 JSON files parseable and valid.
 - Owner account (1111) present, active, not banned.
 - All 8 user accounts intact.
@@ -63,8 +61,9 @@ None.
 
 | ✅ Actions Taken
 - **All clear** — No security threats detected this run.
-- Reliability Bot test cycle (order #126 created and refunded) — expected behavior, no concern.
+- Zero activity in this 17-min window.
 - Updated SECURITY_WATCHDOG.md timestamp and findings.
+- Committed prior run's changes.
 
 ## Previous Run Findings (carried forward)
 - Admin 2FA gap remains: Manager (2222) and Manager Sarah (7788) lack 2FA despite `require_2fa_for_admins: true`. Owner (1111) is exempted via config. Pre-existing — no change. Security Sentinel handles code-level fixes.
@@ -73,9 +72,9 @@ None.
 
 | | | | | | | | | | | | | | | | | | Check | Status |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Current time | 2026-06-28T01:10 UTC — 20:10 CT (Saturday evening) |
-| Activity since last run | 2 events — Reliability Bot test cycle (order + refund) |
-| | | | | | | | | | | | | | | | Login attempts (last ~18 min) | 0 (0 failed) |
+| Current time | 2026-06-28T01:27 UTC — 20:27 CT (Saturday evening) |
+| Activity since last run | No events — quiet window |
+| | | | | | | | | | | | | | | | Login attempts (last ~17 min) | 0 (0 failed) |
 | | | | | | | | | | | | | | | | Successful logins (this window) | 0 |
 | | | | | | | | | | | | | | | | Blocked IPs | 0 |
 | | | | | | | | | | | | | | | | Config changes | None |
