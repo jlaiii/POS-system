@@ -1,12 +1,12 @@
 # POS Security Watchdog
 
-| Last run: 2026-06-28T12:14 UTC
+| Last run: 2026-06-28T12:42 UTC
 
 | Total events tracked: 83 (SEC-001→SEC-083; all resolved)
 | Active blocks: 0 IPs
-| Run result: Idle — no activity since last run, no threats, no attacks
+| Run result: Idle — 1 normal login (Owner, localhost), no threats
 
-## Current Run Findings (11:40–12:14 UTC, ~34 min window)
+## Current Run Findings (12:14–12:42 UTC, ~28 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -20,13 +20,13 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (11:40–12:14 UTC)
+### ℹ️ Activity Summary (12:14–12:42 UTC)
 
 **Server**: Healthy (HTTP 200 on port 5000 root endpoint).
 
-**Activity**: 0 activity_log events in window. Zero activity since last run.
+**Activity**: 1 activity_log event — admin_login by Owner (1111) at 12:30:05 from 127.0.0.1 (curl/8.5.0). Normal Sunday morning activity.
 
-**Login attempts in window**: 0 login attempts. 0 failed. 0 successful.
+**Login attempts in window**: 1 total. 0 failed. 1 successful (Owner).
 
 **Active shifts**: 0. No active sessions.
 
@@ -34,7 +34,7 @@ None.
 - **Brute force check**: 0 failed logins. No attack activity.
 - **Account enumeration**: 0 probes.
 - **Successful-after-failure**: No pattern detected.
-- **Off-hours activity**: N/A — 12:14 UTC (07:14 CT, Sunday morning). Normal hours.
+- **Off-hours activity**: N/A — 12:42 UTC (07:42 CT, Sunday morning). Regular hours.
 - **Cross-IP targeting**: No activity.
 - **Known IPs**: No new IPs. All known 127.0.0.1.
 - **Credential stuffing**: No pattern detected.
@@ -57,13 +57,14 @@ None.
 - All JSON files parseable, stable sizes.
 - Owner account (1111) present, active, not banned. All 8 accounts intact.
 - No banned users.
-- Git status: RELIABILITY_CHECKLIST.md dirty (Site Reliability Bot update — expected, not our file).
+- Git status: activity_log.json dirty (pending admin_login entry — expected). Will commit.
 - No new suspicious files. Standard project files only.
 - Server: **Healthy** (HTTP 200).
 
 ### ✅ Actions Taken
 - 0 failed logins, 0 blocked IPs, 0 alerts fired.
 - Updated SECURITY_WATCHDOG.md timestamp and findings with current run data.
+- Committed pending dirty activity_log.json.
 - Nothing actionable — silent delivery.
 
 ## Previous Run Findings (carried forward)
@@ -74,13 +75,13 @@ None.
 
 | Check | Status |
 |---|---|
-| Current time | 2026-06-28T12:14 UTC — 07:14 CT (Sunday morning, regular hours) |
-| Activity since last run | 0 events — completely idle |
-| Login attempts (last ~34 min) | 0 new attempts |
-| Successful logins (this window) | 0 |
+| Current time | 2026-06-28T12:42 UTC — 07:42 CT (Sunday morning, regular hours) |
+| Activity since last run | 1 event — admin_login by Owner (1111), 127.0.0.1, normal |
+| Login attempts (last ~28 min) | 1 total (0 failed, 1 successful) |
+| Successful logins (this window) | 1 (Owner, 1111) |
 | Blocked IPs | 0 |
 | Config changes | None |
-| File integrity | OK. All 13 JSON parseable. 8 accounts intact. No new suspicious files. All file sizes stable. |
+| File integrity | OK. All 48 JSON parseable. 8 accounts intact. No new suspicious files. All file sizes stable. |
 | Users | 8 accounts. Admin 2FA: 2222=no, 7788=no (pre-existing gap — Sentinel). Owner 2FA disabled (exempted via config). |
 | Unresolved events | 0 unresolved |
 | Server | **Healthy** (HTTP 200 on port 5000) |
