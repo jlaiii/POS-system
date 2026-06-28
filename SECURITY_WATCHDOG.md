@@ -1,12 +1,12 @@
 # POS Security Watchdog
 
-| Last run: 2026-06-28T22:46 UTC
+| Last run: 2026-06-28T23:03 UTC
 
 ||| Total events tracked: 84 (SEC-001→SEC-085; all resolved)
 ||| Active blocks: 0 IPs
 ||| Run result: Normal — Owner login at 22:34 UTC, handled and resolved.
 
-## Current Run Findings (22:28–22:46 UTC, ~18 min window)
+## Current Run Findings (22:46–23:03 UTC, ~17 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -20,19 +20,13 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (22:28–22:46 UTC)
+### ℹ️ Activity Summary (22:46–23:03 UTC)
 
 **Server**: Healthy (HTTP 200 on port 5000, /api/health → {"status":"ok"}).
 
-**Activity**: 3 new activity_log entries since last run — all Owner from 127.0.0.1.
+**Activity**: 0 new activity_log entries since last run. No system activity detected.
 
-| Time (UTC) | Event | User | IP | Details |
-|---|---|---|---|---|
-| 22:34:17 | login (success) | 1111 (Owner) | 127.0.0.1 | PIN login success via curl |
-| 22:34:18 | admin_login (success) | 1111 (Owner) | 127.0.0.1 | Admin panel login |
-| 22:34:26 | admin_login (success) | 1111 (Owner) | 127.0.0.1 | Admin panel login |
-
-**Login attempts in window**: 1 login attempt (1 success, 0 failed). 0 brute force.
+**Login attempts in window**: 0 login attempts. 0 brute force.
 
 **Active shifts**: 0. No one clocked in.
 
@@ -42,13 +36,13 @@ None.
 - **Brute force check**: 0 failed logins in last 5 min. No alert.
 - **Account enumeration**: 0 probes for non-existent PINs. No alert.
 - **Successful-after-failure**: No failed attempts. No alert.
-- **Off-hours activity**: Login at 22:34 UTC (17:34 CT Sunday) — within off-hours window (22:00-06:00 UTC) but actual time is 5:34 PM Central, regular hours. Known UTC false positive. Not re-alerting.
+- **Off-hours activity**: None.
 - **Cross-IP targeting**: No activity.
-- **Known IPs**: 127.0.0.1 (Owner's known IP). No new IPs seen.
+- **Known IPs**: No new IPs seen.
 - **Credential stuffing**: No pattern.
 - **2FA check**: No 2FA events.
 - **Account lockouts**: None.
-- **Last login attempt**: 2026-06-28T22:34:17 UTC (Owner, 127.0.0.1, success).
+- **Last login attempt**: 2026-06-28T22:34:17 UTC (Owner, 127.0.0.1, success) — unchanged since last run.
 
 ### 🔒 Security Config
 - No changes detected. All thresholds normal.
@@ -63,10 +57,10 @@ None.
 - No active cash drawer sessions.
 
 ### 📂 File Integrity
-- All 51 JSON files parseable, valid.
+- All JSON files parseable, valid.
 - Owner account (1111) present, active, not banned. All 8 accounts intact.
 - No banned users. No account modifications.
-- No file size anomalies (activity_log 539KB, login_attempts 80KB, normal growth).
+- No file size anomalies.
 - No new suspicious files — no .php, .exe, or anomalous files in workdir.
 - Git status: clean — no dirty files since last commit.
 - Server: **Healthy** (HTTP 200, /api/health → {"status":"ok"}).
@@ -84,10 +78,10 @@ None.
 
 | | Check | Status |
 |---|---|---|
-| | Current time | 2026-06-28T22:46 UTC — 17:46 CT (Sunday, regular hours) |
-| | Activity since last run | 3 activity_log entries — all Owner from localhost |
-| | Login attempts (last ~18 min) | 1 total (0 failed) |
-| | Successful logins (this window) | 1 login + 2 admin_logins (Owner, 127.0.0.1) |
+| | Current time | 2026-06-28T23:03 UTC — 18:03 CT (Sunday, regular hours) |
+| | Activity since last run | 0 activity_log entries — no activity |
+| | Login attempts (last ~17 min) | 0 total (0 failed) |
+| | Successful logins (this window) | 0 |
 | | Blocked IPs | 0 |
 | | Config changes | None |
 | | File integrity | All 51 JSON valid. No file size anomalies. All 8 accounts intact. Git: clean. |
