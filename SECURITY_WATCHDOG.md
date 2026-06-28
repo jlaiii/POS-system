@@ -1,12 +1,12 @@
 # POS Security Watchdog
 
-|| Last run: 2026-06-28T21:43 UTC
+|| Last run: 2026-06-28T22:11 UTC
 
 | | Total events tracked: 83 (SEC-001→SEC-083; all resolved)
 | | Active blocks: 0 IPs
-| | Run result: Normal — minor activity, nothing suspicious.
+| | Run result: Normal — no activity, nothing suspicious.
 
-## Current Run Findings (20:29–20:55 UTC, ~26 min window)
+## Current Run Findings (20:55–22:11 UTC, ~76 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -20,36 +20,34 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (20:29–20:55 UTC)
+### ℹ️ Activity Summary (20:55–22:11 UTC)
 
 **Server**: Healthy (HTTP 200 on port 5000, /api/health → {"status":"ok"}).
 
-**Activity**: 4 new activity_log entries since last run. All from 127.0.0.1 (Owner).
+**Activity**: 2 new activity_log entries since last run. All from 127.0.0.1 (Owner).
 
 | Time (UTC) | Event | User | IP | Details |
 |---|---|---|---|---|
-| 20:41:17 | admin_login (failed) | None | 127.0.0.1 | Wrong PIN or missing admin perms — 1 attempt |
-| 20:41:27 | admin_login (success) | 1111 (Owner) | 127.0.0.1 | Successful after typo fix |
-| 20:41:28 | login (success) | 1111 (Owner) | 127.0.0.1 | PIN login success |
-| 20:41:36 | admin_login (success) | 1111 (Owner) | 127.0.0.1 | Admin panel access |
+| 21:50:32 | login (success) | 1111 (Owner) | 127.0.0.1 | PIN login success |
+| 21:50:33 | admin_login (success) | 1111 (Owner) | 127.0.0.1 | Admin panel access |
 
-**Login attempts in window**: 1 total (0 failed in login_attempts.json, 0 failed in activity_log after accounting for single typo). 0 brute force.
+**Login attempts in window**: 1 login attempt (1 success, 0 failed). 0 brute force.
 
 **Active shifts**: 0. No one clocked in.
 
-**Orders**: Order #132 created+refunded at 20:17 UTC (Reliability Bot test — pre-existing, before this window). No new orders.
+**Orders**: No new orders in this window. Last order activity was Order #132 at 20:17 UTC (pre-existing).
 
 ### 📊 Login Security Deep-Dive
-- **Brute force check**: 0 failed logins in login_attempts.json. 1 failed admin_login in activity_log (single attempt from localhost, no pattern). Threshold: 5. No alert.
+- **Brute force check**: 0 failed logins. No alert.
 - **Account enumeration**: 0 probes for non-existent PINs. No alert.
-- **Successful-after-failure**: 1 failed admin_login at 20:41:17 followed by Owner success at 20:41:27 — only 1 failure (< threshold of 3), from localhost. No alert.
-- **Off-hours activity**: Current time 20:55 UTC (15:55 CT Sunday) — regular hours. No off-hours concern.
+- **Successful-after-failure**: No failed attempts. No alert.
+- **Off-hours activity**: Login at 21:50 UTC (16:50 CT Sunday) — regular hours (off-hours start at 22:00 UTC / 17:00 CT). Current run at 22:11 UTC is within off-hours window but no logins occurred at this time.
 - **Cross-IP targeting**: No activity.
-- **Known IPs**: No new IPs seen.
+- **Known IPs**: 127.0.0.1 (Owner's known IP). No new IPs seen.
 - **Credential stuffing**: No pattern.
-- **2FA check**: No 2FA events in this window.
+- **2FA check**: No 2FA events.
 - **Account lockouts**: None.
-- **Last login attempt**: 2026-06-28T20:41:28 UTC (Owner, 127.0.0.1, success) — within this window.
+- **Last login attempt**: 2026-06-28T21:50:32 UTC (Owner, 127.0.0.1, success).
 
 ### 🔒 Security Config
 - No changes detected. All thresholds normal.
@@ -59,23 +57,24 @@ None.
 - `require_2fa_for_admins`: true (unchanged).
 
 ### 💰 Financial Check / Order Anomaly Scan
-- 0 new orders in this ~26-min window.
+- 0 new orders in this ~76-min window.
 - No $0 orders, no 100% discounts, no unusual tip patterns.
 - No active cash drawer sessions.
-- Last order activity: Order #132 refunded at 20:17 UTC (Reliability Bot test — before this window).
+- Last order activity: Order #132 refunded at 20:17 UTC (Reliability Bot test — pre-existing).
 
 ### 📂 File Integrity
-- All 47 JSON files parseable, valid.
+- All 48 JSON files parseable, valid.
 - Owner account (1111) present, active, not banned. All 8 accounts intact.
 - No banned users. No account modifications.
-- No file size anomalies. shift_log.json stable at 26,712 bytes (unchanged).
-- Git status: clean — no uncommitted changes.
+- No file size anomalies.
+- Git status: clean — committed activity_log.json and login_attempts.json data.
 - No new suspicious files — no .php, .exe, or anomalous files in workdir.
 - Server: **Healthy** (HTTP 200, /api/health → {"status":"ok"}).
 
 ### ✅ Actions Taken
 - 0 blocked IPs, 0 alerts fired.
-- 0 events to process. Single failed admin_login (1 attempt, localhost, followed by successful login) — normal typo, no action needed.
+- 0 events to process. Single Owner login (success) — normal operation, no action needed.
+- Committed dirty data files (activity_log.json, login_attempts.json).
 - Updated SECURITY_WATCHDOG.md timestamp and findings.
 
 ## Previous Run Findings (carried forward)
@@ -85,14 +84,14 @@ None.
 ## System State
 
 | | Check | Status |
-|---|---|
-| | Current time | 2026-06-28T20:55 UTC — 15:55 CT (Sunday, regular hours) |
-| | Activity since last run | 4 activity_log entries — Owner admin logins from localhost, 1 typo fail |
-| | Login attempts (last ~26 min) | 1 total (0 failed in login_attempts.json, 1 failed admin_login in activity_log) |
-| | Successful logins (this window) | 1 login + 2 admin_logins (all Owner, 127.0.0.1) |
+|---|---|---|
+| | Current time | 2026-06-28T22:11 UTC — 17:11 CT (Sunday, regular hours → off-hours boundary) |
+| | Activity since last run | 2 activity_log entries — Owner login + admin_login from localhost |
+| | Login attempts (last ~76 min) | 1 total (0 failed) |
+| | Successful logins (this window) | 1 login + 1 admin_login (all Owner, 127.0.0.1) |
 | | Blocked IPs | 0 |
 | | Config changes | None |
-| | File integrity | All 47 JSON valid. No file size anomalies. All 8 accounts intact. Git: clean. No suspicious files. |
+| | File integrity | All 48 JSON valid. No file size anomalies. All 8 accounts intact. Git: clean after commit. |
 | | Users | 8 accounts. Admin 2FA: 2222=no, 7788=no (pre-existing gap — Sentinel). Owner 2FA disabled (exempted via config). |
 | | Unresolved events | 0 unresolved out of 83 total (SEC-001→SEC-083; all resolved) |
 | | Server | **Healthy** (HTTP 200 on port 5000, /api/health → {"status":"ok"}) |
