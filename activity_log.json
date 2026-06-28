@@ -18992,5 +18992,107 @@
         "details": {
             "status": "success"
         }
+    },
+    {
+        "timestamp": "2026-06-28T20:17:37.030732",
+        "type": "submit_order",
+        "user_id": null,
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "order_id": 132,
+            "subtotal": 6.0,
+            "tax_amount": 0.49,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 6.49,
+            "payment_method": "Cash",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-28T20:17:45.302278",
+        "type": "refund_order",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "order_id": 132,
+            "reason": "Reliability Bot cycle test",
+            "refunded_by_name": "Owner",
+            "order_total": 6.49,
+            "inventory_restored": [
+                "Hamburger - Normal x1"
+            ]
+        }
+    },
+    {
+        "timestamp": "2026-06-28T20:17:55.251047",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-28T20:17:56.479276",
+        "type": "add_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "failed",
+            "reason": "Missing data",
+            "new_user_id": null
+        }
+    },
+    {
+        "timestamp": "2026-06-28T20:18:08.714569",
+        "type": "add_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "added_user_id": "9358",
+            "added_user_name": "Reliability Bot Test",
+            "added_user_role": "user"
+        }
+    },
+    {
+        "timestamp": "2026-06-28T20:18:08.745167",
+        "type": "delete_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "failed",
+            "reason": "Missing user ID to delete"
+        }
+    },
+    {
+        "timestamp": "2026-06-28T20:18:14.844864",
+        "type": "delete_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "deleted_user_id": "9358",
+            "deleted_user_name": "Reliability Bot Test",
+            "deleted_user_role": "user"
+        }
     }
 ]

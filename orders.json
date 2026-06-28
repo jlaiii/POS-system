@@ -8402,5 +8402,60 @@
         "refund_reason": "Reliability Bot test",
         "refunded_at": "2026-06-28T15:33:35.351417",
         "refunded_by": "1111"
+    },
+    {
+        "order_id": 132,
+        "status": "refunded",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-28T20:17:37.019207",
+        "user": null,
+        "payment": "Cash",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Hamburger - Normal",
+                "price": 6.0,
+                "qty": 1,
+                "category": "Foods",
+                "course_send_at": "2026-06-28T20:17:37.019312",
+                "course_fired": true
+            }
+        ],
+        "subtotal": 6.0,
+        "tax_amount": 0.49,
+        "tip_amount": 0.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "item_tax_details": [
+            {
+                "name": "Hamburger - Normal",
+                "category": "Foods",
+                "qty": 1,
+                "price": 6.0,
+                "tax_rate": 8.25,
+                "tax_amount": 0.49
+            }
+        ],
+        "total": 6.49,
+        "notes": "",
+        "item_notes": {},
+        "table_number": null,
+        "delivery_address": null,
+        "customer_email": "",
+        "order_type": "dine_in",
+        "party_size": null,
+        "packaging_fee": 0.0,
+        "packaging_fee_label": "",
+        "priority": null,
+        "assigned_driver": null,
+        "delivery_status": "pending",
+        "manager_approval": null,
+        "order_number": 111,
+        "refund_reason": "Reliability Bot cycle test",
+        "refunded_at": "2026-06-28T20:17:45.285666",
+        "refunded_by": "1111"
     }
 ]
