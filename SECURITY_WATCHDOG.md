@@ -1,12 +1,12 @@
 # POS Security Watchdog
 
-| Last run: 2026-06-28T03:22 UTC
+| Last run: 2026-06-28T03:37 UTC
 
-| | | | | | | | | | | | | | | | | Total events tracked: 76 (SEC-001→SEC-076; all resolved)
+| | | | | | | | | | | | | | | | | Total events tracked: 78 (SEC-001→SEC-078; all resolved)
 | | | | | | | | | | | | | | | | | Active blocks: 0 IPs
 | Run result: All clear | No threats this window
 
-## Current Run Findings (03:04–03:22 UTC, ~18 min window)
+## Current Run Findings (03:22–03:37 UTC, ~15 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -20,13 +20,13 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (03:04–03:22 UTC)
+### ℹ️ Activity Summary (03:22–03:37 UTC)
 
 **Server**: Healthy (HTTP 200 on port 5000 via gunicorn+gevent).
 
 **Activity**: 0 login events in window. 0 failed. 0 successful.
 - No activity recorded in this window. Last activity was Owner (1111) from 127.0.0.1 at 03:02 UTC (prior window).
-- System quiescent — Saturday night, no users active.
+- System quiescent — Saturday night/Sunday early morning, no users active.
 
 **Login attempts in window**: 0 recorded in login_attempts.json.
 
@@ -40,8 +40,7 @@ None.
 - **Credential stuffing**: No pattern detected.
 - **2FA check**: No 2FA events in window.
 - **Session anomalies**: 0 active shifts. No sessions older than 24h.
-- **Last 24h stats**: 8 entries (0 failed, 8 successful). All from 127.0.0.1. No brute force pattern.
-- **Last 24h login_attempts.json entries**: All successful Owner (1111) logins from IP 127.0.0.1. Last failed attempt: 2026-06-27T14:33:25 (>12h ago).
+- **Last 24h stats**: All successful Owner (1111) logins from IP 127.0.0.1. No brute force pattern.
 
 ### 🔒 Security Config
 - `blocked_ips`: [] — no active blocks.
@@ -53,24 +52,22 @@ None.
 - No config changes detected.
 
 ### 💰 Financial Check
-- 106 orders total. No new orders this window.
-- 0 active shifts. No financial anomalies.
+- No new orders this window. No financial anomalies.
+- 0 active shifts.
 - 0 zero-total orders. No 100%+ discounts. Clean.
 
 ### 📂 File Integrity
-- Git status: Committed clean (dirty file from prior run committed).
-- 49 JSON files — all parseable and valid.
-- Owner account (1111) present, active, not banned.
+- Git status: Clean.
+- All JSON files parseable. Owner account (1111) present, active, not banned.
 - All 8 user accounts intact. No banned users.
-- No non-owner accounts with wildcard (*) permissions.
-- No suspicious files detected (.php, .exe, etc.). Expected project artifacts (scripts/*.sh, __pycache__) present.
+- No suspicious files detected.
 - Server: **Healthy** (HTTP 200 on localhost:5000).
 
-| ✅ Actions Taken
+### ✅ Actions Taken
 - **All clear** — No security threats detected this run.
 - 0 logins, 0 failed attempts, 0 blocked IPs.
+- Resolved SEC-077 and SEC-078 (off-hours Owner logins from 127.0.0.1 at 03:02 UTC — same known pattern).
 - Updated SECURITY_WATCHDOG.md timestamp and findings.
-- Committed dirty file from prior run.
 - Everything clean — silent delivery.
 
 ## Previous Run Findings (carried forward)
@@ -80,12 +77,12 @@ None.
 
 | | | | | | | | | | | | | | | | | Check | Status |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Current time | 2026-06-28T03:22 UTC — 22:22 CT (Saturday evening) |
+| Current time | 2026-06-28T03:37 UTC — 22:37 CT (Saturday evening) |
 | Activity since last run | 0 logins. Window completely idle. |
-| | | | | | | | | | | | | | | | Login attempts (last ~18 min) | 0 (0 failed) |
+| | | | | | | | | | | | | | | | Login attempts (last ~15 min) | 0 (0 failed) |
 | | | | | | | | | | | | | | | | Successful logins (this window) | 0 |
 | | | | | | | | | | | | | | | | Blocked IPs | 0 |
 | | | | | | | | | | | | | | | | Config changes | None |
-| | | | | | | | | | | | | | | | File integrity | OK. 49 JSON files parseable. 8 accounts intact. |
+| | | | | | | | | | | | | | | | File integrity | OK. All JSON files parseable. 8 accounts intact. |
 | | | | | | | | | | | | | | | | Users | 8 accounts. Admin 2FA: 2222=no, 7788=no (pre-existing gap — Sentinel) |
 | | | | | | | | | | | | | | | | Server | **Healthy** (gunicorn+gevent, port 5000) |
