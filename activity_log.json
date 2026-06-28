@@ -17723,5 +17723,40 @@
         "details": {
             "status": "success"
         }
+    },
+    {
+        "timestamp": "2026-06-28T01:07:01.728564",
+        "type": "submit_order",
+        "user_id": null,
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "order_id": 126,
+            "subtotal": 8.99,
+            "tax_amount": 0.74,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 9.73,
+            "payment_method": "Cash",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-28T01:07:09.556327",
+        "type": "refund_order",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "order_id": 126,
+            "reason": "Reliability bot test - lifecycle verification",
+            "refunded_by_name": "Owner",
+            "order_total": 9.73,
+            "inventory_restored": [
+                "Pancakes x1"
+            ]
+        }
     }
 ]
