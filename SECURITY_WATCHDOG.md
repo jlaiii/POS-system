@@ -1,12 +1,12 @@
 # POS Security Watchdog
 
-||| Last run: 2026-06-28T05:30 UTC
+|||| Last run: 2026-06-28T05:47 UTC
 
-||| | | | | | | | | | | | | | | Total events tracked: 80 (SEC-001→SEC-080; all resolved)
-||| | | | | | | | | | | | | | | Active blocks: 0 IPs
-||| Run result: Idle — 1 Owner login, 1 test order/refund (Reliability Bot), no threats
+|||| | | | | | | | | | | | | | | Total events tracked: 80 (SEC-001→SEC-080; all resolved)
+|||| | | | | | | | | | | | | | | Active blocks: 0 IPs
+|||| Run result: Idle — 2 Owner logins (localhost), no threats
 
-## Current Run Findings (05:13–05:30 UTC, ~17 min window)
+## Current Run Findings (05:30–05:47 UTC, ~17 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -20,32 +20,31 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (05:13–05:30 UTC)
+### ℹ️ Activity Summary (05:30–05:47 UTC)
 
 **Server**: Healthy (HTTP 200 on port 5000).
 
-**Activity**: 3 events in this window — all Reliability Bot lifecycle test.
+**Activity**: 2 events in this window — both Owner login checks.
 
 **Events:**
-1. `05:15:51` — Owner (1111) login from 127.0.0.1 (curl)
-2. `05:16:02` — Order #127 submitted ($3.25, 1 Lemonade, cash)
-3. `05:16:05` — Order #127 refunded by Owner (reason: "Reliability Bot lifecycle test")
+1. `05:37:22` — Owner (1111) login from 127.0.0.1 (curl/8.5.0) — SUCCESS
+2. `05:37:26` — Owner (1111) login from 127.0.0.1 (curl/8.5.0) — SUCCESS
 
-**Login attempts in window**: 1 recorded (1 success, 0 failed).
+**Login attempts in window**: 2 recorded (2 success, 0 failed).
 
-**Current time**: 2026-06-28T05:30 UTC — 00:30 CT (Sunday, early morning — business closed).
+**Current time**: 2026-06-28T05:47 UTC — 00:47 CT (Sunday, early morning — business closed).
 
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: 0 failed logins in window. No brute force.
 - **Account enumeration**: 0 probes in window.
-- **Successful-after-failure**: No pattern. Single clean login.
-- **Off-hours activity**: 1 login at 00:15 CT — Owner (1111) from 127.0.0.1. Expected cron worker behavior (Reliability Bot test cycle). Same learned pattern.
+- **Successful-after-failure**: No pattern. Both clean logins.
+- **Off-hours activity**: 2 logins at 00:37 CT — Owner (1111) from 127.0.0.1. Expected cron worker behavior. Same learned pattern (5+ days of dev activity).
 - **Cross-IP targeting**: No activity. Clean.
 - **Known IPs**: No new IPs seen.
 - **Credential stuffing**: No pattern detected.
 - **2FA check**: No 2FA events this window.
 - **Session anomalies**: No active shifts. No sessions.
-- **Last 24h stats**: All successful Owner (1111) logins from IP 127.0.0.1. Zero failed attempts. No brute force pattern.
+- **Last 24h stats**: All successful Owner (1111) logins from IP 127.0.0.1. Zero failed attempts in 24+ hours. No brute force pattern.
 
 ### 🔒 Security Config
 - No changes since last run. All thresholds unchanged.
@@ -53,15 +52,16 @@ None.
 - No config changes detected.
 
 ### 💰 Financial Check
-- 1 new order this window (Order #127, $3.25) — immediately refunded (Reliability Bot test).
+- 0 new orders this window.
 - 0 active shifts.
 - No financial anomalies.
 
 ### 📂 File Integrity
 - Git status: Clean (no dirty files).
-- All 49 JSON files parseable. Owner account (1111) present, active, not banned.
+- All JSON files parseable. Owner account (1111) present, active, not banned.
 - All 8 user accounts intact. No banned users.
-- No suspicious files detected (test_check.py, test_check2.py, test_check3.py are old dev/test scripts from Jun 25).
+- Activity log: 1321 entries, last entry at 05:37:26.
+- No suspicious files detected.
 - Server: **Healthy** (HTTP 200 on localhost:5000).
 
 ### ✅ Actions Taken
@@ -77,10 +77,10 @@ None.
 
 || | | | | | | | | | | | | | | | Check | Status |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-|||||| Current time | 2026-06-28T05:30 UTC — 00:30 CT (Sunday early morning) |
-|||||| Activity since last run | 3 events — Reliability Bot lifecycle test (login, order, refund) |
-||||| | | | | | | | | | | | | | Login attempts (last ~17 min) | 1 (0 failed, 1 success) |
-||||| | | | | | | | | | | | | | Successful logins (this window) | 1 (Owner, 127.0.0.1) |
+||||||| Current time | 2026-06-28T05:47 UTC — 00:47 CT (Sunday early morning) |
+||||||| Activity since last run | 2 events — Owner login checks (owner from localhost) |
+|||||| | | | | | | | | | | | | | Login attempts (last ~17 min) | 2 (0 failed, 2 success) |
+|||||| | | | | | | | | | | | | | Successful logins (this window) | 2 (Owner, 127.0.0.1) |
 ||||| | | | | | | | | | | | | | Blocked IPs | 0 |
 |||| | | | | | | | | | | | | | Config changes | None |
 |||| | | | | | | | | | | | | | File integrity | OK. All JSON parseable. 8 accounts intact. Git clean. |
