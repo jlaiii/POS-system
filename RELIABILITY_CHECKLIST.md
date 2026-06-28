@@ -1,7 +1,7 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-28T15:05 UTC
-> Total checks: 1913
-> Healthy: 1913 | Broken: 0 | Fixed this cycle: 1
+> Last full cycle: 2026-06-28T15:28 UTC
+> Total checks: 1923
+> Healthy: 1923 | Broken: 0 | Fixed this cycle: 1
 
 ## CURRENT OUTAGES
 - None
@@ -10,7 +10,7 @@
 - [x] Flask app responds on port 5000 — 200 OK (gunicorn+gevent, master+worker) [verified 15:05]
 - [x] All JSON data files exist and are valid — 9/9 core files valid (users, items, orders, shift_log, inventory, combos, favorites, cleared_orders, loyalty_points all parseable) [verified 15:05]
 - [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', 8 users, ['*'] permissions, role='owner') [verified 15:05]
-- [x] Git repo is clean — committed dirty SECURITY_WATCHDOG.md (b3c7a2c) [verified 15:05]
+- [x] Git repo is clean — committed dirty SECURITY_WATCHDOG.md (a82d5d9) [verified 15:28]
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/health — {"status":"ok"} (GET) [verified 15:05]
@@ -18,13 +18,13 @@
 - [x] /api/items returns items — 5 categories (Breakfast, Drinks, Foods, Salads, Snacks), 19 items via GET [verified 15:05]
 - [x] /api/login works — POST userId=1111, pin=1111, role=owner, message="Login successful" [verified 15:05]
 - [x] /api/admin_stats returns stats — backup_health=green, avg_sale=$10.91, 141 backups [verified 15:05]
-- [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 200 OK, 55 shifts, 0 active [verified 15:05]
+- [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 200 OK, 55 shifts, 0 active [verified 15:28]
 - [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 15:05]
 - [x] index.html size check — 1375315 bytes (normal, ~1.38MB) [verified 15:05]
 - [x] Disk space check — 38% used (24G free, OK) [verified 15:05]
 - [x] Memory check — ~37% RAM used, 0 swap [verified 15:05]
 - [x] Clock-in/out: employee 1234 status checked — not clocked in [verified 15:05]
-- [x] CSV export — /api/export/shifts_csv returns CSV with adminPin=1111, valid [verified 15:05]
+- [x] CSV export — /api/export/shifts_csv returns CSV with adminPin=1111, valid, 5115 bytes [verified 15:28]
 - [x] Offline queue — /api/sync_orders exists, returns 400 'No orders provided' [verified 15:05]
 - [x] Backup integrity — latest backup (14:55, JSON 74284B/50 files, valid) [verified 15:05]
 
@@ -33,13 +33,13 @@
 - [x] Pickup display: verify /api/pickup-display/queue works — GET, 200 [verified 11:57]
 - [x] Webhook: verify webhook config endpoint works — /api/security/discord_webhook returns config, 200 OK, configured [verified 12:29]
 - [x] Cash register: /api/cash_drawer/status (POST with adminPin=1111) returns active=false, 10 sessions, 200 OK [verified 13:33]
-- [x] User CRUD: add test user (9977 via /api/add_user) -> verify -> delete -> confirmed gone [verified 07:34]
+- [x] User CRUD: add test user (9100 via /api/add_user) -> verify -> delete -> confirmed gone [verified 15:28]
 - [x] Loyalty: points earned on order — 14 loyalty entries (phone-keyed dict), data intact [verified 12:29]
-- [x] Clock-in late detection: 8 late records (up to 563min across shifts), data intact [verified 08:47]
-- [x] Break tracking: 4 shifts with breaks, break data intact [verified 08:47]
-- [x] Shift edit: 5 shifts with edits, audit trail intact (Owner + Employee One), last edit by Owner [verified 12:29]
-- [x] Order lifecycle: create order via /api/submit_order → order 108 created → refunded via /api/orders/refund, 200 OK [verified 09:54]
-- [x] Special chars test: items.json clean (5 categories, 19 items), inventory.json clean (24 items, no test artifacts) [verified 08:47]
+- [x] Clock-in late detection: 8 late records (up to 563min across shifts), data intact [verified 15:28]
+- [x] Break tracking: 4 shifts with breaks, break data intact [verified 15:28]
+- [x] Shift edit: 5 shifts with edits, audit trail intact (Owner + Employee One), last edit by Owner [verified 15:28]
+- [x] Order lifecycle: create order via /api/submit_order → order 131 created (Pancakes) → refunded via /api/orders/refund, 200 OK [verified 15:28]
+- [x] Special chars test: items.json clean (5 categories, 19 items), inventory.json clean (24 items, no test artifacts) [verified 15:28]
 
 ## EVERY 12 HOURS
 - [x] Full app restart test: kill Flask → restart → verify all critical endpoints — Completed, gunicorn+gevent stable [verified 17:11]
