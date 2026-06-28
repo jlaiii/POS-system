@@ -1,12 +1,12 @@
 # POS Security Watchdog
 
-| Last run: 2026-06-28T02:23 UTC
+| Last run: 2026-06-28T02:46 UTC
 
 | | | | | | | | | | | | | | | | | Total events tracked: 76 (SEC-001→SEC-076; all resolved)
 | | | | | | | | | | | | | | | | | Active blocks: 0 IPs
 | Run result: All clear | No threats this window
 
-## Current Run Findings (02:05–02:23 UTC, ~18 min window)
+## Current Run Findings (02:23–02:46 UTC, ~23 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -20,26 +20,27 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (02:05–02:23 UTC)
+### ℹ️ Activity Summary (02:23–02:46 UTC)
 
 **Server**: Healthy (HTTP 200 on /).
 
-**Activity**: 0 login attempts in window. 0 failed. 0 successful.
-- SRE Bot test cycle at 02:13 UTC: add_item (SRE Test Special Item, $6.99), add_user (9977 SRE Test, user role), delete_user (9977), delete_item — all from Owner (1111) at 127.0.0.1. Non-threatening, standard test lifecycle.
-- Security Watchdog process ran standalone — no concurrent worker interference.
+**Activity**: 6 admin_login events in window. 0 failed. 6 successful.
+- Owner (1111) from 127.0.0.1: 6 rapid admin_login calls at 02:42:23–02:43:28 UTC via curl. All successful. Pattern matches cron worker testing (likely SRE Bot or Reliability Bot cycle). Not a threat — all from localhost.
+- No concurrent worker interference detected.
 
-**Login attempts in window**: 0 total (0 failed, 0 successful).
+**Login attempts in window**: 0 recorded in login_attempts.json (admin_login events logged to activity_log instead). 0 failed.
 
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: 0 failed logins in window. No brute force.
 - **Account enumeration**: 0 probes in window.
 - **Successful-after-failure**: No failed logins in window. Clean.
-- **Off-hours activity**: SRE Bot activity at 02:13 UTC (21:13 CT Saturday evening) from 127.0.0.1 — same pattern as 75 previous events, normal cron dev activity. No login events.
+- **Off-hours activity**: Owner admin_logins at 02:42-02:43 UTC (21:42-21:43 CT Saturday evening) from 127.0.0.1 — same pattern as previous runs, normal cron dev activity. No concern.
 - **Cross-IP targeting**: No activity. Clean.
 - **Known IPs**: Owner (1111) from known IP 127.0.0.1. No new IPs.
 - **Credential stuffing**: No pattern detected.
 - **2FA check**: No 2FA events in window.
 - **Session anomalies**: 0 active shifts. No sessions older than 24h.
+- **Last 24h stats**: 147 events total (54 admin_login, 44 login, 12 add_user, 11 submit_order, 6 refund_order, 6 delete_user, 4 login_failed, 3 clock_in, etc.). 4 login_failed events — all from 127.0.0.1, none in this window, none recent.
 
 ### 🔒 Security Config
 - `blocked_ips`: [] — no active blocks.
@@ -51,21 +52,22 @@ None.
 - No config changes detected.
 
 ### 💰 Financial Check
-- Last orders: Order 126 (01:07 UTC — Reliability Bot test, refunded). No new orders in this window.
+- Last orders: Orders 122-126 all refunded (test lifecycle orders). No new orders in this window.
 - 0 active shifts. No financial anomalies.
-- Review: 126 orders checked — no zero-total orders, no 100%+ discounts. Clean.
+- 126 orders checked — no zero-total orders, no 100%+ discounts. Clean.
 
 ### 📂 File Integrity
-- Git status: Clean (committed by SRE Bot, no dirty files).
-- 49 JSON files parseable and valid.
+- Git status: Clean (no dirty files).
+- 51 JSON files parseable and valid (was 49 last run; 2 new metadata files: .data_baseline.json, .watchdog_file_sizes.json).
 - Owner account (1111) present, active, not banned.
-- All 8 user accounts intact.
-- No suspicious files detected (.php, .sh, .exe, etc.).
+- All 8 user accounts intact. No banned users.
+- No non-owner accounts with wildcard (*) permissions.
+- No suspicious files detected (.php, .exe, .sh, etc.).
 - Server: **Healthy** (HTTP 200).
 
 | ✅ Actions Taken
 - **All clear** — No security threats detected this run.
-- 0 logins, 0 failed attempts, 0 blocked IPs.
+- 6 admin_logins (Owner, 127.0.0.1), 0 failed attempts, 0 blocked IPs.
 - Updated SECURITY_WATCHDOG.md timestamp and findings.
 - Everything clean — silent delivery.
 
@@ -76,12 +78,12 @@ None.
 
 | | | | | | | | | | | | | | | | | Check | Status |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Current time | 2026-06-28T02:23 UTC — 21:23 CT (Saturday evening) |
-| Activity since last run | SRE Bot test cycle (add_item, add_user, delete_user, delete_item). No login events. |
-| | | | | | | | | | | | | | | | Login attempts (last ~18 min) | 0 (0 failed) |
-| | | | | | | | | | | | | | | | Successful logins (this window) | 0 |
+| Current time | 2026-06-28T02:46 UTC — 21:46 CT (Saturday evening) |
+| Activity since last run | 6 admin_logins (Owner 1111 from 127.0.0.1 at 02:42-02:43). No login events in login_attempts.json. |
+| | | | | | | | | | | | | | | | Login attempts (last ~23 min) | 0 (0 failed) |
+| | | | | | | | | | | | | | | | Successful logins (this window) | 6 admin_logins (all Owner, all 127.0.0.1) |
 | | | | | | | | | | | | | | | | Blocked IPs | 0 |
 | | | | | | | | | | | | | | | | Config changes | None |
-| | | | | | | | | | | | | | | | File integrity | OK. 49 JSON files parseable. 8 accounts intact. |
+| | | | | | | | | | | | | | | | File integrity | OK. 51 JSON files parseable. 8 accounts intact. |
 | | | | | | | | | | | | | | | | Users | 8 accounts. Admin 2FA: 2222=no, 7788=no (pre-existing gap — Sentinel) |
 | | | | | | | | | | | | | | | | Server | **Healthy** (HTTP 200) |
