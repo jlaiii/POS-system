@@ -1,5 +1,5 @@
 # POS Security Tasks
-> Last run: 2026-06-28 02:45 UTC
+> Last run: 2026-06-28 14:33 UTC
 
 ## CRITICAL — LOGIN & AUTH SECURITY (check every run)
 
@@ -131,7 +131,13 @@
 - [x] **Activity log sensitive data check** — No PINs or passwords logged. Only method names (pin/password) and login success/failure status recorded.
 - [x] **GitHub token security** — /tmp/gh_token_new at 0600 permissions, root-only.
 
-### Run: 2026-06-27 02:00 UTC
+### Run: 2026-06-28 14:33 UTC
+- [x] **Fix pos.db world-readable (644 → 600)** — SQLite database contained all user PINs, password hashes/salts, and TOTP secrets with world-readable permissions (644, -rw-r--r--). Any user on the system could read the entire database. Fixed: `chmod 600 pos.db`. Verified via `stat`. Backup DB files already at 600.
+- [x] **Full security audit — all clean** — Verified: login rate limiting (5/60s + 10min lockout), session security (secrets.token_hex(32), 8h active/24h idle), TOTP encryption (Fernet key valid at 0600), file permissions (all JSON 0600, pos.db now 0600), XSS (escHtml consistently used), payment data (only card_last4 stored, no CVV/track), no eval/exec vectors, debug disabled (gunicorn, no Werkzeug debugger), CORS restricted, error handlers JSON-only. No new vulnerabilities found. All 6 open issues are pre-existing architectural items.
+- [x] **PCI compliance check** — Zero full card numbers stored. Saved customer payment methods store only last4, brand, expiry, and token. No CVV or track data.
+- [x] **Activity log sensitive data check** — No PINs or passwords logged in activity_log. Clean.
+- [x] **File permissions scan** — All 50+ JSON data files at 0600. All backup files at 0600. Source files and public assets (app.py, index.html, SVG icons, CSS, markdown) are world-readable as expected — no sensitive data in those.
+- [x] **Flask app status** — Running under gunicorn -w 1 (gevent), debug=False. Single worker means in-memory rate limiting is effective.
 - [x] **Encrypt TOTP secrets at rest with Fernet** — Added `_encrypt_totp()`/`_decrypt_totp()` using Fernet (cryptography). Key sourced from `TOTP_ENCRYPTION_KEY` env var or `.totp_encryption_key` file (0600). All 4 read/write points updated. Existing Employee One secret migrated. Login verification confirmed working.
 - [x] **File permissions verified** — All 45+ JSON data files at 0600. Key file at 0600. No new world-readable sensitive files.
 - [x] **PCI compliance check** — Zero full card numbers stored. Only card_last4 used. No cvv/track data stored.
