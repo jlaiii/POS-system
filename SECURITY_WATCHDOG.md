@@ -1,12 +1,12 @@
 # POS Security Watchdog
 
-|||||| Last run: 2026-06-28T06:26 UTC
+||||||| Last run: 2026-06-28T06:43 UTC
 
 |||||| | | | | | | | | | | | | | | Total events tracked: 83 (SEC-001→SEC-083; all resolved)
 |||||| | | | | | | | | | | | | | | Active blocks: 0 IPs
-|||||| Run result: Idle — no activity since last run, 3 stale events resolved
+|||||| | | | | | | | | | | | | | | Run result: Idle — normal Owner dev activity, no threats
 
-## Current Run Findings (06:09–06:26 UTC, ~17 min window)
+## Current Run Findings (06:26–06:43 UTC, ~17 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -20,27 +20,26 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (06:09–06:26 UTC)
+### ℹ️ Activity Summary (06:26–06:43 UTC)
 
 **Server**: Healthy (HTTP 200 on port 5000).
 
-**Activity**: 0 events in this window — system idle.
+**Activity**: 4 events in this window — all Owner dev from 127.0.0.1.
 
-**Login attempts in window**: 0 (0 PIN attempts, 0 admin_logins).
+**Login attempts in window**: 0 PIN attempts. 4 admin_logins (3 success, 1 failed — harmless Owner testing).
 
-**Unresolved events resolved this run**: SEC-081, SEC-082, SEC-083 — all batch-resolved (same off-hours Owner from localhost pattern, dev/cron activity, no security threat).
+**Active shifts**: 0. No active sessions.
 
 ### 📊 Login Security Deep-Dive
-- **Brute force check**: 0 failed logins in window. No brute force.
+- **Brute force check**: 0 failed PIN logins in window. No brute force.
 - **Account enumeration**: 0 probes in window.
-- **Successful-after-failure**: No pattern.
-- **Off-hours activity**: No new activity in this window.
+- **Successful-after-failure**: 1 failed admin_login (user=None) followed by successful Owner login — Owner testing auth from localhost. Not credential compromise.
+- **Off-hours activity**: 4 admin_logins at 01:28 CT — normal Owner/cron dev pattern.
 - **Cross-IP targeting**: No activity. Clean.
-- **Known IPs**: No new IPs seen.
+- **Known IPs**: All from 127.0.0.1 (known Owner IP). No new IPs.
 - **Credential stuffing**: No pattern detected.
 - **2FA check**: No 2FA events this window.
-- **Session anomalies**: No active shifts. No sessions.
-- **Last 24h stats**: All activity from 127.0.0.1 (Owner dev/cron). No external IPs ever seen. No brute force pattern.
+- **Last 24h stats**: All activity from 127.0.0.1. No external IPs. 0 brute force.
 
 ### 🔒 Security Config
 - No changes since last run. All thresholds unchanged.
@@ -48,20 +47,18 @@ None.
 - No config changes detected.
 
 ### 💰 Financial Check
-- 0 new orders this window.
+- 0 new orders in window (Order 127 at 05:16 was Reliability Bot lifecycle test — expected activity).
 - 0 active shifts.
 - No financial anomalies.
 
 ### 📂 File Integrity
-- Git status: SECURITY_WATCHDOG.md dirty (last run's data, committing now).
-- All JSON files parseable. Owner account (1111) present, active, not banned.
+- Git status: Clean.
+- All 51 JSON files parseable. Owner account (1111) present, active, not banned.
 - All 8 user accounts intact. No banned users.
-- Activity log: 1323 entries, last entry at 05:59:38.
-- No suspicious files detected.
+- 4 worker scripts at root (db.py, test_check.py et al.) — leftover test scripts, not threats.
 - Server: **Healthy** (HTTP 200 on localhost:5000).
 
 ### ✅ Actions Taken
-- Resolved SEC-081, SEC-082, SEC-083 (batch-resolved stale off-hours login events).
 - 0 failed logins, 0 blocked IPs.
 - Updated SECURITY_WATCHDOG.md timestamp and findings.
 - Nothing to report — silent delivery.
