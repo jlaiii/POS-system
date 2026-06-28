@@ -1,16 +1,16 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-28T16:30 UTC
-> Total checks: 1953
-> Healthy: 1953 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-28T17:04 UTC
+> Total checks: 1958
+> Healthy: 1958 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 — 200 OK (gunicorn+gevent, master+worker) [verified 16:30]
-- [x] All JSON data files exist and are valid — 9/9 core files valid (users, items, orders, shift_log, inventory, combos, favorites, cleared_orders, loyalty_points all parseable) [verified 16:30]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', 8 users, ['*'] permissions, role='owner') [verified 16:30]
-- [x] Git repo is clean — committed dirty data files (4e1a52d, b5907e4) [verified 16:43]
+- [x] Flask app responds on port 5000 — 200 OK (gunicorn+gevent, master+worker) [verified 17:04]
+- [x] All JSON data files exist and are valid — 9/9 core files valid (users, items, orders, shift_log, inventory, combos, favorites, cleared_orders, loyalty_points all parseable) [verified 17:04]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', 8 users, ['*'] permissions, role='owner') [verified 17:04]
+- [x] Git repo is clean — committed dirty SECURITY_WATCHDOG.md (1e2c151) [verified 17:04]
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/health — {"status":"ok"} (GET) [verified 16:42]
@@ -24,17 +24,17 @@
 - [x] Disk space check — 38% used (24G free, OK) [verified 16:42]
 - [x] Memory check — ~37% RAM used, 0 swap [verified 16:42]
 - [x] Clock-in/out: employee 1234 status checked — not clocked in [verified 16:18]
-- [x] CSV export — /api/export/shifts_csv returns CSV with adminPin=1111, valid, 5115 bytes [verified 15:56]
+- [x] CSV export — /api/export/shifts_csv returns CSV with adminPin=1111, valid, 5115 bytes [verified 17:04]
 - [x] Offline queue — /api/sync_orders exists, returns 400 'No orders provided' [verified 15:05]
 - [x] Backup integrity — latest backup (15:57, JSON 75336B/50 files, users+items intact with Owner/jayadmin/8 users, DB also backed up) [verified 16:42]
 
 ## EVERY 4 HOURS
 - [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 200, 2 pending orders (129, 128) [verified 15:05]
-- [x] Pickup display: verify /api/pickup-display/queue works — GET, 200 [verified 11:57]
-- [x] Webhook: verify webhook config endpoint works — /api/security/discord_webhook returns config, 200 OK, configured [verified 12:29]
+- [x] Pickup display: verify /api/pickup-display/queue works — GET, 200, 2 ready orders [verified 17:04]
+- [x] Webhook: verify webhook config endpoint works — /api/security/discord_webhook returns config, 200 OK, webhook URL not set [verified 17:04]
 - [x] Cash register: /api/cash_drawer/status (POST with adminPin=1111) returns active=false, 10 sessions, 200 OK [verified 13:33]
 - [x] User CRUD: add test user (9100 via /api/add_user) -> verify -> delete -> confirmed gone [verified 15:28]
-- [x] Loyalty: points earned on order — 14 loyalty entries (phone-keyed dict), data intact [verified 12:29]
+- [x] Loyalty: points earned on order — 14 loyalty entries (phone-keyed dict), data intact [verified 17:04]
 - [x] Clock-in late detection: 8 late records (up to 563min across shifts), data intact [verified 15:28]
 - [x] Break tracking: 4 shifts with breaks, break data intact [verified 15:28]
 - [x] Shift edit: 5 shifts with edits, audit trail intact (Owner + Employee One), last edit by Owner [verified 15:28]
