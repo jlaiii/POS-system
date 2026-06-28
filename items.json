@@ -1,279 +1,279 @@
 {
-  "Foods": [
-    {
-      "name": "Hamburger - Normal",
-      "price": 6,
-      "modifiers": {
-        "groups": [
-          {
-            "name": "Size",
-            "type": "single",
-            "options": [
-              {
-                "name": "Regular",
-                "price_mod": 0.0
-              },
-              {
-                "name": "Large",
-                "price_mod": 2.0
-              }
+    "Foods": [
+        {
+            "name": "Hamburger - Normal",
+            "price": 6,
+            "modifiers": {
+                "groups": [
+                    {
+                        "name": "Size",
+                        "type": "single",
+                        "options": [
+                            {
+                                "name": "Regular",
+                                "price_mod": 0.0
+                            },
+                            {
+                                "name": "Large",
+                                "price_mod": 2.0
+                            }
+                        ]
+                    },
+                    {
+                        "name": "Extras",
+                        "type": "multiple",
+                        "options": [
+                            {
+                                "name": "Extra Cheese",
+                                "price_mod": 0.5
+                            },
+                            {
+                                "name": "Bacon",
+                                "price_mod": 1.5
+                            },
+                            {
+                                "name": "Avocado",
+                                "price_mod": 1.0
+                            }
+                        ]
+                    }
+                ]
+            },
+            "description": "Juicy quarter-pound beef patty with crisp lettuce, ripe tomato, and fresh onion on a toasted sesame seed bun.",
+            "image_url": "static/images/hamburger-normal.svg",
+            "dietary_tags": [],
+            "ingredients": [
+                {
+                    "name": "Burger Bun",
+                    "qty": 1,
+                    "unit": "piece"
+                },
+                {
+                    "name": "Beef Patty",
+                    "qty": 1,
+                    "unit": "piece"
+                },
+                {
+                    "name": "Lettuce Leaf",
+                    "qty": 2,
+                    "unit": "leaves"
+                },
+                {
+                    "name": "Tomato Slice",
+                    "qty": 2,
+                    "unit": "slices"
+                },
+                {
+                    "name": "Onion Ring",
+                    "qty": 1,
+                    "unit": "piece"
+                }
             ]
-          },
-          {
-            "name": "Extras",
-            "type": "multiple",
-            "options": [
-              {
-                "name": "Extra Cheese",
-                "price_mod": 0.5
-              },
-              {
-                "name": "Bacon",
-                "price_mod": 1.5
-              },
-              {
-                "name": "Avocado",
-                "price_mod": 1.0
-              }
+        },
+        {
+            "name": "Hamburger - All the Fixings",
+            "price": 8,
+            "description": "Fully loaded quarter-pound burger with melted cheddar, crispy bacon, lettuce, tomato, pickles, and grilled onions.",
+            "image_url": "static/images/hamburger-all-the-fixings.svg",
+            "dietary_tags": []
+        },
+        {
+            "name": "Hotdog - Loaded",
+            "price": 7,
+            "description": "All-beef frankfurter piled high with spicy chili, shredded cheddar cheese, diced onions, and pickled jalape\u00f1os.",
+            "image_url": "static/images/hotdog-loaded.svg",
+            "dietary_tags": [
+                "spicy"
             ]
-          }
-        ]
-      },
-      "description": "Juicy quarter-pound beef patty with crisp lettuce, ripe tomato, and fresh onion on a toasted sesame seed bun.",
-      "image_url": "static/images/hamburger-normal.svg",
-      "dietary_tags": [],
-      "ingredients": [
-        {
-          "name": "Burger Bun",
-          "qty": 1,
-          "unit": "piece"
         },
         {
-          "name": "Beef Patty",
-          "qty": 1,
-          "unit": "piece"
+            "name": "Hotdog - Plain",
+            "price": 5,
+            "description": "Classic all-beef frankfurter served in a warm, steamed poppy seed bun. Simple and satisfying.",
+            "image_url": "static/images/hotdog-plain.svg",
+            "dietary_tags": []
         },
         {
-          "name": "Lettuce Leaf",
-          "qty": 2,
-          "unit": "leaves"
+            "name": "Taco - Beef & Cheese",
+            "price": 7,
+            "description": "Crispy corn shell filled with seasoned ground beef, melted cheddar, shredded lettuce, and diced tomatoes.",
+            "image_url": "static/images/taco-beef-&-cheese.svg",
+            "dietary_tags": [
+                "gluten_free"
+            ]
         },
         {
-          "name": "Tomato Slice",
-          "qty": 2,
-          "unit": "slices"
-        },
-        {
-          "name": "Onion Ring",
-          "qty": 1,
-          "unit": "piece"
+            "name": "Taco - Chicken with Salsa",
+            "price": 7,
+            "description": "Soft flour tortilla loaded with seasoned shredded chicken, fresh pico de gallo, sour cream, and sliced avocado.",
+            "image_url": "static/images/taco-chicken-with-salsa.svg",
+            "dietary_tags": []
         }
-      ]
-    },
-    {
-      "name": "Hamburger - All the Fixings",
-      "price": 8,
-      "description": "Fully loaded quarter-pound burger with melted cheddar, crispy bacon, lettuce, tomato, pickles, and grilled onions.",
-      "image_url": "static/images/hamburger-all-the-fixings.svg",
-      "dietary_tags": []
-    },
-    {
-      "name": "Hotdog - Loaded",
-      "price": 7,
-      "description": "All-beef frankfurter piled high with spicy chili, shredded cheddar cheese, diced onions, and pickled jalape\u00f1os.",
-      "image_url": "static/images/hotdog-loaded.svg",
-      "dietary_tags": [
-        "spicy"
-      ]
-    },
-    {
-      "name": "Hotdog - Plain",
-      "price": 5,
-      "description": "Classic all-beef frankfurter served in a warm, steamed poppy seed bun. Simple and satisfying.",
-      "image_url": "static/images/hotdog-plain.svg",
-      "dietary_tags": []
-    },
-    {
-      "name": "Taco - Beef & Cheese",
-      "price": 7,
-      "description": "Crispy corn shell filled with seasoned ground beef, melted cheddar, shredded lettuce, and diced tomatoes.",
-      "image_url": "static/images/taco-beef-&-cheese.svg",
-      "dietary_tags": [
-        "gluten_free"
-      ]
-    },
-    {
-      "name": "Taco - Chicken with Salsa",
-      "price": 7,
-      "description": "Soft flour tortilla loaded with seasoned shredded chicken, fresh pico de gallo, sour cream, and sliced avocado.",
-      "image_url": "static/images/taco-chicken-with-salsa.svg",
-      "dietary_tags": []
-    }
-  ],
-  "Drinks": [
-    {
-      "name": "Lemonade",
-      "price": 3,
-      "description": "Refreshing freshly squeezed lemonade made with real lemons and a touch of cane sugar. Served over ice.",
-      "image_url": "static/images/lemonade.svg",
-      "dietary_tags": [
-        "vegan",
-        "gluten_free",
-        "vegetarian"
-      ]
-    },
-    {
-      "name": "Coke",
-      "price": 3,
-      "barcode": "4901234567890",
-      "description": "Ice-cold Coca-Cola served in a chilled fountain cup or classic glass bottle. The real thing.",
-      "image_url": "static/images/coke.svg",
-      "dietary_tags": [
-        "vegan",
-        "gluten_free"
-      ]
-    },
-    {
-      "name": "Water Bottle",
-      "price": 2,
-      "description": "Pure natural spring water sourced from mountain aquifers. 16 oz bottle, perfectly chilled.",
-      "image_url": "static/images/water-bottle.svg",
-      "dietary_tags": [
-        "vegan",
-        "gluten_free",
-        "vegetarian",
-        "low_carb",
-        "sugar_free"
-      ]
-    }
-  ],
-  "Snacks": [
-    {
-      "name": "Raspia (Fruit Slush)",
-      "price": 4,
-      "description": "Refreshing frozen fruit slushie blended with real raspberry, mango, and passionfruit pur\u00e9e. A customer favorite!",
-      "image_url": "static/images/raspia-fruit-slush.svg",
-      "dietary_tags": [
-        "vegan",
-        "gluten_free",
-        "vegetarian"
-      ]
-    },
-    {
-      "name": "Chips (Large Bag)",
-      "price": 3,
-      "description": "Generous share-size bag of golden, crispy potato chips. Lightly salted and cooked to perfection.",
-      "image_url": "static/images/chips-large-bag.svg",
-      "dietary_tags": [
-        "vegan",
-        "gluten_free",
-        "vegetarian"
-      ]
-    },
-    {
-      "name": "Chocolate Bar",
-      "price": 2,
-      "description": "Rich and creamy milk chocolate bar made with premium Belgian cocoa. The perfect sweet treat.",
-      "image_url": "static/images/chocolate-bar.svg",
-      "dietary_tags": [
-        "vegetarian"
-      ]
-    },
-    {
-      "name": "Mixed Nuts (Small Pack)",
-      "price": 4,
-      "description": "Roasted and salted premium mixed nuts: almonds, cashews, pecans, and peanuts. Protein-packed snack.",
-      "image_url": "static/images/mixed-nuts-small-pack.svg",
-      "dietary_tags": [
-        "vegan",
-        "gluten_free",
-        "vegetarian",
-        "low_carb"
-      ]
-    },
-    {
-      "name": "Granola Bar",
-      "price": 2,
-      "description": "Hearty oats-and-honey granola bar with dried cranberries and pumpkin seeds. Great for a quick energy boost.",
-      "image_url": "static/images/granola-bar.svg",
-      "dietary_tags": [
-        "vegetarian"
-      ]
-    }
-  ],
-  "Breakfast": [
-    {
-      "name": "Pancakes",
-      "price": 8.99,
-      "barcode": "",
-      "image_url": "static/images/pancakes.svg",
-      "description": "Fluffy buttermilk pancakes with maple syrup and butter",
-      "course": "main",
-      "active": true,
-      "dietary_tags": [
-        "vegetarian"
-      ],
-      "nutritional_info": {},
-      "scheduled_visibility": []
-    },
-    {
-      "name": "Bacon & Eggs",
-      "price": 10.99,
-      "barcode": "",
-      "image_url": "static/images/bacon-&-eggs.svg",
-      "description": "Two eggs any style with crispy bacon strips and toast",
-      "course": "main",
-      "active": true,
-      "dietary_tags": [
-        "gluten_free"
-      ],
-      "nutritional_info": {},
-      "scheduled_visibility": []
-    },
-    {
-      "name": "French Toast",
-      "price": 9.49,
-      "barcode": "",
-      "image_url": "static/images/french-toast.svg",
-      "description": "Thick-cut brioche dipped in cinnamon egg batter, grilled golden, topped with berries",
-      "course": "main",
-      "active": true,
-      "dietary_tags": [
-        "vegetarian"
-      ],
-      "nutritional_info": {},
-      "scheduled_visibility": []
-    }
-  ],
-  "Salads": [
-    {
-      "name": "Caesar Salad",
-      "price": 7.99,
-      "barcode": "",
-      "image_url": "static/images/caesar-salad.svg",
-      "description": "Romaine lettuce, parmesan, croutons, and house-made Caesar dressing",
-      "course": "main",
-      "active": true,
-      "dietary_tags": [
-        "vegetarian"
-      ],
-      "nutritional_info": {},
-      "scheduled_visibility": []
-    },
-    {
-      "name": "Grilled Chicken Salad",
-      "price": 11.49,
-      "barcode": "",
-      "image_url": "static/images/grilled-chicken-salad.svg",
-      "description": "Mixed greens, grilled chicken breast, cherry tomatoes, cucumbers, balsamic vinaigrette",
-      "course": "main",
-      "active": true,
-      "dietary_tags": [
-        "gluten_free",
-        "low_carb"
-      ],
-      "nutritional_info": {},
-      "scheduled_visibility": []
-    }
-  ]
+    ],
+    "Drinks": [
+        {
+            "name": "Lemonade",
+            "price": 3,
+            "description": "Refreshing freshly squeezed lemonade made with real lemons and a touch of cane sugar. Served over ice.",
+            "image_url": "static/images/lemonade.svg",
+            "dietary_tags": [
+                "vegan",
+                "gluten_free",
+                "vegetarian"
+            ]
+        },
+        {
+            "name": "Coke",
+            "price": 3,
+            "barcode": "4901234567890",
+            "description": "Ice-cold Coca-Cola served in a chilled fountain cup or classic glass bottle. The real thing.",
+            "image_url": "static/images/coke.svg",
+            "dietary_tags": [
+                "vegan",
+                "gluten_free"
+            ]
+        },
+        {
+            "name": "Water Bottle",
+            "price": 2,
+            "description": "Pure natural spring water sourced from mountain aquifers. 16 oz bottle, perfectly chilled.",
+            "image_url": "static/images/water-bottle.svg",
+            "dietary_tags": [
+                "vegan",
+                "gluten_free",
+                "vegetarian",
+                "low_carb",
+                "sugar_free"
+            ]
+        }
+    ],
+    "Snacks": [
+        {
+            "name": "Raspia (Fruit Slush)",
+            "price": 4,
+            "description": "Refreshing frozen fruit slushie blended with real raspberry, mango, and passionfruit pur\u00e9e. A customer favorite!",
+            "image_url": "static/images/raspia-fruit-slush.svg",
+            "dietary_tags": [
+                "vegan",
+                "gluten_free",
+                "vegetarian"
+            ]
+        },
+        {
+            "name": "Chips (Large Bag)",
+            "price": 3,
+            "description": "Generous share-size bag of golden, crispy potato chips. Lightly salted and cooked to perfection.",
+            "image_url": "static/images/chips-large-bag.svg",
+            "dietary_tags": [
+                "vegan",
+                "gluten_free",
+                "vegetarian"
+            ]
+        },
+        {
+            "name": "Chocolate Bar",
+            "price": 2,
+            "description": "Rich and creamy milk chocolate bar made with premium Belgian cocoa. The perfect sweet treat.",
+            "image_url": "static/images/chocolate-bar.svg",
+            "dietary_tags": [
+                "vegetarian"
+            ]
+        },
+        {
+            "name": "Mixed Nuts (Small Pack)",
+            "price": 4,
+            "description": "Roasted and salted premium mixed nuts: almonds, cashews, pecans, and peanuts. Protein-packed snack.",
+            "image_url": "static/images/mixed-nuts-small-pack.svg",
+            "dietary_tags": [
+                "vegan",
+                "gluten_free",
+                "vegetarian",
+                "low_carb"
+            ]
+        },
+        {
+            "name": "Granola Bar",
+            "price": 2,
+            "description": "Hearty oats-and-honey granola bar with dried cranberries and pumpkin seeds. Great for a quick energy boost.",
+            "image_url": "static/images/granola-bar.svg",
+            "dietary_tags": [
+                "vegetarian"
+            ]
+        }
+    ],
+    "Breakfast": [
+        {
+            "name": "Pancakes",
+            "price": 8.99,
+            "barcode": "",
+            "image_url": "static/images/pancakes.svg",
+            "description": "Fluffy buttermilk pancakes with maple syrup and butter",
+            "course": "main",
+            "active": true,
+            "dietary_tags": [
+                "vegetarian"
+            ],
+            "nutritional_info": {},
+            "scheduled_visibility": []
+        },
+        {
+            "name": "Bacon & Eggs",
+            "price": 10.99,
+            "barcode": "",
+            "image_url": "static/images/bacon-&-eggs.svg",
+            "description": "Two eggs any style with crispy bacon strips and toast",
+            "course": "main",
+            "active": true,
+            "dietary_tags": [
+                "gluten_free"
+            ],
+            "nutritional_info": {},
+            "scheduled_visibility": []
+        },
+        {
+            "name": "French Toast",
+            "price": 9.49,
+            "barcode": "",
+            "image_url": "static/images/french-toast.svg",
+            "description": "Thick-cut brioche dipped in cinnamon egg batter, grilled golden, topped with berries",
+            "course": "main",
+            "active": true,
+            "dietary_tags": [
+                "vegetarian"
+            ],
+            "nutritional_info": {},
+            "scheduled_visibility": []
+        }
+    ],
+    "Salads": [
+        {
+            "name": "Caesar Salad",
+            "price": 7.99,
+            "barcode": "",
+            "image_url": "static/images/caesar-salad.svg",
+            "description": "Romaine lettuce, parmesan, croutons, and house-made Caesar dressing",
+            "course": "main",
+            "active": true,
+            "dietary_tags": [
+                "vegetarian"
+            ],
+            "nutritional_info": {},
+            "scheduled_visibility": []
+        },
+        {
+            "name": "Grilled Chicken Salad",
+            "price": 11.49,
+            "barcode": "",
+            "image_url": "static/images/grilled-chicken-salad.svg",
+            "description": "Mixed greens, grilled chicken breast, cherry tomatoes, cucumbers, balsamic vinaigrette",
+            "course": "main",
+            "active": true,
+            "dietary_tags": [
+                "gluten_free",
+                "low_carb"
+            ],
+            "nutritional_info": {},
+            "scheduled_visibility": []
+        }
+    ]
 }
