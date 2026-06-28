@@ -61,7 +61,7 @@
 - [ ] Add VACUUM + integrity_check automation
 
 ## COMPLETED (this session)
-- [x] **migrate_timesheet.py** — Migrated 1 admin timesheet entry from timesheet.json to SQLite. Added 'source' column for idempotent re-runs. Schema: user_id, login_time, logout_time, duration_hours. Commit: (to be added after push)
+- [x] **migrate_timesheet.py** — Migrated 1 admin timesheet entry from timesheet.json to SQLite. Added 'source' column for idempotent re-runs. Schema: user_id, login_time, logout_time, duration_hours. Commit: c73b650
 - [x] **Initial setup** — Created DB_TASKS.md, db.py, migrations/, and first migration script (users)
 - [x] **migrate_users.py** — Migrated 6 users from users.json to SQLite. Verified row count matches. Idempotency tested. Commit: 0df93e1
 - [x] **migrate_shift_log.py** — Migrated 16 shifts from shift_log.json to SQLite. All fields preserved (edits JSON, breaks JSON, late tracking). Idempotency tested. Commit: 12e292b
