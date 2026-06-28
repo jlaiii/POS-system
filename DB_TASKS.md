@@ -1,6 +1,6 @@
 # POS Database Migration Tasks
-> Last run: 2026-06-27 14:xx UTC
-> Current phase: Phase 2 — Migration Scripts (13/24 complete)
+> Last run: 2026-06-28 00:xx UTC
+> Current phase: Phase 2 — Migration Scripts (14/24 complete)
 
 ## Phase 1: Schema Design
 - [x] Design all SQLite table schemas (users, shift_log, orders, items, inventory, etc.)
@@ -20,7 +20,7 @@
 - [ ] Write migrate_favorites.py — favorites table migration
 - [ ] Write migrate_waste_log.py — waste_log table migration
 - [x] Write migrate_tickets.py — tickets table migration (2 rows verified ✓)
-- [ ] Write migrate_timesheet.py — timesheet table migration
+- [x] Write migrate_timesheet.py — timesheet table migration (1 row verified ✓)
 - [ ] Write migrate_timesheet_approvals.py — timesheet_approvals table migration
 - [ ] Write migrate_cash_drawer.py — cash_drawer table migration
 - [ ] Write migrate_delivery_addresses.py — delivery_addresses table migration
@@ -61,6 +61,7 @@
 - [ ] Add VACUUM + integrity_check automation
 
 ## COMPLETED (this session)
+- [x] **migrate_timesheet.py** — Migrated 1 admin timesheet entry from timesheet.json to SQLite. Added 'source' column for idempotent re-runs. Schema: user_id, login_time, logout_time, duration_hours. Commit: (to be added after push)
 - [x] **Initial setup** — Created DB_TASKS.md, db.py, migrations/, and first migration script (users)
 - [x] **migrate_users.py** — Migrated 6 users from users.json to SQLite. Verified row count matches. Idempotency tested. Commit: 0df93e1
 - [x] **migrate_shift_log.py** — Migrated 16 shifts from shift_log.json to SQLite. All fields preserved (edits JSON, breaks JSON, late tracking). Idempotency tested. Commit: 12e292b
@@ -101,7 +102,7 @@ How to revert to JSON mode if DB breaks:
 | favorites.json | favorites | dict | 0 | |
 | waste_log.json | waste_log | array | 0 | |
 | tickets.json | tickets | array | 2 | ✓ |
-| timesheet.json | timesheet | array | ? | |
+| timesheet.json | timesheet | array | 1 | ✓ |
 | timesheet_approvals.json | timesheet_approvals | array | 0 | |
 | cash_drawer.json | cash_drawer | object | 0 | |
 | delivery_addresses.json | delivery_addresses | dict | 0 | |
