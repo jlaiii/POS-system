@@ -3040,5 +3040,16 @@
         "details": {
             "status": "success"
         }
+    },
+    {
+        "user_id": "1111",
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-28T09:54:44.535401",
+        "success": true,
+        "user_agent": "curl/8.5.0",
+        "method": "pin",
+        "details": {
+            "status": "success"
+        }
     }
 ]

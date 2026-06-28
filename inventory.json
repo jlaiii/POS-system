@@ -15,7 +15,7 @@
         "unit_cost": 3.25
     },
     "Coke": {
-        "stock": 77,
+        "stock": 76,
         "low_stock_threshold": 10,
         "unit_cost": 0.75
     },
