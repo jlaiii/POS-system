@@ -1112,14 +1112,14 @@
         "created_at": "2026-06-28T01:50:43.477407",
         "severity": "MEDIUM",
         "category": "anomaly",
-        "status": "unresolved",
-        "summary": "\u26a0\ufe0f Off-hours login: Owner (1111) at 01:50",
-        "detail": "User Owner (PIN 1111) logged in during off-hours (22:00\u201306:00) from IP 127.0.0.1.",
+        "status": "resolved",
+        "summary": "⚠️ Off-hours login: Owner (1111) at 01:50",
+        "detail": "User Owner (PIN 1111) logged in during off-hours (22:00–06:00) from IP 127.0.0.1.",
         "affected_user": "1111",
         "affected_user_name": "Owner",
         "related_event": null,
         "reported_by": "IP Blocklist Manager",
-        "resolved_at": null,
-        "resolution": null
+        "resolved_at": "2026-06-28T02:05:00",
+        "resolution": "Batch-resolved by Security Watchdog. Off-hours login from 127.0.0.1 (localhost) — same pattern as SEC-009 through SEC-075. Owner dev/cron activity on localhost at 20:50 CT (Saturday evening, just before off-hours window). No external IPs, no failed attempts, no real security concern."
     }
 ]
