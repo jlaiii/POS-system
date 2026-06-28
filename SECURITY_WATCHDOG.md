@@ -1,12 +1,12 @@
 # POS Security Watchdog
 
-| Last run: 2026-06-28T18:27 UTC
+| Last run: 2026-06-28T18:44 UTC
 
-||| Total events tracked: 83 (SEC-001→SEC-083; all resolved)
-||| Active blocks: 0 IPs
-||| Run result: Silent — 0 logins in window. Nothing to report.
+|| Total events tracked: 83 (SEC-001→SEC-083; all resolved)
+|| Active blocks: 0 IPs
+|| Run result: Silent — 0 logins in window. Nothing to report.
 
-## Current Run Findings (18:10–18:27 UTC, ~17 min window)
+## Current Run Findings (18:27–18:44 UTC, ~17 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -20,7 +20,7 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (18:10–18:27 UTC)
+### ℹ️ Activity Summary (18:27–18:44 UTC)
 
 **Server**: Healthy (HTTP 200 on port 5000 root endpoint, /api/health → {"status":"ok"}).
 
@@ -36,7 +36,7 @@ None.
 - **Brute force check**: 0 failed logins in 5 min window. Threshold: 5. No alert.
 - **Account enumeration**: 0 probes. No alert.
 - **Successful-after-failure**: No failed logins in window. No alert.
-- **Off-hours activity**: Current time 18:27 UTC (13:27 CT Sunday) — regular hours. No off-hours activity.
+- **Off-hours activity**: Current time 18:44 UTC (13:44 CT Sunday) — regular hours. No off-hours activity.
 - **Cross-IP targeting**: No activity whatsoever.
 - **Known IPs**: No new IPs. All activity from 127.0.0.1 (known).
 - **Credential stuffing**: No pattern detected.
@@ -61,7 +61,7 @@ None.
 - All 51 JSON files parseable, stable sizes.
 - Owner account (1111) present, active, not banned. All 8 accounts intact.
 - No banned users.
-- Git status: SECURITY_WATCHDOG.md modified (this run's update).
+- Git status: SECURITY_WATCHDOG.md modified (this run's update); RELIABILITY_CHECKLIST.md modified (Site Reliability Bot).
 - No new suspicious files — no .php, .exe, or anomalous files found.
 - Server: **Healthy** (HTTP 200, /api/health → {"status":"ok"}).
 
