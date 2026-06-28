@@ -1,12 +1,12 @@
 # POS Security Watchdog
 
-| Last run: 2026-06-28T03:37 UTC
+| Last run: 2026-06-28T03:55 UTC
 
-| | | | | | | | | | | | | | | | | Total events tracked: 78 (SEC-001→SEC-078; all resolved)
-| | | | | | | | | | | | | | | | | Active blocks: 0 IPs
+| | | | | | | | | | | | | | | | Total events tracked: 78 (SEC-001→SEC-078; all resolved)
+| | | | | | | | | | | | | | | | Active blocks: 0 IPs
 | Run result: All clear | No threats this window
 
-## Current Run Findings (03:22–03:37 UTC, ~15 min window)
+## Current Run Findings (03:37–03:55 UTC, ~18 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -20,7 +20,7 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (03:22–03:37 UTC)
+### ℹ️ Activity Summary (03:37–03:55 UTC)
 
 **Server**: Healthy (HTTP 200 on port 5000 via gunicorn+gevent).
 
@@ -34,7 +34,7 @@ None.
 - **Brute force check**: 0 failed logins in window. No brute force.
 - **Account enumeration**: 0 probes in window.
 - **Successful-after-failure**: No failed logins in window. Clean.
-- **Off-hours activity**: No activity in window. Prior activity at 03:02 UTC (Owner, 127.0.0.1) — same pattern as previous runs, normal cron dev activity. No concern.
+- **Off-hours activity**: No activity in window. Prior activity at 03:02 UTC (Owner, 127.0.0.1) — same pattern, normal cron dev activity.
 - **Cross-IP targeting**: No activity. Clean.
 - **Known IPs**: No new IPs to learn.
 - **Credential stuffing**: No pattern detected.
@@ -54,7 +54,8 @@ None.
 ### 💰 Financial Check
 - No new orders this window. No financial anomalies.
 - 0 active shifts.
-- 0 zero-total orders. No 100%+ discounts. Clean.
+- 0 zero-total orders (order #94 is cancelled/empty, not a financial concern). No 100%+ discounts. Clean.
+- Historical note: dev orders all under "unknown" user — 30/106 refunded (28%) but all test data, not real transactions.
 
 ### 📂 File Integrity
 - Git status: Clean.
@@ -66,7 +67,6 @@ None.
 ### ✅ Actions Taken
 - **All clear** — No security threats detected this run.
 - 0 logins, 0 failed attempts, 0 blocked IPs.
-- Resolved SEC-077 and SEC-078 (off-hours Owner logins from 127.0.0.1 at 03:02 UTC — same known pattern).
 - Updated SECURITY_WATCHDOG.md timestamp and findings.
 - Everything clean — silent delivery.
 
@@ -77,12 +77,12 @@ None.
 
 | | | | | | | | | | | | | | | | | Check | Status |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Current time | 2026-06-28T03:37 UTC — 22:37 CT (Saturday evening) |
+| Current time | 2026-06-28T03:55 UTC — 22:55 CT (Saturday evening) |
 | Activity since last run | 0 logins. Window completely idle. |
-| | | | | | | | | | | | | | | | Login attempts (last ~15 min) | 0 (0 failed) |
-| | | | | | | | | | | | | | | | Successful logins (this window) | 0 |
-| | | | | | | | | | | | | | | | Blocked IPs | 0 |
-| | | | | | | | | | | | | | | | Config changes | None |
-| | | | | | | | | | | | | | | | File integrity | OK. All JSON files parseable. 8 accounts intact. |
-| | | | | | | | | | | | | | | | Users | 8 accounts. Admin 2FA: 2222=no, 7788=no (pre-existing gap — Sentinel) |
-| | | | | | | | | | | | | | | | Server | **Healthy** (gunicorn+gevent, port 5000) |
+| | | | | | | | | | | | | | | Login attempts (last ~18 min) | 0 (0 failed) |
+| | | | | | | | | | | | | | | Successful logins (this window) | 0 |
+| | | | | | | | | | | | | | | Blocked IPs | 0 |
+| | | | | | | | | | | | | | | Config changes | None |
+| | | | | | | | | | | | | | | File integrity | OK. All JSON files parseable. 8 accounts intact. |
+| | | | | | | | | | | | | | | Users | 8 accounts. Admin 2FA: 2222=no, 7788=no (pre-existing gap — Sentinel) |
+| | | | | | | | | | | | | | | Server | **Healthy** (gunicorn+gevent, port 5000) |
