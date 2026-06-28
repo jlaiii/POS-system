@@ -1,12 +1,12 @@
 # POS Security Watchdog
 
-| Last run: 2026-06-28T17:20 UTC
+| Last run: 2026-06-28T17:30 UTC
 
 || Total events tracked: 83 (SEC-001→SEC-083; all resolved)
 || Active blocks: 0 IPs
-|| Run result: Quiet — no activity since last run
+|| Run result: Quiet — 1 admin_login since last run (Owner, localhost, normal)
 
-## Current Run Findings (17:02–17:20 UTC, ~18 min window)
+## Current Run Findings (17:20–17:30 UTC, ~10 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -24,13 +24,13 @@ None.
 
 **Server**: Healthy (HTTP 200 on port 5000 root endpoint, /api/health → {"status":"ok"}).
 
-**Activity**: 0 new entries. Last activity at 16:42:38 (Owner login). No activity since last run.
+**Activity**: 1 new entry since last run. Owner (1111) admin_login at 17:26:09 from 127.0.0.1 — normal single successful login.
 
 **Login attempts in window**: 0 total (0 failed, 0 successful).
 
 **Active shifts**: 0. No one clocked in.
 
-**Orders**: No new orders since last run. Order #131 (Reliability Bot test at 15:30) is oldest recent order.
+**Orders**: No new orders since last run. Existing orders #128 (pending) and #129 (pending) unchanged.
 
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: 0 failed logins in 5 min window. Threshold: 5. No alert.
@@ -77,9 +77,9 @@ None.
 
 || Check | Status |
 |---|---|---|
-|| Current time | 2026-06-28T17:20 UTC — 12:20 CT (Sunday, regular hours) |
-|| Activity since last run | 0 events — no activity |
-|| Login attempts (last ~18 min) | 0 total (0 failed, 0 successful) |
+|| Current time | 2026-06-28T17:30 UTC — 12:30 CT (Sunday, regular hours) |
+|| Activity since last run | 1 event — Owner admin_login at 17:26 UTC |
+|| Login attempts (last ~10 min) | 0 total (0 failed, 0 successful) |
 || Successful logins (this window) | 0 |
 || Blocked IPs | 0 |
 || Config changes | None |
