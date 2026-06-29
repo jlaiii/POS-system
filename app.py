@@ -9447,10 +9447,24 @@ def admin_stats():
     pending_alert_threshold = int(config_data.get('pending_order_alert_threshold', 10))
     pending_alert = pending_count > pending_alert_threshold
 
+    # Calculate today's orders and sales while we have the data
+    today_orders_list = []
+    for o in orders:
+        try:
+            odt = datetime.fromisoformat(o.get('date', ''))
+            if today_start <= odt < today_end:
+                today_orders_list.append(o)
+        except (ValueError, TypeError):
+            pass
+    today_order_count = len(today_orders_list)
+    today_sales_amt = round(sum(float(o.get('total', 0)) for o in today_orders_list), 2)
+
     stats = {
         'total_sales': round(total_sales, 2),
         'total_traffic': total_traffic,
         'total_orders': total_traffic,
+        'today_sales': today_sales_amt,
+        'today_orders': today_order_count,
         'average_sale': round(avg_sale, 2),
         'weekly_sales': round(weekly_sales, 2),
         'monthly_sales': round(monthly_sales, 2),
