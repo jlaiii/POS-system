@@ -1,16 +1,16 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-29T09:18 UTC
-> Total checks: 2332
-> Healthy: 2332 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-29T09:40 UTC
+> Total checks: 2338
+> Healthy: 2337 | Broken: 0 | Fixed this cycle: 1
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-|- [x] Flask app responds on port 5000 — 200 OK (gunicorn+gevent, master+worker) [verified 09:18]
-|- [x] All JSON data files exist and are valid — 15/15 core files valid (users, items, orders, shift_log, inventory, combos, favorites, cleared_orders, loyalty_points, timesheet, timesheet_config, security_config, security_events, known_ips, login_attempts all parseable) [verified 09:18]
-|- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', 8 users, ['*'] permissions, role='owner') [verified 09:18]
-|- [x] Git repo is clean — clean [verified 09:18]
+- [x] Flask app responds on port 5000 — 200 OK (gunicorn+gevent, master+worker) [verified 09:40]
+- [x] All JSON data files exist and are valid — 15/15 core files valid (users, items, orders, shift_log, inventory, combos, favorites, cleared_orders, loyalty_points, timesheet, timesheet_config, security_config, security_events, known_ips, login_attempts all parseable) [verified 09:40]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', 8 users, ['*'] permissions, role='owner') [verified 09:40]
+- [x] Git repo is clean — clean [verified 09:40]
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/health — {"status":"ok"} (GET) [verified 08:56]
@@ -58,7 +58,8 @@
 - [x] **items.json schema changed to category-keyed format** — Items stored as {Foods:[...], Drinks:[...], ...}. Used by /api/items (GET). [verified 07:43]
 
 ## FIXES APPLIED
-|- [2026-06-28 20:40] **Routine run — all healthy** — Flask 200 (gunicorn+gevent), disk 38%, RAM 38%. All 9 core JSON files valid. Owner PIN 1111 intact (name='Owner', username='jayadmin', 8 users, role='owner'). Git: committed dirty SECURITY_WATCHDOG.md + activity_log + login_attempts from workers (2566545). Verified CRITICAL + full HOURLY sweep (health, frontend 1.38MB, items 5 cats/19 items, login owner, admin_stats avg_sale=$10.91/146 backups/green, admin_shifts 55, app.py syntax OK, index.html size normal, disk 38%, RAM 38%, CSV export valid, offline queue 400, backup integrity 19:58). Single gunicorn master+worker, no dual instances. Total checks: 2046, all healthy. No downtime.
+| [2026-06-29 09:40] **Cleaned up leftover test debris from inventory** — Found `Test "Special" 🎉 Item` (0 stock) leftover from previous special chars test in inventory.json. Removed and committed (a036bc9). Also verified: Flask 200, 15/15 JSON valid, owner OK, git clean, webhook config OK, cash drawer 10 sessions, app.py syntax OK, index.html 1,375,315B normal, items GET 5 cats/19 items, clock status OK, shift data intact (57 shifts, 8 late, 4 breaks, 5 edits). No downtime.
+- [2026-06-28 20:40] **Routine run — all healthy** — Flask 200 (gunicorn+gevent), disk 38%, RAM 38%. All 9 core JSON files valid. Owner PIN 1111 intact (name='Owner', username='jayadmin', 8 users, role='owner'). Git: committed dirty SECURITY_WATCHDOG.md + activity_log + login_attempts from workers (2566545). Verified CRITICAL + full HOURLY sweep (health, frontend 1.38MB, items 5 cats/19 items, login owner, admin_stats avg_sale=$10.91/146 backups/green, admin_shifts 55, app.py syntax OK, index.html size normal, disk 38%, RAM 38%, CSV export valid, offline queue 400, backup integrity 19:58). Single gunicorn master+worker, no dual instances. Total checks: 2046, all healthy. No downtime.
 |- [2026-06-28 15:05] **Transitioned dev server to gunicorn+gevent (Flask stability fix)**
 |
 ||- [2026-06-28 12:29] **Routine run — all healthy** — Flask 200 (gunicorn+gevent), disk 38%, RAM 34%. All 9 core JSON files valid. Owner PIN 1111 intact (name='Owner', username='jayadmin', 8 users, role='owner'). Git: dirty SECURITY_WATCHDOG.md (from Security Watchdog). Verified CRITICAL + overdue HOURLY (health, admin_stats, frontend loads, CSV export) + 4H (kitchen 1 pending order, cash drawer 10 sessions, webhook configured, shift edits 5, offline queue, loyalty 14 entries). Single gunicorn master+worker, no dual instances. Total checks: 1871, all healthy. No downtime.
