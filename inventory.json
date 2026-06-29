@@ -15,7 +15,7 @@
         "unit_cost": 3.25
     },
     "Coke": {
-        "stock": 73,
+        "stock": 72,
         "low_stock_threshold": 10,
         "unit_cost": 0.75
     },
@@ -60,7 +60,7 @@
         "unit_cost": 1.2
     },
     "Hamburger - Normal": {
-        "stock": 79,
+        "stock": 78,
         "low_stock_threshold": 10,
         "unit_cost": 3.5
     },
@@ -118,5 +118,9 @@
         "stock": 200,
         "low_stock_threshold": 40,
         "unit_cost": 0.2
+    },
+    "Test \"Special\" \ud83c\udf89 Item": {
+        "stock": 0,
+        "low_stock_threshold": 10
     }
 }

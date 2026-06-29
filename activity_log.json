@@ -19897,5 +19897,134 @@
         "details": {
             "status": "success"
         }
+    },
+    {
+        "timestamp": "2026-06-29T08:34:03.200830",
+        "type": "add_item",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "category": "Drinks",
+            "name": "Test \"Special\" \ud83c\udf89 Item",
+            "price": 5.99
+        }
+    },
+    {
+        "timestamp": "2026-06-29T08:34:03.227913",
+        "type": "delete_item",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "category": "Drinks",
+            "name": "Test \"Special\" \ud83c\udf89 Item"
+        }
+    },
+    {
+        "timestamp": "2026-06-29T08:34:19.668762",
+        "type": "submit_order",
+        "user_id": null,
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 136,
+            "subtotal": 9.0,
+            "tax_amount": 0.74,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 9.74,
+            "payment_method": "Cash",
+            "item_count": 2
+        }
+    },
+    {
+        "timestamp": "2026-06-29T08:34:25.807309",
+        "type": "submit_order",
+        "user_id": null,
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "order_id": 137,
+            "subtotal": 319.9,
+            "tax_amount": 26.4,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 346.3,
+            "payment_method": "Cash",
+            "item_count": 50
+        }
+    },
+    {
+        "timestamp": "2026-06-29T08:34:35.743350",
+        "type": "refund_order",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "order_id": 137,
+            "reason": "Reliability Bot large payload test",
+            "refunded_by_name": "Owner",
+            "order_total": 346.3,
+            "inventory_restored": [
+                "Hamburger - Normal x1",
+                "Hamburger - All the Fixings x1",
+                "Hotdog - Loaded x1",
+                "Water Bottle x1",
+                "Pancakes x1",
+                "Hamburger - Normal x1",
+                "Hamburger - All the Fixings x1",
+                "Hotdog - Loaded x1",
+                "Water Bottle x1",
+                "Pancakes x1",
+                "Hamburger - Normal x1",
+                "Hamburger - All the Fixings x1",
+                "Hotdog - Loaded x1",
+                "Water Bottle x1",
+                "Pancakes x1",
+                "Hamburger - Normal x1",
+                "Hamburger - All the Fixings x1",
+                "Hotdog - Loaded x1",
+                "Water Bottle x1",
+                "Pancakes x1",
+                "Hamburger - Normal x1",
+                "Hamburger - All the Fixings x1",
+                "Hotdog - Loaded x1",
+                "Water Bottle x1",
+                "Pancakes x1",
+                "Hamburger - Normal x1",
+                "Hamburger - All the Fixings x1",
+                "Hotdog - Loaded x1",
+                "Water Bottle x1",
+                "Pancakes x1",
+                "Hamburger - Normal x1",
+                "Hamburger - All the Fixings x1",
+                "Hotdog - Loaded x1",
+                "Water Bottle x1",
+                "Pancakes x1",
+                "Hamburger - Normal x1",
+                "Hamburger - All the Fixings x1",
+                "Hotdog - Loaded x1",
+                "Water Bottle x1",
+                "Pancakes x1",
+                "Hamburger - Normal x1",
+                "Hamburger - All the Fixings x1",
+                "Hotdog - Loaded x1",
+                "Water Bottle x1",
+                "Pancakes x1",
+                "Hamburger - Normal x1",
+                "Hamburger - All the Fixings x1",
+                "Hotdog - Loaded x1",
+                "Water Bottle x1",
+                "Pancakes x1"
+            ]
+        }
     }
 ]
