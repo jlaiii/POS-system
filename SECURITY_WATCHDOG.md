@@ -1,11 +1,11 @@
 # POS Security Watchdog
 
-|||| Last run: 2026-06-29T19:13 UTC
-||||||||||||||| Total events tracked: 95 (SEC-002→SEC-096; 0 unresolved)
-||||||||||||||| Active blocks: 0 IPs
-||||||||||||||| Run result: All normal — silent.|
+||||| Last run: 2026-06-29T19:35 UTC
+|||||||||||||||| Total events tracked: 95 (SEC-002→SEC-096; 0 unresolved)
+|||||||||||||||| Active blocks: 0 IPs
+|||||||||||||||| Run result: All normal — silent.|
 
-## Current Run Findings (18:56–19:13 UTC, ~17 min window)
+## Current Run Findings (19:13–19:35 UTC, ~22 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -23,7 +23,7 @@ None.
 
 **Server**: **Healthy** (HTTP 200 on port 5000, /api/health → {"status":"ok"}).
 
-**Activity**: **0 new activity_log entries** since last run. No activity in this window.
+**Activity**: **1 new activity_log entry** — Owner (1111) admin_login at 19:29:44 from 127.0.0.1 (business hours, normal).
 
 **Login attempts**: 0 new entries since last run. No login activity at all.
 
@@ -32,10 +32,10 @@ None.
 **Orders**: 116 total. No new orders since last run.
 
 ### 📊 Login Security Deep-Dive
-- **Brute force check**: 0 failed logins in last 5 min. 0 failed logins total in this 17min window. No alert.
+- **Brute force check**: 0 failed logins in last 5 min. 0 failed logins total in this 22min window. No alert.
 - **Account enumeration**: No failed attempts in this window.
 - **Successful-after-failure**: No pattern in this window.
-- **Off-hours activity**: Current time ~19:13 UTC (14:13 CT). Normal business hours.
+- **Off-hours activity**: Current time ~19:35 UTC (14:35 CT). Normal business hours.
 - **Cross-IP targeting**: None detected.
 - **Credential stuffing**: No pattern.
 - **All other checks**: Clear.
@@ -52,9 +52,9 @@ None.
 
 ### 📂 File Integrity
 - All 49 JSON files parseable, valid.
-- All 8 accounts intact. Owner (1111) present, active.
+- All 8 accounts intact. Owner (1111) present, active, not banned.
 - Git status: **Clean** — no dirty files.
-- No suspicious new files (.php, .exe, etc.) in workdir. `.pyc` cache files are normal Python artifacts.
+- No suspicious new files (.php, .exe, etc.) in workdir.
 - Server: **Healthy**.
 
 ### ✅ Actions Taken
@@ -66,14 +66,14 @@ None.
 - Admin 2FA gap: Manager (2222) and Manager Sarah (7788) lack 2FA despite `require_2fa_for_admins: true`. Security Sentinel handles.
 - Historical refund rate ~94% — pre-existing test data.
 
-||||||||||| | System State | |
-|||||||---|---|---|---|---|
-||||||||||||||| Current time | 2026-06-29T19:13 UTC — 14:13 CT (Monday, normal business hours) |
-||||||||||||||| Activity since last run | 0 new entries |
-|||||||||||||| Login attempts (this window) | 0 |
-|||||||||||||| Successful logins (this window) | 0 |
-|||||||||||| Blocked IPs | 0 |
-|||||||||||| Config changes | None |
-||||||||||||| File integrity | All 49 JSON valid. All 8 accounts intact. Git: **Clean**. No suspicious files. |
-|||||||||||| Unresolved events | 0 of 95 |
-|||||||||||| Server | **Healthy** |
+|||||||||||| | System State | |
+||||||||---|---|---|---|---|
+|||||||||||||||| Current time | 2026-06-29T19:35 UTC — 14:35 CT (Monday, normal business hours) |
+|||||||||||||||| Activity since last run | 1 entry — Owner admin_login (127.0.0.1) |
+||||||||||||||| Login attempts (this window) | 0 |
+||||||||||||||| Successful logins (this window) | 0 |
+||||||||||||| Blocked IPs | 0 |
+||||||||||||| Config changes | None |
+|||||||||||||| File integrity | All 49 JSON valid. All 8 accounts intact. Git: **Clean**. No suspicious files. |
+||||||||||||| Unresolved events | 0 of 95 |
+||||||||||||| Server | **Healthy** |
