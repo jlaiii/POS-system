@@ -1,16 +1,16 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-29T13:47 UTC
-> Total checks: 2399
-> Healthy: 2399 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-29T14:09 UTC
+> Total checks: 2409
+> Healthy: 2409 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 — 200 OK (gunicorn+gevent, master+worker) [verified 13:24]
-- [x] All JSON data files exist and are valid — 15/15 core files valid (users, items, orders, shift_log, inventory, combos, favorites, cleared_orders, loyalty_points, timesheet, timesheet_config, security_config, security_events, known_ips, login_attempts all parseable) [verified 13:24]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', 8 users, ['*'] permissions, role='owner') [verified 13:24]
-- [x] Git repo is clean — clean [verified 13:24]
+- [x] Flask app responds on port 5000 — 200 OK (gunicorn+gevent, master+worker) [verified 14:09]
+- [x] All JSON data files exist and are valid — 15/15 core files valid (users, items, orders, shift_log, inventory, combos, favorites, cleared_orders, loyalty_points, timesheet, timesheet_config, security_config, security_events, known_ips, login_attempts all parseable) [verified 14:09]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', 8 users, ['*'] permissions, role='owner') [verified 14:09]
+- [x] Git repo is clean — clean [verified 14:09]
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/health — {"status":"ok"} (GET) [verified 13:24]
@@ -19,14 +19,14 @@
 - [x] /api/login works — POST userId=1111, pin=1111, role=owner, message="Login successful" [verified 13:24]
 - [x] /api/admin_stats returns stats — avg_sale=$13.85, backup_health=green, 162 backups [verified 13:24]
 - [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 200 OK, 57 shifts [verified 13:24]
-- [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 13:24]
-- [x] index.html size check — 1375315 bytes (normal, ~1.38MB) [verified 13:24]
-- [x] Disk space check — 38% used (15G/38G, OK) [verified 13:24]
-- [x] Memory check — ~36% RAM used (1336/3915MB), 0 swap [verified 13:24]
+- [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 14:09]
+- [x] index.html size check — 1375315 bytes (normal, ~1.38MB) [verified 14:09]
+- [x] Disk space check — 38% used (15G/38G, OK) [verified 14:09]
+- [x] Memory check — ~34% RAM used (1336/3915MB), 0 swap [verified 14:09]
 - [x] Clock-in/out: employee 1234 not clocked in, status endpoint OK [verified 13:24]
 - [x] CSV export — /api/export/shifts_csv returns CSV, valid (5297 bytes) [verified 13:24]
 - [x] Offline queue — /api/sync_orders exists, returns 400 'No orders provided' [verified 13:24]
-- [x] Backup integrity — latest backup (12:43, 50 JSON files all valid, 8 users, 5 cat items) [verified 13:24]
+- [x] Backup integrity — latest backup (13:44 JSON+DB both valid: 50+ JSON files, 25 SQLite tables, integrity=ok) [verified 14:09]
 
 ## EVERY 4 HOURS
 - [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 200, 0 orders (working) [verified 13:24]
@@ -41,7 +41,7 @@
 
 ## EVERY 12 HOURS
 - [x] Full app restart test: kill Flask → restart → verify all critical endpoints — Completed, gunicorn+gevent stable [verified 17:11]
-- [x] Concurrent write test: two rapid clock-ins (1234+5678, 61ms apart) → both succeeded persisted, then clocked out → verified in shift_log.json, cleaned up, no data loss [verified 19:34]
+- [x] Concurrent write test: two rapid clock-ins (1234+5678, 106ms gap) → both succeeded and persisted, clocked out, verified in shift_log.json, no data loss [verified 14:10]
 - [x] Large payload test: submit order with 50 items — Order 137 (50 items) → 200 OK → refunded via /api/orders/refund [verified 08:33]
 - [x] Special chars test: user name with emoji, item name with quotes — Created \"Special\" 🎉 Item and deleted, no leftover debris [verified 08:33]
 - [x] app.py syntax check (python3 -m py_compile app.py) — SYNTAX OK [verified 07:43]
@@ -51,11 +51,11 @@
 - [x] Backup integrity: verify latest backup is valid and not empty — 07:22 JSON backup (76.7KB, 50 files valid) [verified 07:43]
 
 ## DISCOVERED (failures you've seen before — check every 2h)
-|- [x] **Flask process dying between runs** — Gunicorn+gevent via scripts/run_flask.sh, stable (uptime 2h+, single master+worker on port 5000). No issues. [verified 13:47]
-|||- [x] **Dual Flask instances on port 5000** — Single gunicorn master+worker (PIDs 3094836/3094839). No recurrence. [verified 13:47]
-|||- [x] **items.json + users.json simultaneous data corruption** — Items (5 categories, 19 items: Foods:6, Drinks:3, Snacks:5, Breakfast:3, Salads:2) and users (8 users: Owner/Manager/Employee One/Two/Maria/Chef Diego/Manager Sarah/Carlos) intact. [verified 13:47]
-|||- [x] **Owner username changed to 'testuser' (3rd data corruption incident)** — Owner PIN 1111 name='Owner', username='jayadmin', role='owner', permissions=['*']. No corruption. [verified 13:47]
-|||- [x] **items.json schema changed to category-keyed format** — Items stored as {Foods:[...], Drinks:[...], ...}. Used by /api/items (GET). [verified 13:47]
+|- [x] **Flask process dying between runs** — Gunicorn+gevent via scripts/run_flask.sh, stable (uptime 2h+, single master+worker on port 5000). No issues. [verified 14:09]
+|||- [x] **Dual Flask instances on port 5000** — Single gunicorn master+worker (PIDs 3094836/3094839). No recurrence. [verified 14:09]
+|||- [x] **items.json + users.json simultaneous data corruption** — Items (5 categories, 19 items: Foods:6, Drinks:3, Snacks:5, Breakfast:3, Salads:2) and users (8 users: Owner/Manager/Employee One/Two/Maria/Chef Diego/Manager Sarah/Carlos) intact. [verified 14:09]
+|||- [x] **Owner username changed to 'testuser' (3rd data corruption incident)** — Owner PIN 1111 name='Owner', username='jayadmin', role='owner', permissions=['*']. No corruption. [verified 14:09]
+|||- [x] **items.json schema changed to category-keyed format** — Items stored as {Foods:[...], Drinks:[...], ...}. Used by /api/items (GET). [verified 14:09]
 
 ## FIXES APPLIED
 | [2026-06-29 09:40] **Cleaned up leftover test debris from inventory** — Found `Test "Special" 🎉 Item` (0 stock) leftover from previous special chars test in inventory.json. Removed and committed (a036bc9). Also verified: Flask 200, 15/15 JSON valid, owner OK, git clean, webhook config OK, cash drawer 10 sessions, app.py syntax OK, index.html 1,375,315B normal, items GET 5 cats/19 items, clock status OK, shift data intact (57 shifts, 8 late, 4 breaks, 5 edits). No downtime.
