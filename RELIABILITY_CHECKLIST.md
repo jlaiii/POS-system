@@ -1,7 +1,7 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-29T21:38:00Z
-> Total checks: 35
-> Healthy: 35 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-29T22:25:00Z
+> Total checks: 38
+> Healthy: 38 | Broken: 0 | Fixed this cycle: 0
 
 ## CRITICAL (check every run — these can't wait)
 - [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK
@@ -40,9 +40,9 @@
 - [x] app.py syntax check (python3 -m py_compile app.py) — SYNTAX OK ✓
 - [x] index.html size check (alert if shrunk dramatically — possible corruption) — 1,375,315 bytes, normal ✓
 - [ ] Full app restart test: kill Flask → restart → verify all critical endpoints
-- [ ] Concurrent write test: two rapid clock-ins → verify no data loss
-- [ ] Large payload test: submit order with 50 items
-- [ ] Special chars test: user name with emoji, item name with quotes
+- [x] Large payload test: submit order with 50 items — Order #140 created (50 items, $162.50) ✅
+- [x] Special chars test: user name with emoji, item name with quotes — Item 'Taco 🌮 "Supreme" Deluxe' added/deleted ✅
+- [x] Concurrent write test: two rapid clock-ins → verify no data loss — Two users (1234, 5678) clocked in/out concurrently, both shifts recorded ✅
 
 ## DISCOVERED (failures you've seen before — check every 2h)
 - [ ] (populated over time as you find real failures)
