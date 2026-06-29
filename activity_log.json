@@ -20259,5 +20259,65 @@
         "details": {
             "status": "success"
         }
+    },
+    {
+        "timestamp": "2026-06-29T14:10:06.613801",
+        "type": "clock_in",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Python-urllib/3.11",
+        "details": {
+            "status": "success",
+            "user_name": "Employee One",
+            "clock_in_time": "2026-06-29T14:10:06.613548",
+            "late_minutes": 310,
+            "scheduled_start": "09:00"
+        }
+    },
+    {
+        "timestamp": "2026-06-29T14:10:06.687033",
+        "type": "clock_in",
+        "user_id": "5678",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Python-urllib/3.11",
+        "details": {
+            "status": "success",
+            "user_name": "Employee Two",
+            "clock_in_time": "2026-06-29T14:10:06.686755",
+            "late_minutes": 250,
+            "scheduled_start": "10:00"
+        }
+    },
+    {
+        "timestamp": "2026-06-29T14:10:07.222206",
+        "type": "clock_out",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Python-urllib/3.11",
+        "details": {
+            "status": "success",
+            "user_name": "Employee One",
+            "clock_in_time": "2026-06-29T14:10:06.613548",
+            "clock_out_time": "2026-06-29T14:10:07.219550",
+            "duration_hours": 0.0
+        }
+    },
+    {
+        "timestamp": "2026-06-29T14:10:07.255410",
+        "type": "clock_out",
+        "user_id": "5678",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Python-urllib/3.11",
+        "details": {
+            "status": "success",
+            "user_name": "Employee Two",
+            "clock_in_time": "2026-06-29T14:10:06.686755",
+            "clock_out_time": "2026-06-29T14:10:07.253643",
+            "duration_hours": 0.0
+        }
     }
 ]
