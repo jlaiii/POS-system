@@ -1,11 +1,11 @@
 # POS Security Watchdog
 
-||||||| Last run: 2026-06-29T16:26 UTC
-|||||||||| Total events tracked: 95 (SEC-002→SEC-096; 0 unresolved)
-|||||||||| Active blocks: 0 IPs
-|||||||||| Run result: All normal — silent.|
+||||||| Last run: 2026-06-29T16:43 UTC
+||||||||||| Total events tracked: 95 (SEC-002→SEC-096; 0 unresolved)
+||||||||||| Active blocks: 0 IPs
+||||||||||| Run result: All normal — silent.|
 
-## Current Run Findings (16:09–16:26 UTC, ~17 min window)
+## Current Run Findings (16:26–16:43 UTC, ~17 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -19,15 +19,15 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (16:09–16:26 UTC)
+### ℹ️ Activity Summary (16:26–16:43 UTC)
 
 **Server**: **Healthy** (HTTP 200 on port 5000, /api/health → {"status":"ok"}).
 
-**Activity**: **1 new activity_log entry** since last run.
+**Activity**: **2 new activity_log entries** since last run.
 
-**Login event at 16:11 UTC**: Owner (1111) logged in successfully from 127.0.0.1 via curl. Normal business hours (11:11 CT). Single event, no failures preceding it. No alert.
+**Login events at 16:33 UTC**: Owner (1111) logged in twice via admin_login from 127.0.0.1 (curl/8.5.0). Normal business hours (11:33 CT). Both successful, no failures preceding them. No alert.
 
-**Login attempts in window**: 1 entry in login_attempts.json (successful login by Owner).
+**Login attempts in window**: 0 new entries in login_attempts.json. Last entry remains Owner login at 16:11 UTC.
 
 **Active shifts**: 0. No one clocked in.
 
@@ -36,14 +36,14 @@ None.
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: 0 failed logins in last 5 min. 0 failed logins total this window. No alert.
 - **Account enumeration**: No failed attempts for non-existent PINs. No alert.
-- **Successful-after-failure**: Owner login at 16:11 had no preceding failures. No alert.
-- **Off-hours activity**: Current time ~16:26 UTC (11:26 CT). Normal business hours.
+- **Successful-after-failure**: No pattern detected. All successful logins (Owner, 127.0.0.1) had no preceding failures.
+- **Off-hours activity**: Current time ~16:43 UTC (11:43 CT). Normal business hours.
 - **Cross-IP targeting**: No activity detected.
 - **Known IPs**: No new IPs.
 - **Credential stuffing**: No pattern.
 - **2FA check**: No 2FA events.
 - **Account lockouts**: None.
-- **Last failed login**: 2026-06-29T14:51:15 UTC (~95 min ago), user=9999 (Test2FA) from 127.0.0.1. No change.
+- **Last failed login**: 2026-06-29T14:51:15 UTC (~112 min ago), user=9999 (Test2FA) from 127.0.0.1. No change.
 
 ### 🔒 Security Config
 - No changes detected. All thresholds normal.
@@ -57,7 +57,7 @@ None.
 - Refund rate ~31% (36/116) remains above 20% threshold but all are test orders from cron workers — pre-existing, no action needed.
 
 ### 📂 File Integrity
-- All JSON files parseable, valid.
+- All 51 JSON files parseable, valid.
 - All 8 accounts intact. No banned users.
 - Owner account (1111) present, active, not banned.
 - Git status: **Clean** (no dirty files from any worker).
@@ -72,15 +72,15 @@ None.
 - Admin 2FA gap remains: Manager (2222) and Manager Sarah (7788) lack 2FA despite `require_2fa_for_admins: true`. Owner (1111) is exempted via config. Pre-existing — no change. Security Sentinel handles code-level fixes.
 - Historical refund rate ~31% exceeds 20% threshold but all are test orders from cron workers — no action needed.
 
-|||| | System State | |
-|---|---|---|---|
-||||||| Current time | 2026-06-29T16:26 UTC — 11:26 CT (Monday, normal business hours) |
-|||||||| Activity since last run | 1 entry — Owner login at 16:11 UTC |
-||||||| Login attempts (last ~17 min) | 1 (1 success, 0 failed) |
-|||||| Successful logins (this window) | 1 (Owner, 127.0.0.1) |
-||| Blocked IPs | 0 |
-||| Config changes | None |
-||| File integrity | All JSON valid. All 8 accounts intact. Git: clean. |
-||| Users | 8 accounts. Admin 2FA: 1111=no (exempted), 2222=no, 7788=no (pre-existing gap — Sentinel). |
-||| Unresolved events | 0 unresolved out of 95 total (SEC-002→SEC-096; all resolved) |
-||| Server | **Healthy** (HTTP 200 on port 5000, /api/health → {"status":"ok"}) |
+||||| | System State | |
+|---|---|---|---|---|
+|||||||| Current time | 2026-06-29T16:43 UTC — 11:43 CT (Monday, normal business hours) |
+||||||||| Activity since last run | 2 entries — Owner admin_logins at 16:33 UTC |
+|||||||| Login attempts (last ~17 min) | 0 (0 success, 0 failed) |
+||||||| Successful logins (this window) | 2 (Owner admin_login, 127.0.0.1) |
+|||||| Blocked IPs | 0 |
+|||||| Config changes | None |
+|||||| File integrity | All 51 JSON valid. All 8 accounts intact. Git: clean. |
+|||||| Users | 8 accounts. Admin 2FA: 1111=no (exempted), 2222=no, 7788=no (pre-existing gap — Sentinel). |
+|||||| Unresolved events | 0 unresolved out of 95 total (SEC-002→SEC-096; all resolved) |
+|||||| Server | **Healthy** (HTTP 200 on port 5000, /api/health → {"status":"ok"}) |
