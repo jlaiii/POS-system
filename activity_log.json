@@ -20026,5 +20026,41 @@
                 "Pancakes x1"
             ]
         }
+    },
+    {
+        "timestamp": "2026-06-29T08:56:36.081136",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-29T08:56:37.193920",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-29T08:56:48.663096",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
     }
 ]
