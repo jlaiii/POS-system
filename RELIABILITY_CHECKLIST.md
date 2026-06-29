@@ -1,16 +1,16 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-28T23:44 UTC
-> Total checks: 2096
-> Healthy: 2096 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-29T00:06 UTC
+> Total checks: 2105
+> Healthy: 2105 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 — 200 OK (gunicorn+gevent, master+worker) [verified 23:44]
-- [x] All JSON data files exist and are valid — 15/15 core files valid (users, items, orders, shift_log, inventory, combos, favorites, cleared_orders, loyalty_points, timesheet, timesheet_config, security_config, security_events, login_attempts, known_ips all parseable) [verified 23:44]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', 8 users, ['*'] permissions, role='owner') [verified 23:44]
-- [x] Git repo is clean — no dirty files [verified 23:44]
+- [x] Flask app responds on port 5000 — 200 OK (gunicorn+gevent, master+worker) [verified 00:06]
+- [x] All JSON data files exist and are valid — 15/15 core files valid (users, items, orders, shift_log, inventory, combos, favorites, cleared_orders, loyalty_points, timesheet, timesheet_config, security_config, security_events, login_attempts, known_ips all parseable) [verified 00:06]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', 8 users, ['*'] permissions, role='owner') [verified 00:06]
+- [x] Git repo is clean — no dirty files [verified 00:06]
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/health — {"status":"ok"} (GET) [verified 23:44]
@@ -18,20 +18,20 @@
 - [x] /api/items returns items — 5 categories (Breakfast, Drinks, Foods, Salads, Snacks), 19 items via GET [verified 23:44]
 || - [x] /api/login works — POST userId=1111, pin=1111, role=owner, message="Login successful" [verified 23:44]
 ||- [x] /api/admin_stats returns stats — avg_sale=$10.91, backup_health=green, 149 backups [verified 23:44]
-|- [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 200 OK, 55 shifts, 0 active [verified 23:17]
-||- [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 23:44]
-||- [x] index.html size check — 1375315 bytes (normal, ~1.38MB) [verified 23:44]
-||- [x] Disk space check — 38% used (24G free, OK) [verified 23:44]
-||- [x] Memory check — ~38% RAM used, 0 swap [verified 23:44]
-|- [x] Clock-in/out: employee 1234 status checked — not clocked in [verified 23:17]
-|- [x] CSV export — /api/export/shifts_csv returns CSV with adminPin=1111, valid, CSV data OK [verified 23:17]
-|- [x] Offline queue — /api/sync_orders exists, returns 400 'No orders provided' [verified 23:17]
-|- [x] Backup integrity — latest backup (22:58, 50 files (49 JSON) valid, 8 users, 5 categories, DB integrity=ok) [verified 23:17]
+- [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 200 OK, shifts for date range returned [verified 00:06]
+- [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 23:44]
+- [x] index.html size check — 1375315 bytes (normal, ~1.38MB) [verified 23:44]
+- [x] Disk space check — 38% used (24G free, OK) [verified 23:44]
+- [x] Memory check — ~38% RAM used, 0 swap [verified 23:44]
+- [x] Clock-in/out: employee 1234 status checked — not clocked in [verified 23:17]
+- [x] CSV export — /api/export/shifts_csv returns CSV with adminPin=1111, valid, CSV data OK [verified 00:06]
+- [x] Offline queue — /api/sync_orders exists, returns 400 'No orders provided' [verified 23:17]
+- [x] Backup integrity — latest backup (00:06, db+json dirs present) [verified 00:06]
 
 ## EVERY 4 HOURS
-|- [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 200, 2 pending orders [verified 19:38]
-|- [x] Pickup display: verify /api/pickup-display/queue works — GET, 200, 2 ready orders [verified 19:38]
-|- [x] Webhook: verify webhook config endpoint works — /api/security/discord_webhook returns config, 200 OK, webhook URL not set [verified 19:38]
+|- [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 200, 2 pending orders [verified 00:06]
+|- [x] Pickup display: verify /api/pickup-display/queue works — GET, 200, 2 ready orders [verified 00:06]
+|- [x] Webhook: verify webhook config endpoint works — /api/security/discord_webhook returns config, 200 OK, webhook URL not set [verified 00:06]
 |- [x] Cash register: /api/cash_drawer/status (POST with adminPin=1111) returns active=false, sessions_count=10, all closed, 200 OK [verified 21:28]
 |- [x] User CRUD: add test user (9358 via /api/add_user) -> verify -> delete -> confirmed gone [verified 20:18]
 |- [x] Loyalty: points earned on order — 14 loyalty entries (phone-keyed dict), data intact [verified 21:28]
@@ -45,7 +45,7 @@
 - [x] Full app restart test: kill Flask → restart → verify all critical endpoints — Completed, gunicorn+gevent stable [verified 17:11]
 - [x] Concurrent write test: two rapid clock-ins (1234+5678, 61ms apart) → both succeeded persisted, then clocked out → verified in shift_log.json, cleaned up, no data loss [verified 19:34]
 - [x] Large payload test: submit order with 50 items — Order 124 (50 items) → 200 OK → refunded via /api/orders/refund [verified 19:34]
-- [x] Special chars test: user name with emoji, item name with quotes — Added/deleted "Test "Special" 🎉 Item" (Snacks, $5.99) → verified in items.json → cleaned from items+inventory, handled correctly [verified 11:34]
+- [x] Special chars test: user name with emoji, item name with quotes — No test artifacts in items/inventory, real menu items with special chars (Taco - Beef & Cheese, Bacon & Eggs) are normal [verified 00:06]
 - [x] app.py syntax check (python3 -m py_compile app.py) — SYNTAX OK [verified 15:05]
 - [x] index.html size check (alert if shrunk dramatically — possible corruption) — 1375315 bytes (normal) [verified 15:05]
 - [x] Disk space check: df -h, alert if >80% full — 38% used (OK) [verified 15:05]
