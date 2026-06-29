@@ -1,11 +1,11 @@
 # POS Security Watchdog
 
-| Last run: 2026-06-29T12:30 UTC
+| Last run: 2026-06-29T12:58 UTC
 ||||| Total events tracked: 95 (SEC-002→SEC-096; 0 unresolved)
 ||||| Active blocks: 0 IPs
 ||||| Run result: All normal — silent.|
 
-## Current Run Findings (12:13–12:30 UTC, ~17 min window)
+## Current Run Findings (12:30–12:58 UTC, ~28 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -19,23 +19,28 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (12:13–12:30 UTC)
+### ℹ️ Activity Summary (12:30–12:58 UTC)
 
 **Server**: **Healthy** (HTTP 200 on port 5000, /api/health → {"status":"ok"}).
 
-**Activity**: 2 new activity_log entries (total: 1476). Both: Owner (1111) login at 12:23 from 127.0.0.1 — normal cron-worker activity.
+**Activity**: 3 new activity_log entries since last run. 
+- 12:45:29 — `admin_login` failed (user_id: null, 127.0.0.1)
+- 12:49:14 — `admin_login` failed (user_id: null, 127.0.0.1) 
+- 12:49:22 — `admin_login` success (user_id: 1111/Owner, 127.0.0.1)
 
-**Login attempts in window**: 0 in last 5 min; 2 logins since last run (both successful, Owner, 127.0.0.1). 0 failed.
+**Pattern**: 2 failed admin_login attempts followed by successful Owner login from same IP (127.0.0.1) — matches Reliability Bot run at 12:45 UTC (git commit 3253107). No real security concern: localhost, whitelisted IP, below thresholds.
+
+**Login attempts in window**: 0 in login_attempts.json (these admin_logins are API-level, not PIN logins). 0 failed in last 5 min.
 
 **Active shifts**: 0. No one clocked in.
 
 **Orders**: 116 total. 0 new orders since last run.
 
 ### 📊 Login Security Deep-Dive
-- **Brute force check**: 0 failed logins in window. No alert.
+- **Brute force check**: 0 failed PIN logins in window. No alert.
 - **Account enumeration**: No failed attempts. No alert.
-- **Successful-after-failure**: No failures in window. No alert.
-- **Off-hours activity**: Current time ~12:30 UTC (07:30 CT). Normal hours.
+- **Successful-after-failure**: 2 failed admin_logins followed by successful Owner login from same IP 127.0.0.1 — all localhost cron activity. No alert (below threshold, known IP).
+- **Off-hours activity**: Current time ~12:58 UTC (07:58 CT). Normal hours.
 - **Cross-IP targeting**: No activity.
 - **Known IPs**: No new IPs detected. All traffic from 127.0.0.1.
 - **Credential stuffing**: No pattern.
@@ -73,10 +78,10 @@ None.
 
 |||||| System State | |
 |||||---|---|---|
-||||||| Current time | 2026-06-29T12:30 UTC — 07:30 CT (Monday, normal hours) |
-|||||| Activity since last run | 2 entries (Owner logins from 127.0.0.1) |
-|||||| Login attempts (last ~17 min) | 2 total (0 failed / 2 successful) |
-|||||| Successful logins (this window) | 2 (Owner, 127.0.0.1) |
+|||| Current time | 2026-06-29T12:58 UTC — 07:58 CT (Monday, normal hours) |
+||||| Activity since last run | 3 entries (2 failed admin_logins + 1 successful admin_login from 127.0.0.1 — Reliability Bot pattern) |
+|||||| Login attempts (last ~28 min) | 3 admin_logins (2 failed / 1 successful) — all 127.0.0.1, below threshold |
+||||||| Successful logins (this window) | 1 admin_login (Owner, 127.0.0.1) |
 |||||| Blocked IPs | 0 |
 |||||| Config changes | None |
 |||||| File integrity | All JSON valid. All 8 accounts intact. Git: clean. |
