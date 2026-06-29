@@ -1,7 +1,7 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-29T20:46:00Z
-> Total checks: 27
-> Healthy: 27 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-29T21:08:14Z
+> Total checks: 30
+> Healthy: 30 | Broken: 0 | Fixed this cycle: 0
 
 ## CRITICAL (check every run — these can't wait)
 - [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK
@@ -19,9 +19,9 @@
 - [x] Frontend loads (curl index.html, verify it's HTML not error) — HTML with <!DOCTYPE html> ✓
 
 ## EVERY 4 HOURS
-- [ ] Order lifecycle: create order → verify in orders.json → refund → verify
-- [ ] User CRUD: add test user → verify → delete
-- [ ] Inventory: check stock decrements on order
+- [x] Order lifecycle: create order → verify in orders.json → refund → verify — Created #138 (pending)→paid→refunded ✅
+- [x] User CRUD: add test user → verify → delete — Added 9001, verified, deleted ✅
+- [x] Inventory: check stock decrements on order — Coke 72→71→72 (decrement + restore via refund) ✅
 - [ ] Loyalty: points earned on order
 - [ ] Cash register: open drawer → cash in → cash out → close → verify balance
 - [x] Kitchen display: GET /api/kitchen/queue — 3 pending orders, valid data ✓
