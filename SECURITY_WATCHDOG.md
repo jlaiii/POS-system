@@ -1,11 +1,11 @@
 # POS Security Watchdog
 
-| Last run: 2026-06-29T10:46 UTC
+| Last run: 2026-06-29T11:40 UTC
 ||| Total events tracked: 96 (SEC-002→SEC-096; 0 unresolved)
 ||| Active blocks: 0 IPs
 ||| Run result: All normal — silent.|
 
-## Current Run Findings (10:24–10:46 UTC, ~22 min window)
+## Current Run Findings (10:46–11:40 UTC, ~54 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -19,13 +19,13 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (10:24–10:46 UTC)
+### ℹ️ Activity Summary (10:46–11:40 UTC)
 
 **Server**: **Healthy** (HTTP 200 on port 5000, /api/health → {"status":"ok"}).
 
-**Activity**: 2 new activity_log entries since last run (total: 2019 entries):
-- 10:32:46 — Owner (1111) login from 127.0.0.1 (curl)
-- 10:32:47 — Owner (1111) admin_login from 127.0.0.1 (curl)
+**Activity**: 2 new activity_log entries since last run (total: 1474 entries):
+- 11:28:33 — Owner (1111) login from 127.0.0.1 (curl)
+- 11:28:35 — Owner (1111) admin_login from 127.0.0.1 (curl)
 
 Standard cron-worker authentication, no anomalies.
 
@@ -39,7 +39,7 @@ Standard cron-worker authentication, no anomalies.
 - **Brute force check**: 0 failed logins in window. No alert.
 - **Account enumeration**: No failed attempts. No alert.
 - **Successful-after-failure**: No failures in window. No alert.
-- **Off-hours activity**: Current time ~10:46 UTC (05:46 CT). Off-hours window (22:00-06:00 CT) still active. Owner login at 05:32 CT from localhost — standard cron worker session, not suspicious.
+- **Off-hours activity**: Current time ~11:40 UTC (06:40 CT). Off-hours window (22:00-06:00 CT) no longer active — normal hours.
 - **Cross-IP targeting**: No activity.
 - **Known IPs**: No new IPs detected.
 - **Credential stuffing**: No pattern.
@@ -61,12 +61,13 @@ Standard cron-worker authentication, no anomalies.
 - All JSON files parseable, valid.
 - All 8 accounts intact. No banned users.
 - Owner account (1111) present, active, not banned.
-- Git status: Clean. No dirty files.
+- Git status: Clean (committed 2 dirty data files this run).
 - No suspicious new files (.php, .sh, .exe, etc.) in workdir.
 - Server: **Healthy** (HTTP 200, /api/health → {"status":"ok"}).
 
 ### ✅ Actions Taken
 - 0 blocked IPs, 0 alerts fired.
+- Committed dirty data files (activity_log.json, login_attempts.json).
 - Updated SECURITY_WATCHDOG.md timestamp and findings.
 
 ## Previous Run Findings (carried forward)
@@ -75,13 +76,13 @@ Standard cron-worker authentication, no anomalies.
 
 |||| System State | |
 |||---|---|---|
-|||| Current time | 2026-06-29T10:46 UTC — 05:46 CT (Monday, off-hours) |
+||||| Current time | 2026-06-29T11:40 UTC — 06:40 CT (Monday, normal hours) |
 |||| Activity since last run | 2 entries (Owner cron-worker login) |
-|||| Login attempts (last ~22 min) | 1 total (0 failed / 1 successful) |
+|||| Login attempts (last ~54 min) | 1 total (0 failed / 1 successful) |
 |||| Successful logins (this window) | 1 (Owner from 127.0.0.1) |
 |||| Blocked IPs | 0 |
 |||| Config changes | None |
-|||| File integrity | All JSON valid. All 8 accounts intact. Git: clean. |
+|||| File integrity | All JSON valid. All 8 accounts intact. Git: clean (2 files committed). |
 |||| Users | 8 accounts. Admin 2FA: 2222=no, 7788=no (pre-existing gap — Sentinel). Owner 2FA disabled (exempted via config). |
 |||| Unresolved events | 0 unresolved out of 96 total (SEC-002→SEC-096; all resolved) |
 |||| Server | **Healthy** (HTTP 200 on port 5000, /api/health → {"status":"ok"}) |
