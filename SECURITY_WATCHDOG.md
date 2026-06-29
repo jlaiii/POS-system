@@ -1,11 +1,11 @@
 # POS Security Watchdog
 
-| Last run: 2026-06-29T13:26 UTC
-|||||| Total events tracked: 95 (SEC-002→SEC-096; 0 unresolved)
-|||||| Active blocks: 0 IPs
-|||||| Run result: All normal — silent.|
+| Last run: 2026-06-29T13:43 UTC
+||||||| Total events tracked: 95 (SEC-002→SEC-096; 0 unresolved)
+||||||| Active blocks: 0 IPs
+||||||| Run result: All normal — silent.|
 
-## Current Run Findings (12:58–13:26 UTC, ~28 min window)
+## Current Run Findings (13:26–13:43 UTC, ~17 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -19,28 +19,25 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (12:58–13:26 UTC)
+### ℹ️ Activity Summary (13:26–13:43 UTC)
 
 **Server**: **Healthy** (HTTP 200 on port 5000, /api/health → {"status":"ok"}).
 
-**Activity**: 3 new activity_log entries since last run.
-- 13:24:33 — `login` success (user: 1111/Owner, 127.0.0.1)
-- 13:24:37 — `admin_login` success (user: 1111/Owner, 127.0.0.1)
-- 13:24:44 — `admin_login` success (user: 1111/Owner, 127.0.0.1)
+**Activity**: 0 new activity_log entries since last run.
 
-**Pattern**: 3 successful Owner logins from same IP (127.0.0.1) — matches this Watchdog cron run (API health checks). No security concern: localhost, whitelisted IP.
+**Pattern**: No activity detected in this window. All traffic stopped after 13:24 UTC (3 Owner logins which were already reported in the previous window). No security concern.
 
-**Login attempts in window**: 1 in login_attempts.json (Owner PIN login at 13:24:33). 0 failed in last 5 min.
+**Login attempts in window**: 0 in login_attempts.json. 0 failed in last 5 min.
 
 **Active shifts**: 0. No one clocked in.
 
-**Orders**: 116 total. 0 new orders since last run (Order 137 was from prior window at 08:34 UTC, flagged as "Reliability Bot large payload test" — not new).
+**Orders**: 116 total. 0 new orders since last run.
 
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: 0 failed PIN logins in window. No alert.
 - **Account enumeration**: No failed attempts. No alert.
 - **Successful-after-failure**: No pattern in this window. Previous window's 2-fails-then-success pattern (12:45-12:49) was already reported.
-- **Off-hours activity**: Current time ~13:26 UTC (08:26 CT). Normal business hours.
+- **Off-hours activity**: Current time ~13:43 UTC (08:43 CT). Normal business hours.
 - **Cross-IP targeting**: No activity detected.
 - **Known IPs**: No new IPs. All traffic from 127.0.0.1.
 - **Credential stuffing**: No pattern.
@@ -79,10 +76,10 @@ None.
 
 | | System State | |
 |---|---|---|
-| Current time | 2026-06-29T13:26 UTC — 08:26 CT (Monday, normal business hours) |
-| Activity since last run | 3 entries (all successful Owner logins from 127.0.0.1 — this Watchdog run) |
-| Login attempts (last ~28 min) | 1 PIN login (Owner, 127.0.0.1, success) — 0 failed |
-| Successful logins (this window) | 3 (Owner/1111, 127.0.0.1) |
+|| Current time | 2026-06-29T13:43 UTC — 08:43 CT (Monday, normal business hours) |
+|| Activity since last run | 0 entries — no activity in window |
+|| Login attempts (last ~17 min) | 0 — 0 failed |
+|| Successful logins (this window) | 0 |
 | Blocked IPs | 0 |
 | Config changes | None |
 | File integrity | All JSON valid. All 8 accounts intact. Git: clean. |
