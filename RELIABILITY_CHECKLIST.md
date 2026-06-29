@@ -1,16 +1,16 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-29T00:06 UTC
-> Total checks: 2105
-> Healthy: 2105 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-29T00:28 UTC
+> Total checks: 2108
+> Healthy: 2108 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 — 200 OK (gunicorn+gevent, master+worker) [verified 00:06]
-- [x] All JSON data files exist and are valid — 15/15 core files valid (users, items, orders, shift_log, inventory, combos, favorites, cleared_orders, loyalty_points, timesheet, timesheet_config, security_config, security_events, login_attempts, known_ips all parseable) [verified 00:06]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', 8 users, ['*'] permissions, role='owner') [verified 00:06]
-- [x] Git repo is clean — no dirty files [verified 00:06]
+|- [x] Flask app responds on port 5000 — 200 OK (gunicorn+gevent, master+worker) [verified 00:28]
+|- [x] All JSON data files exist and are valid — 15/15 core files valid (users, items, orders, shift_log, inventory, combos, favorites, cleared_orders, loyalty_points, timesheet, timesheet_config, security_config, security_events, login_attempts, known_ips all parseable) [verified 00:28]
+|- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', 8 users, ['*'] permissions, role='owner') [verified 00:28]
+|- [x] Git repo is clean — no dirty files [verified 00:28]
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/health — {"status":"ok"} (GET) [verified 23:44]
@@ -32,13 +32,13 @@
 |- [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 200, 2 pending orders [verified 00:06]
 |- [x] Pickup display: verify /api/pickup-display/queue works — GET, 200, 2 ready orders [verified 00:06]
 |- [x] Webhook: verify webhook config endpoint works — /api/security/discord_webhook returns config, 200 OK, webhook URL not set [verified 00:06]
-|- [x] Cash register: /api/cash_drawer/status (POST with adminPin=1111) returns active=false, sessions_count=10, all closed, 200 OK [verified 21:28]
-|- [x] User CRUD: add test user (9358 via /api/add_user) -> verify -> delete -> confirmed gone [verified 20:18]
-|- [x] Loyalty: points earned on order — 14 loyalty entries (phone-keyed dict), data intact [verified 21:28]
+||- [x] Cash register: /api/cash_drawer/status (POST with adminPin=1111) returns active=false, sessions_count=10, all closed, 200 OK [verified 00:28]
+||- [x] User CRUD: add test user (9016 via /api/add_user) -> verify -> delete -> confirmed gone [verified 00:28]
+||- [x] Loyalty: points earned on order — 14 loyalty entries (phone-keyed dict), data intact [verified 00:28]
 - [x] Clock-in late detection: 8 late records (up to 563min across shifts), data intact [verified 21:03]
 - [x] Break tracking: 4 shifts with breaks, break data intact [verified 21:03]
 - [x] Shift edit: 5 shifts with edits, audit trail intact (Owner + Employee One + Carlos), last edit by Owner [verified 21:03]
-|- [x] Order lifecycle: create order via /api/submit_order → order 132 created (Hamburger - Normal) → refunded via /api/orders/refund, 200 OK [verified 20:18]
+||- [x] Order lifecycle: create order via /api/submit_order → order 133 created (Hamburger - Normal) → refunded via /api/orders/refund, 200 OK [verified 00:28]
 - [x] Special chars test: items.json clean (5 categories, 19 items), inventory.json clean (24 items, no test artifacts) [verified 21:03]
 
 ## EVERY 12 HOURS
