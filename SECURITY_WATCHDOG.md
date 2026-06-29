@@ -1,12 +1,12 @@
 # POS Security Watchdog
 
-||| Last run: 2026-06-29T00:34 UTC
+|||| Last run: 2026-06-29T00:52 UTC
 
-||||||| Total events tracked: 86 (SEC-001→SEC-086; all resolved)
-|||||| Active blocks: 0 IPs
-||||||| Run result: Normal — all quiet. 0 findings.
+|||||||| Total events tracked: 87 (SEC-001→SEC-087; all resolved)
+||||||| Active blocks: 0 IPs
+|||||||| Run result: Normal — all quiet. 0 findings.
 
-## Current Run Findings (00:19–00:34 UTC, ~15 min window)
+## Current Run Findings (00:34–00:52 UTC, ~18 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -20,31 +20,28 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (00:19–00:34 UTC)
+### ℹ️ Activity Summary (00:34–00:52 UTC)
 
 **Server**: Healthy (HTTP 200 on port 5000, /api/health → {"status":"ok"}).
 
-**Activity**: 6 activity_log entries — all Reliability Bot testing (order lifecycle, user CRUD).
+**Activity**: 1 activity_log entry — Owner (1111) login at 00:51 UTC.
 
-**Login attempts in window**: 0. No login activity at all.
+**Login attempts in window**: 1 total (0 failed, 1 successful).
 
 **Active shifts**: 0. No one clocked in.
 
-**Orders**: Order #133 created ($6.49, cash) and immediately refunded — Reliability Bot lifecycle test. No anomalies.
-
-**User CRUD**: Test user 9016 added and deleted by Reliability Bot. Normal behavior.
+**Orders**: None in this window.
 
 ### 📊 Login Security Deep-Dive
-- **Brute force check**: 0 failed logins in last 15 min. No alert.
+- **Brute force check**: 0 failed logins in last 18 min. No alert.
 - **Account enumeration**: 0 probes for non-existent PINs. No alert.
-- **Successful-after-failure**: No login attempts at all. No alert.
-- **Off-hours activity**: Reliability Bot testing (localhost, 127.0.0.1). Not suspicious.
+- **Successful-after-failure**: No failed→successful pattern. No alert.
+- **Off-hours activity**: Owner (1111) login at 00:51 UTC from 127.0.0.1 — within anomaly window (22:00-06:00 UTC) but Owner is in `exempted_users` in security_config.json. Known IP (localhost). No failures. Standard dev behavior. Resolved SEC-087.
 - **Cross-IP targeting**: No activity.
 - **Known IPs**: No new IPs seen.
 - **Credential stuffing**: No pattern.
 - **2FA check**: No 2FA events.
 - **Account lockouts**: None.
-- **Last login attempt**: 2026-06-28T23:44:26 UTC (Owner, 127.0.0.1, success) — no new attempts since.
 
 ### 🔒 Security Config
 - No changes detected. All thresholds normal.
@@ -54,7 +51,7 @@ None.
 - `require_2fa_for_admins`: true (unchanged).
 
 ### 💰 Financial Check / Order Anomaly Scan
-- 0 new orders in this window (order #133 was created and refunded in same window — test).
+- 0 new orders in this window.
 - No active cash drawer sessions.
 - No $0 orders, no 100% discounts, no unusual tip patterns.
 
@@ -63,12 +60,13 @@ None.
 - Owner account (1111) present, active, not banned. All 8 accounts intact.
 - No banned users. No account modifications.
 - No file size anomalies.
-- No new suspicious files.
+- No new suspicious files (test_check*.py and db.py are known — Database Architect and Reliability Bot scripts).
 - Git status: **Clean**.
 - Server: **Healthy** (HTTP 200, /api/health → {"status":"ok"}).
 
 ### ✅ Actions Taken
 - 0 blocked IPs, 0 alerts fired.
+- Resolved SEC-087 (Owner off-hours login from localhost — exempted user, known IP).
 - Updated SECURITY_WATCHDOG.md timestamp and findings.
 
 ## Previous Run Findings (carried forward)
@@ -79,13 +77,13 @@ None.
 
 | | Check | Status |
 |---|---|---|
-| | Current time | 2026-06-29T00:34 UTC — 19:34 CT (Sunday, regular hours) |
-| | Activity since last run | 6 activity_log entries — Reliability Bot testing (order #133 lifecycle, user 9016 add/delete) |
-| | Login attempts (last ~15 min) | 0 total (0 failed, 0 successful) |
-| | Successful logins (this window) | 0 |
+| | Current time | 2026-06-29T00:52 UTC — 19:52 CT (Sunday, regular hours) |
+| | Activity since last run | 1 activity_log entry — Owner (1111) login at 00:51 |
+| | Login attempts (last ~18 min) | 1 total (0 failed, 1 successful) |
+| | Successful logins (this window) | 1 (Owner, 127.0.0.1, success) |
 | | Blocked IPs | 0 |
 | | Config changes | None |
 | | File integrity | All JSON valid. No file size anomalies. All 8 accounts intact. Git: clean. |
 | | Users | 8 accounts. Admin 2FA: 2222=no, 7788=no (pre-existing gap — Sentinel). Owner 2FA disabled (exempted via config). |
-| | Unresolved events | 0 unresolved out of 86 total (SEC-001→SEC-086; all resolved) |
+| | Unresolved events | 0 unresolved out of 87 total (SEC-001→SEC-087; all resolved) |
 | | Server | **Healthy** (HTTP 200 on port 5000, /api/health → {"status":"ok"}) |

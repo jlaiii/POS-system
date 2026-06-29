@@ -1277,14 +1277,14 @@
         "created_at": "2026-06-29T00:51:25.756294",
         "severity": "MEDIUM",
         "category": "anomaly",
-        "status": "unresolved",
+        "status": "resolved",
         "summary": "\u26a0\ufe0f Off-hours login: Owner (1111) at 00:51",
         "detail": "User Owner (PIN 1111) logged in during off-hours (22:00\u201306:00) from IP 127.0.0.1.",
         "affected_user": "1111",
         "affected_user_name": "Owner",
         "related_event": null,
         "reported_by": "IP Blocklist Manager",
-        "resolved_at": null,
-        "resolution": null
+        "resolved_at": "2026-06-29T00:52:30",
+        "resolution": "Resolved by Security Watchdog. Owner (1111) login from known IP (127.0.0.1, localhost). Owner is in exempted_users in security_config.json. Single successful login with no preceding failures. Standard dev/cron activity. No real security concern."
     }
 ]
