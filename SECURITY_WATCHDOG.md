@@ -1,11 +1,11 @@
 # POS Security Watchdog
 
-| Last run: 2026-06-29T17:39 UTC
-||||||||||| Total events tracked: 95 (SEC-002→SEC-096; 0 unresolved)
-||||||||||| Active blocks: 0 IPs
-||||||||||| Run result: All normal — silent.|
+| Last run: 2026-06-29T17:56 UTC
+|||||||||||| Total events tracked: 95 (SEC-002→SEC-096; 0 unresolved)
+|||||||||||| Active blocks: 0 IPs
+|||||||||||| Run result: All normal — silent.|
 
-## Current Run Findings (17:22–17:39 UTC, ~17 min window)
+## Current Run Findings (17:39–17:56 UTC, ~17 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -19,71 +19,60 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (17:00–17:22 UTC)
+### ℹ️ Activity Summary
 
 **Server**: **Healthy** (HTTP 200 on port 5000, /api/health → {"status":"ok"}).
 
-**Activity**: **2 new activity_log entries** since last run.
+**Activity**: **0 new activity_log entries** since last run. Complete quiet period.
 
-**Login event at 17:17 UTC**: Owner (1111) logged in via login from 127.0.0.1 (curl/8.5.0). Normal business hours (12:17 CT). Successful, no failures preceding it. No alert.
-
-**Follow-up admin_login events at 17:17-17:18 UTC**: Owner (1111) performed 2 admin logins shortly after. Normal pattern.
-
-**Login attempts in window**: 1 new entry in login_attempts.json — Owner success at 17:17 UTC. 0 failed attempts.
+**Login attempts**: 0 new entries. Last login was Owner success at 17:17 UTC from 127.0.0.1. No failed attempts.
 
 **Active shifts**: 0. No one clocked in.
 
 **Orders**: 116 total. No new orders.
 
 ### 📊 Login Security Deep-Dive
-- **Brute force check**: 0 failed logins in last 5 min. 0 failed logins total this window. No alert.
+- **Brute force check**: 0 failed logins in last 5 min. 0 failed logins in this window. No alert.
 - **Account enumeration**: No failed attempts for non-existent PINs. No alert.
-- **Successful-after-failure**: No pattern detected. All successful logins (Owner, 127.0.0.1) had no preceding failures.
-- **Off-hours activity**: Current time ~17:22 UTC (12:22 CT). Normal business hours.
-- **Cross-IP targeting**: No activity detected.
-- **Known IPs**: No new IPs.
+- **Successful-after-failure**: No pattern. Last failed login was 3h+ ago (14:51:15 UTC, user=9999 Test2FA).
+- **Off-hours activity**: Current time ~17:56 UTC (12:56 CT). Normal business hours.
+- **Cross-IP targeting**: None detected.
 - **Credential stuffing**: No pattern.
-- **2FA check**: No 2FA events.
-- **Account lockouts**: None.
-- **Last failed login**: 2026-06-29T14:51:15 UTC (~2h 31m ago), user=9999 (Test2FA) from 127.0.0.1. No change.
+- **All other checks**: Clear.
 
 ### 🔒 Security Config
 - No changes detected. All thresholds normal.
 - `blocked_ips`: [] — no active blocks.
 - `auto_block_threshold`: 5 (unchanged).
-- `rate_limit_enabled`: true (unchanged).
-- `require_2fa_for_admins`: true (unchanged).
 
 ### 💰 Financial Check / Order Anomaly Scan
-- 0 new orders since last run. No new anomalies.
-- Refund rate ~94% (109/116) remains high but all are test/cancelled/refunded orders from cron workers — pre-existing, no action needed.
+- 0 new orders. No new anomalies.
+- Refund rate ~94% (109/116) — pre-existing, no change.
 
 ### 📂 File Integrity
-- All 51 JSON files parseable, valid.
-- All 8 accounts intact. No banned users.
-- Owner account (1111) present, active, not banned.
-- Git status: **Dirty** (activity_log.json, login_attempts.json, RELIABILITY_CHECKLIST.md modified by concurrent workers — will commit).
-- No suspicious new files (.php, .sh, .exe, etc.) in workdir.
-- Server: **Healthy** (HTTP 200, /api/health → {"status":"ok"}).
+- All 49 JSON files parseable, valid.
+- All 8 accounts intact. Owner (1111) present, active.
+- Git status: **Clean** (committed RELIABILITY_CHECKLIST.md from Reliability Bot).
+- No suspicious new files in workdir.
+- Server: **Healthy**.
 
 ### ✅ Actions Taken
 - 0 blocked IPs, 0 alerts fired.
-- Updated SECURITY_WATCHDOG.md timestamp and findings.
-- Committed dirty data files from concurrent workers.
+- Updated SECURITY_WATCHDOG.md.
+- Committed dirty RELIABILITY_CHECKLIST.md from concurrent Reliability Bot worker.
 
 ## Previous Run Findings (carried forward)
-- Admin 2FA gap remains: Manager (2222) and Manager Sarah (7788) lack 2FA despite `require_2fa_for_admins: true`. Owner (1111) is exempted via config. Pre-existing — no change. Security Sentinel handles code-level fixes.
-- Historical refund rate ~94% (109/116 cancelled/refunded test orders) — all from cron workers. Pre-existing, no action needed.
+- Admin 2FA gap: Manager (2222) and Manager Sarah (7788) lack 2FA despite `require_2fa_for_admins: true`. Security Sentinel handles.
+- Historical refund rate ~94% — pre-existing test data.
 
-||||||| | System State | |
-|||---|---|---|---|---|
-|||||||||| Current time | 2026-06-29T17:22 UTC — 12:22 CT (Monday, normal business hours) |
-||||||||||| Activity since last run | 2 entries — Owner login + admin logins at 17:17-17:18 UTC |
-|||||||||| Login attempts (last ~22 min) | 1 (1 success, 0 failed) |
-||||||||| Successful logins (this window) | 1 (Owner login, 127.0.0.1) |
-|||||||| Blocked IPs | 0 |
-|||||||| Config changes | None |
-|||||||| File integrity | All 51 JSON valid. All 8 accounts intact. Git: post-run clean. |
-|||||||| Users | 8 accounts. Admin 2FA: 1111=no (exempted), 2222=no, 7788=no (pre-existing gap — Sentinel). |
-|||||||| Unresolved events | 0 unresolved out of 95 total (SEC-002→SEC-096; all resolved) |
-|||||||| Server | **Healthy** (HTTP 200 on port 5000, /api/health → {"status":"ok"}) |
+|||||||| | System State | |
+||||---|---|---|---|---|
+||||||||||| Current time | 2026-06-29T17:56 UTC — 12:56 CT (Monday, normal business hours) |
+|||||||||||| Activity since last run | 0 new entries |
+||||||||||| Login attempts (this window) | 0 |
+|||||||||| Successful logins (this window) | 0 |
+||||||||| Blocked IPs | 0 |
+||||||||| Config changes | None |
+||||||||| File integrity | All 49 JSON valid. All 8 accounts intact. Git: clean. |
+||||||||| Unresolved events | 0 of 95 |
+||||||||| Server | **Healthy** |
