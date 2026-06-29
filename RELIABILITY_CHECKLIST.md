@@ -1,7 +1,7 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-29T13:24 UTC
-> Total checks: 2394
-> Healthy: 2394 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-29T13:47 UTC
+> Total checks: 2399
+> Healthy: 2399 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
@@ -51,11 +51,11 @@
 - [x] Backup integrity: verify latest backup is valid and not empty — 07:22 JSON backup (76.7KB, 50 files valid) [verified 07:43]
 
 ## DISCOVERED (failures you've seen before — check every 2h)
-|- [x] **Flask process dying between runs** — Gunicorn+gevent via scripts/run_flask.sh, stable. No issues. [verified 10:32]
-||- [x] **Dual Flask instances on port 5000** — Single gunicorn master+worker. No recurrence. [verified 10:32]
-||- [x] **items.json + users.json simultaneous data corruption** — Items (5 categories, 19 items) and users (8 users) intact. [verified 10:32]
-||- [x] **Owner username changed to 'testuser' (3rd data corruption incident)** — Owner PIN 1111 name='Owner', username='jayadmin'. No corruption. [verified 10:32]
-||- [x] **items.json schema changed to category-keyed format** — Items stored as {Foods:[...], Drinks:[...], ...}. Used by /api/items (GET). [verified 10:32]
+|- [x] **Flask process dying between runs** — Gunicorn+gevent via scripts/run_flask.sh, stable (uptime 2h+, single master+worker on port 5000). No issues. [verified 13:47]
+|||- [x] **Dual Flask instances on port 5000** — Single gunicorn master+worker (PIDs 3094836/3094839). No recurrence. [verified 13:47]
+|||- [x] **items.json + users.json simultaneous data corruption** — Items (5 categories, 19 items: Foods:6, Drinks:3, Snacks:5, Breakfast:3, Salads:2) and users (8 users: Owner/Manager/Employee One/Two/Maria/Chef Diego/Manager Sarah/Carlos) intact. [verified 13:47]
+|||- [x] **Owner username changed to 'testuser' (3rd data corruption incident)** — Owner PIN 1111 name='Owner', username='jayadmin', role='owner', permissions=['*']. No corruption. [verified 13:47]
+|||- [x] **items.json schema changed to category-keyed format** — Items stored as {Foods:[...], Drinks:[...], ...}. Used by /api/items (GET). [verified 13:47]
 
 ## FIXES APPLIED
 | [2026-06-29 09:40] **Cleaned up leftover test debris from inventory** — Found `Test "Special" 🎉 Item` (0 stock) leftover from previous special chars test in inventory.json. Removed and committed (a036bc9). Also verified: Flask 200, 15/15 JSON valid, owner OK, git clean, webhook config OK, cash drawer 10 sessions, app.py syntax OK, index.html 1,375,315B normal, items GET 5 cats/19 items, clock status OK, shift data intact (57 shifts, 8 late, 4 breaks, 5 edits). No downtime.
