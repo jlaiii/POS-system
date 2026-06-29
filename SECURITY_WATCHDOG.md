@@ -1,11 +1,11 @@
 # POS Security Watchdog
 
-|||||| Last run: 2026-06-29T06:24 UTC
-||||||| Total events tracked: 96 (SEC-001→SEC-096; 0 unresolved)
-||||||| Active blocks: 0 IPs
-||||||| Run result: All normal — silent.|
+| Last run: 2026-06-29T07:13 UTC
+| Total events tracked: 96 (SEC-001→SEC-096; 0 unresolved)
+| Active blocks: 0 IPs
+| Run result: All normal — silent.|
 
-## Current Run Findings (05:38–06:24 UTC, ~46 min window)
+## Current Run Findings (06:41–07:13 UTC, ~32 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -19,15 +19,13 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (05:38–06:24 UTC)
+### ℹ️ Activity Summary (06:41–07:13 UTC)
 
 **Server**: **Healthy** (HTTP 200 on port 5000, /api/health → {"status":"ok"}).
 
-**Activity**: 2 new activity_log entries since last run (total: 1453 entries):
-- 06:18:34 — admin_login by Owner (1111) from 127.0.0.1 (curl)
-- 06:18:40 — admin_login by Owner (1111) from 127.0.0.1 (curl)
+**Activity**: 0 new activity_log entries since last run (total: 1454 entries, unchanged).
 
-**Login attempts in window**: 0 total (0 failed / 0 successful).
+**Login attempts in window**: 0 total (0 failed / 0 successful) — no new login activity.
 
 **Active shifts**: 0. No one clocked in.
 
@@ -37,7 +35,7 @@ None.
 - **Brute force check**: 0 failed logins in window. No alert.
 - **Account enumeration**: No failed attempts for non-existent users. No alert.
 - **Successful-after-failure**: No pattern.
-- **Off-hours activity**: Owner (1111) admin_login at 06:18 during off-hours window (22:00–06:00) — from localhost/127.0.0.1, consistent with cron worker testing. Expected behavior.
+- **Off-hours activity**: No logins in this window (07:13 UTC = 02:13 CT, off-hours, but no activity at all).
 - **Cross-IP targeting**: No activity.
 - **Known IPs**: No new IPs seen.
 - **Credential stuffing**: No pattern.
@@ -75,15 +73,15 @@ None.
 
 ## System State
 
-|||| | Check | Status |
-||---|---|---|---|---|
-|||||| | Current time | 2026-06-29T06:24 UTC — 01:24 CT (Monday, off-hours) |
-|||||| | Activity since last run | 2 new activity_log entries |
-|||||| | Login attempts (last ~46 min) | 0 total (0 failed / 0 successful) |
-|||||| | Successful logins (this window) | 0 (login only shows in login_attempts.json; admin_logins are session-based) |
-|||||| | Blocked IPs | 0 |
-|||||| | Config changes | None |
-|||||| | File integrity | All 187 JSON valid. All 8 accounts intact. Git: activity_log.json dirty (expected). |
-|||||| | Users | 8 accounts. Admin 2FA: 2222=no, 7788=no (pre-existing gap — Sentinel). Owner 2FA disabled (exempted via config). |
-|||||| | Unresolved events | 0 unresolved out of 96 total (SEC-001→SEC-096; all resolved) |
-|||||| | Server | **Healthy** (HTTP 200 on port 5000, /api/health → {"status":"ok"}) |
+| | Check | Status |
+|---|---|---|---|---|---|
+| | Current time | 2026-06-29T07:13 UTC — 02:13 CT (Monday, off-hours) |
+| | Activity since last run | 0 new activity_log entries |
+| | Login attempts (last ~32 min) | 0 total (0 failed / 0 successful) |
+| | Successful logins (this window) | None |
+| | Blocked IPs | 0 |
+| | Config changes | None |
+| | File integrity | All 187 JSON valid. All 8 accounts intact. Git: activity_log.json + login_attempts.json + SECURITY_WATCHDOG.md dirty (expected — data collection + self-update). |
+| | Users | 8 accounts. Admin 2FA: 2222=no, 7788=no (pre-existing gap — Sentinel). Owner 2FA disabled (exempted via config). |
+| | Unresolved events | 0 unresolved out of 96 total (SEC-001→SEC-096; all resolved) |
+| | Server | **Healthy** (HTTP 200 on port 5000, /api/health → {"status":"ok"}) |
