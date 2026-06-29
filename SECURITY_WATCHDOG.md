@@ -1,12 +1,11 @@
 # POS Security Watchdog
 
-| Last run: 2026-06-29T01:36 UTC
-
+| Last run: 2026-06-29T01:52 UTC
 | Total events tracked: 87 (SEC-001→SEC-087; all resolved)
 | Active blocks: 0 IPs
 | Run result: Normal — all quiet. 0 findings.
 
-## Current Run Findings (01:08–01:36 UTC, ~28 min window)
+## Current Run Findings (01:36–01:52 UTC, ~16 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -20,23 +19,23 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (01:08–01:36 UTC)
+### ℹ️ Activity Summary (01:36–01:52 UTC)
 
 **Server**: Healthy (HTTP 200 on port 5000, /api/health → {"status":"ok"}).
 
-**Activity**: 2 new activity_log entries since last run (Owner admin_login + login at 01:20, 127.0.0.1).
+**Activity**: 0 new activity_log entries since last run.
 
-**Login attempts in window**: 0 total (0 failed, 0 successful). Login at 01:20 recorded in activity_log only.
+**Login attempts in window**: 0 total (0 failed, 0 successful).
 
 **Active shifts**: 0. No one clocked in.
 
 **Orders**: None in this window.
 
 ### 📊 Login Security Deep-Dive
-- **Brute force check**: 0 failed logins in last ~28 min. No alert.
+- **Brute force check**: 0 failed logins in last ~16 min. No alert.
 - **Account enumeration**: 0 probes for non-existent PINs. No alert.
 - **Successful-after-failure**: No failed→successful pattern. No alert.
-- **Off-hours activity**: Owner (1111) login at 01:20 UTC (20:20 CT) from known IP 127.0.0.1 — expected cron worker activity. Not flagged.
+- **Off-hours activity**: None in this window.
 - **Cross-IP targeting**: No activity.
 - **Known IPs**: No new IPs seen.
 - **Credential stuffing**: No pattern.
@@ -52,7 +51,6 @@ None.
 
 ### 💰 Financial Check / Order Anomaly Scan
 - 0 new orders in this window.
-- Note: Order 133 was created and refunded at 00:28 UTC (last window) by Reliability Bot lifecycle test — not in this window.
 - No active cash drawer sessions.
 - No $0 orders, no 100% discounts, no unusual tip patterns.
 
@@ -62,12 +60,11 @@ None.
 - No banned users. No account modifications.
 - No file size anomalies.
 - No new suspicious files.
-- Git status: **Cleaned** — committed 3 dirty data files (activity_log.json, login_attempts.json, security_events.json).
+- Git status: Clean except RELIABILITY_CHECKLIST.md (not our file).
 - Server: **Healthy** (HTTP 200, /api/health → {"status":"ok"}).
 
 ### ✅ Actions Taken
 - 0 blocked IPs, 0 alerts fired.
-- Committed pending data changes from previous workers.
 - Updated SECURITY_WATCHDOG.md timestamp and findings.
 
 ## Previous Run Findings (carried forward)
@@ -77,14 +74,14 @@ None.
 ## System State
 
 | | Check | Status |
-||---|---|---|
-| | Current time | 2026-06-29T01:36 UTC — 20:36 CT (Sunday, regular hours) |
-| | Activity since last run | 2 new activity_log entries (Owner login at 01:20) |
-| | Login attempts (last ~28 min) | 0 total (0 failed, 0 successful) |
-| | Successful logins (this window) | 0 in login_attempts; 1 login + 1 admin_login in activity_log |
+|---|---|---|
+| | Current time | 2026-06-29T01:52 UTC — 20:52 CT (Sunday, regular hours) |
+| | Activity since last run | 0 new activity_log entries |
+| | Login attempts (last ~16 min) | 0 total (0 failed, 0 successful) |
+| | Successful logins (this window) | 0 |
 | | Blocked IPs | 0 |
 | | Config changes | None |
-| | File integrity | All JSON valid. No file size anomalies. All 8 accounts intact. Git: cleaned (committed 3 dirty files). |
+| | File integrity | All JSON valid. No file size anomalies. All 8 accounts intact. Git: no new dirty files. |
 | | Users | 8 accounts. Admin 2FA: 2222=no, 7788=no (pre-existing gap — Sentinel). Owner 2FA disabled (exempted via config). |
 | | Unresolved events | 0 unresolved out of 87 total (SEC-001→SEC-087; all resolved) |
 | | Server | **Healthy** (HTTP 200 on port 5000, /api/health → {"status":"ok"}) |
