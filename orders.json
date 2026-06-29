@@ -9608,5 +9608,70 @@
         "refund_reason": "Reliability Bot large payload test",
         "refunded_at": "2026-06-29T08:34:35.721656",
         "refunded_by": "1111"
+    },
+    {
+        "order_id": 138,
+        "status": "refunded",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-29T21:09:03.795959",
+        "user": "1111",
+        "payment": "Cash",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Coke",
+                "price": 3.0,
+                "qty": 1,
+                "course_send_at": "2026-06-29T21:09:03.796095",
+                "course_fired": true
+            }
+        ],
+        "subtotal": 3.0,
+        "tax_amount": 0.25,
+        "tip_amount": 0.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "item_tax_details": [
+            {
+                "name": "Coke",
+                "category": "",
+                "qty": 1,
+                "price": 3.0,
+                "tax_rate": 8.25,
+                "tax_amount": 0.25
+            }
+        ],
+        "total": 3.25,
+        "notes": "",
+        "item_notes": {},
+        "table_number": null,
+        "delivery_address": null,
+        "customer_email": "",
+        "order_type": "dine_in",
+        "party_size": null,
+        "packaging_fee": 0.0,
+        "packaging_fee_label": "",
+        "priority": null,
+        "assigned_driver": null,
+        "delivery_status": "pending",
+        "manager_approval": null,
+        "order_number": 117,
+        "payment_transaction": {
+            "transaction_id": "TXN-20260629-4820",
+            "auth_code": "MAN-2109",
+            "card_type": "Card",
+            "card_last4": "****",
+            "entry_mode": "manual",
+            "gateway": "manual",
+            "amount": 3.25,
+            "status": "approved",
+            "timestamp": "2026-06-29T21:09:10.557619"
+        },
+        "refund_reason": "Reliability Bot - lifecycle test",
+        "refunded_at": "2026-06-29T21:09:12.914526",
+        "refunded_by": "1111"
     }
 ]

@@ -20802,5 +20802,110 @@
                 "discount_approval_threshold": 0
             }
         }
+    },
+    {
+        "timestamp": "2026-06-29T21:08:37.325091",
+        "type": "login_failed",
+        "user_id": null,
+        "user_role": "unknown",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed",
+            "method": "pin",
+            "ip": "127.0.0.1",
+            "attempt": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-29T21:08:51.456014",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-29T21:09:03.813011",
+        "type": "submit_order",
+        "user_id": "1111",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 138,
+            "subtotal": 3.0,
+            "tax_amount": 0.25,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 3.25,
+            "payment_method": "Cash",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-29T21:09:10.577284",
+        "type": "order_payment_processed",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 138,
+            "amount": 3.25,
+            "transaction_id": "TXN-20260629-4820",
+            "card_type": "Card"
+        }
+    },
+    {
+        "timestamp": "2026-06-29T21:09:12.936967",
+        "type": "refund_order",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 138,
+            "reason": "Reliability Bot - lifecycle test",
+            "refunded_by_name": "Owner",
+            "order_total": 3.25,
+            "inventory_restored": [
+                "Coke x1"
+            ]
+        }
+    },
+    {
+        "timestamp": "2026-06-29T21:09:48.863096",
+        "type": "add_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "added_user_id": "9001",
+            "added_user_name": "Reliability Test User",
+            "added_user_role": "user"
+        }
+    },
+    {
+        "timestamp": "2026-06-29T21:09:52.907994",
+        "type": "delete_user",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "deleted_user_id": "9001",
+            "deleted_user_name": "Reliability Test User",
+            "deleted_user_role": "user"
+        }
     }
 ]
