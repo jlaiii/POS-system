@@ -9449,15 +9449,19 @@ def admin_stats():
 
     # Calculate today's orders and sales while we have the data
     today_orders_list = []
+    today_revenue_orders = []
     for o in orders:
         try:
             odt = datetime.fromisoformat(o.get('date', ''))
             if today_start <= odt < today_end:
                 today_orders_list.append(o)
+                # Only count non-cancelled/non-refunded orders for revenue
+                if o.get('status') not in ('refunded', 'voided', 'cancelled'):
+                    today_revenue_orders.append(o)
         except (ValueError, TypeError):
             pass
     today_order_count = len(today_orders_list)
-    today_sales_amt = round(sum(float(o.get('total', 0)) for o in today_orders_list), 2)
+    today_sales_amt = round(sum(float(o.get('total', 0)) for o in today_revenue_orders), 2)
 
     stats = {
         'total_sales': round(total_sales, 2),

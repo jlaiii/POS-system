@@ -1,7 +1,7 @@
 # POS Production Readiness Audit
-> Last run: 2026-06-29 02:58 CT
-> Overall readiness: 62% (HIGH issues: 12, MEDIUM: 15)
-> Workflow tested this run: A (Waiter taking orders — login, clock in, submit order for Table 5 and Table 6, check kitchen queue, clock out)
+> Last run: 2026-06-29 14:58 CT
+> Overall readiness: 64% (HIGH issues: 11, MEDIUM: 16)
+> Workflow tested this run: B (Manager closing shift — login, view stats, cash drawer management, employee shifts, pay period summary, CSV export)
 
 ## BLOCKERS (can't go live with these)
 
@@ -32,6 +32,8 @@
 - [ ] **No modifier price validation on submit_order** — `submit_order()` validates base item prices against the menu within ±$0.50 tolerance, but does NOT validate modifier price adjustments. A waiter (or malicious API caller) can add +$100 to a modifier price and the system accepts it. Modifier groups with price_mod values (e.g., "Large" +$2.00, "Bacon" +$1.50) are not checked against the items.json modifier definitions. The subtotal from the frontend is accepted without recalculating from base+modifier prices. [NEW]
 
 - [ ] **API inconsistency: kitchen/queue uses GET instead of POST** — TASKS.md states "All endpoints are POST (even reads)," but `/api/kitchen/queue` is `@app.route('/api/kitchen/queue', methods=['GET'])`. Also `/api/analytics/summary` and `/kitchen/stats` use GET. This is inconsistent and would confuse any developer integrating with the API. [NEW]
+
+- [ ] **Admin login sessions not persisted to timesheet.json — lost on server restart** — `active_admin_sessions` is an in-memory dict that never gets written to `timesheet.json`. The JSON file has only 1 entry (Manager 2222 from June 24). The owner (1111) has logged in hundreds of times but none are recorded. When gunicorn restarts, all session history disappears. A real restaurant manager needs accurate login tracking. [NEW - Workflow B]
 
 ## MEDIUM (annoying but workable)
 
@@ -77,6 +79,7 @@
 
 ## FIXED (this session)
 
+- [x] **today_sales incorrectly counted refunded orders — caused "today_sales ($401.35) > total_sales ($94.52)" impossibility** — The `today_sales` calculation at line 9460 iterated ALL orders (including cancelled/refunded) for revenue, while `total_sales` correctly excluded them. One refunded order for $346.30 inflated today's number above the all-time total. Fixed: added `today_revenue_orders` list that filters out refunded/voided/cancelled orders. Verified: today_sales=$48.56 (only pending orders), today_orders=5 (still counts all orders).
 - [x] **dtag-chip, day-check, allergen-filter-toggle, allergen-chip touch targets too small (36px) — increased to 44px** — Four interactive element classes had `min-height: 36px`, below the recommended 44px touch target minimum (WCAG). Increased all to 44px. Also increased offline-badge from 28px to 36px. Commit: `2d7bd39`.
 - [x] **admin_stats missing today_sales and today_orders** — The admin dashboard stats response had no `today_sales` or `today_orders` fields. Added calculation of today's order count and revenue, and injected them into the stats dict. Verified: `today_sales: 45.31`, `today_orders: 3` after testing. Commit: `2d7bd39`.
 - [x] **Workflow A tested end-to-end (Waiter taking orders)** — Login → Clock in → Submit order Table 5 (Hamburger-Normal Large w/ Bacon, 2x Coke, French Toast; split payment $15 cash + $10 card; notes: "no onions on the burger") → Submit order Table 6 (Caesar Salad, Coke, Chocolate Bar; Card) → Verify kitchen queue shows both orders with notes → Verify order history → Clock out. All endpoints functional. 5 friction points documented.
