@@ -1,7 +1,7 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-29T23:10:17Z
-> Total checks: 38
-> Healthy: 38 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-29T23:33:43Z
+> Total checks: 39
+> Healthy: 39 | Broken: 0 | Fixed this cycle: 0
 
 ## CRITICAL (check every run — these can't wait)
 - [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK
@@ -39,7 +39,7 @@
 - [x] Backup integrity: verify latest backup is valid JSON and not empty — 50 files all VALID JSON, SQLite backup OK ✓
 - [x] app.py syntax check (python3 -m py_compile app.py) — SYNTAX OK ✓
 - [x] index.html size check (alert if shrunk dramatically — possible corruption) — 1,375,315 bytes, normal ✓
-- [ ] Full app restart test: kill Flask → restart → verify all critical endpoints
+- [x] Full app restart test: kill Flask → restart → verify all critical endpoints — 2026-06-29T23:33:43Z, PASSED (killed gunicorn master, restarted, verified /api/health, /api/items, /api/kitchen/queue, /api/pickup-display/queue, /api/login, /api/admin_stats, /api/admin_shifts, /api/clock/status all 200 OK)
 - [x] Large payload test: submit order with 50 items — Order #140 created (50 items, $162.50) ✅
 - [x] Special chars test: user name with emoji, item name with quotes — Item 'Taco 🌮 "Supreme" Deluxe' added/deleted ✅
 - [x] Concurrent write test: two rapid clock-ins → verify no data loss — Two users (1234, 5678) clocked in/out concurrently, both shifts recorded ✅
