@@ -1,11 +1,11 @@
 # POS Security Watchdog
 
-||| Last run: 2026-06-29T05:03 UTC
+||| Last run: 2026-06-29T05:21 UTC
 |||| Total events tracked: 95 (SEC-001→SEC-095; 0 unresolved)
 |||| Active blocks: 0 IPs
-|||| Run result: 4-hour status summary — all normal.|
+|||| Run result: All normal — silent.|
 
-## Current Run Findings (04:46–05:03 UTC, ~17 min window)
+## Current Run Findings (05:06–05:21 UTC, ~15 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -19,11 +19,11 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (04:46–05:03 UTC)
+### ℹ️ Activity Summary (05:06–05:21 UTC)
 
 **Server**: **Healthy** (HTTP 200 on port 5000, /api/health → {"status":"ok"}).
 
-**Activity**: 0 new activity_log entries since last run (total: 1445 entries).
+**Activity**: 0 new activity_log entries since last run (total: 1448 entries). Last entries: admin_login by Owner (1111) + clock_in/out by Employee One (1234) at 05:06 UTC — from previous run.
 
 **Login attempts in window**: 0 total (0 failed / 0 successful).
 
@@ -58,7 +58,7 @@ None.
 - All 49 JSON files parseable, valid.
 - All 8 accounts intact. No banned users.
 - Owner account (1111) present, active, not banned.
-- No file size anomalies (small files are empty arrays — normal).
+- No file size anomalies.
 - Git status: clean — no dirty files.
 - Server: **Healthy** (HTTP 200, /api/health → {"status":"ok"}).
 
@@ -73,14 +73,14 @@ None.
 ## System State
 
 || | Check | Status |
-|---|---|---|---|
-||| | Current time | 2026-06-29T05:03 UTC — 00:03 CT (Monday, off-hours) |
-||| | Activity since last run | 0 new activity_log entries |
-||| | Login attempts (last ~17 min) | 0 total (0 failed / 0 successful) |
-||| | Successful logins (this window) | 0 |
-||| | Blocked IPs | 0 |
-||| | Config changes | None |
-||| | File integrity | All 49 JSON valid. No file anomalies. All 8 accounts intact. Git: clean. |
-||| | Users | 8 accounts. Admin 2FA: 2222=no, 7788=no (pre-existing gap — Sentinel). Owner 2FA disabled (exempted via config). |
-||| | Unresolved events | 0 unresolved out of 95 total (SEC-001→SEC-095; all resolved) |
-||| | Server | **Healthy** (HTTP 200 on port 5000, /api/health → {"status":"ok"}) |
+||---|---|---|---|
+|||| | Current time | 2026-06-29T05:21 UTC — 00:21 CT (Monday, off-hours) |
+|||| | Activity since last run | 0 new activity_log entries |
+|||| | Login attempts (last ~15 min) | 0 total (0 failed / 0 successful) |
+|||| | Successful logins (this window) | 0 |
+|||| | Blocked IPs | 0 |
+|||| | Config changes | None |
+|||| | File integrity | All 49 JSON valid. No file anomalies. All 8 accounts intact. Git: clean. |
+|||| | Users | 8 accounts. Admin 2FA: 2222=no, 7788=no (pre-existing gap — Sentinel). Owner 2FA disabled (exempted via config). |
+|||| | Unresolved events | 0 unresolved out of 95 total (SEC-001→SEC-095; all resolved) |
+|||| | Server | **Healthy** (HTTP 200 on port 5000, /api/health → {"status":"ok"}) |
