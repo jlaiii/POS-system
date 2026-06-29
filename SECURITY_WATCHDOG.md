@@ -1,12 +1,12 @@
 # POS Security Watchdog
 
-|| Last run: 2026-06-29T00:19 UTC
+||| Last run: 2026-06-29T00:34 UTC
 
-||||| Total events tracked: 86 (SEC-001→SEC-086; all resolved)
-||||| Active blocks: 0 IPs
-|||||| Run result: Normal — 4-hour clean status. 0 findings. All thresholds normal.
+||||||| Total events tracked: 86 (SEC-001→SEC-086; all resolved)
+|||||| Active blocks: 0 IPs
+||||||| Run result: Normal — all quiet. 0 findings.
 
-## Current Run Findings (00:04–00:19 UTC, ~15 min window)
+## Current Run Findings (00:19–00:34 UTC, ~15 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -20,33 +20,25 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### 🐕 4-Hour Clean Status Summary (20:19–00:19 UTC)
-
-**Logins last 4h**: 5 attempts, 5 successful, 0 failed.
-**Unique IPs**: 1 (127.0.0.1) — all localhost.
-**Unique users**: 1 (1111 — Owner).
-**IPs blocked**: 0.
-**Anomalies detected**: 0.
-**Security events**: 0 new.
-**Known IPs tracked**: 6 users tracked, 0 new IPs in window.
-
-### ℹ️ Activity Summary (00:04–00:19 UTC)
+### ℹ️ Activity Summary (00:19–00:34 UTC)
 
 **Server**: Healthy (HTTP 200 on port 5000, /api/health → {"status":"ok"}).
 
-**Activity**: 0 new activity_log entries since last run. No API calls in this window.
+**Activity**: 6 activity_log entries — all Reliability Bot testing (order lifecycle, user CRUD).
 
-**Login attempts in window**: 0. No login activity.
+**Login attempts in window**: 0. No login activity at all.
 
 **Active shifts**: 0. No one clocked in.
 
-**Orders**: None in this window.
+**Orders**: Order #133 created ($6.49, cash) and immediately refunded — Reliability Bot lifecycle test. No anomalies.
+
+**User CRUD**: Test user 9016 added and deleted by Reliability Bot. Normal behavior.
 
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: 0 failed logins in last 15 min. No alert.
 - **Account enumeration**: 0 probes for non-existent PINs. No alert.
-- **Successful-after-failure**: No failed attempts. No alert.
-- **Off-hours activity**: None in this window.
+- **Successful-after-failure**: No login attempts at all. No alert.
+- **Off-hours activity**: Reliability Bot testing (localhost, 127.0.0.1). Not suspicious.
 - **Cross-IP targeting**: No activity.
 - **Known IPs**: No new IPs seen.
 - **Credential stuffing**: No pattern.
@@ -62,22 +54,21 @@ None.
 - `require_2fa_for_admins`: true (unchanged).
 
 ### 💰 Financial Check / Order Anomaly Scan
-- 0 new orders in this window.
-- No $0 orders, no 100% discounts, no unusual tip patterns.
+- 0 new orders in this window (order #133 was created and refunded in same window — test).
 - No active cash drawer sessions.
+- No $0 orders, no 100% discounts, no unusual tip patterns.
 
 ### 📂 File Integrity
 - All JSON files parseable, valid.
 - Owner account (1111) present, active, not banned. All 8 accounts intact.
 - No banned users. No account modifications.
 - No file size anomalies.
-- No new suspicious files — no .php, .exe, or anomalous files in workdir.
-- Git status: **Clean** (committed dirty RELIABILITY_CHECKLIST.md from Reliability Bot at 00:06).
+- No new suspicious files.
+- Git status: **Clean**.
 - Server: **Healthy** (HTTP 200, /api/health → {"status":"ok"}).
 
 ### ✅ Actions Taken
 - 0 blocked IPs, 0 alerts fired.
-- Committed dirty `RELIABILITY_CHECKLIST.md` (Reliability Bot timestamp update).
 - Updated SECURITY_WATCHDOG.md timestamp and findings.
 
 ## Previous Run Findings (carried forward)
@@ -88,8 +79,8 @@ None.
 
 | | Check | Status |
 |---|---|---|
-| | Current time | 2026-06-29T00:19 UTC — 19:19 CT (Sunday, regular hours) |
-| | Activity since last run | 0 activity_log entries — no API calls since 23:44 |
+| | Current time | 2026-06-29T00:34 UTC — 19:34 CT (Sunday, regular hours) |
+| | Activity since last run | 6 activity_log entries — Reliability Bot testing (order #133 lifecycle, user 9016 add/delete) |
 | | Login attempts (last ~15 min) | 0 total (0 failed, 0 successful) |
 | | Successful logins (this window) | 0 |
 | | Blocked IPs | 0 |
