@@ -19483,5 +19483,162 @@
             "ip": "127.0.0.1",
             "attempt": 2
         }
+    },
+    {
+        "timestamp": "2026-06-29T02:57:14.947118",
+        "type": "login",
+        "user_id": "5678",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Employee Two",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-29T02:57:18.016459",
+        "type": "clock_in",
+        "user_id": "5678",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee Two",
+            "clock_in_time": "2026-06-29T02:57:18.016218",
+            "late_minutes": null,
+            "scheduled_start": "10:00"
+        }
+    },
+    {
+        "timestamp": "2026-06-29T02:57:26.971850",
+        "type": "submit_order",
+        "user_id": "5678",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 134,
+            "subtotal": 22.99,
+            "tax_amount": 1.76,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 24.75,
+            "payment_method": "Split (Cash $15.00, Card $10.00)",
+            "item_count": 3
+        }
+    },
+    {
+        "timestamp": "2026-06-29T02:57:55.955665",
+        "type": "submit_order",
+        "user_id": "5678",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 135,
+            "subtotal": 12.99,
+            "tax_amount": 1.08,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 14.07,
+            "payment_method": "Card",
+            "item_count": 3
+        }
+    },
+    {
+        "timestamp": "2026-06-29T02:57:57.925700",
+        "type": "clock_out",
+        "user_id": "5678",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee Two",
+            "clock_in_time": "2026-06-29T02:57:18.016218",
+            "clock_out_time": "2026-06-29T02:57:57.922905",
+            "duration_hours": 0.01
+        }
+    },
+    {
+        "timestamp": "2026-06-29T02:58:08.954372",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-29T02:58:12.207610",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-29T02:58:15.803819",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-29T02:58:36.517164",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-29T02:59:08.887919",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-29T03:00:29.401817",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-29T03:00:47.837644",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
     }
 ]

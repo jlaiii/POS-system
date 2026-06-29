@@ -8512,5 +8512,188 @@
         "refund_reason": "Reliability bot lifecycle test - verifying refund works",
         "refunded_at": "2026-06-29T00:28:48.465776",
         "refunded_by": "1111"
+    },
+    {
+        "order_id": 134,
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-29T02:57:26.958364",
+        "user": "5678",
+        "payment": "Split (Cash $15.00, Card $10.00)",
+        "payment_splits": [
+            {
+                "method": "Cash",
+                "amount": 15.0
+            },
+            {
+                "method": "Card",
+                "amount": 10.0
+            }
+        ],
+        "items": [
+            {
+                "name": "Hamburger - Normal",
+                "price": 6.0,
+                "qty": 1,
+                "modifiers": [
+                    {
+                        "group": "Size",
+                        "option": "Large",
+                        "price_mod": 2.0
+                    },
+                    {
+                        "group": "Extras",
+                        "option": "Bacon",
+                        "price_mod": 1.5
+                    }
+                ],
+                "course_send_at": "2026-06-29T02:57:26.959892",
+                "course_fired": true
+            },
+            {
+                "name": "Coke",
+                "price": 3.0,
+                "qty": 2,
+                "course_send_at": "2026-06-29T02:57:26.959892",
+                "course_fired": true
+            },
+            {
+                "name": "French Toast",
+                "price": 9.49,
+                "qty": 1,
+                "course_send_at": "2026-06-29T02:57:26.959892",
+                "course_fired": true
+            }
+        ],
+        "subtotal": 22.99,
+        "tax_amount": 1.76,
+        "tip_amount": 0.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "item_tax_details": [
+            {
+                "name": "Hamburger - Normal",
+                "category": "",
+                "qty": 1,
+                "price": 6.0,
+                "tax_rate": 8.25,
+                "tax_amount": 0.49
+            },
+            {
+                "name": "Coke",
+                "category": "",
+                "qty": 2,
+                "price": 3.0,
+                "tax_rate": 8.25,
+                "tax_amount": 0.49
+            },
+            {
+                "name": "French Toast",
+                "category": "",
+                "qty": 1,
+                "price": 9.49,
+                "tax_rate": 8.25,
+                "tax_amount": 0.78
+            }
+        ],
+        "total": 24.75,
+        "notes": "no onions on the burger",
+        "item_notes": {},
+        "table_number": 5,
+        "delivery_address": null,
+        "customer_email": "",
+        "order_type": "dine_in",
+        "party_size": 2,
+        "packaging_fee": 0.0,
+        "packaging_fee_label": "",
+        "priority": null,
+        "assigned_driver": null,
+        "delivery_status": "pending",
+        "manager_approval": null,
+        "order_number": 113
+    },
+    {
+        "order_id": 135,
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-06-29T02:57:55.942566",
+        "user": "5678",
+        "payment": "Card",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Caesar Salad",
+                "price": 7.99,
+                "qty": 1,
+                "course_send_at": "2026-06-29T02:57:55.942625",
+                "course_fired": true
+            },
+            {
+                "name": "Coke",
+                "price": 3.0,
+                "qty": 1,
+                "course_send_at": "2026-06-29T02:57:55.942625",
+                "course_fired": true
+            },
+            {
+                "name": "Chocolate Bar",
+                "price": 2.0,
+                "qty": 1,
+                "course_send_at": "2026-06-29T02:57:55.942625",
+                "course_fired": true
+            }
+        ],
+        "subtotal": 12.99,
+        "tax_amount": 1.08,
+        "tip_amount": 0.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "item_tax_details": [
+            {
+                "name": "Caesar Salad",
+                "category": "",
+                "qty": 1,
+                "price": 7.99,
+                "tax_rate": 8.25,
+                "tax_amount": 0.66
+            },
+            {
+                "name": "Coke",
+                "category": "",
+                "qty": 1,
+                "price": 3.0,
+                "tax_rate": 8.25,
+                "tax_amount": 0.25
+            },
+            {
+                "name": "Chocolate Bar",
+                "category": "",
+                "qty": 1,
+                "price": 2.0,
+                "tax_rate": 8.25,
+                "tax_amount": 0.17
+            }
+        ],
+        "total": 14.07,
+        "notes": "",
+        "item_notes": {},
+        "table_number": 6,
+        "delivery_address": null,
+        "customer_email": "",
+        "order_type": "dine_in",
+        "party_size": 1,
+        "packaging_fee": 0.0,
+        "packaging_fee_label": "",
+        "priority": null,
+        "assigned_driver": null,
+        "delivery_status": "pending",
+        "manager_approval": null,
+        "order_number": 114
     }
 ]
