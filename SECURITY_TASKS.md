@@ -1,5 +1,5 @@
 # POS Security Tasks
-> Last run: 2026-06-29 02:45 UTC
+> Last run: 2026-06-29 14:52 UTC
 
 ## CRITICAL — LOGIN & AUTH SECURITY (check every run)
 
@@ -120,6 +120,19 @@
 - [x] **Fix X-Forwarded-For spoofing bypass of ALL IP rate limiting** — CRITICAL: `get_client_ip()` blindly trusted X-Forwarded-For header. With gunicorn on 0.0.0.0:5000 and no reverse proxy, external attacker could set `X-Forwarded-For: 127.0.0.1` to bypass all IP-based rate limiting, blocklists, allowlists, and auto-block. Fixed by only trusting X-Forwarded-For from known proxy IPs (127.0.0.1, ::1, localhost). Commit `b802794`.
 - [x] **Full security audit — login security, data protection, file permissions, XSS, payment data** — Verified: login rate limiting (5/60s + 10min lockout), session security (secrets.token_hex(32), 8h active/24h idle), TOTP encryption (valid Fernet key at 0600), file permissions (all JSON 0600, pos.db 600, backups 700), XSS (3 escape functions all use DOM-based escaping), payment data (only card_last4 stored, no CVV/track), no eval/exec vectors, debug disabled (gunicorn -w 1), CORS restricted, error handlers JSON-only, all 336 routes have proper auth. All 6 open issues are pre-existing architectural items.
 - [x] **Security events audit** — 88 total events, 87 resolved, 1 unresolved (SEC-089: off-hours login from localhost — expected from cron jobs). PCI compliance maintained.
+
+### Run: 2026-06-29 14:52 UTC
+- [x] **Fix pos.db world-readable again (644 → 600)** — SQLite database had reverted to 644 permissions (world-readable). Previous fix from 2026-06-28 14:33 UTC was applied but pos.db was subsequently recreated with default permissions (likely by Database Architect worker). Fixed: chmod 600 pos.db. Flagged as recurring issue — Database Architect worker's SQLite creation path should enforce 600.
+- [x] **Full security audit — all controls intact** — Verified: login rate limiting (5/60s + 10min lockout, working), session security (secrets.token_hex(32), 8h active/24h idle), TOTP encryption (valid Fernet key at 0600), file permissions (all JSON 0600, pos.db now 0600), XSS (escHtml consistently used, 3 escape functions all DOM-based), payment data (only card_last4 stored in memory, never persisted — PCI DSS compliant), no eval/exec vectors, debug disabled (gunicorn -w 1), CORS restricted, error handlers JSON-only, multi-tenant platform endpoints properly secured (all require_super_admin()), security events all 95 resolved.
+- [x] **PCI compliance check** — Only `card_last4` and `card_type` stored temporarily in payment processing response. Orders store payment as text description ("cash $30.00, card $20.00"). No full card numbers, CVV, or track data persisted in orders.json, cleared_orders.json, or any other file.
+- [x] **Activity log sensitive data check** — No PINs or passwords logged. Only method names and status flags. Clean.
+- [x] **File permissions scan** — All 45+ JSON data files at 0600. pos.db fixed to 600. .totp_encryption_key at 0600. Backup files at 600. menu_backups directory verified.
+- [x] **Dependency check** — Flask 3.1.3, pyotp 2.9.0, qrcode 7.4.2, Werkzeug 3.1.8, eventlet 0.41.0. All current stable. No outdated packages.
+- [x] **Endpoint auth scan** — 336 routes scanned. All sensitive endpoints have proper auth. Multi-tenant platform endpoints use require_super_admin(). No unprotected sensitive endpoints found beyond intentionally public ones.
+- [x] **X-Forwarded-For spoofing fix verified intact** — get_client_ip() still correctly validates proxy source. Last verified working in commit b802794.
+- [x] **super_admin login rate limiting verified** — Still has 5-attempt/60s window with 10min lockout.
+- [x] **Waitlist auth fix verified intact** — All waitlist endpoints require pos_access or higher.
+- [x] **Gift card auth fix verified intact** — redeem and balance both require manage_items or owner role.
 
 ### Run: 2026-06-28 02:45 UTC
 - [x] **Full security audit — gift card endpoints had NO auth on redeem + balance** — `/api/gift-cards/redeem` accepted any code+amount with zero authentication (attacker could drain gift card balances). `/api/gift-cards/balance` exposed card codes, balances, customer names with zero auth. Both now require `manage_items` or owner role. Verified with curl.
