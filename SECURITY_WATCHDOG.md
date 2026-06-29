@@ -1,11 +1,11 @@
 # POS Security Watchdog
 
-| Last run: 2026-06-29T17:22 UTC
+| Last run: 2026-06-29T17:39 UTC
 ||||||||||| Total events tracked: 95 (SEC-002→SEC-096; 0 unresolved)
 ||||||||||| Active blocks: 0 IPs
 ||||||||||| Run result: All normal — silent.|
 
-## Current Run Findings (17:00–17:22 UTC, ~22 min window)
+## Current Run Findings (17:22–17:39 UTC, ~17 min window)
 
 ### 🔴 CRITICAL (0)
 None.
