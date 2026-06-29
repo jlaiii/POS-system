@@ -1,1 +1,30 @@
-{"max_staff_off_per_day": 3, "overtime_daily_threshold": 8, "overtime_weekly_threshold": 40, "late_grace_minutes": 5, "use_database": false, "offsite_backup": {"enabled": false, "host": "", "path": "", "ssh_key": ""}, "auto_approve_threshold_days": 14}
+{
+    "overtime_daily_threshold": 8,
+    "overtime_weekly_threshold": 40,
+    "late_grace_minutes": 5,
+    "max_staff_off_per_day": 3,
+    "auto_approve_threshold_days": 14,
+    "offsite_backup": {
+        "enabled": false,
+        "host": "",
+        "path": "",
+        "ssh_key": ""
+    },
+    "data_retention": {
+        "activity_log_days": 90,
+        "login_attempts_days": 30
+    },
+    "comp_config": {
+        "employee_meal_limit": 15.0,
+        "daily_comp_cap": 50.0
+    },
+    "course_delays": {
+        "appetizer": 0,
+        "main": 15,
+        "dessert": 20,
+        "side": 0
+    },
+    "stale_order_hours": 24,
+    "pending_order_alert_threshold": 10,
+    "discount_approval_threshold": 0
+}
