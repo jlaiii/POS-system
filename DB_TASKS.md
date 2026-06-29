@@ -1,6 +1,6 @@
 # POS Database Migration Tasks
-> Last run: 2026-06-28 14:xx UTC
-> Current phase: Phase 2 — Migration Scripts (15/24 complete)
+> Last run: 2026-06-29 02:xx UTC
+> Current phase: Phase 2 — Migration Scripts (16/24 complete)
 
 ## Phase 1: Schema Design
 - [x] Design all SQLite table schemas (users, shift_log, orders, items, inventory, etc.)
@@ -22,7 +22,7 @@
 - [x] Write migrate_tickets.py — tickets table migration (2 rows verified ✓)
 - [x] Write migrate_timesheet.py — timesheet table migration (1 row verified ✓)
 - [ ] Write migrate_timesheet_approvals.py — timesheet_approvals table migration
-- [ ] Write migrate_cash_drawer.py — cash_drawer table migration
+- [x] Write migrate_cash_drawer.py — cash_drawer table migration (10 sessions, 12 transactions verified ✓)
 - [ ] Write migrate_delivery_addresses.py — delivery_addresses table migration
 - [ ] Write migrate_scheduled_pricing.py — scheduled_pricing table migration
 - [ ] Write migrate_webhooks.py — webhooks table migration
@@ -78,6 +78,7 @@
 - [x] **migrate_known_ips.py** — Migrated 7 known IPs from known_ips.json to SQLite. Flattened per-user IP arrays into individual rows. Handled edge case (user 123456 with empty IPs array — skipped). Idempotency tested. Commit: bfab6d5
 - [x] **migrate_tickets.py** — Migrated 2 tickets from tickets.json to SQLite. Mapped subject→title, user_id→created_by, extra fields (user_name, type) stored in metadata JSON. Idempotency tested. Commit: ad249b2
 - [x] **migrate_combos.py** — Migrated 1 combo from combos.json to SQLite. Updated combos schema to match JSON structure (combo_id, combo_price, description, child_items, active, created_at, updated_at). Added schema migration entries for existing installs. Idempotency tested. Commit: a1fd348
+- [x] **migrate_cash_drawer.py** — Migrated 10 cash drawer sessions with 12 embedded transactions from cash_drawer.json to SQLite. Added 7 columns (opened_by_name, closed_by_name, variance_reason, total_cash_in, total_cash_out, status, notes) to cash_drawer schema with auto-migration for existing installs. Transactions filtered per-session and stored as JSON. Idempotency tested. Commit: 9cf8a13
 
 ## ROLLBACK PLAN (always keep current)
 How to revert to JSON mode if DB breaks:
@@ -105,7 +106,7 @@ How to revert to JSON mode if DB breaks:
 | tickets.json | tickets | array | 2 | ✓ |
 | timesheet.json | timesheet | array | 1 | ✓ |
 | timesheet_approvals.json | timesheet_approvals | array | 0 | |
-| cash_drawer.json | cash_drawer | object | 0 | |
+| cash_drawer.json | cash_drawer | object {sessions:[]} | 10 sessions + 12 txs | ✓ |
 | delivery_addresses.json | delivery_addresses | dict | 0 | |
 | scheduled_pricing.json | scheduled_pricing | array | 0 | |
 | webhooks.json | webhooks | dict | 0 | |
