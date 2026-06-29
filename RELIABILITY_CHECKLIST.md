@@ -1,16 +1,16 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-29T08:56 UTC
-> Total checks: 2327
-> Healthy: 2327 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-29T09:18 UTC
+> Total checks: 2332
+> Healthy: 2332 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 — 200 OK (gunicorn+gevent, master+worker) [verified 08:56]
-- [x] All JSON data files exist and are valid — 15/15 core files valid (users, items, orders, shift_log, inventory, combos, favorites, cleared_orders, loyalty_points, timesheet, timesheet_config, security_config, security_events, known_ips, login_attempts all parseable) [verified 08:56]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', 8 users, ['*'] permissions, role='owner') [verified 08:56]
-- [x] Git repo is clean — clean [verified 08:56]
+|- [x] Flask app responds on port 5000 — 200 OK (gunicorn+gevent, master+worker) [verified 09:18]
+|- [x] All JSON data files exist and are valid — 15/15 core files valid (users, items, orders, shift_log, inventory, combos, favorites, cleared_orders, loyalty_points, timesheet, timesheet_config, security_config, security_events, known_ips, login_attempts all parseable) [verified 09:18]
+|- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', 8 users, ['*'] permissions, role='owner') [verified 09:18]
+|- [x] Git repo is clean — clean [verified 09:18]
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/health — {"status":"ok"} (GET) [verified 08:56]
