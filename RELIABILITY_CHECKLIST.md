@@ -1,32 +1,32 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-29T02:37 UTC
-> Total checks: 2184
-> Healthy: 2184 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-29T03:02 UTC
+> Total checks: 2195
+> Healthy: 2195 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-|||| - [x] Flask app responds on port 5000 — 200 OK (gunicorn+gevent, master+worker) [verified 02:37]
-|||| - [x] All JSON data files exist and are valid — 15/15 core files valid (users, items, orders, shift_log, inventory, combos, favorites, cleared_orders, loyalty_points, timesheet, timesheet_config, security_config, security_events, login_attempts, known_ips all parseable) [verified 02:37]
-|||| - [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', 8 users, ['*'] permissions, role='owner') [verified 02:37]
-|||| - [x] Git repo is clean — committed old RELIABILITY_CHECKLIST.md changes (554c584), no uncommitted changes [verified 02:37]
+|||| - [x] Flask app responds on port 5000 — 200 OK (gunicorn+gevent, master+worker) [verified 03:02]
+|||| - [x] All JSON data files exist and are valid — 15/15 core files valid (users, items, orders, shift_log, inventory, combos, favorites, cleared_orders, loyalty_points, timesheet, timesheet_config, security_config, security_events, login_attempts, known_ips all parseable) [verified 03:02]
+|||| - [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', 8 users, ['*'] permissions, role='owner') [verified 03:02]
+|||| - [x] Git repo is clean — no uncommitted changes [verified 03:02]
 
 ## HOURLY (check if last check was >1h ago)
-- [x] /api/health — {"status":"ok"} (GET) [verified 02:37]
-- [x] Frontend loads — 200 OK, frontend returned HTML (1.38MB) [verified 02:37]
-- [x] /api/items returns items — 5 categories (Breakfast, Drinks, Foods, Salads, Snacks), 19 items via GET [verified 02:37]
-- [x] /api/login works — POST userId=1111, pin=1111, role=owner, message="Login successful" [verified 02:37]
+- [x] /api/health — {"status":"ok"} (GET) [verified 03:02]
+- [x] Frontend loads — 200 OK, frontend returned HTML (1.38MB) [verified 03:02]
+- [x] /api/items returns items — 5 categories (Breakfast, Drinks, Foods, Salads, Snacks), 19 items via GET [verified 03:02]
+- [x] /api/login works — POST userId=1111, pin=1111, role=owner, message="Login successful" [verified 03:02]
 - [x] /api/admin_stats returns stats — avg_sale=$10.91, backup_health=green, 152 backups [verified 02:37]
-- [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 200 OK, 0 shifts for recent date range [verified 02:37]
-- [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 02:37]
-- [x] index.html size check — 1375315 bytes (normal, ~1.38MB) [verified 02:37]
-- [x] Disk space check — 38% used (24G free, OK) [verified 02:37]
-- [x] Memory check — ~38% RAM used, 0 swap [verified 02:37]
-- [x] Clock-in/out: employee 1234 status checked — not clocked in [verified 02:37]
+- [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 200 OK, 1 shift for June 28 [verified 03:02]
+- [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 03:02]
+- [x] index.html size check — 1375315 bytes (normal, ~1.38MB) [verified 03:02]
+- [x] Disk space check — 38% used (24G free, OK) [verified 03:02]
+- [x] Memory check — ~38% RAM used, 0 swap [verified 03:02]
+- [x] Clock-in/out: employee 1234 status checked — not clocked in [verified 03:02]
 - [x] CSV export — /api/export/shifts_csv returns CSV with adminPin=1111, valid, CSV data OK [verified 02:37]
 - [x] Offline queue — /api/sync_orders exists, returns 400 'No orders provided' [verified 02:37]
-- [x] Backup integrity — latest backup (01:58, 50 JSON files all valid, DB backup 73KB) [verified 02:37]
+- [x] Backup integrity — latest backup (03:02, 50 JSON files all valid, DB backup 73KB, 23 tables, integrity=ok) [verified 03:02]
 
 ## EVERY 4 HOURS
 - [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 200, 2 pending orders [verified 02:37]
