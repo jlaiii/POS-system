@@ -1,32 +1,32 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-29T14:09 UTC
-> Total checks: 2409
-> Healthy: 2409 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-29T14:32 UTC
+> Total checks: 2428
+> Healthy: 2428 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 — 200 OK (gunicorn+gevent, master+worker) [verified 14:09]
-- [x] All JSON data files exist and are valid — 15/15 core files valid (users, items, orders, shift_log, inventory, combos, favorites, cleared_orders, loyalty_points, timesheet, timesheet_config, security_config, security_events, known_ips, login_attempts all parseable) [verified 14:09]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', 8 users, ['*'] permissions, role='owner') [verified 14:09]
-- [x] Git repo is clean — clean [verified 14:09]
+- [x] Flask app responds on port 5000 — 200 OK (gunicorn+gevent, master+worker) [verified 14:32]
+- [x] All JSON data files exist and are valid — 15/15 core files valid (users, items, orders, shift_log, inventory, combos, favorites, cleared_orders, loyalty_points, timesheet, timesheet_config, security_config, security_events, known_ips, login_attempts all parseable) [verified 14:32]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', 8 users, ['*'] permissions, role='owner') [verified 14:32]
+- [x] Git repo is clean — clean [verified 14:32]
 
 ## HOURLY (check if last check was >1h ago)
-- [x] /api/health — {"status":"ok"} (GET) [verified 13:24]
-- [x] Frontend loads — 200 OK, frontend returned HTML (1.38MB) [verified 13:24]
-- [x] /api/items returns items — 5 categories (Breakfast:3, Drinks:3, Foods:6, Salads:2, Snacks:5), 19 items via GET [verified 13:24]
-- [x] /api/login works — POST userId=1111, pin=1111, role=owner, message="Login successful" [verified 13:24]
-- [x] /api/admin_stats returns stats — avg_sale=$13.85, backup_health=green, 162 backups [verified 13:24]
-- [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 200 OK, 57 shifts [verified 13:24]
-- [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 14:09]
-- [x] index.html size check — 1375315 bytes (normal, ~1.38MB) [verified 14:09]
-- [x] Disk space check — 38% used (15G/38G, OK) [verified 14:09]
-- [x] Memory check — ~34% RAM used (1336/3915MB), 0 swap [verified 14:09]
-- [x] Clock-in/out: employee 1234 not clocked in, status endpoint OK [verified 13:24]
-- [x] CSV export — /api/export/shifts_csv returns CSV, valid (5297 bytes) [verified 13:24]
-- [x] Offline queue — /api/sync_orders exists, returns 400 'No orders provided' [verified 13:24]
-- [x] Backup integrity — latest backup (13:44 JSON+DB both valid: 50+ JSON files, 25 SQLite tables, integrity=ok) [verified 14:09]
+- [x] /api/health — {"status":"ok"} (GET) [verified 14:32]
+- [x] Frontend loads — 200 OK, frontend returned HTML (1.38MB) [verified 14:32]
+- [x] /api/items returns items — 5 categories (Breakfast:3, Drinks:3, Foods:6, Salads:2, Snacks:5), 19 items via GET [verified 14:32]
+- [x] /api/login works — POST userId=1111, pin=1111, role=owner, message="Login successful" [verified 14:32]
+- [x] /api/admin_stats returns stats — avg_sale=$13.85, backup_health=green, 163 backups [verified 14:32]
+- [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 200 OK, 59 shifts [verified 14:32]
+- [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 14:32]
+- [x] index.html size check — 1375315 bytes (normal, ~1.38MB) [verified 14:32]
+- [x] Disk space check — 38% used (15G/38G, OK) [verified 14:32]
+- [x] Memory check — ~35% RAM used (1353/3915MB), 0 swap [verified 14:32]
+- [x] Clock-in/out: employee 1234 not clocked in, status endpoint OK [verified 14:32]
+- [x] CSV export — /api/export/shifts_csv returns CSV, valid (5483 bytes) [verified 14:32]
+- [x] Offline queue — /api/sync_orders exists, returns 400 'No orders provided' [verified 14:32]
+- [x] Backup integrity — latest backup (13:44 JSON+DB both valid: 50 JSON files, 25 SQLite tables, integrity=ok) [verified 14:32]
 
 ## EVERY 4 HOURS
 - [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 200, 0 orders (working) [verified 13:24]
