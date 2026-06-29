@@ -1,16 +1,16 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-29T08:11 UTC
-> Total checks: 2300
-> Healthy: 2300 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-29T08:33 UTC
+> Total checks: 2312
+> Healthy: 2312 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 — 200 OK (gunicorn+gevent, master+worker) [verified 08:11]
-- [x] All JSON data files exist and are valid — 15/15 core files valid (users, items, orders, shift_log, inventory, combos, favorites, cleared_orders, loyalty_points, timesheet, timesheet_config, security_config, security_events, known_ips, login_attempts all parseable) [verified 08:11]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', 8 users, ['*'] permissions, role='owner') [verified 08:11]
-- [x] Git repo is clean — clean [verified 08:11]
+- [x] Flask app responds on port 5000 — 200 OK (gunicorn+gevent, master+worker) [verified 08:33]
+- [x] All JSON data files exist and are valid — 15/15 core files valid (users, items, orders, shift_log, inventory, combos, favorites, cleared_orders, loyalty_points, timesheet, timesheet_config, security_config, security_events, known_ips, login_attempts all parseable) [verified 08:33]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', 8 users, ['*'] permissions, role='owner') [verified 08:33]
+- [x] Git repo is clean — clean [verified 08:33]
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/health — {"status":"ok"} (GET) [verified 07:43]
@@ -42,8 +42,8 @@
 ## EVERY 12 HOURS
 - [x] Full app restart test: kill Flask → restart → verify all critical endpoints — Completed, gunicorn+gevent stable [verified 17:11]
 - [x] Concurrent write test: two rapid clock-ins (1234+5678, 61ms apart) → both succeeded persisted, then clocked out → verified in shift_log.json, cleaned up, no data loss [verified 19:34]
-- [x] Large payload test: submit order with 50 items — Order 124 (50 items) → 200 OK → refunded via /api/orders/refund [verified 19:34]
-- [x] Special chars test: user name with emoji, item name with quotes — No test artifacts in items/inventory, real menu items with special chars (Taco - Beef & Cheese, Bacon & Eggs) are normal [verified 00:06]
+- [x] Large payload test: submit order with 50 items — Order 137 (50 items) → 200 OK → refunded via /api/orders/refund [verified 08:33]
+- [x] Special chars test: user name with emoji, item name with quotes — Created \"Special\" 🎉 Item and deleted, no leftover debris [verified 08:33]
 - [x] app.py syntax check (python3 -m py_compile app.py) — SYNTAX OK [verified 07:43]
 - [x] index.html size check (alert if shrunk dramatically — possible corruption) — 1375315 bytes (normal) [verified 07:43]
 - [x] Disk space check: df -h, alert if >80% full — 38% used (OK) [verified 07:43]
