@@ -1,11 +1,11 @@
 # POS Security Watchdog
 
-|| Last run: 2026-06-29T14:05 UTC
+||| Last run: 2026-06-29T14:27 UTC
 ||||||| Total events tracked: 95 (SEC-002→SEC-096; 0 unresolved)
 ||||||| Active blocks: 0 IPs
 ||||||| Run result: All normal — silent.|
 
-## Current Run Findings (13:26–13:43 UTC, ~17 min window)
+## Current Run Findings (14:05–14:27 UTC, ~22 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -19,31 +19,31 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (13:26–13:43 UTC)
+### ℹ️ Activity Summary (14:05–14:27 UTC)
 
 **Server**: **Healthy** (HTTP 200 on port 5000, /api/health → {"status":"ok"}).
 
-**Activity**: 0 new activity_log entries since last run.
+**Activity**: 4 new activity_log entries since last run — Reliability Bot test clock-in/out at 14:10.
 
-**Pattern**: No activity detected in this window. All traffic stopped after 13:24 UTC (3 Owner logins which were already reported in the previous window). No security concern.
+**Pattern**: Reliability Bot performed test clock-in/out for Employee One (1234) and Employee Two (5678) from 127.0.0.1 (Python-urllib/3.11). Both shifts: 0.0 hours (instantaneous). Not suspicious — standard cron test behavior.
 
-**Login attempts in window**: 0 in login_attempts.json. 0 failed in last 5 min.
+**Login attempts in window**: 0 in login_attempts.json. No entries since 13:24 UTC. 0 failed in last 5 min.
 
-**Active shifts**: 0. No one clocked in.
+**Active shifts**: 0. No one clocked in (test shifts were instantaneous).
 
 **Orders**: 116 total. 0 new orders since last run.
 
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: 0 failed PIN logins in window. No alert.
 - **Account enumeration**: No failed attempts. No alert.
-- **Successful-after-failure**: No pattern in this window. Previous window's 2-fails-then-success pattern (12:45-12:49) was already reported.
-- **Off-hours activity**: Current time ~13:43 UTC (08:43 CT). Normal business hours.
+- **Successful-after-failure**: No new pattern. Last known pattern (12:45-12:49) already reported.
+- **Off-hours activity**: Current time ~14:27 UTC (09:27 CT). Normal business hours.
 - **Cross-IP targeting**: No activity detected.
 - **Known IPs**: No new IPs. All traffic from 127.0.0.1.
 - **Credential stuffing**: No pattern.
 - **2FA check**: No 2FA events.
 - **Account lockouts**: None.
-- **Last failed login**: 2026-06-29T12:49 UTC (~37 min ago), admin_login from 127.0.0.1 (previously reported).
+- **Last failed login**: 2026-06-29T02:43 UTC (~11.7h ago), user=9999 (Test2FA) from 127.0.0.1.
 
 ### 🔒 Security Config
 - No changes detected. All thresholds normal.
@@ -54,7 +54,6 @@ None.
 
 ### 💰 Financial Check / Order Anomaly Scan
 - 0 new orders since last run. No new anomalies.
-- Order 137 ($346.30 refunded at 08:34 UTC): Reason = "Reliability Bot large payload test" — test order, not suspicious.
 - Refund rate ~31% (36/116) remains above 20% threshold but all are test orders from cron workers — pre-existing, no action needed.
 
 ### 📂 File Integrity
@@ -74,12 +73,12 @@ None.
 - Admin 2FA gap remains: Manager (2222) and Manager Sarah (7788) lack 2FA despite `require_2fa_for_admins: true`. Owner (1111) is exempted via config. Pre-existing — no change. Security Sentinel handles code-level fixes.
 - Historical refund rate ~31% exceeds 20% threshold but all are test orders from cron workers — no action needed.
 
-| | System State | |
-|---|---|---|
-|| Current time | 2026-06-29T13:43 UTC — 08:43 CT (Monday, normal business hours) |
-|| Activity since last run | 0 entries — no activity in window |
-|| Login attempts (last ~17 min) | 0 — 0 failed |
-|| Successful logins (this window) | 0 |
+|| | System State | |
+|---|---|---|---|
+||| Current time | 2026-06-29T14:27 UTC — 09:27 CT (Monday, normal business hours) |
+||| Activity since last run | 4 entries — Reliability Bot test clock-in/out at 14:10 |
+||| Login attempts (last ~22 min) | 0 — 0 failed |
+||| Successful logins (this window) | 0 |
 | Blocked IPs | 0 |
 | Config changes | None |
 | File integrity | All JSON valid. All 8 accounts intact. Git: clean. |
