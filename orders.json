@@ -8228,7 +8228,7 @@
     },
     {
         "order_id": 128,
-        "status": "pending",
+        "status": "cancelled",
         "claimed_by": null,
         "claimed_at": null,
         "completed_at": null,
@@ -8276,7 +8276,10 @@
         "assigned_driver": null,
         "delivery_status": "pending",
         "manager_approval": null,
-        "order_number": 108
+        "order_number": 108,
+        "cancelled_reason": "Auto-cancelled (stale \u2014 no kitchen action)",
+        "cancelled_at": "2026-06-29T10:09:42.497106",
+        "cancelled_by": "system"
     },
     {
         "order_id": 129,
