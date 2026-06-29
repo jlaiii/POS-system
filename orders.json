@@ -8283,7 +8283,7 @@
     },
     {
         "order_id": 129,
-        "status": "pending",
+        "status": "cancelled",
         "claimed_by": null,
         "claimed_at": null,
         "completed_at": null,
@@ -8349,7 +8349,10 @@
         "manager_approval": null,
         "order_number": 109,
         "ready_for_pickup": true,
-        "ready_for_pickup_at": "2026-06-28T14:50:08.105509"
+        "ready_for_pickup_at": "2026-06-28T14:50:08.105509",
+        "cancelled_reason": "Auto-cancelled (stale \u2014 no kitchen action)",
+        "cancelled_at": "2026-06-29T15:03:22.484834",
+        "cancelled_by": "system"
     },
     {
         "order_id": 131,
