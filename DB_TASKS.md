@@ -1,6 +1,6 @@
 # POS Database Migration Tasks
-> Last run: 2026-06-29 02:xx UTC
-> Current phase: Phase 2 — Migration Scripts (16/24 complete)
+> Last run: 2026-06-29 15:xx UTC
+> Current phase: Phase 2 — Migration Scripts (17/24 complete)
 
 ## Phase 1: Schema Design
 - [x] Design all SQLite table schemas (users, shift_log, orders, items, inventory, etc.)
@@ -27,12 +27,12 @@
 - [ ] Write migrate_scheduled_pricing.py — scheduled_pricing table migration
 - [ ] Write migrate_webhooks.py — webhooks table migration
 - [x] Write migrate_tables.py — tables table migration (20 rows verified ✓)
-- [ ] Write migrate_table_ads.py — table_ads table migration
+- [x] Write migrate_table_ads.py — table_ads table migration (0 ads, handled empty case ✓)
 - [x] Write migrate_security_events.py — security_events table migration (24 rows verified ✓)
 - [x] Write migrate_known_ips.py — known_ips table migration
 - [x] Write migrate_login_attempts.py — login_attempts table migration (102 rows verified ✓)
 - [x] Write migrate_refunded_orders.py — refunded_orders table migration (17 rows verified ✓)
-- [ ] Write migrate_cleared_orders.py — cleared_orders table migration
+- [x] Write migrate_cleared_orders.py — cleared_orders table migration (handled by migrate_orders.py ✓)
 
 ## Phase 3: Endpoint Refactor (one endpoint at a time)
 - [ ] Create db.py helper module for SQLite queries
@@ -61,6 +61,7 @@
 - [ ] Add VACUUM + integrity_check automation
 
 ## COMPLETED (this session)
+- [x] **migrate_table_ads.py** — Migrated 0 table ads from table_ads.json to SQLite. Empty ads array handled gracefully. Global rotation_interval (10s) preserved. Commit: 00bc17c
 - [x] **migrate_tables.py** — Migrated 20 tables from tables.json to SQLite. All fields preserved (section, capacity, status, created_at, last_bussed_at). Added created_at + last_bussed_at columns to tables_config schema. Schema migration entries added for existing installs. Idempotency tested. Commit: c8047b7
 - [x] **migrate_timesheet.py** — Migrated 1 admin timesheet entry from timesheet.json to SQLite. Added 'source' column for idempotent re-runs. Schema: user_id, login_time, logout_time, duration_hours. Commit: c73b650
 - [x] **Initial setup** — Created DB_TASKS.md, db.py, migrations/, and first migration script (users)
