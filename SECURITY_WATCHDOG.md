@@ -1,11 +1,11 @@
 # POS Security Watchdog
 
-|| Last run: 2026-06-29T18:22 UTC
-|||||||||||| Total events tracked: 95 (SEC-002→SEC-096; 0 unresolved)
-|||||||||||| Active blocks: 0 IPs
-|||||||||||| Run result: All normal — silent.|
+||| Last run: 2026-06-29T18:39 UTC
+||||||||||||| Total events tracked: 95 (SEC-002→SEC-096; 0 unresolved)
+||||||||||||| Active blocks: 0 IPs
+||||||||||||| Run result: All normal — silent.|
 
-## Current Run Findings (18:02–18:22 UTC, ~20 min window)
+## Current Run Findings (18:22–18:39 UTC, ~17 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -23,7 +23,7 @@ None.
 
 **Server**: **Healthy** (HTTP 200 on port 5000, /api/health → {"status":"ok"}).
 
-**Activity**: **0 new activity_log entries** since last run. Complete quiet period.
+**Activity**: **0 new activity_log entries** since last run. Complete quiet period — still the same entries as last run.
 
 **Login attempts**: 0 new entries since last run (last entry was Owner success at 18:02:34 from 127.0.0.1). No failed attempts.
 
@@ -35,7 +35,7 @@ None.
 - **Brute force check**: 0 failed logins in last 5 min. 0 failed logins in this window. No alert.
 - **Account enumeration**: No failed attempts for non-existent PINs. No alert.
 - **Successful-after-failure**: No pattern. Last failed login was 3h+ ago (14:51:15 UTC, user=9999 Test2FA).
-- **Off-hours activity**: Current time ~18:22 UTC (13:22 CT). Normal business hours.
+- **Off-hours activity**: Current time ~18:39 UTC (13:39 CT). Normal business hours.
 - **Cross-IP targeting**: None detected.
 - **Credential stuffing**: No pattern.
 - **All other checks**: Clear.
@@ -52,7 +52,7 @@ None.
 ### 📂 File Integrity
 - All 49 JSON files parseable, valid.
 - All 8 accounts intact. Owner (1111) present, active.
-- Git status: **3 dirty files** (RELIABILITY_CHECKLIST.md, activity_log.json, login_attempts.json) — runtime data changes from cron activity.
+- Git status: **1 dirty file** (RELIABILITY_CHECKLIST.md) — runtime data from Reliability Bot (20min cycle, normal).
 - No suspicious new files in workdir.
 - Server: **Healthy**.
 
@@ -67,12 +67,12 @@ None.
 
 ||||||||| | System State | |
 |||||---|---|---|---|---|
-|||||||||||| Current time | 2026-06-29T18:22 UTC — 13:22 CT (Monday, normal business hours) |
-|||||||||||| Activity since last run | 0 new entries |
-||||||||||| Login attempts (this window) | 0 |
-||||||||||| Successful logins (this window) | 0 |
+||||||||||||| Current time | 2026-06-29T18:39 UTC — 13:39 CT (Monday, normal business hours) |
+||||||||||||| Activity since last run | 0 new entries |
+|||||||||||| Login attempts (this window) | 0 |
+|||||||||||| Successful logins (this window) | 0 |
 |||||||||| Blocked IPs | 0 |
 |||||||||| Config changes | None |
-|||||||||| File integrity | All 49 JSON valid. All 8 accounts intact. Git: 3 dirty files (runtime data). |
+||||||||||| File integrity | All 49 JSON valid. All 8 accounts intact. Git: 1 dirty file (RELIABILITY_CHECKLIST.md). |
 |||||||||| Unresolved events | 0 of 95 |
 |||||||||| Server | **Healthy** |
