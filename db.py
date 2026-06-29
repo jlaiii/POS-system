@@ -389,6 +389,13 @@ def init_db():
             variance REAL DEFAULT 0,
             opened_by TEXT,
             closed_by TEXT,
+            opened_by_name TEXT DEFAULT '',
+            closed_by_name TEXT DEFAULT '',
+            variance_reason TEXT DEFAULT '',
+            total_cash_in REAL DEFAULT 0,
+            total_cash_out REAL DEFAULT 0,
+            status TEXT DEFAULT 'open',
+            notes TEXT DEFAULT '',
             transactions TEXT DEFAULT '[]'
         )
     """)
@@ -579,6 +586,15 @@ def _migrate_schemas():
         # tables_config: added created_at, last_bussed_at for migration
         ('tables_config', 'created_at', 'TEXT'),
         ('tables_config', 'last_bussed_at', 'TEXT'),
+        # cash_drawer: added opened_by_name, closed_by_name, variance_reason,
+        # total_cash_in, total_cash_out, status, notes for cash drawer migration
+        ('cash_drawer', 'opened_by_name', 'TEXT DEFAULT ""'),
+        ('cash_drawer', 'closed_by_name', 'TEXT DEFAULT ""'),
+        ('cash_drawer', 'variance_reason', 'TEXT DEFAULT ""'),
+        ('cash_drawer', 'total_cash_in', 'REAL DEFAULT 0'),
+        ('cash_drawer', 'total_cash_out', 'REAL DEFAULT 0'),
+        ('cash_drawer', 'status', 'TEXT DEFAULT "open"'),
+        ('cash_drawer', 'notes', 'TEXT DEFAULT ""'),
     ]
 
     for table, column, col_def in migrations:
