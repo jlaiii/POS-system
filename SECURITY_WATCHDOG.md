@@ -1,11 +1,11 @@
 # POS Security Watchdog
 
-||||||| Last run: 2026-06-29T16:09 UTC
+||||||| Last run: 2026-06-29T16:26 UTC
 |||||||||| Total events tracked: 95 (SEC-002→SEC-096; 0 unresolved)
 |||||||||| Active blocks: 0 IPs
 |||||||||| Run result: All normal — silent.|
 
-## Current Run Findings (15:47–16:09 UTC, ~22 min window)
+## Current Run Findings (16:09–16:26 UTC, ~17 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -19,15 +19,15 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (15:14–15:47 UTC)
+### ℹ️ Activity Summary (16:09–16:26 UTC)
 
 **Server**: **Healthy** (HTTP 200 on port 5000, /api/health → {"status":"ok"}).
 
-**Activity**: **0 new activity_log entries** since last run. Zero activity detected in this window.
+**Activity**: **1 new activity_log entry** since last run.
 
-**Pattern**: Extended inactivity continues. No logins, no admin actions, no attempted connections. System idle since 15:11 UTC.
+**Login event at 16:11 UTC**: Owner (1111) logged in successfully from 127.0.0.1 via curl. Normal business hours (11:11 CT). Single event, no failures preceding it. No alert.
 
-**Login attempts in window**: 0 entries in login_attempts.json.
+**Login attempts in window**: 1 entry in login_attempts.json (successful login by Owner).
 
 **Active shifts**: 0. No one clocked in.
 
@@ -36,14 +36,14 @@ None.
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: 0 failed logins in last 5 min. 0 failed logins total this window. No alert.
 - **Account enumeration**: No failed attempts for non-existent PINs. No alert.
-- **Successful-after-failure**: No activity. No alert.
-- **Off-hours activity**: Current time ~16:09 UTC (11:09 CT). Normal business hours.
+- **Successful-after-failure**: Owner login at 16:11 had no preceding failures. No alert.
+- **Off-hours activity**: Current time ~16:26 UTC (11:26 CT). Normal business hours.
 - **Cross-IP targeting**: No activity detected.
 - **Known IPs**: No new IPs.
 - **Credential stuffing**: No pattern.
 - **2FA check**: No 2FA events.
 - **Account lockouts**: None.
-- **Last failed login**: 2026-06-29T14:51:15 UTC (~78 min ago), user=9999 (Test2FA) from 127.0.0.1. No change.
+- **Last failed login**: 2026-06-29T14:51:15 UTC (~95 min ago), user=9999 (Test2FA) from 127.0.0.1. No change.
 
 ### 🔒 Security Config
 - No changes detected. All thresholds normal.
@@ -67,7 +67,6 @@ None.
 ### ✅ Actions Taken
 - 0 blocked IPs, 0 alerts fired.
 - Updated SECURITY_WATCHDOG.md timestamp and findings.
-- Git: committed dirty SECURITY_WATCHDOG.md from previous run.
 
 ## Previous Run Findings (carried forward)
 - Admin 2FA gap remains: Manager (2222) and Manager Sarah (7788) lack 2FA despite `require_2fa_for_admins: true`. Owner (1111) is exempted via config. Pre-existing — no change. Security Sentinel handles code-level fixes.
@@ -75,10 +74,10 @@ None.
 
 |||| | System State | |
 |---|---|---|---|
-|||||| Current time | 2026-06-29T16:09 UTC — 11:09 CT (Monday, normal business hours) |
-||||||| Activity since last run | 0 entries — system idle |
-||||||| Login attempts (last ~22 min) | 0 |
-|||||| Successful logins (this window) | 0 |
+||||||| Current time | 2026-06-29T16:26 UTC — 11:26 CT (Monday, normal business hours) |
+|||||||| Activity since last run | 1 entry — Owner login at 16:11 UTC |
+||||||| Login attempts (last ~17 min) | 1 (1 success, 0 failed) |
+|||||| Successful logins (this window) | 1 (Owner, 127.0.0.1) |
 ||| Blocked IPs | 0 |
 ||| Config changes | None |
 ||| File integrity | All JSON valid. All 8 accounts intact. Git: clean. |
