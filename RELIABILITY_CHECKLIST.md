@@ -1,32 +1,32 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-29T05:28 UTC
-> Total checks: 2237
-> Healthy: 2237 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-29T05:56 UTC
+> Total checks: 2246
+> Healthy: 2246 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 — 200 OK (gunicorn+gevent, master+worker) [verified 05:28]
-- [x] All JSON data files exist and are valid — 15/15 core files valid (users, items, orders, shift_log, inventory, combos, favorites, cleared_orders, loyalty_points, timesheet, timesheet_config, security_config, security_events, login_attempts, known_ips all parseable) [verified 05:28]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', 8 users, ['*'] permissions, role='owner') [verified 05:28]
-- [x] Git repo is clean — committed dirty data files from Security Watchdog (90ee867) [verified 05:28]
+- [x] Flask app responds on port 5000 — 200 OK (gunicorn+gevent, master+worker) [verified 05:56]
+- [x] All JSON data files exist and are valid — 15/15 core files valid (users, items, orders, shift_log, inventory, combos, favorites, cleared_orders, loyalty_points, timesheet, timesheet_config, security_config, security_events, login_attempts, known_ips all parseable) [verified 05:56]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', 8 users, ['*'] permissions, role='owner') [verified 05:56]
+- [x] Git repo is clean — committed dirty SECURITY_WATCHDOG.md (0a39b58) [verified 05:56]
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/health — {"status":"ok"} (GET) [verified 05:28]
 - [x] Frontend loads — 200 OK, frontend returned HTML (1.38MB) [verified 05:28]
 - [x] /api/items returns items — 5 categories (Breakfast, Drinks, Foods, Salads, Snacks), 19 items via GET [verified 05:28]
 - [x] /api/login works — POST userId=1111, pin=1111, role=owner, message="Login successful" [verified 05:28]
-||- [x] /api/admin_stats returns stats — avg_sale=$13.03, backup_health=green, 155 backups [verified 05:28]
-||- [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 200 OK, 57 shifts [verified 05:28]
-||- [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 05:28]
-||- [x] index.html size check — 1375315 bytes (normal, ~1.38MB) [verified 05:28]
-||- [x] Disk space check — 38% used (24G free, OK) [verified 05:28]
-||- [x] Memory check — ~38% RAM used, 0 swap [verified 05:28]
-||- [x] Clock-in/out: employee 1234 in/out cycle OK [verified 05:28]
-||- [x] CSV export — /api/export/shifts_csv returns CSV (5297 bytes), valid, CSV data OK [verified 05:28]
-||- [x] Offline queue — /api/sync_orders exists, returns 400 'No orders provided' [verified 05:28]
-||- [x] Backup integrity — latest backup (05:02, 50 JSON files all valid, users=8/items=5cats/orders=114/shifts=56, DB SQLite header OK) [verified 05:28]
+|- [x] /api/admin_stats returns stats — avg_sale=$13.03, backup_health=green, 155 backups [verified 05:28]
+|- [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 200 OK, 57 shifts [verified 05:28]
+|- [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 05:56]
+|- [x] index.html size check — 1375315 bytes (normal, ~1.38MB) [verified 05:56]
+|- [x] Disk space check — 38% used (24G free, OK) [verified 05:56]
+|- [x] Memory check — ~38% RAM used, 0 swap [verified 05:56]
+|- [x] Clock-in/out: employee 1234 in/out cycle OK [verified 05:28]
+|- [x] CSV export — /api/export/shifts_csv returns CSV (5297 bytes), valid, CSV data OK [verified 05:28]
+|- [x] Offline queue — /api/sync_orders exists, returns 400 'No orders provided' [verified 05:28]
+|- [x] Backup integrity — latest backup (05:02, 49/49 JSON files valid, users=8/items=5cats/orders=114/shifts=56, DB integrity=ok, 25 tables) [verified 05:56]
 
 ## EVERY 4 HOURS
 - [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 200, 0 pending orders [verified 03:47]
