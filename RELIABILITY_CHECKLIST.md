@@ -1,32 +1,32 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-29T09:40 UTC
-> Total checks: 2338
-> Healthy: 2337 | Broken: 0 | Fixed this cycle: 1
+> Last full cycle: 2026-06-29T10:09 UTC
+> Total checks: 2350
+> Healthy: 2350 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 — 200 OK (gunicorn+gevent, master+worker) [verified 09:40]
-- [x] All JSON data files exist and are valid — 15/15 core files valid (users, items, orders, shift_log, inventory, combos, favorites, cleared_orders, loyalty_points, timesheet, timesheet_config, security_config, security_events, known_ips, login_attempts all parseable) [verified 09:40]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', 8 users, ['*'] permissions, role='owner') [verified 09:40]
-- [x] Git repo is clean — clean [verified 09:40]
+- [x] Flask app responds on port 5000 — 200 OK (gunicorn+gevent, master+worker, PIDs 2917296/2917297) [verified 10:09]
+- [x] All JSON data files exist and are valid — 15/15 core files valid (users, items, orders, shift_log, inventory, combos, favorites, cleared_orders, loyalty_points, timesheet, timesheet_config, security_config, security_events, known_ips, login_attempts all parseable) [verified 10:09]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', 8 users, ['*'] permissions, role='owner') [verified 10:09]
+- [x] Git repo is clean — clean (committed dirty SECURITY_WATCHDOG.md at 87889e4) [verified 10:09]
 
 ## HOURLY (check if last check was >1h ago)
-- [x] /api/health — {"status":"ok"} (GET) [verified 08:56]
-- [x] Frontend loads — 200 OK, frontend returned HTML (1.38MB) [verified 08:56]
+- [x] /api/health — {"status":"ok"} (GET) [verified 10:09]
+- [x] Frontend loads — 200 OK, frontend returned HTML (1.38MB) [verified 10:09]
 - [x] /api/items returns items — 5 categories (Breakfast, Drinks, Foods, Salads, Snacks), 19 items via GET [verified 08:56]
-- [x] /api/login works — POST userId=1111, pin=1111, role=owner, message="Login successful" [verified 08:56]
-- [x] /api/admin_stats returns stats — avg_sale=$12.67, backup_health=green, 158 backups [verified 08:56]
+- [x] /api/login works — POST userId=1111, pin=1111, role=owner, message="Login successful" [verified 10:09]
+- [x] /api/admin_stats returns stats — avg_sale=$12.67, backup_health=green, 159 backups [verified 10:09]
 - [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 200 OK, 57 shifts [verified 08:56]
-- [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 08:56]
-- [x] index.html size check — 1375315 bytes (normal, ~1.38MB) [verified 08:56]
-- [x] Disk space check — 38% used (15G/38G, OK) [verified 08:56]
-- [x] Memory check — ~38% RAM used (1482/3915MB), 0 swap [verified 08:56]
-- [x] Clock-in/out: employee 1234 not clocked in, status endpoint OK [verified 08:56]
-- [x] CSV export — /api/export/shifts_csv returns CSV, valid, CSV data OK [verified 08:56]
-- [x] Offline queue — /api/sync_orders exists, returns 400 'No orders provided' [verified 08:56]
-- [x] Backup integrity — latest backup (08:22, JSON 78.6KB 50 files, DB 76KB valid) [verified 08:56]
+- [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 10:09]
+- [x] index.html size check — 1375315 bytes (normal, ~1.38MB) [verified 10:09]
+- [x] Disk space check — 38% used (15G/38G, OK) [verified 10:09]
+- [x] Memory check — ~38% RAM used (1482/3915MB), 0 swap [verified 10:09]
+- [x] Clock-in/out: employee 1234 not clocked in, status endpoint OK [verified 10:09]
+- [x] CSV export — /api/export/shifts_csv returns CSV, valid (5297 bytes) [verified 10:09]
+- [x] Offline queue — /api/sync_orders exists, returns 400 'No orders provided' [verified 10:09]
+- [x] Backup integrity — latest backup (09:22, JSON 79KB 50 files, gzip valid) [verified 10:09]
 
 ## EVERY 4 HOURS
 - [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 200, 5 pending orders [verified 08:56]
@@ -51,11 +51,11 @@
 - [x] Backup integrity: verify latest backup is valid and not empty — 07:22 JSON backup (76.7KB, 50 files valid) [verified 07:43]
 
 ## DISCOVERED (failures you've seen before — check every 2h)
-|||- [x] **Flask process dying between runs** — Gunicorn+gevent via scripts/run_flask.sh, stable. No issues. [verified 07:43]
-- [x] **Dual Flask instances on port 5000** — Single gunicorn master+worker (PIDs 2917296/2917297). No recurrence. [verified 07:43]
-- [x] **items.json + users.json simultaneous data corruption** — Items (5 categories, 19 items) and users (8 users) intact. [verified 07:43]
-- [x] **Owner username changed to 'testuser' (3rd data corruption incident)** — Owner PIN 1111 name='Owner', username='jayadmin'. No corruption. [verified 07:43]
-- [x] **items.json schema changed to category-keyed format** — Items stored as {Foods:[...], Drinks:[...], ...}. Used by /api/items (GET). [verified 07:43]
+|- [x] **Flask process dying between runs** — Gunicorn+gevent via scripts/run_flask.sh, stable. PIDs 2917296/2917297, running since 03:00 UTC. No issues. [verified 10:09]
+|- [x] **Dual Flask instances on port 5000** — Single gunicorn master+worker (PIDs 2917296/2917297). No recurrence. [verified 10:09]
+|- [x] **items.json + users.json simultaneous data corruption** — Items (5 categories, 19 items) and users (8 users) intact. [verified 10:09]
+|- [x] **Owner username changed to 'testuser' (3rd data corruption incident)** — Owner PIN 1111 name='Owner', username='jayadmin'. No corruption. [verified 10:09]
+|- [x] **items.json schema changed to category-keyed format** — Items stored as {Foods:[...], Drinks:[...], ...}. Used by /api/items (GET). [verified 10:09]
 
 ## FIXES APPLIED
 | [2026-06-29 09:40] **Cleaned up leftover test debris from inventory** — Found `Test "Special" 🎉 Item` (0 stock) leftover from previous special chars test in inventory.json. Removed and committed (a036bc9). Also verified: Flask 200, 15/15 JSON valid, owner OK, git clean, webhook config OK, cash drawer 10 sessions, app.py syntax OK, index.html 1,375,315B normal, items GET 5 cats/19 items, clock status OK, shift data intact (57 shifts, 8 late, 4 breaks, 5 edits). No downtime.
