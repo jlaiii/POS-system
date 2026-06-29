@@ -175,6 +175,24 @@
             "variance_reason": "",
             "total_cash_in": 50.0,
             "total_cash_out": 20.0
+        },
+        {
+            "id": "899fb4f13ae5df2c",
+            "opened_at": "2026-06-29T21:37:49.772173",
+            "opened_by": "1111",
+            "opened_by_name": "Owner",
+            "opening_balance": 100.0,
+            "closed_at": "2026-06-29T21:37:57.288542",
+            "closed_by": "1111",
+            "closed_by_name": "Owner",
+            "closing_balance": 130.0,
+            "expected_balance": 130.0,
+            "difference": 0.0,
+            "notes": "Reliability Bot test close",
+            "status": "closed",
+            "variance_reason": "",
+            "total_cash_in": 50.0,
+            "total_cash_out": 20.0
         }
     ],
     "transactions": [
@@ -306,6 +324,28 @@
             "amount": 20.0,
             "reason": "Test withdrawal",
             "created_at": "2026-06-24T09:41:13.291727",
+            "created_by": "1111",
+            "created_by_name": "Owner",
+            "related_order_id": null
+        },
+        {
+            "id": "3926f12faac3c189",
+            "session_id": "899fb4f13ae5df2c",
+            "type": "cash_in",
+            "amount": 50.0,
+            "reason": "Reliability Bot test cash in",
+            "created_at": "2026-06-29T21:37:52.309373",
+            "created_by": "1111",
+            "created_by_name": "Owner",
+            "related_order_id": null
+        },
+        {
+            "id": "865dc4da093a7995",
+            "session_id": "899fb4f13ae5df2c",
+            "type": "cash_out",
+            "amount": 20.0,
+            "reason": "Reliability Bot test cash out",
+            "created_at": "2026-06-29T21:37:54.786481",
             "created_by": "1111",
             "created_by_name": "Owner",
             "related_order_id": null

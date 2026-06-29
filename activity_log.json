@@ -20907,5 +20907,143 @@
             "deleted_user_name": "Reliability Test User",
             "deleted_user_role": "user"
         }
+    },
+    {
+        "timestamp": "2026-06-29T21:37:30.913181",
+        "type": "submit_order",
+        "user_id": "1111",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 139,
+            "subtotal": 3.0,
+            "tax_amount": 0.25,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 3.25,
+            "payment_method": "cash",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-29T21:37:30.942645",
+        "type": "loyalty_earn",
+        "user_id": "1111",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "customer_phone": "RELIABILITY-TEST-BOT-001",
+            "points_earned": 3,
+            "order_id": 139,
+            "birthday_bonus": 0,
+            "anniversary_bonus": 0,
+            "milestone_bonus": 0,
+            "milestone_name": ""
+        }
+    },
+    {
+        "timestamp": "2026-06-29T21:37:35.371424",
+        "type": "refund_order",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "order_id": 139,
+            "reason": "Reliability Bot loyalty test cleanup",
+            "refunded_by_name": "Owner",
+            "order_total": 3.25,
+            "inventory_restored": [
+                "Coke x1"
+            ]
+        }
+    },
+    {
+        "timestamp": "2026-06-29T21:37:49.774957",
+        "type": "cash_drawer_open",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "session_id": "899fb4f13ae5df2c",
+            "opening_balance": 100.0
+        }
+    },
+    {
+        "timestamp": "2026-06-29T21:37:52.309951",
+        "type": "cash_drawer_transaction",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "session_id": "899fb4f13ae5df2c",
+            "type": "cash_in",
+            "amount": 50.0,
+            "reason": "Reliability Bot test cash in"
+        }
+    },
+    {
+        "timestamp": "2026-06-29T21:37:54.787075",
+        "type": "cash_drawer_transaction",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "session_id": "899fb4f13ae5df2c",
+            "type": "cash_out",
+            "amount": 20.0,
+            "reason": "Reliability Bot test cash out"
+        }
+    },
+    {
+        "timestamp": "2026-06-29T21:37:57.289333",
+        "type": "cash_drawer_close",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "session_id": "899fb4f13ae5df2c",
+            "opening_balance": 100.0,
+            "expected_balance": 130.0,
+            "closing_balance": 130.0,
+            "difference": 0.0,
+            "variance_reason": ""
+        }
+    },
+    {
+        "timestamp": "2026-06-29T21:38:14.756390",
+        "type": "clock_in",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee One",
+            "clock_in_time": "2026-06-29T21:38:14.756144",
+            "late_minutes": 758,
+            "scheduled_start": "09:00"
+        }
+    },
+    {
+        "timestamp": "2026-06-29T21:38:17.559690",
+        "type": "clock_out",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee One",
+            "clock_in_time": "2026-06-29T21:38:14.756144",
+            "clock_out_time": "2026-06-29T21:38:17.557085",
+            "duration_hours": 0.0
+        }
     }
 ]

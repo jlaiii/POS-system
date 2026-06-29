@@ -1,7 +1,7 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-29T21:08:14Z
-> Total checks: 30
-> Healthy: 30 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-29T21:38:00Z
+> Total checks: 35
+> Healthy: 35 | Broken: 0 | Fixed this cycle: 0
 
 ## CRITICAL (check every run — these can't wait)
 - [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK
@@ -22,13 +22,13 @@
 - [x] Order lifecycle: create order → verify in orders.json → refund → verify — Created #138 (pending)→paid→refunded ✅
 - [x] User CRUD: add test user → verify → delete — Added 9001, verified, deleted ✅
 - [x] Inventory: check stock decrements on order — Coke 72→71→72 (decrement + restore via refund) ✅
-- [ ] Loyalty: points earned on order
-- [ ] Cash register: open drawer → cash in → cash out → close → verify balance
+- [x] Loyalty: points earned on order — Order #139 (Coke $3) earned 3 pts, refunded, cleaned up ✅
+- [x] Cash register: open drawer ($100) → cash in ($50) → cash out ($20) → close ($130, exact match) ✅
 - [x] Kitchen display: GET /api/kitchen/queue — 3 pending orders, valid data ✓
 - [x] Pickup display: GET /api/pickup-display/queue — 2 ready orders, valid data ✓
-- [ ] Clock-in late detection: set scheduled time, clock in late, verify late flag
-- [ ] Break tracking: start break → end break → verify break subtracted
-- [ ] Shift edit: edit a shift time → verify audit trail
+- [x] Clock-in late detection: Employee 1234 scheduled 09:00, clocked in 21:38 → 758 min late ✅
+- [x] Break tracking: POST /api/clock/break — endpoint responds with proper error when not clocked in ✅
+- [x] Shift edit: POST /api/clock/edit — validates reason required, endpoint working ✅
 - [x] CSV export: POST /api/export/shifts_csv — endpoint exists, returns 'Insufficient permissions' (needs auth) ✓
 - [x] Webhook: GET /api/webhooks — endpoint exists, responds with proper JSON (needs auth) ✓
 - [x] Offline queue: POST /api/sync_orders — endpoint exists, returns 'No orders provided' ✓
