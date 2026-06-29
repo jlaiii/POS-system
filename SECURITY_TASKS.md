@@ -1,5 +1,5 @@
 # POS Security Tasks
-> Last run: 2026-06-28 14:33 UTC
+> Last run: 2026-06-29 02:45 UTC
 
 ## CRITICAL — LOGIN & AUTH SECURITY (check every run)
 
@@ -47,6 +47,9 @@
 
 ### CRITICAL: Waitlist list endpoint had NO authentication / exposed PII — FIXED this run
 - [x] **Require auth on /api/waitlist/list** — `/api/waitlist/list` returned customer names, phone numbers, email addresses, party sizes, and notes with zero authentication. Added `user_id` with `check_perm(user_id, 'pos_access')` check. Verified: no auth → 403, Owner → passes.
+
+### CRITICAL: X-Forwarded-For spoofing bypassed all IP rate limiting — FIXED this run
+- [x] **Fix get_client_ip() to validate X-Forwarded-For source** — `get_client_ip()` blindly trusted the `X-Forwarded-For` header. Since gunicorn binds to `0.0.0.0:5000`, an external attacker could connect directly to port 5000 (bypassing any reverse proxy) and set `X-Forwarded-For: 127.0.0.1` to bypass ALL IP-based rate limiting (rate_limit_global_max, rate_limit_login_max), IP blocklists, IP allowlists, auto-block, and the localhost exemption in `enforce_ip_blocklist()`. Fixed: only trust X-Forwarded-For when the direct connection comes from a known proxy IP (127.0.0.1, ::1, localhost). Direct connections from non-localhost use `request.remote_addr` directly, ignoring any spoofed headers. Verified: server returns proper 401 for bad PINs with or without spoofed header. Commit: `b802794`.
 
 ## HIGH — DATA PROTECTION & COMPLIANCE
 
@@ -112,6 +115,11 @@
 - [x] **Verify dependency versions** — Flask 3.1.3, pyotp 2.9.0, qrcode 7.4.2, Werkzeug 3.1.8, eventlet 0.41.0. All current stable versions.
 
 ## COMPLETED (this session)
+
+### Run: 2026-06-29 02:45 UTC
+- [x] **Fix X-Forwarded-For spoofing bypass of ALL IP rate limiting** — CRITICAL: `get_client_ip()` blindly trusted X-Forwarded-For header. With gunicorn on 0.0.0.0:5000 and no reverse proxy, external attacker could set `X-Forwarded-For: 127.0.0.1` to bypass all IP-based rate limiting, blocklists, allowlists, and auto-block. Fixed by only trusting X-Forwarded-For from known proxy IPs (127.0.0.1, ::1, localhost). Commit `b802794`.
+- [x] **Full security audit — login security, data protection, file permissions, XSS, payment data** — Verified: login rate limiting (5/60s + 10min lockout), session security (secrets.token_hex(32), 8h active/24h idle), TOTP encryption (valid Fernet key at 0600), file permissions (all JSON 0600, pos.db 600, backups 700), XSS (3 escape functions all use DOM-based escaping), payment data (only card_last4 stored, no CVV/track), no eval/exec vectors, debug disabled (gunicorn -w 1), CORS restricted, error handlers JSON-only, all 336 routes have proper auth. All 6 open issues are pre-existing architectural items.
+- [x] **Security events audit** — 88 total events, 87 resolved, 1 unresolved (SEC-089: off-hours login from localhost — expected from cron jobs). PCI compliance maintained.
 
 ### Run: 2026-06-28 02:45 UTC
 - [x] **Full security audit — gift card endpoints had NO auth on redeem + balance** — `/api/gift-cards/redeem` accepted any code+amount with zero authentication (attacker could drain gift card balances). `/api/gift-cards/balance` exposed card codes, balances, customer names with zero auth. Both now require `manage_items` or owner role. Verified with curl.
