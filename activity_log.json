@@ -19737,5 +19737,46 @@
             "user_name": "Owner",
             "ip": "127.0.0.1"
         }
+    },
+    {
+        "timestamp": "2026-06-29T05:06:04.886411",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-29T05:06:06.191113",
+        "type": "clock_in",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee One",
+            "clock_in_time": "2026-06-29T05:06:06.190920",
+            "late_minutes": null,
+            "scheduled_start": "09:00"
+        }
+    },
+    {
+        "timestamp": "2026-06-29T05:06:07.221449",
+        "type": "clock_out",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee One",
+            "clock_in_time": "2026-06-29T05:06:06.190920",
+            "clock_out_time": "2026-06-29T05:06:07.218868",
+            "duration_hours": 0.0
+        }
     }
 ]

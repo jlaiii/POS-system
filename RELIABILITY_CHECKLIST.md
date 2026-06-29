@@ -1,31 +1,31 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-29T04:42 UTC
-> Total checks: 2230
-> Healthy: 2230 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-29T05:05 UTC
+> Total checks: 2235
+> Healthy: 2235 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-|||||||| - [x] Flask app responds on port 5000 — 200 OK (gunicorn+gevent, master+worker) [verified 04:42]
-|||||||| - [x] All JSON data files exist and are valid — 15/15 core files valid (users, items, orders, shift_log, inventory, combos, favorites, cleared_orders, loyalty_points, timesheet, timesheet_config, security_config, security_events, login_attempts, known_ips all parseable) [verified 04:42]
-|||||||| - [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', 8 users, ['*'] permissions, role='owner') [verified 04:42]
-|||||||| - [x] Git repo is clean — no uncommitted changes [verified 04:42]
+- [x] Flask app responds on port 5000 — 200 OK (gunicorn+gevent, master+worker) [verified 05:05]
+- [x] All JSON data files exist and are valid — 15/15 core files valid (users, items, orders, shift_log, inventory, combos, favorites, cleared_orders, loyalty_points, timesheet, timesheet_config, security_config, security_events, login_attempts, known_ips all parseable) [verified 05:05]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', 8 users, ['*'] permissions, role='owner') [verified 05:05]
+- [x] Git repo is clean — no uncommitted changes [verified 05:05]
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/health — {"status":"ok"} (GET) [verified 04:20]
 - [x] Frontend loads — 200 OK, frontend returned HTML (1.38MB) [verified 04:20]
 - [x] /api/items returns items — 5 categories (Breakfast, Drinks, Foods, Salads, Snacks), 19 items via GET [verified 04:20]
 - [x] /api/login works — POST userId=1111, pin=1111, role=owner, message="Login successful" [verified 04:20]
-||- [x] /api/admin_stats returns stats — avg_sale=$13.03, backup_health=green, 153 backups [verified 03:47]
+|||- [x] /api/admin_stats returns stats — avg_sale=$13.03, backup_health=green, 155 backups [verified 05:05]
 |||- [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 200 OK, 56 shifts [verified 04:20]
 |||- [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 04:20]
 |||- [x] index.html size check — 1375315 bytes (normal, ~1.38MB) [verified 04:20]
 |||- [x] Disk space check — 38% used (24G free, OK) [verified 04:20]
 |||- [x] Memory check — ~38% RAM used, 0 swap [verified 04:20]
-||- [x] Clock-in/out: employee 1234 status checked — not clocked in [verified 03:47]
-|- [x] CSV export — /api/export/shifts_csv returns CSV with adminPin=1111, valid, CSV data OK [verified 03:47]
-|- [x] Offline queue — /api/sync_orders exists, returns 400 'No orders provided' [verified 03:47]
+|||- [x] Clock-in/out: employee 1234 in/out cycle OK [verified 05:05]
+||- [x] CSV export — /api/export/shifts_csv returns CSV (5297 bytes), valid, CSV data OK [verified 05:05]
+|||- [x] Offline queue — /api/sync_orders exists, returns 400 'No orders provided' [verified 05:05]
 ||- [x] Backup integrity — latest backup (04:02, 50 JSON files all valid, users=8/items=5cats/orders=114/shifts=56, DB SQLite header OK) [verified 04:20]
 
 ## EVERY 4 HOURS
@@ -51,7 +51,7 @@
 - [x] Backup integrity: verify latest backup is valid and not empty — 14:55 JSON backup (74KB, 50 files valid) [verified 15:05]
 
 ## DISCOVERED (failures you've seen before — check every 2h)
-- [x] **Flask process dying between runs** — Gunicorn+gevent via scripts/run_flask.sh, stable. No issues. [verified 04:42]
+|||- [x] **Flask process dying between runs** — Gunicorn+gevent via scripts/run_flask.sh, stable. No issues. [verified 05:05]
 - [x] **Dual Flask instances on port 5000** — Single gunicorn master+worker. No recurrence. [verified 04:42]
 - [x] **items.json + users.json simultaneous data corruption** — Items (5 categories, 19 items) and users (8 users) intact. [verified 04:42]
 - [x] **Owner username changed to 'testuser' (3rd data corruption incident)** — Owner PIN 1111 name='Owner', username='jayadmin'. No corruption. [verified 04:42]

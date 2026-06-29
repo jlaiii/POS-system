@@ -1,11 +1,11 @@
 # POS Security Watchdog
 
-|| Last run: 2026-06-29T04:46 UTC
-||| Total events tracked: 95 (SEC-001→SEC-095; 0 unresolved)
-||| Active blocks: 0 IPs
-||| Run result: Silent — all normal, no findings.|
+||| Last run: 2026-06-29T05:03 UTC
+|||| Total events tracked: 95 (SEC-001→SEC-095; 0 unresolved)
+|||| Active blocks: 0 IPs
+|||| Run result: 4-hour status summary — all normal.|
 
-## Current Run Findings (04:28–04:46 UTC, ~18 min window)
+## Current Run Findings (04:46–05:03 UTC, ~17 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -19,11 +19,11 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (04:28–04:46 UTC)
+### ℹ️ Activity Summary (04:46–05:03 UTC)
 
 **Server**: **Healthy** (HTTP 200 on port 5000, /api/health → {"status":"ok"}).
 
-**Activity**: 0 new activity_log entries since last run.
+**Activity**: 0 new activity_log entries since last run (total: 1445 entries).
 
 **Login attempts in window**: 0 total (0 failed / 0 successful).
 
@@ -55,17 +55,15 @@ None.
 - No active cash drawer sessions.
 
 ### 📂 File Integrity
-- All 51 JSON files parseable, valid.
+- All 49 JSON files parseable, valid.
 - All 8 accounts intact. No banned users.
 - Owner account (1111) present, active, not banned.
-- No file size anomalies.
-- No new suspicious files found.
-- Git status: clean (committed RELIABILITY_CHECKLIST.md dirtied by Site Reliability Bot).
+- No file size anomalies (small files are empty arrays — normal).
+- Git status: clean — no dirty files.
 - Server: **Healthy** (HTTP 200, /api/health → {"status":"ok"}).
 
 ### ✅ Actions Taken
 - 0 blocked IPs, 0 alerts fired.
-- Committed dirty data file (RELIABILITY_CHECKLIST.md — updated by Site Reliability Bot at 04:42).
 - Updated SECURITY_WATCHDOG.md timestamp and findings.
 
 ## Previous Run Findings (carried forward)
@@ -76,13 +74,13 @@ None.
 
 || | Check | Status |
 |---|---|---|---|
-|| | Current time | 2026-06-29T04:46 UTC — 23:46 CT (Sunday, off-hours) |
-|| | Activity since last run | 0 new activity_log entries |
-|| | Login attempts (last ~18 min) | 0 total (0 failed / 0 successful) |
-|| | Successful logins (this window) | 0 |
-|| | Blocked IPs | 0 |
-|| | Config changes | None |
-|| | File integrity | All 51 JSON valid. No file size anomalies. All 8 accounts intact. Git: clean. |
-|| | Users | 8 accounts. Admin 2FA: 2222=no, 7788=no (pre-existing gap — Sentinel). Owner 2FA disabled (exempted via config). |
-|| | Unresolved events | 0 unresolved out of 95 total (SEC-001→SEC-095; all resolved) |
-|| | Server | **Healthy** (HTTP 200 on port 5000, /api/health → {"status":"ok"}) |
+||| | Current time | 2026-06-29T05:03 UTC — 00:03 CT (Monday, off-hours) |
+||| | Activity since last run | 0 new activity_log entries |
+||| | Login attempts (last ~17 min) | 0 total (0 failed / 0 successful) |
+||| | Successful logins (this window) | 0 |
+||| | Blocked IPs | 0 |
+||| | Config changes | None |
+||| | File integrity | All 49 JSON valid. No file anomalies. All 8 accounts intact. Git: clean. |
+||| | Users | 8 accounts. Admin 2FA: 2222=no, 7788=no (pre-existing gap — Sentinel). Owner 2FA disabled (exempted via config). |
+||| | Unresolved events | 0 unresolved out of 95 total (SEC-001→SEC-095; all resolved) |
+||| | Server | **Healthy** (HTTP 200 on port 5000, /api/health → {"status":"ok"}) |
