@@ -1,11 +1,11 @@
 # POS Security Watchdog
 
-||||| Last run: 2026-06-29T15:14 UTC
-||||||||| Total events tracked: 95 (SEC-002→SEC-096; 0 unresolved)
-||||||||| Active blocks: 0 IPs
-||||||||| Run result: All normal — silent.|
+||||||| Last run: 2026-06-29T16:09 UTC
+|||||||||| Total events tracked: 95 (SEC-002→SEC-096; 0 unresolved)
+|||||||||| Active blocks: 0 IPs
+|||||||||| Run result: All normal — silent.|
 
-## Current Run Findings (14:44–15:14 UTC, ~30 min window)
+## Current Run Findings (15:47–16:09 UTC, ~22 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -19,31 +19,31 @@ None.
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (14:44–15:14 UTC)
+### ℹ️ Activity Summary (15:14–15:47 UTC)
 
 **Server**: **Healthy** (HTTP 200 on port 5000, /api/health → {"status":"ok"}).
 
-**Activity**: 10 new activity_log entries since last run — Owner (1111) login + admin actions at 14:51, 15:03, 15:11 from 127.0.0.1. One failed login for Test2FA (9999) at 14:51.
+**Activity**: **0 new activity_log entries** since last run. Zero activity detected in this window.
 
-**Pattern**: Owner testing via curl on localhost. Single failed login for 9999 (Test2FA account, likely cron worker test). All typical dev behavior.
+**Pattern**: Extended inactivity continues. No logins, no admin actions, no attempted connections. System idle since 15:11 UTC.
 
-**Login attempts in window**: 4 entries in login_attempts.json (3 Owner successful, 1 Test2FA failed). 0 failed in last 5 min.
+**Login attempts in window**: 0 entries in login_attempts.json.
 
 **Active shifts**: 0. No one clocked in.
 
-**Orders**: 116 total. 0 today (June 29). No new orders.
+**Orders**: 116 total. No new orders.
 
 ### 📊 Login Security Deep-Dive
-- **Brute force check**: 0 failed logins in last 5 min. 1 failed login total this window (user=9999 from 127.0.0.1). No alert.
+- **Brute force check**: 0 failed logins in last 5 min. 0 failed logins total this window. No alert.
 - **Account enumeration**: No failed attempts for non-existent PINs. No alert.
-- **Successful-after-failure**: Test2FA (9999) had 1 failed login at 14:51, no subsequent success. No alert.
-- **Off-hours activity**: Current time ~15:14 UTC (10:14 CT). Normal business hours.
+- **Successful-after-failure**: No activity. No alert.
+- **Off-hours activity**: Current time ~16:09 UTC (11:09 CT). Normal business hours.
 - **Cross-IP targeting**: No activity detected.
-- **Known IPs**: No new IPs. All traffic from 127.0.0.1.
+- **Known IPs**: No new IPs.
 - **Credential stuffing**: No pattern.
 - **2FA check**: No 2FA events.
 - **Account lockouts**: None.
-- **Last failed login**: 2026-06-29T14:51:15 UTC (~23 min ago), user=9999 (Test2FA) from 127.0.0.1.
+- **Last failed login**: 2026-06-29T14:51:15 UTC (~78 min ago), user=9999 (Test2FA) from 127.0.0.1. No change.
 
 ### 🔒 Security Config
 - No changes detected. All thresholds normal.
@@ -66,8 +66,8 @@ None.
 
 ### ✅ Actions Taken
 - 0 blocked IPs, 0 alerts fired.
-- No dirty data files from Watchdog to commit.
 - Updated SECURITY_WATCHDOG.md timestamp and findings.
+- Git: committed dirty SECURITY_WATCHDOG.md from previous run.
 
 ## Previous Run Findings (carried forward)
 - Admin 2FA gap remains: Manager (2222) and Manager Sarah (7788) lack 2FA despite `require_2fa_for_admins: true`. Owner (1111) is exempted via config. Pre-existing — no change. Security Sentinel handles code-level fixes.
@@ -75,10 +75,10 @@ None.
 
 |||| | System State | |
 |---|---|---|---|
-||||| Current time | 2026-06-29T15:14 UTC — 10:14 CT (Monday, normal business hours) |
-||||| Activity since last run | 10 entries — Owner curl login/test at 14:51, 15:03, 15:11; 1 failed login (9999) |
-||||| Login attempts (last ~30 min) | 4 — 1 failed |
-||||| Successful logins (this window) | 3 (Owner, 127.0.0.1) |
+|||||| Current time | 2026-06-29T16:09 UTC — 11:09 CT (Monday, normal business hours) |
+||||||| Activity since last run | 0 entries — system idle |
+||||||| Login attempts (last ~22 min) | 0 |
+|||||| Successful logins (this window) | 0 |
 ||| Blocked IPs | 0 |
 ||| Config changes | None |
 ||| File integrity | All JSON valid. All 8 accounts intact. Git: clean. |
