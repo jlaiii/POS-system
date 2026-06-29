@@ -1,12 +1,12 @@
 # POS Security Watchdog
 
-| Last run: 2026-06-28T23:49 UTC
+|| Last run: 2026-06-29T00:19 UTC
 
 ||||| Total events tracked: 86 (SEC-001→SEC-086; all resolved)
 ||||| Active blocks: 0 IPs
-||||| Run result: Normal — 1 off-hours Owner login from localhost. Resolved SEC-086.
+|||||| Run result: Normal — 4-hour clean status. 0 findings. All thresholds normal.
 
-## Current Run Findings (23:28–23:49 UTC, ~21 min window)
+## Current Run Findings (00:04–00:19 UTC, ~15 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -14,19 +14,29 @@ None.
 ### 🟠 HIGH (0)
 None.
 
-### 🟡 MEDIUM (1)
-- **SEC-086** — ⚠️ Off-hours login: Owner (1111) at 23:44 from 127.0.0.1. Same pattern as SEC-009→SEC-085. Expected cron worker dev activity. ➡️ **Resolved**.
+### 🟡 MEDIUM (0)
+None.
 
 ### 🟢 LOW (0)
 None.
 
-### ℹ️ Activity Summary (23:28–23:49 UTC)
+### 🐕 4-Hour Clean Status Summary (20:19–00:19 UTC)
+
+**Logins last 4h**: 5 attempts, 5 successful, 0 failed.
+**Unique IPs**: 1 (127.0.0.1) — all localhost.
+**Unique users**: 1 (1111 — Owner).
+**IPs blocked**: 0.
+**Anomalies detected**: 0.
+**Security events**: 0 new.
+**Known IPs tracked**: 6 users tracked, 0 new IPs in window.
+
+### ℹ️ Activity Summary (00:04–00:19 UTC)
 
 **Server**: Healthy (HTTP 200 on port 5000, /api/health → {"status":"ok"}).
 
-**Activity**: 4 new activity_log entries — Owner (1111) PIN login + 3 admin_login events via Python-urllib/3.11 at 23:44:25–23:44:40. Rapid admin_login calls suggest a cron worker making multiple API requests.
+**Activity**: 0 new activity_log entries since last run. No API calls in this window.
 
-**Login attempts in window**: 1 login attempt (Owner, 23:44, 127.0.0.1, success). 0 failed.
+**Login attempts in window**: 0. No login activity.
 
 **Active shifts**: 0. No one clocked in.
 
@@ -36,19 +46,19 @@ None.
 - **Brute force check**: 0 failed logins in last 15 min. No alert.
 - **Account enumeration**: 0 probes for non-existent PINs. No alert.
 - **Successful-after-failure**: No failed attempts. No alert.
-- **Off-hours activity**: Owner login at 23:44 UTC (22:00–06:00 window) from 127.0.0.1 — same routine dev pattern.
+- **Off-hours activity**: None in this window.
 - **Cross-IP targeting**: No activity.
 - **Known IPs**: No new IPs seen.
 - **Credential stuffing**: No pattern.
 - **2FA check**: No 2FA events.
 - **Account lockouts**: None.
-- **Last login attempt**: 2026-06-28T23:44:26 UTC (Owner, 127.0.0.1, success).
+- **Last login attempt**: 2026-06-28T23:44:26 UTC (Owner, 127.0.0.1, success) — no new attempts since.
 
 ### 🔒 Security Config
 - No changes detected. All thresholds normal.
 - `blocked_ips`: [] — no active blocks.
-- `auto_block_threshold`: 5 (normal).
-- `rate_limit_enabled`: true (active).
+- `auto_block_threshold`: 5 (unchanged).
+- `rate_limit_enabled`: true (unchanged).
 - `require_2fa_for_admins`: true (unchanged).
 
 ### 💰 Financial Check / Order Anomaly Scan
@@ -62,12 +72,12 @@ None.
 - No banned users. No account modifications.
 - No file size anomalies.
 - No new suspicious files — no .php, .exe, or anomalous files in workdir.
-- Git status: clean — no dirty files since last commit.
+- Git status: **Clean** (committed dirty RELIABILITY_CHECKLIST.md from Reliability Bot at 00:06).
 - Server: **Healthy** (HTTP 200, /api/health → {"status":"ok"}).
 
 ### ✅ Actions Taken
 - 0 blocked IPs, 0 alerts fired.
-- Resolved SEC-086 (Owner off-hours login at 23:44 from 127.0.0.1 — same pattern as SEC-009→SEC-085).
+- Committed dirty `RELIABILITY_CHECKLIST.md` (Reliability Bot timestamp update).
 - Updated SECURITY_WATCHDOG.md timestamp and findings.
 
 ## Previous Run Findings (carried forward)
@@ -78,10 +88,10 @@ None.
 
 | | Check | Status |
 |---|---|---|
-| | Current time | 2026-06-28T23:49 UTC — 18:49 CT (Sunday, regular hours) |
-| | Activity since last run | 4 activity_log entries — Owner login + admin_logins at 23:44 via Python-urllib (cron worker) |
-| | Login attempts (last ~21 min) | 1 total (0 failed, 1 successful) |
-| | Successful logins (this window) | 1 (Owner, 23:44, 127.0.0.1) |
+| | Current time | 2026-06-29T00:19 UTC — 19:19 CT (Sunday, regular hours) |
+| | Activity since last run | 0 activity_log entries — no API calls since 23:44 |
+| | Login attempts (last ~15 min) | 0 total (0 failed, 0 successful) |
+| | Successful logins (this window) | 0 |
 | | Blocked IPs | 0 |
 | | Config changes | None |
 | | File integrity | All JSON valid. No file size anomalies. All 8 accounts intact. Git: clean. |
