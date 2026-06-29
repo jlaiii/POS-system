@@ -1,16 +1,16 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-29T18:46 UTC
-> Total checks: 2529
-> Healthy: 2529 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-29T19:08 UTC
+> Total checks: 2537
+> Healthy: 2537 | Broken: 0 | Fixed this cycle: 0
 
 ## CURRENT OUTAGES
 - None
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 — 200 OK (gunicorn+gevent, master+worker) [verified 18:46]
-- [x] All JSON data files exist and are valid — 15/15 core files valid [verified 18:46]
-- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', 8 users) [verified 18:46]
-- [x] Git repo is clean — clean [verified 18:46]
+- [x] Flask app responds on port 5000 — 200 OK (gunicorn+gevent, master+worker) [verified 19:08]
+- [x] All JSON data files exist and are valid — 15/15 core files valid [verified 19:08]
+- [x] users.json has at least owner PIN 1111 — Owner (1111, name='Owner', username='jayadmin', 8 users) [verified 19:08]
+- [x] Git repo is clean — clean [verified 19:08]
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/health — {"status":"ok"} (GET) [verified 18:46]
@@ -18,15 +18,15 @@
 - [x] /api/items returns items — 5 categories, 19 items [verified 18:46]
 - [x] /api/login works — POST userId=1111, pin=1111, role=owner [verified 18:46]
 - [x] /api/admin_stats returns stats — avg_sale=$13.50, backup_health=green [verified 18:46]
-- [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 200 OK [verified 18:02]
-- [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 18:02]
-- [x] index.html size check — 1,375,315 bytes (normal) [verified 18:24]
-- [x] Disk space check — 39% used (OK) [verified 18:02]
-- [x] Memory check — ~37% RAM used, 0 swap [verified 18:02]
+- [x] /api/admin_shifts returns shifts — POST with adminPin=1111, 200 OK [verified 19:08]
+- [x] app.py syntax check — SYNTAX OK (python3 -m py_compile) [verified 19:08]
+- [x] index.html size check — 1,375,315 bytes (normal) [verified 19:08]
+- [x] Disk space check — 39% used (OK) [verified 19:08]
+- [x] Memory check — ~37% RAM used, 0 swap [verified 19:08]
 - [x] Clock-in/out: 59 shifts, 10 late, 4 breaks, 5 edits — data intact [verified 18:24]
-- [x] CSV export — /api/export/shifts_csv returns CSV, 200 OK, 5483 bytes [verified 18:24]
-- [x] Offline queue — /api/sync_orders exists, returns 400 [verified 18:02]
-- [x] Backup integrity — latest backup (17:41 JSON+DB valid) [verified 17:40]
+- [x] CSV export — /api/export/shifts_csv returns CSV, 200 OK [verified 19:08]
+- [x] Offline queue — /api/sync_orders exists, returns 400 [verified 19:08]
+- [x] Backup integrity — latest backup (18:57 JSON+DB valid) [verified 19:08]
 
 ## EVERY 4 HOURS
 |- [x] Kitchen display: verify /api/kitchen/queue returns valid data — GET, 200, 3 orders (working) [verified 17:17]
