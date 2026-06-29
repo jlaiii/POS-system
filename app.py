@@ -1819,11 +1819,21 @@ def _record_clock_failure(key):
 
 
 def get_client_ip():
-    """Get client IP from request, handling X-Forwarded-For for proxied requests."""
+    """Get client IP from request, handling X-Forwarded-For for proxied requests.
+
+    SECURITY: Only trust X-Forwarded-For when the direct connection comes from
+    a known local proxy (127.0.0.1, ::1, localhost). If the Flask app is exposed
+    directly on a public interface (gunicorn bound to 0.0.0.0), an attacker can
+    spoof X-Forwarded-For: 127.0.0.1 to bypass IP-based rate limiting and
+    blocklists. By checking request.remote_addr against trusted proxy IPs first,
+    we prevent this bypass.
+    """
+    remote_addr = request.remote_addr or 'unknown'
     forwarded = request.headers.get('X-Forwarded-For')
-    if forwarded:
+    if forwarded and remote_addr in ('127.0.0.1', '::1', 'localhost'):
+        # Request came via a local proxy — trust the forwarded IP
         return forwarded.split(',')[0].strip()
-    return request.remote_addr or 'unknown'
+    return remote_addr
 
 
 def record_login_attempt(user_id, success, method, client_ip=None, details=None):
