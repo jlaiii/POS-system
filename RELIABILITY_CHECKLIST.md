@@ -1,13 +1,13 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-29T23:33:43Z
-> Total checks: 39
-> Healthy: 39 | Broken: 0 | Fixed this cycle: 0
+> Last full cycle: 2026-06-29T23:57:22Z
+> Total checks: 40
+> Healthy: 40 | Broken: 0 | Fixed this cycle: 1
 
 ## CRITICAL (check every run — these can't wait)
 - [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK
 - [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID
 - [x] users.json has at least owner PIN 1111 — Owner present, wildcard permissions
-- [x] Git repo is clean (no uncommitted changes from crashes) — clean
+- [x] Git repo is clean (no uncommitted changes from crashes) — clean (committed Security Watchdog leftovers at f8f6e6a)
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/clock/in works (clock in test user, verify response) — clocked in Employee 1234, late detection works
@@ -45,10 +45,10 @@
 - [x] Concurrent write test: two rapid clock-ins → verify no data loss — Two users (1234, 5678) clocked in/out concurrently, both shifts recorded ✅
 
 ## DISCOVERED (failures you've seen before — check every 2h)
-- [ ] (populated over time as you find real failures)
+- [ ] Security Watchdog leaves dirty files after each run (SECURITY_WATCHDOG.md + security_events.json) — auto-commit on SRE bot runs
 
 ## CURRENT OUTAGES
 _None_
 
 ## FIXES APPLIED
-_None yet_
+- 2026-06-29T23:57Z **Security Watchdog dirty files** — SECURITY_WATCHDOG.md and security_events.json left uncommitted after Watchdog run at 23:49 UTC. Committed at f8f6e6a. Added to DISCOVERED checklist.
