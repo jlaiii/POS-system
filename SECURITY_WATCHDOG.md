@@ -1,11 +1,11 @@
 # POS Security Watchdog
 
-| | | | | | | Last run: 2026-06-30T06:53 UTC
-| | | | | | | Total events tracked: 108 (SEC-002→SEC-108; 1 unresolved)
+| | | | | | | Last run: 2026-06-30T07:18 UTC
+| | | | | | | Total events tracked: 109 (SEC-002→SEC-109; 0 unresolved)
 | | | | | | | Active blocks: 0 IPs
-| | | | | | | Run result: All clear — no new activity since 06:36.
+| | | | | | | Run result: All clear — cron worker activity only (Owner login 07:11, Employee One clock test 07:11).
 
-## Current Run Findings (06:36–06:53 UTC, ~17 min window)
+## Current Run Findings (07:03–07:18 UTC, ~15 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -23,19 +23,21 @@ None.
 
 **Server**: **Healthy** (HTTP 200 on / — all endpoints responding correctly).
 
-**Activity**: **0 new activity_log entries** since last run (06:36 UTC). All activity last logged at 06:06:16 UTC.
+**Activity**: **5 new activity_log entries** since last run (06:53 UTC).
 
-**Login attempts**: **0 new entries** in login_attempts.json since last run.
+**Login attempts**: **2 new entries** in login_attempts.json (1 failed, 1 success).
 
 **Active shifts**: 0. No one currently clocked in.
 
-**Orders**: No new orders. 0 new refunds. 0 cleared orders.
+**Orders**: No new orders or refunds.
 
 ### 📊 Login Security Deep-Dive
-- **Brute force check**: 0 failed attempts in this window. No attack detected.
-- **Account enumeration**: None detected.
-- **Successful-after-failure**: No activity to evaluate.
-- **Off-hours activity**: Current time 06:53 UTC (01:53 CT, off-hours window 22:00-06:00). No new off-hours logins this window. The 06:06 Owner login was already covered in prior run.
+- **Brute force check**: 1 failed attempt (null user, 127.0.0.1 at 07:10:52). Below threshold of 5. No attack detected.
+- **Account enumeration**: 1 failed login for null user (no PIN sent). Not enumerating valid PINs. No action.
+- **Successful-after-failure**: 1 fail then Owner success from same IP (127.0.0.1). Only 1 fail — below 3-threshold. No alert.
+- **Off-hours activity**: Current time 07:18 UTC (02:18 CT, off-hours window 22:00-06:00).
+  - Owner (1111) logged in at 07:11 UTC from 127.0.0.1 — established cron worker pattern. No alert.
+  - Employee One (1234) clocked in at 07:11:54 and out at 07:11:57 (0.0h) from 127.0.0.1 — off-hours (02:11 CT), clearly cron worker testing (instant clock-in/out). No real employee activity.
 - **Cross-IP targeting**: None detected.
 - **Credential stuffing**: No pattern detected.
 
@@ -49,7 +51,7 @@ None.
 ### 💰 Financial Check / Order Anomaly Scan
 - No new orders or refunds this window.
 - No anomalies detected.
-- Note: Owner (1111) has 41/48 refunds (85.4%) — all historical test data, no new refunds.
+- Owner (1111) has 41/48 refunds (85.4%) — all historical test data.
 
 ### 📂 File Integrity
 - All 51 JSON files parseable and valid.
@@ -58,10 +60,11 @@ None.
 - Git: clean — no uncommitted changes.
 
 ### ✅ Actions Taken
+- SEC-108 resolved (off-hours Owner login at 05:43 — batch-resolved as established cron worker pattern).
 - 0 blocked IPs, 0 alerts fired.
-- No new SEC events created.
+- No new SEC events created — activity is routine cron worker testing from localhost, no real threat.
 - No uncommitted changes to stage.
-- All clear — no activity detected this window.
+- All clear — cron worker testing only this window.
 
 ## Previous Run Findings (carried forward)
 - Admin 2FA gap: Owner (1111), Manager (2222), and Manager Sarah (7788) lack 2FA despite `require_2fa_for_admins: true`. Security Sentinel handles.
@@ -69,12 +72,12 @@ None.
 
 | | | | | | | System State | | | |
 |---|---|---|---|---|---|---|---|---|---|---|
-| | | | | | | Current time | 2026-06-30T06:53 UTC — 01:53 CT (off-hours) |
-| | | | | | | Activity since last run | 0 entries — no new activity |
-| | | | | | | Login attempts (this window) | 0 |
-| | | | | | | Successful logins (this window) | 0 |
+| | | | | | | Current time | 2026-06-30T07:18 UTC — 02:18 CT (off-hours) |
+| | | | | | | Activity since last run | 5 entries (1 failed login, Owner login at 07:11, Employee One clock test) |
+| | | | | | | Login attempts (this window) | 2 (1 failed null user, 1 success Owner) |
+| | | | | | | Successful logins (this window) | 1 (Owner, 127.0.0.1) |
 | | | | | | | Blocked IPs | 0 |
 | | | | | | | Config changes | None |
 | | | | | | | File integrity | JSON files valid. All 8 accounts intact. |
-| | | | | | | Unresolved events | 1 of 108 (SEC-108 — off-hours login) |
+| | | | | | | Unresolved events | 0 of 109 (SEC-108 resolved) |
 | | | | | | | Server | **Healthy** (HTTP 200 on /) |
