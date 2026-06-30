@@ -1,13 +1,13 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-30T15:47Z
+> Last full cycle: 2026-06-30T16:09Z
 > Total checks: 61
 > Healthy: 61 | Broken: 0 | Fixed this cycle: 14
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (15:47Z)
-- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID (15:47Z)
-- [x] users.json has at least owner PIN 1111 — Owner present, wildcard permissions (15:47Z)
-- [x] Git repo is clean (no uncommitted changes from crashes) — clean (15:47Z)
+- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (16:09Z)
+- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID (16:09Z)
+- [x] users.json has at least owner PIN 1111 — Owner present, wildcard permissions (16:09Z)
+- [x] Git repo is clean (no uncommitted changes from crashes) — clean (16:09Z, committed SECURITY_WATCHDOG.md at 716aefe)
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/clock/in works (clock in test user, verify response) — Employee 1234 clocked in (387 min late), clocked out, test shift cleaned up (15:26Z)
@@ -25,7 +25,7 @@
 - [x] Loyalty: points earned on order — Order #139 (Coke $3) earned 3 pts, refunded, cleaned up ✅
 - [x] Cash register: open drawer ($100) → cash in ($50) → cash out ($20) → close ($130, exact match) ✅
 - [x] Kitchen display: GET /api/kitchen/queue — 0 pending orders, valid data ✓ (12:38Z)
-- [x] Pickup display: GET /api/pickup-display/queue — 2 ready orders, valid data ✓ (11:44Z)
+- [x] Pickup display: GET /api/pickup-display/queue — 2 ready orders, valid data ✓ (16:09Z)
 - [x] Clock-in late detection: Employee 1234 scheduled 09:00, clocked in 21:38 → 758 min late ✅
 - [x] Break tracking: POST /api/clock/break — endpoint responds with proper error when not clocked in ✅
 - [x] Shift edit: POST /api/clock/edit — validates reason required, endpoint working ✅
@@ -51,6 +51,7 @@
 _None_
 
 ## FIXES APPLIED
+- 2026-06-30T16:09Z **Security Watchdog dirty file** — SECURITY_WATCHDOG.md left uncommitted after Watchdog run at 15:58 UTC. Committed at 716aefe. Ran critical checks (Flask 200, all JSON valid, PIN 1111 present). Updated pickup display check (was 4h25m overdue). Pushed to main.
 - 2026-06-30T14:13Z **Security Watchdog dirty file + 12H restart test** — Committed activity_log.json left dirty by Security Watchdog at 8b97e2f. Ran 12H full app restart test — killed Flask, restarted, verified all 8 critical endpoints pass. Pushed to main.
 - 2026-06-30T13:00Z **Security Watchdog dirty file** — SECURITY_WATCHDOG.md timestamp update left file dirty after Watchdog 12:52 UTC run. Committed at c3d5ef9. Pushed to main ✓
 - 2026-06-30T11:23Z **Flask was down (HTTP 000)** — Flask process had died between 11:01Z and 11:23Z. Restarted via python3 app.py in background. Verified all critical endpoints (health, items, login, admin_stats). Committed dirty SECURITY_WATCHDOG.md from Watchdog 11:13 UTC run. Pushed at 33d09b9.
