@@ -1,7 +1,7 @@
 # POS Production Readiness Audit
-> Last run: 2026-06-29 14:58 CT
-> Overall readiness: 64% (HIGH issues: 11, MEDIUM: 16)
-> Workflow tested this run: B (Manager closing shift — login, view stats, cash drawer management, employee shifts, pay period summary, CSV export)
+> Last run: 2026-06-30 03:16 CT
+> Overall readiness: 62% (HIGH issues: 14, MEDIUM: 18)
+> Workflow tested this run: D (Customer-facing experience — kiosk mode, customer display, pickup display, tablet pages, PWA audit)
 
 ## BLOCKERS (can't go live with these)
 
@@ -35,6 +35,8 @@
 
 - [ ] **Admin login sessions not persisted to timesheet.json — lost on server restart** — `active_admin_sessions` is an in-memory dict that never gets written to `timesheet.json`. The JSON file has only 1 entry (Manager 2222 from June 24). The owner (1111) has logged in hundreds of times but none are recorded. When gunicorn restarts, all session history disappears. A real restaurant manager needs accurate login tracking. [NEW - Workflow B]
 
+- [ ] **Standalone tablet pages (tablet.html, pickup-display.html, customer-login.html, feedback.html, kitchen.html, offline.html) missing PWA meta tags** — These 6 standalone pages lack `apple-mobile-web-app-capable`, `apple-mobile-web-app-status-bar-style`, manifest link, and most lack `theme-color`. They are designed for wall-mounted tablets (ad display, pickup board, feedback kiosk, etc.) but cannot be added to home screen as standalone web apps. Only customer-display.html and drivethrough.html have theme-color. [NEW]
+
 ## MEDIUM (annoying but workable)
 
 - [ ] **"Call Server" button on tablet has no notification in POS** — The tablet page has a "📞 Call Server" button that calls the backend endpoint. Waiters never know a customer needs them. The backend stores calls and a `server_call` WebSocket event is emitted, but POS has no listener. Worker-3 added polling fallback + endpoint but this remains partially functional.
@@ -67,6 +69,10 @@
 
 - [ ] **Order submission response lacks employee attribution** — The submit_order response returns `order_id` and `order_number` but no employee name or ID confirmation. The waiter has no confirmation of WHO submitted the order. [NEW]
 
+- [ ] **Kiosk order lookup by order_number doesn't work — uses internal order_id only** — `/api/orders/lookup` only accepts `order_id` (internal auto-increment ID), but kiosk users see `order_number` (human-friendly display number). The frontend kiosk "Find Order" form uses order_number but the API can't find it. Tested: lookup by order_number 120 returned empty. [NEW]
+
+- [ ] **customer-display.html has no manifest.json link despite being designed for wall-mounted tablets** — Has theme-color but lacks `<link rel="manifest" href="manifest.json">` and `apple-mobile-web-app-capable` meta. Cannot be added to home screen as standalone PWA. [NEW]
+
 ## LOW (polish, nice-to-have)
 
 - [ ] No auto-generated placeholder images for items added without image_url
@@ -79,13 +85,18 @@
 
 ## FIXED (this session)
 
-- [x] **today_sales incorrectly counted refunded orders — caused "today_sales ($401.35) > total_sales ($94.52)" impossibility** — The `today_sales` calculation at line 9460 iterated ALL orders (including cancelled/refunded) for revenue, while `total_sales` correctly excluded them. One refunded order for $346.30 inflated today's number above the all-time total. Fixed: added `today_revenue_orders` list that filters out refunded/voided/cancelled orders. Verified: today_sales=$48.56 (only pending orders), today_orders=5 (still counts all orders). Commit: `b9bc9da`.
-- [x] **dtag-chip, day-check, allergen-filter-toggle, allergen-chip touch targets too small (36px) — increased to 44px** — Four interactive element classes had `min-height: 36px`, below the recommended 44px touch target minimum (WCAG). Increased all to 44px. Also increased offline-badge from 28px to 36px. Commit: `2d7bd39`.
-- [x] **admin_stats missing today_sales and today_orders** — The admin dashboard stats response had no `today_sales` or `today_orders` fields. Added calculation of today's order count and revenue, and injected them into the stats dict. Verified: `today_sales: 45.31`, `today_orders: 3` after testing. Commit: `2d7bd39`.
-- [x] **Workflow A tested end-to-end (Waiter taking orders)** — Login → Clock in → Submit order Table 5 (Hamburger-Normal Large w/ Bacon, 2x Coke, French Toast; split payment $15 cash + $10 card; notes: "no onions on the burger") → Submit order Table 6 (Caesar Salad, Coke, Chocolate Bar; Card) → Verify kitchen queue shows both orders with notes → Verify order history → Clock out. All endpoints functional. 5 friction points documented.
+- [x] **Kiosk pay and order lookup accepted payment for refunded/voided orders — security fix** — Both `/api/orders/kiosk_pay` and `/api/orders/lookup` only checked for `cancelled` status before allowing payment. Refunded and voided orders passed through. Fixed: added `refunded` and `voided` status checks to both endpoints. Verified: kiosk paying order #120 (refunded) now returns 409 with "was refunded and cannot be paid." Commit: `49ba79d`.
+
+- [x] **4 standalone pages had user-scalable=no in viewport meta — breaks accessibility zoom** — customer-login.html, drivethrough.html, feedback.html, and offline.html still had `user-scalable=no` (bad for accessibility, users can't zoom). Changed to `maximum-scale=5.0`. Commit: `49ba79d`.
+
+- [x] **Workflow D tested end-to-end (Customer-facing experience)** — Tested kiosk mode, customer display update/status, kiosk pay, order lookup, pickup display, tablet pages, drive-through display, feedback page. Verified: customer display uses shared global (confirmed overwrite bug), kiosk pay accepted refunded orders (now fixed), PWA meta tags missing on 6 standalone pages, 4 pages had user-scalable=no. 5 new issues documented.
 
 ## PREVIOUSLY FIXED (archive)
 
+- [x] **today_sales incorrectly counted refunded orders — caused \"today_sales ($401.35) > total_sales ($94.52)\" impossibility** — Fixed: added `today_revenue_orders` list that filters out refunded/voided/cancelled orders. Commit: `b9bc9da`.
+- [x] **dtag-chip, day-check, allergen-filter-toggle, allergen-chip touch targets too small (36px) — increased to 44px** — Commit: `2d7bd39`.
+- [x] **admin_stats missing today_sales and today_orders** — Commit: `2d7bd39`.
+- [x] **Workflow A tested end-to-end (Waiter taking orders)** — Commit: `2d7bd39`.
 - [x] **BLOCKER: No checkout workflow confirmation** — Worker-2 added full order review modal with undo grace period.
 - [x] **Added safe-area-inset padding to all position:fixed elements** — env(safe-area-inset-*) padding added. (NOTE: This claim appears to be inaccurate — grep shows NO safe-area references in index.html. May have been lost in subsequent edits.)
 - [x] **Server-side tax enforcement is implemented and working** — The HIGH issue "Server-side tax enforcement missing" was outdated. `submit_order()` (lines 5450-5467 in app.py) recalculates tax server-side using `get_effective_tax_rate()` from `tax_config.json`. The `global_tax_rate` of 8.25% is enforced. The audit finding has been corrected.
