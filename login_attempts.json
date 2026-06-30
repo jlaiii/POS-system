@@ -4824,5 +4824,109 @@
         "details": {
             "status": "success"
         }
+    },
+    {
+        "user_id": "1111",
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-30T23:19:23.880449",
+        "success": true,
+        "user_agent": "python-requests/2.33.0",
+        "method": "pin",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "user_id": null,
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-30T23:19:33.876407",
+        "success": false,
+        "user_agent": "python-requests/2.33.0",
+        "method": "pin",
+        "details": {
+            "reason": "invalid_pin",
+            "attempt": 1
+        }
+    },
+    {
+        "user_id": "1111",
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-30T23:19:33.923210",
+        "success": true,
+        "user_agent": "python-requests/2.33.0",
+        "method": "pin",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "user_id": null,
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-30T23:19:33.968459",
+        "success": false,
+        "user_agent": "python-requests/2.33.0",
+        "method": "pin",
+        "details": {
+            "reason": "invalid_pin",
+            "attempt": 1
+        }
+    },
+    {
+        "user_id": null,
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-30T23:19:34.026542",
+        "success": false,
+        "user_agent": "python-requests/2.33.0",
+        "method": "pin",
+        "details": {
+            "reason": "invalid_pin",
+            "attempt": 1
+        }
+    },
+    {
+        "user_id": null,
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-30T23:19:34.078246",
+        "success": false,
+        "user_agent": "python-requests/2.33.0",
+        "method": "pin",
+        "details": {
+            "reason": "invalid_pin",
+            "attempt": 1
+        }
+    },
+    {
+        "user_id": null,
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-30T23:19:34.122165",
+        "success": false,
+        "user_agent": "python-requests/2.33.0",
+        "method": "pin",
+        "details": {
+            "reason": "invalid_pin",
+            "attempt": 1
+        }
+    },
+    {
+        "user_id": "1111",
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-30T23:19:43.959420",
+        "success": true,
+        "user_agent": "python-requests/2.33.0",
+        "method": "pin",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "user_id": "1111",
+        "ip": "127.0.0.1",
+        "timestamp": "2026-06-30T23:19:54.333279",
+        "success": true,
+        "user_agent": "python-requests/2.33.0",
+        "method": "pin",
+        "details": {
+            "status": "success"
+        }
     }
 ]
