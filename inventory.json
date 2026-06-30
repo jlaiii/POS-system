@@ -1,126 +1,122 @@
 {
-    "Hotdog - Loaded": {
-        "stock": 92,
-        "low_stock_threshold": 10,
-        "unit_cost": 2.75
-    },
-    "Hamburger - All the Fixings": {
-        "stock": 98,
-        "low_stock_threshold": 10,
-        "unit_cost": 4.0
-    },
-    "Taco - Beef & Cheese": {
-        "stock": 98,
-        "low_stock_threshold": 10,
-        "unit_cost": 3.25
-    },
-    "Coke": {
-        "stock": 70,
-        "low_stock_threshold": 10,
-        "unit_cost": 0.75
-    },
-    "Raspia (Fruit Slush)": {
-        "stock": 100,
-        "low_stock_threshold": 10,
-        "unit_cost": 1.25
-    },
-    "Hotdog - Plain": {
-        "stock": 98,
-        "low_stock_threshold": 10,
-        "unit_cost": 2.0
-    },
-    "Lemonade": {
-        "stock": 92,
-        "low_stock_threshold": 10,
-        "unit_cost": 0.85
-    },
-    "Chocolate Bar": {
-        "stock": 98,
-        "low_stock_threshold": 10,
-        "unit_cost": 1.1
-    },
-    "Mixed Nuts (Small Pack)": {
-        "stock": 98,
-        "low_stock_threshold": 10,
-        "unit_cost": 1.75
-    },
-    "Taco - Chicken with Salsa": {
-        "stock": 91,
-        "low_stock_threshold": 10,
-        "unit_cost": 3.5
-    },
-    "Granola Bar": {
-        "stock": 99,
-        "low_stock_threshold": 10,
-        "unit_cost": 0.95
-    },
-    "Chips (Large Bag)": {
-        "stock": 94,
-        "low_stock_threshold": 10,
-        "unit_cost": 1.2
-    },
-    "Hamburger - Normal": {
-        "stock": 78,
-        "low_stock_threshold": 10,
-        "unit_cost": 3.5
-    },
-    "Water Bottle": {
-        "stock": 96,
-        "low_stock_threshold": 10,
-        "unit_cost": 0.6
-    },
-    "Pancakes": {
-        "stock": 49,
-        "low_stock_threshold": 10,
-        "unit_cost": 2.5
-    },
-    "Bacon & Eggs": {
-        "stock": 40,
-        "low_stock_threshold": 10,
-        "unit_cost": 3.75
-    },
-    "French Toast": {
-        "stock": 48,
-        "low_stock_threshold": 10,
-        "unit_cost": 2.8
-    },
-    "Caesar Salad": {
-        "stock": 38,
-        "low_stock_threshold": 10,
-        "unit_cost": 3.0
-    },
-    "Grilled Chicken Salad": {
-        "stock": 30,
-        "low_stock_threshold": 10,
-        "unit_cost": 4.5
-    },
-    "Burger Bun": {
-        "stock": 200,
-        "low_stock_threshold": 50,
-        "unit_cost": 0.35
-    },
-    "Beef Patty": {
-        "stock": 150,
-        "low_stock_threshold": 30,
-        "unit_cost": 1.5
-    },
-    "Lettuce Leaf": {
-        "stock": 500,
-        "low_stock_threshold": 100,
-        "unit_cost": 0.1
-    },
-    "Tomato Slice": {
-        "stock": 300,
-        "low_stock_threshold": 50,
-        "unit_cost": 0.15
-    },
-    "Onion Ring": {
-        "stock": 200,
-        "low_stock_threshold": 40,
-        "unit_cost": 0.2
-    },
-    "Taco \ud83c\udf2e \"Supreme\" Deluxe": {
-        "stock": 0,
-        "low_stock_threshold": 10
-    }
+  "Hotdog - Loaded": {
+    "stock": 92,
+    "low_stock_threshold": 10,
+    "unit_cost": 2.75
+  },
+  "Hamburger - All the Fixings": {
+    "stock": 98,
+    "low_stock_threshold": 10,
+    "unit_cost": 4.0
+  },
+  "Taco - Beef & Cheese": {
+    "stock": 98,
+    "low_stock_threshold": 10,
+    "unit_cost": 3.25
+  },
+  "Coke": {
+    "stock": 70,
+    "low_stock_threshold": 10,
+    "unit_cost": 0.75
+  },
+  "Raspia (Fruit Slush)": {
+    "stock": 100,
+    "low_stock_threshold": 10,
+    "unit_cost": 1.25
+  },
+  "Hotdog - Plain": {
+    "stock": 98,
+    "low_stock_threshold": 10,
+    "unit_cost": 2.0
+  },
+  "Lemonade": {
+    "stock": 92,
+    "low_stock_threshold": 10,
+    "unit_cost": 0.85
+  },
+  "Chocolate Bar": {
+    "stock": 98,
+    "low_stock_threshold": 10,
+    "unit_cost": 1.1
+  },
+  "Mixed Nuts (Small Pack)": {
+    "stock": 98,
+    "low_stock_threshold": 10,
+    "unit_cost": 1.75
+  },
+  "Taco - Chicken with Salsa": {
+    "stock": 91,
+    "low_stock_threshold": 10,
+    "unit_cost": 3.5
+  },
+  "Granola Bar": {
+    "stock": 99,
+    "low_stock_threshold": 10,
+    "unit_cost": 0.95
+  },
+  "Chips (Large Bag)": {
+    "stock": 94,
+    "low_stock_threshold": 10,
+    "unit_cost": 1.2
+  },
+  "Hamburger - Normal": {
+    "stock": 78,
+    "low_stock_threshold": 10,
+    "unit_cost": 3.5
+  },
+  "Water Bottle": {
+    "stock": 96,
+    "low_stock_threshold": 10,
+    "unit_cost": 0.6
+  },
+  "Pancakes": {
+    "stock": 49,
+    "low_stock_threshold": 10,
+    "unit_cost": 2.5
+  },
+  "Bacon & Eggs": {
+    "stock": 40,
+    "low_stock_threshold": 10,
+    "unit_cost": 3.75
+  },
+  "French Toast": {
+    "stock": 48,
+    "low_stock_threshold": 10,
+    "unit_cost": 2.8
+  },
+  "Caesar Salad": {
+    "stock": 38,
+    "low_stock_threshold": 10,
+    "unit_cost": 3.0
+  },
+  "Grilled Chicken Salad": {
+    "stock": 30,
+    "low_stock_threshold": 10,
+    "unit_cost": 4.5
+  },
+  "Burger Bun": {
+    "stock": 200,
+    "low_stock_threshold": 50,
+    "unit_cost": 0.35
+  },
+  "Beef Patty": {
+    "stock": 150,
+    "low_stock_threshold": 30,
+    "unit_cost": 1.5
+  },
+  "Lettuce Leaf": {
+    "stock": 500,
+    "low_stock_threshold": 100,
+    "unit_cost": 0.1
+  },
+  "Tomato Slice": {
+    "stock": 300,
+    "low_stock_threshold": 50,
+    "unit_cost": 0.15
+  },
+  "Onion Ring": {
+    "stock": 200,
+    "low_stock_threshold": 40,
+    "unit_cost": 0.2
+  }
 }

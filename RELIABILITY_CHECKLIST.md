@@ -1,18 +1,18 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-30T07:11Z
+> Last full cycle: 2026-06-30T07:33Z
 > Total checks: 48
 > Healthy: 48 | Broken: 0 | Fixed this cycle: 5
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (07:11Z)
-- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID (07:11Z)
-- [x] users.json has at least owner PIN 1111 — Owner present, wildcard permissions (07:11Z)
-- [x] Git repo is clean (no uncommitted changes from crashes) — clean (07:11Z)
+- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (07:33Z)
+- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID (07:33Z)
+- [x] users.json has at least owner PIN 1111 — Owner present, wildcard permissions (07:33Z)
+- [x] Git repo is clean (no uncommitted changes from crashes) — clean (07:33Z)
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/clock/in works (clock in test user, verify response) — clocked in Employee 1234 at 07:11Z, clocked out ✓ (07:11Z)
 - [x] /api/clock/out works — clocked out, duration recorded (07:11Z)
-- [x] /api/items returns items — 19 items across 5 categories (06:05Z)
+- [x] /api/items returns items — 19 items across 5 categories (07:33Z)
 - [x] /api/login works with valid PIN — Owner 1111 login, token returned (07:11Z)
 - [x] /api/admin_stats returns stats — stats via POST adminPin (07:11Z)
 - [x] /api/admin_shifts returns shifts — 63 shifts returned (07:11Z)
