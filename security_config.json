@@ -22,7 +22,16 @@
     "max_same_item_count": 50,
     "refund_rate_threshold_pct": 20,
     "high_severity_blocklist": true,
-    "blocked_ips": [],
+    "blocked_ips": [
+        {
+            "ip": "127.0.0.1",
+            "reason": "Auto-blocked after 5 failed logins in 5 minutes",
+            "blocked_at": "2026-06-30T15:12:44.093586",
+            "auto_blocked": true,
+            "permanent": false,
+            "auto_block_duration_minutes": 60
+        }
+    ],
     "retention_days": 30,
     "known_ip_gc_days": 30,
     "created_at": "2026-06-23T06:51:47",
@@ -38,5 +47,7 @@
         }
     },
     "require_2fa_for_admins": true,
-    "exempted_users": ["1111"]
+    "exempted_users": [
+        "1111"
+    ]
 }

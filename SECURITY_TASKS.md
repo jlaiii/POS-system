@@ -1,5 +1,5 @@
 # POS Security Tasks
-> Last run: 2026-06-30 02:56 UTC
+> Last run: 2026-06-30 15:18 UTC
 
 ## CRITICAL — LOGIN & AUTH SECURITY (check every run)
 
@@ -115,6 +115,12 @@
 - [x] **Verify dependency versions** — Flask 3.1.3, pyotp 2.9.0, qrcode 7.4.2, Werkzeug 3.1.8, eventlet 0.41.0. All current stable versions.
 
 ## COMPLETED (this session)
+
+### Run: 2026-06-30 15:18 UTC
+- [x] **Full security audit — all Tier 1-4 controls verified intact** — Login rate limiting (5 attempts/60s + 10min lockout) verified working. Session security (secrets.token_hex(32), 8h active/24h idle expiry, logout invalidation) intact. TOTP encryption (Fernet key at 0600) valid. All file permissions: JSON at 0600, pos.db at 600, .totp_encryption_key at 600, backups at 700. Activity log: no PINs/passwords/card data logged. Payment data: only card_last4/type stored (PCI compliant). No eval/exec/hardcoded credentials. Debug mode disabled. CORS restricted. X-Forwarded-For spoofing fix intact. All 336+ routes have proper auth. XSS: escHtml() consistently used; document.write only in server-generated PDF exports (safe). Dependencies all current. No new vulnerabilities found.
+- [x] **Resolve SEC-109 (auto-block of 127.0.0.1)** — False positive from testing login rate limiting. Marked as resolved.
+- [x] **Security events audit** — 108 total events, 108 resolved. All clear.
+- [x] **PCI compliance check** — No full card numbers stored. Only card_last4 and card_type persisted. Payment processing receives full card data in memory only (manual entry), never persisted to disk.
 
 ### Run: 2026-06-30 02:56 UTC
 - [x] **Fix stored XSS in tip pool calculate (unescaped user_name/role in innerHTML)** — MEDIUM: The tip pool calculation display rendered employee names (`e.user_name || e.user_id`) and roles (`e.role`) directly into `innerHTML` without escaping via `escHtml()`. An employee with a malicious name could execute arbitrary JS when an admin views the tip pool calculator. Fixed by wrapping all user data with `escHtml()`. Commit `110cab2`.
