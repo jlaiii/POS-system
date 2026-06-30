@@ -1,13 +1,13 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-30T17:37Z
-> Total checks: 71
-> Healthy: 71 | Broken: 0 | Fixed this cycle: 17
+> Last full cycle: 2026-06-30T17:59Z
+> Total checks: 72
+> Healthy: 72 | Broken: 0 | Fixed this cycle: 17
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (17:37Z)
-- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID (17:37Z)
-- [x] users.json has at least owner PIN 1111 — Owner present, wildcard permissions (17:37Z)
-- [x] Git repo is clean (no uncommitted changes from crashes) — clean (17:37Z)
+- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (17:59Z)
+- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID (17:59Z)
+- [x] users.json has at least owner PIN 1111 — Owner present, wildcard permissions (17:59Z)
+- [x] Git repo is clean (no uncommitted changes from crashes) — clean after commit c87020a (17:59Z)
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/clock/in works (clock in test user, verify response) — Employee 1234 clocked in (518 min late), clocked out, test shift cleaned up (17:37Z)
@@ -21,7 +21,7 @@
 ## EVERY 4 HOURS
 - [x] Order lifecycle: create order → verify in orders.json → refund → verify — Created #138 (pending)→paid→refunded ✅
 - [x] User CRUD: add test user → verify → delete — Added 9001, verified, deleted ✅
-- [x] Inventory: check stock decrements on order — Coke 70→69→70 (decrement + restore via refund) ✅ | Inventory file valid, 24 items. All stock levels healthy ✓ (13:44Z)
+- [x] Inventory: check stock decrements on order — Coke 70→69→70 (decrement + restore via refund) ✅ | Inventory file valid, 24 items. All stock levels healthy ✓ (17:59Z)
 - [x] Loyalty: points earned on order — Order #139 (Coke $3) earned 3 pts, refunded, cleaned up ✅
 - [x] Cash register: open drawer ($100) → cash in ($50) → cash out ($20) → close ($130, exact match) ✅
 - [x] Kitchen display: GET /api/kitchen/queue — 1 pending order, valid data ✓ (16:32Z)
@@ -45,12 +45,13 @@
 - [x] Concurrent write test: two rapid clock-ins → verify no data loss — Two users (1234, 5678) clocked in/out concurrently, both shifts recorded ✅
 
 ## DISCOVERED (failures you've seen before — check every 2h)
-- [x] Security Watchdog leaves dirty files after each run (SECURITY_WATCHDOG.md + security_events.json) — auto-commit on SRE bot runs — CHECKED 16:54Z, committed SECURITY_WATCHDOG.md at 13dd22d ✓
+- [x] Security Watchdog leaves dirty files after each run (SECURITY_WATCHDOG.md + security_events.json) — auto-commit on SRE bot runs — CHECKED 17:59Z, committed SECURITY_WATCHDOG.md at c87020a ✓
 
 ## CURRENT OUTAGES
 _None_
 
 ## FIXES APPLIED
+- 2026-06-30T17:59Z **Security Watchdog dirty file** — SECURITY_WATCHDOG.md left dirty after Watchdog run. Committed at c87020a. Ran CRITICAL checks (Flask 200, all 15 JSON valid, PIN 1111 present) and 4H inventory check. Pushed to main.
 - 2026-06-30T17:37Z **Security Watchdog dirty file** — activity_log.json left dirty after Watchdog run. Committed at c4f5f42. Ran CRITICAL checks (Flask 200, all JSON valid, PIN 1111 present) and HOURLY check: clock/in+out (518 min late — correct). Cleaned up test shift. Pushed to main.
 - 2026-06-30T16:54Z **Security Watchdog dirty file + SRE bot run** — SECURITY_WATCHDOG.md left uncommitted after Watchdog run at 16:48 UTC. Committed at 13dd22d. Ran CRITICAL checks (Flask 200, all JSON valid, PIN 1111 present) and HOURLY checks (items GET, login via userId, admin_shifts, frontend load — all healthy). Pushed to main.
 - 2026-06-30T16:32Z **Security Watchdog dirty file + SRE bot run** — Committed activity_log.json left dirty after Watchdog run. Ran CRITICAL checks (Flask 200, all JSON valid, PIN 1111 present), HOURLY clock/in+out (453 min late — correct), 4H kitchen display (1 pending order). Cleaned up test shift. Pushed to main.
