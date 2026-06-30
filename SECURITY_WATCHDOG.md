@@ -1,11 +1,11 @@
 # POS Security Watchdog
 
-| | | | | | | | Last run: 2026-06-30T11:51 UTC
+| | | | | | | | Last run: 2026-06-30T12:18 UTC
 | | | | | | | | Total events tracked: 107 (SEC-001→SEC-108; 0 unresolved)
 | | | | | | | | Active blocks: 0 IPs
-| | | | | | | | Run result: Routine cron worker activity detected — 3 new activity_log entries (1 failed login, 2 Owner logins). No threats. Clean run.
+| | | | | | | | Run result: Clean — 2 new activity_log entries (Employee Two clock test). No threats. No new login attempts.
 
-## Current Run Findings (11:30–11:51 UTC, ~21 min window)
+## Current Run Findings (11:51–12:18 UTC, ~27 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -23,28 +23,27 @@ None.
 
 **Server**: **Healthy** (HTTP 200 on / — all endpoints responding).
 
-**Activity**: **3 new activity_log entries** since last run (11:30 UTC).
+**Activity**: **2 new activity_log entries** since last run (11:51 UTC).
 
 | Time (UTC) | Type | User | IP | Detail |
 |---|---|---|---|---|
-| 11:45:19 | login_failed | null | 127.0.0.1 | invalid_pin (curl) |
-| 11:45:19 | admin_login | 1111/Owner | 127.0.0.1 | success (curl) |
-| 11:45:31 | login | 1111/Owner | 127.0.0.1 | success (curl) |
+| 12:12:24 | clock_in | 5678/Employee Two | 127.0.0.1 | success (curl) — 132 min late |
+| 12:12:26 | clock_out | 5678/Employee Two | 127.0.0.1 | success (curl) — 0.0h duration |
 
-**Login attempts**: 2 new entries (1 failure, 1 success).
+**Login attempts**: 0 new entries. No login activity at all this window.
 
 **Active shifts**: 0. No one currently clocked in.
 
 **Orders**: No new orders this window.
 
 ### 📊 Login Security Deep-Dive
-- **Brute force check**: 1 failed login (null user) in this window from 127.0.0.1. 0 failed logins in last 5 min (11:46-11:51). Threshold (5) not reached. No auto-block needed.
-- **Account enumeration**: 1 null-user probe — well below 10-threshold for MEDIUM. Consistent with cron testing pattern.
-- **Successful-after-failure**: 1 failure followed by Owner success from same IP — only 1 failure (threshold is 3+). Pattern matches established cron worker testing behavior.
-- **Off-hours activity**: Login at 11:45 UTC (06:45 CT) — 45 minutes past off-hours cutoff (06:00 CT). NOT flagged.
-- **Cross-IP targeting**: None detected. All activity from single IP (127.0.0.1).
+- **Brute force check**: 0 failed logins in this window. 0 failed logins in last 5 min (12:13-12:18). Threshold (5) not reached. No auto-block needed.
+- **Account enumeration**: 0 null-user probes. No enumeration pattern.
+- **Successful-after-failure**: No pattern detected.
+- **Off-hours activity**: 12:12 UTC = 07:12 CT — past the 06:00 CT cutoff. Normal operating hours. NOT flagged.
+- **Cross-IP targeting**: None detected.
 - **Credential stuffing**: No pattern detected.
-- **Unusual hour**: 06:45 CT is normal operating hours.
+- **Unusual hour**: 07:12 CT is normal operating hours.
 
 ### 🔒 Security Config
 - No config changes detected this window.
@@ -62,12 +61,13 @@ None.
 - All JSON files parseable and valid.
 - All 8 accounts intact. Owner (1111) present, active, not banned.
 - No suspicious new files (.php, .sh, .exe, .bat, .jar).
-- Git: clean (no uncommitted changes).
+- Git: clean (committed activity_log.json dirty data — Employee Two clock test entries).
 
 ### ✅ Actions Taken
+- Commit dirty activity_log.json (30 lines: Employee Two clock test at 12:12).
 - 0 blocked IPs, 0 alerts fired.
 - No new SEC events created.
-- Routine cron testing activity on localhost only. No threats.
+- Routine Employee Two clock test from localhost. No threats.
 
 ## Previous Run Findings (carried forward)
 - Admin 2FA gap: Owner (1111), Manager (2222), and Manager Sarah (7788) lack 2FA despite `require_2fa_for_admins: true`. Security Sentinel handles.
@@ -75,10 +75,10 @@ None.
 
 | | | | | | | | System State | | | |
 |---|---|---|---|---|---|---|---|---|---|---|
-| | | | | | | | Current time | 2026-06-30T11:51 UTC — 06:51 CT (normal hours) |
-| | | | | | | | Activity since last run | 3 entries |
-| | | | | | | | Login attempts (this window) | 2 (1 failed, 1 success) |
-| | | | | | | | Successful logins (this window) | 2 (Owner/1111 from localhost) |
+| | | | | | | | Current time | 2026-06-30T12:18 UTC — 07:18 CT (normal hours) |
+| | | | | | | | Activity since last run | 2 entries |
+| | | | | | | | Login attempts (this window) | 0 (0 failed, 0 success) |
+| | | | | | | | Successful logins (this window) | 0 |
 | | | | | | | | Blocked IPs | 0 |
 | | | | | | | | Config changes | None |
 | | | | | | | | File integrity | JSON files valid. All 8 accounts intact. |
