@@ -1,13 +1,13 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-30T08:18Z
-> Total checks: 49
-> Healthy: 49 | Broken: 0 | Fixed this cycle: 6
+> Last full cycle: 2026-06-30T08:41Z
+> Total checks: 50
+> Healthy: 50 | Broken: 0 | Fixed this cycle: 7
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (08:18Z)
-- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID (08:18Z)
-- [x] users.json has at least owner PIN 1111 — Owner present, wildcard permissions (08:18Z)
-- [x] Git repo is clean (no uncommitted changes from crashes) — clean (08:18Z)
+- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (08:41Z)
+- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID (08:41Z)
+- [x] users.json has at least owner PIN 1111 — Owner present, wildcard permissions (08:41Z)
+- [x] Git repo is clean (no uncommitted changes from crashes) — clean (08:41Z)
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/clock/in works (clock in test user, verify response) — clocked in Employee 1234 at 08:18Z, clocked out ✓ (08:18Z)
@@ -51,6 +51,7 @@
 _None_
 
 ## FIXES APPLIED
+- 2026-06-30T08:41Z **Security Watchdog dirty files** — Committed SECURITY_WATCHDOG.md left uncommitted after Watchdog run at 08:35 UTC. Committed + pushed at fd78774.
 - 2026-06-30T08:18Z **Security Watchdog dirty files** — Committed activity_log.json + login_attempts.json left uncommitted after Watchdog run at 08:07 UTC. Committed at fb187c5.
 - 2026-06-30T07:55Z **Inventory stock decrement/restore test** — Ran 4H inventory check (last was 03:18Z, overdue). Created order #142 (1 Coke $3), verified stock 70→69→70. Committed at 73f07b2.
 - 2026-06-30T07:11Z **Security Watchdog dirty files** — SECURITY_WATCHDOG.md left uncommitted after Watchdog run at 06:53 UTC. Committed at baf2f79. Pushed to main. Also cleaned up test clock-in/out shift.
