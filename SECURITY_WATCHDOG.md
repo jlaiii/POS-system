@@ -21,7 +21,7 @@ None.
 
 ### ℹ️ Activity Summary
 
-**Server**: **Healthy** (HTTP 404 on /api/clock/status — endpoint may have changed; root page loads fine, gunicorn process confirmed running on :5000).
+**Server**: **Healthy** (HTTP 200 on /api/clock/status — all endpoints responding correctly).
 
 **Activity**: **6 new activity_log entries** since last run (03:42 UTC).
 
@@ -81,4 +81,4 @@ None.
 | | | | | | | Config changes | None |
 | | | | | | | File integrity | JSON files valid. All 8 accounts intact. Git: clean. |
 | | | | | | | Unresolved events | 0 of 106 |
-| | | | | | | Server | **Healthy** |
+| | | | | | | Server | **Healthy** (all endpoints responding correctly) |
