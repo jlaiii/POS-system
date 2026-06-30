@@ -22571,5 +22571,35 @@
             "user_name": "Owner",
             "ip": "127.0.0.1"
         }
+    },
+    {
+        "timestamp": "2026-06-30T12:12:24.634696",
+        "type": "clock_in",
+        "user_id": "5678",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee Two",
+            "clock_in_time": "2026-06-30T12:12:24.634338",
+            "late_minutes": 132,
+            "scheduled_start": "10:00"
+        }
+    },
+    {
+        "timestamp": "2026-06-30T12:12:26.993069",
+        "type": "clock_out",
+        "user_id": "5678",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee Two",
+            "clock_in_time": "2026-06-30T12:12:24.634338",
+            "clock_out_time": "2026-06-30T12:12:26.991069",
+            "duration_hours": 0.0
+        }
     }
 ]
