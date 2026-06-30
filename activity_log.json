@@ -22136,5 +22136,40 @@
             "clock_out_time": "2026-06-30T07:11:57.259468",
             "duration_hours": 0.0
         }
+    },
+    {
+        "timestamp": "2026-06-30T07:56:41.883666",
+        "type": "submit_order",
+        "user_id": null,
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "order_id": 142,
+            "subtotal": 3.0,
+            "tax_amount": 0.25,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 3.25,
+            "payment_method": "cash",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-30T07:56:41.940820",
+        "type": "refund_order",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "order_id": 142,
+            "reason": "Reliability bot \u2014 inventory test",
+            "refunded_by_name": "Owner",
+            "order_total": 3.25,
+            "inventory_restored": [
+                "Coke x1"
+            ]
+        }
     }
 ]
