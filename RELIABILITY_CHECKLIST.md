@@ -1,13 +1,13 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-30T10:33Z
+> Last full cycle: 2026-06-30T11:01Z
 > Total checks: 56
-> Healthy: 56 | Broken: 0 | Fixed this cycle: 12
+> Healthy: 56 | Broken: 0 | Fixed this cycle: 13
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (10:27Z)
-- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID (10:27Z)
-- [x] users.json has at least owner PIN 1111 — Owner present, wildcard permissions (10:27Z)
-- [x] Git repo is clean (no uncommitted changes from crashes) — clean after commit e844f49 (10:33Z)
+- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (11:01Z)
+- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID (11:01Z)
+- [x] users.json has at least owner PIN 1111 — Owner present, wildcard permissions (11:01Z)
+- [x] Git repo is clean (no uncommitted changes from crashes) — clean after commit b5a093e (11:01Z)
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/clock/in works (clock in test user, verify response) — Employee 5678 clocked in (33 min late), clocked out, test shift cleaned up (10:33Z)
@@ -51,6 +51,7 @@
 _None_
 
 ## FIXES APPLIED
+- 2026-06-30T11:01Z **Security Watchdog dirty files** — Watchdog run at 10:56 UTC left activity_log.json (+39) and login_attempts.json (+23) uncommitted. Committed + pushed at b5a093e.
 - 2026-06-30T10:33Z **Watchdog dirty files + SRE bot test cleanup** — Committed activity_log.json (+93) + login_attempts.json (+23) left uncommitted after Watchdog run. Clocked in/out Employee 5678 to verify /api/clock/in+out, cleaned up test shift. Committed + pushed at e844f49.
 - 2026-06-30T09:27Z **23 stale test shifts cleaned up + Watchdog dirty file** — Cleaned up 23 accumulated test shifts from shift_log.json (Employee 1234 SRE bot tests over past week). Committed activity_log.json (+43 lines) left dirty by Security Watchdog at e3401ca.
 - 2026-06-30T09:05Z **Security Watchdog dirty files** — Committed activity_log.json + login_attempts.json + orders.json (stale auto-cancel) left uncommitted after workers. Committed + pushed at 2e1766c.
