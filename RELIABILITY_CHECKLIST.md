@@ -1,22 +1,22 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-30T07:55Z
+> Last full cycle: 2026-06-30T08:18Z
 > Total checks: 49
-> Healthy: 49 | Broken: 0 | Fixed this cycle: 5
+> Healthy: 49 | Broken: 0 | Fixed this cycle: 6
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (07:55Z)
-- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID (07:55Z)
-- [x] users.json has at least owner PIN 1111 — Owner present, wildcard permissions (07:55Z)
-- [x] Git repo is clean (no uncommitted changes from crashes) — clean (07:55Z)
+- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (08:18Z)
+- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID (08:18Z)
+- [x] users.json has at least owner PIN 1111 — Owner present, wildcard permissions (08:18Z)
+- [x] Git repo is clean (no uncommitted changes from crashes) — clean (08:18Z)
 
 ## HOURLY (check if last check was >1h ago)
-- [x] /api/clock/in works (clock in test user, verify response) — clocked in Employee 1234 at 07:11Z, clocked out ✓ (07:11Z)
-- [x] /api/clock/out works — clocked out, duration recorded (07:11Z)
-- [x] /api/items returns items — 19 items across 5 categories (07:33Z)
-- [x] /api/login works with valid PIN — Owner 1111 login, token returned (07:11Z)
-- [x] /api/admin_stats returns stats — stats via POST adminPin (07:11Z)
-- [x] /api/admin_shifts returns shifts — 63 shifts returned (07:11Z)
-- [x] Frontend loads (curl index.html, verify it's HTML not error) — HTML 200 OK ✓ (07:11Z)
+- [x] /api/clock/in works (clock in test user, verify response) — clocked in Employee 1234 at 08:18Z, clocked out ✓ (08:18Z)
+- [x] /api/clock/out works — clocked out, duration recorded (08:18Z)
+- [x] /api/items returns items — 19 items across 5 categories (08:18Z)
+- [x] /api/login works with valid PIN — Owner 1111 login via userId, token + perms returned (08:18Z)
+- [x] /api/admin_stats returns stats — stats via POST adminPin, stats returned ✓ (08:18Z)
+- [x] /api/admin_shifts returns shifts — 64 shifts returned (08:18Z)
+- [x] Frontend loads (curl index.html, verify it's HTML not error) — HTML 200 OK, 1,375,342 bytes ✓ (08:18Z)
 
 ## EVERY 4 HOURS
 - [x] Order lifecycle: create order → verify in orders.json → refund → verify — Created #138 (pending)→paid→refunded ✅
@@ -45,12 +45,13 @@
 - [x] Concurrent write test: two rapid clock-ins → verify no data loss — Two users (1234, 5678) clocked in/out concurrently, both shifts recorded ✅
 
 ## DISCOVERED (failures you've seen before — check every 2h)
-- [x] Security Watchdog leaves dirty files after each run (SECURITY_WATCHDOG.md + security_events.json) — auto-commit on SRE bot runs — CHECKED 07:55Z, committed + pushed ✓
+- [x] Security Watchdog leaves dirty files after each run (SECURITY_WATCHDOG.md + security_events.json) — auto-commit on SRE bot runs — CHECKED 08:18Z, committed + pushed ✓
 
 ## CURRENT OUTAGES
 _None_
 
 ## FIXES APPLIED
+- 2026-06-30T08:18Z **Security Watchdog dirty files** — Committed activity_log.json + login_attempts.json left uncommitted after Watchdog run at 08:07 UTC. Committed at fb187c5.
 - 2026-06-30T07:55Z **Inventory stock decrement/restore test** — Ran 4H inventory check (last was 03:18Z, overdue). Created order #142 (1 Coke $3), verified stock 70→69→70. Committed at 73f07b2.
 - 2026-06-30T07:11Z **Security Watchdog dirty files** — SECURITY_WATCHDOG.md left uncommitted after Watchdog run at 06:53 UTC. Committed at baf2f79. Pushed to main. Also cleaned up test clock-in/out shift.
 - 2026-06-30T05:42Z **Security Watchdog dirty files** — Watchdog run left activity_log.json (+39), login_attempts.json (+23), security_events.json (+15), RELIABILITY_CHECKLIST.md (+10/-10) uncommitted. Committed + pushed.
