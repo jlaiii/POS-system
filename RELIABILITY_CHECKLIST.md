@@ -1,22 +1,22 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-30T03:18:27Z
+> Last full cycle: 2026-06-30T03:40:27Z
 > Total checks: 43
 > Healthy: 43 | Broken: 0 | Fixed this cycle: 2
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (03:18Z)
-- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID (03:18Z)
-- [x] users.json has at least owner PIN 1111 — Owner present, wildcard permissions (03:18Z)
-- [x] Git repo is clean (no uncommitted changes from crashes) — clean (03:18Z)
+- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (03:40Z)
+- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID (03:40Z)
+- [x] users.json has at least owner PIN 1111 — Owner present, wildcard permissions (03:40Z)
+- [x] Git repo is clean (no uncommitted changes from crashes) — clean (03:40Z)
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/clock/in works (clock in test user, verify response) — clocked in Employee 1234, late detection works
 - [x] /api/clock/out works — clocked out, duration recorded
-- [x] /api/items returns items — Breakfast, Lunch categories returned
-- [x] /api/login works with valid PIN — Owner 1111 login successful, session token returned
-- [x] /api/admin_stats returns stats — stats response received (keys: message, stats)
+- [x] /api/items returns items (GET) — 19 items across 5 categories (Breakfast, Drinks, Foods, Salads, Snacks) (03:40Z)
+- [x] /api/login works with valid PIN — Owner 1111 login successful, session token returned (03:40Z)
+- [x] /api/admin_stats returns stats — stats: average_sale, backup_count, backup_health, etc. (03:40Z)
 - [x] /api/admin_shifts returns shifts — 59 shifts returned
-- [x] Frontend loads (curl index.html, verify it's HTML not error) — HTML with <!DOCTYPE html> ✓ (03:18Z)
+- [x] Frontend loads (curl index.html, verify it's HTML not error) — HTML with <!DOCTYPE html> ✓ (03:40Z)
 
 ## EVERY 4 HOURS
 - [x] Order lifecycle: create order → verify in orders.json → refund → verify — Created #138 (pending)→paid→refunded ✅
