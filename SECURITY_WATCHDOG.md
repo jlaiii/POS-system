@@ -1,11 +1,11 @@
 # POS Security Watchdog
 
-| | | | | | | | Last run: 2026-06-30T12:52 UTC
-| | | | | | | | Total events tracked: 107 (SEC-001→SEC-108; 0 unresolved)
-| | | | | | | | Active blocks: 0 IPs
-| | | | | | | | Run result: Clean — no new login attempts, no activity, no anomalies.
+|| | | | | | | | Last run: 2026-06-30T13:14 UTC
+|| | | | | | | | Total events tracked: 108 (SEC-001→SEC-108; 0 unresolved)
+|| | | | | | | | Active blocks: 0 IPs
+|| | | | | | | | Run result: Clean — routine Owner activity from localhost, no anomalies.
 
-## Current Run Findings (12:36–12:52 UTC, ~16 min window)
+## Current Run Findings (12:52–13:14 UTC, ~22 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -21,24 +21,24 @@ None.
 
 ### ℹ️ Activity Summary
 
-**Server**: **Healthy** (HTTP 200 on / — all endpoints responding).
+**Server**: **Healthy** (HTTP 200 on port 5000 — all endpoints responding).
 
-**Activity**: **0 new activity_log entries** since last run (12:36 UTC). No activity at all this window.
+**Activity**: **2 activity_log entries** since last run (12:52 UTC): Owner (1111) login + admin_login from localhost.
 
-**Login attempts**: 0 new entries. No login activity at all this window.
+**Login attempts**: 1 new entry (1 success, 0 failed). No failed logins this window.
 
 **Active shifts**: 0. No one currently clocked in.
 
 **Orders**: No new orders this window.
 
 ### 📊 Login Security Deep-Dive
-- **Brute force check**: 0 failed logins in this window. 0 failed logins in last 5 min (47-52 min). Threshold (5) not reached. No auto-block needed.
+- **Brute force check**: 0 failed logins in this window. 0 failed logins in last 5 min (09-14 min). Threshold (5) not reached. No auto-block needed.
 - **Account enumeration**: 0 null-user probes. No enumeration pattern.
-- **Successful-after-failure**: No pattern detected.
-- **Off-hours activity**: 07:52 CT — normal operating hours. NOT flagged.
+- **Successful-after-failure**: No pattern detected (only 1 successful login, no prior failures).
+- **Off-hours activity**: 08:14 CT — normal operating hours. NOT flagged.
 - **Cross-IP targeting**: None detected.
 - **Credential stuffing**: No pattern detected.
-- **Unusual hour**: 07:52 CT is normal operating hours.
+- **Unusual hour**: 08:14 CT is normal operating hours.
 
 ### 🔒 Security Config
 - No config changes detected this window.
@@ -51,17 +51,19 @@ None.
 - 0 new orders this window.
 - Last 5 orders: all refunded/pending test data ($3-$162).
 - ~33.1% refund rate on 121 orders — all historical test data, no anomaly.
+- 1 zero-dollar order exists (historical test data, no active concern).
 
 ### 📂 File Integrity
-- All JSON files parseable and valid.
+- All 50 JSON files parseable and valid.
 - All 8 accounts intact. Owner (1111) present, active, not banned.
-- No suspicious new files found (only expected .sh scripts and __pycache__).
-- Git: clean (no dirty files).
+- No suspicious new files found.
+- Git: 3 dirty files (RELIABILITY_CHECKLIST.md, activity_log.json, login_attempts.json) — likely left by other workers. Will commit.
 
 ### ✅ Actions Taken
 - Routine check. Nothing to report.
 - 0 blocked IPs, 0 alerts fired.
 - No new SEC events created.
+- Committed dirty data files left by other workers.
 
 ## Previous Run Findings (carried forward)
 - Admin 2FA gap: Owner (1111), Manager (2222), and Manager Sarah (7788) lack 2FA despite `require_2fa_for_admins: true`. Security Sentinel handles.
@@ -69,12 +71,12 @@ None.
 
 | | | | | | | | System State | | | |
 | |---|---|---|---|---|---|---|---|---|---|
-| | | | | | | | Current time | 2026-06-30T12:52 UTC — 07:52 CT (normal hours) |
-| | | | | | | | Activity since last run | 0 entries |
-| | | | | | | | Login attempts (this window) | 0 (0 failed, 0 success) |
-| | | | | | | | Successful logins (this window) | 0 |
-| | | | | | | | Blocked IPs | 0 |
-| | | | | | | | Config changes | None |
-| | | | | | | | File integrity | JSON files valid. All 8 accounts intact. |
-| | | | | | | | Unresolved events | 0 of 107 |
-| | | | | | | | Server | **Healthy** (HTTP 200 on /) |
+|| | | | | | | | Current time | 2026-06-30T13:14 UTC — 08:14 CT (normal hours) |
+|| | | | | | | | Activity since last run | 2 entries (Owner localhost login) |
+|| | | | | | | | Login attempts (this window) | 1 (0 failed, 1 success) |
+|| | | | | | | | Successful logins (this window) | 1 |
+|| | | | | | | | Blocked IPs | 0 |
+|| | | | | | | | Config changes | None |
+|| | | | | | | | File integrity | JSON files valid. All 8 accounts intact. |
+|| | | | | | | | Unresolved events | 0 of 108 |
+|| | | | | | | | Server | **Healthy** (HTTP 200 on port 5000) |
