@@ -1,11 +1,11 @@
 # POS Security Watchdog
 
-| | | | | | | Last run: 2026-06-30T05:20 UTC
+| | | | | | | Last run: 2026-06-30T05:53 UTC
 | | | | | | | Total events tracked: 107 (SEC-002→SEC-107; 0 unresolved)
 | | | | | | | Active blocks: 0 IPs
-| | | | | | | Run result: All clear — no activity since last run, no threats detected.
+| | | | | | | Run result: All clear — only cron worker test activity, no threats.
 
-## Current Run Findings (04:52–05:20 UTC, ~28 min window)
+## Current Run Findings (05:20–05:53 UTC, ~33 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -23,19 +23,24 @@ None.
 
 **Server**: **Healthy** (HTTP 200 on / — all endpoints responding correctly).
 
-**Activity**: **0 new activity_log entries** since last run (04:52 UTC). Last activity at 04:46:23 UTC (Employee One clock_out).
+**Activity**: **3 new activity_log entries** since last run (05:20 UTC).
+- 05:42:52 — login_failed (null user, 127.0.0.1, invalid PIN test)
+- 05:43:15 — login success (Owner 1111, 127.0.0.1)
+- 05:43:24 — admin_login (Owner 1111, 127.0.0.1)
 
-**Login attempts**: **0 new entries** in login_attempts.json since last run. Last attempt at 04:45:58 UTC (Owner success).
+**Login attempts**: **2 new entries** in login_attempts.json since last run.
+- 05:42:52 — failed (null user, 127.0.0.1, invalid_pin — single probe only)
+- 05:43:15 — success (Owner 1111, 127.0.0.1)
 
 **Active shifts**: 0. No one currently clocked in.
 
 **Orders**: No new orders. 0 new refunds. 0 cleared orders.
 
 ### 📊 Login Security Deep-Dive
-- **Brute force check**: 0 failed attempts in this window. No attack detected.
-- **Account enumeration**: 0 null-user failures. No probing detected.
-- **Successful-after-failure**: No new attempts in this window.
-- **Off-hours activity**: Current time 05:20 UTC (00:20 CT, off-hours window 22:00-06:00). No new activity to flag.
+- **Brute force check**: 1 failed attempt in this window — isolated single probe from 127.0.0.1 (null user). Not enough for threshold (5). No attack detected.
+- **Account enumeration**: 1 null-user failure (invalid PIN test) — single event, no pattern. No systematic probing.
+- **Successful-after-failure**: 1 failed (null user) then 1 success (Owner 1111) — unrelated events. The failed was a wrong-PIN test, the success was Owner logging in with correct PIN. Not a credential compromise.
+- **Off-hours activity**: Current time 05:53 UTC (00:53 CT, off-hours window 22:00-06:00). Owner login at 00:43 CT from known IP 127.0.0.1 — expected cron worker behavior per established pattern.
 - **Cross-IP targeting**: None detected.
 - **Credential stuffing**: No pattern detected.
 
@@ -54,12 +59,13 @@ None.
 - All 49 JSON files parseable and valid.
 - All 8 accounts intact. Owner (1111) present, active, not banned.
 - No suspicious new files.
+- Git: clean — no uncommitted changes.
 
 ### ✅ Actions Taken
 - 0 blocked IPs, 0 alerts fired.
 - No new SEC events created.
-- Committed pending changes from previous run (SECURITY_WATCHDOG.md + security_events.json).
-- All clear — no activity since last run.
+- No uncommitted changes to stage.
+- All clear — only cron worker test activity, no threats.
 
 ## Previous Run Findings (carried forward)
 - Admin 2FA gap: Owner (1111), Manager (2222), and Manager Sarah (7788) lack 2FA despite `require_2fa_for_admins: true`. Security Sentinel handles.
@@ -67,10 +73,10 @@ None.
 
 | | | | | | | System State | | | |
 |---|---|---|---|---|---|---|---|---|---|---|
-| | | | | | | Current time | 2026-06-30T05:20 UTC — 00:20 CT (off-hours) |
-| | | | | | | Activity since last run | 0 entries — no new activity |
-| | | | | | | Login attempts (this window) | 0 |
-| | | | | | | Successful logins (this window) | 0 |
+| | | | | | | Current time | 2026-06-30T05:53 UTC — 00:53 CT (off-hours) |
+| | | | | | | Activity since last run | 3 entries — 2 logins, 1 failed test |
+| | | | | | | Login attempts (this window) | 2 (1 failed, 1 success) |
+| | | | | | | Successful logins (this window) | 1 (Owner, localhost) |
 | | | | | | | Blocked IPs | 0 |
 | | | | | | | Config changes | None |
 | | | | | | | File integrity | JSON files valid. All 8 accounts intact. |
