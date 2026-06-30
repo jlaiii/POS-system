@@ -1,11 +1,11 @@
 # POS Security Watchdog
 
-| | | | | | | | Last run: 2026-06-30T12:18 UTC
+| | | | | | | | Last run: 2026-06-30T12:36 UTC
 | | | | | | | | Total events tracked: 107 (SEC-001→SEC-108; 0 unresolved)
 | | | | | | | | Active blocks: 0 IPs
-| | | | | | | | Run result: Clean — 2 new activity_log entries (Employee Two clock test). No threats. No new login attempts.
+| | | | | | | | Run result: Clean — no new login attempts, no activity, no anomalies.
 
-## Current Run Findings (11:51–12:18 UTC, ~27 min window)
+## Current Run Findings (12:18–12:36 UTC, ~18 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -23,12 +23,7 @@ None.
 
 **Server**: **Healthy** (HTTP 200 on / — all endpoints responding).
 
-**Activity**: **2 new activity_log entries** since last run (11:51 UTC).
-
-| Time (UTC) | Type | User | IP | Detail |
-|---|---|---|---|---|
-| 12:12:24 | clock_in | 5678/Employee Two | 127.0.0.1 | success (curl) — 132 min late |
-| 12:12:26 | clock_out | 5678/Employee Two | 127.0.0.1 | success (curl) — 0.0h duration |
+**Activity**: **0 new activity_log entries** since last run (12:18 UTC). No activity at all this window.
 
 **Login attempts**: 0 new entries. No login activity at all this window.
 
@@ -37,13 +32,13 @@ None.
 **Orders**: No new orders this window.
 
 ### 📊 Login Security Deep-Dive
-- **Brute force check**: 0 failed logins in this window. 0 failed logins in last 5 min (12:13-12:18). Threshold (5) not reached. No auto-block needed.
+- **Brute force check**: 0 failed logins in this window. 0 failed logins in last 5 min (31-36 min). Threshold (5) not reached. No auto-block needed.
 - **Account enumeration**: 0 null-user probes. No enumeration pattern.
 - **Successful-after-failure**: No pattern detected.
-- **Off-hours activity**: 12:12 UTC = 07:12 CT — past the 06:00 CT cutoff. Normal operating hours. NOT flagged.
+- **Off-hours activity**: 07:36 CT — normal operating hours. NOT flagged.
 - **Cross-IP targeting**: None detected.
 - **Credential stuffing**: No pattern detected.
-- **Unusual hour**: 07:12 CT is normal operating hours.
+- **Unusual hour**: 07:36 CT is normal operating hours.
 
 ### 🔒 Security Config
 - No config changes detected this window.
@@ -53,30 +48,29 @@ None.
 - 2FA gap: Owner (1111), Manager (2222), and Manager Sarah (7788) still lack 2FA — known issue for Security Sentinel.
 
 ### 💰 Financial Check / Order Anomaly Scan
-- No new orders this window.
+- 0 new orders this window.
 - Last 5 orders: all refunded/pending test data ($3-$162).
-- 95.9% refund rate on 121 orders — all historical test data, no anomaly.
+- ~95.9% refund rate on 121 orders — all historical test data, no anomaly.
 
 ### 📂 File Integrity
 - All JSON files parseable and valid.
 - All 8 accounts intact. Owner (1111) present, active, not banned.
 - No suspicious new files (.php, .sh, .exe, .bat, .jar).
-- Git: clean (committed activity_log.json dirty data — Employee Two clock test entries).
+- Git: clean (no dirty files).
 
 ### ✅ Actions Taken
-- Commit dirty activity_log.json (30 lines: Employee Two clock test at 12:12).
+- Routine check. Nothing to report.
 - 0 blocked IPs, 0 alerts fired.
 - No new SEC events created.
-- Routine Employee Two clock test from localhost. No threats.
 
 ## Previous Run Findings (carried forward)
 - Admin 2FA gap: Owner (1111), Manager (2222), and Manager Sarah (7788) lack 2FA despite `require_2fa_for_admins: true`. Security Sentinel handles.
 - Historical refund rate ~95.9% — all test data, no real customer orders.
 
 | | | | | | | | System State | | | |
-|---|---|---|---|---|---|---|---|---|---|---|
-| | | | | | | | Current time | 2026-06-30T12:18 UTC — 07:18 CT (normal hours) |
-| | | | | | | | Activity since last run | 2 entries |
+| ---|---|---|---|---|---|---|---|---|---|---|
+| | | | | | | | Current time | 2026-06-30T12:36 UTC — 12:36 CT (normal hours) |
+| | | | | | | | Activity since last run | 0 entries |
 | | | | | | | | Login attempts (this window) | 0 (0 failed, 0 success) |
 | | | | | | | | Successful logins (this window) | 0 |
 | | | | | | | | Blocked IPs | 0 |
