@@ -767,6 +767,12 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 
 - [ ] **Kitchen display still shows order_id instead of order_number in some cases** — The previous Production Auditor run claimed to fix this, but the fix was never committed. The `renderKitchenOrderCard` in index.html still uses `oid` (resolved to `order_id`) as the displayed order number. Kitchen staff see internal DB IDs instead of human-readable order numbers. While the kitchen queue API returns both fields, the frontend renders the wrong one. [Production Auditor — Workflow A: verified kitchen queue returns order_number correctly, but needs frontend fix to display it.]
 
+- [ ] **40px touch targets on 7+ top-bar and cart buttons — 48px WCAG minimum not met** — Theme toggle, language toggle, clock in/out, start break, change PIN, 2FA setup, and coupon apply buttons all use `min-height: 40px` instead of the 48px WCAG touch target minimum. On a restaurant tablet, these frequently-used buttons are harder to tap accurately than the rest of the UI which uses `--tap: 48px`. Lines 708-713, 772, 782 in index.html. [Production Auditor — Workflow B: verified via CSS audit.]
+
+- [ ] **Test data artifacts in shift_log.json show employees "736 minutes late" — pollutes real timesheet** — Employee Two has `late_minutes: 736` and `late_minutes: 796` (over 12 hours) from Reliability Bot testing at non-standard hours. A real manager seeing "13 hours late" would be confused. Fix: cap late_minutes at a reasonable maximum (e.g., 480 min = 8 hours) or flag absurd values. [Production Auditor — Workflow B: exported shifts CSV and found 736/796 min late values.]
+
+- [ ] **Owner (1111) also has force_pin_change: true — same bypass issue as Employee Two** — Same as above. Both the Owner (1111) and Employee Two (5678) have `force_pin_change: true` in users.json. The API warns but doesn't enforce. Merge this with the existing force_pin_change task to cover both accounts. [Production Auditor — Workflow B: Owner login returned force_pin_change_required: true, but all operations work fine.]
+
 ### Priority: LOW
 
 - [ ] **Add tip prompt to submit_order workflow** — The submit_order API accepts `tip_amount` (defaults to $0), but there's no enforced tip entry step in the API flow. In a real restaurant, every card transaction should prompt for a tip. Add tip selection (15%/18%/20%/custom) as a required step before submitting payment. [Production Auditor — Workflow A: submitted order with $0 tip, no prompt.]

@@ -1,7 +1,7 @@
 # POS Production Readiness Audit
-> Last run: 2026-06-30 03:16 CT
-> Overall readiness: 62% (HIGH issues: 14, MEDIUM: 18)
-> Workflow tested this run: D (Customer-facing experience — kiosk mode, customer display, pickup display, tablet pages, PWA audit)
+> Last run: 2026-06-30 15:30 CT
+> Overall readiness: 63% (HIGH issues: 14, MEDIUM: 20)
+> Workflow tested this run: B (Manager closing shift — admin stats, cash drawer, pay period, shift audit, CSV export)
 
 ## BLOCKERS (can't go live with these)
 
@@ -65,6 +65,12 @@
 
 - [ ] **Login returns force_pin_change_required: true for Employee Two** — Employee Two (PIN 5678) has `force_pin_change: true` in users.json. The API login returns this flag, but it doesn't block clock-in or order submission. In a real restaurant, this means a user who's supposed to change their PIN can still clock in and take orders without doing so. Either the flag should block operations or it's misleading. [NEW]
 
+- [ ] **Owner (1111) also has force_pin_change: true — can bypass by just not changing PIN** — Same as above for the Owner account. `force_pin_change: true` in users.json. The system warns but doesn't enforce. [NEW - Workflow B]
+
+- [ ] **40px touch targets on 7+ top-bar and cart buttons — 48px WCAG minimum not met** — Theme toggle, language toggle, clock in/out, start break, change PIN, 2FA setup, and coupon apply buttons all have `min-height: 40px` instead of the 48px WCAG touch target minimum. On a tablet held by a waiter, these are harder to tap accurately. Lines 708-713, 772, 782 in index.html. [NEW - Workflow B]
+
+- [ ] **Test data artifacts in shift_log.json show employees "736 minutes late" — pollutes real timesheet data** — Employee Two has `late_minutes: 736` and `late_minutes: 796` (over 12 hours) from Reliability Bot testing at non-standard hours. A real manager seeing an employee 13 hours late would be confused. These are from system testing with `scheduled_start: "09:00"` but clock-in at 22:15. Either test shifts should be cleaned up or late detection should cap at reasonable values (e.g., max 480 min = 8 hours). [NEW - Workflow B]
+
 - [ ] **No tip prompt during submit_order API** — The submit_order endpoint accepts `tip_amount` (default 0) but there's no enforced tip entry step in the API workflow. In a real restaurant, every card transaction should prompt for a tip. [NEW]
 
 - [ ] **Order submission response lacks employee attribution** — The submit_order response returns `order_id` and `order_number` but no employee name or ID confirmation. The waiter has no confirmation of WHO submitted the order. [NEW]
@@ -85,11 +91,13 @@
 
 ## FIXED (this session)
 
+- [x] **8 standalone tablet pages missing PWA meta tags — now addable to home screen as standalone web apps** — tablet.html, customer-display.html, customer-login.html, feedback.html, kitchen.html, offline.html, drivethrough.html, and pickup-display.html all lacked `apple-mobile-web-app-capable`, `apple-mobile-web-app-status-bar-style`, manifest link, and most lacked `theme-color`. These pages are designed for wall-mounted tablets but couldn't be added to home screen as standalone PWAs. Fixed: added all missing meta tags + manifest link to all 8 pages. Commit: (pending push).
+
 - [x] **Kiosk pay and order lookup accepted payment for refunded/voided orders — security fix** — Both `/api/orders/kiosk_pay` and `/api/orders/lookup` only checked for `cancelled` status before allowing payment. Refunded and voided orders passed through. Fixed: added `refunded` and `voided` status checks to both endpoints. Verified: kiosk paying order #120 (refunded) now returns 409 with "was refunded and cannot be paid." Commit: `49ba79d`.
 
 - [x] **4 standalone pages had user-scalable=no in viewport meta — breaks accessibility zoom** — customer-login.html, drivethrough.html, feedback.html, and offline.html still had `user-scalable=no` (bad for accessibility, users can't zoom). Changed to `maximum-scale=5.0`. Commit: `49ba79d`.
 
-- [x] **Workflow D tested end-to-end (Customer-facing experience)** — Tested kiosk mode, customer display update/status, kiosk pay, order lookup, pickup display, tablet pages, drive-through display, feedback page. Verified: customer display uses shared global (confirmed overwrite bug), kiosk pay accepted refunded orders (now fixed), PWA meta tags missing on 6 standalone pages, 4 pages had user-scalable=no. 5 new issues documented.
+- [x] **Workflow B tested end-to-end (Manager closing shift)** — Tested admin login (session token-based auth), admin_stats (correctly returns stats but raw_orders payload is 121 orders = ~150KB), cash drawer status/history/report (11 sessions, 5 with uncommented variance), pay period summary, CSV exports with date filtering, clock status. 4 new issues documented (Owner force_pin_change too, 40px touch targets, test data artifacts).
 
 ## PREVIOUSLY FIXED (archive)
 
