@@ -23077,5 +23077,172 @@
             "ip": "127.0.0.1",
             "attempt": 10
         }
+    },
+    {
+        "timestamp": "2026-06-30T15:26:33.559035",
+        "type": "clock_in",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee One",
+            "clock_in_time": "2026-06-30T15:26:33.558830",
+            "late_minutes": 387,
+            "scheduled_start": "09:00"
+        }
+    },
+    {
+        "timestamp": "2026-06-30T15:26:38.667291",
+        "type": "clock_out",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee One",
+            "clock_in_time": "2026-06-30T15:26:33.558830",
+            "clock_out_time": "2026-06-30T15:26:38.665339",
+            "duration_hours": 0.0
+        }
+    },
+    {
+        "timestamp": "2026-06-30T15:28:32.962199",
+        "type": "login_failed",
+        "user_id": null,
+        "user_role": "unknown",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed",
+            "method": "pin",
+            "ip": "127.0.0.1",
+            "attempt": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-30T15:28:34.101435",
+        "type": "admin_login",
+        "user_id": null,
+        "user_role": "unauthorized",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed"
+        }
+    },
+    {
+        "timestamp": "2026-06-30T15:28:39.570718",
+        "type": "login_failed",
+        "user_id": null,
+        "user_role": "unknown",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed",
+            "method": "pin",
+            "ip": "127.0.0.1",
+            "attempt": 1
+        }
+    },
+    {
+        "timestamp": "2026-06-30T15:28:47.436110",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-30T15:28:52.357333",
+        "type": "admin_login",
+        "user_id": null,
+        "user_role": "unauthorized",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed"
+        }
+    },
+    {
+        "timestamp": "2026-06-30T15:29:06.809854",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-30T15:29:09.392445",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-30T15:29:16.155604",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
+    },
+    {
+        "timestamp": "2026-06-30T15:29:40.236697",
+        "type": "timesheet_config_updated",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "config": {
+                "overtime_daily_threshold": 8,
+                "overtime_weekly_threshold": 40,
+                "late_grace_minutes": 5,
+                "max_staff_off_per_day": 3,
+                "auto_approve_threshold_days": 14,
+                "offsite_backup": {
+                    "enabled": false,
+                    "host": "",
+                    "path": "",
+                    "ssh_key": ""
+                },
+                "data_retention": {
+                    "activity_log_days": 90,
+                    "login_attempts_days": 30
+                },
+                "comp_config": {
+                    "employee_meal_limit": 15.0,
+                    "daily_comp_cap": 50.0
+                },
+                "course_delays": {
+                    "appetizer": 0,
+                    "main": 15,
+                    "dessert": 20,
+                    "side": 0
+                },
+                "stale_order_hours": 24,
+                "pending_order_alert_threshold": 10,
+                "discount_approval_threshold": 0
+            }
+        }
     }
 ]
