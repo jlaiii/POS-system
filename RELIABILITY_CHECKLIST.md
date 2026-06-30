@@ -1,22 +1,22 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-30T15:26Z
+> Last full cycle: 2026-06-30T15:47Z
 > Total checks: 61
 > Healthy: 61 | Broken: 0 | Fixed this cycle: 14
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (15:26Z)
-- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID (15:26Z)
-- [x] users.json has at least owner PIN 1111 — Owner present, wildcard permissions (15:26Z)
-- [x] Git repo is clean (no uncommitted changes from crashes) — clean (15:26Z)
+- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (15:47Z)
+- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID (15:47Z)
+- [x] users.json has at least owner PIN 1111 — Owner present, wildcard permissions (15:47Z)
+- [x] Git repo is clean (no uncommitted changes from crashes) — clean (15:47Z)
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/clock/in works (clock in test user, verify response) — Employee 1234 clocked in (387 min late), clocked out, test shift cleaned up (15:26Z)
 - [x] /api/clock/out works — clocked out Employee 1234, duration 0.0h recorded (15:26Z)
-- [x] /api/items returns items (GET) — Items by category, valid data ✓ (14:37Z)
-- [x] /api/login works with valid PIN — Owner 1111 login, session_token + perms returned (14:37Z)
-- [x] /api/admin_stats returns stats — stats via POST adminPin, stats returned ✓ (14:37Z)
-- [x] /api/admin_shifts returns shifts — 42 shifts returned ✓ (14:37Z)
-- [x] Frontend loads (curl index.html, verify it's HTML not error) — HTML 200 OK, 1,359,284 bytes ✓ (14:37Z)
+- [x] /api/items returns items (GET) — Breakfast, Drinks, Foods, Salads, Snacks ✓ (15:47Z)
+- [x] /api/login works with valid PIN — Owner 1111 login via userId, session_token + perms returned ✓ (15:47Z)
+- [x] /api/admin_stats returns stats — stats via POST adminPin, stats returned ✓ (15:47Z)
+- [x] /api/admin_shifts returns shifts — 42 shifts returned ✓ (15:47Z)
+- [x] Frontend loads (curl index.html, verify it's HTML not error) — HTML 200 OK, 1,375,342 bytes ✓ (15:47Z)
 
 ## EVERY 4 HOURS
 - [x] Order lifecycle: create order → verify in orders.json → refund → verify — Created #138 (pending)→paid→refunded ✅
@@ -34,11 +34,11 @@
 - [x] Offline queue: POST /api/sync_orders — endpoint exists, returns 'No orders provided' ✓
 
 ## EVERY 12 HOURS
-- [x] Disk space check: df -h, alert if >80% full — 39% used ✓ (09:05Z)
-- [x] Memory check: free -m, alert if swap used — 38% RAM, no swap used ✓ (09:05Z)
-- [x] Backup integrity: verify latest backup is valid JSON and not empty — 49 JSON files valid, DB backup present ✓ (09:05Z)
-- [x] app.py syntax check (python3 -m py_compile app.py) — SYNTAX OK ✓ (09:05Z)
-- [x] index.html size check (alert if shrunk dramatically — possible corruption) — 1,375,342 bytes, normal ✓ (09:05Z)
+- [x] Disk space check: df -h, alert if >80% full — 39% used ✓ (15:47Z)
+- [x] Memory check: free -m, alert if swap used — 36% RAM, no swap used ✓ (15:47Z)
+- [x] Backup integrity: verify latest backup is valid JSON and not empty — 50 JSON files valid (tar.gz), DB backup 569KB ✓ (15:47Z)
+- [x] app.py syntax check (python3 -m py_compile app.py) — SYNTAX OK ✓ (15:47Z)
+- [x] index.html size check (alert if shrunk dramatically — possible corruption) — 1,375,342 bytes, normal ✓ (15:47Z)
 - [x] Full app restart test: kill Flask → restart → verify all critical endpoints — 2026-06-30T14:13Z, PASSED (killed python3 app.py, restarted, verified /api/health, /api/items, /api/kitchen/queue, /api/pickup-display/queue, /api/login, /api/admin_stats, /api/admin_shifts, /api/clock/status all 200 OK)
 - [x] Large payload test: submit order with 50 items — Order #140 created (50 items, $162.50) ✅
 - [x] Special chars test: user name with emoji, item name with quotes — Item 'Taco 🌮 "Supreme" Deluxe' added/deleted ✅
