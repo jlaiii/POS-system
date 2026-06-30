@@ -1,31 +1,31 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-30T21:40Z
-> Total checks: 83
-> Healthy: 83 | Broken: 0 | Fixed this cycle: 24
+> Last full cycle: 2026-06-30T22:10Z
+> Total checks: 86
+> Healthy: 86 | Broken: 0 | Fixed this cycle: 25
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (21:40Z)
-- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID, 8 users, 5 items, 121 orders, 0 shifts, 24 inventory (21:40Z)
-- [x] users.json has at least owner PIN 1111 — Owner present, wildcard permissions (21:40Z)
-- [x] Git repo is clean (no uncommitted changes from crashes) — clean, Watchdog 21:37 commit clean ✓ (21:40Z)
+- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (22:10Z)
+- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID, 8 users, 19 items/5 cats, 121 orders, 0 shifts, 24 inventory (22:10Z)
+- [x] users.json has at least owner PIN 1111 — Owner present, wildcard permissions (22:10Z)
+- [x] Git repo is clean (no uncommitted changes from crashes) — clean, committed Watchdog files + SRE test at 5fdfae6 (22:10Z)
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/clock/in works (clock in test user, verify response) — Employee 1234 clocked in, 759 min late (schedule 09:00) ✓ (21:39Z)
 - [x] /api/clock/out works — Employee 1234 clocked out, test shift cleaned up ✓ (21:39Z)
-- [x] /api/items returns items (GET) — 5 categories: Breakfast, Drinks, Foods, Salads, Snacks ✓ (21:40Z)
-- [x] /api/login works with valid PIN — Owner 1111 login via pin+adminPin, admin_stats/shifts 200 ✓ (21:40Z)
-- [x] /api/admin_stats returns stats — stats returned, backup_count=194, backup_health=green ✓ (21:40Z)
-- [x] /api/admin_shifts returns shifts — 0 shifts (all test artifacts cleaned up) ✓ (21:40Z)
+- [x] /api/items returns items (GET) — 5 categories: Breakfast, Drinks, Foods, Salads, Snacks, 19 items (22:10Z)
+- [x] /api/login works with valid PIN — Owner 1111 login via userId ✓ (22:10Z)
+- [x] /api/admin_stats returns stats — stats returned ✓ (22:10Z)
+- [x] /api/admin_shifts returns shifts — 0 shifts (all test artifacts cleaned up) ✓ (22:10Z)
 - [x] Frontend loads (curl index.html, verify it's HTML not error) — HTML 200 OK, ~1,375KB ✓ (21:40Z)
 
 ## EVERY 4 HOURS
-- [x] Order lifecycle: create order → verify in orders.json → refund → verify — Created #138 (pending)→paid→refunded ✅
+- [x] Order lifecycle: create order → verify in orders.json → refund → verify — Created #143 (Coke $3)→paid→refunded ✅ (22:10Z)
 - [x] User CRUD: add test user → verify → delete — Added 9001, verified, deleted ✅
-- [x] Inventory: check stock decrements on order — Coke 70→69→70 (decrement + restore via refund) ✅ | Inventory file valid, 24 items. All stock levels healthy ✓ (17:59Z)
+- [x] Inventory: check stock decrements on order — Coke 70→69→70 (decrement + restore via refund) ✅ (22:10Z)
 - [x] Loyalty: points earned on order — Order #139 (Coke $3) earned 3 pts, refunded, cleaned up ✅
 - [x] Cash register: open drawer ($100) → cash in ($50) → cash out ($20) → close ($130, exact match) ✅
-- [x] Kitchen display: GET /api/kitchen/queue — 1 pending order, valid data ✓ (19:06Z)
-- [x] Pickup display: GET /api/pickup-display/queue — 2 ready orders, valid data ✓ (19:06Z)
+- [x] Kitchen display: GET /api/kitchen/queue — 0 pending orders, valid data ✓ (22:10Z)
+- [x] Pickup display: GET /api/pickup-display/queue — 0 ready orders, valid data ✓ (22:10Z)
 - [x] Clock-in late detection: Employee 1234 scheduled 09:00, clocked in 21:38 → 758 min late ✅
 - [x] Break tracking: POST /api/clock/break — endpoint responds with proper error when not clocked in ✅
 - [x] Shift edit: POST /api/clock/edit — validates reason required, endpoint working ✅
