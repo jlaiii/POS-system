@@ -1,30 +1,30 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-30T08:41Z
-> Total checks: 50
-> Healthy: 50 | Broken: 0 | Fixed this cycle: 8
+> Last full cycle: 2026-06-30T09:05Z
+> Total checks: 55
+> Healthy: 55 | Broken: 0 | Fixed this cycle: 9
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (08:41Z)
-- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID (08:41Z)
-- [x] users.json has at least owner PIN 1111 — Owner present, wildcard permissions (08:41Z)
-- [x] Git repo is clean (no uncommitted changes from crashes) — clean (08:41Z)
+- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (09:05Z)
+- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID (09:05Z)
+- [x] users.json has at least owner PIN 1111 — Owner present, wildcard permissions (09:05Z)
+- [x] Git repo is clean (no uncommitted changes from crashes) — clean after commit (09:05Z)
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/clock/in works (clock in test user, verify response) — clocked in Employee 1234 at 08:18Z, clocked out ✓ (08:18Z)
 - [x] /api/clock/out works — clocked out, duration recorded (08:18Z)
-- [x] /api/items returns items — 19 items across 5 categories (08:18Z)
-- [x] /api/login works with valid PIN — Owner 1111 login via userId, token + perms returned (08:18Z)
-- [x] /api/admin_stats returns stats — stats via POST adminPin, stats returned ✓ (08:18Z)
-- [x] /api/admin_shifts returns shifts — 64 shifts returned (08:18Z)
+- [x] /api/items returns items — 5 items via GET (09:05Z)
+- [x] /api/login works with valid PIN — Owner 1111 login via userId, token + perms returned (09:05Z)
+- [x] /api/admin_stats returns stats — stats via POST adminPin, stats returned ✓ (09:05Z)
+- [x] /api/admin_shifts returns shifts — 9 shifts filtered by date range (09:05Z)
 - [x] Frontend loads (curl index.html, verify it's HTML not error) — HTML 200 OK, 1,375,342 bytes ✓ (08:18Z)
 
 ## EVERY 4 HOURS
 - [x] Order lifecycle: create order → verify in orders.json → refund → verify — Created #138 (pending)→paid→refunded ✅
 - [x] User CRUD: add test user → verify → delete — Added 9001, verified, deleted ✅
-- [x] Inventory: check stock decrements on order — Coke 70→69→70 (decrement + restore via refund) ✅ | Inventory file valid, 24 items. Stock: Hotdogs 92, Hamburger 98, Taco 98, Coke 70, Raspia 100 (07:55Z)
+- [x] Inventory: check stock decrements on order — Coke 70→69→70 (decrement + restore via refund) ✅ | Inventory file valid, 24 items. Stock: Hotdogs 92, Hamburger 98, Taco 98, Coke 70, Raspia 100 (09:05Z)
 - [x] Loyalty: points earned on order — Order #139 (Coke $3) earned 3 pts, refunded, cleaned up ✅
 - [x] Cash register: open drawer ($100) → cash in ($50) → cash out ($20) → close ($130, exact match) ✅
-- [x] Kitchen display: GET /api/kitchen/queue — 2 pending orders, valid data ✓ (06:48Z)
+- [x] Kitchen display: GET /api/kitchen/queue — 0 pending orders, valid data ✓ (09:05Z)
 - [x] Pickup display: GET /api/pickup-display/queue — 2 ready orders, valid data ✓ (06:48Z)
 - [x] Clock-in late detection: Employee 1234 scheduled 09:00, clocked in 21:38 → 758 min late ✅
 - [x] Break tracking: POST /api/clock/break — endpoint responds with proper error when not clocked in ✅
@@ -34,11 +34,11 @@
 - [x] Offline queue: POST /api/sync_orders — endpoint exists, returns 'No orders provided' ✓
 
 ## EVERY 12 HOURS
-- [x] Disk space check: df -h, alert if >80% full — 39% used ✓ (03:18Z)
-- [x] Memory check: free -m, alert if swap used — 38% RAM, no swap used ✓ (03:18Z)
-- [x] Backup integrity: verify latest backup is valid JSON and not empty — JSON + SQLite both valid ✓ (05:42Z)
-- [x] app.py syntax check (python3 -m py_compile app.py) — SYNTAX OK ✓ (06:48Z)
-- [x] index.html size check (alert if shrunk dramatically — possible corruption) — 1,375,342 bytes, normal ✓
+- [x] Disk space check: df -h, alert if >80% full — 39% used ✓ (09:05Z)
+- [x] Memory check: free -m, alert if swap used — 38% RAM, no swap used ✓ (09:05Z)
+- [x] Backup integrity: verify latest backup is valid JSON and not empty — 49 JSON files valid, DB backup present ✓ (09:05Z)
+- [x] app.py syntax check (python3 -m py_compile app.py) — SYNTAX OK ✓ (09:05Z)
+- [x] index.html size check (alert if shrunk dramatically — possible corruption) — 1,375,342 bytes, normal ✓ (09:05Z)
 - [x] Full app restart test: kill Flask → restart → verify all critical endpoints — 2026-06-29T23:33:43Z, PASSED (killed gunicorn master, restarted, verified /api/health, /api/items, /api/kitchen/queue, /api/pickup-display/queue, /api/login, /api/admin_stats, /api/admin_shifts, /api/clock/status all 200 OK)
 - [x] Large payload test: submit order with 50 items — Order #140 created (50 items, $162.50) ✅
 - [x] Special chars test: user name with emoji, item name with quotes — Item 'Taco 🌮 "Supreme" Deluxe' added/deleted ✅
@@ -51,6 +51,7 @@
 _None_
 
 ## FIXES APPLIED
+- 2026-06-30T09:05Z **Security Watchdog dirty files** — Committed activity_log.json + login_attempts.json + orders.json (stale auto-cancel) left uncommitted after workers. Committed + pushed at 2e1766c.
 - 2026-06-30T08:43Z **Security Watchdog dirty files** — Committed activity_log.json + login_attempts.json left uncommitted after Watchdog run at 08:35 UTC. Committed + pushed at 59414fa.
 - 2026-06-30T08:41Z **Security Watchdog dirty files** — Committed SECURITY_WATCHDOG.md left uncommitted after Watchdog run at 08:35 UTC. Committed + pushed at fd78774.
 - 2026-06-30T08:18Z **Security Watchdog dirty files** — Committed activity_log.json + login_attempts.json left uncommitted after Watchdog run at 08:07 UTC. Committed at fb187c5.
