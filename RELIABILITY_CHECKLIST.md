@@ -1,20 +1,20 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-30T16:54Z
-> Total checks: 66
-> Healthy: 66 | Broken: 0 | Fixed this cycle: 16
+> Last full cycle: 2026-06-30T17:16Z
+> Total checks: 70
+> Healthy: 70 | Broken: 0 | Fixed this cycle: 16
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (16:54Z)
-- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID (16:54Z)
-- [x] users.json has at least owner PIN 1111 — Owner present, wildcard permissions (16:54Z)
-- [x] Git repo is clean (no uncommitted changes from crashes) — committed dirty SECURITY_WATCHDOG.md (16:54Z)
+- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (17:16Z)
+- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID (17:16Z)
+- [x] users.json has at least owner PIN 1111 — Owner present, wildcard permissions (17:16Z)
+- [x] Git repo is clean (no uncommitted changes from crashes) — clean (17:16Z)
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/clock/in works (clock in test user, verify response) — Employee 1234 clocked in (453 min late), clocked out, test shift cleaned up (16:32Z)
 - [x] /api/clock/out works — clocked out Employee 1234, duration 0.0h recorded (16:32Z)
 - [x] /api/items returns items (GET) — Breakfast, Drinks, Foods, Salads, Snacks ✓ (16:54Z)
 - [x] /api/login works with valid PIN — Owner 1111 login via userId, session_token returned ✓ (16:54Z)
-- [x] /api/admin_stats returns stats — stats via POST adminPin, stats returned ✓ (15:47Z)
+- [x] /api/admin_stats returns stats — stats via POST adminPin, stats returned ✓ (17:16Z)
 - [x] /api/admin_shifts returns shifts — 42 shifts returned ✓ (16:54Z)
 - [x] Frontend loads (curl index.html, verify it's HTML not error) — HTML 200 OK, 1,375,342 bytes ✓ (16:54Z)
 
