@@ -1,22 +1,22 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-30T14:13Z
+> Last full cycle: 2026-06-30T14:37Z
 > Total checks: 61
 > Healthy: 61 | Broken: 0 | Fixed this cycle: 14
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (14:13Z)
-- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID (14:13Z)
-- [x] users.json has at least owner PIN 1111 — Owner present, wildcard permissions (14:13Z)
-- [x] Git repo is clean (no uncommitted changes from crashes) — clean (14:13Z)
+- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (14:37Z)
+- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID (14:37Z)
+- [x] users.json has at least owner PIN 1111 — Owner present, wildcard permissions (14:37Z)
+- [x] Git repo is clean (no uncommitted changes from crashes) — clean (14:37Z) — committed Watchdog leftovers at 5dbb051, 1da3b22
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/clock/in works (clock in test user, verify response) — Employee 1234 clocked in (314 min late), clocked out, test shift cleaned up (14:14Z)
 - [x] /api/clock/out works — clocked out Employee 1234, duration 0.0h recorded (14:14Z)
-- [x] /api/items returns items (GET) — Items by category, valid data ✓ (13:44Z)
-- [x] /api/login works with valid PIN — Owner 1111 login, session_token + perms returned (13:44Z)
-- [x] /api/admin_stats returns stats — stats via POST adminPin, stats returned ✓ (14:15Z)
-- [x] /api/admin_shifts returns shifts — 42 shifts returned ✓ (14:15Z)
-- [x] Frontend loads (curl index.html, verify it's HTML not error) — HTML 200 OK, 1,375,342 bytes ✓ (13:44Z)
+- [x] /api/items returns items (GET) — Items by category, valid data ✓ (14:37Z)
+- [x] /api/login works with valid PIN — Owner 1111 login, session_token + perms returned (14:37Z)
+- [x] /api/admin_stats returns stats — stats via POST adminPin, stats returned ✓ (14:37Z)
+- [x] /api/admin_shifts returns shifts — 42 shifts returned ✓ (14:37Z)
+- [x] Frontend loads (curl index.html, verify it's HTML not error) — HTML 200 OK, 1,359,284 bytes ✓ (14:37Z)
 
 ## EVERY 4 HOURS
 - [x] Order lifecycle: create order → verify in orders.json → refund → verify — Created #138 (pending)→paid→refunded ✅
