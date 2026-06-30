@@ -61,7 +61,7 @@
 - [ ] Add VACUUM + integrity_check automation
 
 ## COMPLETED (this session)
-- [x] **migrate_waste_log.py** — Migrated 0 waste log entries from waste_log.json to SQLite. Empty array handled gracefully. Schema already defined in db.py. Idempotency tested. Commit: (pending)
+- [x] **migrate_waste_log.py** — Migrated 0 waste log entries from waste_log.json to SQLite. Empty array handled gracefully. Schema already defined in db.py. Idempotency tested. Commit: b15632c
 - [x] **migrate_table_ads.py** — Migrated 0 table ads from table_ads.json to SQLite. Empty ads array handled gracefully. Global rotation_interval (10s) preserved. Commit: fe6ef2f
 - [x] **migrate_tables.py** — Migrated 20 tables from tables.json to SQLite. All fields preserved (section, capacity, status, created_at, last_bussed_at). Added created_at + last_bussed_at columns to tables_config schema. Schema migration entries added for existing installs. Idempotency tested. Commit: c8047b7
 - [x] **migrate_timesheet.py** — Migrated 1 admin timesheet entry from timesheet.json to SQLite. Added 'source' column for idempotent re-runs. Schema: user_id, login_time, logout_time, duration_hours. Commit: c73b650
