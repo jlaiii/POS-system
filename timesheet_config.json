@@ -1,5 +1,4 @@
 {
-    "use_database": false,
     "overtime_daily_threshold": 8,
     "overtime_weekly_threshold": 40,
     "late_grace_minutes": 5,
