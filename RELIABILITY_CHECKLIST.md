@@ -36,8 +36,8 @@
 ## EVERY 12 HOURS
 - [x] Disk space check: df -h, alert if >80% full — 39% used ✓ (03:18Z)
 - [x] Memory check: free -m, alert if swap used — 38% RAM, no swap used ✓ (03:18Z)
-- [x] Backup integrity: verify latest backup is valid JSON and not empty — 50 files all VALID JSON, SQLite backup OK ✓
-- [x] app.py syntax check (python3 -m py_compile app.py) — SYNTAX OK ✓ (04:46Z)
+- [x] Backup integrity: verify latest backup is valid JSON and not empty — JSON + SQLite both valid ✓ (05:42Z)
+- [x] app.py syntax check (python3 -m py_compile app.py) — SYNTAX OK ✓ (05:42Z)
 - [x] index.html size check (alert if shrunk dramatically — possible corruption) — 1,375,342 bytes, normal ✓
 - [x] Full app restart test: kill Flask → restart → verify all critical endpoints — 2026-06-29T23:33:43Z, PASSED (killed gunicorn master, restarted, verified /api/health, /api/items, /api/kitchen/queue, /api/pickup-display/queue, /api/login, /api/admin_stats, /api/admin_shifts, /api/clock/status all 200 OK)
 - [x] Large payload test: submit order with 50 items — Order #140 created (50 items, $162.50) ✅
