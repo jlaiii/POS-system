@@ -1,22 +1,22 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-30T22:35Z
-> Total checks: 90
-> Healthy: 90 | Broken: 0 | Fixed this cycle: 26
+> Last full cycle: 2026-06-30T22:57Z
+> Total checks: 96
+> Healthy: 96 | Broken: 0 | Fixed this cycle: 27
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (22:35Z)
-- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID, 14 JSON files, 8 users, 19 items/5 cats, 122 orders, 0 shifts, 24 inventory (22:35Z)
-- [x] users.json has at least owner PIN 1111 — Owner 1111 present, permissions OK (22:35Z)
-- [x] Git repo is clean (no uncommitted changes from crashes) — clean, committed SECURITY_WATCHDOG.md at 6f6727f (22:35Z)
+- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (22:57Z)
+- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID, 8 users, 19 items/5 cats, 122 orders, 0 shifts, 24 inventory (22:57Z)
+- [x] users.json has at least owner PIN 1111 — Owner 1111 present, permissions OK (22:57Z)
+- [x] Git repo is clean (no uncommitted changes from crashes) — Watchdog dirty file committed at 7572f88 (22:57Z)
 
 ## HOURLY (check if last check was >1h ago)
-- [x] /api/clock/in works (clock in test user, verify response) — Employee 1234 clocked in, 759 min late (schedule 09:00) ✓ (21:39Z)
-- [x] /api/clock/out works — Employee 1234 clocked out, test shift cleaned up ✓ (21:39Z)
+- [x] /api/clock/in works (clock in test user, verify response) — Employee 1234 clocked in, 838 min late (schedule 09:00) ✓ (22:57Z)
+- [x] /api/clock/out works — Employee 1234 clocked out, test shift cleaned up ✓ (22:57Z)
 - [x] /api/items returns items (GET) — 5 categories: Breakfast, Drinks, Foods, Salads, Snacks, 19 items (22:10Z)
 - [x] /api/login works with valid PIN — Owner 1111 login via userId ✓ (22:10Z)
 - [x] /api/admin_stats returns stats — stats returned ✓ (22:10Z)
 - [x] /api/admin_shifts returns shifts — 0 shifts (all test artifacts cleaned up) ✓ (22:10Z)
-- [x] Frontend loads (curl index.html, verify it's HTML not error) — HTML 200 OK, ~1,375KB ✓ (21:40Z)
+- [x] Frontend loads (curl index.html, verify it's HTML not error) — HTML 200 OK, ~1,375KB ✓ (22:57Z)
 
 ## EVERY 4 HOURS
 - [x] Order lifecycle: create order → verify in orders.json → refund → verify — Created #143 (Coke $3)→paid→refunded ✅ (22:10Z)
@@ -27,10 +27,10 @@
 - [x] Kitchen display: GET /api/kitchen/queue — 0 pending orders, valid data ✓ (22:10Z)
 - [x] Pickup display: GET /api/pickup-display/queue — 0 ready orders, valid data ✓ (22:10Z)
 - [x] Clock-in late detection: Employee 1234 scheduled 09:00, clocked in 21:38 → 758 min late ✅
-- [x] Break tracking: POST /api/clock/break — endpoint responds with proper error when not clocked in ✅
+- [x] Break tracking: POST /api/clock/break — 'Not clocked in' when not clocked in, endpoint working ✅ (22:57Z)
 - [x] Shift edit: POST /api/clock/edit — validates reason required, endpoint working ✅
-- [x] CSV export: POST /api/export/shifts_csv — endpoint exists, returns 'Insufficient permissions' (needs auth) ✓
-- [x] Webhook: GET /api/webhooks — endpoint exists, responds with proper JSON (needs auth) ✓
+- [x] CSV export: POST /api/export/shifts_csv — endpoint exists, returns 'Insufficient permissions' (needs auth) ✓ (22:57Z)
+- [x] Webhook: GET /api/webhooks — endpoint exists, responds with 'Insufficient permissions' (needs auth) ✓ (22:57Z)
 - [x] Offline queue: POST /api/sync_orders — endpoint exists, returns 'No orders provided' ✓
 
 ## EVERY 12 HOURS
@@ -51,7 +51,7 @@
 _None_
 
 ## FIXES APPLIED
-- 2026-06-30T22:35Z **Security Watchdog dirty file** — SECURITY_WATCHDOG.md left dirty after Watchdog 22:28 UTC run. Committed at 6f6727f. CRITICAL checks: Flask 200, all 14 JSON valid, PIN 1111 owner present, git clean. Disk 39%, RAM 37%. DISCOVERED 2h check: dirty file pattern confirmed, committed. Pushed to main.
+- 2026-06-30T22:57Z **Security Watchdog dirty file** — SECURITY_WATCHDOG.md left dirty after Watchdog 22:43 UTC run. Committed at 7572f88. Also committed activity_log.json (+30 lines from clock-in test). CRITICAL checks: Flask 200, all 8 JSON valid, PIN 1111 owner present, git clean. HOURLY: clock/in+out (838 min late — correct), frontend (1,375KB). 4H: webhook, CSV export, break tracking all respond correctly. shift_log.json cleaned of test artifact. Pushed to main.
 - 2026-06-30T20:55Z **Security Watchdog dirty file** — activity_log.json (+39) left dirty after Watchdog run. Committed at d7716b1. CRITICAL checks: Flask 200, all 8 JSON valid, PIN 1111 owner present. HOURLY: items (GET ✓), login (owner 1111 via userId ✓), admin_stats, admin_shifts (42), frontend (1,375KB). Git clean. All healthy.
 - 2026-06-30T20:33Z **Security Watchdog dirty files** — activity_log.json (+69) + login_attempts.json (+23) left dirty after Watchdog run. Committed at f16edfd. CRITICAL checks: Flask 200, all 8 JSON valid, PIN 1111 owner present. Git clean. Disk 39%, RAM 37%. HOURLY checks: clock/in+out (694 min late — correct), login (owner 1111 via userId ✓), admin_shifts (42 shifts). Test shift cleaned up. Pushed to main.
 - 2026-06-30T19:06Z **Security Watchdog dirty files** — SECURITY_WATCHDOG.md + activity_log.json + login_attempts.json left dirty after Watchdog run. Committed at c1ac89b (SECURITY_WATCHDOG.md) and 39108fa (activity_log.json + login_attempts.json). Ran CRITICAL checks (Flask 200, all 8 JSON valid, PIN 1111 present), HOURLY checks (login via userId, items GET, admin_stats, admin_shifts, frontend) and 4H checks (kitchen+pickup displays — GET, both working). Disk 39%, RAM 37%. Pushed to main.
