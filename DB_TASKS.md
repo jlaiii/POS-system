@@ -1,6 +1,6 @@
 # POS Database Migration Tasks
-> Last run: 2026-06-29 15:xx UTC
-> Current phase: Phase 2 — Migration Scripts (17/24 complete)
+> Last run: 2026-06-30 03:xx UTC
+> Current phase: Phase 2 — Migration Scripts (18/24 complete)
 
 ## Phase 1: Schema Design
 - [x] Design all SQLite table schemas (users, shift_log, orders, items, inventory, etc.)
@@ -17,7 +17,7 @@
 - [x] Write migrate_loyalty_points.py — loyalty_points table migration (2 records verified ✓)
 - [x] Write migrate_orders.py — orders table migration (66 rows verified ✓)
 - [x] Write migrate_combos.py — combos table migration (1 row verified ✓)
-- [ ] Write migrate_favorites.py — favorites table migration
+- [x] Write migrate_favorites.py — favorites table migration (0 records, empty case handled ✓)
 - [ ] Write migrate_waste_log.py — waste_log table migration
 - [x] Write migrate_tickets.py — tickets table migration (2 rows verified ✓)
 - [x] Write migrate_timesheet.py — timesheet table migration (1 row verified ✓)
