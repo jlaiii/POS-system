@@ -1,22 +1,22 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-30T20:33Z
-> Total checks: 79
-> Healthy: 79 | Broken: 0 | Fixed this cycle: 22
+> Last full cycle: 2026-06-30T20:55Z
+> Total checks: 81
+> Healthy: 81 | Broken: 0 | Fixed this cycle: 23
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (20:33Z)
-- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID (20:33Z)
-- [x] users.json has at least owner PIN 1111 — Owner present, wildcard permissions (20:33Z)
-- [x] Git repo is clean (no uncommitted changes from crashes) — clean after f16edfd (20:33Z)
+- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (20:55Z)
+- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID, 8 users, 5 items, 121 orders, 42 shifts (20:55Z)
+- [x] users.json has at least owner PIN 1111 — Owner present, wildcard permissions (20:55Z)
+- [x] Git repo is clean (no uncommitted changes from crashes) — committed activity_log.json at d7716b1 (20:55Z)
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/clock/in works (clock in test user, verify response) — Employee 1234 clocked in, 694 min late (schedule 09:00) ✓ (20:34Z)
 - [x] /api/clock/out works — Employee 1234 clocked out, test shift cleaned up ✓ (20:34Z)
-- [x] /api/items returns items (GET) — 5 categories: Breakfast, Drinks, Foods, Salads, Snacks ✓ (19:54Z)
-- [x] /api/login works with valid PIN — Owner 1111 login via userId, Login successful ✓ (20:33Z)
-- [x] /api/admin_stats returns stats — stats returned ✓ (19:54Z)
-- [x] /api/admin_shifts returns shifts — 42 shifts returned ✓ (20:33Z)
-- [x] Frontend loads (curl index.html, verify it's HTML not error) — HTML 200 OK, ~1,375KB ✓ (19:54Z)
+- [x] /api/items returns items (GET) — 5 categories: Breakfast, Drinks, Foods, Salads, Snacks ✓ (20:55Z)
+- [x] /api/login works with valid PIN — Owner 1111 login via userId, Login successful ✓ (20:55Z)
+- [x] /api/admin_stats returns stats — stats returned ✓ (20:55Z)
+- [x] /api/admin_shifts returns shifts — 42 shifts returned ✓ (20:55Z)
+- [x] Frontend loads (curl index.html, verify it's HTML not error) — HTML 200 OK, ~1,375KB ✓ (20:55Z)
 
 ## EVERY 4 HOURS
 - [x] Order lifecycle: create order → verify in orders.json → refund → verify — Created #138 (pending)→paid→refunded ✅
@@ -51,6 +51,7 @@
 _None_
 
 ## FIXES APPLIED
+- 2026-06-30T20:55Z **Security Watchdog dirty file** — activity_log.json (+39) left dirty after Watchdog run. Committed at d7716b1. CRITICAL checks: Flask 200, all 8 JSON valid, PIN 1111 owner present. HOURLY: items (GET ✓), login (owner 1111 via userId ✓), admin_stats, admin_shifts (42), frontend (1,375KB). Git clean. All healthy.
 - 2026-06-30T20:33Z **Security Watchdog dirty files** — activity_log.json (+69) + login_attempts.json (+23) left dirty after Watchdog run. Committed at f16edfd. CRITICAL checks: Flask 200, all 8 JSON valid, PIN 1111 owner present. Git clean. Disk 39%, RAM 37%. HOURLY checks: clock/in+out (694 min late — correct), login (owner 1111 via userId ✓), admin_shifts (42 shifts). Test shift cleaned up. Pushed to main.
 - 2026-06-30T19:06Z **Security Watchdog dirty files** — SECURITY_WATCHDOG.md + activity_log.json + login_attempts.json left dirty after Watchdog run. Committed at c1ac89b (SECURITY_WATCHDOG.md) and 39108fa (activity_log.json + login_attempts.json). Ran CRITICAL checks (Flask 200, all 8 JSON valid, PIN 1111 present), HOURLY checks (login via userId, items GET, admin_stats, admin_shifts, frontend) and 4H checks (kitchen+pickup displays — GET, both working). Disk 39%, RAM 37%. Pushed to main.
 - 2026-06-30T17:59Z **Security Watchdog dirty file** — SECURITY_WATCHDOG.md left dirty after Watchdog run. Committed at c87020a. Ran CRITICAL checks (Flask 200, all 15 JSON valid, PIN 1111 present) and 4H inventory check. Pushed to main.
