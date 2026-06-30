@@ -1,22 +1,22 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-30T19:49Z
+> Last full cycle: 2026-06-30T19:54Z
 > Total checks: 79
-> Healthy: 79 | Broken: 0 | Fixed this cycle: 20
+> Healthy: 79 | Broken: 0 | Fixed this cycle: 21
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (19:49Z)
-- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID (19:49Z)
-- [x] users.json has at least owner PIN 1111 — Owner present, wildcard permissions (19:49Z)
-- [x] Git repo is clean (no uncommitted changes from crashes) — clean after fd3b875 (19:49Z)
+- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (19:54Z)
+- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID (19:54Z)
+- [x] users.json has at least owner PIN 1111 — Owner present, wildcard permissions (19:54Z)
+- [x] Git repo is clean (no uncommitted changes from crashes) — clean after 916757f (19:54Z)
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/clock/in works (clock in test user, verify response) — endpoint responds, returns 'User ID required' as expected (19:06Z)
 - [x] /api/clock/out works — endpoint available (19:06Z)
-- [x] /api/items returns items (GET) — Breakfast, Drinks, Foods, Salads, Snacks ✓ (19:06Z)
+- [x] /api/items returns items (GET) — Breakfast, Drinks, Foods, Salads, Snacks ✓ (19:54Z)
 - [x] /api/login works with valid PIN — Owner 1111 login via userId, Login successful ✓ (19:06Z)
-- [x] /api/admin_stats returns stats — stats returned ✓ (19:06Z)
+- [x] /api/admin_stats returns stats — stats returned ✓ (19:54Z)
 - [x] /api/admin_shifts returns shifts — 42 shifts returned ✓ (19:06Z)
-- [x] Frontend loads (curl index.html, verify it's HTML not error) — HTML 200 OK, ~1,375KB ✓ (19:06Z)
+- [x] Frontend loads (curl index.html, verify it's HTML not error) — HTML 200 OK, ~1,375KB ✓ (19:54Z)
 
 ## EVERY 4 HOURS
 - [x] Order lifecycle: create order → verify in orders.json → refund → verify — Created #138 (pending)→paid→refunded ✅
@@ -45,13 +45,13 @@
 - [x] Concurrent write test: two rapid clock-ins → verify no data loss — Two users (1234, 5678) clocked in/out concurrently, both shifts recorded ✅
 
 ## DISCOVERED (failures you've seen before — check every 2h)
-- [x] Security Watchdog leaves dirty files after each run (SECURITY_WATCHDOG.md + activity_log.json + login_attempts.json + security_events.json) — auto-commit on SRE bot runs — CHECKED 19:49Z, committed SECURITY_WATCHDOG.md + activity_log.json + login_attempts.json at fd3b875 ✓
+- [x] Security Watchdog leaves dirty files after each run (SECURITY_WATCHDOG.md + activity_log.json + login_attempts.json + security_events.json) — auto-commit on SRE bot runs — CHECKED 19:54Z, committed SECURITY_WATCHDOG.md at 916757f ✓
 
 ## CURRENT OUTAGES
 _None_
 
 ## FIXES APPLIED
-- 2026-06-30T19:49Z **Security Watchdog dirty files** — SECURITY_WATCHDOG.md + activity_log.json + login_attempts.json left dirty after Watchdog run. Committed at fd3b875. CRITICAL checks: Flask 200, all 8 JSON valid, PIN 1111 owner present. Git clean. Disk 39%, RAM 37%. Pushed to main.
+- 2026-06-30T19:54Z **Security Watchdog dirty files** — SECURITY_WATCHDOG.md left dirty after Watchdog 19:52 UTC run. Committed at 916757f. CRITICAL checks: Flask 200, all 8 JSON valid, PIN 1111 owner present. Git clean. Disk 39%, RAM 37%. HOURLY checks: items (GET, 5 categories), frontend load (200), admin_stats returned stats. Pushed to main.
 - 2026-06-30T19:06Z **Security Watchdog dirty files** — SECURITY_WATCHDOG.md + activity_log.json + login_attempts.json left dirty after Watchdog run. Committed at c1ac89b (SECURITY_WATCHDOG.md) and 39108fa (activity_log.json + login_attempts.json). Ran CRITICAL checks (Flask 200, all 8 JSON valid, PIN 1111 present), HOURLY checks (login via userId, items GET, admin_stats, admin_shifts, frontend) and 4H checks (kitchen+pickup displays — GET, both working). Disk 39%, RAM 37%. Pushed to main.
 - 2026-06-30T17:59Z **Security Watchdog dirty file** — SECURITY_WATCHDOG.md left dirty after Watchdog run. Committed at c87020a. Ran CRITICAL checks (Flask 200, all 15 JSON valid, PIN 1111 present) and 4H inventory check. Pushed to main.
 - 2026-06-30T17:37Z **Security Watchdog dirty file** — activity_log.json left dirty after Watchdog run. Committed at c4f5f42. Ran CRITICAL checks (Flask 200, all JSON valid, PIN 1111 present) and HOURLY check: clock/in+out (518 min late — correct). Cleaned up test shift. Pushed to main.
