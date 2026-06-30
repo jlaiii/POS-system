@@ -1,11 +1,11 @@
 # POS Security Watchdog
 
-| | | | | | | Last run: 2026-06-30T04:09 UTC
+| | | | | | | Last run: 2026-06-30T04:32 UTC
 | | | | | | | Total events tracked: 106 (SEC-002→SEC-106; 0 unresolved)
 | | | | | | | Active blocks: 0 IPs
-| | | | | | | Run result: All clear — routine cron activity, no threats detected.
+| | | | | | | Run result: All clear — no activity since last run, no threats detected.
 
-## Current Run Findings (03:42–04:09 UTC, ~27 min window)
+## Current Run Findings (04:09–04:32 UTC, ~23 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -23,22 +23,21 @@ None.
 
 **Server**: **Healthy** (HTTP 200 on /api/clock/status — all endpoints responding correctly).
 
-**Activity**: **6 new activity_log entries** since last run (03:42 UTC).
+**Activity**: **0 new activity_log entries** since last run (04:09 UTC). Last activity at 04:03:21 UTC (Owner login).
 
-**Login attempts**: **3 new entries** in login_attempts.json since last run.
+**Login attempts**: **0 new entries** in login_attempts.json since last run. Last attempt at 04:03:09 UTC.
 
-**Active shifts**: 0. No one currently clocked in (Owner checked via /api/clock/status).
+**Active shifts**: 0. No one currently clocked in.
 
-**Orders**: No new orders since last run. Order 141 still pending ($18.22). 0 new refunds.
+**Orders**: No new orders. Orders 77 (undo_voided, $3.30), 136 (pending, $9.74), 141 (pending, $18.22) unchanged. 0 new refunds.
 
 ### 📊 Login Security Deep-Dive
-- **Brute force check**: 2 failed attempts from 127.0.0.1 at 04:02:45/51 (null user) — below threshold of 5. No attack detected.
-- **Account enumeration**: 2 null-user failures from 127.0.0.1 — below 10 threshold.
-- **Successful-after-failure**: IP 127.0.0.1 had 2 failed → 1 successful login (Owner 1111, 04:03:09). Below the 3+ trigger threshold. Pattern matches routine cron worker activity.
-- **Off-hours activity**: Current time 04:09 UTC (23:09 CT, off-hours window 22:00-06:00). Owner (1111) logged in at 04:03 UTC (23:03 CT) from 127.0.0.1 — standard cron worker pattern. Not flagged.
+- **Brute force check**: 0 failed attempts in this window. No attack detected.
+- **Account enumeration**: 0 null-user failures. No probing detected.
+- **Successful-after-failure**: No new attempts in this window.
+- **Off-hours activity**: Current time 04:32 UTC (23:32 CT, off-hours window 22:00-06:00). No new login activity to flag.
 - **Cross-IP targeting**: None detected.
 - **Credential stuffing**: No pattern detected.
-- **SEC events resolved**: Resolved SEC-106 (off-hours login from 127.0.0.1 during cron testing — established pattern).
 
 ### 🔒 Security Config
 - No config changes detected this window.
@@ -49,22 +48,18 @@ None.
 
 ### 💰 Financial Check / Order Anomaly Scan
 - No new orders or refunds this window.
-- Order 141 still pending ($18.22, 2 items) — no anomalies.
-- Orders 139 and 140 are refunded (from 2026-06-29, historical). No new refunds.
-- Historical refund rate unchanged (~32.8% — pre-existing test data).
 - No anomalies detected.
 
 ### 📂 File Integrity
-- All JSON files parseable and valid.
+- All 49 JSON files parseable and valid.
 - All 8 accounts intact. Owner (1111) present, active, not banned.
-- No file shrinkage detected vs baseline.
+- Known non-JSON files present: pos.db (SQLite), pos-system.pid, sw.js (service worker), style.css — all expected.
 - No suspicious new files.
-- Git: clean (no pending changes after this run).
-- Server: **Healthy** (gunicorn running on :5000).
+- Git: RELIABILITY_CHECKLIST.md modified (Site Reliability Bot) — changes tracked.
 
 ### ✅ Actions Taken
 - 0 blocked IPs, 0 alerts fired.
-- Resolved 1 SEC event (SEC-106 — off-hours login, known pattern).
+- No new SEC events to create or resolve.
 - All activity is routine cron worker testing from localhost (127.0.0.1). No external IPs involved. No threats detected.
 
 ## Previous Run Findings (carried forward)
@@ -73,12 +68,12 @@ None.
 
 | | | | | | | System State | | | |
 |---|---|---|---|---|---|---|---|---|---|---|
-| | | | | | | Current time | 2026-06-30T04:09 UTC — 23:09 CT (Monday night, off-hours) |
-| | | | | | | Activity since last run | 6 entries — cron worker testing (Owner login) |
-| | | | | | | Login attempts (this window) | 3 (2 failed, 1 successful — all 127.0.0.1) |
-| | | | | | | Successful logins (this window) | 1 (Owner 1111, 127.0.0.1) |
+| | | | | | | Current time | 2026-06-30T04:32 UTC — 23:32 CT (Monday night, off-hours) |
+| | | | | | | Activity since last run | 0 entries — system idle |
+| | | | | | | Login attempts (this window) | 0 |
+| | | | | | | Successful logins (this window) | 0 |
 | | | | | | | Blocked IPs | 0 |
 | | | | | | | Config changes | None |
-| | | | | | | File integrity | JSON files valid. All 8 accounts intact. Git: clean. |
+| | | | | | | File integrity | JSON files valid. All 8 accounts intact. Git: RELIABILITY_CHECKLIST.md modified (SRB). |
 | | | | | | | Unresolved events | 0 of 106 |
 | | | | | | | Server | **Healthy** (all endpoints responding correctly) |

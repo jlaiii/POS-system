@@ -1,13 +1,13 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-30T04:03:31Z
+> Last full cycle: 2026-06-30T04:24:42Z
 > Total checks: 43
 > Healthy: 43 | Broken: 0 | Fixed this cycle: 2
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (04:03Z)
-- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID (04:03Z)
-- [x] users.json has at least owner PIN 1111 — Owner present, wildcard permissions (04:03Z)
-- [x] Git repo is clean (no uncommitted changes from crashes) — clean (04:03Z)
+- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (04:24Z)
+- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID (04:24Z)
+- [x] users.json has at least owner PIN 1111 — Owner present, wildcard permissions (04:24Z)
+- [x] Git repo is clean (no uncommitted changes from crashes) — clean (04:24Z)
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/clock/in works (clock in test user, verify response) — clocked in Employee 1234, late detection works
