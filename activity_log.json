@@ -22254,5 +22254,19 @@
             "clock_out_time": "2026-06-30T08:19:17.617898",
             "duration_hours": 0.01
         }
+    },
+    {
+        "timestamp": "2026-06-30T08:41:57.610642",
+        "type": "login_failed",
+        "user_id": null,
+        "user_role": "unknown",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed",
+            "method": "pin",
+            "ip": "127.0.0.1",
+            "attempt": 1
+        }
     }
 ]
