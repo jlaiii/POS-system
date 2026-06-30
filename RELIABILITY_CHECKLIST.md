@@ -1,22 +1,22 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-30T16:32Z
-> Total checks: 65
-> Healthy: 65 | Broken: 0 | Fixed this cycle: 15
+> Last full cycle: 2026-06-30T16:54Z
+> Total checks: 66
+> Healthy: 66 | Broken: 0 | Fixed this cycle: 16
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (16:32Z)
-- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID (16:32Z)
-- [x] users.json has at least owner PIN 1111 — Owner present, wildcard permissions (16:32Z)
-- [x] Git repo is clean (no uncommitted changes from crashes) — clean (16:32Z, committed activity_log.json)
+- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (16:54Z)
+- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID (16:54Z)
+- [x] users.json has at least owner PIN 1111 — Owner present, wildcard permissions (16:54Z)
+- [x] Git repo is clean (no uncommitted changes from crashes) — committed dirty SECURITY_WATCHDOG.md (16:54Z)
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/clock/in works (clock in test user, verify response) — Employee 1234 clocked in (453 min late), clocked out, test shift cleaned up (16:32Z)
 - [x] /api/clock/out works — clocked out Employee 1234, duration 0.0h recorded (16:32Z)
-- [x] /api/items returns items (GET) — Breakfast, Drinks, Foods, Salads, Snacks ✓ (15:47Z)
-- [x] /api/login works with valid PIN — Owner 1111 login via userId, session_token + perms returned ✓ (15:47Z)
+- [x] /api/items returns items (GET) — Breakfast, Drinks, Foods, Salads, Snacks ✓ (16:54Z)
+- [x] /api/login works with valid PIN — Owner 1111 login via userId, session_token returned ✓ (16:54Z)
 - [x] /api/admin_stats returns stats — stats via POST adminPin, stats returned ✓ (15:47Z)
-- [x] /api/admin_shifts returns shifts — 42 shifts returned ✓ (15:47Z)
-- [x] Frontend loads (curl index.html, verify it's HTML not error) — HTML 200 OK, 1,375,342 bytes ✓ (15:47Z)
+- [x] /api/admin_shifts returns shifts — 42 shifts returned ✓ (16:54Z)
+- [x] Frontend loads (curl index.html, verify it's HTML not error) — HTML 200 OK, 1,375,342 bytes ✓ (16:54Z)
 
 ## EVERY 4 HOURS
 - [x] Order lifecycle: create order → verify in orders.json → refund → verify — Created #138 (pending)→paid→refunded ✅
@@ -45,12 +45,13 @@
 - [x] Concurrent write test: two rapid clock-ins → verify no data loss — Two users (1234, 5678) clocked in/out concurrently, both shifts recorded ✅
 
 ## DISCOVERED (failures you've seen before — check every 2h)
-- [x] Security Watchdog leaves dirty files after each run (SECURITY_WATCHDOG.md + security_events.json) — auto-commit on SRE bot runs — CHECKED 14:13Z, committed activity_log.json + pushed at 8b97e2f ✓
+- [x] Security Watchdog leaves dirty files after each run (SECURITY_WATCHDOG.md + security_events.json) — auto-commit on SRE bot runs — CHECKED 16:54Z, committed SECURITY_WATCHDOG.md at 13dd22d ✓
 
 ## CURRENT OUTAGES
 _None_
 
 ## FIXES APPLIED
+- 2026-06-30T16:54Z **Security Watchdog dirty file + SRE bot run** — SECURITY_WATCHDOG.md left uncommitted after Watchdog run at 16:48 UTC. Committed at 13dd22d. Ran CRITICAL checks (Flask 200, all JSON valid, PIN 1111 present) and HOURLY checks (items GET, login via userId, admin_shifts, frontend load — all healthy). Pushed to main.
 - 2026-06-30T16:32Z **Security Watchdog dirty file + SRE bot run** — Committed activity_log.json left dirty after Watchdog run. Ran CRITICAL checks (Flask 200, all JSON valid, PIN 1111 present), HOURLY clock/in+out (453 min late — correct), 4H kitchen display (1 pending order). Cleaned up test shift. Pushed to main.
 - 2026-06-30T16:09Z **Security Watchdog dirty file** — SECURITY_WATCHDOG.md left uncommitted after Watchdog run at 15:58 UTC. Committed at 716aefe. Ran critical checks (Flask 200, all JSON valid, PIN 1111 present). Updated pickup display check (was 4h25m overdue). Pushed to main.
 - 2026-06-30T14:13Z **Security Watchdog dirty file + 12H restart test** — Committed activity_log.json left dirty by Security Watchdog at 8b97e2f. Ran 12H full app restart test — killed Flask, restarted, verified all 8 critical endpoints pass. Pushed to main.
