@@ -1,10 +1,10 @@
 # POS Security Watchdog
 
-| | | | | | | | | | | | | | Last run: 2026-06-30T18:52 UTC
+| | | | | | | | | | | | | | Last run: 2026-06-30T19:09 UTC
 ||||| | | | | | | | Total events tracked: 109 (SEC-001→SEC-109; 0 unresolved)
 |||||| | | | | | | | | Active blocks: 0
 ||||| | | | | | | | Run result: **CLEAN** — server up, no external threats, no anomalies.
-## Current Run Findings (18:29–18:52 UTC, ~23 min window)
+## Current Run Findings (18:52–19:09 UTC, ~17 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -20,24 +20,24 @@ None.
 
 ### ℹ️ Activity Summary
 
-**Server**: **UP** (HTTP 200 throughout this window).
+**Server**: **UP** (HTTP 200 on port 5000, gunicorn).
 
-**Activity**: **0 new activity_log entries** since last run (18:29 UTC). Zero activity in this window.
+**Activity**: **3 new activity_log entries** since last run (18:52 UTC).
 
-**Login attempts**: 0 failed, 0 successful in this window. No login activity at all.
+**Login attempts**: 1 failed (null user, 127.0.0.1), 2 successful (1111, 127.0.0.1) in this window. All from localhost — standard cron worker activity.
 
 **Active shifts**: 0. No one currently clocked in.
 
 **Orders**: No new orders this window.
 
 ### 📊 Login Security Deep-Dive
-- **Brute force check**: 0 failed logins in this window — clean.
-- **Account enumeration**: No activity.
-- **Successful-after-failure**: No new activity.
-- **Credential stuffing**: No pattern detected.
-- **Off-hours activity**: Current time 18:52 UTC (1:52 PM CT) — normal business hours. Not flagged.
+- **Brute force check**: 1 failed login in this window (null user, 127.0.0.1) — well under 5 threshold. Clean.
+- **Account enumeration**: 1 null-user failure — not enough to flag (need 10+).
+- **Successful-after-failure**: 1 fail → 1 success for 1111 from same IP 127.0.0.1. Under 3+ threshold. Not flagged.
+- **Credential stuffing**: No pattern — 1 IP, 2 targets (null user + 1111), only 1 fail. Not a stuffing attempt.
+- **Off-hours activity**: Current time 19:09 UTC (2:09 PM CT) — normal business hours. Not flagged.
 - **Cross-IP targeting**: None.
-- **Session anomalies**: No active sessions detected.
+- **Session anomalies**: 0 active shifts. Server queried OK via POST /api/clock/status.
 - **Rate limiting**: Unchanged (10 logins/min per IP, 60 req/min global).
 
 ### 🔒 Security Config
