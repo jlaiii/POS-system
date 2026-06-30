@@ -1,11 +1,11 @@
 # POS Security Watchdog
 
-| | | | | | | | Last run: 2026-06-30T10:05 UTC
+| | | | | | | | Last run: 2026-06-30T10:22 UTC
 | | | | | | | | Total events tracked: 108 (SEC-002→SEC-108; 0 unresolved)
 | | | | | | | | Active blocks: 0 IPs
-| | | | | | | | Run result: All clear — minor activity (cron worker tests on localhost), no threats.
+| | | | | | | | Run result: No new activity since last run — all clear.
 
-## Current Run Findings (09:25–09:59 UTC, ~34 min window)
+## Current Run Findings (10:05–10:22 UTC, ~17 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -23,26 +23,20 @@ None.
 
 **Server**: **Healthy** (HTTP 200 on / — all endpoints responding).
 
-**Activity**: **3 new activity_log entries** since last run (09:25 UTC):
-1. `clock_in_failed` user 9999 (non-existent user in users.json) at 09:27:56 — single event from 127.0.0.1, likely stale test reference by cron worker.
-2. `clock_in` user 1234 (Employee One) at 09:28:04 from 127.0.0.1 — late 28 min, followed by immediate clock_out (0.0 hrs).
-3. `clock_out` user 1234 at 09:28:04.
+**Activity**: **0 new activity_log entries** since last run (10:05 UTC). No activity recorded in this window.
 
-All activity from 127.0.0.1 (localhost). Expected cron/dev behavior.
-
-**Login attempts**: **0 new entries** in login_attempts.json since last run.
+**Login attempts**: **0 new entries** in login_attempts.json since last run. Latest entry: Owner (1111) successful login at 09:05 UTC from 127.0.0.1.
 
 **Active shifts**: 0. No one currently clocked in.
 
-**Orders**: No new orders this window. Stale pending order 141 (6h+ old) — minor, not security-relevant.
+**Orders**: No new orders this window. Stale pending order 141 (created 03:16 UTC, $18.22) — 7h old, non-security issue.
 
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: 0 failed attempts in last 15 min. No auto-block needed.
-- **Account enumeration**: No probes detected (single clock_in_failed for non-existent 9999 from 127.0.0.1 is one-off, not a pattern).
+- **Account enumeration**: No probes detected.
 - **Successful-after-failure**: No activity to evaluate.
-- **Off-hours activity**: Current time 09:59 UTC (04:59 CT, off-hours window 22:00-06:00 CT).
-  - Minor clock activity from 127.0.0.1 — expected cron testing.
-  - No external IPs.
+- **Off-hours activity**: Current time 10:22 UTC (05:22 CT, off-hours window 22:00-06:00 CT).
+  - No activity from any IP in this window.
 - **Cross-IP targeting**: None detected.
 - **Credential stuffing**: No pattern detected.
 
@@ -75,14 +69,14 @@ All activity from 127.0.0.1 (localhost). Expected cron/dev behavior.
 - Admin 2FA gap: Owner (1111), Manager (2222), and Manager Sarah (7788) lack 2FA despite `require_2fa_for_admins: true`. Security Sentinel handles.
 - Historical refund rate ~33.1% — pre-existing test data, no real customer orders.
 
-| | | | | | | | System State | | | |
+|| | | | | | | | System State | | | |
 |---|---|---|---|---|---|---|---|---|---|---|
-| | | | | | | | Current time | 2026-06-30T10:05 UTC — 05:05 CT (off-hours) |
-| | | | | | | | Activity since last run | 3 entries (localhost only) |
-| | | | | | | | Login attempts (this window) | 0 |
-| | | | | | | | Successful logins (this window) | 0 |
-| | | | | | | | Blocked IPs | 0 |
-| | | | | | | | Config changes | None |
-| | | | | | | | File integrity | JSON files valid. All 8 accounts intact. |
-| | | | | | | | Unresolved events | 0 of 108 |
-| | | | | | | | Server | **Healthy** (HTTP 200 on /) |
+|| | | | | | | | Current time | 2026-06-30T10:22 UTC — 05:22 CT (off-hours) |
+|| | | | | | | | Activity since last run | 0 entries |
+|| | | | | | | | Login attempts (this window) | 0 |
+|| | | | | | | | Successful logins (this window) | 0 |
+|| | | | | | | | Blocked IPs | 0 |
+|| | | | | | | | Config changes | None |
+|| | | | | | | | File integrity | JSON files valid. All 8 accounts intact. |
+|| | | | | | | | Unresolved events | 0 of 108 |
+|| | | | | | | | Server | **Healthy** (HTTP 200 on /) |
