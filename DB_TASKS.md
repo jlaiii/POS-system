@@ -1,6 +1,6 @@
 # POS Database Migration Tasks
-> Last run: 2026-06-30 03:xx UTC
-> Current phase: Phase 2 — Migration Scripts (18/24 complete)
+> Last run: 2026-06-30 15:30 UTC
+> Current phase: Phase 2 — Migration Scripts (19/24 complete)
 
 ## Phase 1: Schema Design
 - [x] Design all SQLite table schemas (users, shift_log, orders, items, inventory, etc.)
@@ -18,7 +18,7 @@
 - [x] Write migrate_orders.py — orders table migration (66 rows verified ✓)
 - [x] Write migrate_combos.py — combos table migration (1 row verified ✓)
 - [x] Write migrate_favorites.py — favorites table migration (0 records, empty case handled ✓)
-- [ ] Write migrate_waste_log.py — waste_log table migration
+- [x] Write migrate_waste_log.py — waste_log table migration (0 entries, empty case handled ✓)
 - [x] Write migrate_tickets.py — tickets table migration (2 rows verified ✓)
 - [x] Write migrate_timesheet.py — timesheet table migration (1 row verified ✓)
 - [ ] Write migrate_timesheet_approvals.py — timesheet_approvals table migration
@@ -61,6 +61,7 @@
 - [ ] Add VACUUM + integrity_check automation
 
 ## COMPLETED (this session)
+- [x] **migrate_waste_log.py** — Migrated 0 waste log entries from waste_log.json to SQLite. Empty array handled gracefully. Schema already defined in db.py. Idempotency tested. Commit: (pending)
 - [x] **migrate_table_ads.py** — Migrated 0 table ads from table_ads.json to SQLite. Empty ads array handled gracefully. Global rotation_interval (10s) preserved. Commit: fe6ef2f
 - [x] **migrate_tables.py** — Migrated 20 tables from tables.json to SQLite. All fields preserved (section, capacity, status, created_at, last_bussed_at). Added created_at + last_bussed_at columns to tables_config schema. Schema migration entries added for existing installs. Idempotency tested. Commit: c8047b7
 - [x] **migrate_timesheet.py** — Migrated 1 admin timesheet entry from timesheet.json to SQLite. Added 'source' column for idempotent re-runs. Schema: user_id, login_time, logout_time, duration_hours. Commit: c73b650
