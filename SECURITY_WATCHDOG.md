@@ -1,11 +1,11 @@
 # POS Security Watchdog
 
-|||||| | Last run: 2026-06-30T01:39 UTC
-|||||| | Total events tracked: 100 (SEC-002→SEC-100; 0 unresolved)
-|||||| | Active blocks: 0 IPs
-|||||| | Run result: All clear — silent.
+| | | | | | | Last run: 2026-06-30T02:01 UTC
+| | | | | | | Total events tracked: 100 (SEC-002→SEC-100; 0 unresolved)
+| | | | | | | Active blocks: 0 IPs
+| | | | | | | Run result: All clear — silent.
 
-## Current Run Findings (01:08–01:39 UTC, ~31 min window)
+## Current Run Findings (01:39–02:01 UTC, ~22 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -31,15 +31,15 @@ None.
 
 **Orders**: No new orders in this window.
 
-**Shifts**: Last shift: Employee One (1234) and Employee Two (5678) at 22:15-22:21 UTC on Jun 29. No new shifts this window.
+**Shifts**: Last shift activity at 22:21 UTC on Jun 29 (Employee One/Two test clock in/out). No new shifts this window.
 
 **Refunds**: None in this window.
 
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: No login attempts in this window. No attack detected.
-- **Account enumeration**: 6 total null-user probes from 127.0.0.1 historically — below 10-threshold for flagging.
+- **Account enumeration**: No new null-user probes. Total remains 6 historical from 127.0.0.1 — below 10-threshold.
 - **Successful-after-failure**: No relevant events.
-- **Off-hours activity**: Current time 01:39 UTC falls within off-hours window. No new logins occurred in this window.
+- **Off-hours activity**: Current time 02:01 UTC within off-hours window (22:00-06:00). No new logins occurred in this window.
 - **Cross-IP targeting**: None detected.
 - **Credential stuffing**: No pattern detected.
 - **All other checks**: Clear.
@@ -59,27 +59,28 @@ None.
 - All JSON files parseable and valid.
 - All 8 accounts intact. Owner (1111) present, active, not banned.
 - No file shrinkage detected vs baseline.
+- No suspicious new files — sw.js is legitimate tracked PWA service worker.
 - Git status: **clean** — no pending changes.
 - Server: **Healthy**.
 
 ### ✅ Actions Taken
 - 0 blocked IPs, 0 alerts fired.
 - No anomalous activity detected.
-- Updated SECURITY_WATCHDOG.md with 01:39 UTC findings.
+- Updated SECURITY_WATCHDOG.md with 02:01 UTC findings.
 - No new threats detected — silent.
 
 ## Previous Run Findings (carried forward)
 - Admin 2FA gap: Owner (1111), Manager (2222), and Manager Sarah (7788) lack 2FA despite `require_2fa_for_admins: true`. Security Sentinel handles.
 - Historical refund rate ~32.8% — pre-existing test data from unknown user.
 
-|||||| | System State | |
-|---|---|---|---|---|
-|||||| | Current time | 2026-06-30T01:39 UTC — 20:39 CT (Monday evening, off-hours) |
-|||||| | Activity since last run | 0 entries — zero activity |
-|||||| | Login attempts (this window) | 0 |
-|||||| | Successful logins (this window) | 0 |
-|||||| | Blocked IPs | 0 |
-|||||| | Config changes | None |
-|||||| | File integrity | JSON files valid. All 8 accounts intact. Git: clean. |
-|||||| | Unresolved events | 0 of 100 |
-|||||| | Server | **Healthy** |
+| | | | | | | System State | | |
+|---|---|---|---|---|---|---|---|---|
+| | | | | | | Current time | 2026-06-30T02:01 UTC — 21:01 CT (Monday night, off-hours) |
+| | | | | | | Activity since last run | 0 entries — zero activity |
+| | | | | | | Login attempts (this window) | 0 |
+| | | | | | | Successful logins (this window) | 0 |
+| | | | | | | Blocked IPs | 0 |
+| | | | | | | Config changes | None |
+| | | | | | | File integrity | JSON files valid. All 8 accounts intact. Git: clean. |
+| | | | | | | Unresolved events | 0 of 100 |
+| | | | | | | Server | **Healthy** |
