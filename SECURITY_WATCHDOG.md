@@ -1,11 +1,11 @@
 # POS Security Watchdog
 
-| | | | | | | | | Last run: 2026-06-30T13:48 UTC
+| | | | | | | | | | Last run: 2026-06-30T14:28 UTC
 | | | | | | | | | Total events tracked: 108 (SEC-001→SEC-108; 0 unresolved)
 | | | | | | | | | Active blocks: 0 IPs
 | | | | | | | | | Run result: Clean — routine Owner activity from localhost, no anomalies.
 
-## Current Run Findings (13:14–13:48 UTC, ~34 min window)
+## Current Run Findings (13:48–14:28 UTC, ~40 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -23,22 +23,22 @@ None.
 
 **Server**: **Healthy** (HTTP response on port 5000 — all endpoints responding).
 
-**Activity**: **4 activity_log entries** since last run (13:14 UTC): All Owner (1111) login events from localhost.
+**Activity**: **8 activity_log entries** since last run (13:48 UTC): Employee One clock-in/out test (14:14), Owner admin logins (14:14-14:15), 2 failed login attempts (14:15, null user, 127.0.0.1), Owner login success (14:15).
 
-**Login attempts**: 4 new entries (4 success, 0 failed). No failed logins this window.
+**Login attempts**: 3 new entries (1 success, 2 failed). Both failures from 127.0.0.1 targeting null user.
 
 **Active shifts**: 0. No one currently clocked in.
 
 **Orders**: No new orders this window.
 
 ### 📊 Login Security Deep-Dive
-- **Brute force check**: 0 failed logins in this window. 0 failed logins in last 5 min. Threshold (5) not reached. No auto-block needed.
-- **Account enumeration**: 0 null-user probes. No enumeration pattern.
-- **Successful-after-failure**: No pattern detected (no prior failures before successful logins).
-- **Off-hours activity**: 08:48 CT — normal operating hours. NOT flagged.
+- **Brute force check**: 2 failed logins in this window (14:15 UTC). Both from 127.0.0.1 targeting null user (invalid PIN). Under threshold of 5. No auto-block needed.
+- **Account enumeration**: 2 null-user probes from 127.0.0.1. Under threshold of 10. No enumeration pattern.
+- **Successful-after-failure**: 2 failed attempts (null user, invalid PIN) followed by successful login as Owner (1111) from same IP. Failure was for invalid PIN, not Owner's account — not a brute force compromise pattern.
+- **Off-hours activity**: 09:28 CT — normal operating hours. NOT flagged.
 - **Cross-IP targeting**: None detected.
 - **Credential stuffing**: No pattern detected.
-- **Unusual hour**: 08:48 CT is normal operating hours.
+- **Unusual hour**: 09:28 CT is normal operating hours.
 
 ### 🔒 Security Config
 - No config changes detected this window.
@@ -70,10 +70,10 @@ None.
 
 | | | | | | | | | System State | | | |
 | |---|---|---|---|---|---|---|---|---|---|
-| | | | | | | | | Current time | 2026-06-30T13:48 UTC — 08:48 CT (normal hours) |
-| | | | | | | | | Activity since last run | 4 entries (Owner localhost logins) |
-| | | | | | | | | Login attempts (this window) | 4 (0 failed, 4 success) |
-| | | | | | | | | Successful logins (this window) | 4 |
+| | | | | | | | | | Current time | 2026-06-30T14:28 UTC — 09:28 CT (normal hours) |
+| | | | | | | | | | Activity since last run | 8 entries (Employee One clock test, Owner admin logins, 2 failed logins) |
+| | | | | | | | | | Login attempts (this window) | 3 (2 failed, 1 success) |
+| | | | | | | | | | Successful logins (this window) | 1 |
 | | | | | | | | | Blocked IPs | 0 |
 | | | | | | | | | Config changes | None |
 | | | | | | | | | File integrity | JSON files valid. All 8 accounts intact. |
