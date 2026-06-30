@@ -1,22 +1,22 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-30T06:48Z
-> Total checks: 47
-> Healthy: 47 | Broken: 0 | Fixed this cycle: 4
+> Last full cycle: 2026-06-30T07:11Z
+> Total checks: 48
+> Healthy: 48 | Broken: 0 | Fixed this cycle: 5
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (06:48Z)
-- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID (06:48Z)
-- [x] users.json has at least owner PIN 1111 — Owner present, wildcard permissions (06:48Z)
-- [x] Git repo is clean (no uncommitted changes from crashes) — clean (06:48Z)
+- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (07:11Z)
+- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID (07:11Z)
+- [x] users.json has at least owner PIN 1111 — Owner present, wildcard permissions (07:11Z)
+- [x] Git repo is clean (no uncommitted changes from crashes) — clean (07:11Z)
 
 ## HOURLY (check if last check was >1h ago)
-- [x] /api/clock/in works (clock in test user, verify response) — clocked in Employee 1234 at 06:05Z, clocked out ✓ (06:05Z)
-- [x] /api/clock/out works — clocked out, duration recorded (06:05Z)
+- [x] /api/clock/in works (clock in test user, verify response) — clocked in Employee 1234 at 07:11Z, clocked out ✓ (07:11Z)
+- [x] /api/clock/out works — clocked out, duration recorded (07:11Z)
 - [x] /api/items returns items — 19 items across 5 categories (06:05Z)
-- [x] /api/login works with valid PIN — Owner 1111 login, token returned (06:05Z)
-- [x] /api/admin_stats returns stats — stats via POST adminPin (06:05Z)
-- [x] /api/admin_shifts returns shifts — 63 shifts returned (06:05Z)
-- [x] Frontend loads (curl index.html, verify it's HTML not error) — HTML with <!DOCTYPE html> ✓ (06:05Z)
+- [x] /api/login works with valid PIN — Owner 1111 login, token returned (07:11Z)
+- [x] /api/admin_stats returns stats — stats via POST adminPin (07:11Z)
+- [x] /api/admin_shifts returns shifts — 63 shifts returned (07:11Z)
+- [x] Frontend loads (curl index.html, verify it's HTML not error) — HTML 200 OK ✓ (07:11Z)
 
 ## EVERY 4 HOURS
 - [x] Order lifecycle: create order → verify in orders.json → refund → verify — Created #138 (pending)→paid→refunded ✅
@@ -51,6 +51,7 @@
 _None_
 
 ## FIXES APPLIED
+- 2026-06-30T07:11Z **Security Watchdog dirty files** — SECURITY_WATCHDOG.md left uncommitted after Watchdog run at 06:53 UTC. Committed at baf2f79. Pushed to main. Also cleaned up test clock-in/out shift.
 - 2026-06-30T05:42Z **Security Watchdog dirty files** — Watchdog run left activity_log.json (+39), login_attempts.json (+23), security_events.json (+15), RELIABILITY_CHECKLIST.md (+10/-10) uncommitted. Committed + pushed.
 - 2026-06-30T04:46Z **Security Watchdog dirty files** — Watchdog runs left activity_log.json, login_attempts.json, security_events.json uncommitted. Committed + pushed at a2269fe. Also cleaned up test clock-in/out shift.
 - 2026-06-30T01:29Z **Security Watchdog dirty file** — SECURITY_WATCHDOG.md left uncommitted after Watchdog run at 01:08 UTC. Committed at 114e17b. Push: to main ✓
