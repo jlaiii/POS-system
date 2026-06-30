@@ -1,22 +1,22 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-30T09:27Z
+> Last full cycle: 2026-06-30T10:33Z
 > Total checks: 56
-> Healthy: 56 | Broken: 0 | Fixed this cycle: 11
+> Healthy: 56 | Broken: 0 | Fixed this cycle: 12
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (09:27Z)
-- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID (09:27Z)
-- [x] users.json has at least owner PIN 1111 — Owner present, wildcard permissions (09:27Z)
-- [x] Git repo is clean (no uncommitted changes from crashes) — clean after commit (09:27Z)
+- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (10:27Z)
+- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID (10:27Z)
+- [x] users.json has at least owner PIN 1111 — Owner present, wildcard permissions (10:27Z)
+- [x] Git repo is clean (no uncommitted changes from crashes) — clean after commit e844f49 (10:33Z)
 
 ## HOURLY (check if last check was >1h ago)
-- [x] /api/clock/in works (clock in test user, verify response) — clocked in Employee 1234, late 28min, clocked out ✓ (09:27Z)
-- [x] /api/clock/out works — clocked out, duration recorded (09:27Z)
-- [x] /api/items returns items — 19 items across 5 categories via GET (09:27Z)
-- [x] /api/login works with valid PIN — Owner 1111 login via userId, token + perms returned (09:05Z)
-- [x] /api/admin_stats returns stats — stats via POST adminPin, stats returned ✓ (09:05Z)
-- [x] /api/admin_shifts returns shifts — 9 shifts filtered by date range (09:05Z)
-- [x] Frontend loads (curl index.html, verify it's HTML not error) — HTML 200 OK, 1,375,342 bytes ✓ (09:27Z)
+- [x] /api/clock/in works (clock in test user, verify response) — Employee 5678 clocked in (33 min late), clocked out, test shift cleaned up (10:33Z)
+- [x] /api/clock/out works — clocked out Employee 5678, duration 0.0h recorded (10:33Z)
+- [x] /api/items returns items — 19 items across 5 categories via GET (10:27Z)
+- [x] /api/login works with valid PIN — Owner 1111 login via userId, token + perms returned (10:27Z)
+- [x] /api/admin_stats returns stats — stats via POST adminPin, stats returned ✓ (10:27Z)
+- [x] /api/admin_shifts returns shifts — shifts returned ✓ (10:27Z)
+- [x] Frontend loads (curl index.html, verify it's HTML not error) — HTML 200 OK, 1,375,342 bytes ✓ (10:27Z)
 
 ## EVERY 4 HOURS
 - [x] Order lifecycle: create order → verify in orders.json → refund → verify — Created #138 (pending)→paid→refunded ✅
@@ -45,12 +45,13 @@
 - [x] Concurrent write test: two rapid clock-ins → verify no data loss — Two users (1234, 5678) clocked in/out concurrently, both shifts recorded ✅
 
 ## DISCOVERED (failures you've seen before — check every 2h)
-- [x] Security Watchdog leaves dirty files after each run (SECURITY_WATCHDOG.md + security_events.json) — auto-commit on SRE bot runs — CHECKED 09:27Z, committed + pushed ✓
+- [x] Security Watchdog leaves dirty files after each run (SECURITY_WATCHDOG.md + security_events.json) — auto-commit on SRE bot runs — CHECKED 10:33Z, committed + pushed at e844f49 ✓
 
 ## CURRENT OUTAGES
 _None_
 
 ## FIXES APPLIED
+- 2026-06-30T10:33Z **Watchdog dirty files + SRE bot test cleanup** — Committed activity_log.json (+93) + login_attempts.json (+23) left uncommitted after Watchdog run. Clocked in/out Employee 5678 to verify /api/clock/in+out, cleaned up test shift. Committed + pushed at e844f49.
 - 2026-06-30T09:27Z **23 stale test shifts cleaned up + Watchdog dirty file** — Cleaned up 23 accumulated test shifts from shift_log.json (Employee 1234 SRE bot tests over past week). Committed activity_log.json (+43 lines) left dirty by Security Watchdog at e3401ca.
 - 2026-06-30T09:05Z **Security Watchdog dirty files** — Committed activity_log.json + login_attempts.json + orders.json (stale auto-cancel) left uncommitted after workers. Committed + pushed at 2e1766c.
 - 2026-06-30T08:43Z **Security Watchdog dirty files** — Committed activity_log.json + login_attempts.json left uncommitted after Watchdog run at 08:35 UTC. Committed + pushed at 59414fa.
