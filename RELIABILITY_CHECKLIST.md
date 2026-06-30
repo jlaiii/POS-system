@@ -1,21 +1,21 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-30T13:44Z
-> Total checks: 60
-> Healthy: 60 | Broken: 0 | Fixed this cycle: 14
+> Last full cycle: 2026-06-30T14:13Z
+> Total checks: 61
+> Healthy: 61 | Broken: 0 | Fixed this cycle: 14
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (13:44Z)
-- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID (13:44Z)
-- [x] users.json has at least owner PIN 1111 — Owner present, wildcard permissions (13:44Z)
-- [x] Git repo is clean (no uncommitted changes from crashes) — clean (13:44Z)
+- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (14:13Z)
+- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID (14:13Z)
+- [x] users.json has at least owner PIN 1111 — Owner present, wildcard permissions (14:13Z)
+- [x] Git repo is clean (no uncommitted changes from crashes) — clean (14:13Z)
 
 ## HOURLY (check if last check was >1h ago)
-- [x] /api/clock/in works (clock in test user, verify response) — Employee 5678 clocked in (132 min late), clocked out, test shift cleaned up (12:06Z)
-- [x] /api/clock/out works — clocked out Employee 5678, duration 0.0h recorded (12:06Z)
+- [x] /api/clock/in works (clock in test user, verify response) — Employee 1234 clocked in (314 min late), clocked out, test shift cleaned up (14:14Z)
+- [x] /api/clock/out works — clocked out Employee 1234, duration 0.0h recorded (14:14Z)
 - [x] /api/items returns items (GET) — Items by category, valid data ✓ (13:44Z)
 - [x] /api/login works with valid PIN — Owner 1111 login, session_token + perms returned (13:44Z)
-- [x] /api/admin_stats returns stats — stats via POST adminPin, stats returned ✓ (13:00Z)
-- [x] /api/admin_shifts returns shifts — 42 shifts returned ✓ (13:00Z)
+- [x] /api/admin_stats returns stats — stats via POST adminPin, stats returned ✓ (14:15Z)
+- [x] /api/admin_shifts returns shifts — 42 shifts returned ✓ (14:15Z)
 - [x] Frontend loads (curl index.html, verify it's HTML not error) — HTML 200 OK, 1,375,342 bytes ✓ (13:44Z)
 
 ## EVERY 4 HOURS
@@ -39,18 +39,19 @@
 - [x] Backup integrity: verify latest backup is valid JSON and not empty — 49 JSON files valid, DB backup present ✓ (09:05Z)
 - [x] app.py syntax check (python3 -m py_compile app.py) — SYNTAX OK ✓ (09:05Z)
 - [x] index.html size check (alert if shrunk dramatically — possible corruption) — 1,375,342 bytes, normal ✓ (09:05Z)
-- [x] Full app restart test: kill Flask → restart → verify all critical endpoints — 2026-06-29T23:33:43Z, PASSED (killed gunicorn master, restarted, verified /api/health, /api/items, /api/kitchen/queue, /api/pickup-display/queue, /api/login, /api/admin_stats, /api/admin_shifts, /api/clock/status all 200 OK)
+- [x] Full app restart test: kill Flask → restart → verify all critical endpoints — 2026-06-30T14:13Z, PASSED (killed python3 app.py, restarted, verified /api/health, /api/items, /api/kitchen/queue, /api/pickup-display/queue, /api/login, /api/admin_stats, /api/admin_shifts, /api/clock/status all 200 OK)
 - [x] Large payload test: submit order with 50 items — Order #140 created (50 items, $162.50) ✅
 - [x] Special chars test: user name with emoji, item name with quotes — Item 'Taco 🌮 "Supreme" Deluxe' added/deleted ✅
 - [x] Concurrent write test: two rapid clock-ins → verify no data loss — Two users (1234, 5678) clocked in/out concurrently, both shifts recorded ✅
 
 ## DISCOVERED (failures you've seen before — check every 2h)
-- [x] Security Watchdog leaves dirty files after each run (SECURITY_WATCHDOG.md + security_events.json) — auto-commit on SRE bot runs — CHECKED 11:23Z, committed + pushed at 33d09b9 ✓
+- [x] Security Watchdog leaves dirty files after each run (SECURITY_WATCHDOG.md + security_events.json) — auto-commit on SRE bot runs — CHECKED 14:13Z, committed activity_log.json + pushed at 8b97e2f ✓
 
 ## CURRENT OUTAGES
 _None_
 
 ## FIXES APPLIED
+- 2026-06-30T14:13Z **Security Watchdog dirty file + 12H restart test** — Committed activity_log.json left dirty by Security Watchdog at 8b97e2f. Ran 12H full app restart test — killed Flask, restarted, verified all 8 critical endpoints pass. Pushed to main.
 - 2026-06-30T13:00Z **Security Watchdog dirty file** — SECURITY_WATCHDOG.md timestamp update left file dirty after Watchdog 12:52 UTC run. Committed at c3d5ef9. Pushed to main ✓
 - 2026-06-30T11:23Z **Flask was down (HTTP 000)** — Flask process had died between 11:01Z and 11:23Z. Restarted via python3 app.py in background. Verified all critical endpoints (health, items, login, admin_stats). Committed dirty SECURITY_WATCHDOG.md from Watchdog 11:13 UTC run. Pushed at 33d09b9.
 - 2026-06-30T10:33Z **Watchdog dirty files + SRE bot test cleanup** — Committed activity_log.json (+93) + login_attempts.json (+23) left uncommitted after Watchdog run. Clocked in/out Employee 5678 to verify /api/clock/in+out, cleaned up test shift. Committed + pushed at e844f49.
