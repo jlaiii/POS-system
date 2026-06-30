@@ -1,8 +1,8 @@
 # POS Security Watchdog
 
-||| | | | | | | | | | Last run: 2026-06-30T15:58 UTC
+|||| | | | | | | | | | Last run: 2026-06-30T16:48 UTC
 ||| | | | | | | | | Total events tracked: 109 (SEC-001→SEC-109; 0 unresolved)
-||| | | | | | | | | Active blocks: 1 IP (127.0.0.1 — expires ~16:12 UTC, ineffective by design, localhost bypasses blocklist in app.py)
+|||| | | | | | | | | | Active blocks: 1 IP (127.0.0.1 — expired ~16:12 UTC, ineffective by design, localhost bypasses blocklist in app.py)
 ||| | | | | | | | | Run result: **CLEAN** — server up, no external threats, no anomalies.
 
 ## Current Run Findings (15:41–15:58 UTC, ~17 min window)
