@@ -4,14 +4,14 @@
 > Healthy: 57 | Broken: 0 | Fixed this cycle: 14
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (11:44Z)
-- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID (11:44Z)
-- [x] users.json has at least owner PIN 1111 — Owner present, wildcard permissions (11:44Z)
-- [x] Git repo is clean (no uncommitted changes from crashes) — clean (11:44Z)
+- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (12:06Z)
+- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID (12:06Z)
+- [x] users.json has at least owner PIN 1111 — Owner present, wildcard permissions (12:06Z)
+- [x] Git repo is clean (no uncommitted changes from crashes) — clean (12:06Z)
 
 ## HOURLY (check if last check was >1h ago)
-- [x] /api/clock/in works (clock in test user, verify response) — Employee 5678 clocked in (33 min late), clocked out, test shift cleaned up (10:33Z)
-- [x] /api/clock/out works — clocked out Employee 5678, duration 0.0h recorded (10:33Z)
+- [x] /api/clock/in works (clock in test user, verify response) — Employee 5678 clocked in (132 min late), clocked out, test shift cleaned up (12:06Z)
+- [x] /api/clock/out works — clocked out Employee 5678, duration 0.0h recorded (12:06Z)
 - [x] /api/items returns items — 19 items across 5 categories (11:44Z)
 - [x] /api/login works with valid PIN — Owner 1111 login via userId+pin, token + perms returned (11:44Z)
 - [x] /api/admin_stats returns stats — stats via POST adminPin, stats returned ✓ (11:44Z)
