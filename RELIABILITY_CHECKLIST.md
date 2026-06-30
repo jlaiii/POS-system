@@ -1,22 +1,22 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-30T12:06Z
-> Total checks: 59
-> Healthy: 58 | Broken: 0 | Fixed this cycle: 14
+> Last full cycle: 2026-06-30T12:38Z
+> Total checks: 60
+> Healthy: 60 | Broken: 0 | Fixed this cycle: 14
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (12:06Z)
-- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID (12:06Z)
-- [x] users.json has at least owner PIN 1111 — Owner present, wildcard permissions (12:06Z)
-- [x] Git repo is clean (no uncommitted changes from crashes) — clean (12:06Z)
+- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (12:38Z)
+- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID (12:38Z)
+- [x] users.json has at least owner PIN 1111 — Owner present, wildcard permissions (12:38Z)
+- [x] Git repo is clean (no uncommitted changes from crashes) — clean after committing Watchdog dirty file at c8023ea (12:38Z)
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/clock/in works (clock in test user, verify response) — Employee 5678 clocked in (132 min late), clocked out, test shift cleaned up (12:06Z)
 - [x] /api/clock/out works — clocked out Employee 5678, duration 0.0h recorded (12:06Z)
-- [x] /api/items returns items — 19 items across 5 categories (11:44Z)
+- [x] /api/items returns items — 19+ items across 5 categories, valid data (12:38Z)
 - [x] /api/login works with valid PIN — Owner 1111 login via userId+pin, token + perms returned (11:44Z)
 - [x] /api/admin_stats returns stats — stats via POST adminPin, stats returned ✓ (11:44Z)
 - [x] /api/admin_shifts returns shifts — 42 shifts returned ✓ (11:44Z)
-- [x] Frontend loads (curl index.html, verify it's HTML not error) — HTML 200 OK, 1,375,342 bytes ✓ (11:44Z)
+- [x] Frontend loads (curl index.html, verify it's HTML not error) — HTML 200 OK, 1,375,342 bytes ✓ (12:38Z)
 
 ## EVERY 4 HOURS
 - [x] Order lifecycle: create order → verify in orders.json → refund → verify — Created #138 (pending)→paid→refunded ✅
@@ -24,7 +24,7 @@
 - [x] Inventory: check stock decrements on order — Coke 70→69→70 (decrement + restore via refund) ✅ | Inventory file valid, 24 items. Stock: Hotdogs 92, Hamburger 98, Taco 98, Coke 70, Raspia 100 (09:05Z)
 - [x] Loyalty: points earned on order — Order #139 (Coke $3) earned 3 pts, refunded, cleaned up ✅
 - [x] Cash register: open drawer ($100) → cash in ($50) → cash out ($20) → close ($130, exact match) ✅
-- [x] Kitchen display: GET /api/kitchen/queue — 0 pending orders, valid data ✓ (09:05Z)
+- [x] Kitchen display: GET /api/kitchen/queue — 0 pending orders, valid data ✓ (12:38Z)
 - [x] Pickup display: GET /api/pickup-display/queue — 2 ready orders, valid data ✓ (11:44Z)
 - [x] Clock-in late detection: Employee 1234 scheduled 09:00, clocked in 21:38 → 758 min late ✅
 - [x] Break tracking: POST /api/clock/break — endpoint responds with proper error when not clocked in ✅
