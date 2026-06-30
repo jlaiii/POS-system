@@ -1,11 +1,11 @@
 # POS Security Watchdog
 
-| | | | | | | | Last run: 2026-06-30T08:07 UTC
-| | | | | | | | Total events tracked: 109 (SEC-002→SEC-109; 0 unresolved)
+| | | | | | | | Last run: 2026-06-30T08:35 UTC
+| | | | | | | | Total events tracked: 107 (SEC-002→SEC-108; 0 unresolved)
 | | | | | | | | Active blocks: 0 IPs
-| | | | | | | | Run result: All clear — Reliability Bot order+refund test only (no login activity this window).
+| | | | | | | | Run result: All clear — Employee One clock test + 2 failed probes + Owner login, all from localhost.
 
-## Current Run Findings (07:18–08:07 UTC, ~49 min window)
+## Current Run Findings (08:07–08:35 UTC, ~28 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -23,21 +23,21 @@ None.
 
 **Server**: **Healthy** (HTTP 200 on / — all endpoints responding correctly).
 
-**Activity**: **2 new activity_log entries** since last run (07:18 UTC).
+**Activity**: **6 new activity_log entries** since last run (08:07 UTC).
 
-**Login attempts**: **0 new entries** in login_attempts.json — no login activity at all this window.
+**Login attempts**: **3 new entries** in login_attempts.json — 2 failed (null user, localhost) + 1 success (Owner 1111, localhost).
 
 **Active shifts**: 0. No one currently clocked in.
 
-**Orders**: 1 new order (Order 142 — 1 Coke, $3.25) created and immediately refunded by Reliability Bot.
+**Orders**: No new orders this window.
 
 ### 📊 Login Security Deep-Dive
-- **Brute force check**: 0 failed attempts this window. No activity to check.
-- **Account enumeration**: No failed logins at all.
-- **Successful-after-failure**: No pattern to detect — no new logins occurred.
-- **Off-hours activity**: Current time 08:07 UTC (03:07 CT, off-hours window 22:00-06:00).
-  - No new logins since last run. Owner login at 07:11 UTC (02:11 CT) already captured and cleared in previous run.
-  - The only activity (07:56) was Reliability Bot creating and refunding order #142 — no authentication required for submit_order as null user.
+- **Brute force check**: 2 failed attempts from 127.0.0.1 in last 15 min (< 5 threshold). No auto-block needed.
+- **Account enumeration**: 2 probes against non-existent PINs from 127.0.0.1 (< 10 threshold). Low severity.
+- **Successful-after-failure**: 127.0.0.1 had 2 failures then Owner (1111) success — below 3-failure threshold. Not flagged.
+- **Off-hours activity**: Current time 08:35 UTC (03:35 CT, off-hours window 22:00-06:00 CT).
+  - Activity at 08:18-08:19 UTC (03:18-03:19 CT) from localhost — standard cron worker testing.
+  - Employee One clock test + Owner admin login — all localhost, no external IPs.
 - **Cross-IP targeting**: None detected.
 - **Credential stuffing**: No pattern detected.
 
@@ -49,20 +49,19 @@ None.
 - 2FA gap: Owner (1111), Manager (2222), and Manager Sarah (7788) still lack 2FA — known issue for Security Sentinel.
 
 ### 💰 Financial Check / Order Anomaly Scan
-- 1 new order + refund (Order 142, $3.25, 1 Coke) by Reliability Bot — inventory test, not suspicious.
-- No real customer orders this window.
-- Historical refund rate ~33.1% (40/121) — all test/development data.
+- No new orders this window. No customer activity.
+- Previous test orders (refunded/pending) unchanged.
 - No anomalies detected.
 
 ### 📂 File Integrity
-- All 51 JSON files parseable and valid.
+- All JSON files parseable and valid.
 - All 8 accounts intact. Owner (1111) present, active, not banned.
 - No suspicious new files (.php, .sh, .exe, .bat).
-- Git: clean — no uncommitted changes (Reliability Bot committed its work at 07:55Z).
+- Git: clean — no uncommitted changes.
 
 ### ✅ Actions Taken
 - 0 blocked IPs, 0 alerts fired.
-- No new SEC events created — activity is entirely Reliability Bot testing from localhost.
+- No new SEC events created — activity is routine cron testing from localhost.
 - No uncommitted changes to stage.
 - All clear — cron worker testing only this window.
 
@@ -72,12 +71,12 @@ None.
 
 | | | | | | | | System State | | | |
 |---|---|---|---|---|---|---|---|---|---|---|
-| | | | | | | | Current time | 2026-06-30T08:07 UTC — 03:07 CT (off-hours) |
-| | | | | | | | Activity since last run | 2 entries (Reliability Bot: submit_order + refund_order at 07:56) |
-| | | | | | | | Login attempts (this window) | 0 |
-| | | | | | | | Successful logins (this window) | 0 |
-| | | | | | | | Blocked IPs | 0 |
-| | | | | | | | Config changes | None |
-| | | | | | | | File integrity | JSON files valid. All 8 accounts intact. |
-| | | | | | | | Unresolved events | 0 of 109 |
-| | | | | | | | Server | **Healthy** (HTTP 200 on /) |
+|| | | | | | | | Current time | 2026-06-30T08:35 UTC — 03:35 CT (off-hours) |
+|| | | | | | | | Activity since last run | 6 entries (Employee One clock in/out, 2 failed logins, Owner login at 08:18-08:19) |
+|| | | | | | | | Login attempts (this window) | 3 (2 failed + 1 success) |
+|| | | | | | | | Successful logins (this window) | 2 (Owner admin_login + login at 08:18-08:19) |
+|| | | | | | | | Blocked IPs | 0 |
+|| | | | | | | | Config changes | None |
+|| | | | | | | | File integrity | JSON files valid. All 8 accounts intact. |
+|| | | | | | | | Unresolved events | 0 of 107 |
+|| | | | | | | | Server | **Healthy** (HTTP 200 on /) |
