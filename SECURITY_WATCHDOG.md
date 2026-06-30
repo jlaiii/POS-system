@@ -1,11 +1,11 @@
 # POS Security Watchdog
 
-| | | | | | | | Last run: 2026-06-30T10:39 UTC
+| | | | | | | | Last run: 2026-06-30T10:56 UTC
 | | | | | | | | Total events tracked: 108 (SEC-002→SEC-108; 0 unresolved)
 | | | | | | | | Active blocks: 0 IPs
-| | | | | | | | Run result: No activity since last run — all clear.
+| | | | | | | | Run result: No activity since last run — all clear. Consecutive clean run.
 
-## Current Run Findings (10:22–10:39 UTC, ~17 min window)
+## Current Run Findings (10:39–10:56 UTC, ~17 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -23,28 +23,20 @@ None.
 
 **Server**: **Healthy** (HTTP 200 on / — all endpoints responding).
 
-**Activity**: **7 new activity_log entries** since last run (10:22 UTC). All from 127.0.0.1 (localhost/curl) — standard cron worker testing:
-  - 10:27:49 — login_failed (null user, invalid_pin) — probe/typo by worker
-  - 10:27:50 — admin_login failed (null user) — same probe
-  - 10:32:29 — Owner (1111) successful login
-  - 10:32:30 — Owner (1111) successful admin_login
-  - 10:32:41 — clock_in_failed (5555, doesn't exist) — worker testing with bad PIN
-  - 10:33:11 — Employee Two (5678) clock_in (late 33min) — worker test
-  - 10:33:14 — Employee Two (5678) clock_out — worker test
+**Activity**: **0 new activity_log entries** since last run (10:39 UTC). No activity whatsoever in this window.
 
-**Login attempts**: 2 new entries since last run. Latest: Owner (1111) successful login at 10:32:29 UTC from 127.0.0.1.
+**Login attempts**: 0 new entries since last run.
 
 **Active shifts**: 0. No one currently clocked in.
 
 **Orders**: No new orders this window.
 
 ### 📊 Login Security Deep-Dive
-- **Brute force check**: 1 failed login (null user, 127.0.0.1) in last 15 min. Threshold 5+ not met. No auto-block needed.
-- **Account enumeration**: 1 probe on non-existent PIN 5555 (clock_in_failed). Threshold 10+ not met. No alert.
-- **Successful-after-failure**: 1 failure then success, but failure was for null user (not 1111), only 1 attempt (threshold 3+), and all from localhost. No concern.
-- **Off-hours activity**: Current time 10:39 UTC (05:39 CT, off-hours window 22:00-06:00 CT).
-  - Owner (1111) login at 05:32 CT from 127.0.0.1 — established cron worker pattern. No external IPs.
-- **Cross-IP targeting**: None detected (all from 127.0.0.1).
+- **Brute force check**: 0 failed logins in last 15 min. No auto-block needed.
+- **Account enumeration**: No probes detected.
+- **Successful-after-failure**: No login attempts at all this window.
+- **Off-hours activity**: Current time 10:56 UTC (05:56 CT, off-hours window 22:00-06:00 CT). No activity this window.
+- **Cross-IP targeting**: None detected.
 - **Credential stuffing**: No pattern detected.
 
 ### 🔒 Security Config
@@ -67,7 +59,7 @@ None.
 ### ✅ Actions Taken
 - 0 blocked IPs, 0 alerts fired.
 - No new SEC events created.
-- All clear — no threats detected.
+- No activity detected — all clear.
 
 ## Previous Run Findings (carried forward)
 - Admin 2FA gap: Owner (1111), Manager (2222), and Manager Sarah (7788) lack 2FA despite `require_2fa_for_admins: true`. Security Sentinel handles.
@@ -75,10 +67,10 @@ None.
 
 | | | | | | | | System State | | | |
 |---|---|---|---|---|---|---|---|---|---|---|
-| | | | | | | | Current time | 2026-06-30T10:39 UTC — 05:39 CT (off-hours) |
-| | | | | | | | Activity since last run | 7 entries (all localhost cron worker) |
-| | | | | | | | Login attempts (this window) | 2 (1 failed, 1 success) |
-| | | | | | | | Successful logins (this window) | 1 (Owner/1111 at 10:32 UTC) |
+| | | | | | | | Current time | 2026-06-30T10:56 UTC — 05:56 CT (off-hours) |
+| | | | | | | | Activity since last run | 0 entries |
+| | | | | | | | Login attempts (this window) | 0 |
+| | | | | | | | Successful logins (this window) | 0 |
 | | | | | | | | Blocked IPs | 0 |
 | | | | | | | | Config changes | None |
 | | | | | | | | File integrity | JSON files valid. All 8 accounts intact. |
