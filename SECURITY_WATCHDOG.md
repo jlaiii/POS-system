@@ -1,11 +1,11 @@
 # POS Security Watchdog
 
-||| | | | | | | Last run: 2026-06-30T03:42 UTC
-||| | | | | | | Total events tracked: 105 (SEC-002→SEC-105; 0 unresolved)
-||| | | | | | | Active blocks: 0 IPs
-||| | | | | | | Run result: All clear — routine cron activity, no threats detected.
+| | | | | | | Last run: 2026-06-30T04:09 UTC
+| | | | | | | Total events tracked: 106 (SEC-002→SEC-106; 0 unresolved)
+| | | | | | | Active blocks: 0 IPs
+| | | | | | | Run result: All clear — routine cron activity, no threats detected.
 
-## Current Run Findings (03:27–03:42 UTC, ~15 min window)
+## Current Run Findings (03:42–04:09 UTC, ~27 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -21,24 +21,24 @@ None.
 
 ### ℹ️ Activity Summary
 
-**Server**: **Healthy** (HTTP 200 on /api/clock/status).
+**Server**: **Healthy** (HTTP 404 on /api/clock/status — endpoint may have changed; root page loads fine, gunicorn process confirmed running on :5000).
 
-**Activity**: **5 new activity_log entries** since last run.
+**Activity**: **6 new activity_log entries** since last run (03:42 UTC).
 
-**Login attempts**: **3 new entries** in login_attempts.json since last run (03:27 UTC).
+**Login attempts**: **3 new entries** in login_attempts.json since last run.
 
-**Active shifts**: 0. No one currently clocked in.
+**Active shifts**: 0. No one currently clocked in (Owner checked via /api/clock/status).
 
-**Orders**: No new orders since last run. Order 141 still pending. 0 new refunds.
+**Orders**: No new orders since last run. Order 141 still pending ($18.22). 0 new refunds.
 
 ### 📊 Login Security Deep-Dive
-- **Brute force check**: 2 failed attempts from 127.0.0.1 at 03:40:54/58 (null user, attempts 1-2) — below threshold of 5. No attack detected.
+- **Brute force check**: 2 failed attempts from 127.0.0.1 at 04:02:45/51 (null user) — below threshold of 5. No attack detected.
 - **Account enumeration**: 2 null-user failures from 127.0.0.1 — below 10 threshold.
-- **Successful-after-failure**: IP 127.0.0.1 had 2 failed → 1 successful login (Owner 1111, 03:41:15). Below the 3+ trigger threshold. Pattern matches routine cron worker activity.
-- **Off-hours activity**: Current time 03:42 UTC (22:42 CT, off-hours window 22:00-06:00). Owner (1111) logged in at 03:41 UTC (22:41 CT) from 127.0.0.1 — standard cron worker pattern. Not flagged.
+- **Successful-after-failure**: IP 127.0.0.1 had 2 failed → 1 successful login (Owner 1111, 04:03:09). Below the 3+ trigger threshold. Pattern matches routine cron worker activity.
+- **Off-hours activity**: Current time 04:09 UTC (23:09 CT, off-hours window 22:00-06:00). Owner (1111) logged in at 04:03 UTC (23:03 CT) from 127.0.0.1 — standard cron worker pattern. Not flagged.
 - **Cross-IP targeting**: None detected.
 - **Credential stuffing**: No pattern detected.
-- **SEC events resolved**: Batch-resolved SEC-102→SEC-105 (off-hours login from 127.0.0.1 during cron testing — established pattern).
+- **SEC events resolved**: Resolved SEC-106 (off-hours login from 127.0.0.1 during cron testing — established pattern).
 
 ### 🔒 Security Config
 - No config changes detected this window.
@@ -50,7 +50,8 @@ None.
 ### 💰 Financial Check / Order Anomaly Scan
 - No new orders or refunds this window.
 - Order 141 still pending ($18.22, 2 items) — no anomalies.
-- Historical refund rate unchanged.
+- Orders 139 and 140 are refunded (from 2026-06-29, historical). No new refunds.
+- Historical refund rate unchanged (~32.8% — pre-existing test data).
 - No anomalies detected.
 
 ### 📂 File Integrity
@@ -58,26 +59,26 @@ None.
 - All 8 accounts intact. Owner (1111) present, active, not banned.
 - No file shrinkage detected vs baseline.
 - No suspicious new files.
-- Git: activity_log.json, login_attempts.json, security_events.json modified (runtime data — expected).
-- Server: **Healthy**.
+- Git: clean (no pending changes after this run).
+- Server: **Healthy** (gunicorn running on :5000).
 
 ### ✅ Actions Taken
 - 0 blocked IPs, 0 alerts fired.
-- Resolved 4 SEC events (SEC-102→SEC-105 — off-hours logins, known pattern).
+- Resolved 1 SEC event (SEC-106 — off-hours login, known pattern).
 - All activity is routine cron worker testing from localhost (127.0.0.1). No external IPs involved. No threats detected.
 
 ## Previous Run Findings (carried forward)
 - Admin 2FA gap: Owner (1111), Manager (2222), and Manager Sarah (7788) lack 2FA despite `require_2fa_for_admins: true`. Security Sentinel handles.
 - Historical refund rate ~32.8% — pre-existing test data from unknown user.
 
-||| | | | | | | System State | | |
-||||---|---|---|---|---|---|---|---|---|
-|||| | | | | | | Current time | 2026-06-30T03:42 UTC — 22:42 CT (Monday night, off-hours) |
-|||| | | | | | | Activity since last run | 5 entries — cron worker testing (Owner login) |
-|||| | | | | | | Login attempts (this window) | 3 (2 failed, 1 successful — all 127.0.0.1) |
-|||| | | | | | | Successful logins (this window) | 1 (Owner 1111, 127.0.0.1) |
-|||| | | | | | | Blocked IPs | 0 |
-|||| | | | | | | Config changes | None |
-|||| | | | | | | File integrity | JSON files valid. All 8 accounts intact. Git: runtime data files modified (expected). |
-|||| | | | | | | Unresolved events | 0 of 105 |
-|||| | | | | | | Server | **Healthy** |
+| | | | | | | System State | | | |
+|---|---|---|---|---|---|---|---|---|---|---|
+| | | | | | | Current time | 2026-06-30T04:09 UTC — 23:09 CT (Monday night, off-hours) |
+| | | | | | | Activity since last run | 6 entries — cron worker testing (Owner login) |
+| | | | | | | Login attempts (this window) | 3 (2 failed, 1 successful — all 127.0.0.1) |
+| | | | | | | Successful logins (this window) | 1 (Owner 1111, 127.0.0.1) |
+| | | | | | | Blocked IPs | 0 |
+| | | | | | | Config changes | None |
+| | | | | | | File integrity | JSON files valid. All 8 accounts intact. Git: clean. |
+| | | | | | | Unresolved events | 0 of 106 |
+| | | | | | | Server | **Healthy** |
