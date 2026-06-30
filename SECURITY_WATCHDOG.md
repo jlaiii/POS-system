@@ -1,11 +1,11 @@
 # POS Security Watchdog
 
-| | | | | | | | Last run: 2026-06-30T11:13 UTC
+| | | | | | | | Last run: 2026-06-30T11:30 UTC
 | | | | | | | | Total events tracked: 108 (SEC-002→SEC-108; 0 unresolved)
 | | | | | | | | Active blocks: 0 IPs
 | | | | | | | | Run result: Routine cron worker activity detected — 1 failed login, 1 Owner login. No threats. Clean run.
 
-## Current Run Findings (10:56–11:13 UTC, ~17 min window)
+## Current Run Findings (11:13–11:30 UTC, ~17 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -23,13 +23,14 @@ None.
 
 **Server**: **Healthy** (HTTP 200 on / — all endpoints responding).
 
-**Activity**: **3 new activity_log entries** since last run (10:56 UTC).
+**Activity**: **4 new activity_log entries** since last run (11:13 UTC).
 
 | Time (UTC) | Type | User | IP | Detail |
 |---|---|---|---|---|
-| 11:00:46 | login_failed | null | 127.0.0.1 | invalid_pin (curl) |
-| 11:01:01 | login | 1111/Owner | 127.0.0.1 | success (curl) |
-| 11:01:03 | admin_login | 1111/Owner | 127.0.0.1 | success (curl) |
+| 11:23:25 | login_failed | null | 127.0.0.1 | invalid_pin (curl) |
+| 11:23:26 | admin_login | 1111/Owner | 127.0.0.1 | success (curl) |
+| 11:23:38 | login | 1111/Owner | 127.0.0.1 | success (curl) |
+| 11:23:39 | admin_login | 1111/Owner | 127.0.0.1 | success (curl) |
 
 **Login attempts**: 2 new entries (1 failure, 1 success).
 
@@ -38,13 +39,13 @@ None.
 **Orders**: No new orders this window.
 
 ### 📊 Login Security Deep-Dive
-- **Brute force check**: 1 failed login (null user) in this window from 127.0.0.1. 0 failed logins in last 5 min. Threshold (5) not reached. No auto-block needed.
+- **Brute force check**: 1 failed login (null user) in this window from 127.0.0.1. 0 failed logins in last 5 min (11:25-11:30). Threshold (5) not reached. No auto-block needed.
 - **Account enumeration**: 1 null-user probe — well below 10-threshold for MEDIUM. Consistent with cron testing pattern.
-- **Successful-after-failure**: 1 failure followed by Owner success from same IP — only 1 failure (threshold is 3+). Pattern matches established cron worker testing behavior (test invalid PIN, then Owner logs in).
-- **Off-hours activity**: Login at 11:01 UTC (06:01 CT) — 1 minute past off-hours cutoff (06:00 CT). Technically NOT off-hours. Not flagged.
+- **Successful-after-failure**: 1 failure followed by Owner success from same IP — only 1 failure (threshold is 3+). Pattern matches established cron worker testing behavior.
+- **Off-hours activity**: Login at 11:23 UTC (06:23 CT) — 23 minutes past off-hours cutoff (06:00 CT). NOT flagged.
 - **Cross-IP targeting**: None detected. All activity from single IP (127.0.0.1).
 - **Credential stuffing**: No pattern detected.
-- **Unusual hour**: 06:01 CT is normal hours (just past off-hours window).
+- **Unusual hour**: 06:23 CT is normal operating hours.
 
 ### 🔒 Security Config
 - No config changes detected this window.
@@ -75,8 +76,8 @@ None.
 
 | | | | | | | | System State | | | |
 |---|---|---|---|---|---|---|---|---|---|---|
-| | | | | | | | Current time | 2026-06-30T11:13 UTC — 06:13 CT (normal hours) |
-| | | | | | | | Activity since last run | 3 entries |
+| | | | | | | | Current time | 2026-06-30T11:30 UTC — 06:30 CT (normal hours) |
+| | | | | | | | Activity since last run | 4 entries |
 | | | | | | | | Login attempts (this window) | 2 (1 failed, 1 success) |
 | | | | | | | | Successful logins (this window) | 1 (Owner/1111 from localhost) |
 | | | | | | | | Blocked IPs | 0 |
