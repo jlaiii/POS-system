@@ -1,11 +1,11 @@
 # POS Security Watchdog
 
-| | | | | | | | Last run: 2026-06-30T08:51 UTC
+| | | | | | | | Last run: 2026-06-30T09:25 UTC
 | | | | | | | | Total events tracked: 108 (SEC-002→SEC-108; 0 unresolved)
 | | | | | | | | Active blocks: 0 IPs
-| | | | | | | | Run result: All clear — 1 failed login from localhost (curl), no external IPs.
+| | | | | | | | Run result: All clear — no activity since previous run, all clean.
 
-## Current Run Findings (08:35–08:51 UTC, ~16 min window)
+## Current Run Findings (09:08–09:25 UTC, ~17 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -21,23 +21,23 @@ None.
 
 ### ℹ️ Activity Summary
 
-**Server**: **Healthy** (HTTP 200 on / — all endpoints responding correctly).
+**Server**: **Healthy** (HTTP 200 on / — all endpoints responding).
 
-**Activity**: **1 new activity_log entry** since last run (08:35 UTC).
+**Activity**: **0 new activity_log entries** since last run (09:08 UTC) — no activity detected.
 
-**Login attempts**: **1 new entry** in login_attempts.json — 1 failed (null user, curl/8.5.0, localhost).
+**Login attempts**: **0 new entries** in login_attempts.json.
 
 **Active shifts**: 0. No one currently clocked in.
 
-**Orders**: No new orders this window.
+**Orders**: No new orders this window. Stale pending order 141 (6h old) — minor cleanliness issue, not security-related.
 
 ### 📊 Login Security Deep-Dive
-- **Brute force check**: 1 failed attempt from 127.0.0.1 in last 16 min (< 5 threshold). No auto-block needed.
-- **Account enumeration**: 1 probe against non-existent PIN from 127.0.0.1 (< 10 threshold). Low severity.
-- **Successful-after-failure**: No pattern — only 1 failure, no subsequent success.
-- **Off-hours activity**: Current time 08:51 UTC (03:51 CT, off-hours window 22:00-06:00 CT).
-  - Single failed login at 08:41:57 from localhost — likely another cron worker testing.
-  - No external IPs, no sustained probing.
+- **Brute force check**: No failed attempts in last 17 min. No auto-block needed.
+- **Account enumeration**: No probes detected.
+- **Successful-after-failure**: No activity to evaluate.
+- **Off-hours activity**: Current time 09:25 UTC (04:25 CT, off-hours window 22:00-06:00 CT).
+  - No logins this window.
+  - No external IPs.
 - **Cross-IP targeting**: None detected.
 - **Credential stuffing**: No pattern detected.
 
@@ -50,20 +50,22 @@ None.
 
 ### 💰 Financial Check / Order Anomaly Scan
 - No new orders this window. No customer activity.
-- Previous test orders (1 pending, 120 completed/cancelled/refunded) unchanged.
+- 1 pending order (141, $18.22, from 03:16 UTC) — stale but not security-relevant.
+- 40 refunded / 121 total orders (33.1%) — pre-existing test data, no real transactions.
+- Zero-total order (94, cancelled, 0 items) — old test artifact, not suspicious.
 - No anomalies detected.
 
 ### 📂 File Integrity
 - All JSON files parseable and valid.
 - All 8 accounts intact. Owner (1111) present, active, not banned.
 - No suspicious new files (.php, .sh, .exe, .bat).
-- Git: clean — no uncommitted changes.
+- Git: clean — uncommitted watchdog file committed with this run.
 
 ### ✅ Actions Taken
 - 0 blocked IPs, 0 alerts fired.
-- No new SEC events created — activity is routine curl probe from localhost.
-- No uncommitted changes to stage.
-- All clear — single failed probe from another cron worker.
+- No new SEC events created.
+- Dirty SECURITY_WATCHDOG.md from previous run committed.
+- All clear — no threats detected.
 
 ## Previous Run Findings (carried forward)
 - Admin 2FA gap: Owner (1111), Manager (2222), and Manager Sarah (7788) lack 2FA despite `require_2fa_for_admins: true`. Security Sentinel handles.
@@ -71,9 +73,9 @@ None.
 
 | | | | | | | | System State | | | |
 |---|---|---|---|---|---|---|---|---|---|---|
-| | | | | | | | Current time | 2026-06-30T08:51 UTC — 03:51 CT (off-hours) |
-| | | | | | | | Activity since last run | 1 entry (failed login at 08:41 from localhost) |
-| | | | | | | | Login attempts (this window) | 1 (1 failed, 0 successes) |
+| | | | | | | | Current time | 2026-06-30T09:25 UTC — 04:25 CT (off-hours) |
+| | | | | | | | Activity since last run | 0 entries |
+| | | | | | | | Login attempts (this window) | 0 |
 | | | | | | | | Successful logins (this window) | 0 |
 | | | | | | | | Blocked IPs | 0 |
 | | | | | | | | Config changes | None |
