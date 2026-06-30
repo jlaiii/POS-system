@@ -1,21 +1,21 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-30T12:38Z
+> Last full cycle: 2026-06-30T13:00Z
 > Total checks: 60
 > Healthy: 60 | Broken: 0 | Fixed this cycle: 14
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (12:38Z)
-- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID (12:38Z)
-- [x] users.json has at least owner PIN 1111 — Owner present, wildcard permissions (12:38Z)
-- [x] Git repo is clean (no uncommitted changes from crashes) — clean after committing Watchdog dirty file at c8023ea (12:38Z)
+- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (13:00Z)
+- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID (13:00Z)
+- [x] users.json has at least owner PIN 1111 — Owner present, wildcard permissions (13:00Z)
+- [x] Git repo is clean (no uncommitted changes from crashes) — clean after committing Watchdog dirty file at c3d5ef9 (13:00Z)
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/clock/in works (clock in test user, verify response) — Employee 5678 clocked in (132 min late), clocked out, test shift cleaned up (12:06Z)
 - [x] /api/clock/out works — clocked out Employee 5678, duration 0.0h recorded (12:06Z)
 - [x] /api/items returns items — 19+ items across 5 categories, valid data (12:38Z)
-- [x] /api/login works with valid PIN — Owner 1111 login via userId+pin, token + perms returned (11:44Z)
-- [x] /api/admin_stats returns stats — stats via POST adminPin, stats returned ✓ (11:44Z)
-- [x] /api/admin_shifts returns shifts — 42 shifts returned ✓ (11:44Z)
+- [x] /api/login works with valid PIN — Owner 1111 login via userId+pin, token + perms returned (13:00Z)
+- [x] /api/admin_stats returns stats — stats via POST adminPin, stats returned ✓ (13:00Z)
+- [x] /api/admin_shifts returns shifts — 42 shifts returned ✓ (13:00Z)
 - [x] Frontend loads (curl index.html, verify it's HTML not error) — HTML 200 OK, 1,375,342 bytes ✓ (12:38Z)
 
 ## EVERY 4 HOURS
@@ -51,6 +51,7 @@
 _None_
 
 ## FIXES APPLIED
+- 2026-06-30T13:00Z **Security Watchdog dirty file** — SECURITY_WATCHDOG.md timestamp update left file dirty after Watchdog 12:52 UTC run. Committed at c3d5ef9. Pushed to main ✓
 - 2026-06-30T11:23Z **Flask was down (HTTP 000)** — Flask process had died between 11:01Z and 11:23Z. Restarted via python3 app.py in background. Verified all critical endpoints (health, items, login, admin_stats). Committed dirty SECURITY_WATCHDOG.md from Watchdog 11:13 UTC run. Pushed at 33d09b9.
 - 2026-06-30T10:33Z **Watchdog dirty files + SRE bot test cleanup** — Committed activity_log.json (+93) + login_attempts.json (+23) left uncommitted after Watchdog run. Clocked in/out Employee 5678 to verify /api/clock/in+out, cleaned up test shift. Committed + pushed at e844f49.
 - 2026-06-30T09:27Z **23 stale test shifts cleaned up + Watchdog dirty file** — Cleaned up 23 accumulated test shifts from shift_log.json (Employee 1234 SRE bot tests over past week). Committed activity_log.json (+43 lines) left dirty by Security Watchdog at e3401ca.
