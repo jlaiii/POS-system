@@ -1,7 +1,7 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-29T23:57:22Z
-> Total checks: 40
-> Healthy: 40 | Broken: 0 | Fixed this cycle: 1
+> Last full cycle: 2026-06-30T00:23:09Z
+> Total checks: 41
+> Healthy: 41 | Broken: 0 | Fixed this cycle: 1
 
 ## CRITICAL (check every run — these can't wait)
 - [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK
@@ -51,4 +51,4 @@
 _None_
 
 ## FIXES APPLIED
-- 2026-06-29T23:57Z **Security Watchdog dirty files** — SECURITY_WATCHDOG.md and security_events.json left uncommitted after Watchdog run at 23:49 UTC. Committed at f8f6e6a. Added to DISCOVERED checklist.
+- 2026-06-30T00:23Z **Security Watchdog dirty files** — Watchdog run at 00:21 UTC left activity_log.json, login_attempts.json, security_events.json uncommitted. Committed at 72ec0a9.
