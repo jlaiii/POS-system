@@ -1,11 +1,11 @@
 # POS Security Watchdog
 
-| | | | | | | Last run: 2026-06-30T02:50 UTC
-| | | | | | | Total events tracked: 101 (SEC-002→SEC-101; 0 unresolved)
-| | | | | | | Active blocks: 0 IPs
-| | | | | | | Run result: All clear — silent.
+|| | | | | | | Last run: 2026-06-30T03:12 UTC
+|| | | | | | | Total events tracked: 101 (SEC-002→SEC-101; 0 unresolved)
+|| | | | | | | Active blocks: 0 IPs
+|| | | | | | | Run result: All clear — silent. No activity since last run.
 
-## Current Run Findings (02:29–02:50 UTC, ~21 min window)
+## Current Run Findings (02:50–03:12 UTC, ~22 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -23,18 +23,11 @@ None.
 
 **Server**: **Healthy** (HTTP 200 on port 5000).
 
-**Activity**: **7 new activity_log entries** since last run (02:29 UTC window).
+**Activity**: **0 new activity_log entries** since last run (02:50 UTC). No new activity recorded.
 
-**Login attempts**: **3 new entries** in login_attempts.json since last run:
-- 02:32:52 — fail (null user, 127.0.0.1, invalid_pin)
-- 02:32:58 — fail (null user, 127.0.0.1, invalid_pin)
-- 02:33:20 — success (Owner 1111, 127.0.0.1)
+**Login attempts**: **0 new entries** in login_attempts.json since last run.
 
-**Admin login attempts**:  
-- 02:33:22 — fail (unauthorized, 127.0.0.1)
-- 02:33:25 — fail (unauthorized, 127.0.0.1)
-- 02:33:30 — fail (unauthorized, 127.0.0.1)
-- 02:33:41 — success (Owner 1111, 127.0.0.1, admin)
+**Admin login attempts**: 0 new entries.
 
 **Active shifts**: 0. No one currently clocked in.
 
@@ -42,11 +35,11 @@ None.
 
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: 0 failed attempts in last 5 min — no attack detected.
-- **Account enumeration**: 2 null-user failures from 127.0.0.1 — far below 10-threshold. Consistent with Owner typing wrong PIN before correct one (same pattern observed ~20+ times today).
-- **Successful-after-failure**: 2 failures (null user) then success (1111/Owner) from same IP — failures were for non-existent users, success was for known user with correct PIN. Not a credential compromise.
-- **Off-hours activity**: Current time 02:50 UTC within off-hours window (22:00-06:00). Owner (1111) logged in at 02:33 from 127.0.0.1 — same pattern as 90+ previous events. Owner is exempted_user in security_config.json.
-- **Cross-IP targeting**: None detected. All activity from 127.0.0.1 only.
-- **Credential stuffing**: No pattern detected — single IP, same target user pattern as always.
+- **Account enumeration**: 0 null-user failures — none detected.
+- **Successful-after-failure**: No new logins of any kind.
+- **Off-hours activity**: Current time 03:12 UTC within off-hours window (22:00-06:00). No new logins in this window. Previous run handled all off-hours Owner logins.
+- **Cross-IP targeting**: None detected.
+- **Credential stuffing**: No pattern detected.
 
 ### 🔒 Security Config
 - No config changes detected this window.
@@ -65,27 +58,25 @@ None.
 - All 8 accounts intact. Owner (1111) present, active, not banned.
 - No file shrinkage detected vs baseline.
 - No suspicious new files.
-- Git: 3 modified files (activity_log.json, login_attempts.json, security_events.json) — all committed this run.
+- Git: Only RELIABILITY_CHECKLIST.md modified (Security Reliability Bot's file). All watchdog-managed files clean.
 - Server: **Healthy**.
 
 ### ✅ Actions Taken
-- Batch-resolved SEC-099, SEC-100, SEC-101 (stale off-hours events, same pattern as all previous).
-- Committed pending data changes (security_events.json, login_attempts.json, activity_log.json).
 - 0 blocked IPs, 0 alerts fired.
-- No new threats detected — silent.
+- No new threats detected — silent. Genuinely no activity since last run at 02:50 UTC.
 
 ## Previous Run Findings (carried forward)
 - Admin 2FA gap: Owner (1111), Manager (2222), and Manager Sarah (7788) lack 2FA despite `require_2fa_for_admins: true`. Security Sentinel handles.
 - Historical refund rate ~32.8% — pre-existing test data from unknown user.
 
-| | | | | | | System State | | |
-|---|---|---|---|---|---|---|---|---|
-| | | | | | | Current time | 2026-06-30T02:50 UTC — 21:50 CT (Monday night, off-hours) |
-| | | | | | | Activity since last run | 7 entries — cron auth testing pattern |
-| | | | | | | Login attempts (this window) | 3 (2 failed, 1 successful Owner) |
-| | | | | | | Successful logins (this window) | 1 (Owner, 127.0.0.1) |
-| | | | | | | Blocked IPs | 0 |
-| | | | | | | Config changes | None |
-| | | | | | | File integrity | JSON files valid. All 8 accounts intact. Git: clean. |
-| | | | | | | Unresolved events | 0 of 101 |
-| | | | | | | Server | **Healthy** |
+|| | | | | | | System State | | |
+||---|---|---|---|---|---|---|---|---|
+|| | | | | | | Current time | 2026-06-30T03:12 UTC — 22:12 CT (Monday night, off-hours) |
+|| | | | | | | Activity since last run | 0 entries — no activity |
+|| | | | | | | Login attempts (this window) | 0 |
+|| | | | | | | Successful logins (this window) | 0 |
+|| | | | | | | Blocked IPs | 0 |
+|| | | | | | | Config changes | None |
+|| | | | | | | File integrity | JSON files valid. All 8 accounts intact. Git: clean (no watchdog files changed). |
+|| | | | | | | Unresolved events | 0 of 101 |
+|| | | | | | | Server | **Healthy** |
