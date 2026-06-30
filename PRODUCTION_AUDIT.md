@@ -91,7 +91,7 @@
 
 ## FIXED (this session)
 
-- [x] **8 standalone tablet pages missing PWA meta tags — now addable to home screen as standalone web apps** — tablet.html, customer-display.html, customer-login.html, feedback.html, kitchen.html, offline.html, drivethrough.html, and pickup-display.html all lacked `apple-mobile-web-app-capable`, `apple-mobile-web-app-status-bar-style`, manifest link, and most lacked `theme-color`. These pages are designed for wall-mounted tablets but couldn't be added to home screen as standalone PWAs. Fixed: added all missing meta tags + manifest link to all 8 pages. Commit: (pending push).
+- [x] **8 standalone tablet pages missing PWA meta tags — now addable to home screen as standalone web apps** — tablet.html, customer-display.html, customer-login.html, feedback.html, kitchen.html, offline.html, drivethrough.html, and pickup-display.html all lacked `apple-mobile-web-app-capable`, `apple-mobile-web-app-status-bar-style`, manifest link, and most lacked `theme-color`. These pages are designed for wall-mounted tablets but couldn't be added to home screen as standalone PWAs. Fixed: added all missing meta tags + manifest link to all 8 pages. Commit: `add422a`.
 
 - [x] **Kiosk pay and order lookup accepted payment for refunded/voided orders — security fix** — Both `/api/orders/kiosk_pay` and `/api/orders/lookup` only checked for `cancelled` status before allowing payment. Refunded and voided orders passed through. Fixed: added `refunded` and `voided` status checks to both endpoints. Verified: kiosk paying order #120 (refunded) now returns 409 with "was refunded and cannot be paid." Commit: `49ba79d`.
 
