@@ -1,11 +1,11 @@
 # POS Security Watchdog
 
-| | | | | | | Last run: 2026-06-30T04:32 UTC
-| | | | | | | Total events tracked: 106 (SEC-002→SEC-106; 0 unresolved)
+| | | | | | | Last run: 2026-06-30T05:20 UTC
+| | | | | | | Total events tracked: 107 (SEC-002→SEC-107; 0 unresolved)
 | | | | | | | Active blocks: 0 IPs
 | | | | | | | Run result: All clear — no activity since last run, no threats detected.
 
-## Current Run Findings (04:09–04:32 UTC, ~23 min window)
+## Current Run Findings (04:52–05:20 UTC, ~28 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -21,21 +21,21 @@ None.
 
 ### ℹ️ Activity Summary
 
-**Server**: **Healthy** (HTTP 200 on /api/clock/status — all endpoints responding correctly).
+**Server**: **Healthy** (HTTP 200 on / — all endpoints responding correctly).
 
-**Activity**: **0 new activity_log entries** since last run (04:09 UTC). Last activity at 04:03:21 UTC (Owner login).
+**Activity**: **0 new activity_log entries** since last run (04:52 UTC). Last activity at 04:46:23 UTC (Employee One clock_out).
 
-**Login attempts**: **0 new entries** in login_attempts.json since last run. Last attempt at 04:03:09 UTC.
+**Login attempts**: **0 new entries** in login_attempts.json since last run. Last attempt at 04:45:58 UTC (Owner success).
 
 **Active shifts**: 0. No one currently clocked in.
 
-**Orders**: No new orders. Orders 77 (undo_voided, $3.30), 136 (pending, $9.74), 141 (pending, $18.22) unchanged. 0 new refunds.
+**Orders**: No new orders. 0 new refunds. 0 cleared orders.
 
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: 0 failed attempts in this window. No attack detected.
 - **Account enumeration**: 0 null-user failures. No probing detected.
 - **Successful-after-failure**: No new attempts in this window.
-- **Off-hours activity**: Current time 04:32 UTC (23:32 CT, off-hours window 22:00-06:00). No new login activity to flag.
+- **Off-hours activity**: Current time 05:20 UTC (00:20 CT, off-hours window 22:00-06:00). No new activity to flag.
 - **Cross-IP targeting**: None detected.
 - **Credential stuffing**: No pattern detected.
 
@@ -44,7 +44,7 @@ None.
 - `blocked_ips`: [] — no active blocks.
 - `auto_block_threshold`: 5 (unchanged).
 - `require_2fa_for_admins`: true (unchanged).
-- 2FA gap: Owner (1111), Manager (2222), and Manager Sarah (7788) still lack 2FA — known issue for Security Sentinel. Config exempts user 1111 from 2FA requirement.
+- 2FA gap: Owner (1111), Manager (2222), and Manager Sarah (7788) still lack 2FA — known issue for Security Sentinel.
 
 ### 💰 Financial Check / Order Anomaly Scan
 - No new orders or refunds this window.
@@ -53,14 +53,13 @@ None.
 ### 📂 File Integrity
 - All 49 JSON files parseable and valid.
 - All 8 accounts intact. Owner (1111) present, active, not banned.
-- Known non-JSON files present: pos.db (SQLite), pos-system.pid, sw.js (service worker), style.css — all expected.
 - No suspicious new files.
-- Git: RELIABILITY_CHECKLIST.md modified (Site Reliability Bot) — changes tracked.
 
 ### ✅ Actions Taken
 - 0 blocked IPs, 0 alerts fired.
-- No new SEC events to create or resolve.
-- All activity is routine cron worker testing from localhost (127.0.0.1). No external IPs involved. No threats detected.
+- No new SEC events created.
+- Committed pending changes from previous run (SECURITY_WATCHDOG.md + security_events.json).
+- All clear — no activity since last run.
 
 ## Previous Run Findings (carried forward)
 - Admin 2FA gap: Owner (1111), Manager (2222), and Manager Sarah (7788) lack 2FA despite `require_2fa_for_admins: true`. Security Sentinel handles.
@@ -68,12 +67,12 @@ None.
 
 | | | | | | | System State | | | |
 |---|---|---|---|---|---|---|---|---|---|---|
-| | | | | | | Current time | 2026-06-30T04:32 UTC — 23:32 CT (Monday night, off-hours) |
-| | | | | | | Activity since last run | 0 entries — system idle |
+| | | | | | | Current time | 2026-06-30T05:20 UTC — 00:20 CT (off-hours) |
+| | | | | | | Activity since last run | 0 entries — no new activity |
 | | | | | | | Login attempts (this window) | 0 |
 | | | | | | | Successful logins (this window) | 0 |
 | | | | | | | Blocked IPs | 0 |
 | | | | | | | Config changes | None |
-| | | | | | | File integrity | JSON files valid. All 8 accounts intact. Git: RELIABILITY_CHECKLIST.md modified (SRB). |
-| | | | | | | Unresolved events | 0 of 106 |
-| | | | | | | Server | **Healthy** (all endpoints responding correctly) |
+| | | | | | | File integrity | JSON files valid. All 8 accounts intact. |
+| | | | | | | Unresolved events | 0 of 107 |
+| | | | | | | Server | **Healthy** (HTTP 200 on /) |
