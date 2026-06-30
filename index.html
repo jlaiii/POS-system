@@ -20328,15 +20328,15 @@ async function previewTipPool() {
     }
     
     if (!data.eligible_employees || !data.eligible_employees.length) {
-      resultDiv.innerHTML = `<div class="empty-state">${data.message || 'No eligible employees found.'}</div>`;
+      resultDiv.innerHTML = `<div class="empty-state">${escHtml(data.message || 'No eligible employees found.')}</div>`;
       return;
     }
     
     const methodLabel = data.method === 'hours' ? 'Hours-based (hours × weight)' : 'Equal split';
     let rows = data.eligible_employees.map(e => `
       <tr>
-        <td style="padding:6px 8px;">${e.user_name || e.user_id}</td>
-        <td style="padding:6px 8px;">${e.role || '—'}</td>
+        <td style="padding:6px 8px;">${escHtml(e.user_name || e.user_id)}</td>
+        <td style="padding:6px 8px;">${escHtml(e.role || '—')}</td>
         <td style="padding:6px 8px;text-align:right;">${(e.hours || 0).toFixed(2)}</td>
         <td style="padding:6px 8px;text-align:right;">${e.weight || 1}</td>
         <td style="padding:6px 8px;text-align:right;">${(e.share_weight || 0).toFixed(2)}</td>
