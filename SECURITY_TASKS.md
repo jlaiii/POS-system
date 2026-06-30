@@ -1,5 +1,5 @@
 # POS Security Tasks
-> Last run: 2026-06-29 14:52 UTC
+> Last run: 2026-06-30 02:56 UTC
 
 ## CRITICAL — LOGIN & AUTH SECURITY (check every run)
 
@@ -115,6 +115,10 @@
 - [x] **Verify dependency versions** — Flask 3.1.3, pyotp 2.9.0, qrcode 7.4.2, Werkzeug 3.1.8, eventlet 0.41.0. All current stable versions.
 
 ## COMPLETED (this session)
+
+### Run: 2026-06-30 02:56 UTC
+- [x] **Fix stored XSS in tip pool calculate (unescaped user_name/role in innerHTML)** — MEDIUM: The tip pool calculation display rendered employee names (`e.user_name || e.user_id`) and roles (`e.role`) directly into `innerHTML` without escaping via `escHtml()`. An employee with a malicious name could execute arbitrary JS when an admin views the tip pool calculator. Fixed by wrapping all user data with `escHtml()`. Commit `110cab2`.
+- [x] **Full security audit — login security, data protection, file permissions, XSS, payment data, activity log** — Verified all controls intact. Login rate limiting (5/60s + 10min lockout) working. Session security (secrets.token_hex(32), 8h active/24h idle) intact. TOTP encryption valid. File permissions all 0600/600/700. XSS: 3 additional low-risk innerHTML vetos identified (numeric tableNumber, pre-escaped sub-variables). Payment data: only card_last4/type stored, PCI compliant. Activity log: no sensitive data. All 6 open issues are pre-existing architectural items.
 
 ### Run: 2026-06-29 02:45 UTC
 - [x] **Fix X-Forwarded-For spoofing bypass of ALL IP rate limiting** — CRITICAL: `get_client_ip()` blindly trusted X-Forwarded-For header. With gunicorn on 0.0.0.0:5000 and no reverse proxy, external attacker could set `X-Forwarded-For: 127.0.0.1` to bypass all IP-based rate limiting, blocklists, allowlists, and auto-block. Fixed by only trusting X-Forwarded-For from known proxy IPs (127.0.0.1, ::1, localhost). Commit `b802794`.
