@@ -1,11 +1,11 @@
 # POS Security Watchdog
 
-|| | | | | | | Last run: 2026-06-30T03:12 UTC
+|| | | | | | | Last run: 2026-06-30T03:27 UTC
 || | | | | | | Total events tracked: 101 (SEC-002→SEC-101; 0 unresolved)
 || | | | | | | Active blocks: 0 IPs
-|| | | | | | | Run result: All clear — silent. No activity since last run.
+|| | | | | | | Run result: All clear — routine cron activity, no threats detected.
 
-## Current Run Findings (02:50–03:12 UTC, ~22 min window)
+## Current Run Findings (03:12–03:27 UTC, ~15 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -14,7 +14,7 @@ None.
 None.
 
 ### 🟡 MEDIUM (0)
-None — 3 stale off-hours events batch-resolved (SEC-099/100/101).
+None.
 
 ### 🟢 LOW (0)
 None.
@@ -23,21 +23,19 @@ None.
 
 **Server**: **Healthy** (HTTP 200 on port 5000).
 
-**Activity**: **0 new activity_log entries** since last run (02:50 UTC). No new activity recorded.
+**Activity**: **8 new activity_log entries** since last run.
 
-**Login attempts**: **0 new entries** in login_attempts.json since last run.
-
-**Admin login attempts**: 0 new entries.
+**Login attempts**: **5 new entries** in login_attempts.json since last run (03:12 UTC).
 
 **Active shifts**: 0. No one currently clocked in.
 
-**Orders**: No new orders in this window. 0 new refunds.
+**Orders**: 1 new order (Order 141 — Pancakes + 2 Cokes, $18.22, Cash, table 10). 0 new refunds. 1 payment processing event (Order 120 kiosk).
 
 ### 📊 Login Security Deep-Dive
-- **Brute force check**: 0 failed attempts in last 5 min — no attack detected.
-- **Account enumeration**: 0 null-user failures — none detected.
-- **Successful-after-failure**: No new logins of any kind.
-- **Off-hours activity**: Current time 03:12 UTC within off-hours window (22:00-06:00). No new logins in this window. Previous run handled all off-hours Owner logins.
+- **Brute force check**: 2 failed attempts from 127.0.0.1 in <1s (03:15:07, 03:15:13) — below threshold of 5. No attack detected.
+- **Account enumeration**: 2 null-user failures from 127.0.0.1 — below 10 threshold.
+- **Successful-after-failure**: IP 127.0.0.1 had 2 failed → 3 successful logins (Owner 1111, 03:15:23-55). Below the 3+ trigger threshold. Pattern matches routine cron worker activity (Reliability Bot making an order).
+- **Off-hours activity**: Current time 03:27 UTC (22:27 CT, off-hours window 22:00-06:00). Owner (1111) logged in at 03:15 UTC (22:15 CT) from 127.0.0.1 — standard cron worker pattern. Not flagged.
 - **Cross-IP targeting**: None detected.
 - **Credential stuffing**: No pattern detected.
 
@@ -49,34 +47,35 @@ None.
 - 2FA gap: Owner (1111), Manager (2222), and Manager Sarah (7788) still lack 2FA — known issue for Security Sentinel. Config exempts user 1111 from 2FA requirement.
 
 ### 💰 Financial Check / Order Anomaly Scan
-- No new orders or financial activity in this window.
-- 0 new refunds. Historical refund rate unchanged (test data).
+- Order 141: $18.22 total, 2 items (Pancakes $8.99 + 2×Coke $3.00), Cash, table 10 — normal transaction. No $0 total, no 100% discounts, no unusual tips ($2.00 on $16.22 before tax = ~12% — normal).
+- Order 120 payment: $3.25 kiosk payment — normal.
+- 0 new refunds. Historical refund rate unchanged.
 - No anomalies detected.
 
 ### 📂 File Integrity
 - All JSON files parseable and valid.
 - All 8 accounts intact. Owner (1111) present, active, not banned.
 - No file shrinkage detected vs baseline.
-- No suspicious new files.
-- Git: Only RELIABILITY_CHECKLIST.md modified (Security Reliability Bot's file). All watchdog-managed files clean.
+- No suspicious new files (`.pyc` files are __pycache__ artifacts, not threats).
+- Git: Only RELIABILITY_CHECKLIST.md modified (Site Reliability Bot's file). All watchdog-managed files clean.
 - Server: **Healthy**.
 
 ### ✅ Actions Taken
 - 0 blocked IPs, 0 alerts fired.
-- No new threats detected — silent. Genuinely no activity since last run at 02:50 UTC.
+- All activity is routine cron worker testing from localhost (127.0.0.1). No external IPs involved. No threats detected.
 
 ## Previous Run Findings (carried forward)
 - Admin 2FA gap: Owner (1111), Manager (2222), and Manager Sarah (7788) lack 2FA despite `require_2fa_for_admins: true`. Security Sentinel handles.
 - Historical refund rate ~32.8% — pre-existing test data from unknown user.
 
 || | | | | | | System State | | |
-||---|---|---|---|---|---|---|---|---|
-|| | | | | | | Current time | 2026-06-30T03:12 UTC — 22:12 CT (Monday night, off-hours) |
-|| | | | | | | Activity since last run | 0 entries — no activity |
-|| | | | | | | Login attempts (this window) | 0 |
-|| | | | | | | Successful logins (this window) | 0 |
-|| | | | | | | Blocked IPs | 0 |
-|| | | | | | | Config changes | None |
-|| | | | | | | File integrity | JSON files valid. All 8 accounts intact. Git: clean (no watchdog files changed). |
-|| | | | | | | Unresolved events | 0 of 101 |
-|| | | | | | | Server | **Healthy** |
+|||---|---|---|---|---|---|---|---|---|
+||| | | | | | | Current time | 2026-06-30T03:27 UTC — 22:27 CT (Monday night, off-hours) |
+||| | | | | | | Activity since last run | 8 entries — cron worker testing (Owner login + test order) |
+||| | | | | | | Login attempts (this window) | 5 (2 failed, 3 successful — all 127.0.0.1) |
+||| | | | | | | Successful logins (this window) | 3 (Owner 1111, 127.0.0.1) |
+||| | | | | | | Blocked IPs | 0 |
+||| | | | | | | Config changes | None |
+||| | | | | | | File integrity | JSON files valid. All 8 accounts intact. Git: clean (no watchdog files changed). |
+||| | | | | | | Unresolved events | 0 of 101 |
+||| | | | | | | Server | **Healthy** |
