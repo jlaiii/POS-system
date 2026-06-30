@@ -1,8 +1,8 @@
 # POS Security Watchdog
 
-| Last run: 2026-06-30T22:11 UTC | Total events tracked: 110 (SEC-001→SEC-110; 0 unresolved) | Active blocks: 0 | Run result: **CLEAN** — server up, no threats, no anomalies.
+| Last run: 2026-06-30T22:28 UTC | Total events tracked: 110 (SEC-001→SEC-110; 0 unresolved) | Active blocks: 0 | Run result: **CLEAN** — server up, no threats, no anomalies.
 
-## Current Run Findings (22:08–22:11 UTC, ~3 min window)
+## Current Run Findings (22:11–22:28 UTC, ~17 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -18,29 +18,22 @@ None.
 
 ### ℹ️ Activity Summary
 
-**Server**: **UP** (responding on port 5000 via /api/clock/status — Owner logged in).
+**Server**: **UP** (responding on port 5000 — Owner login verified).
 
-**Activity**: 5 events in the activity log, all from Owner (1111) at 127.0.0.1:
-- 22:08:00 — submit_order (Order #143, $3.25, 1 Coke)
-- 22:08:07 — refund_order (Order #143 — "SRE bot inventory test cleanup")
-- 22:08:14 — login_failed (null user, invalid_pin — likely probe typo)
-- 22:08:31 — login (Owner 1111, success)
-- 22:08:31 — admin_login (Owner 1111, success)
+**Activity**: 0 new events in activity log since last run. No activity in this window.
 
-**Login attempts (this window)**: 2 total (1 failed, 1 successful via login_attempts.json).
-- 22:08:14 — null user, 127.0.0.1, FAILED (invalid_pin, python-requests/2.33.0)
-- 22:08:31 — Owner (1111), 127.0.0.1, SUCCESS (python-requests/2.33.0)
+**Login attempts (this window)**: 0. No new entries since 22:08:31 UTC (before last run).
 
 **Active shifts**: 0. No one currently clocked in.
 
-**Orders today**: 0 (the Order #143 was created and immediately refunded within the same second — SRE bot test, not a real order).
+**Orders today**: 0 new orders since last run.
 
 ### 📊 Login Security Deep-Dive
-- **Brute force check**: 0 failed logins in last 5 min (only 1 total in the window). Clean.
-- **Account enumeration**: 1 null-user probe (single, isolated — consistent with prior runs' chron worker typo pattern). Clean.
-- **Successful-after-failure**: Owner (1111) had 1 preceding null failure then success. Only 1 failure — well below the 3+ threshold. Not actionable.
-- **Credential stuffing**: No pattern — single source IP (127.0.0.1), single target user. Clean.
-- **Off-hours activity**: 22:08 UTC is in the off-hours window (22:00-06:00). Already logged as SEC-110 and resolved this run — same established pattern as SEC-009→SEC-109 (Owner dev/testing from localhost). Not actionable.
+- **Brute force check**: 0 failed logins in last 15 min. Clean.
+- **Account enumeration**: 0 null-user probes. Clean.
+- **Successful-after-failure**: No successes after failures in this window. Clean.
+- **Credential stuffing**: No activity. Clean.
+- **Off-hours activity**: No new off-hours logins. Clean.
 - **Cross-IP targeting**: None.
 - **Session anomalies**: 0 active shifts. No suspicious sessions.
 - **Rate limiting**: Unchanged.
@@ -53,8 +46,8 @@ None.
 - 2FA gap: Owner (1111), Manager (2222), and Manager Sarah (7788) lack 2FA — known issue for Security Sentinel.
 
 ### 💰 Financial Check / Order Anomaly Scan
-- 0 new completed orders this window (order #143 was created and immediately refunded at 22:08 — SRE bot test).
-- 1 refund this window (Order #143, $3.25, reason: "SRE bot inventory test cleanup").
+- 0 new completed orders this window.
+- 0 refunds this window.
 - 0 zero-dollar non-cancelled orders.
 - No new financial anomalies.
 
@@ -65,10 +58,9 @@ None.
 - Git: CLEAN — no uncommitted changes.
 
 ### ✅ Actions Taken
-- SEC-110 resolved: off-hours login by Owner — same pattern as SEC-009→SEC-109. Known cron worker testing, no security concern.
-- 0 new SEC events created.
-- SECURITY_WATCHDOG.md updated with this run's findings.
-- No git commit needed — runtime data changes are expected.
+- SECURITY_WATCHDOG.md updated with this run's findings (22:28 UTC).
+- No SEC events created — clean window.
+- No git commit needed — no changes to runtime files.
 
 ## Previous Run Findings (carried forward)
 - Admin 2FA gap: Owner (1111), Manager (2222), and Manager Sarah (7788) lack 2FA despite `require_2fa_for_admins: true`. Security Sentinel handles.
