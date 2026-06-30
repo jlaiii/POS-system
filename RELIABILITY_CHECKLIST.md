@@ -1,13 +1,13 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-30T22:10Z
-> Total checks: 86
-> Healthy: 86 | Broken: 0 | Fixed this cycle: 25
+> Last full cycle: 2026-06-30T22:35Z
+> Total checks: 90
+> Healthy: 90 | Broken: 0 | Fixed this cycle: 26
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (22:10Z)
-- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID, 8 users, 19 items/5 cats, 121 orders, 0 shifts, 24 inventory (22:10Z)
-- [x] users.json has at least owner PIN 1111 — Owner present, wildcard permissions (22:10Z)
-- [x] Git repo is clean (no uncommitted changes from crashes) — clean, committed Watchdog files + SRE test at 5fdfae6 (22:10Z)
+- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (22:35Z)
+- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID, 14 JSON files, 8 users, 19 items/5 cats, 122 orders, 0 shifts, 24 inventory (22:35Z)
+- [x] users.json has at least owner PIN 1111 — Owner 1111 present, permissions OK (22:35Z)
+- [x] Git repo is clean (no uncommitted changes from crashes) — clean, committed SECURITY_WATCHDOG.md at 6f6727f (22:35Z)
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/clock/in works (clock in test user, verify response) — Employee 1234 clocked in, 759 min late (schedule 09:00) ✓ (21:39Z)
@@ -45,12 +45,13 @@
 - [x] Concurrent write test: two rapid clock-ins → verify no data loss — Two users (1234, 5678) clocked in/out concurrently, both shifts recorded ✅
 
 ## DISCOVERED (failures you've seen before — check every 2h)
-- [x] Security Watchdog leaves dirty files after each run (SECURITY_WATCHDOG.md + activity_log.json + login_attempts.json + security_events.json) — auto-commit on SRE bot runs — CHECKED 19:54Z, committed SECURITY_WATCHDOG.md at 916757f ✓
+- [x] Security Watchdog leaves dirty files after each run (SECURITY_WATCHDOG.md + activity_log.json + login_attempts.json + security_events.json) — auto-commit on SRE bot runs — CHECKED 22:35Z, committed SECURITY_WATCHDOG.md at 6f6727f ✓
 
 ## CURRENT OUTAGES
 _None_
 
 ## FIXES APPLIED
+- 2026-06-30T22:35Z **Security Watchdog dirty file** — SECURITY_WATCHDOG.md left dirty after Watchdog 22:28 UTC run. Committed at 6f6727f. CRITICAL checks: Flask 200, all 14 JSON valid, PIN 1111 owner present, git clean. Disk 39%, RAM 37%. DISCOVERED 2h check: dirty file pattern confirmed, committed. Pushed to main.
 - 2026-06-30T20:55Z **Security Watchdog dirty file** — activity_log.json (+39) left dirty after Watchdog run. Committed at d7716b1. CRITICAL checks: Flask 200, all 8 JSON valid, PIN 1111 owner present. HOURLY: items (GET ✓), login (owner 1111 via userId ✓), admin_stats, admin_shifts (42), frontend (1,375KB). Git clean. All healthy.
 - 2026-06-30T20:33Z **Security Watchdog dirty files** — activity_log.json (+69) + login_attempts.json (+23) left dirty after Watchdog run. Committed at f16edfd. CRITICAL checks: Flask 200, all 8 JSON valid, PIN 1111 owner present. Git clean. Disk 39%, RAM 37%. HOURLY checks: clock/in+out (694 min late — correct), login (owner 1111 via userId ✓), admin_shifts (42 shifts). Test shift cleaned up. Pushed to main.
 - 2026-06-30T19:06Z **Security Watchdog dirty files** — SECURITY_WATCHDOG.md + activity_log.json + login_attempts.json left dirty after Watchdog run. Committed at c1ac89b (SECURITY_WATCHDOG.md) and 39108fa (activity_log.json + login_attempts.json). Ran CRITICAL checks (Flask 200, all 8 JSON valid, PIN 1111 present), HOURLY checks (login via userId, items GET, admin_stats, admin_shifts, frontend) and 4H checks (kitchen+pickup displays — GET, both working). Disk 39%, RAM 37%. Pushed to main.
