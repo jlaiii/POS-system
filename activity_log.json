@@ -22307,5 +22307,48 @@
             "user_name": "Owner",
             "ip": "127.0.0.1"
         }
+    },
+    {
+        "timestamp": "2026-06-30T09:27:56.560566",
+        "type": "clock_in_failed",
+        "user_id": "9999",
+        "user_role": "unknown",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed",
+            "reason": "invalid_pin",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-06-30T09:28:04.856408",
+        "type": "clock_in",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee One",
+            "clock_in_time": "2026-06-30T09:28:04.856118",
+            "late_minutes": 28,
+            "scheduled_start": "09:00"
+        }
+    },
+    {
+        "timestamp": "2026-06-30T09:28:04.924133",
+        "type": "clock_out",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee One",
+            "clock_in_time": "2026-06-30T09:28:04.856118",
+            "clock_out_time": "2026-06-30T09:28:04.922179",
+            "duration_hours": 0.0
+        }
     }
 ]
