@@ -16111,9 +16111,10 @@ def order_lookup():
     if order_id is not None:
         for order in orders:
             if order.get('order_id') == order_id:
-                # Don't allow re-paying already-paid or cancelled orders
-                if order.get('status') == 'cancelled':
-                    return jsonify({'found': False, 'message': f'Order #{order_id} was cancelled.'}), 404
+                # Don't allow re-paying already-paid, cancelled, refunded, or voided orders
+                status = order.get('status')
+                if status in ('cancelled', 'refunded', 'voided'):
+                    return jsonify({'found': False, 'message': f'Order #{order_id} was {status}.'}), 404
                 if order.get('kiosk_paid'):
                     return jsonify({'found': False, 'message': f'Order #{order_id} has already been paid.'}), 404
 
@@ -16224,8 +16225,9 @@ def kiosk_pay():
 
     for order in orders:
         if order.get('order_id') == order_id:
-            if order.get('status') == 'cancelled':
-                return jsonify({'message': f'Order #{order_id} was cancelled.'}), 409
+            if order.get('status') in ('cancelled', 'refunded', 'voided'):
+                status = order.get('status')
+                return jsonify({'message': f'Order #{order_id} was {status} and cannot be paid.'}), 409
             if order.get('kiosk_paid'):
                 return jsonify({'message': f'Order #{order_id} has already been paid.'}), 409
 
