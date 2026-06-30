@@ -1,8 +1,8 @@
 # POS Security Watchdog
 
-| Last run: 2026-06-30T22:28 UTC | Total events tracked: 110 (SEC-001→SEC-110; 0 unresolved) | Active blocks: 0 | Run result: **CLEAN** — server up, no threats, no anomalies.
+| Last run: 2026-06-30T22:45 UTC | Total events tracked: 110 (SEC-001→SEC-110; 0 unresolved) | Active blocks: 0 | Run result: **CLEAN** — server up, no threats, no anomalies in this window.
 
-## Current Run Findings (22:11–22:28 UTC, ~17 min window)
+## Current Run Findings (22:28–22:45 UTC, ~17 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -18,9 +18,9 @@ None.
 
 ### ℹ️ Activity Summary
 
-**Server**: **UP** (responding on port 5000 — Owner login verified).
+**Server**: **UP** (responding on port 5000 — verified).
 
-**Activity**: 0 new events in activity log since last run. No activity in this window.
+**Activity**: No new events in activity log since last run. No activity in this window (22:28–22:45 UTC).
 
 **Login attempts (this window)**: 0. No new entries since 22:08:31 UTC (before last run).
 
@@ -58,7 +58,7 @@ None.
 - Git: CLEAN — no uncommitted changes.
 
 ### ✅ Actions Taken
-- SECURITY_WATCHDOG.md updated with this run's findings (22:28 UTC).
+- SECURITY_WATCHDOG.md updated with this run's findings (22:45 UTC).
 - No SEC events created — clean window.
 - No git commit needed — no changes to runtime files.
 
