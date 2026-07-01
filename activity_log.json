@@ -25871,5 +25871,19 @@
             "clock_out_time": "2026-07-01T15:27:04.270767",
             "duration_hours": 0.0
         }
+    },
+    {
+        "timestamp": "2026-07-01T15:48:04.182091",
+        "type": "login_failed",
+        "user_id": "9999",
+        "user_role": "unknown",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Python-urllib/3.11",
+        "details": {
+            "status": "failed",
+            "method": "pin",
+            "ip": "127.0.0.1",
+            "attempt": 1
+        }
     }
 ]

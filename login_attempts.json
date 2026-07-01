@@ -5437,5 +5437,17 @@
         "details": {
             "status": "success"
         }
+    },
+    {
+        "user_id": "9999",
+        "ip": "127.0.0.1",
+        "timestamp": "2026-07-01T15:48:04.217003",
+        "success": false,
+        "user_agent": "Python-urllib/3.11",
+        "method": "pin",
+        "details": {
+            "reason": "invalid_pin",
+            "attempt": 1
+        }
     }
 ]
