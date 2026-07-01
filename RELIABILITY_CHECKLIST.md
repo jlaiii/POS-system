@@ -1,13 +1,13 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-07-01T13:29Z
+> Last full cycle: 2026-07-01T14:05Z
 > Total checks: 200
-> Healthy: 238 | Broken: 0 | Fixed this cycle: 33
+> Healthy: 243 | Broken: 0 | Fixed this cycle: 33
 
 ## CRITICAL (check every run — these can't wait)
-|- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (13:29Z)
-|- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID, 8 users, 5 cats/19 items, 1 order, 24 inventory, 14 loyalty (13:29Z)
-|- [x] users.json has at least owner PIN 1111 — Owner 1111 present, perms ['*'], super admin ✓ (13:29Z)
-|- [x] Git repo is clean (no uncommitted changes from crashes) — clean after committing Watchdog dirty file at 2fd3a8a (13:29Z)
+||- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (14:00Z)
+||- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID, 8 users, 5 cats/19 items, orders OK, shift_log empty, 24 inventory, 14 loyalty (14:00Z)
+||- [x] users.json has at least owner PIN 1111 — Owner 1111 present, perms ['*'], super admin ✓ (14:00Z)
+||- [x] Git repo is clean (no uncommitted changes from crashes) — clean ✓ (14:00Z)
 
 ## HOURLY (check if last check was >1h ago)
 |- [x] /api/clock/in works (clock in test user, verify response) — Employee 1234 clocked in at 13:29Z, 270 min late (sched 09:00), cleaned up ✓ (13:29Z)
@@ -30,11 +30,11 @@
 |- [x] Kitchen display: GET /api/kitchen/queue — 4 pending orders, valid data ✓ (11:39Z)
 |- [x] Pickup display: GET /api/pickup-display/queue — 2 ready orders, valid data ✓ (11:39Z)
 - [x] Clock-in late detection: Employee 1234 scheduled 09:00, clocked in 21:38 → 758 min late ✅
-|- [x] Break tracking: POST /api/clock/break — Break start + end + clock out worked, break recorded in shift ✓ (09:39Z)
-|- [x] Shift edit: POST /api/clock/edit — validates reason required, endpoint working ✓ (09:39Z)
-|- [x] CSV export: POST /api/export/shifts_csv — endpoint exists, returns CSV with headers, needs auth ✓ (09:39Z)
-|- [x] Webhook: GET /api/webhooks — endpoint exists, responds with 'Insufficient permissions' (needs auth) ✓ (09:39Z)
-|- [x] Offline queue: POST /api/sync_orders — endpoint exists, returns 'No orders provided' ✓ (09:39Z)
+||- [x] Break tracking: POST /api/clock/break — Break start + end + clock out worked, break recorded in shift ✓ (14:00Z)
+||- [x] Shift edit: POST /api/clock/edit — validates reason required, audit trail recorded ✓ (14:05Z)
+||- [x] CSV export: POST /api/export/shifts_csv — returns CSV with headers ✓ (14:00Z)
+||- [x] Webhook: GET /api/webhooks — endpoint exists, responds with 'Insufficient permissions' (needs auth) ✓ (14:00Z)
+||- [x] Offline queue: POST /api/sync_orders — endpoint exists, returns 'No orders provided' ✓ (14:00Z)
 
 ## EVERY 12 HOURS
 - [x] Disk space check: df -h, alert if >80% full — 39% used ✓ (05:08Z)

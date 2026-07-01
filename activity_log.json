@@ -25672,5 +25672,149 @@
             "user_name": "Owner",
             "ip": "127.0.0.1"
         }
+    },
+    {
+        "timestamp": "2026-07-01T14:00:00.560928",
+        "type": "clock_in",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee One",
+            "clock_in_time": "2026-07-01T14:00:00.560611",
+            "late_minutes": 300,
+            "scheduled_start": "09:00"
+        }
+    },
+    {
+        "timestamp": "2026-07-01T14:00:01.124428",
+        "type": "clock_out",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee One",
+            "clock_in_time": "2026-07-01T14:00:00.560611",
+            "clock_out_time": "2026-07-01T14:00:01.123945",
+            "duration_hours": 0.0
+        }
+    },
+    {
+        "timestamp": "2026-07-01T14:05:15.898027",
+        "type": "clock_in",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee One",
+            "clock_in_time": "2026-07-01T14:05:15.897772",
+            "late_minutes": 305,
+            "scheduled_start": "09:00"
+        }
+    },
+    {
+        "timestamp": "2026-07-01T14:05:15.938480",
+        "type": "clock_out",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee One",
+            "clock_in_time": "2026-07-01T14:05:15.897772",
+            "clock_out_time": "2026-07-01T14:05:15.938023",
+            "duration_hours": 0.0
+        }
+    },
+    {
+        "timestamp": "2026-07-01T14:05:21.710747",
+        "type": "clock_in",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee One",
+            "clock_in_time": "2026-07-01T14:05:21.710297",
+            "late_minutes": 305,
+            "scheduled_start": "09:00"
+        }
+    },
+    {
+        "timestamp": "2026-07-01T14:05:21.761232",
+        "type": "clock_out",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee One",
+            "clock_in_time": "2026-07-01T14:05:21.710297",
+            "clock_out_time": "2026-07-01T14:05:21.760804",
+            "duration_hours": 0.0
+        }
+    },
+    {
+        "timestamp": "2026-07-01T14:05:31.300931",
+        "type": "clock_in",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee One",
+            "clock_in_time": "2026-07-01T14:05:31.298666",
+            "late_minutes": 306,
+            "scheduled_start": "09:00"
+        }
+    },
+    {
+        "timestamp": "2026-07-01T14:05:31.353490",
+        "type": "clock_out",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee One",
+            "clock_in_time": "2026-07-01T14:05:31.298666",
+            "clock_out_time": "2026-07-01T14:05:31.353078",
+            "duration_hours": 0.0
+        }
+    },
+    {
+        "timestamp": "2026-07-01T14:05:31.403905",
+        "type": "shift_edited",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "shift_index": 0,
+            "user_id": "1234",
+            "user_name": "Employee One",
+            "changes": {
+                "clock_in_time": {
+                    "old": "2026-07-01T14:05:31.298666",
+                    "new": "2026-07-01T14:02:31.298666"
+                },
+                "late_minutes": {
+                    "old": 306,
+                    "new": 303
+                }
+            },
+            "reason": "SRE bot shift edit test"
+        }
     }
 ]
