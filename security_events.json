@@ -1993,5 +1993,20 @@
         "reported_by": "IP Blocklist Manager",
         "resolved_at": "2026-07-01T06:20:00",
         "resolution": "Off-hours login from exempted Owner (1111) via 127.0.0.1. Normal cron/testing activity. Resolved by Security Watchdog."
+    },
+    {
+        "id": "SEC-135",
+        "created_at": "2026-07-01T16:10:16.637868",
+        "severity": "HIGH",
+        "category": "authentication",
+        "status": "unresolved",
+        "summary": "IP 127.0.0.1 auto-blocked after 5 failed logins",
+        "detail": "IP 127.0.0.1 was automatically added to blocklist after 5 failed login attempts within 5 minutes. Block duration: 60 minutes.",
+        "affected_user": null,
+        "affected_user_name": null,
+        "related_event": null,
+        "reported_by": "IP Blocklist Manager",
+        "resolved_at": null,
+        "resolution": null
     }
 ]
