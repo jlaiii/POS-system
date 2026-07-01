@@ -1,8 +1,8 @@
 # POS Security Watchdog
 
-|||||| || || || || |||||||||||||||| Last run: 2026-07-01T14:32 UTC | Total events tracked: 134 (SEC-001→SEC-134; all resolved) | Active blocks: 0 | Run result: **CLEAN** — 1 login, zero failed attempts.|
+|||||| || || || || |||||||||||||||| Last run: 2026-07-01T14:52 UTC | Total events tracked: 134 (SEC-001→SEC-134; all resolved) | Active blocks: 0 | Run result: **CLEAN** — no new activity since previous run.|
 
-## Current Run Findings (14:14–14:32 UTC, ~18 min window)
+## Current Run Findings (14:32–14:52 UTC, ~20 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -20,13 +20,9 @@ None.
 
 **Server**: **UP** (Flask process running, `/api/clock/status` responds HTTP 400 as expected).
 
-**Activity** (activity_log.json): **1 new event** since last run — Owner (1111) login from 127.0.0.1.
+**Activity** (activity_log.json): **0 new events** since last run. All activity is from the previous run.
 
-| Time (UTC) | Event | User | Details |
-|---|---|---|---|
-| 14:32:09 | login | Owner (1111) | 127.0.0.1, curl/8.5.0, PIN auth success |
-
-**Login attempts**: **1 new** since last run (Owner 1111 successful login at 14:32 UTC). **Zero failed attempts.**
+**Login attempts**: **0 new** since last run. **Zero activity of any kind.**
 
 **Active shifts**: 0. No one currently clocked in.
 
@@ -34,11 +30,11 @@ None.
 
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: 0 failed attempts in window. No threat.
-- **Account enumeration**: 0 invalid-PIN probes.
-- **Successful-after-failure**: No pattern — zero failures preceded the success.
-- **Credential stuffing**: No evidence — zero attempts from any IP.
-- **Off-hours activity**: 14:32 UTC = 09:32 CT — within normal business hours.
-- **Cross-IP targeting**: None.
+- **Account enumeration**: 0 invalid-PIN probes in window (138 lifetime, all historical).
+- **Successful-after-failure**: No pattern — zero activity in window.
+- **Credential stuffing**: No evidence — zero attempts from any IP in window.
+- **Off-hours activity**: No activity in window. Last off-hours event at 05:36 UTC.
+- **Cross-IP targeting**: None in window.
 - **Session anomalies**: No active sessions. No stale sessions >24h.
 - **Rate limiting**: No trigger events.
 
@@ -61,11 +57,10 @@ None.
 - No suspicious new files found.
 
 ### ✅ Actions Taken
-- Tier 1-4 full security sweep — no threats.
+- Tier 1-4 full security sweep — no threats, no new activity since previous run.
 - No security events to log.
-- Committed and pushed dirty data files (login_attempts.json, activity_log.json).
-- No Discord alert needed — no anomalies.
 - Updated SECURITY_WATCHDOG.md.
+- No Discord alert needed — no anomalies.
 
 ## Previous Run Findings (carried forward)
 - Admin 2FA gap: Owner (1111), Manager (2222), Manager Sarah (7788) lack 2FA despite `require_2fa_for_admins: true`. Security Sentinel handles.
