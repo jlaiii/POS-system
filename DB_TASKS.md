@@ -1,6 +1,6 @@
 # POS Database Migration Tasks
-> Last run: 2026-07-01 03:35 UTC
-> Current phase: Phase 2 — Migration Scripts (21/24 complete)
+> Last run: 2026-07-01 15:53 UTC
+> Current phase: Phase 3 — Endpoint Refactor (0/10 complete)
 
 ## Phase 1: Schema Design
 - [x] Design all SQLite table schemas (users, shift_log, orders, items, inventory, etc.)
@@ -23,9 +23,9 @@
 - [x] Write migrate_timesheet.py — timesheet table migration (1 row verified ✓)
 - [x] Write migrate_timesheet_approvals.py — timesheet_approvals table migration (0 records, empty case handled ✓)
 - [x] Write migrate_cash_drawer.py — cash_drawer table migration (10 sessions, 12 transactions verified ✓)
-- [ ] Write migrate_delivery_addresses.py — delivery_addresses table migration
-- [ ] Write migrate_scheduled_pricing.py — scheduled_pricing table migration
-- [ ] Write migrate_webhooks.py — webhooks table migration
+- [x] Write migrate_delivery_addresses.py — delivery_addresses table migration (0 records, empty dict case handled ✓)
+- [x] Write migrate_scheduled_pricing.py — scheduled_pricing table migration (0 rules, empty array case handled ✓)
+- [x] Write migrate_webhooks.py — webhooks table migration (0 webhooks, empty dict case handled ✓)
 - [x] Write migrate_tables.py — tables table migration (20 rows verified ✓)
 - [x] Write migrate_table_ads.py — table_ads table migration (0 ads, handled empty case ✓)
 - [x] Write migrate_security_events.py — security_events table migration (24 rows verified ✓)
@@ -61,6 +61,9 @@
 - [ ] Add VACUUM + integrity_check automation
 
 ## COMPLETED (this session)
+- [x] **migrate_webhooks.py** — Migrated 0 webhooks from webhooks.json to SQLite. Empty dict handled gracefully. Schema already defined in db.py. Idempotency tested.
+- [x] **migrate_scheduled_pricing.py** — Migrated 0 pricing rules from scheduled_pricing.json to SQLite. Empty array handled gracefully. Schema already defined in db.py. Idempotency tested.
+- [x] **migrate_delivery_addresses.py** — Migrated 0 delivery addresses from delivery_addresses.json to SQLite. Empty dict handled gracefully. Schema already defined in db.py. Idempotency tested.
 - [x] **migrate_timesheet_approvals.py** — Migrated 0 timesheet approvals from timesheet_approvals.json to SQLite. Empty array handled gracefully. Schema already defined in db.py. Idempotency tested.
 - [x] **Restore `use_database` flag** — The Security Watchdog worker (f8bd681) had removed the `use_database: false` flag from timesheet_config.json. Restored it to enable feature-gated endpoint refactoring in Phase 3.
 - [x] **migrate_waste_log.py** — Migrated 0 waste log entries from waste_log.json to SQLite. Empty array handled gracefully. Schema already defined in db.py. Idempotency tested. Commit: b15632c
@@ -111,9 +114,9 @@ How to revert to JSON mode if DB breaks:
 | timesheet.json | timesheet | array | 1 | ✓ |
 | timesheet_approvals.json | timesheet_approvals | array | 0 | ✓ |
 | cash_drawer.json | cash_drawer | object {sessions:[]} | 10 sessions + 12 txs | ✓ |
-| delivery_addresses.json | delivery_addresses | dict | 0 | |
-| scheduled_pricing.json | scheduled_pricing | array | 0 | |
-| webhooks.json | webhooks | dict | 0 | |
+| delivery_addresses.json | delivery_addresses | dict | 0 | ✓ |
+| scheduled_pricing.json | scheduled_pricing | array | 0 | ✓ |
+| webhooks.json | webhooks | dict | 0 | ✓ |
 | tables.json | tables | dict | 0 | |
 | table_ads.json | table_ads | object | 0 | |
 | security_events.json | security_events | array | 24 | ✓ |
