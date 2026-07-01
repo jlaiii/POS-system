@@ -26265,5 +26265,35 @@
                 "Coke x1"
             ]
         }
+    },
+    {
+        "timestamp": "2026-07-01T16:43:58.146107",
+        "type": "clock_in",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee One",
+            "clock_in_time": "2026-07-01T16:43:58.145813",
+            "late_minutes": 464,
+            "scheduled_start": "09:00"
+        }
+    },
+    {
+        "timestamp": "2026-07-01T16:44:00.568132",
+        "type": "clock_out",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee One",
+            "clock_in_time": "2026-07-01T16:43:58.145813",
+            "clock_out_time": "2026-07-01T16:44:00.567716",
+            "duration_hours": 0.0
+        }
     }
 ]
