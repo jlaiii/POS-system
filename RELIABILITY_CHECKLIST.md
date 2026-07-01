@@ -1,13 +1,13 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-07-01T06:49Z
-> Total checks: 153
-> Healthy: 175 | Broken: 0 | Fixed this cycle: 33
+> Last full cycle: 2026-07-01T07:32Z
+> Total checks: 154
+> Healthy: 176 | Broken: 0 | Fixed this cycle: 33
 
 ## CRITICAL (check every run — these can't wait)
-|- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (06:48Z)
-|- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID, 8 users, 5 cats/items dict, 128 orders, 1 shift, 24 inventory (06:48Z)
-|- [x] users.json has at least owner PIN 1111 — Owner 1111 present, permissions '*' OK (06:48Z)
-|- [x] Git repo is clean (no uncommitted changes from crashes) — committed Watchdog dirty files (SECURITY_WATCHDOG.md, activity_log.json, login_attempts.json) at 890c19b, clean now (06:48Z)
+|- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (07:32Z)
+|- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID, 8 users, 5 cats/items dict, 128+ orders, 1 shift, 24 inventory (07:32Z)
+|- [x] users.json has at least owner PIN 1111 — Owner 1111 present, permissions '*' OK (07:32Z)
+|- [x] Git repo is clean (no uncommitted changes from crashes) — clean now (07:32Z)
 
 ## HOURLY (check if last check was >1h ago)
 |- [x] /api/clock/in works (clock in test user, verify response) — Employee 1234 clocked in at 06:48Z, no late detection ✓ (06:48Z)
@@ -19,13 +19,13 @@
 |- [x] Frontend loads (curl index.html, verify it's HTML not error) — HTML 200 OK, 1,375,342 bytes ✓ (06:49Z)
 
 ## EVERY 4 HOURS
-- [x] Order lifecycle: create order → verify in orders.json → refund → verify — Created #145 (Coke $3) → pending → refunded ✅ (02:44Z)
-- [x] User CRUD: add test user → verify → delete — Added 9001, verified, deleted ✅
-- [x] Inventory: check stock decrements on order — Coke 67→66→67 (order #150 created + refunded) ✅ (06:27Z)
-- [x] Loyalty: points earned on order — Order #139 (Coke $3) earned 3 pts, refunded, cleaned up ✅
-- [x] Cash register: open drawer ($100) → cash in ($50) → cash out ($20) → close ($130, exact match) ✅
-- [x] Kitchen display: GET /api/kitchen/queue — 2 pending orders, valid data ✓ (04:08Z)
-- [x] Pickup display: GET /api/pickup-display/queue — 2 ready orders, valid data ✓ (04:08Z)
+|- [x] Order lifecycle: create order → verify in orders.json → refund → verify — Created #151 (Pancakes $8.99) → pending → refunded → cleaned ✅ (07:32Z)
+|- [x] User CRUD: add test user → verify → delete — Added 9001, verified, deleted ✅
+|- [x] Inventory: check stock decrements on order — Coke 67→66→67 (order #150 created + refunded) ✅ (06:27Z)
+|- [x] Loyalty: points earned on order — Order #139 (Coke $3) earned 3 pts, refunded, cleaned up ✅
+|- [x] Cash register: open drawer ($100) → cash in ($50) → cash out ($20) → close ($130, exact match) ✅
+|- [x] Kitchen display: GET /api/kitchen/queue — 4 pending orders, valid data ✓ (07:32Z)
+|- [x] Pickup display: GET /api/pickup-display/queue — 2 ready orders, valid data ✓ (07:32Z)
 - [x] Clock-in late detection: Employee 1234 scheduled 09:00, clocked in 21:38 → 758 min late ✅
 - [x] Break tracking: POST /api/clock/break — Break start + end + clock out worked, break recorded in shift ✓ (03:46Z)
 - [x] Shift edit: POST /api/clock/edit — validates reason required, endpoint working ✅ (03:46Z)
@@ -51,6 +51,7 @@
 _None_
 
 ## FIXES APPLIED
+- 2026-07-01T07:32Z **SRE bot routine run** — CRITICAL: Flask 200, all 8 JSON valid, Owner 1111 present, git clean. 4H: order lifecycle (created #151 Pancakes $8.99, refunded, cleaned ✓), kitchen queue (4 pending ✓), pickup display (2 ready ✓). Disk 39%, RAM 40%. All healthy.
 - 2026-07-01T06:48Z **SRE bot routine run** — CRITICAL: Flask 200, all 8 JSON valid, Owner 1111 present, git clean after committing Watchdog dirty files (SECURITY_WATCHDOG.md, activity_log.json, login_attempts.json at 890c19b). HOURLY: clock/in+out (Employee 1234 at 06:48Z, cleaned), login (Owner 1111 ✓). Disk 39%, RAM 40%. All healthy.
 - 2026-07-01T05:35Z **SRE bot routine run** — CRITICAL: Flask 200, all 8 JSON valid, Owner 1111 present, git clean after committing Watchdog dirty files. HOURLY: clock/in+out (Employee 1234 at 05:35Z, cleaned), items (5 cats/19 items ✓), login (Owner 1111 ✓), admin_stats ($13.24 avg, 202 backups green), admin_shifts (0 shifts ✓), frontend (1,375KB ✓). Committed Watchdog dirty files (activity_log +15, login_attempts +11, security_events +15) at feedd4e. All healthy.
 - 2026-07-01T04:08Z **SRE bot routine run** — CRITICAL: Flask 200, all 8 JSON valid, Owner 1111 present. Committed Watchdog dirty files (.watchdog_file_sizes.json + SECURITY_WATCHDOG.md at 10c29f1). HOURLY: clock/in+out (Employee 1234 at 04:08Z, cleaned), items (5 categories ✓), login (Owner 1111 ✓). 4H: kitchen (2 pending), pickup (2 ready). app.py syntax OK, index.html 1.4M normal, backup valid. Disk 39%, RAM 38%. All healthy.
