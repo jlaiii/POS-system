@@ -1,18 +1,18 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-07-01T16:16Z
-> Total checks: 222
-> Healthy: 262 | Broken: 0 | Fixed this cycle: 33
+> Last full cycle: 2026-07-01T16:43Z
+> Total checks: 226
+> Healthy: 266 | Broken: 0 | Fixed this cycle: 33
 
 ## CRITICAL (check every run — these can't wait)
-||- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (16:16Z)
-||- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID, 11 users, 5 cats/19 items, orders OK (155 orders, 4 pending), shift_log empty, 24 inventory, 14 loyalty (16:16Z)
-||- [x] users.json has at least owner PIN 1111 — Owner 1111 present, perms ['*'], super admin ✓ (16:16Z)
-||- [x] Git repo is clean (no uncommitted changes from crashes) — clean after commit 27b299c ✓ (16:16Z)
+||- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (16:43Z)
+||- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID, 11 users, 5 cats/23 items, orders OK (155 orders, 4 pending), shift_log empty, 28 inventory (4 sold out), 14 loyalty (16:43Z)
+||- [x] users.json has at least owner PIN 1111 — Owner 1111 present, perms ['*'], super admin ✓ (16:43Z)
+||- [x] Git repo is clean (no uncommitted changes from crashes) — clean after commit 8cd70ab ✓ (16:43Z)
 
 ## HOURLY (check if last check was >1h ago)
-||- [x] /api/clock/in works (clock in test user, verify response) — Employee 1234 clocked in at 15:27Z, 387 min late (sched 09:00), cleaned up ✓ (15:27Z)
-||- [x] /api/clock/out works — Employee 1234 clocked out (0s shift), test shift cleaned ✓ (15:27Z)
-||- [x] /api/clock/status works (adminPin, not userId) — Employee 1234 not clocked in ✓ (15:27Z)
+||- [x] /api/clock/in works (clock in test user, verify response) — Employee 1234 clocked in at 16:43Z, 464 min late (sched 09:00), cleaned up ✓ (16:43Z)
+||- [x] /api/clock/out works — Employee 1234 clocked out (0s shift), test shift cleaned ✓ (16:43Z)
+||- [x] /api/clock/status works (adminPin, not userId) — Employee 1234 not clocked in ✓ (16:43Z)
 ||- [x] /api/items returns items — 5 categories: Breakfast, Drinks, Foods, Salads, Snacks, 19 items ✓ (15:51Z)
 ||- [x] /api/login works (POST userId) — Owner 1111 login, message 'Login successful', full permissions ✓ (15:51Z)
 ||- [x] /api/admin_stats returns stats (POST adminPin) — Admin data retrieved, 4 pending, avg $13.24, backup count 212, green ✓ (15:51Z)
@@ -48,7 +48,7 @@
 ||- [x] Concurrent write test: two rapid clock-ins → verify no data loss — Two users (1234, 5678) clocked in/out concurrently, both shifts recorded ✅
 
 ## DISCOVERED (failures you've seen before — check every 2h)
-||- [x] Security Watchdog leaves dirty files after each run (SECURITY_WATCHDOG.md + activity_log.json + login_attempts.json + security_events.json + .watchdog_file_sizes.json) — auto-commit on SRE bot runs — CHECKED 13:29Z, git clean after commit 2fd3a8a ✓
+||- [x] Security Watchdog leaves dirty files after each run (SECURITY_WATCHDOG.md + activity_log.json + login_attempts.json + security_events.json + .watchdog_file_sizes.json) — auto-commit on SRE bot runs — COMMITTED activity_log.json at 8cd70ab (16:43Z) ✓
 
 ## CURRENT OUTAGES
 _None_
