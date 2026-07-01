@@ -1,5 +1,5 @@
 # POS Security Tasks
-> Last run: 2026-07-01 03:30 UTC
+> Last run: 2026-07-01 15:46 UTC
 
 ## CRITICAL — LOGIN & AUTH SECURITY (check every run)
 
@@ -115,6 +115,10 @@
 - [x] **Verify dependency versions** — Flask 3.1.3, pyotp 2.9.0, qrcode 7.4.2, Werkzeug 3.1.8, eventlet 0.41.0. All current stable versions.
 
 ## COMPLETED (this session)
+
+### Run: 2026-07-01 15:46 UTC
+- [x] **Full security audit — all Tier 1-4 controls verified intact** — Login rate limiting (5/60s + 10min lockout, verified via curl). Session security (secrets.token_hex(32), 8h active/24h idle expiry, logout invalidation) intact. TOTP encryption (Fernet key at 0600) valid. All file permissions: JSON at 0600, pos.db at 600, .totp_encryption_key at 600, backups at 700. Activity log: no PINs/passwords/card data logged. Payment data: only card_last4/type stored (PCI compliant). No eval/exec/hardcoded credentials. Debug mode disabled (gunicorn -w 1 gevent). CORS restricted. X-Forwarded-For spoofing fix intact. All routes have proper auth. XSS: escHtml()/escapeHtml() all use DOM-safe escaping; document.write only in server-generated PDF exports (safe). Security events: all 134 resolved. Login attempts: 0 external failures in last hour. No new code changes in app.py or index.html since last run. All 6 open issues are pre-existing architectural items (PIN-as-key, session tokens, root user, kitchen auth, backup path scope, bcrypt). No new vulnerabilities found.
+- [x] **Commit dirty runtime data** — activity_log.json + login_attempts.json had uncommitted changes from Security Watchdog and SRE bot runs. Committed with commit `d8f6a00`.
 
 ### Run: 2026-07-01 03:30 UTC
 - [x] **Full security audit — all Tier 1-4 controls verified intact** — Login rate limiting (5/60s + 10min lockout) verified working. Session security (secrets.token_hex(32), 8h active/24h idle expiry, logout invalidation) intact. TOTP encryption (Fernet key at 0600) valid. All file permissions: JSON at 0600 (fixed items.json from 0444→0600), pos.db at 600, .totp_encryption_key at 600, backups at 700. Activity log: no PINs/passwords/card data logged. Payment data: only card_last4/type stored (PCI compliant). No eval/exec/hardcoded credentials. Debug mode disabled. CORS restricted. X-Forwarded-For spoofing fix intact. All 336 routes have proper auth. XSS: escHtml() consistently used; document.write only in server-generated PDF exports (safe). No new critical vulnerabilities found.
