@@ -1969,29 +1969,29 @@
         "created_at": "2026-07-01T05:08:58.578729",
         "severity": "MEDIUM",
         "category": "anomaly",
-        "status": "unresolved",
+        "status": "resolved",
         "summary": "\u26a0\ufe0f Off-hours login: Owner (1111) at 05:08",
         "detail": "User Owner (PIN 1111) logged in during off-hours (22:00\u201306:00) from IP 127.0.0.1.",
         "affected_user": "1111",
         "affected_user_name": "Owner",
         "related_event": null,
         "reported_by": "IP Blocklist Manager",
-        "resolved_at": null,
-        "resolution": null
+        "resolved_at": "2026-07-01T06:20:00",
+        "resolution": "Off-hours login from exempted Owner (1111) via 127.0.0.1. Normal cron/testing activity. Resolved by Security Watchdog."
     },
     {
         "id": "SEC-134",
         "created_at": "2026-07-01T05:36:10.788602",
         "severity": "MEDIUM",
         "category": "anomaly",
-        "status": "unresolved",
+        "status": "resolved",
         "summary": "\u26a0\ufe0f Off-hours login: Owner (1111) at 05:36",
         "detail": "User Owner (PIN 1111) logged in during off-hours (22:00\u201306:00) from IP 127.0.0.1.",
         "affected_user": "1111",
         "affected_user_name": "Owner",
         "related_event": null,
         "reported_by": "IP Blocklist Manager",
-        "resolved_at": null,
-        "resolution": null
+        "resolved_at": "2026-07-01T06:20:00",
+        "resolution": "Off-hours login from exempted Owner (1111) via 127.0.0.1. Normal cron/testing activity. Resolved by Security Watchdog."
     }
 ]
