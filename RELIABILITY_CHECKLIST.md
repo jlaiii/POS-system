@@ -1,18 +1,18 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-07-01T14:53Z
-> Total checks: 210
-> Healthy: 250 | Broken: 0 | Fixed this cycle: 33
+> Last full cycle: 2026-07-01T15:27Z
+> Total checks: 216
+> Healthy: 256 | Broken: 0 | Fixed this cycle: 33
 
 ## CRITICAL (check every run — these can't wait)
-||- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (14:53Z)
-||- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID, 8 users, 5 cats/19 items, orders OK, shift_log empty, 24 inventory, 14 loyalty (14:53Z)
-||- [x] users.json has at least owner PIN 1111 — Owner 1111 present, perms ['*'], super admin ✓ (14:53Z)
-||- [x] Git repo is clean (no uncommitted changes from crashes) — clean after commit b289c77 ✓ (14:53Z)
+||- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (15:27Z)
+||- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID, 8 users, 5 cats/19 items, orders OK, shift_log empty (cleaned test), 24 inventory, 14 loyalty (15:27Z)
+||- [x] users.json has at least owner PIN 1111 — Owner 1111 present, perms ['*'], super admin ✓ (15:27Z)
+||- [x] Git repo is clean (no uncommitted changes from crashes) — clean ✓ (15:27Z)
 
 ## HOURLY (check if last check was >1h ago)
-||- [x] /api/clock/in works (clock in test user, verify response) — Employee 1234 clocked in at 13:29Z, 270 min late (sched 09:00), cleaned up ✓ (13:29Z)
-||- [x] /api/clock/out works — Employee 1234 clocked out (0s shift), test shift cleaned ✓ (13:29Z)
-||- [x] /api/clock/status works (userId or adminPin) — Employee 1234 not clocked in ✓ (13:29Z)
+||- [x] /api/clock/in works (clock in test user, verify response) — Employee 1234 clocked in at 15:27Z, 387 min late (sched 09:00), cleaned up ✓ (15:27Z)
+||- [x] /api/clock/out works — Employee 1234 clocked out (0s shift), test shift cleaned ✓ (15:27Z)
+||- [x] /api/clock/status works (adminPin, not userId) — Employee 1234 not clocked in ✓ (15:27Z)
 ||- [x] /api/items returns items (GET) — 5 categories: Breakfast, Drinks, Foods, Salads, Snacks, 19 items ✓ (14:31Z)
 ||- [x] /api/login works (POST userId) — Owner 1111 login, message 'Login successful', full permissions ✓ (14:31Z)
 ||- [x] /api/admin_stats returns stats (POST adminPin) — Admin data retrieved, avg $13.24, backup count 209, green ✓ (14:53Z)
@@ -37,11 +37,11 @@
 ||- [x] Offline queue: POST /api/sync_orders — endpoint exists, returns 'No orders provided' ✓ (14:00Z)
 
 ## EVERY 12 HOURS
-||- [x] Disk space check: df -h, alert if >80% full — 39% used ✓ (05:08Z)
-||- [x] Memory check: free -m, alert if swap used — 40% RAM, no swap used ✓ (05:08Z)
-||- [x] Backup integrity: verify latest backup is valid JSON and not empty — 50 files in tar.gz, core POS files VALID (users:8, items:5, orders:128, inventory:24), DB backup 76KB ✓ (05:08Z)
-||- [x] app.py syntax check (python3 -m py_compile app.py) — SYNTAX OK ✓ (13:29Z)
-||- [x] index.html size check (alert if shrunk dramatically — possible corruption) — 1,375,342 bytes, normal ✓ (13:29Z)
+||- [x] Disk space check: df -h, alert if >80% full — 40% used ✓ (15:27Z)
+||- [x] Memory check: free -m, alert if swap used — 34% RAM, no swap used ✓ (15:27Z)
+||- [x] Backup integrity: verify latest backup is valid JSON and not empty — 50 files in tar.gz, core POS files VALID (users:8 keys, items:5 cats, orders:130 items, inventory:24). DB backup 569KB, valid gzip. Backup format changed: now under backups/json/ + backups/db/ ✓ (15:27Z)
+||- [x] app.py syntax check (python3 -m py_compile app.py) — SYNTAX OK ✓ (15:27Z)
+||- [x] index.html size check (alert if shrunk dramatically — possible corruption) — 1,375,342 bytes, normal ✓ (15:27Z)
 ||- [x] Full app restart test: kill gunicorn → restart → verify all critical endpoints — 2026-07-01T05:08Z, PASSED (killed gunicorn, restarted, verified /api/health, /api/items, /api/login, /api/admin_stats, /api/admin_shifts, /api/clock/status, /api/kitchen/queue, /api/pickup-display/queue all 200 OK)
 ||- [x] Large payload test: submit order with 50 items — Order #140 created (50 items, $162.50) ✅
 ||- [x] Special chars test: user name with emoji, item name with quotes — Item 'Taco 🌮 "Supreme" Deluxe' added/deleted ✅
@@ -54,7 +54,7 @@
 _None_
 
 ## FIXES APPLIED
-||- 2026-07-01T14:53Z **SRE bot routine run** — CRITICAL: Flask 200, all 8 JSON valid, Owner 1111 present, git clean after commit of SECURITY_WATCHDOG.md at b289c77. HOURLY: admin_stats ✓, admin_shifts (0 active ✓), frontend (1,375KB ✓), clock/status (not clocked in ✓). Disk 40%, RAM 34%. All healthy.
+||- 2026-07-01T15:27Z **SRE bot routine run** — CRITICAL: Flask 200, all 8 JSON valid, Owner 1111 present, git clean. HOURLY: clock/in+out (Employee 1234 at 15:27Z, 387 min late ✓), clock/status (uses adminPin not userId ✓ — corrected checklist). 12H: disk 40%, RAM 34%, backup integrity (50 files, new format under backups/json/ + backups/db/ ✓), app.py syntax OK, index.html 1,375,342B normal. All healthy.
 ||- 2026-07-01T13:29Z **SRE bot routine run** — CRITICAL: Flask 200, all 8 JSON valid, Owner 1111 present, git clean after commit of SECURITY_WATCHDOG.md at 2fd3a8a. HOURLY: clock/in+out (Employee 1234, 270 min late ✓), clock/status (not clocked in ✓), admin_stats ✓, admin_shifts (0 active ✓), frontend (1,375KB ✓). 4H: inventory (24 items, all stocked ✓). 12H: app.py syntax OK, index.html size normal (1,375KB). Disk 40%, RAM 34%. All healthy.
 ||- 2026-07-01T13:07Z **SRE bot routine run** — CRITICAL: Flask 200, all 8 JSON valid, Owner 1111 present, git clean after commit Watchdog SECURITY_WATCHDOG.md at 267c32a. HOURLY: items (5 cats/19 items ✓), login (Owner 1111 ✓), admin_stats ($13.24 avg, 209 backups green ✓), kitchen (4 pending ✓), pickup (2 ready ✓). Disk 40%, RAM 34%. All healthy.
 ||- 2026-07-01T12:25Z **SRE bot routine run** — CRITICAL: Flask 200, all 8 JSON valid, Owner 1111 present, git dirty (activity_log.json from clock test). HOURLY: clock/in+out (Employee 1234, 205 min late ✓), admin_shifts (1 completed ✓), frontend (HTML ✓). Cleaned up stale Employee 5678 shift from 03:49Z + test shift. Disk 40%, RAM 34%. All healthy.
