@@ -17,7 +17,7 @@
         "totp_backup_codes": [],
         "totp_setup_at": null,
         "pin_reset_notification": null,
-        "force_pin_change": true,
+        "force_pin_change": false,
         "temp_pin": null,
         "temp_pin_expiry": null,
         "email": "owner@example.com"
@@ -46,7 +46,7 @@
         ],
         "totp_setup_at": "2026-06-23T07:59:32.165011",
         "pin_reset_notification": null,
-        "force_pin_change": true,
+        "force_pin_change": false,
         "temp_pin": null,
         "temp_pin_expiry": null,
         "email": "employee@example.com",
@@ -72,7 +72,7 @@
         "totp_backup_codes": [],
         "totp_setup_at": null,
         "pin_reset_notification": null,
-        "force_pin_change": true,
+        "force_pin_change": false,
         "temp_pin": null,
         "temp_pin_expiry": null
     },
@@ -91,7 +91,7 @@
         "totp_backup_codes": [],
         "totp_setup_at": null,
         "pin_reset_notification": null,
-        "force_pin_change": true,
+        "force_pin_change": false,
         "temp_pin": null,
         "temp_pin_expiry": null
     },
@@ -106,7 +106,7 @@
         "email": "",
         "pto_balance": 0.0,
         "pto_log": [],
-        "force_pin_change": true
+        "force_pin_change": false
     },
     "5566": {
         "name": "Chef Diego",
@@ -119,7 +119,7 @@
         "email": "",
         "pto_balance": 0.0,
         "pto_log": [],
-        "force_pin_change": true
+        "force_pin_change": false
     },
     "7788": {
         "name": "Manager Sarah",
@@ -141,7 +141,7 @@
         "email": "",
         "pto_balance": 0.0,
         "pto_log": [],
-        "force_pin_change": true
+        "force_pin_change": false
     },
     "987654": {
         "name": "Carlos",
@@ -156,7 +156,7 @@
         "totp_backup_codes": [],
         "totp_setup_at": null,
         "pin_reset_notification": null,
-        "force_pin_change": true,
+        "force_pin_change": false,
         "temp_pin": null,
         "temp_pin_expiry": null
     },

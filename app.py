@@ -6295,10 +6295,25 @@ def submit_order():
                     except Exception:
                         pass
 
+    # Resolve employee name for attribution in response
+    employee_name = None
+    employee_role = None
+    user_id_str = str(data.get('user', ''))
+    if user_id_str:
+        users_data = load_json_data(USERS_FILE)
+        if user_id_str in users_data:
+            employee_name = users_data[user_id_str].get('name')
+            employee_role = users_data[user_id_str].get('role')
+
     return jsonify({
         'message': 'Order submitted successfully',
         'order_number': order_number,
         'order_id': order_id,
+        'employee': {
+            'id': data.get('user'),
+            'name': employee_name,
+            'role': employee_role
+        },
         'low_stock_warnings': low_stock_warnings,
         'loyalty_earned': loyalty_earned,
         'birthday_bonus': birthday_bonus,
@@ -13491,7 +13506,7 @@ def menu_restore():
 # --- Kitchen Order Queue System ---
 # ============================================================
 
-@app.route('/api/kitchen/queue', methods=['GET'])
+@app.route('/api/kitchen/queue', methods=['GET', 'POST'])
 def kitchen_queue():
     """Returns all orders where status is 'pending' or 'preparing', sorted oldest first.
     Orders are grouped by table_number so same-table orders appear together.
