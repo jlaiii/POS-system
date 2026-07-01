@@ -65,7 +65,7 @@ None.
 
 ### ✅ Actions Taken
 - **Routine monitoring**: No threats detected. All clear.
-- **No git commit needed**: working tree clean.
+- **Git commit**: Pushed dirty data files (activity_log.json, login_attempts.json) + watchdog update.
 
 ## Previous Run Findings (carried forward)
 70|- Admin 2FA gap: Owner (1111), Manager (2222), Manager Sarah (7788) lack 2FA despite `require_2fa_for_admins: true`. Owner is exempted. Security Sentinel handles.
