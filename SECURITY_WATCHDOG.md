@@ -1,8 +1,8 @@
 # POS Security Watchdog
 
-|||||||||||| Last run: 2026-07-01T06:59 UTC | Total events tracked: 134 (SEC-001→SEC-134; all resolved) | Active blocks: 0 | Run result: **CLEAN** — minimal test activity (Owner login + Employee One clock-in/out), no threats.|
+||||||||||||| Last run: 2026-07-01T07:20 UTC | Total events tracked: 134 (SEC-001→SEC-134; all resolved) | Active blocks: 0 | Run result: **CLEAN** — 1 admin_login (Owner, 127.0.0.1), 0 failed logins, 0 threats. No alerts.|
 
-## Current Run Findings (06:42–06:59 UTC, ~17 min window)
+## Current Run Findings (07:00–07:20 UTC, ~20 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -20,23 +20,21 @@ None.
 
 **Server**: **UP** (responding on port 5000 — HTTP 200).
 
-**Activity** (activity_log.json): **3 new events** since last run:
-- `login` at 06:48:34 — Owner (1111) from 127.0.0.1 (python-requests/2.33.0)
-- `clock_in` at 06:48:40 — Employee One (1234) from 127.0.0.1 (0.0h duration)
-- `clock_out` at 06:48:40 — Employee One (1234) clocked out immediately after
+**Activity** (activity_log.json): **1 new event** since last run:
+- `admin_login` at 07:11:22 — Owner (1111) from 127.0.0.1 (curl/8.5.0)
 
-This is legitimate test activity (likely Site Reliability Bot testing clock-in/out). No concern.
+This is a normal administrative login from localhost. No concern.
 
 **Login attempts (this window)**: 0 failed, 1 successful (Owner). No brute force or enumeration.
 
 **Active shifts**: 0. No one currently clocked in.
 
 ### 📊 Login Security Deep-Dive
-- **Brute force check**: 0 failed attempts in last 15 min. No threat.
+- **Brute force check**: 0 failed attempts in last 20 min. No threat.
 - **Account enumeration**: 0 invalid-PIN probes. None.
 - **Successful-after-failure**: No failure→success pattern.
 - **Credential stuffing**: No evidence — single IP (127.0.0.1) only.
-- **Off-hours activity**: 06:48 is outside anomaly window (22:00–06:00). Normal hours.
+- **Off-hours activity**: 07:11 is outside anomaly window (22:00–06:00). Normal hours.
 - **Cross-IP targeting**: None.
 - **Session anomalies**: No active sessions.
 - **Rate limiting**: No trigger events.
@@ -52,7 +50,7 @@ This is legitimate test activity (likely Site Reliability Bot testing clock-in/o
 - No orders in this window. No anomalies detected.
 
 ### 📂 File Integrity
-- All JSON files present and properly sized.
+- All critical JSON files valid and present.
 - Owner (1111) present, active, not banned.
 - No new suspicious files found.
 - Git: **clean** — no uncommitted changes.
