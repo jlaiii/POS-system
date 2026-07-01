@@ -26331,5 +26331,19 @@
         "details": {
             "status": "success"
         }
+    },
+    {
+        "timestamp": "2026-07-01T17:07:57.775191",
+        "type": "login_failed",
+        "user_id": null,
+        "user_role": "unknown",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "failed",
+            "method": "pin",
+            "ip": "127.0.0.1",
+            "attempt": 1
+        }
     }
 ]

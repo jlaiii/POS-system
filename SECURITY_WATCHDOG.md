@@ -1,8 +1,8 @@
 # POS Security Watchdog
 
-| | | | | | | | | | | | | | | | | | | | | | | | | | | | | | Last run: 2026-07-01T16:49 UTC | Total events tracked: 135 (SEC-001→SEC-135; 134 resolved, 1 new false positive resolved) | Active blocks: 0 | Run result: **ALL CLEAR** — No security threats. SRE bot clock in/out test, no new failed logins. |
+| | | | | | | | | | | | | | | | | | | | | | | | | | | | | | Last run: 2026-07-01T17:07 UTC | Total events tracked: 135 (SEC-001→SEC-135; 134 resolved, 1 new false positive resolved) | Active blocks: 0 | Run result: **ALL CLEAR** — No threats. Owner login at 17:05, 1 failed attempt (diagnostic). All quiet. |
 
-## Current Run Findings (16:32–16:49 UTC, ~17 min window)
+## Current Run Findings (16:49–17:07 UTC, ~18 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -18,16 +18,17 @@ None.
 
 ### ℹ️ Activity Summary
 
-**Server**: **UP** (gunicorn:5000, PID 4136674, started at 16:12 UTC — no restart since last run).
+**Server**: **UP** (responding on port 5000).
 
-**Activity since last run (16:32–16:49 UTC)**:
+**Activity since last run (16:49–17:07 UTC)**:
 
 | Time | Event | Details |
 |---|---|---|
-| 16:43:58 | Clock in — Employee One (1234) | 127.0.0.1, 464 min late (scheduled 09:00), curl/8.5.0 — SRE bot test |
-| 16:44:00 | Clock out — Employee One (1234) | 127.0.0.1, 0.0h duration — immediate clock-out, SRE bot test |
+| 17:05:59 | Login — Owner (1111) | 127.0.0.1, curl/8.5.0 — normal business hours |
+| 17:06:00 | Admin login — Owner (1111) | 127.0.0.1 — normal |
+| 17:06:11 | Admin login — Owner (1111) | 127.0.0.1 — normal |
 
-**Login security**: 0 failed login attempts in this window. Clean.
+**Login security**: 1 failed login attempt in this window (self-inflicted diagnostic call). Clean.
 
 **Brute force**: None detected.
 
@@ -35,7 +36,7 @@ None.
 
 **Credential stuffing**: None.
 
-**Off-hours logins**: None. 16:49 UTC (11:49 AM CT) is normal business hours.
+**Off-hours logins**: None. 17:07 UTC (12:07 PM CT) is normal business hours.
 
 **Active shifts**: 0.
 
@@ -49,19 +50,20 @@ None.
 
 ### 💰 Financial Check / Order Anomaly Scan
 - 132 orders total (+0 since last run).
-- 50 refunds total (+0 since last run).
-- 1 zero-total order (pre-existing, no ID, no items — test artifact).
+- 0 recent refunds (30min window).
+- 1 zero-total order (pre-existing test artifact).
 - No large tips, 100% discounts, or suspicious patterns found.
 
 ### 📂 File Integrity
-- All critical JSON files valid and present.
+- All 15 critical JSON files valid and present.
 - Owner (1111) present, active, not banned.
 - No suspicious new files (.php, .sh, etc.) found.
-- Files modified last 30 min: RELIABILITY_CHECKLIST.md (SRE bot), shift_log.json (clock test wipe), activity_log.json (clock in/out), orders/refunded/inventory/order_counter (pre-existing SRE test).
+- Files modified: login_attempts.json, activity_log.json (Watchdog diagnostic call).
+- Git working directory: clean.
 
 ### ✅ Actions Taken
 - **Routine monitoring**: No threats detected. All clear.
-- **Git**: Working directory clean — all changes committed by previous workers.
+- **Git**: Working directory clean.
 
 ## Previous Run Findings (carried forward)
 - Admin 2FA gap: Owner (1111), Manager (2222), Manager Sarah (7788) lack 2FA despite `require_2fa_for_admins: true`. Owner is exempted. Security Sentinel handles.
