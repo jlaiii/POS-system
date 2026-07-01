@@ -1,18 +1,18 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-07-01T17:27Z
-> Total checks: 234
-> Healthy: 274 | Broken: 0 | Fixed this cycle: 34
+> Last full cycle: 2026-07-01T17:54Z
+> Total checks: 235
+> Healthy: 283 | Broken: 0 | Fixed this cycle: 34
 
 ## CRITICAL (check every run — these can't wait)
-||- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (17:27Z)
-||- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID, 11 users, 5 cats/23 items, 132 orders, shift_log empty, 28 inventory (4 sold out), 14 loyalty ✓ (17:27Z)
-||- [x] users.json has at least owner PIN 1111 — Owner 1111 present, perms ['*'], super admin ✓ (17:27Z)
-||- [x] Git repo is clean (no uncommitted changes from crashes) — clean ✓ (17:27Z)
+||- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (17:54Z)
+||- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID, 11 users, 5 cats/23 items, 132 orders, shift_log empty (cleaned), 28 inventory (4 sold out), 14 loyalty ✓ (17:54Z)
+||- [x] users.json has at least owner PIN 1111 — Owner 1111 present, perms ['*'], super admin ✓ (17:54Z)
+||- [x] Git repo is clean (no uncommitted changes from crashes) — clean ✓ (17:54Z)
 
 ## HOURLY (check if last check was >1h ago)
-||- [x] /api/clock/in works (clock in test user, verify response) — Employee 1234 clocked in at 16:43Z, 464 min late (sched 09:00), cleaned up ✓ (16:43Z)
-||- [x] /api/clock/out works — Employee 1234 clocked out (0s shift), test shift cleaned ✓ (16:43Z)
-||- [x] /api/clock/status works (adminPin, not userId) — Employee 1234 not clocked in ✓ (16:43Z)
+||- [x] /api/clock/in works (clock in test user, verify response) — Employee 1234 clocked in at 17:55Z, 535 min late (sched 09:00), cleaned up ✓ (17:55Z)
+||- [x] /api/clock/out works — Employee 1234 clocked out (0s shift), test shift cleaned ✓ (17:55Z)
+||- [x] /api/clock/status works (adminPin, not userId) — Employee 1234 not clocked in ✓ (17:55Z)
 ||- [x] /api/items returns items (GET) — 5 categories, 23 items ✓ (17:05Z)
 ||- [x] /api/login works (POST userId) — Owner 1111 login, force_pin_change_required, full permissions, session_token ✓ (17:05Z)
 ||- [x] /api/admin_stats returns stats (POST adminPin) — Admin data retrieved, avg $12.13, backup count 213, green ✓ (17:05Z)
@@ -42,7 +42,7 @@
 |||- [x] Backup integrity: verify latest backup is valid JSON and not empty — Latest backup 15:26Z: backups/json/2026-07-01_15-26-22.tar.gz (90KB) + backups/db/pos_2026-07-01_15-26-22.db.gz (76KB) — valid ✓ (16:16Z)
 |||- [x] app.py syntax check (python3 -m py_compile app.py) — SYNTAX OK ✓ (17:27Z)
 |||- [x] index.html size check (alert if shrunk dramatically — possible corruption) — 1,375,342 bytes, normal ✓ (17:27Z)
-|||- [x] Full app restart test: kill gunicorn → restart → verify all critical endpoints — 2026-07-01T05:08Z, PASSED (killed gunicorn, restarted, verified /api/health, /api/items, /api/login, /api/admin_stats, /api/admin_shifts, /api/clock/status, /api/kitchen/queue, /api/pickup-display/queue all 200 OK)
+|||- [x] Full app restart test: kill gunicorn → restart → verify all critical endpoints — 2026-07-01T17:54Z, PASSED (killed gunicorn, restarted, verified all 8 endpoints: /, /api/items, /api/login, /api/admin_stats, /api/admin_shifts, /api/clock/status, /api/kitchen/queue, /api/pickup-display/queue all 200 OK)
 |||- [x] Large payload test: submit order with 50 items — Order #140 created (50 items, $162.50) ✅
 |||- [x] Special chars test: user name with emoji, item name with quotes — Item 'Taco 🌮 "Supreme" Deluxe' added/deleted ✅
 |||- [x] Concurrent write test: two rapid clock-ins → verify no data loss — Two users (1234, 5678) clocked in/out concurrently, both shifts recorded ✅
