@@ -1,8 +1,8 @@
 # POS Security Watchdog
 
-| | | | | | | | | | | | | | | | | | | | | | | | | | | | | | Last run: 2026-07-01T17:07 UTC | Total events tracked: 135 (SEC-001→SEC-135; 134 resolved, 1 new false positive resolved) | Active blocks: 0 | Run result: **ALL CLEAR** — No threats. Owner login at 17:05, 1 failed attempt (diagnostic). All quiet. |
+| | | | | | | | | | | | | | | | | | | | | | | | | | | | | | Last run: 2026-07-01T17:41 UTC | Total events tracked: 135 (SEC-001→SEC-135; 134 resolved, 1 new false positive resolved) | Active blocks: 0 | Run result: **ALL CLEAR** — 1 failed login (localhost diagnostic), SRE bot order lifecycle test (#156 created+refunded). All quiet. |
 
-## Current Run Findings (16:49–17:07 UTC, ~18 min window)
+## Current Run Findings (17:07–17:41 UTC, ~34 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -18,25 +18,25 @@ None.
 
 ### ℹ️ Activity Summary
 
-**Server**: **UP** (responding on port 5000).
+**Server**: **UP** (responding on port 5000 — HTTP 200).
 
-**Activity since last run (16:49–17:07 UTC)**:
+**Activity since last run (17:07–17:41 UTC)**:
 
 | Time | Event | Details |
 |---|---|---|
-| 17:05:59 | Login — Owner (1111) | 127.0.0.1, curl/8.5.0 — normal business hours |
-| 17:06:00 | Admin login — Owner (1111) | 127.0.0.1 — normal |
-| 17:06:11 | Admin login — Owner (1111) | 127.0.0.1 — normal |
+|| 17:07:57 | Failed login — no user | 127.0.0.1, curl/8.5.0 — Watchdog self-diagnostic call |
+|| 17:28:26 | Order #156 created | $3.28, 1 item (Coke), Cash |
+|| 17:28:29 | Order #156 refunded | By Owner (1111) — SRE bot lifecycle test |
 
-**Login security**: 1 failed login attempt in this window (self-inflicted diagnostic call). Clean.
+**Login security**: 1 failed login attempt (Watchdog self-diagnostic). Clean.
 
-**Brute force**: None detected.
+**Brute force**: None detected (1 failure from localhost is not a pattern).
 
-**Account enumeration**: None.
+**Account enumeration**: None (no probing of user IDs).
 
-**Credential stuffing**: None.
+**Credential stuffing**: None (single IP, single null user).
 
-**Off-hours logins**: None. 17:07 UTC (12:07 PM CT) is normal business hours.
+**Off-hours logins**: None. 17:41 UTC (12:41 PM CT) is normal business hours.
 
 **Active shifts**: 0.
 
@@ -49,16 +49,16 @@ None.
 - Config unchanged since last run.
 
 ### 💰 Financial Check / Order Anomaly Scan
-- 132 orders total (+0 since last run).
-- 0 recent refunds (30min window).
-- 1 zero-total order (pre-existing test artifact).
-- No large tips, 100% discounts, or suspicious patterns found.
+- 133 orders total (+1 since last run: #156).
+- 1 recent refund (#156, SRE bot lifecycle test — authorized by Owner).
+- 1 zero-total order (pre-existing cancelled test artifact).
+- Refund rate: 47/133 = ~35% — all test data, no real customer orders.
+- No large tips, 100% discounts, or suspicious financial patterns.
 
 ### 📂 File Integrity
-- All 15 critical JSON files valid and present.
+- All 16 critical JSON files valid and parseable.
 - Owner (1111) present, active, not banned.
-- No suspicious new files (.php, .sh, etc.) found.
-- Files modified: login_attempts.json, activity_log.json (Watchdog diagnostic call).
+- No suspicious new files — `pos-system.pid` (runtime PID, gitignored) and `style.css` (legitimate barcode scanner CSS, git-tracked).
 - Git working directory: clean.
 
 ### ✅ Actions Taken
