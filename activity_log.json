@@ -25551,5 +25551,35 @@
             "clock_out_time": "2026-07-01T12:02:46.683745",
             "duration_hours": 0.0
         }
+    },
+    {
+        "timestamp": "2026-07-01T12:25:13.681180",
+        "type": "clock_in",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee One",
+            "clock_in_time": "2026-07-01T12:25:13.680877",
+            "late_minutes": 205,
+            "scheduled_start": "09:00"
+        }
+    },
+    {
+        "timestamp": "2026-07-01T12:25:19.010228",
+        "type": "clock_out",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee One",
+            "clock_in_time": "2026-07-01T12:25:13.680877",
+            "clock_out_time": "2026-07-01T12:25:19.009739",
+            "duration_hours": 0.0
+        }
     }
 ]
