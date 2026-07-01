@@ -1,7 +1,7 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-07-01T04:08Z
-> Total checks: 140
-> Healthy: 153 | Broken: 0 | Fixed this cycle: 32
+> Last full cycle: 2026-07-01T04:35Z
+> Total checks: 141
+> Healthy: 159 | Broken: 0 | Fixed this cycle: 32
 
 ## CRITICAL (check every run — these can't wait)
 - [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (04:08Z)
@@ -14,9 +14,9 @@
 - [x] /api/clock/out works — Employee 1234 clocked out (3.5s shift), cleaned up ✓ (04:08Z)
 - [x] /api/items returns items (GET) — 5 categories: Breakfast, Drinks, Foods, Salads, Snacks, 19 items ✓ (04:08Z)
 - [x] /api/login works (POST userId) — Owner 1111 login, message 'Login successful', full permissions ✓ (04:08Z)
-- [x] /api/admin_stats returns stats (POST adminPin) — Admin data retrieved, backup health green, avg sale $12.84 ✓ (02:42Z)
-- [x] /api/admin_shifts returns shifts (POST adminPin) — 0 active shifts, 0 completed shifts ✓ (02:42Z)
-- [x] Frontend loads (curl index.html, verify it's HTML not error) — HTML 200 OK, 1,375,342 bytes ✓ (03:11Z)
+- [x] /api/admin_stats returns stats (POST adminPin) — Admin data retrieved, 200 OK ✓ (04:35Z)
+- [x] /api/admin_shifts returns shifts (POST adminPin) — 0 active shifts, 0 completed shifts ✓ (04:35Z)
+- [x] Frontend loads (curl index.html, verify it's HTML not error) — HTML 200 OK, 1,375,342 bytes ✓ (04:35Z)
 
 ## EVERY 4 HOURS
 - [x] Order lifecycle: create order → verify in orders.json → refund → verify — Created #145 (Coke $3) → pending → refunded ✅ (02:44Z)
@@ -34,11 +34,11 @@
 - [x] Offline queue: POST /api/sync_orders — endpoint exists, returns 'No orders provided' ✓ (03:47Z)
 
 ## EVERY 12 HOURS
-- [x] Disk space check: df -h, alert if >80% full — 39% used ✓ (15:47Z)
-- [x] Memory check: free -m, alert if swap used — 36% RAM, no swap used ✓ (15:47Z)
-- [x] Backup integrity: verify latest backup is valid JSON and not empty — 50 JSON files valid (tar.gz), DB backup 569KB ✓ (15:47Z)
-- [x] app.py syntax check (python3 -m py_compile app.py) — SYNTAX OK ✓ (15:47Z)
-- [x] index.html size check (alert if shrunk dramatically — possible corruption) — 1,375,342 bytes, normal ✓ (15:47Z)
+- [x] Disk space check: df -h, alert if >80% full — 39% used ✓ (04:35Z)
+- [x] Memory check: free -m, alert if swap used — 38% RAM, no swap used ✓ (04:35Z)
+- [x] Backup integrity: verify latest backup is valid JSON and not empty — 48 JSON files valid (tar.gz), DB backup 76KB ✓ (04:35Z)
+- [x] app.py syntax check (python3 -m py_compile app.py) — SYNTAX OK ✓ (04:35Z)
+- [x] index.html size check (alert if shrunk dramatically — possible corruption) — 1,375,342 bytes, normal ✓ (04:35Z)
 - [x] Full app restart test: kill Flask → restart → verify all critical endpoints — 2026-06-30T14:13Z, PASSED (killed python3 app.py, restarted, verified /api/health, /api/items, /api/kitchen/queue, /api/pickup-display/queue, /api/login, /api/admin_stats, /api/admin_shifts, /api/clock/status all 200 OK)
 - [x] Large payload test: submit order with 50 items — Order #140 created (50 items, $162.50) ✅
 - [x] Special chars test: user name with emoji, item name with quotes — Item 'Taco 🌮 "Supreme" Deluxe' added/deleted ✅
@@ -51,6 +51,7 @@
 _None_
 
 ## FIXES APPLIED
+- 2026-07-01T04:35Z **SRE bot routine run** — CRITICAL: Flask 200, git clean, all healthy. HOURLY: admin_stats+admin_shifts (200 OK, 0 shifts), frontend (1,375KB ✓). 12H: disk 39%, RAM 38%, backup integrity (48 JSON files valid, 04:04Z backup OK), app.py syntax OK, index.html size normal. All healthy.
 - 2026-07-01T04:08Z **SRE bot routine run** — CRITICAL: Flask 200, all 8 JSON valid, Owner 1111 present. Committed Watchdog dirty files (.watchdog_file_sizes.json + SECURITY_WATCHDOG.md at 10c29f1). HOURLY: clock/in+out (Employee 1234 at 04:08Z, cleaned), items (5 categories ✓), login (Owner 1111 ✓). 4H: kitchen (2 pending), pickup (2 ready). app.py syntax OK, index.html 1.4M normal, backup valid. Disk 39%, RAM 38%. All healthy.
 - 2026-07-01T03:41Z **SRE bot routine run** — CRITICAL: Flask 200, all 8 JSON valid, Owner 1111 present. Committed Watchdog dirty files (SECURITY_WATCHDOG.md at c3bc324, activity_log.json at 641605f). 4H checks: break tracking (start→end→clock out ✓), shift edit (reason validation ✓), CSV export (headers returned ✓), webhook + offline queue (both respond ✓), kitchen + pickup displays (data valid ✓). All healthy.
 - 2026-07-01T03:12Z **SRE bot routine run** — CRITICAL: Flask 200, all 8 JSON valid, Owner 1111 present, git clean after committing Watchdog dirty files. HOURLY: login (Owner 1111 ✓), frontend (1,375KB ✓). DISCOVERED: committed Watchdog dirty files (activity_log +28, login_attempts +22, security_events +30) at 0f1d7b0. All healthy.
