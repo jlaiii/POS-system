@@ -1,8 +1,8 @@
 # POS Security Watchdog
 
-|||||||| Last run: 2026-07-01T04:41 UTC | Total events tracked: 132 (SEC-001→SEC-132; 0 unresolved) | Active blocks: 0 | Run result: **CLEAN** — dev activity from localhost only, no external threats.|
+|||||||| Last run: 2026-07-01T05:19 UTC | Total events tracked: 132 (SEC-001→SEC-132; 0 unresolved) | Active blocks: 0 | Run result: **CLEAN** — dev activity from localhost only, no external threats.|
 
-## Current Run Findings (04:20–04:41 UTC, ~21 min window)
+## Current Run Findings (04:41–05:19 UTC, ~38 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -11,7 +11,7 @@ None.
 None.
 
 ### 🟡 MEDIUM (0)
-None after batch-resolve.
+None.
 
 ### 🟢 LOW (0)
 None.
@@ -20,21 +20,22 @@ None.
 
 **Server**: **UP** (responding on port 5000 — HTTP 200).
 
-**Activity** (activity_log.json): **1 new event** since last run — from 127.0.0.1 (localhost, whitelisted):
-- 04:35:28 — Owner (1111) admin_login from 127.0.0.1 via curl (Reliability Bot health check)
+**Activity** (activity_log.json): **2 new events** since last run — all from 127.0.0.1 (localhost, whitelisted):
+- 05:08:58 — Owner (1111) login from 127.0.0.1 via curl
+- 05:08:58 — Owner (1111) admin_login from 127.0.0.1 via curl
 
-**Login attempts (this window)**: 0 failed, 0 new login entries. Last attempt logged at 04:09 (Owner login — from previous window).
+**Login attempts (this window)**: 0 failed, 2 successful logins (both Owner, localhost).
 
 **Active shifts**: 0. No one currently clocked in.
 
-**Orders today (July 1)**: No new orders since last run. Order 149 ($3.25) is the latest.
+**Orders today (July 1)**: 4 orders placed today — all before 04:00 UTC. No new orders in this window.
 
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: 0 failed attempts. No threat.
 - **Account enumeration**: 0 invalid-PIN probes. None.
 - **Successful-after-failure**: No failure→success pattern detected.
 - **Credential stuffing**: No evidence — single IP (127.0.0.1) only.
-- **Off-hours activity**: Owner (1111) admin_login at 04:35 — from 127.0.0.1. Owner is exempted in config. Normal cron activity.
+- **Off-hours activity**: Owner (1111) login+admin_login at 05:08 — from 127.0.0.1. Owner is exempted in config. Normal cron activity.
 - **Cross-IP targeting**: None.
 - **Session anomalies**: No active sessions.
 - **Rate limiting**: No trigger events.
@@ -49,18 +50,16 @@ None.
 ### 💰 Financial Check / Order Anomaly Scan
 - No new orders this window.
 - No zero-dollar orders, no 100% discounts, no large tips.
-- Order 145 is refunded (status=refunded) — from prior run, unchanged.
+- Previously flagged refunded orders (refunded at ~02:20-02:44) — unchanged, test data.
 
 ### 📂 File Integrity
 - All JSON files parseable and valid.
 - Owner (1111) present, active, not banned.
 - No suspicious new files (.php, .sh, etc.) found.
-- Git: dirty — RELIABILITY_CHECKLIST.md (modified by Reliability Bot), activity_log.json (1 new event).
+- Git: **clean** (no uncommitted changes).
 
 ### ✅ Actions Taken
 - Tier 1-4 full security sweep completed — no threats.
-- Batch-resolved 5 stale MEDIUM events (SEC-123→SEC-127) — off-hours logins from 127.0.0.1 during cron/dev testing.
-- Committed security_events.json changes.
 - No Discord alert needed — all activity is known dev behavior from localhost, no external threats.
 
 ## Previous Run Findings (carried forward)
