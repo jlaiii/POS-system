@@ -1,8 +1,8 @@
 # POS Security Watchdog
 
-||||| || || || || |||||||||||||||| Last run: 2026-07-01T14:14 UTC | Total events tracked: 134 (SEC-001→SEC-134; all resolved) | Active blocks: 0 | Run result: **CLEAN** — 0 logins, zero failed attempts.|
+|||||| || || || || |||||||||||||||| Last run: 2026-07-01T14:32 UTC | Total events tracked: 134 (SEC-001→SEC-134; all resolved) | Active blocks: 0 | Run result: **CLEAN** — 1 login, zero failed attempts.|
 
-## Current Run Findings (13:37–14:14 UTC, ~37 min window)
+## Current Run Findings (14:14–14:32 UTC, ~18 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -18,18 +18,15 @@ None.
 
 ### ℹ️ Activity Summary
 
-**Server**: **UP** (Flask process running, `/api/clock/status` responds).
+**Server**: **UP** (Flask process running, `/api/clock/status` responds HTTP 400 as expected).
 
-**Activity** (activity_log.json): **9 new events** since last run — all SRE bot clock-in/out tests for Employee One (1234) from 127.0.0.1, plus one shift edit by Owner (1111). No login events.
+**Activity** (activity_log.json): **1 new event** since last run — Owner (1111) login from 127.0.0.1.
 
 | Time (UTC) | Event | User | Details |
 |---|---|---|---|
-| 14:00:00 | clock_in | Employee One (1234) | 127.0.0.1, SRE bot |
-| 14:00:01 | clock_out | Employee One (1234) | 127.0.0.1, SRE bot |
-| 14:05:15-31 | clock_in/out ×4 | Employee One (1234) | 127.0.0.1, SRE bot test cycle |
-| 14:05:31 | shift_edited | Owner (1111) | SRE bot shift edit test |
+| 14:32:09 | login | Owner (1111) | 127.0.0.1, curl/8.5.0, PIN auth success |
 
-**Login attempts**: **0** new since last run. Last entry: Owner (1111) at 13:30 UTC. **Zero failed attempts.**
+**Login attempts**: **1 new** since last run (Owner 1111 successful login at 14:32 UTC). **Zero failed attempts.**
 
 **Active shifts**: 0. No one currently clocked in.
 
@@ -38,9 +35,9 @@ None.
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: 0 failed attempts in window. No threat.
 - **Account enumeration**: 0 invalid-PIN probes.
-- **Successful-after-failure**: No pattern — zero failures.
+- **Successful-after-failure**: No pattern — zero failures preceded the success.
 - **Credential stuffing**: No evidence — zero attempts from any IP.
-- **Off-hours activity**: 14:00-14:14 UTC = 09:00-09:14 CT — within normal hours.
+- **Off-hours activity**: 14:32 UTC = 09:32 CT — within normal business hours.
 - **Cross-IP targeting**: None.
 - **Session anomalies**: No active sessions. No stale sessions >24h.
 - **Rate limiting**: No trigger events.
@@ -60,13 +57,13 @@ None.
 ### 📂 File Integrity
 - All critical JSON files valid and present.
 - Owner (1111) present, active, not banned.
-- Git: clean working tree. Last commit: "SRE bot routine run at 14:05Z".
-- shift_log.json cleared (now `[]`) — SRE bot cleanup of test data. Not a concern: file is in .gitignore, contained only test data, old backups exist.
+- Git: clean working tree (after committing dirty data files).
 - No suspicious new files found.
 
 ### ✅ Actions Taken
 - Tier 1-4 full security sweep — no threats.
 - No security events to log.
+- Committed and pushed dirty data files (login_attempts.json, activity_log.json).
 - No Discord alert needed — no anomalies.
 - Updated SECURITY_WATCHDOG.md.
 
