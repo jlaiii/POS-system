@@ -1,8 +1,8 @@
 # POS Security Watchdog
 
-| || || || ||||||||||||||||| Last run: 2026-07-01T11:48 UTC | Total events tracked: 134 (SEC-001→SEC-134; all resolved) | Active blocks: 0 | Run result: **CLEAN** — 0 failed logins, no threats.|
+|| || || || ||||||||||||||||| Last run: 2026-07-01T12:05 UTC | Total events tracked: 134 (SEC-001→SEC-134; all resolved) | Active blocks: 0 | Run result: **CLEAN** — 0 failed logins, no threats.|
 
-## Current Run Findings (11:31–11:48 UTC, ~17 min window)
+## Current Run Findings (11:48–12:05 UTC, ~17 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -20,17 +20,14 @@ None.
 
 **Server**: **UP** (responding on port 5000 — HTTP 200 on GET /).
 
-**Activity** (activity_log.json): **6 new events** since last run:
-- 11:39:45 — Owner (1111) admin_login from 127.0.0.1 (curl)
-- 11:39:48 — Owner (1111) login from 127.0.0.1 (curl, success)
-- 11:40:02 — Order #153 submitted ($3.25, 1 Coke, Cash) by anonymous user
-- 11:40:09 — Owner (1111) login from 127.0.0.1 (curl, success)
-- 11:40:14 — Order #153 refunded by Owner (reason: "SRE bot order lifecycle test")
-- 11:40:14 — Inventory restored (Coke x1)
+**Activity** (activity_log.json): **3 new events** since last run:
+|- 12:02:07 — Owner (1111) admin_login from 127.0.0.1 (curl)
+|- 12:02:43 — Employee One (1234) clock_in from 127.0.0.1 (curl) — 183 min late (scheduled 09:00 UTC, clocked 12:02 UTC)
+|- 12:02:46 — Employee One (1234) clock_out from 127.0.0.1 (curl) — 0.0h duration
 
-All from 127.0.0.1, all SRE bot lifecycle test activity. Order 153 was created and immediately refunded as a test — this is the Site Reliability Bot running its standard order lifecycle test.
+All from 127.0.0.1, all SRE bot clock-in/out lifecycle test activity. Employee One was clocked in and immediately out as part of the SRE bot's hourly routine. The shift was not persisted to shift_log.json (expected for zero-duration tests).
 
-**Login attempts (last 17 min)**: 0 failed, 3 successful (Owner 1111). No login attack activity.
+**Login attempts (last 17 min)**: 0 failed, 1 successful (Owner 1111 admin_login). No login attack activity.
 
 **Active shifts**: 0. No one currently clocked in.
 
@@ -41,7 +38,7 @@ All from 127.0.0.1, all SRE bot lifecycle test activity. Order 153 was created a
 - **Account enumeration**: 0 invalid-PIN probes. None.
 - **Successful-after-failure**: No failure→success pattern.
 - **Credential stuffing**: No evidence — zero attempts from any IP.
-- **Off-hours activity**: Current time 11:48 UTC = 06:48 CT — outside anomaly window (22:00–06:00 CT). Normal.
+- **Off-hours activity**: Current time 12:05 UTC = 07:05 CT — outside anomaly window (22:00–06:00 CT). Normal.
 - **Cross-IP targeting**: None.
 - **Session anomalies**: No active sessions. No stale sessions >24h.
 - **Rate limiting**: No trigger events.
@@ -54,20 +51,21 @@ All from 127.0.0.1, all SRE bot lifecycle test activity. Order 153 was created a
 - 2FA gap remains: Owner (1111), Manager (2222), Manager Sarah (7788) lack 2FA despite `require_2fa_for_admins: true`.
 
 ### 💰 Financial Check / Order Anomaly Scan
-- Order 153: $3.25, 1 Coke, Cash — SRE bot lifecycle test. Created and refunded same minute. Not suspicious.
+- No new orders this run. Order 153 already cleared last run.
 - No $0 orders, no 100% discounts, no unusual refund patterns.
-- Refund rate remains ~36.5% — all test data, no real customer orders.
+- Refund rate ~36.5% — all test data, no real customer orders.
 
 ### 📂 File Integrity
 - All critical JSON files valid and present.
 - Owner (1111) present, active, not banned.
 - No new suspicious files found.
-- Git: clean — no dirty files.
+- Git: committed activity_log.json (+41 lines, push to main at 9a8c8de). Now clean.
 
 ### ✅ Actions Taken
 - Tier 1-4 full security sweep completed — no threats.
 - No security events to log.
-- No Discord alert needed — all activity is SRE bot testing, zero login attack activity.
+- Committed activity_log.json (dirty from SRE bot test activity) and pushed to main.
+- No Discord alert needed — zero login attack activity, routine SRE bot testing.
 - Updated SECURITY_WATCHDOG.md.
 
 ## Previous Run Findings (carried forward)
