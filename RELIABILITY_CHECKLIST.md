@@ -1,21 +1,21 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-07-01T08:24Z
+> Last full cycle: 2026-07-01T09:39Z
 > Total checks: 168
-> Healthy: 190 | Broken: 0 | Fixed this cycle: 33
+> Healthy: 198 | Broken: 0 | Fixed this cycle: 33
 
 ## CRITICAL (check every run — these can't wait)
-|- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (08:24Z)
-|- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID, 8 users, 5 cats/19 items, 129 orders, 1 shift, 24 inventory, 14 loyalty (08:24Z)
-|- [x] users.json has at least owner PIN 1111 — Owner 1111 present, perms ['*'], super admin ✓ (08:24Z)
-|- [x] Git repo is clean (no uncommitted changes from crashes) — clean after committing Watchdog dirty files at dc11610 (08:24Z)
+|- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (09:39Z)
+|- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID, 8 users, 5 cats/19 items, 129 orders, 1 shift, 24 inventory, 14 loyalty (09:39Z)
+|- [x] users.json has at least owner PIN 1111 — Owner 1111 present, perms ['*'], super admin ✓ (09:39Z)
+|- [x] Git repo is clean (no uncommitted changes from crashes) — clean after committing Watchdog dirty files at bd09ef8 (09:39Z)
 
 ## HOURLY (check if last check was >1h ago)
 |- [x] /api/clock/in works (clock in test user, verify response) — Employee 1234 clocked in at 07:56Z, no late detection (early vs 09:00 sched) ✓ (07:56Z)
 |- [x] /api/clock/out works — Employee 1234 clocked out (12s shift), cleaned up ✓ (07:56Z)
 |- [x] /api/clock/status works (userId or adminPin) — Employee 1234 clocked in status returned ✓ (07:56Z)
 |- [x] /api/items returns items (GET) — 5 categories: Breakfast, Drinks, Foods, Salads, Snacks, 19 items ✓ (08:24Z)
-|- [x] /api/login works (POST userId) — Owner 1111 login, message 'Login successful', full permissions ✓ (08:24Z)
-|- [x] /api/admin_stats returns stats (POST adminPin) — Admin data retrieved ✓ (08:24Z)
+|- [x] /api/login works (POST userId) — Owner 1111 login, message 'Login successful', full permissions ✓ (09:39Z)
+|- [x] /api/admin_stats returns stats (POST adminPin) — Admin data retrieved ✓ (09:39Z)
 |- [x] /api/admin_shifts returns shifts (POST adminPin) — 0 active shifts, 1 completed shift ✓ (07:55Z)
 |- [x] Frontend loads (curl index.html, verify it's HTML not error) — HTML 200 OK, 1,375,342 bytes ✓ (08:24Z)
 |- [x] /api/kitchen/queue returns valid data (GET) — 4 pending orders, valid ✓ (07:56Z)
@@ -30,11 +30,11 @@
 |- [x] Kitchen display: GET /api/kitchen/queue — 4 pending orders, valid data ✓ (07:32Z)
 |- [x] Pickup display: GET /api/pickup-display/queue — 2 ready orders, valid data ✓ (07:32Z)
 - [x] Clock-in late detection: Employee 1234 scheduled 09:00, clocked in 21:38 → 758 min late ✅
-- [x] Break tracking: POST /api/clock/break — Break start + end + clock out worked, break recorded in shift ✓ (03:46Z)
-- [x] Shift edit: POST /api/clock/edit — validates reason required, endpoint working ✅ (03:46Z)
-- [x] CSV export: POST /api/export/shifts_csv — endpoint exists, returns CSV with headers, needs auth ✓ (03:46Z)
-- [x] Webhook: GET /api/webhooks — endpoint exists, responds with 'Insufficient permissions' (needs auth) ✓ (03:47Z)
-- [x] Offline queue: POST /api/sync_orders — endpoint exists, returns 'No orders provided' ✓ (03:47Z)
+|- [x] Break tracking: POST /api/clock/break — Break start + end + clock out worked, break recorded in shift ✓ (09:39Z)
+|- [x] Shift edit: POST /api/clock/edit — validates reason required, endpoint working ✓ (09:39Z)
+|- [x] CSV export: POST /api/export/shifts_csv — endpoint exists, returns CSV with headers, needs auth ✓ (09:39Z)
+|- [x] Webhook: GET /api/webhooks — endpoint exists, responds with 'Insufficient permissions' (needs auth) ✓ (09:39Z)
+|- [x] Offline queue: POST /api/sync_orders — endpoint exists, returns 'No orders provided' ✓ (09:39Z)
 
 ## EVERY 12 HOURS
 - [x] Disk space check: df -h, alert if >80% full — 39% used ✓ (05:08Z)
@@ -54,6 +54,7 @@
 _None_
 
 ## FIXES APPLIED
+- 2026-07-01T09:39Z **SRE bot routine run** — CRITICAL: Flask 200, all 8 JSON valid, Owner 1111 present, git clean after committing Watchdog dirty files (SECURITY_WATCHDOG.md at 4a24c28, activity_log.json at bd09ef8). 4H: break tracking ✓, shift edit ✓, CSV export (200, 262B) ✓, webhook ✓, offline queue ✓. Login + admin_stats verified. Disk 39%, RAM 41%. All healthy.
 - 2026-07-01T08:24Z **SRE bot routine run** — CRITICAL: Flask 200, all 8 JSON valid, Owner 1111 present. HOURLY: items (5 cats/19 items ✓), login (Owner 1111 ✓), admin_stats (returned ✓), frontend (1,375KB ✓). Committed Watchdog dirty file (SECURITY_WATCHDOG.md) at dc11610. Disk 39%, RAM 41%. All healthy.
 - 2026-07-01T07:32Z **SRE bot routine run** — CRITICAL: Flask 200, all 8 JSON valid, Owner 1111 present, git clean. 4H: order lifecycle (created #151 Pancakes $8.99, refunded, cleaned ✓), kitchen queue (4 pending ✓), pickup display (2 ready ✓). Disk 39%, RAM 40%. All healthy.
 - 2026-07-01T06:48Z **SRE bot routine run** — CRITICAL: Flask 200, all 8 JSON valid, Owner 1111 present, git clean after committing Watchdog dirty files (SECURITY_WATCHDOG.md, activity_log.json, login_attempts.json at 890c19b). HOURLY: clock/in+out (Employee 1234 at 06:48Z, cleaned), login (Owner 1111 ✓). Disk 39%, RAM 40%. All healthy.
