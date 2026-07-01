@@ -1,21 +1,21 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-07-01T00:09Z
-> Total checks: 100
-> Healthy: 101 | Broken: 0 | Fixed this cycle: 28
+> Last full cycle: 2026-07-01T00:17Z
+> Total checks: 106
+> Healthy: 107 | Broken: 0 | Fixed this cycle: 28
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (00:09Z)
-- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID, 8 users, 19 items/5 cats, 122 orders, 0 shifts, 24 inventory (00:09Z)
-- [x] users.json has at least owner PIN 1111 — Owner 1111 present, permissions '*' OK (00:09Z)
-- [x] Git repo is clean (no uncommitted changes from crashes) — committed activity_log.json + updated .data_baseline.json (00:14Z)
+- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (00:17Z)
+- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID, 8 users, 19 items/5 cats, 122 orders, 0 shifts, 24 inventory (00:17Z)
+- [x] users.json has at least owner PIN 1111 — Owner 1111 present, permissions '*' OK (00:17Z)
+- [x] Git repo is clean (no uncommitted changes from crashes) — clean at check (00:17Z)
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/clock/in works (clock in test user, verify response) — Employee 1234 clocked in, 882 min late (schedule 09:00) ✓ (23:45Z)
 - [x] /api/clock/out works — Employee 1234 clocked out, test shift cleaned up ✓ (23:45Z)
-- [x] /api/items returns items (GET) — 5 categories: Breakfast, Drinks, Foods, Salads, Snacks, 19 items (23:19Z)
-- [x] /api/login works with valid PIN — Owner 1111 login via userId, Login successful ✓ (23:19Z)
-- [x] /api/admin_stats returns stats — stats returned, 200 OK (23:19Z)
-- [x] /api/admin_shifts returns shifts — 0 shifts (all test artifacts cleaned up) ✓ (23:19Z)
+- [x] /api/items returns items (GET) — 5 categories: Breakfast, Drinks, Foods, Salads, Snacks, 19 items (00:17Z)
+- [x] /api/login works with valid PIN — Owner 1111 login via userId, Login successful ✓ (00:17Z)
+- [x] /api/admin_stats returns stats — stats retrieved, backup health green, average sale $12.84 (00:17Z)
+- [x] /api/admin_shifts returns shifts — 0 shifts (all test artifacts cleaned up) ✓ (00:17Z)
 - [x] Frontend loads (curl index.html, verify it's HTML not error) — HTML 200 OK, ~1,375KB ✓ (23:45Z)
 
 ## EVERY 4 HOURS
