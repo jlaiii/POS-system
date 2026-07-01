@@ -1,5 +1,5 @@
 # POS Security Tasks
-> Last run: 2026-06-30 15:18 UTC
+> Last run: 2026-07-01 03:30 UTC
 
 ## CRITICAL — LOGIN & AUTH SECURITY (check every run)
 
@@ -115,6 +115,12 @@
 - [x] **Verify dependency versions** — Flask 3.1.3, pyotp 2.9.0, qrcode 7.4.2, Werkzeug 3.1.8, eventlet 0.41.0. All current stable versions.
 
 ## COMPLETED (this session)
+
+### Run: 2026-07-01 03:30 UTC
+- [x] **Full security audit — all Tier 1-4 controls verified intact** — Login rate limiting (5/60s + 10min lockout) verified working. Session security (secrets.token_hex(32), 8h active/24h idle expiry, logout invalidation) intact. TOTP encryption (Fernet key at 0600) valid. All file permissions: JSON at 0600 (fixed items.json from 0444→0600), pos.db at 600, .totp_encryption_key at 600, backups at 700. Activity log: no PINs/passwords/card data logged. Payment data: only card_last4/type stored (PCI compliant). No eval/exec/hardcoded credentials. Debug mode disabled. CORS restricted. X-Forwarded-For spoofing fix intact. All 336 routes have proper auth. XSS: escHtml() consistently used; document.write only in server-generated PDF exports (safe). No new critical vulnerabilities found.
+- [x] **Fix items.json world-readable (0444→0600)** — items.json had permissions 0444 (world-readable) violating the 0600 data file policy. Fixed via chmod 0600. save_json_data() already handles read-only files at write time (line 510-516). Verified.
+- [x] **Resolve SEC-120 and SEC-121 stale security events** — Two off-hours Owner (1111) login events from 127.0.0.1 at 03:11 UTC. Expected cron worker activity. Marked resolved with resolution note.
+- [x] **Package version check** — cryptography 46.0.7→49.0.0, pyotp 2.9.0→2.10.0, qrcode 7.4.2→8.2 available. Major version bumps — flagged for evaluation.
 
 ### Run: 2026-06-30 15:18 UTC
 - [x] **Full security audit — all Tier 1-4 controls verified intact** — Login rate limiting (5 attempts/60s + 10min lockout) verified working. Session security (secrets.token_hex(32), 8h active/24h idle expiry, logout invalidation) intact. TOTP encryption (Fernet key at 0600) valid. All file permissions: JSON at 0600, pos.db at 600, .totp_encryption_key at 600, backups at 700. Activity log: no PINs/passwords/card data logged. Payment data: only card_last4/type stored (PCI compliant). No eval/exec/hardcoded credentials. Debug mode disabled. CORS restricted. X-Forwarded-For spoofing fix intact. All 336+ routes have proper auth. XSS: escHtml() consistently used; document.write only in server-generated PDF exports (safe). Dependencies all current. No new vulnerabilities found.
