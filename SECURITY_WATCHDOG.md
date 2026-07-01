@@ -1,8 +1,8 @@
 # POS Security Watchdog
 
-|| Last run: 2026-07-01T00:38 UTC | Total events tracked: 116 (SEC-001→SEC-116; 1 unresolved — SEC-116) | Active blocks: 0 | Run result: **CLEAN** — no new threats.|
+||| Last run: 2026-07-01T00:53 UTC | Total events tracked: 116 (SEC-001→SEC-116; all resolved) | Active blocks: 0 | Run result: **CLEAN** — no new activity since last run.|
 
-## Current Run Findings (00:20–00:38 UTC, ~18 min window)
+## Current Run Findings (00:38–00:53 UTC, ~15 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -20,29 +20,22 @@ None.
 
 **Server**: **UP** (responding on port 5000 — verified via /api/clock/status).
 
-**Activity**: 4 new events since last run.
+**Activity**: 0 new events since last run. No activity at all in this window.
 
-| Event type | Count | Details |
-|---|---|---|
-| login_failed | 1 | null user, 127.0.0.1, 00:36:21 |
-| login (success) | 1 | Owner (1111), 127.0.0.1, 00:36:38 |
-| admin_login (failed) | 1 | null user, 127.0.0.1, 00:36:22 |
-| admin_login (success) | 1 | Owner (1111), 127.0.0.1, 00:36:39 |
-
-**Login attempts (this window)**: 2 total (1 failed, 1 success) — Owner login activity from 127.0.0.1.
+**Login attempts (this window)**: 0 — zero activity.
 
 **Active shifts**: 0. No one currently clocked in.
 
 **Orders today (July 1)**: 0.
 
 ### 📊 Login Security Deep-Dive
-- **Brute force check**: 1 failed attempt from 127.0.0.1 (null user) — well below threshold.
-- **Account enumeration**: 1 attempt with null user_id. Below threshold (10). Likely typo.
-- **Successful-after-failure**: 1 failed → 1 success from same IP (127.0.0.1). Only 1 failure — not significant.
-- **Credential stuffing**: No evidence — single IP, single user targeted.
-- **Off-hours activity**: Owner (1111) logged in at 00:36 UTC (off-hours 22:00-06:00). Owner is in exempted_users list. Normal dev behavior.
-- **Cross-IP targeting**: None — single IP (127.0.0.1).
-- **Session anomalies**: No active shifts. No session issues detected.
+- **Brute force check**: No attempts. Threshold not triggered.
+- **Account enumeration**: No attempts. Threshold not triggered.
+- **Successful-after-failure**: No attempts.
+- **Credential stuffing**: No evidence.
+- **Off-hours activity**: None in this window.
+- **Cross-IP targeting**: None.
+- **Session anomalies**: No active shifts. No session issues.
 - **Rate limiting**: No trigger events.
 
 ### 🔒 Security Config
@@ -53,24 +46,22 @@ None.
 - 2FA gap: Owner (1111), Manager (2222), and Manager Sarah (7788) lack 2FA — known issue (Security Sentinel domain).
 
 ### 💰 Financial Check / Order Anomaly Scan
-- 0 new orders this window (July 1).
+- 0 new orders this window.
 - 0 refunds.
 - 0 zero-dollar non-cancelled orders.
 - No anomalies.
 
 ### 📂 File Integrity
-- All 51 JSON files parseable and valid.
+- All 49 JSON files parseable and valid.
 - Owner (1111) present, active, not banned.
 - No suspicious new files found.
-- Git: 3 modified files (activity_log.json, login_attempts.json, security_events.json — all data from this run).
+- Git status: clean (no modified files).
 
 ### ✅ Actions Taken
-- SEC-116 auto-generated for off-hours login (Owner, 00:36 UTC) — known pattern, owner exempted.
-- Security Watchdog file updated with this run's findings (00:38 UTC).
-- Committed pending data changes for clean state.
-- No Discord alert needed — no actionable threats.
+- Security Watchdog file updated with this run's findings (00:53 UTC).
+- No Discord alert needed — no activity, no threats.
 
 ## Previous Run Findings (carried forward)
 - Admin 2FA gap: Owner (1111), Manager (2222), and Manager Sarah (7788) lack 2FA despite `require_2fa_for_admins: true`. Security Sentinel handles.
-- Historical refund rate ~33.1% — all test data, no real customer orders.
+- Historical refund rate ~33.6% — all test data, no real customer orders.
 - Systemd zombie service — needs Reliability Bot attention.
