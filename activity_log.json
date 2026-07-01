@@ -25111,5 +25111,16 @@
             "clock_out_time": "2026-07-01T06:48:40.589608",
             "duration_hours": 0.0
         }
+    },
+    {
+        "timestamp": "2026-07-01T07:11:22.235203",
+        "type": "admin_login",
+        "user_id": "1111",
+        "user_role": "admin",
+        "ip_address": "127.0.0.1",
+        "user_agent": "curl/8.5.0",
+        "details": {
+            "status": "success"
+        }
     }
 ]
