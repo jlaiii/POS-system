@@ -1,22 +1,22 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-07-01T01:25Z
-> Total checks: 112
-> Healthy: 115 | Broken: 0 | Fixed this cycle: 29
+> Last full cycle: 2026-07-01T01:53Z
+> Total checks: 119
+> Healthy: 122 | Broken: 0 | Fixed this cycle: 29
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (01:25Z)
-- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID, 8 users, 19 items/5 cats, 122 orders, 0 shifts, 24 inventory (01:25Z)
-- [x] users.json has at least owner PIN 1111 — Owner 1111 present, permissions '*' OK (01:25Z)
-- [x] Git repo is clean (no uncommitted changes from crashes) — committed Watchdog dirty files, now clean (01:25Z)
+- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (01:53Z)
+- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID, 8 users, 5 cats/items dict, 122 orders, 0 shifts, 24 inventory (01:53Z)
+- [x] users.json has at least owner PIN 1111 — Owner 1111 present, permissions '*' OK (01:53Z)
+- [x] Git repo is clean (no uncommitted changes from crashes) — clean, last commit 89a18f6 (Watchdog 01:39Z) (01:53Z)
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/clock/in works (clock in test user, verify response) — Employee 1234 clocked in, no late detection (00:58 UTC, schedule 09:00) ✓ (00:58Z)
 - [x] /api/clock/out works — Employee 1234 clocked out, test shift cleaned up ✓ (00:58Z)
-- [x] /api/items returns items (GET) — 5 categories: Breakfast, Drinks, Foods, Salads, Snacks, 19 items ✓ (01:25Z)
-- [x] /api/login works (POST userId) — Owner 1111 login via userId ✓ (01:25Z)
+- [x] /api/items returns items (GET) — 5 categories: Breakfast, Drinks, Foods, Salads, Snacks, items.json dict valid ✓ (01:53Z)
+- [x] /api/login works (POST userId) — Owner 1111 login, permissions ['*'], force_pin_change_required=true ✓ (01:53Z)
 - [x] /api/admin_stats returns stats (POST adminPin) — Admin data retrieved, backup health green, avg sale $12.84 ✓ (01:25Z)
 - [x] /api/admin_shifts returns shifts (POST adminPin) — 0 shifts ✓ (01:25Z)
-- [x] Frontend loads (curl index.html, verify it's HTML not error) — HTML 200 OK, ~1,375KB ✓ (00:58Z)
+- [x] Frontend loads (curl index.html, verify it's HTML not error) — HTML 200 OK, ~1,375KB ✓ (01:53Z)
 
 ## EVERY 4 HOURS
 - [x] Order lifecycle: create order → verify in orders.json → refund → verify — Created #143 (Coke $3)→paid→refunded ✅ (22:10Z)
