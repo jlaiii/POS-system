@@ -1,6 +1,6 @@
 # POS Database Migration Tasks
-> Last run: 2026-06-30 15:30 UTC
-> Current phase: Phase 2 — Migration Scripts (19/24 complete)
+> Last run: 2026-07-01 03:35 UTC
+> Current phase: Phase 2 — Migration Scripts (21/24 complete)
 
 ## Phase 1: Schema Design
 - [x] Design all SQLite table schemas (users, shift_log, orders, items, inventory, etc.)
@@ -21,7 +21,7 @@
 - [x] Write migrate_waste_log.py — waste_log table migration (0 entries, empty case handled ✓)
 - [x] Write migrate_tickets.py — tickets table migration (2 rows verified ✓)
 - [x] Write migrate_timesheet.py — timesheet table migration (1 row verified ✓)
-- [ ] Write migrate_timesheet_approvals.py — timesheet_approvals table migration
+- [x] Write migrate_timesheet_approvals.py — timesheet_approvals table migration (0 records, empty case handled ✓)
 - [x] Write migrate_cash_drawer.py — cash_drawer table migration (10 sessions, 12 transactions verified ✓)
 - [ ] Write migrate_delivery_addresses.py — delivery_addresses table migration
 - [ ] Write migrate_scheduled_pricing.py — scheduled_pricing table migration
@@ -61,6 +61,8 @@
 - [ ] Add VACUUM + integrity_check automation
 
 ## COMPLETED (this session)
+- [x] **migrate_timesheet_approvals.py** — Migrated 0 timesheet approvals from timesheet_approvals.json to SQLite. Empty array handled gracefully. Schema already defined in db.py. Idempotency tested.
+- [x] **Restore `use_database` flag** — The Security Watchdog worker (f8bd681) had removed the `use_database: false` flag from timesheet_config.json. Restored it to enable feature-gated endpoint refactoring in Phase 3.
 - [x] **migrate_waste_log.py** — Migrated 0 waste log entries from waste_log.json to SQLite. Empty array handled gracefully. Schema already defined in db.py. Idempotency tested. Commit: b15632c
 - [x] **migrate_table_ads.py** — Migrated 0 table ads from table_ads.json to SQLite. Empty ads array handled gracefully. Global rotation_interval (10s) preserved. Commit: fe6ef2f
 - [x] **migrate_tables.py** — Migrated 20 tables from tables.json to SQLite. All fields preserved (section, capacity, status, created_at, last_bussed_at). Added created_at + last_bussed_at columns to tables_config schema. Schema migration entries added for existing installs. Idempotency tested. Commit: c8047b7
@@ -107,7 +109,7 @@ How to revert to JSON mode if DB breaks:
 | waste_log.json | waste_log | array | 0 | |
 | tickets.json | tickets | array | 2 | ✓ |
 | timesheet.json | timesheet | array | 1 | ✓ |
-| timesheet_approvals.json | timesheet_approvals | array | 0 | |
+| timesheet_approvals.json | timesheet_approvals | array | 0 | ✓ |
 | cash_drawer.json | cash_drawer | object {sessions:[]} | 10 sessions + 12 txs | ✓ |
 | delivery_addresses.json | delivery_addresses | dict | 0 | |
 | scheduled_pricing.json | scheduled_pricing | array | 0 | |
