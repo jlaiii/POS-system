@@ -1,8 +1,8 @@
 1|# POS Security Watchdog
 2|
-| Last run: 2026-07-01T20:10 UTC | Total events tracked: 135 (SEC-001→SEC-135; all resolved) | Active blocks: 0 | Run result: **ALL CLEAR** — No new activity since previous run. |
+| Last run: 2026-07-01T20:25 UTC | Total events tracked: 135 (SEC-001→SEC-135; all resolved) | Active blocks: 0 | Run result: **ALL CLEAR** — Routine activity only. |
 
-## Current Run Findings (20:10–20:10 UTC, ~0 min window)
+## Current Run Findings (20:10–20:25 UTC, ~15 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -20,25 +20,25 @@ None.
 
 **Server**: **UP** (responding on port 5000 — HTTP 200).
 
-**Activity since last run (19:53–20:10 UTC)**: No new activity_log events. System idle.
+**Activity since last run (20:10–20:25 UTC)**: 1 event: Owner (1111) login + admin_login at 20:18 from 127.0.0.1.
 
-**Last 4h summary (16:10–20:10 UTC)**:
-- 9 login attempts total (3 failed, 6 successful — all Owner 1111 from 127.0.0.1)
-- 3 failed logins: all `invalid_pin` for non-existent users from 127.0.0.1 (16:14, 16:16, 17:07) — isolated probes, not a pattern
-- 29 activity_log events (routine: login, admin_login, clock in/out, 2 submit_order, 2 refund_order)
-- Employee One (1234) test clock in/out cycles (4 sessions) — SRE bot pattern
+**Last 4h summary (16:25–20:25 UTC)**:
+- 10 login attempts total (3 failed, 7 successful — all Owner 1111 from 127.0.0.1, except 1 failed for non-existent user at 16:08-16:10)
+- 3 failed logins: all `invalid_pin` for non-existent users from 127.0.0.1 (16:08-16:10, 16:14, 16:16, 17:07) — isolated probes, not a pattern
+- ~30 activity_log events (routine: login, admin_login, clock in/out, shift_edit)
+- Employee One (1234) test clock in/out cycles — SRE bot pattern
 - No new orders, no refunds in this window
-- Last activity: 19:35:25 shift_edit by Owner (1111)
+- Last activity: 20:18:10 admin_login by Owner (1111)
 
-**Login security**: 0 attempts in last 5min. 0 in last 15min. Clean.
+**Login security**: 0 attempts in last 5min. 1 successful (Owner 1111, 127.0.0.1). Clean.
 
 **Brute force**: None detected.
 
-**Account enumeration**: 3 non-existent-user probes (all 127.0.0.1, isolated, not accelerating).
+**Account enumeration**: 4 non-existent-user probes (all 127.0.0.1, isolated, not accelerating).
 
 **Credential stuffing**: None.
 
-**Off-hours logins**: None. 20:10 UTC (15:10 CT) is business hours.
+**Off-hours logins**: None. 20:25 UTC (15:25 CT) is business hours.
 
 **Active shifts**: 0.
 
@@ -51,7 +51,7 @@ None.
 ### 💰 Financial Check / Order Anomaly Scan
 - 133 orders total (no change since last run).
 - No new orders, refunds, or financial activity in this window.
-- 1 order with $0 total (known pre-existing data issue).
+- 0 active $0 orders (pre-existing cancelled order excluded).
 - 0 orders with >50% discount.
 
 ### 📂 File Integrity
