@@ -1,8 +1,8 @@
 1|# POS Security Watchdog
 2|
-3|| | | | | | | | | | | | | | | | | | | | | | | | | | | | | | Last run: 2026-07-01T18:31 UTC | Total events tracked: 135 (SEC-001→SEC-135; 134 resolved, 1 new false positive resolved) | Active blocks: 0 | Run result: **ALL CLEAR** — 0 failed logins, routine activity (Employee One clock-in/out test). |
+3|| | | | | | | | | | | | | | | | | | | | | | | | | | | | | | Last run: 2026-07-01T18:48 UTC | Total events tracked: 135 (SEC-001→SEC-135; 134 resolved, 1 new false positive resolved) | Active blocks: 0 | Run result: **ALL CLEAR** — 0 failed logins, routine activity (Owner auth tests). |
 4|
-## Current Run Findings (17:58–18:31 UTC, ~33 min window)
+## Current Run Findings (18:31–18:48 UTC, ~17 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -20,12 +20,16 @@ None.
 
 **Server**: **UP** (responding on port 5000 — HTTP 200).
 
-**Activity since last run (17:58–18:31 UTC)**:
+**Activity since last run (18:31–18:48 UTC)**:
 
 | Time | Event | Details |
 |---|---|---|
-| 18:18:08 | Clock-in — Employee One (1234) | 127.0.0.1, python-requests/2.33.0 — immediate clock-in/out test (0s) |
-| 18:18:08 | Clock-out — Employee One (1234) | 127.0.0.1, duration 0.0h |
+| 18:40:59 | Login — Owner (1111) | 127.0.0.1, curl/8.5.0 — success |
+| 18:41:00 | Admin login — Owner (1111) | 127.0.0.1, curl/8.5.0 — success |
+| 18:41:04 | Login — Owner (1111) | 127.0.0.1, curl/8.5.0 — success |
+| 18:41:05 | Admin login — Owner (1111) | 127.0.0.1, curl/8.5.0 — success |
+| 18:41:10 | Login — Owner (1111) | 127.0.0.1, curl/8.5.0 — success |
+| 18:41:11 | Admin login — Owner (1111) | 127.0.0.1, curl/8.5.0 — success |
 
 **Login security**: 0 failed login attempts. Clean.
 
@@ -35,7 +39,7 @@ None.
 
 **Credential stuffing**: None.
 
-**Off-hours logins**: None. 18:31 UTC (13:31 PM CT) is normal business hours.
+**Off-hours logins**: None. 18:48 UTC (13:48 PM CT) is normal business hours.
 
 **Active shifts**: 0 (JSON shift_log empty; 55 records in SQLite — Database Architect migration).
 
