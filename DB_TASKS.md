@@ -1,6 +1,6 @@
 # POS Database Migration Tasks
 > Last run: 2026-07-01 15:53 UTC
-> Current phase: Phase 3 — Endpoint Refactor (0/10 complete)
+> Current phase: Phase 3 — Endpoint Refactor (1/11 complete — db.py done)
 
 ## Phase 1: Schema Design
 - [x] Design all SQLite table schemas (users, shift_log, orders, items, inventory, etc.)
@@ -35,7 +35,7 @@
 - [x] Write migrate_cleared_orders.py — cleared_orders table migration (handled by migrate_orders.py ✓)
 
 ## Phase 3: Endpoint Refactor (one endpoint at a time)
-- [ ] Create db.py helper module for SQLite queries
+- [x] Create db.py helper module for SQLite queries (completed in Phase 1)
 - [ ] Refactor /api/clock/status to use SQLite (feature-flagged)
 - [ ] Refactor /api/clock/in to use SQLite (feature-flagged)
 - [ ] Refactor /api/clock/out to use SQLite (feature-flagged)
