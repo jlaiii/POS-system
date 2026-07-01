@@ -1,13 +1,13 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-07-01T05:59Z
-> Total checks: 152
-> Healthy: 170 | Broken: 0 | Fixed this cycle: 32
+> Last full cycle: 2026-07-01T06:27Z
+> Total checks: 153
+> Healthy: 171 | Broken: 0 | Fixed this cycle: 33
 
 ## CRITICAL (check every run — these can't wait)
 - [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (05:35Z)
 - [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID, 8 users, 5 cats/items dict, 128 orders, 1 shift, 24 inventory (05:35Z)
 - [x] users.json has at least owner PIN 1111 — Owner 1111 present, permissions '*' OK (05:35Z)
-- [x] Git repo is clean (no uncommitted changes from crashes) — committed SRE bot tracking (feedd4e), clean now (05:35Z)
+- [x] Git repo is clean (no uncommitted changes from crashes) — committed SRE bot tracking + inventory test artifacts, clean now (06:27Z)
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/clock/in works (clock in test user, verify response) — Employee 1234 clocked in at 05:35Z, no late detection ✓ (05:35Z)
@@ -21,7 +21,7 @@
 ## EVERY 4 HOURS
 - [x] Order lifecycle: create order → verify in orders.json → refund → verify — Created #145 (Coke $3) → pending → refunded ✅ (02:44Z)
 - [x] User CRUD: add test user → verify → delete — Added 9001, verified, deleted ✅
-- [x] Inventory: check stock decrements on order — Coke 70→69→70 (decrement + restore via refund) ✅ (02:20Z)
+- [x] Inventory: check stock decrements on order — Coke 67→66→67 (order #150 created + refunded) ✅ (06:27Z)
 - [x] Loyalty: points earned on order — Order #139 (Coke $3) earned 3 pts, refunded, cleaned up ✅
 - [x] Cash register: open drawer ($100) → cash in ($50) → cash out ($20) → close ($130, exact match) ✅
 - [x] Kitchen display: GET /api/kitchen/queue — 2 pending orders, valid data ✓ (04:08Z)
