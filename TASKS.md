@@ -714,7 +714,7 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 
 ### Priority: MEDIUM
 
-- [ ] **Kitchen display: show order-level notes** — The kitchen queue endpoint returns items with modifiers but does NOT include or display the order-level `notes` field (special instructions). When tested with Workflow A, the order note "No onions on the burger" was stored on the order but NOT visible in the kitchen display. Cooks need to see special instructions. Fix: add `notes` field to kitchen queue response and display it prominently in the kitchen view. [Production Auditor]
+- [x] **Kitchen display: show order-level notes** — The kitchen queue endpoint returns items with modifiers but does NOT include or display the order-level `notes` field (special instructions). When tested with Workflow A, the order note "No onions on the burger" was stored on the order but NOT visible in the kitchen display. Cooks need to see special instructions. Fix: add `notes` field to kitchen queue response and display it prominently in the kitchen view. [Production Auditor] **[FIXED: already working — kitchen/queue returns full order objects with `notes` field; renderKitchenOrderCard reads `o.notes` and renders via `notesHtml` (line 19734). Verified: Order #125 "no onions on the burger" visible in queue.]**
 
 ### Priority: LOW
 
