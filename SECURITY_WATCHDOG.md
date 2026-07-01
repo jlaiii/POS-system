@@ -1,8 +1,8 @@
 # POS Security Watchdog
 
-|||||| Last run: 2026-07-01T02:30 UTC | Total events tracked: 119 (SEC-001→SEC-119; 0 unresolved) | Active blocks: 0 | Run result: **CLEAN** — 0 new login activity, all systems nominal. SEC-117/118/119 batch-resolved.|
+||||||| Last run: 2026-07-01T03:07 UTC | Total events tracked: 119 (SEC-001→SEC-119; 0 unresolved) | Active blocks: 0 | Run result: **CLEAN** — zero activity in window, all systems quiet.|
 
-## Current Run Findings (02:13–02:30 UTC, ~17 min window)
+## Current Run Findings (02:52–03:07 UTC, ~15 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -18,26 +18,22 @@ None.
 
 ### ℹ️ Activity Summary
 
-**Server**: **UP** (responding on port 5000 — verified).
+**Server**: **UP** (responding on port 5000 — gunicorn, serving index.html).
 
-**Activity** (activity_log.json): **2 new events** in this window:
-- `submit_order` (Order 144, Coke $3.00, user=None, 127.0.0.1, curl/8.5.0) at 02:20:58 UTC
-- `refund_order` (Order 144, by Owner 1111, reason: "SRE bot inventory test - refund verification") at 02:21:14 UTC
-
-Both are SRE bot test activity — no security concern.
+**Activity** (activity_log.json): **0 new events** in this window. Nothing since 02:44:02 UTC (SRE bot refund).
 
 **Login attempts (this window)**: 0 failed, 0 successful. No login activity at all.
 
 **Active shifts**: 0. No one currently clocked in.
 
-**Orders today (July 1)**: 1 (Order 144 — submitted + refunded by SRE bot).
+**Orders today (July 1)**: No new orders this window. Order 141 ($18.22, Pancakes + Coke x2) still pending from June 30 — stale test order, not a new concern.
 
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: 0 failed attempts in window — threshold (5) not triggered.
 - **Account enumeration**: No invalid-PIN probes.
 - **Successful-after-failure**: No preceding failures.
 - **Credential stuffing**: No evidence.
-- **Off-hours activity**: None in this window.
+- **Off-hours activity**: None from any IP.
 - **Cross-IP targeting**: None.
 - **Session anomalies**: No active sessions/shifts.
 - **Rate limiting**: No trigger events.
@@ -50,22 +46,25 @@ Both are SRE bot test activity — no security concern.
 - 2FA gap: Owner (1111), Manager (2222), and Manager Sarah (7788) lack 2FA — known issue (Security Sentinel domain).
 
 ### 💰 Financial Check / Order Anomaly Scan
-- 1 new order this window (Order 144, $3.25 Coke). Refunded immediately by Owner — SRE bot test.
+- No new orders this window.
 - No zero-dollar non-cancelled orders.
-- No anomalies.
+- No 100% discounts.
+- No large orders (>$500) or unusual tipping patterns.
+- Order 141 ($18.22, Pancakes + Coke x2) still in 'pending' status — stale test order, not a concern.
 
 ### 📂 File Integrity
 - All JSON files parseable and valid.
 - Owner (1111) present, active, not banned.
 - No suspicious new files — only expected artifacts.
-- Git: clean — no pending changes.
+- Git: 1 modified file (SECURITY_WATCHDOG.md — this update).
 
 ### ✅ Actions Taken
-- Batch-resolved SEC-117, SEC-118, SEC-119 (off-hours 127.0.0.1 Owner logins — exempted user, standard dev/cron testing).
-- Security Watchdog file updated with this run's findings (02:30 UTC).
-- No Discord alert needed — zero login activity, no anomalies, all systems quiet.
+- Conducted full security sweep: Tiers 1-4 all clean.
+- Resolved SEC-111 (off-hours Owner login from 127.0.0.1, exempted user — same pattern as batch-resolved SEC-117/118/119).
+- Security Watchdog file updated with this run's findings (03:07 UTC).
+- No Discord alert needed — zero activity, no anomalies, all systems quiet.
 
 ## Previous Run Findings (carried forward)
-|- Admin 2FA gap: Owner (1111), Manager (2222), and Manager Sarah (7788) lack 2FA despite `require_2fa_for_admins: true`. Security Sentinel handles.
-|- Historical refund rate ~33.6% — all test data, no real customer orders.
-|- Systemd zombie service — needs Reliability Bot attention.
+- Admin 2FA gap: Owner (1111), Manager (2222), and Manager Sarah (7788) lack 2FA despite `require_2fa_for_admins: true`. Security Sentinel handles.
+- Historical refund rate ~33.6% — all test data, no real customer orders.
+- Systemd zombie service — needs Reliability Bot attention.
