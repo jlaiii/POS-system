@@ -1,13 +1,13 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-06-30T23:45Z
+> Last full cycle: 2026-07-01T00:09Z
 > Total checks: 100
-> Healthy: 100 | Broken: 0 | Fixed this cycle: 28
+> Healthy: 101 | Broken: 0 | Fixed this cycle: 28
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (23:45Z)
-- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID, 8 users, 19 items/5 cats, 122 orders, 0 shifts, 24 inventory (23:45Z)
-- [x] users.json has at least owner PIN 1111 — Owner 1111 present, permissions '*' OK (23:45Z)
-- [x] Git repo is clean (no uncommitted changes from crashes) — committed SECURITY_WATCHDOG.md dirty + SRE bot test artifacts cleaned up (23:45Z)
+- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (00:09Z)
+- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID, 8 users, 19 items/5 cats, 122 orders, 0 shifts, 24 inventory (00:09Z)
+- [x] users.json has at least owner PIN 1111 — Owner 1111 present, permissions '*' OK (00:09Z)
+- [x] Git repo is clean (no uncommitted changes from crashes) — committed activity_log.json + updated .data_baseline.json (00:14Z)
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/clock/in works (clock in test user, verify response) — Employee 1234 clocked in, 882 min late (schedule 09:00) ✓ (23:45Z)
