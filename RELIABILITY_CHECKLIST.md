@@ -22,7 +22,7 @@
 ||- [x] /api/pickup-display/queue works (GET) — pickup endpoint works, 0 ready orders ✓ (17:27Z)
 
 ## EVERY 4 HOURS
-||- [x] Order lifecycle: create order → verify in orders.json → refund → verify — Created #155 (Coke $3.00) → pending → refunded → cleaned ✅ (16:16Z)
+||- [x] Order lifecycle: create order → verify in orders.json → refund → verify — Created #156 (Coke $3.00) → submitted → refunded → cleaned ✅ (17:27Z)
 ||- [x] User CRUD: add test user → verify → delete — Added 9001, verified, deleted ✅
 ||- [x] Inventory: check stock decrements on order — Coke 66, 28 items (24 stocked, 4 sold out) ✓ (17:05Z)
 ||- [x] Loyalty: points earned on order — Order #139 (Coke $3) earned 3 pts, refunded, cleaned up ✅
@@ -37,15 +37,15 @@
 ||- [x] Offline queue: POST /api/sync_orders — endpoint exists, returns 'No orders provided' ✓ (14:00Z)
 
 ## EVERY 12 HOURS
-||- [x] Disk space check: df -h, alert if >80% full — 40% used ✓ (16:16Z)
-||- [x] Memory check: free -m, alert if swap used — 37% RAM, no swap used ✓ (16:16Z)
-||- [x] Backup integrity: verify latest backup is valid JSON and not empty — Latest backup 15:26Z: backups/json/2026-07-01_15-26-22.tar.gz (90KB) + backups/db/pos_2026-07-01_15-26-22.db.gz (76KB) — valid ✓ (16:16Z)
-||- [x] app.py syntax check (python3 -m py_compile app.py) — SYNTAX OK ✓ (16:16Z)
-||- [x] index.html size check (alert if shrunk dramatically — possible corruption) — 1,375,342 bytes, normal ✓ (16:16Z)
-||- [x] Full app restart test: kill gunicorn → restart → verify all critical endpoints — 2026-07-01T05:08Z, PASSED (killed gunicorn, restarted, verified /api/health, /api/items, /api/login, /api/admin_stats, /api/admin_shifts, /api/clock/status, /api/kitchen/queue, /api/pickup-display/queue all 200 OK)
-||- [x] Large payload test: submit order with 50 items — Order #140 created (50 items, $162.50) ✅
-||- [x] Special chars test: user name with emoji, item name with quotes — Item 'Taco 🌮 "Supreme" Deluxe' added/deleted ✅
-||- [x] Concurrent write test: two rapid clock-ins → verify no data loss — Two users (1234, 5678) clocked in/out concurrently, both shifts recorded ✅
+|||- [x] Disk space check: df -h, alert if >80% full — 40% used ✓ (17:27Z)
+|||- [x] Memory check: free -m, alert if swap used — 37% RAM, no swap used ✓ (17:27Z)
+|||- [x] Backup integrity: verify latest backup is valid JSON and not empty — Latest backup 15:26Z: backups/json/2026-07-01_15-26-22.tar.gz (90KB) + backups/db/pos_2026-07-01_15-26-22.db.gz (76KB) — valid ✓ (16:16Z)
+|||- [x] app.py syntax check (python3 -m py_compile app.py) — SYNTAX OK ✓ (17:27Z)
+|||- [x] index.html size check (alert if shrunk dramatically — possible corruption) — 1,375,342 bytes, normal ✓ (17:27Z)
+|||- [x] Full app restart test: kill gunicorn → restart → verify all critical endpoints — 2026-07-01T05:08Z, PASSED (killed gunicorn, restarted, verified /api/health, /api/items, /api/login, /api/admin_stats, /api/admin_shifts, /api/clock/status, /api/kitchen/queue, /api/pickup-display/queue all 200 OK)
+|||- [x] Large payload test: submit order with 50 items — Order #140 created (50 items, $162.50) ✅
+|||- [x] Special chars test: user name with emoji, item name with quotes — Item 'Taco 🌮 "Supreme" Deluxe' added/deleted ✅
+|||- [x] Concurrent write test: two rapid clock-ins → verify no data loss — Two users (1234, 5678) clocked in/out concurrently, both shifts recorded ✅
 
 ## DISCOVERED (failures you've seen before — check every 2h)
 ||- [x] Security Watchdog leaves dirty files after each run (SECURITY_WATCHDOG.md + activity_log.json + login_attempts.json + security_events.json + .watchdog_file_sizes.json) — auto-commit on SRE bot runs — COMMITTED activity_log.json at 8cd70ab (16:43Z) ✓
