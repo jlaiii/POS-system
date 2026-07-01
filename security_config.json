@@ -23,14 +23,6 @@
     "refund_rate_threshold_pct": 20,
     "high_severity_blocklist": true,
     "blocked_ips": [
-        {
-            "ip": "127.0.0.1",
-            "reason": "Auto-blocked after 5 failed logins in 5 minutes",
-            "blocked_at": "2026-07-01T16:10:16.635761",
-            "auto_blocked": true,
-            "permanent": false,
-            "auto_block_duration_minutes": 60
-        }
     ],
     "retention_days": 30,
     "known_ip_gc_days": 30,

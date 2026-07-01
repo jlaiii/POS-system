@@ -1999,14 +1999,14 @@
         "created_at": "2026-07-01T16:10:16.637868",
         "severity": "HIGH",
         "category": "authentication",
-        "status": "unresolved",
+        "status": "resolved",
         "summary": "IP 127.0.0.1 auto-blocked after 5 failed logins",
         "detail": "IP 127.0.0.1 was automatically added to blocklist after 5 failed login attempts within 5 minutes. Block duration: 60 minutes.",
         "affected_user": null,
         "affected_user_name": null,
         "related_event": null,
         "reported_by": "IP Blocklist Manager",
-        "resolved_at": null,
-        "resolution": null
+        "resolved_at": "2026-07-01T16:13:30",
+        "resolution": "False positive: 127.0.0.1 (localhost) was auto-blocked by the app's auto-block mechanism, but the before_request handler at app.py line 94 explicitly exempts localhost from the IP blocklist check, so the block was never enforced. Blocklist entry cleaned from security_config.json. Root cause: auto-block logic at line 1888 does not check whether client_ip is localhost before adding to blocklist — 2nd occurrence today (SEC-122 at 03:25 was the first). Resolved by Security Watchdog."
     }
 ]
