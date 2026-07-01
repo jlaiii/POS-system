@@ -25841,5 +25841,35 @@
         "details": {
             "status": "success"
         }
+    },
+    {
+        "timestamp": "2026-07-01T15:27:04.215214",
+        "type": "clock_in",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee One",
+            "clock_in_time": "2026-07-01T15:27:04.214914",
+            "late_minutes": 387,
+            "scheduled_start": "09:00"
+        }
+    },
+    {
+        "timestamp": "2026-07-01T15:27:04.271174",
+        "type": "clock_out",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee One",
+            "clock_in_time": "2026-07-01T15:27:04.214914",
+            "clock_out_time": "2026-07-01T15:27:04.270767",
+            "duration_hours": 0.0
+        }
     }
 ]
