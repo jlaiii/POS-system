@@ -10581,7 +10581,7 @@
     },
     {
         "order_id": 141,
-        "status": "pending",
+        "status": "cancelled",
         "claimed_by": null,
         "claimed_at": null,
         "completed_at": null,
@@ -10647,7 +10647,10 @@
         "assigned_driver": null,
         "delivery_status": "pending",
         "manager_approval": null,
-        "order_number": 120
+        "order_number": 120,
+        "cancelled_reason": "Auto-cancelled (stale \u2014 no kitchen action)",
+        "cancelled_at": "2026-07-01T03:48:33.759023",
+        "cancelled_by": "system"
     },
     {
         "order_id": 142,
@@ -10868,5 +10871,289 @@
         "refund_reason": "SRE bot lifecycle test",
         "refunded_at": "2026-07-01T02:44:02.773117",
         "refunded_by": "1111"
+    },
+    {
+        "order_id": 146,
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-07-01T03:49:41.377404",
+        "user": null,
+        "payment": "Cash",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Hamburger - Normal",
+                "category": "Foods",
+                "price": 6.0,
+                "quantity": 1,
+                "modifiers": [
+                    {
+                        "name": "Size",
+                        "option": "Large",
+                        "price_mod": 2.0
+                    },
+                    {
+                        "name": "Extras",
+                        "option": "Extra Cheese",
+                        "price_mod": 0.5
+                    }
+                ],
+                "course_send_at": "2026-07-01T03:49:41.377492",
+                "course_fired": true
+            },
+            {
+                "name": "Hotdog - Loaded",
+                "category": "Foods",
+                "price": 7.0,
+                "quantity": 1,
+                "course_send_at": "2026-07-01T03:49:41.377492",
+                "course_fired": true
+            },
+            {
+                "name": "Coke",
+                "category": "Drinks",
+                "price": 3.0,
+                "quantity": 2,
+                "course_send_at": "2026-07-01T03:49:41.377492",
+                "course_fired": true
+            }
+        ],
+        "subtotal": 21.5,
+        "tax_amount": 1.32,
+        "tip_amount": 0.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "item_tax_details": [
+            {
+                "name": "Hamburger - Normal",
+                "category": "Foods",
+                "qty": 1,
+                "price": 6.0,
+                "tax_rate": 8.25,
+                "tax_amount": 0.49
+            },
+            {
+                "name": "Hotdog - Loaded",
+                "category": "Foods",
+                "qty": 1,
+                "price": 7.0,
+                "tax_rate": 8.25,
+                "tax_amount": 0.58
+            },
+            {
+                "name": "Coke",
+                "category": "Drinks",
+                "qty": 1,
+                "price": 3.0,
+                "tax_rate": 8.25,
+                "tax_amount": 0.25
+            }
+        ],
+        "total": 22.82,
+        "notes": "no onions on the burger",
+        "item_notes": {},
+        "table_number": null,
+        "delivery_address": null,
+        "customer_email": "",
+        "order_type": "dine_in",
+        "party_size": null,
+        "packaging_fee": 0.0,
+        "packaging_fee_label": "",
+        "priority": null,
+        "assigned_driver": null,
+        "delivery_status": "pending",
+        "manager_approval": null,
+        "order_number": 125
+    },
+    {
+        "order_id": 147,
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-07-01T03:49:58.590452",
+        "user": null,
+        "payment": "Cash",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Pancakes",
+                "category": "Breakfast",
+                "price": 8.99,
+                "quantity": 2,
+                "course_send_at": "2026-07-01T03:49:58.590566",
+                "course_fired": true
+            },
+            {
+                "name": "Lemonade",
+                "category": "Drinks",
+                "price": 3.0,
+                "quantity": 1,
+                "course_send_at": "2026-07-01T03:49:58.590566",
+                "course_fired": true
+            },
+            {
+                "name": "Caesar Salad",
+                "category": "Salads",
+                "price": 7.99,
+                "quantity": 1,
+                "course_send_at": "2026-07-01T03:49:58.590566",
+                "course_fired": true
+            }
+        ],
+        "subtotal": 28.97,
+        "tax_amount": 1.65,
+        "tip_amount": 0.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "item_tax_details": [
+            {
+                "name": "Pancakes",
+                "category": "Breakfast",
+                "qty": 1,
+                "price": 8.99,
+                "tax_rate": 8.25,
+                "tax_amount": 0.74
+            },
+            {
+                "name": "Lemonade",
+                "category": "Drinks",
+                "qty": 1,
+                "price": 3.0,
+                "tax_rate": 8.25,
+                "tax_amount": 0.25
+            },
+            {
+                "name": "Caesar Salad",
+                "category": "Salads",
+                "qty": 1,
+                "price": 7.99,
+                "tax_rate": 8.25,
+                "tax_amount": 0.66
+            }
+        ],
+        "total": 30.62,
+        "notes": "extra dressing on salad",
+        "item_notes": {},
+        "table_number": null,
+        "delivery_address": null,
+        "customer_email": "",
+        "order_type": "dine_in",
+        "party_size": null,
+        "packaging_fee": 0.0,
+        "packaging_fee_label": "",
+        "priority": null,
+        "assigned_driver": null,
+        "delivery_status": "pending",
+        "manager_approval": null,
+        "order_number": 126
+    },
+    {
+        "order_id": 148,
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-07-01T03:50:23.091373",
+        "user": null,
+        "payment": "Cash",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Coke",
+                "category": "Drinks",
+                "price": 3.0,
+                "quantity": 1,
+                "course_send_at": "2026-07-01T03:50:23.091499",
+                "course_fired": true
+            }
+        ],
+        "subtotal": 3.0,
+        "tax_amount": 0.25,
+        "tip_amount": 0.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "item_tax_details": [
+            {
+                "name": "Coke",
+                "category": "Drinks",
+                "qty": 1,
+                "price": 3.0,
+                "tax_rate": 8.25,
+                "tax_amount": 0.25
+            }
+        ],
+        "total": 3.25,
+        "notes": "test table_number field",
+        "item_notes": {},
+        "table_number": 7,
+        "delivery_address": null,
+        "customer_email": "",
+        "order_type": "dine_in",
+        "party_size": null,
+        "packaging_fee": 0.0,
+        "packaging_fee_label": "",
+        "priority": null,
+        "assigned_driver": null,
+        "delivery_status": "pending",
+        "manager_approval": null,
+        "order_number": 127
+    },
+    {
+        "order_id": 149,
+        "status": "pending",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-07-01T03:58:00.475567",
+        "user": "5678",
+        "payment": "Cash",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Coke",
+                "category": "Drinks",
+                "price": 3.0,
+                "quantity": 1,
+                "course_send_at": "2026-07-01T03:58:00.475671",
+                "course_fired": true
+            }
+        ],
+        "subtotal": 3.0,
+        "tax_amount": 0.25,
+        "tip_amount": 0.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "item_tax_details": [
+            {
+                "name": "Coke",
+                "category": "Drinks",
+                "qty": 1,
+                "price": 3.0,
+                "tax_rate": 8.25,
+                "tax_amount": 0.25
+            }
+        ],
+        "total": 3.25,
+        "notes": "testing user attribution",
+        "item_notes": {},
+        "table_number": 8,
+        "delivery_address": null,
+        "customer_email": "",
+        "order_type": "dine_in",
+        "party_size": null,
+        "packaging_fee": 0.0,
+        "packaging_fee_label": "",
+        "priority": null,
+        "assigned_driver": null,
+        "delivery_status": "pending",
+        "manager_approval": null,
+        "order_number": 128
     }
 ]

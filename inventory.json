@@ -1,6 +1,6 @@
 {
     "Hotdog - Loaded": {
-        "stock": 92,
+        "stock": 91,
         "low_stock_threshold": 10,
         "unit_cost": 2.75
     },
@@ -15,7 +15,7 @@
         "unit_cost": 3.25
     },
     "Coke": {
-        "stock": 70,
+        "stock": 67,
         "low_stock_threshold": 10,
         "unit_cost": 0.75
     },
@@ -30,7 +30,7 @@
         "unit_cost": 2.0
     },
     "Lemonade": {
-        "stock": 92,
+        "stock": 91,
         "low_stock_threshold": 10,
         "unit_cost": 0.85
     },
@@ -60,7 +60,7 @@
         "unit_cost": 1.2
     },
     "Hamburger - Normal": {
-        "stock": 78,
+        "stock": 77,
         "low_stock_threshold": 10,
         "unit_cost": 3.5
     },
@@ -70,7 +70,7 @@
         "unit_cost": 0.6
     },
     "Pancakes": {
-        "stock": 49,
+        "stock": 48,
         "low_stock_threshold": 10,
         "unit_cost": 2.5
     },
@@ -85,7 +85,7 @@
         "unit_cost": 2.8
     },
     "Caesar Salad": {
-        "stock": 38,
+        "stock": 37,
         "low_stock_threshold": 10,
         "unit_cost": 3.0
     },

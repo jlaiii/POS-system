@@ -1,7 +1,7 @@
 # POS Production Readiness Audit
-> Last run: 2026-06-30 15:30 CT
-> Overall readiness: 63% (HIGH issues: 14, MEDIUM: 20)
-> Workflow tested this run: B (Manager closing shift — admin stats, cash drawer, pay period, shift audit, CSV export)
+> Last run: 2026-07-01 03:55 CT
+> Overall readiness: 64% (HIGH issues: 13, MEDIUM: 20)
+> Workflow tested this run: A (Waiter taking orders — login, clock in, submit 2 orders with modifiers & split payment, clock out)
 
 ## BLOCKERS (can't go live with these)
 
@@ -12,6 +12,10 @@
 - [ ] **No `safe-area-inset-*` on any position:fixed elements** — Despite being claimed as "Added safe-area-inset padding to all position:fixed elements" in a previous audit, there are ZERO references to `safe-area` or `env(` in the entire index.html. All 12 fixed-position elements (modal overlays, toasts, undo toast, kitchen audio overlay, video player, print overlay) lack safe-area padding. On iOS devices with notches (iPad Pro 2018+, iPhone X+), these overlays will be partially hidden under the notch/home indicator. This is a tablet deployment blocker.
 
 - [ ] **font-size: 13px and 14px on ~200 UI elements — too small for restaurant use** — Remaining small text across `.perm-table` (13px), `.log-entry` (13px), `.pp-preset` (13px), `.cart-item` (14px), `.ho-meta` (13px), `.ts-dense-table` (13px), allergen chips (13px), `.emp-perf-card h4` (13px), `.recent-order-info` (12px), `.item-stock` (12px), `.sale-badge` (11px), `.popular-badge` (11px), `.filter-count` (11px). A waiter reading order details on a tablet at arm's length needs minimum 16px body text.
+
+- [ ] **~50+ interactive elements still use 40px touch targets in admin/settings areas** — All timesheet config inputs, ticket filters, date inputs, security settings, and admin buttons use `min-height:40px` (below 48px WCAG minimum). While these are admin-only (less frequent usage), a restaurant manager using a tablet to configure the system will still struggle with small tap targets. Affected: tsConfig inputs (lines 1349-1445), ticket filter selects/inputs (2113-2167), admin buttons (1463-1525), security settings (2414-2532), many more. [NEW - this run]
+
+- [ ] **style.css loaded with media="print" — responsive breakpoints delayed on first paint** — `style.css` (50KB) is loaded as `<link rel="stylesheet" href="style.css" media="print" onload="this.media='all'">`. This print-first loading strategy means the responsive grid breakpoints (600/768/900/1200px column counts) and important layout rules aren't applied until the CSS finishes downloading and the onload fires. On a restaurant tablet on consumer WiFi (3-5 Mbps), there's a visible layout shift 200-500ms after page render. All critical layout and color rules are duplicated inline in the `<style>` block, but the grid breakpoints exist ONLY in style.css. [NEW]
 
 - [ ] **Zero comprehensive responsive breakpoints — layout is identical on 10" tablet and 27" monitor** — style.css has @media rules (600/768/900/1200px, orientation breakpoints) but the overall layout doesn't adapt meaningfully between iPad portrait (768×1024) and a 27" monitor. Admin sub-tabs row (17+ buttons) can still overflow. Missing: a dedicated @media (max-width: 768px) layout switch.
 
@@ -97,7 +101,9 @@
 
 - [x] **4 standalone pages had user-scalable=no in viewport meta — breaks accessibility zoom** — customer-login.html, drivethrough.html, feedback.html, and offline.html still had `user-scalable=no` (bad for accessibility, users can't zoom). Changed to `maximum-scale=5.0`. Commit: `49ba79d`.
 
-- [x] **Workflow B tested end-to-end (Manager closing shift)** — Tested admin login (session token-based auth), admin_stats (correctly returns stats but raw_orders payload is 121 orders = ~150KB), cash drawer status/history/report (11 sessions, 5 with uncommented variance), pay period summary, CSV exports with date filtering, clock status. 4 new issues documented (Owner force_pin_change too, 40px touch targets, test data artifacts).
+|- [x] **Workflow B tested end-to-end (Manager closing shift)** — Tested admin login (session token-based auth), admin_stats (correctly returns stats but raw_orders payload is 121 orders = ~150KB), cash drawer status/history/report (11 sessions, 5 with uncommented variance), pay period summary, CSV exports with date filtering, clock status. 4 new issues documented (Owner force_pin_change too, 40px touch targets, test data artifacts).
+
+|- [x] **11 core workflow touch targets bumped from 40px→44px (WCAG compliance)** — Top bar critical buttons (theme toggle, lang toggle, clock in/out, break, change PIN, 2FA setup) and cart action buttons (Apply discount, Clear tip, table select, save delivery address) plus item grid Add to Cart button all had `min-height:40px` (below WCAG 48px minimum). Bumped to 44px. Also updated `.twofa-setup-btn` and `#topBar .logout-btn` CSS classes. ~50+ 40px elements remain in admin/settings areas. Commit: `f98727e`.
 
 ## PREVIOUSLY FIXED (archive)
 

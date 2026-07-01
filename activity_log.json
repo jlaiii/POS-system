@@ -24602,5 +24602,275 @@
             "clock_out_time": "2026-07-01T03:46:46.011080",
             "duration_hours": 0.0
         }
+    },
+    {
+        "timestamp": "2026-07-01T03:48:44.054801",
+        "type": "login_failed",
+        "user_id": null,
+        "user_role": "unknown",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "failed",
+            "method": "pin",
+            "ip": "127.0.0.1",
+            "attempt": 1
+        }
+    },
+    {
+        "timestamp": "2026-07-01T03:48:52.065598",
+        "type": "login_failed",
+        "user_id": null,
+        "user_role": "unknown",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "failed",
+            "method": "pin",
+            "ip": "127.0.0.1",
+            "attempt": 1
+        }
+    },
+    {
+        "timestamp": "2026-07-01T03:49:02.260847",
+        "type": "login",
+        "user_id": "1234",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "2fa_required",
+            "method": "pin",
+            "user_name": "Employee One",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-07-01T03:49:06.845490",
+        "type": "login",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Owner",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-07-01T03:49:15.113920",
+        "type": "login",
+        "user_id": "5678",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Employee Two",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-07-01T03:49:15.169599",
+        "type": "clock_in",
+        "user_id": "5678",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee Two",
+            "clock_in_time": "2026-07-01T03:49:15.169178",
+            "late_minutes": null,
+            "scheduled_start": "10:00"
+        }
+    },
+    {
+        "timestamp": "2026-07-01T03:49:18.883181",
+        "type": "login",
+        "user_id": "5678",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Employee Two",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-07-01T03:49:24.597678",
+        "type": "login",
+        "user_id": "5678",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Employee Two",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-07-01T03:49:41.310167",
+        "type": "login",
+        "user_id": "5678",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Employee Two",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-07-01T03:49:41.395201",
+        "type": "submit_order",
+        "user_id": null,
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "order_id": 146,
+            "subtotal": 21.5,
+            "tax_amount": 1.32,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 22.82,
+            "payment_method": "Cash",
+            "item_count": 3
+        }
+    },
+    {
+        "timestamp": "2026-07-01T03:49:58.543474",
+        "type": "login",
+        "user_id": "5678",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Employee Two",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-07-01T03:49:58.609805",
+        "type": "submit_order",
+        "user_id": null,
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "order_id": 147,
+            "subtotal": 28.97,
+            "tax_amount": 1.65,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 30.62,
+            "payment_method": "Cash",
+            "item_count": 3
+        }
+    },
+    {
+        "timestamp": "2026-07-01T03:50:23.039744",
+        "type": "login",
+        "user_id": "5678",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Employee Two",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-07-01T03:50:23.106838",
+        "type": "submit_order",
+        "user_id": null,
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "order_id": 148,
+            "subtotal": 3.0,
+            "tax_amount": 0.25,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 3.25,
+            "payment_method": "Cash",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-07-01T03:55:50.284301",
+        "type": "login",
+        "user_id": "5678",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Employee Two",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-07-01T03:55:50.337037",
+        "type": "clock_out",
+        "user_id": "5678",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "user_name": "Employee Two",
+            "clock_in_time": "2026-07-01T03:49:15.169178",
+            "clock_out_time": "2026-07-01T03:55:50.336699",
+            "duration_hours": 0.11
+        }
+    },
+    {
+        "timestamp": "2026-07-01T03:58:00.419425",
+        "type": "login",
+        "user_id": "5678",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "status": "success",
+            "method": "pin",
+            "user_name": "Employee Two",
+            "ip": "127.0.0.1"
+        }
+    },
+    {
+        "timestamp": "2026-07-01T03:58:00.498649",
+        "type": "submit_order",
+        "user_id": "5678",
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "order_id": 149,
+            "subtotal": 3.0,
+            "tax_amount": 0.25,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 3.25,
+            "payment_method": "Cash",
+            "item_count": 1
+        }
     }
 ]
