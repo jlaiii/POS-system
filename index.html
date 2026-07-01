@@ -298,7 +298,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 .twofa-verify-input:focus { border-color: var(--accent); outline: none; }
 .twofa-backup-list { background: var(--bg); padding: 14px 20px; border-radius: 8px; font-family: monospace; font-size: 15px; line-height: 1.8; color: var(--text); width: 100%; max-width: 320px; text-align: center; letter-spacing: 1px; }
 .twofa-backup-warn { background: rgba(231,76,60,0.12); border-left: 4px solid #e74c3c; padding: 10px 14px; border-radius: 8px; font-size: 13px; color: #e74c3c; width: 100%; }
-.twofa-setup-btn { font-size: 14px; padding: 8px 14px; min-height: 40px; }
+.twofa-setup-btn { font-size: 14px; padding: 8px 14px; min-height: 44px; }
 .twofa-setup-btn.enabled { color: #2ecc71; cursor: default; opacity: 0.9; }
 
 @keyframes shake {
@@ -317,7 +317,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 }
 #topBar .app-title { font-size: 22px; font-weight: 700; color: var(--accent); }
 #topBar .user-info { color: var(--text2); font-size: 14px; }
-#topBar .logout-btn { padding: 8px 16px; font-size: 14px; min-height: 40px; }
+#topBar .logout-btn { padding: 8px 16px; font-size: 14px; min-height: 44px; }
 #topBar .offline-badge {
   display: none;
   background: #f39c12;
@@ -705,12 +705,12 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
     <span class="user-info" id="userInfoDisplay"></span>
     <div style="display:flex;gap:8px;align-items:center;">
       <span class="offline-badge" id="offlineBadge" onclick="syncQueuedOrders()" title="Click to sync now"></span>
-      <button class="ghost logout-btn" id="themeToggle" onclick="toggleTheme()" style="font-size:18px;padding:8px 12px;min-height:40px;" title="Toggle theme">🌙</button>
-      <button class="ghost logout-btn" id="langToggle" onclick="switchLanguage(currentLang === 'en' ? 'es' : 'en')" style="font-size:18px;padding:8px 12px;min-height:40px;" title="Switch language">🇪🇸</button>
-      <button class="ghost logout-btn" id="clockBtn" onclick="toggleClock()" style="font-size:14px;padding:8px 14px;min-height:40px;display:none;" title="Clock in/out">⏰ Clock In</button>
-      <button class="ghost logout-btn" id="breakBtn" onclick="toggleBreak()" style="font-size:14px;padding:8px 14px;min-height:40px;display:none;" title="Start/end break">☕ Break</button>
-      <button class="ghost logout-btn" id="changePinBtn" onclick="showChangePinModal()" style="font-size:14px;padding:8px 14px;min-height:40px;display:none;" title="Change PIN">🔑 Change PIN</button>
-      <button class="ghost logout-btn" id="twofaSetupBtn" onclick="showTwofaSetup()" style="font-size:14px;padding:8px 14px;min-height:40px;display:none;" title="Two-factor authentication">🔐 2FA</button>
+      <button class="ghost logout-btn" id="themeToggle" onclick="toggleTheme()" style="font-size:18px;padding:8px 12px;min-height:44px;" title="Toggle theme">🌙</button>
+      <button class="ghost logout-btn" id="langToggle" onclick="switchLanguage(currentLang === 'en' ? 'es' : 'en')" style="font-size:18px;padding:8px 12px;min-height:44px;" title="Switch language">🇪🇸</button>
+      <button class="ghost logout-btn" id="clockBtn" onclick="toggleClock()" style="font-size:14px;padding:8px 14px;min-height:44px;display:none;" title="Clock in/out">⏰ Clock In</button>
+      <button class="ghost logout-btn" id="breakBtn" onclick="toggleBreak()" style="font-size:14px;padding:8px 14px;min-height:44px;display:none;" title="Start/end break">☕ Break</button>
+      <button class="ghost logout-btn" id="changePinBtn" onclick="showChangePinModal()" style="font-size:14px;padding:8px 14px;min-height:44px;display:none;" title="Change PIN">🔑 Change PIN</button>
+      <button class="ghost logout-btn" id="twofaSetupBtn" onclick="showTwofaSetup()" style="font-size:14px;padding:8px 14px;min-height:44px;display:none;" title="Two-factor authentication">🔐 2FA</button>
       <button class="ghost logout-btn" onclick="doLogout()" data-i18n="logout">🚪 Logout</button>
     </div>
   </div>
@@ -769,7 +769,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
           <div id="discountRow" style="display:none;margin-top:4px;">
             <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
               <input type="text" id="couponInput" placeholder="Coupon code" style="flex:1;min-width:100px;padding:10px 12px;font-size:14px;text-transform:uppercase;" maxlength="20" data-i18n-placeholder="cart.coupon" aria-label="Coupon code"/>
-              <button class="outline" onclick="applyDiscount()" style="font-size:13px;padding:8px 14px;min-height:40px;" data-i18n="cart.apply">Apply</button>
+              <button class="outline" onclick="applyDiscount()" style="font-size:13px;padding:8px 14px;min-height:44px;" data-i18n="cart.apply">Apply</button>
             </div>
             <div id="discountStatus" style="font-size:13px;margin-top:4px;"></div>
           </div>
@@ -779,7 +779,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
           <div id="tableRow" style="display:none;margin-top:4px;">
             <div style="display:flex;gap:8px;align-items:center;">
               <span style="color:var(--text2);font-size:13px;white-space:nowrap;">🪑 Table:</span>
-              <select id="tableSelect" style="flex:1;padding:8px 10px;font-size:14px;min-height:40px;" aria-label="Select table">
+              <select id="tableSelect" style="flex:1;padding:8px 10px;font-size:14px;min-height:44px;" aria-label="Select table">
                 <option value="">No table</option>
               </select>
             </div>
@@ -807,7 +807,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
             <div id="customTipRow" style="display:none;margin-top:6px;">
               <div style="display:flex;gap:6px;align-items:center;">
                 <input type="number" id="customTipInput" placeholder="$0.00" step="0.01" min="0" inputmode="decimal" style="flex:1;max-width:140px;min-height:44px;font-size:16px;padding:8px 12px;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);">
-                <button class="outline" onclick="document.getElementById('customTipInput').value='';updateTipCustom();" style="font-size:13px;padding:8px 14px;min-height:40px;">Clear</button>
+                <button class="outline" onclick="document.getElementById('customTipInput').value='';updateTipCustom();" style="font-size:13px;padding:8px 14px;min-height:44px;">Clear</button>
               </div>
             </div>
           </div>
@@ -828,7 +828,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
                 </div>
                 <textarea id="delInstructions" placeholder="Delivery instructions (gate code, landmark, etc.)" style="width:100%;background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:14px;padding:10px 12px;min-height:44px;resize:vertical;font-family:inherit;" rows="1" maxlength="300" data-i18n-placeholder="delivery.instructions" aria-label="Delivery instructions"></textarea>
                 <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
-                  <button class="outline" onclick="saveDeliveryAddress()" style="font-size:12px;padding:6px 12px;min-height:40px;border-color:#4fc3f7;color:#4fc3f7;" data-i18n="delivery.save">💾 Save for reuse</button>
+                  <button class="outline" onclick="saveDeliveryAddress()" style="font-size:12px;padding:6px 12px;min-height:44px;border-color:#4fc3f7;color:#4fc3f7;" data-i18n="delivery.save">💾 Save for reuse</button>
                   <span id="deliverySaveStatus" style="font-size:12px;color:var(--text2);"></span>
                 </div>
               </div>
