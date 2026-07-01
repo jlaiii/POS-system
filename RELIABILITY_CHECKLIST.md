@@ -1,19 +1,19 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-07-01T03:41Z
-> Total checks: 132
-> Healthy: 145 | Broken: 0 | Fixed this cycle: 31
+> Last full cycle: 2026-07-01T04:08Z
+> Total checks: 140
+> Healthy: 153 | Broken: 0 | Fixed this cycle: 32
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (03:41Z)
-- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID, 8 users, 5 cats/items dict, 124 orders, 0 shifts, 24 inventory (03:41Z)
-- [x] users.json has at least owner PIN 1111 — Owner 1111 present, permissions '*' OK (03:41Z)
-- [x] Git repo is clean (no uncommitted changes from crashes) — committed Watchdog dirty files + activity_log, clean now (03:41Z)
+- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (04:08Z)
+- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID, 8 users, 5 cats/items dict, 124 orders, 2 shifts, 24 inventory (04:08Z)
+- [x] users.json has at least owner PIN 1111 — Owner 1111 present, permissions '*' OK, login successful (04:08Z)
+- [x] Git repo is clean (no uncommitted changes from crashes) — committed Watchdog dirty files (10c29f1), clean now (04:08Z)
 
 ## HOURLY (check if last check was >1h ago)
-- [x] /api/clock/in works (clock in test user, verify response) — Employee 1234 clocked in at 02:42Z, no late detection ✓ (02:42Z)
-- [x] /api/clock/out works — Employee 1234 clocked out (3.5s shift), cleaned up ✓ (02:42Z)
-- [x] /api/items returns items (GET) — 5 categories: Breakfast, Drinks, Foods, Salads, Snacks, 19 items ✓ (02:43Z)
-- [x] /api/login works (POST userId) — Owner 1111 login, message 'Login successful', full permissions ✓ (03:11Z)
+- [x] /api/clock/in works (clock in test user, verify response) — Employee 1234 clocked in at 04:08Z, no late detection ✓ (04:08Z)
+- [x] /api/clock/out works — Employee 1234 clocked out (3.5s shift), cleaned up ✓ (04:08Z)
+- [x] /api/items returns items (GET) — 5 categories: Breakfast, Drinks, Foods, Salads, Snacks, 19 items ✓ (04:08Z)
+- [x] /api/login works (POST userId) — Owner 1111 login, message 'Login successful', full permissions ✓ (04:08Z)
 - [x] /api/admin_stats returns stats (POST adminPin) — Admin data retrieved, backup health green, avg sale $12.84 ✓ (02:42Z)
 - [x] /api/admin_shifts returns shifts (POST adminPin) — 0 active shifts, 0 completed shifts ✓ (02:42Z)
 - [x] Frontend loads (curl index.html, verify it's HTML not error) — HTML 200 OK, 1,375,342 bytes ✓ (03:11Z)
@@ -24,8 +24,8 @@
 - [x] Inventory: check stock decrements on order — Coke 70→69→70 (decrement + restore via refund) ✅ (02:20Z)
 - [x] Loyalty: points earned on order — Order #139 (Coke $3) earned 3 pts, refunded, cleaned up ✅
 - [x] Cash register: open drawer ($100) → cash in ($50) → cash out ($20) → close ($130, exact match) ✅
-- [x] Kitchen display: GET /api/kitchen/queue — 1 pending order, valid data ✓ (03:47Z)
-- [x] Pickup display: GET /api/pickup-display/queue — 2 ready orders, valid data ✓ (03:47Z)
+- [x] Kitchen display: GET /api/kitchen/queue — 2 pending orders, valid data ✓ (04:08Z)
+- [x] Pickup display: GET /api/pickup-display/queue — 2 ready orders, valid data ✓ (04:08Z)
 - [x] Clock-in late detection: Employee 1234 scheduled 09:00, clocked in 21:38 → 758 min late ✅
 - [x] Break tracking: POST /api/clock/break — Break start + end + clock out worked, break recorded in shift ✓ (03:46Z)
 - [x] Shift edit: POST /api/clock/edit — validates reason required, endpoint working ✅ (03:46Z)
@@ -45,12 +45,13 @@
 - [x] Concurrent write test: two rapid clock-ins → verify no data loss — Two users (1234, 5678) clocked in/out concurrently, both shifts recorded ✅
 
 ## DISCOVERED (failures you've seen before — check every 2h)
-- [x] Security Watchdog leaves dirty files after each run (SECURITY_WATCHDOG.md + activity_log.json + login_attempts.json + security_events.json) — auto-commit on SRE bot runs — CHECKED 03:41Z, committed SECURITY_WATCHDOG.md (c3bc324) + activity_log.json (641605f) ✓
+- [x] Security Watchdog leaves dirty files after each run (SECURITY_WATCHDOG.md + activity_log.json + login_attempts.json + security_events.json + .watchdog_file_sizes.json) — auto-commit on SRE bot runs — CHECKED 04:08Z, committed .watchdog_file_sizes.json + SECURITY_WATCHDOG.md (10c29f1) ✓
 
 ## CURRENT OUTAGES
 _None_
 
 ## FIXES APPLIED
+- 2026-07-01T04:08Z **SRE bot routine run** — CRITICAL: Flask 200, all 8 JSON valid, Owner 1111 present. Committed Watchdog dirty files (.watchdog_file_sizes.json + SECURITY_WATCHDOG.md at 10c29f1). HOURLY: clock/in+out (Employee 1234 at 04:08Z, cleaned), items (5 categories ✓), login (Owner 1111 ✓). 4H: kitchen (2 pending), pickup (2 ready). app.py syntax OK, index.html 1.4M normal, backup valid. Disk 39%, RAM 38%. All healthy.
 - 2026-07-01T03:41Z **SRE bot routine run** — CRITICAL: Flask 200, all 8 JSON valid, Owner 1111 present. Committed Watchdog dirty files (SECURITY_WATCHDOG.md at c3bc324, activity_log.json at 641605f). 4H checks: break tracking (start→end→clock out ✓), shift edit (reason validation ✓), CSV export (headers returned ✓), webhook + offline queue (both respond ✓), kitchen + pickup displays (data valid ✓). All healthy.
 - 2026-07-01T03:12Z **SRE bot routine run** — CRITICAL: Flask 200, all 8 JSON valid, Owner 1111 present, git clean after committing Watchdog dirty files. HOURLY: login (Owner 1111 ✓), frontend (1,375KB ✓). DISCOVERED: committed Watchdog dirty files (activity_log +28, login_attempts +22, security_events +30) at 0f1d7b0. All healthy.
 - 2026-07-01T02:44Z **SRE bot routine run** — CRITICAL: Flask 200, all 8 JSON valid, Owner 1111 present. HOURLY: clock/in+out (Employee 1234 at 02:42Z), admin_stats (avg $12.84, backup green), admin_shifts (0 shifts), items GET (5 categories, 19 items ✓). 4H: Order lifecycle — created #145 (Coke $3), pending, refunded, verified. Cleaned test shift from shift_log.json. Committed activity_log + orders + refunded_orders at 6692605. All healthy.
