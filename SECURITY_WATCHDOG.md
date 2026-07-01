@@ -1,8 +1,8 @@
 # POS Security Watchdog
 
-||||||||||||||| Last run: 2026-07-01T08:24 UTC | Total events tracked: 134 (SEC-001→SEC-134; all resolved) | Active blocks: 0 | Run result: **CLEAN** — 0 failed logins, no threats.|
+|||||||||||||||| Last run: 2026-07-01T08:41 UTC | Total events tracked: 134 (SEC-001→SEC-134; all resolved) | Active blocks: 0 | Run result: **CLEAN** — 0 failed logins, no threats.|
 
-## Current Run Findings (08:07–08:24 UTC, ~17 min window)
+## Current Run Findings (08:24–08:41 UTC, ~17 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -18,13 +18,13 @@ None.
 
 ### ℹ️ Activity Summary
 
-**Server**: **UP** (responding on port 5000 — HTTP 200 on /api/clock/status).
+**Server**: **UP** (responding on port 5000 — HTTP 400 on /api/clock/status, expected for empty POST).
 
-**Activity** (activity_log.json): **0 new events** since last run (last event at 07:56:13). System idle.
+**Activity** (activity_log.json): **0 new events** since last run (last event at 07:55:41). System idle.
 
 **Login attempts (this window)**: 0 failed, 0 successful. No login activity at all.
 
-**Active shifts**: 0. No one currently clocked in (Owner clock status test confirmed).
+**Active shifts**: 0. No one currently clocked in.
 
 **Active admin sessions**: 0 (no admin_sessions.json on disk).
 
@@ -33,7 +33,7 @@ None.
 - **Account enumeration**: 0 invalid-PIN probes. None.
 - **Successful-after-failure**: No failure→success pattern.
 - **Credential stuffing**: No evidence — zero attempts from any IP.
-- **Off-hours activity**: 08:07–08:24 is outside anomaly window (22:00–06:00). Normal hours.
+- **Off-hours activity**: 08:24–08:41 is outside anomaly window (22:00–06:00). Normal hours.
 - **Cross-IP targeting**: None.
 - **Session anomalies**: No active sessions. No stale sessions >24h.
 - **Rate limiting**: No trigger events.
@@ -42,12 +42,12 @@ None.
 - `blocked_ips`: **0** (unchanged).
 - `auto_block_threshold`: 5 (unchanged).
 - `require_2fa_for_admins`: true (unchanged).
-- Config hash unchanged since last run. No modifications detected.
+- Config unchanged since last run. No modifications detected.
 - 2FA gap remains: Owner (1111), Manager (2222), Manager Sarah (7788) lack 2FA despite `require_2fa_for_admins: true`.
 
 ### 💰 Financial Check / Order Anomaly Scan
 - No new orders or refunds this window. All quiet.
-- Stale pending orders remain in orders.json (test data, no security concern).
+- 129 orders in orders.json (all stale test data, no security concern).
 - No suspicious refund patterns.
 
 ### 📂 File Integrity
