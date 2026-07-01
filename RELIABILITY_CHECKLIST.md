@@ -1,25 +1,25 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-07-01T18:18Z
-> Total checks: 236
-> Healthy: 284 | Broken: 0 | Fixed this cycle: 34
+> Last full cycle: 2026-07-01T19:12Z
+> Total checks: 240
+> Healthy: 295 | Broken: 0 | Fixed this cycle: 34
 
 ## CRITICAL (check every run — these can't wait)
-||- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (18:18Z)
-||- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID, 11 users, 5 cats/23 items, 132 orders, shift_log empty (cleaned), 28 inventory (4 sold out), 14 loyalty ✓ (18:18Z)
-|||- [x] users.json has at least owner PIN 1111 — Owner 1111 present, perms ['*'], super admin ✓ (18:18Z)
-|||- [x] Git repo is clean (no uncommitted changes from crashes) — clean ✓ (18:18Z)
+|||- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (19:12Z)
+|||- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID, 11 users, 133 orders, shift_log empty (cleaned), inventory OK ✓ (19:12Z)
+|||- [x] users.json has at least owner PIN 1111 — Owner 1111 present, perms ['*'], super admin ✓ (19:12Z)
+|||- [x] Git repo is clean (no uncommitted changes from crashes) — clean after commit 0c8dd5b (Watchdog dirty file) ✓ (19:12Z)
 
 ## HOURLY (check if last check was >1h ago)
 ||- [x] /api/clock/in works (clock in test user, verify response) — Employee 1234 clocked in at 17:55Z, 535 min late (sched 09:00), cleaned up ✓ (17:55Z)
 ||- [x] /api/clock/out works — Employee 1234 clocked out (0s shift), test shift cleaned ✓ (17:55Z)
-||- [x] /api/clock/status works (adminPin, not userId) — Employee 1234 not clocked in ✓ (17:55Z)
+|||- [x] /api/clock/status works (adminPin, not userId) — Employee 1234 not clocked in ✓ (19:12Z)
 |||- [x] /api/items returns items (GET) — 5 categories, 23 items ✓ (18:18Z)
-||- [x] /api/login works (POST userId) — Owner 1111 login, force_pin_change_required, full permissions, session_token ✓ (17:05Z)
-||- [x] /api/admin_stats returns stats (POST adminPin) — Admin data retrieved, avg $12.13, backup count 213, green ✓ (17:05Z)
-||- [x] /api/admin_shifts returns shifts (POST adminPin) — 0 active shifts, 0 completed, clean ✓ (17:27Z)
-||- [x] Frontend loads (curl index.html, verify it's HTML not error) — HTML 200 OK, 1,375,342 bytes ✓ (17:27Z)
-||- [x] /api/kitchen/queue returns valid data (GET) — queue endpoint works, 0 pending orders ✓ (17:27Z)
-||- [x] /api/pickup-display/queue works (GET) — pickup endpoint works, 0 ready orders ✓ (17:27Z)
+||||- [x] /api/login works (POST userId) — Owner 1111 login, force_pin_change_required, full permissions, session_token ✓ (18:40Z)
+|||- [x] /api/admin_stats returns stats (POST adminPin) — Admin data retrieved, avg $12.13, backup count 215, green ✓ (18:40Z)
+|||- [x] /api/admin_shifts returns shifts (POST adminPin) — 0 active, 0 completed ✓ (19:12Z)
+|||- [x] Frontend loads (curl index.html, verify it's HTML not error) — HTML 200 OK, 1,375,342 bytes ✓ (19:12Z)
+|||- [x] /api/kitchen/queue returns valid data (GET) — 5 pending orders, valid ✓ (19:12Z)
+|||- [x] /api/pickup-display/queue works (GET) — 2 ready orders, valid ✓ (19:12Z)
 
 ## EVERY 4 HOURS
 ||- [x] Order lifecycle: create order → verify in orders.json → refund → verify — Created #156 (Coke $3.00) → submitted → refunded → cleaned ✅ (17:27Z)
@@ -37,9 +37,9 @@
 |||- [x] Offline queue: POST /api/sync_orders — endpoint exists, returns 'No orders provided' ✓ (18:18Z)
 
 ## EVERY 12 HOURS
-|||- [x] Disk space check: df -h, alert if >80% full — 40% used ✓ (17:27Z)
-|||- [x] Memory check: free -m, alert if swap used — 37% RAM, no swap used ✓ (17:27Z)
-|||- [x] Backup integrity: verify latest backup is valid JSON and not empty — Latest backup 15:26Z: backups/json/2026-07-01_15-26-22.tar.gz (90KB) + backups/db/pos_2026-07-01_15-26-22.db.gz (76KB) — valid ✓ (16:16Z)
+|||- [x] Disk space check: df -h, alert if >80% full — 40% used ✓ (18:40Z)
+|||- [x] Memory check: free -m, alert if swap used — 37% RAM, no swap used ✓ (18:40Z)
+||||- [x] Backup integrity: verify latest backup is valid JSON and not empty — Latest backup 18:26Z: backups/json/2026-07-01_18-26-27.tar.gz (94KB) + backups/db/pos_2026-07-01_18-26-27.db.gz (76KB) — both VALID gzip ✓ (18:40Z)
 |||- [x] app.py syntax check (python3 -m py_compile app.py) — SYNTAX OK ✓ (17:27Z)
 |||- [x] index.html size check (alert if shrunk dramatically — possible corruption) — 1,375,342 bytes, normal ✓ (17:27Z)
 |||- [x] Full app restart test: kill gunicorn → restart → verify all critical endpoints — 2026-07-01T17:54Z, PASSED (killed gunicorn, restarted, verified all 8 endpoints: /, /api/items, /api/login, /api/admin_stats, /api/admin_shifts, /api/clock/status, /api/kitchen/queue, /api/pickup-display/queue all 200 OK)
