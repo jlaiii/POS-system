@@ -1,7 +1,7 @@
 # POS Production Readiness Audit
-> Last run: 2026-07-01 03:55 CT
-> Overall readiness: 64% (HIGH issues: 13, MEDIUM: 20)
-> Workflow tested this run: A (Waiter taking orders — login, clock in, submit 2 orders with modifiers & split payment, clock out)
+> Last run: 2026-07-01 11:09 CT
+> Overall readiness: 64% (HIGH issues: 13, MEDIUM: 21)
+> Workflow tested this run: C (First-time setup — add 5 items across 2 categories, add 3 employees, configure tax, add discount, create combo)
 
 ## BLOCKERS (can't go live with these)
 
@@ -83,6 +83,10 @@
 
 - [ ] **customer-display.html has no manifest.json link despite being designed for wall-mounted tablets** — Has theme-color but lacks `<link rel="manifest" href="manifest.json">` and `apple-mobile-web-app-capable` meta. Cannot be added to home screen as standalone PWA. [NEW]
 
+- [ ] **No onboarding/setup wizard — 6 separate API calls to configure a new restaurant** — Setting up a new restaurant requires: add_menu_items (categories x items), add_user (per employee), update_tax_config, manage_discount (add), combos_save (per combo). These are 6+ separate API calls with different parameter naming conventions. A first-time restaurant owner has no guided flow. The frontend has the panels but they're hidden under different tabs. [NEW - Workflow C]
+- [ ] **Login endpoint expects `userId` while all other endpoints use `adminPin` — confusing inconsistency** — `/api/login` takes `{"userId":"1111"}` but every other admin endpoint takes `{"adminPin":"1111"}`. A first-time user naturally tries `pin` or `adminPin`, gets "Invalid User ID or role" with no hint of the correct field name. This would cause a first-timer to think their credentials are wrong. [NEW - Workflow C]
+- [ ] **No `force_pin_change` option during user creation — can't enforce PIN change on first login** — `/api/add_user` has no parameter for `force_pin_change`. The field exists in users.json and is checked by login (returns `force_pin_change_required`), but new employees are created with it unset. An admin who must share the initial PIN with a new employee cannot force them to change it on first login. [NEW - Workflow C]
+
 ## LOW (polish, nice-to-have)
 
 - [ ] No auto-generated placeholder images for items added without image_url
@@ -95,6 +99,7 @@
 
 ## FIXED (this session)
 
+- [x] **12 unguarded `:hover` CSS rules in style.css — now properly wrapped in `@media (hover: hover)`** — style.css had 12 `:hover` rules that were duplicated (one unguarded outer version + one inner `@media (hover: hover)` version). On touch devices, the unguarded version caused hover styles to "stick" after tapping. Also fixed `#cartToggle:hover` which had NO `@media` wrapper at all — this is a mobile/tablet-only element so the stuck hover would persist until another element is tapped. Commit: (pending push)
 - [x] **8 standalone tablet pages missing PWA meta tags — now addable to home screen as standalone web apps** — tablet.html, customer-display.html, customer-login.html, feedback.html, kitchen.html, offline.html, drivethrough.html, and pickup-display.html all lacked `apple-mobile-web-app-capable`, `apple-mobile-web-app-status-bar-style`, manifest link, and most lacked `theme-color`. These pages are designed for wall-mounted tablets but couldn't be added to home screen as standalone PWAs. Fixed: added all missing meta tags + manifest link to all 8 pages. Commit: `add422a`.
 
 - [x] **Kiosk pay and order lookup accepted payment for refunded/voided orders — security fix** — Both `/api/orders/kiosk_pay` and `/api/orders/lookup` only checked for `cancelled` status before allowing payment. Refunded and voided orders passed through. Fixed: added `refunded` and `voided` status checks to both endpoints. Verified: kiosk paying order #120 (refunded) now returns 409 with "was refunded and cannot be paid." Commit: `49ba79d`.

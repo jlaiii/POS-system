@@ -25,6 +25,32 @@
             "active": true,
             "created_at": "2026-06-25T09:30:46.005782",
             "updated_at": "2026-06-25T09:30:46.005790"
+        },
+        {
+            "id": "combo_1782922175",
+            "name": "Lunch Special",
+            "combo_price": 10.99,
+            "description": "Grilled Cheese, Chips, and Coke",
+            "child_items": [
+                {
+                    "name": "Grilled Cheese",
+                    "category": "Foods",
+                    "quantity": 1
+                },
+                {
+                    "name": "Chips (Large Bag)",
+                    "category": "Snacks",
+                    "quantity": 1
+                },
+                {
+                    "name": "Coke",
+                    "category": "Drinks",
+                    "quantity": 1
+                }
+            ],
+            "active": true,
+            "created_at": "2026-07-01T16:09:35.611524",
+            "updated_at": "2026-07-01T16:09:35.611532"
         }
     ]
 }

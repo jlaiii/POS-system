@@ -108,6 +108,34 @@
             "description": "Soft flour tortilla loaded with seasoned shredded chicken, fresh pico de gallo, sour cream, and sliced avocado.",
             "image_url": "static/images/taco-chicken-with-salsa.svg",
             "dietary_tags": []
+        },
+        {
+            "name": "Grilled Cheese",
+            "price": 5.99,
+            "barcode": "",
+            "image_url": "",
+            "description": "Classic grilled cheese on sourdough",
+            "course": "main",
+            "active": true,
+            "dietary_tags": [],
+            "nutritional_info": {},
+            "scheduled_visibility": [],
+            "ingredients": [],
+            "end_date": null
+        },
+        {
+            "name": "Fish & Chips",
+            "price": 12.99,
+            "barcode": "",
+            "image_url": "",
+            "description": "Beer-battered cod with fries and tartar sauce",
+            "course": "main",
+            "active": true,
+            "dietary_tags": [],
+            "nutritional_info": {},
+            "scheduled_visibility": [],
+            "ingredients": [],
+            "end_date": null
         }
     ],
     "Drinks": [
@@ -145,6 +173,34 @@
                 "low_carb",
                 "sugar_free"
             ]
+        },
+        {
+            "name": "Iced Tea",
+            "price": 2.5,
+            "barcode": "",
+            "image_url": "",
+            "description": "Fresh-brewed iced tea",
+            "course": "main",
+            "active": true,
+            "dietary_tags": [],
+            "nutritional_info": {},
+            "scheduled_visibility": [],
+            "ingredients": [],
+            "end_date": null
+        },
+        {
+            "name": "Milkshake",
+            "price": 5.0,
+            "barcode": "",
+            "image_url": "",
+            "description": "Hand-spun milkshake - chocolate, vanilla, or strawberry",
+            "course": "main",
+            "active": true,
+            "dietary_tags": [],
+            "nutritional_info": {},
+            "scheduled_visibility": [],
+            "ingredients": [],
+            "end_date": null
         }
     ],
     "Snacks": [

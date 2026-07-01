@@ -778,3 +778,9 @@ A new cron worker — **POS Production Auditor** — runs every 8 hours. Unlike 
 - [ ] **Add tip prompt to submit_order workflow** — The submit_order API accepts `tip_amount` (defaults to $0), but there's no enforced tip entry step in the API flow. In a real restaurant, every card transaction should prompt for a tip. Add tip selection (15%/18%/20%/custom) as a required step before submitting payment. [Production Auditor — Workflow A: submitted order with $0 tip, no prompt.]
 
 - [ ] **Return employee attribution in submit_order response** — The submit_order response returns `order_id` and `order_number` but no confirmation of which employee submitted the order. The `user` field is sent in the request but not echoed back in the response. A waiter submitting an order has no server-side confirmation of their identity on the receipt. [Production Auditor — Workflow A: response had no employee info.]
+
+## New Tasks (from Production Auditor — 2026-07-01 — Workflow C)
+
+### Priority: MEDIUM
+
+- [ ] **Add setup wizard / onboarding flow for first-time restaurant configuration** — Currently requires 6+ separate API calls (add_item per item, add_user per employee, update_tax_config, manage_discount, combos_save) with different parameter naming conventions. No guided setup. A first-time restaurant owner has to discover each admin tab and figure out the parameter names. A guided setup wizard (step 1: add menu items, step 2: add employees, step 3: configure tax, etc.) would dramatically reduce time-to-first-order. Scope: frontend wizard in admin panel, or at minimum a setup checklist page. [Production Auditor — Workflow C: tested full first-time setup flow, documented each API call needed.]

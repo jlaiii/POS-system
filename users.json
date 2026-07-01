@@ -159,5 +159,50 @@
         "force_pin_change": true,
         "temp_pin": null,
         "temp_pin_expiry": null
+    },
+    "9012": {
+        "name": "Server Alice",
+        "role": "user",
+        "permissions": [
+            "pos_access"
+        ],
+        "pay_rate": 16.0,
+        "scheduled_start": "09:00",
+        "email": "alice@example.com",
+        "pto_balance": 0.0,
+        "pto_log": []
+    },
+    "9013": {
+        "name": "Cook Bob",
+        "role": "cook",
+        "permissions": [
+            "kitchen_access"
+        ],
+        "pay_rate": 19.0,
+        "scheduled_start": "10:00",
+        "email": "",
+        "pto_balance": 0.0,
+        "pto_log": []
+    },
+    "9014": {
+        "name": "Manager Carol",
+        "role": "admin",
+        "permissions": [
+            "manage_users",
+            "ban_users",
+            "manage_items",
+            "manage_permissions",
+            "view_stats",
+            "view_logs",
+            "view_timesheet",
+            "manage_orders",
+            "pos_access",
+            "kitchen_access"
+        ],
+        "pay_rate": 24.0,
+        "scheduled_start": "08:30",
+        "email": "",
+        "pto_balance": 0.0,
+        "pto_log": []
     }
 }

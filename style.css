@@ -19,7 +19,6 @@
   display: flex; align-items: center; justify-content: center;
   transition: background 0.2s;
 }
-.barcode-scan-btn:hover, .barcode-clear-btn:hover { background: var(--card-alt, #1e2a4a); }
 @media (hover: hover) { .barcode-scan-btn:hover, .barcode-clear-btn:hover { background: var(--card-alt, #1e2a4a); } }
 #barcodeStatus {
   font-size: 13px; min-height: 20px; padding: 4px 0; color: var(--text2);
@@ -220,17 +219,14 @@
 
 /* Timesheet sub-tabs */
 .timesheet-subtab { background: transparent; border: none; padding: 8px 16px; font-size: 14px; cursor: pointer; border-radius: 6px 6px 0 0; color: var(--text2); min-height: 44px; font-weight: 500; transition: all .15s; }
-.timesheet-subtab:hover { background: var(--card); color: var(--text); }
 @media (hover: hover) { .timesheet-subtab:hover { background: var(--card); color: var(--text); } }
 .timesheet-subtab.active { background: var(--accent); color: #fff; font-weight: 600; }
 /* Ticket sub-tabs */
 .ticket-subtab { background: transparent; border: none; padding: 8px 16px; font-size: 14px; cursor: pointer; border-radius: 6px 6px 0 0; color: var(--text2); min-height: 44px; font-weight: 500; transition: all .15s; border-bottom: 3px solid transparent; }
-.ticket-subtab:hover { background: var(--card); color: var(--text); }
 @media (hover: hover) { .ticket-subtab:hover { background: var(--card); color: var(--text); } }
 .ticket-subtab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
 /* Time-off calendar */
 .calendar-day { min-height: 80px; padding: 4px; font-size: 13px; vertical-align: top; border: 1px solid var(--border); }
-.calendar-day:hover { background: var(--card); }
 @media (hover: hover) { .calendar-day:hover { background: var(--card); } }
 .calendar-day.today { border: 2px solid var(--accent); }
 .calendar-day.other-month { opacity: 0.35; }
@@ -253,14 +249,12 @@
 .pp-stat-label { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: .5px; }
 .pp-overtime { color: #ff9800; font-weight: 600; }
 .pp-details-btn { font-size: 13px; padding: 6px 14px; min-height: 36px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius); cursor: pointer; }
-.pp-details-btn:hover { opacity: .85; }
 @media (hover: hover) { .pp-details-btn:hover { opacity: .85; } }
 .pp-shift-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px; flex-wrap: wrap; gap: 4px; }
 .pp-shift-row:last-child { border-bottom: none; }
 .pp-active-badge { background: #4caf50; color: #fff; font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
 /* Pay period preset buttons */
 .pp-preset { font-size: 13px; padding: 8px 14px; min-height: 44px; background: var(--card); color: var(--text); border: 2px solid var(--border); border-radius: var(--radius); cursor: pointer; transition: all .15s; font-weight: 500; white-space: nowrap; }
-.pp-preset:hover { border-color: var(--accent); background: var(--card-alt); }
 @media (hover: hover) { .pp-preset:hover { border-color: var(--accent); background: var(--card-alt); } }
 .pp-preset.active { border-color: var(--accent); background: var(--accent); color: #fff; }
 
@@ -279,7 +273,6 @@
   min-height: 22px;
   line-height: 18px;
 }
-.shift-edited-badge:hover { opacity: 0.85; }
 @media (hover: hover) { .shift-edited-badge:hover { opacity: 0.85; } }
 .shift-late-badge {
   display: inline-block;
@@ -294,7 +287,6 @@
   line-height: 18px;
   cursor: pointer;
 }
-.shift-late-badge:hover { opacity: 0.85; }
 @media (hover: hover) { .shift-late-badge:hover { opacity: 0.85; } }
 .shift-late-badge.excused {
   background: rgba(149,165,166,0.15);
@@ -311,7 +303,6 @@
   color: var(--text);
   transition: background .15s;
 }
-.shift-edit-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
 @media (hover: hover) { .shift-edit-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); } }
 
 .log-filters { background: var(--card); border-radius: var(--radius); padding: 12px 16px; margin-bottom: 12px; }
@@ -677,7 +668,6 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
   background: transparent; color: #666; border: 1px solid #333;
   font-size: 16px; padding: 8px 16px; border-radius: 8px; cursor: pointer;
 }
-#kioskOverlay .kiosk-header .kiosk-exit:hover { color: #fff; border-color: #666; }
 @media (hover: hover) { #kioskOverlay .kiosk-header .kiosk-exit:hover { color: #fff; border-color: #666; } }
 #kioskOverlay .kiosk-cart {
   width: 100%; max-width: 700px; max-height: 40vh;
@@ -719,15 +709,13 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
   background: var(--card); color: var(--text); border: 2px solid var(--border);
    cursor: pointer;transition: all 0.2s;
 }
-#kioskOverlay .kiosk-tip .tip-btns button:hover,
-#kioskOverlay .kiosk-tip .tip-btns button.selected {
-  background: var(--accent); border-color: var(--accent); color: #fff;
-}
 @media (hover: hover) {
-#kioskOverlay .kiosk-tip .tip-btns button:hover,
-#kioskOverlay .kiosk-tip .tip-btns button.selected {
+#kioskOverlay .kiosk-tip .tip-btns button:hover {
   background: var(--accent); border-color: var(--accent); color: #fff;
 }
+}
+#kioskOverlay .kiosk-tip .tip-btns button.selected {
+  background: var(--accent); border-color: var(--accent); color: #fff;
 }
 #kioskOverlay .kiosk-tip .tip-btns .tip-custom {
   background: var(--card-alt); border-color: var(--border);
@@ -862,7 +850,7 @@ div[style*="overflow-x:auto"]:not(.modal-box) {
 /* Cart expand/collapse toggle for portrait/compact mode */
 #cart.cart-expanded { max-height: 70vh; }
 #cartToggle { display: none; background: transparent; color: var(--text2); border: none; cursor: pointer; font-size: 18px; padding: 6px 10px; min-height: 44px; min-width: 44px; border-radius: 8px; align-items: center; justify-content: center; }
-#cartToggle:hover { background: var(--hover); color: var(--text); }
+@media (hover: hover) { #cartToggle:hover { background: var(--hover); color: var(--text); } }
 #cartHeader { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 #cartHeader h3 { margin: 0; }
 @media (orientation: portrait) { #cartToggle { display: flex; } }
