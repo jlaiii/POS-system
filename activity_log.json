@@ -26212,5 +26212,58 @@
             "ip": "127.0.0.1",
             "attempt": 1
         }
+    },
+    {
+        "timestamp": "2026-07-01T16:22:29.783066",
+        "type": "submit_order",
+        "user_id": null,
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "order_id": 154,
+            "subtotal": 3.0,
+            "tax_amount": 0.28,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 3.28,
+            "payment_method": "Cash",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-07-01T16:22:41.793121",
+        "type": "submit_order",
+        "user_id": null,
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "order_id": 155,
+            "subtotal": 3.0,
+            "tax_amount": 0.28,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 3.28,
+            "payment_method": "Cash",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-07-01T16:22:41.862828",
+        "type": "refund_order",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "python-requests/2.33.0",
+        "details": {
+            "order_id": 155,
+            "reason": "No reason provided",
+            "refunded_by_name": "Owner",
+            "order_total": 3.28,
+            "inventory_restored": [
+                "Coke x1"
+            ]
+        }
     }
 ]
