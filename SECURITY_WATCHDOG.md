@@ -1,8 +1,8 @@
 # POS Security Watchdog
 
-| Last run: 2026-06-30T23:28 UTC | Total events tracked: 110 (SEC-001→SEC-110; 0 unresolved) | Active blocks: 1 (127.0.0.1 auto-blocked until 00:19 UTC) | Run result: **MINOR** — auto-block triggered on localhost, known cron pattern.|
+| Last run: 2026-07-01T00:20 UTC | Total events tracked: 110 (SEC-001→SEC-110; 0 unresolved) | Active blocks: 0 | Run result: **CLEAN** — no new threats; expired IP block cleaned up.|
 
-## Current Run Findings (22:45–23:28 UTC, ~43 min window)
+## Current Run Findings (23:28–00:20 UTC, ~52 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -20,55 +20,53 @@ None.
 
 **Server**: **UP** (responding on port 5000 — verified via /api/clock/status).
 
-**Activity**: 15 new events in activity log since last run.
+**Activity**: 2 new events in activity log since last run (Reliability Bot test cycle).
 
 | Event type | Count | Details |
 |---|---|---|
-| login_failed | 5 | null user, 127.0.0.1, <1s burst at 23:19:33-34 |
-| login | 4 | Owner (1111), 127.0.0.1, all success |
-| admin_login | 4 | 3 failed (unauthorized) + 1 success (Owner at 23:20:04) |
-| clock_in | 1 | Employee One (1234), 127.0.0.1, 22:57:34 |
-| clock_out | 1 | Employee One (1234), 127.0.0.1, 22:57:38 |
+| clock_in | 1 | Employee One (1234), 127.0.0.1, 23:42:29 |
+| clock_out | 1 | Employee One (1234), 127.0.0.1, 23:42:32 |
 
-**Login attempts (this window)**: 9 total (5 failed, 4 successful).
+**Login attempts (this window)**: 0 — no login activity in the last 52 min.
 
 **Active shifts**: 0. No one currently clocked in.
 
-**Orders today**: 0 new orders.
+**Orders today (July 1)**: 0.
 
 ### 📊 Login Security Deep-Dive
-- **Brute force check**: 5 failed logins in <1s from 127.0.0.1 (23:19:33-34). **Auto-block triggered correctly** at 23:19:34. All failures are null-user probes (invalid PIN), not targeting specific accounts.
-- **Account enumeration**: 5 null-user probes from 127.0.0.1 — below the 10-probe MEDIUM threshold. All localhost.
-- **Successful-after-failure**: Owner (1111) logged in successfully after the failures. However, failures were null-user probes (not targeting 1111), and 1111 is on the exempted_users list. Not a credential compromise.
-- **Credential stuffing**: No evidence — all activity from single IP (127.0.0.1).
-- **Off-hours activity**: Logins at 23:19-23:20 UTC (off-hours window 22:00-06:00). Owner (1111), known pattern from cron workers. Not alerted.
-- **Cross-IP targeting**: None — single IP.
-- **Session anomalies**: 0 active shifts. No suspicious sessions.
-- **Rate limiting**: Auto-block triggered correctly at threshold (5 fails in <5 min from 127.0.0.1).
+- **Brute force check**: No login attempts. Clean.
+- **Account enumeration**: No activity.
+- **Successful-after-failure**: No new login events since last run.
+- **Credential stuffing**: No evidence.
+- **Off-hours activity**: No new logins.
+- **Cross-IP targeting**: None — single IP (127.0.0.1) only.
+- **Session anomalies**: No active shifts.
+- **Rate limiting**: No trigger events.
 
 ### 🔒 Security Config
-- `blocked_ips`: 1 entry — **127.0.0.1 auto-blocked at 23:19:34** (expires 00:19 UTC). Owner (1111) exempted — continued operating normally.
+- `blocked_ips`: **0** (expired 127.0.0.1 block removed this run — duration 60min expired at 00:19:34 UTC).
 - `auto_block_threshold`: 5 (unchanged).
 - `require_2fa_for_admins`: true (unchanged).
-- `security_config.json` no other changes this window.
-- 2FA gap: Owner (1111), Manager (2222), Manager Sarah (7788) lack 2FA — known issue for Security Sentinel.
+- No other config changes this window.
+- 2FA gap: Owner (1111), Manager (2222), and Manager Sarah (7788) lack 2FA — known issue (Security Sentinel domain).
 
 ### 💰 Financial Check / Order Anomaly Scan
-- 0 new completed orders this window.
+- 0 new orders this window (July 1 start).
 - 0 refunds this window.
 - 0 zero-dollar non-cancelled orders.
-- No new financial anomalies.
+- No anomalies.
 
 ### 📂 File Integrity
 - All JSON files parseable and valid.
-- All accounts intact. Owner (1111) present, active, not banned.
+- Owner (1111) present, active, not banned.
 - No suspicious new files found.
-- Git: CLEAN — no uncommitted changes.
+- Git: CLEAN — security_config.json updated (expired block removed).
 
 ### ✅ Actions Taken
-- SECURITY_WATCHDOG.md updated with this run's findings (23:28 UTC).
-- No SEC events created — auto-block handled by existing rate-limiting logic.
-- No git commit needed — auto-block is in security_config.json (runtime data, not stale).
+- Security Watchdog file updated with this run's findings (00:20 UTC).
+- Expired block on 127.0.0.1 cleaned up from security_config.json.
+- No new SEC events created.
+- No Discord alert needed — environment quiet.
 
 ## Previous Run Findings (carried forward)
 - Admin 2FA gap: Owner (1111), Manager (2222), and Manager Sarah (7788) lack 2FA despite `require_2fa_for_admins: true`. Security Sentinel handles.
