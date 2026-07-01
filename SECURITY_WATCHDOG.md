@@ -1,8 +1,8 @@
 # POS Security Watchdog
 
-|||||||| Last run: 2026-07-01T05:19 UTC | Total events tracked: 132 (SEC-001→SEC-132; 0 unresolved) | Active blocks: 0 | Run result: **CLEAN** — dev activity from localhost only, no external threats.|
+|||||||||| Last run: 2026-07-01T05:58 UTC | Total events tracked: 134 (SEC-001→SEC-134; 2 unresolved — off-hours logins from exempted Owner) | Active blocks: 0 | Run result: **CLEAN** — no activity since last run, system quiet.|
 
-## Current Run Findings (04:41–05:19 UTC, ~38 min window)
+## Current Run Findings (05:41–05:58 UTC, ~17 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -20,25 +20,24 @@ None.
 
 **Server**: **UP** (responding on port 5000 — HTTP 200).
 
-**Activity** (activity_log.json): **2 new events** since last run — all from 127.0.0.1 (localhost, whitelisted):
-- 05:08:58 — Owner (1111) login from 127.0.0.1 via curl
-- 05:08:58 — Owner (1111) admin_login from 127.0.0.1 via curl
+**Activity** (activity_log.json): **0 new events** since last run. System completely idle.
 
-**Login attempts (this window)**: 0 failed, 2 successful logins (both Owner, localhost).
+**Login attempts (this window)**: 0 failed, 0 successful. No login activity at all.
 
 **Active shifts**: 0. No one currently clocked in.
 
-**Orders today (July 1)**: 4 orders placed today — all before 04:00 UTC. No new orders in this window.
+**Orders today (July 1)**: 6 orders today (03:49–03:58 UTC window, all from Employee Two / python-requests, all from 127.0.0.1). No new orders in this window.
 
 ### 📊 Login Security Deep-Dive
 - **Brute force check**: 0 failed attempts. No threat.
 - **Account enumeration**: 0 invalid-PIN probes. None.
-- **Successful-after-failure**: No failure→success pattern detected.
+- **Successful-after-failure**: No new failure→success pattern detected.
 - **Credential stuffing**: No evidence — single IP (127.0.0.1) only.
-- **Off-hours activity**: Owner (1111) login+admin_login at 05:08 — from 127.0.0.1. Owner is exempted in config. Normal cron activity.
+- **Off-hours activity**: None in this window.
 - **Cross-IP targeting**: None.
-- **Session anomalies**: No active sessions.
+- **Session anomalies**: No active sessions — server hasn't seen a request since 05:36.
 - **Rate limiting**: No trigger events.
+- **Carried forward**: SEC-133 (Owner 05:08) and SEC-134 (Owner 05:36) remain unresolved in security_events.json — both are off-hours logins from 127.0.0.1 by Owner (1111), who is in the exempted_users list. These were created by the backend IP Blocklist Manager, not the Watchdog. Mark as LOW — Owner is exempted.
 
 ### 🔒 Security Config
 - `blocked_ips`: **0** (none currently blocked).
@@ -48,19 +47,21 @@ None.
 - 2FA gap remains (Security Sentinel domain): Owner (1111), Manager (2222), Manager Sarah (7788) lack 2FA.
 
 ### 💰 Financial Check / Order Anomaly Scan
-- No new orders this window.
-- No zero-dollar orders, no 100% discounts, no large tips.
-- Previously flagged refunded orders (refunded at ~02:20-02:44) — unchanged, test data.
+- 6 orders today, all from 127.0.0.1, Employee Two testing (python-requests).
+- 1 refunded order (03:49 UTC, order during same testing window).
+- No zero-dollar active orders (1 zero-dollar order from June 25 is cancelled — pre-existing).
+- No 100% discounts, no large tips, no suspicious patterns.
 
 ### 📂 File Integrity
-- All JSON files parseable and valid.
+- All JSON files present and properly sized.
 - Owner (1111) present, active, not banned.
-- No suspicious new files (.php, .sh, etc.) found.
-- Git: **clean** (no uncommitted changes).
+- No new suspicious files found. Scripts in scripts/ are pre-existing worker artifacts (committed, git-tracked).
+- Git: **dirty** — SECURITY_WATCHDOG.md has uncommitted changes from prior run (will commit with this update).
 
 ### ✅ Actions Taken
 - Tier 1-4 full security sweep completed — no threats.
-- No Discord alert needed — all activity is known dev behavior from localhost, no external threats.
+- No Discord alert needed — zero activity, system idle, no threats.
+- SEC-133/134 noted as LOW priority (exempted Owner off-hours logins).
 
 ## Previous Run Findings (carried forward)
 - Admin 2FA gap: Owner (1111), Manager (2222), and Manager Sarah (7788) lack 2FA despite `require_2fa_for_admins: true`. Security Sentinel handles.
