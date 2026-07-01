@@ -1,13 +1,13 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-07-01T01:53Z
-> Total checks: 119
-> Healthy: 122 | Broken: 0 | Fixed this cycle: 29
+> Last full cycle: 2026-07-01T02:20Z
+> Total checks: 125
+> Healthy: 128 | Broken: 0 | Fixed this cycle: 30
 
 ## CRITICAL (check every run — these can't wait)
-- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (01:53Z)
-- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID, 8 users, 5 cats/items dict, 122 orders, 0 shifts, 24 inventory (01:53Z)
-- [x] users.json has at least owner PIN 1111 — Owner 1111 present, permissions '*' OK (01:53Z)
-- [x] Git repo is clean (no uncommitted changes from crashes) — clean, last commit 89a18f6 (Watchdog 01:39Z) (01:53Z)
+- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (02:20Z)
+- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID, 8 users, 5 cats/items dict, 123 orders, 0 shifts, 24 inventory (02:20Z)
+- [x] users.json has at least owner PIN 1111 — Owner 1111 present, permissions '*' OK (02:20Z)
+- [x] Git repo is clean (no uncommitted changes from crashes) — clean, committed Watchdog dirt at 9cf10e2 (02:20Z)
 
 ## HOURLY (check if last check was >1h ago)
 - [x] /api/clock/in works (clock in test user, verify response) — Employee 1234 clocked in, no late detection (00:58 UTC, schedule 09:00) ✓ (00:58Z)
@@ -21,11 +21,11 @@
 ## EVERY 4 HOURS
 - [x] Order lifecycle: create order → verify in orders.json → refund → verify — Created #143 (Coke $3)→paid→refunded ✅ (22:10Z)
 - [x] User CRUD: add test user → verify → delete — Added 9001, verified, deleted ✅
-- [x] Inventory: check stock decrements on order — Coke 70→69→70 (decrement + restore via refund) ✅ (22:10Z)
+- [x] Inventory: check stock decrements on order — Coke 70→69→70 (decrement + restore via refund) ✅ (02:20Z)
 - [x] Loyalty: points earned on order — Order #139 (Coke $3) earned 3 pts, refunded, cleaned up ✅
 - [x] Cash register: open drawer ($100) → cash in ($50) → cash out ($20) → close ($130, exact match) ✅
-- [x] Kitchen display: GET /api/kitchen/queue — 0 pending orders, valid data ✓ (22:10Z)
-- [x] Pickup display: GET /api/pickup-display/queue — 0 ready orders, valid data ✓ (22:10Z)
+- [x] Kitchen display: GET /api/kitchen/queue — 1 pending order (order 141), valid data ✓ (02:20Z)
+- [x] Pickup display: GET /api/pickup-display/queue — 2 ready orders, valid data ✓ (02:20Z)
 - [x] Clock-in late detection: Employee 1234 scheduled 09:00, clocked in 21:38 → 758 min late ✅
 - [x] Break tracking: POST /api/clock/break — 'Not clocked in' when not clocked in, endpoint working ✅ (22:57Z)
 - [x] Shift edit: POST /api/clock/edit — validates reason required, endpoint working ✅

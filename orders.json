@@ -10758,5 +10758,60 @@
         "refund_reason": "SRE bot inventory test cleanup",
         "refunded_at": "2026-06-30T22:08:07.003415",
         "refunded_by": "1111"
+    },
+    {
+        "order_id": 144,
+        "status": "refunded",
+        "claimed_by": null,
+        "claimed_at": null,
+        "completed_at": null,
+        "date": "2026-07-01T02:20:58.884208",
+        "user": null,
+        "payment": "Cash",
+        "payment_splits": null,
+        "items": [
+            {
+                "name": "Coke",
+                "price": 3.0,
+                "category": "Drinks",
+                "qty": 1,
+                "course_send_at": "2026-07-01T02:20:58.884321",
+                "course_fired": true
+            }
+        ],
+        "subtotal": 3.0,
+        "tax_amount": 0.25,
+        "tip_amount": 0.0,
+        "service_charge_amount": 0.0,
+        "discount_code": null,
+        "discount_amount": 0.0,
+        "item_tax_details": [
+            {
+                "name": "Coke",
+                "category": "Drinks",
+                "qty": 1,
+                "price": 3.0,
+                "tax_rate": 8.25,
+                "tax_amount": 0.25
+            }
+        ],
+        "total": 3.25,
+        "notes": "",
+        "item_notes": {},
+        "table_number": 99,
+        "delivery_address": null,
+        "customer_email": "",
+        "order_type": "dine_in",
+        "party_size": null,
+        "packaging_fee": 0.0,
+        "packaging_fee_label": "",
+        "priority": null,
+        "assigned_driver": null,
+        "delivery_status": "pending",
+        "manager_approval": null,
+        "order_number": 123,
+        "refund_reason": "SRE bot inventory test - refund verification",
+        "refunded_at": "2026-07-01T02:21:14.158728",
+        "refunded_by": "1111"
     }
 ]
