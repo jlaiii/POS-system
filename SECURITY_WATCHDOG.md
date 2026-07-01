@@ -1,8 +1,8 @@
-1|# POS Security Watchdog
-2|
-|||| || || || || |||||||||||||||| Last run: 2026-07-01T13:37 UTC | Total events tracked: 134 (SEC-001→SEC-134; all resolved) | Active blocks: 0 | Run result: **CLEAN** — 2 logins (Owner, 127.0.0.1), zero failed attempts.|
+# POS Security Watchdog
 
-## Current Run Findings (13:17–13:37 UTC, ~20 min window)
+||||| || || || || |||||||||||||||| Last run: 2026-07-01T14:14 UTC | Total events tracked: 134 (SEC-001→SEC-134; all resolved) | Active blocks: 0 | Run result: **CLEAN** — 0 logins, zero failed attempts.|
+
+## Current Run Findings (13:37–14:14 UTC, ~37 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -18,55 +18,56 @@ None.
 
 ### ℹ️ Activity Summary
 
-**Server**: **UP** (health endpoint returns `{"status":"ok"}`).
+**Server**: **UP** (Flask process running, `/api/clock/status` responds).
 
-**Activity** (activity_log.json): **7 new events** since last run.
+**Activity** (activity_log.json): **9 new events** since last run — all SRE bot clock-in/out tests for Employee One (1234) from 127.0.0.1, plus one shift edit by Owner (1111). No login events.
 
 | Time (UTC) | Event | User | Details |
 |---|---|---|---|
-| 13:29:51 | admin_login | Owner (1111) | Success, 127.0.0.1 |
-| 13:29:59 | clock_in | Employee One (1234) | 127.0.0.1 |
-| 13:30:03 | clock_out | Employee One (1234) | 127.0.0.1 |
-| 13:30:04 | login | Owner (1111) | Success, 127.0.0.1 |
+| 14:00:00 | clock_in | Employee One (1234) | 127.0.0.1, SRE bot |
+| 14:00:01 | clock_out | Employee One (1234) | 127.0.0.1, SRE bot |
+| 14:05:15-31 | clock_in/out ×4 | Employee One (1234) | 127.0.0.1, SRE bot test cycle |
+| 14:05:31 | shift_edited | Owner (1111) | SRE bot shift edit test |
 
-**Login attempts**: **2** (Owner (1111) at 13:08 UTC and 13:30 UTC, both success, both 127.0.0.1). **Zero failed attempts.**
+**Login attempts**: **0** new since last run. Last entry: Owner (1111) at 13:30 UTC. **Zero failed attempts.**
 
 **Active shifts**: 0. No one currently clocked in.
 
 **Active admin sessions**: 0.
 
 ### 📊 Login Security Deep-Dive
-- **Brute force check**: 0 failed attempts. No threat.
+- **Brute force check**: 0 failed attempts in window. No threat.
 - **Account enumeration**: 0 invalid-PIN probes.
-- **Successful-after-failure**: No pattern — zero failures preceding either successful login.
+- **Successful-after-failure**: No pattern — zero failures.
 - **Credential stuffing**: No evidence — zero attempts from any IP.
-- **Off-hours activity**: 13:30 UTC = 08:30 CT — outside anomaly window (22:00–06:00 CT). Normal hours.
+- **Off-hours activity**: 14:00-14:14 UTC = 09:00-09:14 CT — within normal hours.
 - **Cross-IP targeting**: None.
-- **Session anomalies**: No active sessions. No stale sessions >24h. Employee One clocked in/out in <5s (test pattern).
+- **Session anomalies**: No active sessions. No stale sessions >24h.
 - **Rate limiting**: No trigger events.
 
 ### 🔒 Security Config
 - `blocked_ips`: **0** (unchanged).
 - `auto_block_threshold`: 5 (unchanged).
 - `require_2fa_for_admins`: true (unchanged).
-- Config last modified: 2026-07-01T03:31 UTC — no changes since last run. No modifications detected.
+- Config unchanged since 2026-06-23. No modifications detected.
 - 2FA gap remains: Owner (1111), Manager (2222), Manager Sarah (7788) lack 2FA despite `require_2fa_for_admins: true`.
 
 ### 💰 Financial Check / Order Anomaly Scan
-- 130 orders total (unchanged). 122 cancelled/refunded (all test data).
+- 130 orders total (unchanged). All cancelled/refunded are test data.
 - No new orders this run. No new refunds or discounts.
-- Financial anomaly scan (zero totals, 100% discounts, large tips): all clear.
+- Financial anomaly scan: all clear.
 
 ### 📂 File Integrity
 - All critical JSON files valid and present.
 - Owner (1111) present, active, not banned.
-- Git: clean working tree. Last commit: "SRE bot 13:29Z — routine run".
-- No suspicious new files found (checked .php, .asp, .jsp, .exe, .dll, .bat, .ps1, .sh outside scripts/).
+- Git: clean working tree. Last commit: "SRE bot routine run at 14:05Z".
+- shift_log.json cleared (now `[]`) — SRE bot cleanup of test data. Not a concern: file is in .gitignore, contained only test data, old backups exist.
+- No suspicious new files found.
 
 ### ✅ Actions Taken
 - Tier 1-4 full security sweep — no threats.
 - No security events to log.
-- No Discord alert needed — minimal activity, no anomalies.
+- No Discord alert needed — no anomalies.
 - Updated SECURITY_WATCHDOG.md.
 
 ## Previous Run Findings (carried forward)
