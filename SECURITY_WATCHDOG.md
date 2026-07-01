@@ -1,8 +1,8 @@
 # POS Security Watchdog
 
-|||||||||||||| Last run: 2026-07-01T08:07 UTC | Total events tracked: 134 (SEC-001→SEC-134; all resolved) | Active blocks: 0 | Run result: **CLEAN** — 0 failed logins, SRE bot test cycles only. No threats.|
+||||||||||||||| Last run: 2026-07-01T08:24 UTC | Total events tracked: 134 (SEC-001→SEC-134; all resolved) | Active blocks: 0 | Run result: **CLEAN** — 0 failed logins, no threats.|
 
-## Current Run Findings (07:42–08:07 UTC, ~25 min window)
+## Current Run Findings (08:07–08:24 UTC, ~17 min window)
 
 ### 🔴 CRITICAL (0)
 None.
@@ -18,28 +18,22 @@ None.
 
 ### ℹ️ Activity Summary
 
-**Server**: **UP** (responding on port 5000 — HTTP 200).
+**Server**: **UP** (responding on port 5000 — HTTP 200 on /api/clock/status).
 
-**Activity** (activity_log.json): **4 new events** since last run:
-- `login` at 07:55:41 — Owner (1111) from 127.0.0.1 (Python-urllib/3.11) — success
-- `admin_login` at 07:55:54 — Owner (1111) from 127.0.0.1 — success
-- `clock_in` at 07:56:01 — Employee One (1234) from 127.0.0.1 — success (late_minutes=null)
-- `clock_out` at 07:56:13 — Employee One (1234) from 127.0.0.1 — success (0.0h)
+**Activity** (activity_log.json): **0 new events** since last run (last event at 07:56:13). System idle.
 
-All from localhost (127.0.0.1), all standard SRE bot / worker test cycles. No security concern.
+**Login attempts (this window)**: 0 failed, 0 successful. No login activity at all.
 
-**Login attempts (this window)**: 0 failed, 1 successful (Owner login at 07:55). No brute force activity.
-
-**Active shifts**: 0. No one currently clocked in.
+**Active shifts**: 0. No one currently clocked in (Owner clock status test confirmed).
 
 **Active admin sessions**: 0 (no admin_sessions.json on disk).
 
 ### 📊 Login Security Deep-Dive
-- **Brute force check**: 0 failed attempts in last 25 min. No threat.
+- **Brute force check**: 0 failed attempts in last 17 min. No threat.
 - **Account enumeration**: 0 invalid-PIN probes. None.
 - **Successful-after-failure**: No failure→success pattern.
 - **Credential stuffing**: No evidence — zero attempts from any IP.
-- **Off-hours activity**: 07:42–08:07 is outside anomaly window (22:00–06:00). Normal hours.
+- **Off-hours activity**: 08:07–08:24 is outside anomaly window (22:00–06:00). Normal hours.
 - **Cross-IP targeting**: None.
 - **Session anomalies**: No active sessions. No stale sessions >24h.
 - **Rate limiting**: No trigger events.
@@ -53,8 +47,7 @@ All from localhost (127.0.0.1), all standard SRE bot / worker test cycles. No se
 
 ### 💰 Financial Check / Order Anomaly Scan
 - No new orders or refunds this window. All quiet.
-- 4 stale pending orders in orders.json (all have no user_id — test data from earlier worker runs). Not a security concern.
-- Zero-total orders: 0 active.
+- Stale pending orders remain in orders.json (test data, no security concern).
 - No suspicious refund patterns.
 
 ### 📂 File Integrity
