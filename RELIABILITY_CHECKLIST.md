@@ -1,21 +1,21 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-07-01T10:06Z
-> Total checks: 176
-> Healthy: 208 | Broken: 0 | Fixed this cycle: 33
+> Last full cycle: 2026-07-01T10:28Z
+> Total checks: 177
+> Healthy: 209 | Broken: 0 | Fixed this cycle: 33
 
 ## CRITICAL (check every run — these can't wait)
-|- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (10:06Z)
-|- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID, 8 users, 5 cats/19 items, 1 shift, 24 inventory, 14 loyalty (10:06Z)
-|- [x] users.json has at least owner PIN 1111 — Owner 1111 present, perms ['*'], super admin ✓ (10:06Z)
-|- [x] Git repo is clean (no uncommitted changes from crashes) — clean with Watchdog activity_log dirty pending commit (10:06Z)
+|- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (10:28Z)
+|- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID, 8 users, 5 cats/19 items, 1 shift, 24 inventory, 14 loyalty (10:28Z)
+|- [x] users.json has at least owner PIN 1111 — Owner 1111 present, perms ['*'], super admin ✓ (10:28Z)
+|- [x] Git repo is clean (no uncommitted changes from crashes) — clean with Watchdog activity_log dirty pending commit (10:28Z)
 
 ## HOURLY (check if last check was >1h ago)
 |- [x] /api/clock/in works (clock in test user, verify response) — Employee 1234 clocked in at 10:06Z, 67 min late (sched 09:00), cleaned up ✓ (10:06Z)
 |- [x] /api/clock/out works — Employee 1234 clocked out (0s shift), test shift cleaned ✓ (10:06Z)
 |- [x] /api/clock/status works (userId or adminPin) — Employee 1234 clocked in status returned ✓ (10:06Z)
-|- [x] /api/items returns items (GET) — 5 categories: Breakfast, Drinks, Foods, Salads, Snacks, 19 items ✓ (08:24Z)
-|- [x] /api/login works (POST userId) — Owner 1111 login, message 'Login successful', full permissions ✓ (09:39Z)
-|- [x] /api/admin_stats returns stats (POST adminPin) — Admin data retrieved ✓ (09:39Z)
+|- [x] /api/items returns items (GET) — 5 categories: Breakfast, Drinks, Foods, Salads, Snacks, 19 items ✓ (10:28Z)
+|- [x] /api/login works (POST userId) — Owner 1111 login, message 'Login successful', full permissions ✓ (10:28Z)
+|- [x] /api/admin_stats returns stats (POST adminPin) — Admin data retrieved, avg $13.24, backup green ✓ (10:28Z)
 |- [x] /api/admin_shifts returns shifts (POST adminPin) — 0 active shifts, 2 completed shifts ✓ (10:06Z)
 |- [x] Frontend loads (curl index.html, verify it's HTML not error) — HTML 200 OK, 1,359,284 bytes ✓ (10:06Z)
 |- [x] /api/kitchen/queue returns valid data (GET) — queue endpoint works, has data ✓ (10:06Z)
@@ -24,7 +24,7 @@
 ## EVERY 4 HOURS
 |- [x] Order lifecycle: create order → verify in orders.json → refund → verify — Created #151 (Pancakes $8.99) → pending → refunded → cleaned ✅ (07:32Z)
 |- [x] User CRUD: add test user → verify → delete — Added 9001, verified, deleted ✅
-|- [x] Inventory: check stock decrements on order — Coke 67→66→67 (order #150 created + refunded) ✅ (06:27Z)
+|- [x] Inventory: check stock decrements on order — Coke 67→66→67 (order #152 created + refunded) ✅ (10:28Z)
 |- [x] Loyalty: points earned on order — Order #139 (Coke $3) earned 3 pts, refunded, cleaned up ✅
 |- [x] Cash register: open drawer ($100) → cash in ($50) → cash out ($20) → close ($130, exact match) ✅
 |- [x] Kitchen display: GET /api/kitchen/queue — 4 pending orders, valid data ✓ (07:32Z)
@@ -48,7 +48,7 @@
 - [x] Concurrent write test: two rapid clock-ins → verify no data loss — Two users (1234, 5678) clocked in/out concurrently, both shifts recorded ✅
 
 ## DISCOVERED (failures you've seen before — check every 2h)
-|- [x] Security Watchdog leaves dirty files after each run (SECURITY_WATCHDOG.md + activity_log.json + login_attempts.json + security_events.json + .watchdog_file_sizes.json) — auto-commit on SRE bot runs — CHECKED 07:57Z, committed Watchdog dirty files (cc16e0b) ✓
+|- [x] Security Watchdog leaves dirty files after each run (SECURITY_WATCHDOG.md + activity_log.json + login_attempts.json + security_events.json + .watchdog_file_sizes.json) — auto-commit on SRE bot runs — CHECKED 10:28Z, git clean ✓
 
 ## CURRENT OUTAGES
 _None_
