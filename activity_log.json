@@ -26345,5 +26345,40 @@
             "ip": "127.0.0.1",
             "attempt": 1
         }
+    },
+    {
+        "timestamp": "2026-07-01T17:28:26.915500",
+        "type": "submit_order",
+        "user_id": null,
+        "user_role": "user",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Python-urllib/3.11",
+        "details": {
+            "order_id": 156,
+            "subtotal": 3.0,
+            "tax_amount": 0.28,
+            "discount_code": null,
+            "discount_amount": 0.0,
+            "total": 3.28,
+            "payment_method": "Cash",
+            "item_count": 1
+        }
+    },
+    {
+        "timestamp": "2026-07-01T17:28:29.970686",
+        "type": "refund_order",
+        "user_id": "1111",
+        "user_role": "owner",
+        "ip_address": "127.0.0.1",
+        "user_agent": "Python-urllib/3.11",
+        "details": {
+            "order_id": 156,
+            "reason": "SRE bot lifecycle test",
+            "refunded_by_name": "Owner",
+            "order_total": 3.28,
+            "inventory_restored": [
+                "Coke x1"
+            ]
+        }
     }
 ]

@@ -1,13 +1,13 @@
 # POS Reliability Checklist
-> Last full cycle: 2026-07-01T17:05Z
-> Total checks: 230
-> Healthy: 270 | Broken: 0 | Fixed this cycle: 34
+> Last full cycle: 2026-07-01T17:27Z
+> Total checks: 234
+> Healthy: 274 | Broken: 0 | Fixed this cycle: 34
 
 ## CRITICAL (check every run — these can't wait)
-||- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (17:05Z)
-||- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID, 11 users, 5 cats/23 items, 132 orders, shift_log empty, 28 inventory (4 sold out), 14 loyalty ✓ (17:05Z)
-||- [x] users.json has at least owner PIN 1111 — Owner 1111 present, perms ['*'], super admin ✓ (17:05Z)
-||- [x] Git repo is clean (no uncommitted changes from crashes) — clean after commit 1c548aa ✓ (17:05Z)
+||- [x] Flask app responds on port 5000 (curl /api/health or root) — 200 OK (17:27Z)
+||- [x] All JSON data files exist and are valid (users, items, orders, shift_log, inventory, combos, favorites, loyalty_points) — all VALID, 11 users, 5 cats/23 items, 132 orders, shift_log empty, 28 inventory (4 sold out), 14 loyalty ✓ (17:27Z)
+||- [x] users.json has at least owner PIN 1111 — Owner 1111 present, perms ['*'], super admin ✓ (17:27Z)
+||- [x] Git repo is clean (no uncommitted changes from crashes) — clean ✓ (17:27Z)
 
 ## HOURLY (check if last check was >1h ago)
 ||- [x] /api/clock/in works (clock in test user, verify response) — Employee 1234 clocked in at 16:43Z, 464 min late (sched 09:00), cleaned up ✓ (16:43Z)
@@ -16,10 +16,10 @@
 ||- [x] /api/items returns items (GET) — 5 categories, 23 items ✓ (17:05Z)
 ||- [x] /api/login works (POST userId) — Owner 1111 login, force_pin_change_required, full permissions, session_token ✓ (17:05Z)
 ||- [x] /api/admin_stats returns stats (POST adminPin) — Admin data retrieved, avg $12.13, backup count 213, green ✓ (17:05Z)
-||- [x] /api/admin_shifts returns shifts (POST adminPin) — 0 active shifts, 0 completed, clean ✓ (15:51Z)
-||- [x] Frontend loads (curl index.html, verify it's HTML not error) — HTML 200 OK, 1,375,342 bytes ✓ (17:05Z)
-||- [x] /api/kitchen/queue returns valid data (GET) — queue endpoint works, 4 pending orders ✓ (15:51Z)
-||- [x] /api/pickup-display/queue works (GET) — pickup endpoint works, 2 ready orders ✓ (15:51Z)
+||- [x] /api/admin_shifts returns shifts (POST adminPin) — 0 active shifts, 0 completed, clean ✓ (17:27Z)
+||- [x] Frontend loads (curl index.html, verify it's HTML not error) — HTML 200 OK, 1,375,342 bytes ✓ (17:27Z)
+||- [x] /api/kitchen/queue returns valid data (GET) — queue endpoint works, 0 pending orders ✓ (17:27Z)
+||- [x] /api/pickup-display/queue works (GET) — pickup endpoint works, 0 ready orders ✓ (17:27Z)
 
 ## EVERY 4 HOURS
 ||- [x] Order lifecycle: create order → verify in orders.json → refund → verify — Created #155 (Coke $3.00) → pending → refunded → cleaned ✅ (16:16Z)
